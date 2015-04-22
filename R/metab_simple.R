@@ -25,7 +25,7 @@
 #' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
 #' @examples
 #'  metab_simple(data=data.frame(date.time=rep(as.Date("2015-04-15"), 24), DO.obs=1:24, DO.sat=rep(14, 24), PAR=sin((1:24)*pi/24)^8, temp.water=15))
-#'  metab_simple(data=data.frame(empty="shouldbreak"))
+#'  \dontrun{metab_simple(data=data.frame(empty="shouldbreak"))}
 #' @export
 metab_simple <- function(data, ...) {
   

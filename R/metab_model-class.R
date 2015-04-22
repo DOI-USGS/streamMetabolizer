@@ -7,6 +7,7 @@
 #' @rdname metab_model-class
 #' @name metab_model-class
 #' @slot fit An internal representation of a fitted model.
+#' @slot pkg_version A string indicating the package version used to create this metab_model object.
 #' @slot args A list of arguments, excluding data, that were supplied to the fitting function.
 #' @slot data The data that were used to fit the model.
 #' @exportClass metab_model
@@ -15,11 +16,13 @@ setClass(
   "metab_model",
   slots=c(
     fit="ANY",
+    pkg_version="character",
     args="list",
     data="data.frame"),
   
   prototype=c(
     fit=NULL,
+    pkg_version="",
     args=NULL,
     data=NULL),
   
@@ -56,6 +59,7 @@ metab_model <- function() {
   # Create a dummy metab_model object
   new("metab_model",
       fit=lm(GPP~DO, data=data.frame(GPP=1:5, DO=1:5+0.1)), # trivial and wrong
+      pkg_version=packageVersion("streamMetabolizer"),
       args=list(arg1="none"),
       data=NULL)
 }
