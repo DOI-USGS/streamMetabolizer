@@ -1,9 +1,20 @@
 Package: streamMetabolizer
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: package to calculate stream metabolism from timeseries
+Version: 0.0.1
 Date: 2015-04-22
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Aappling, Read, Winslow
+Maintainer: Alison Appling <aappling@usgs.gov>
+Description: Basic package for stream metabolism
+License: CC0
+Copyright: This software is in the public domain because it contains materials
+    that originally came from the United States Geological Survey, an agency of
+    the United States Department of Interior. For more information, see the
+    official USGS copyright policy at
+    http://www.usgs.gov/visual-id/credit_usgs.html#copyright
+Depends:
+    R (>= 3.0)
+Imports:
+    LakeMetabolizer
+Suggests:
+    testthat
