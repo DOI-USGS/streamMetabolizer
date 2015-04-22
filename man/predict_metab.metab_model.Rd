@@ -7,7 +7,8 @@
 \method{predict_metab}{metab_model}(metab_model)
 }
 \arguments{
-\item{metab_model}{}
+\item{metab_model}{A metabolism model, implementing the
+metab_model_interface, to use in predicting metabolism}
 }
 \value{
 A data.frame of predictions, as for the generic

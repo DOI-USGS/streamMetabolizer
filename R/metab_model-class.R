@@ -59,7 +59,7 @@ metab_model <- function() {
   # Create a dummy metab_model object
   new("metab_model",
       fit=lm(GPP~DO, data=data.frame(GPP=1:5, DO=1:5+0.1)), # trivial and wrong
-      pkg_version=packageVersion("streamMetabolizer"),
+      pkg_version=as.character(packageVersion("streamMetabolizer")),
       args=list(arg1="none"),
       data=data.frame(GPP=1:5, DO=1:5+0.1))
 }
@@ -71,10 +71,7 @@ metab_model <- function() {
 #' 
 #' Print a metab_model object to the console.
 #' 
-#' @rdname show.metab_model
-#' @name show.metab_model
 #' @param object metab_model to be displayed.
-#' @exportMethod show
 setMethod(
   "show", "metab_model", 
   function(object) {
@@ -108,7 +105,6 @@ get_fitting_data.metab_model <- function(metab_model) {
 #' Makes daily predictions of GPP, ER, and NEP.
 #' 
 #' @inheritParams predict_metab
-#' @param metab_model
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @export
