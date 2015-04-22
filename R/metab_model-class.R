@@ -61,7 +61,7 @@ metab_model <- function() {
       fit=lm(GPP~DO, data=data.frame(GPP=1:5, DO=1:5+0.1)), # trivial and wrong
       pkg_version=packageVersion("streamMetabolizer"),
       args=list(arg1="none"),
-      data=NULL)
+      data=data.frame(GPP=1:5, DO=1:5+0.1))
 }
 
 #### loadModelInterface ####
