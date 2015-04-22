@@ -23,8 +23,10 @@ Maintainer: \packageMaintainer{streamMetabolizer}
 \references{
 ~~ Literature or other references for background information ~~
 }
+
+\keyword{ 
 ~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory ~~
-\keyword{ package }
+package }
 \seealso{
 ~~ Optional links to other man pages, e.g. ~~
 ~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
