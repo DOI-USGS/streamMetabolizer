@@ -1,10 +1,9 @@
 
 context("basic light model")
-
 test_that("can generate light predictions from basic light model", {
   # radian-degree conversions
-  expect_equal(streamMetabolizer:::rad(180), pi)
-  expect_equal(streamMetabolizer:::deg(pi*3/2), 270)
+  expect_equal(streamMetabolizer:::to_radians(180), pi)
+  expect_equal(streamMetabolizer:::to_degrees(pi*3/2), 270)
 
   # declination angle
   decdf <- data.frame(
@@ -16,15 +15,15 @@ test_that("can generate light predictions from basic light model", {
   solstice <- which(decdf$jday == as.numeric(format(as.Date("2015-06-21"), "%j")))
   expect_more_than(decdf[solstice,"dec"], decdf[equinox,"dec"], "solstice more declined than equinox")
   expect_equal(max(decdf$dec), -1*(min(decdf$dec)), info="equal & opposite declination on summer/winter solstices")
-  expect_equal(rad(decdf$dec), decdf$dec_rad, info="degree & radian formats agree")
+  expect_equal(streamMetabolizer:::to_radians(decdf$dec), decdf$dec_rad, info="degree & radian formats agree")
   
   # hour angle
   hourdf <- data.frame(
     hour=c(0:24), 
     hragl=streamMetabolizer:::model_hour_angle(0:24))
   expect_equal(hourdf[hourdf$hour==12, "hragl"], 0, info="hour angle is 0 at solar noon")
-  expect_equal(-1*hourdf[0:13, "hragl"], hourdf[25:13, "hragl"], info="hour angles revers at noon")
-  expect_equal(rad(hourdf$hragl), streamMetabolizer:::model_hour_angle(0:24, format="radians"))
+  expect_equal(-1*hourdf[0:13, "hragl"], hourdf[25:13, "hragl"], info="hour angles reverse at noon")
+  expect_equal(streamMetabolizer:::to_radians(hourdf$hragl), streamMetabolizer:::model_hour_angle(0:24, format="radians"))
   
   # zenith angle
   library(dplyr)
@@ -38,7 +37,7 @@ test_that("can generate light predictions from basic light model", {
       hragl=streamMetabolizer:::model_hour_angle(hour)) %>%
     transform(
       zen=streamMetabolizer:::model_zenith_angle(lat, dec, hragl))
-  expect_true(all(filter(zendf, lat==80)$zen > filter(zendf, lat==40)$zen), "higher latitude, higher zenith angle (lower sun)")
+  expect_true(all(zendf[zendf$lat==80, "zen"] > zendf[zendf$lat==40, "zen"]), "higher latitude, higher zenith angle (lower sun)")
   
   # insolation
   insdf <- data.frame(

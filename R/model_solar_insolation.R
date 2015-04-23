@@ -2,7 +2,7 @@
 #' 
 #' @param degrees angle in degrees
 #' @return angle in radians
-rad <- function(degrees) {
+to_radians <- function(degrees) {
   degrees * pi / 180
 }
 
@@ -10,7 +10,7 @@ rad <- function(degrees) {
 #' 
 #' @param radians angle in radians
 #' @return angle in degrees
-deg <- function(radians) {
+to_degrees <- function(radians) {
   radians * 180 / pi
 }
 
@@ -33,9 +33,9 @@ deg <- function(radians) {
 #' }
 model_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  declination.angle <- asin(sin(rad(23.45))*sin(rad((360/365)*(jday-81))))
+  declination.angle <- asin(sin(to_radians(23.45))*sin(to_radians((360/365)*(jday-81))))
   if(format == "degrees") {
-    declination.angle <- deg(declination.angle)
+    declination.angle <- to_degrees(declination.angle)
   }
   declination.angle
 }
@@ -63,7 +63,7 @@ model_declination_angle <- function(jday, format=c("degrees", "radians")) {
 model_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
   hour.angle <- 15*(hour-12)
-  if(format=="radians") hour.angle <- rad(hour.angle)
+  if(format=="radians") hour.angle <- to_radians(hour.angle)
   hour.angle
 }
 
@@ -95,15 +95,16 @@ model_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #' }
 model_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
   format <- match.arg(format)
+  latitude <- to_radians(latitude)
   if(format == "degrees") {
-    declination.angle <- rad(declination.angle)
-    hour.angle <- rad(hour.angle)
+    declination.angle <- to_radians(declination.angle)
+    hour.angle <- to_radians(hour.angle)
   }
   zenith.angle <- 
     acos(sin(latitude) * sin(declination.angle) + 
            cos(latitude) * cos(declination.angle) * cos(hour.angle))
   if(format == "degrees") {
-    zenith.angle <- deg(zenith.angle)
+    zenith.angle <- to_degrees(zenith.angle)
   }
   zenith.angle
 }
@@ -135,7 +136,7 @@ model_solar_insolation <- function(jday, hour, latitude, max.insolation=1000, fo
   declination.angle <- model_declination_angle(jday, format=format)
   hour.angle <- model_hour_angle(hour, format=format)
   zenith.angle <- model_zenith_angle(latitude, declination.angle, hour.angle, format=format)
-  if(format=="degrees") zenith.angle <- rad(zenith.angle)
+  if(format=="degrees") zenith.angle <- to_radians(zenith.angle)
   insolation <- max.insolation * cos(zenith.angle)
   insolation <- pmax(insolation, 0)
 
