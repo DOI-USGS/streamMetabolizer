@@ -7,14 +7,18 @@
 calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0, ...)
 }
 \arguments{
-\item{DO.obs}{}
+\item{DO.obs}{a numeric vector of dissolved oxygen concentration observations, mg L^-1,
+or a \linkS4class{unitted} object of dissolved oxygen concentrations.}
 
-\item{temp.water}{a numeric vector of water temperature in degrees Celsius.}
+\item{temp.water}{a numeric vector of water temperature in degrees Celsius,
+or a \linkS4class{unitted} object of water temperatures.}
 
-\item{pressure.air}{barometric pressure in millibars}
+\item{pressure.air}{barometric pressure in millibars,
+or a \linkS4class{unitted} object of barometric pressure.}
 
-\item{salinity.water}{a numeric vector of salinity in PSU. Defaults to zero.
-Length must be one or equal to length of temperature.}
+\item{salinity.water}{a numeric vector of salinity in PSU,
+or a \linkS4class{unitted} object of salinity. Defaults to zero.
+Length must be one or equal to length of \code{temp.water}.}
 
 \item{...}{additional parameters passed to \code{\link[LakeMetabolizer]{o2.at.sat.base}}}
 }
@@ -26,9 +30,16 @@ Creates a DO.deficit vector for input into various metabolism models (see...)
 }
 \examples{
 DO.obs = 7
-temp.water =25
+temp.water = 25
 pressure.air = 900
 salinity.water = 2.43
-DO.deficit <- calc_DO_deficit(DO, temp, prss.mb, salinity.water)
+DO.deficit <- calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water)
+
+library(unitted)
+DO.obs = u(c(7,7.5,7),'mg L^-1')
+temp.water = u(c(25,24.5,18.9), 'degC')
+pressure.air = u(c(900,903,910), 'mb')
+salinity.water = u(2.43, 'PSU')
+DO.deficit <- calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water)
 }
 

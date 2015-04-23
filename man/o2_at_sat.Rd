@@ -4,7 +4,7 @@
 \alias{o2_at_sat}
 \title{Calculates the equilibrium saturation concentration of oxygen in water at the supplied conditions}
 \usage{
-o2_at_sat(temp.water, pressure.air, salinity.water = 0, ...)
+o2_at_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"), ...)
 }
 \arguments{
 \item{temp.water}{water temperature in degrees C}
