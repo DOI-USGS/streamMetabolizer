@@ -7,12 +7,14 @@
 o2_at_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"), ...)
 }
 \arguments{
-\item{temp.water}{water temperature in degrees C}
+\item{temp.water}{a numeric vector of water temperature in degrees Celsius,
+or a \linkS4class{unitted} object of water temperatures.}
 
-\item{pressure.air}{air pressure in millibars}
+\item{pressure.air}{barometric pressure in millibars,
+or a \linkS4class{unitted} object of barometric pressure.}
 
-\item{salinity.water}{a numeric vector of salinity in PSU. Defaults to zero.
-Length must be one or equal to length of temperature.}
+\item{salinity.water}{a numeric vector of salinity in PSU,
+or a \linkS4class{unitted} object of salinity. Defaults to zero.}
 
 \item{...}{additional parameters passed to \code{\link[LakeMetabolizer]{o2.at.sat.base}}}
 }

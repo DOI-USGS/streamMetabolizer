@@ -1,22 +1,25 @@
 #' Calculates the equilibrium saturation concentration of oxygen in water at the supplied conditions
-#' @param temp.water water temperature in degrees C
-#' @param pressure.air air pressure in millibars
-#' @param salinity.water a numeric vector of salinity in PSU. Defaults to zero. 
-#' Length must be one or equal to length of temperature.
+#' @param temp.water a numeric vector of water temperature in degrees Celsius, 
+#' or a \linkS4class{unitted} object of water temperatures.
+#' @param pressure.air barometric pressure in millibars, 
+#' or a \linkS4class{unitted} object of barometric pressure.
+#' @param salinity.water a numeric vector of salinity in PSU, 
+#' or a \linkS4class{unitted} object of salinity. Defaults to zero. 
 #' @param ... additional parameters passed to \code{\link[LakeMetabolizer]{o2.at.sat.base}}
 #' @importFrom LakeMetabolizer o2.at.sat.base
 #' @importFrom unitted u v get_units 
 #' @keywords internal
 o2_at_sat <- function(temp.water, pressure.air, salinity.water = u(0,'PSU'), ...){
+
+  with.units <- any(sapply(list(temp.water, pressure.air, salinity.water), is.unitted))
   
-  units <- sapply(list(temp.water, pressure.air, salinity.water), get_units)
-  
-  with.units <- TRUE
-  
-  if (any(is.na(units)) | !all(units == c("degC", "mb", "PSU"))){
-    with.units <- FALSE
-  } 
-  
+  if (with.units){
+    # if any units are set, they all must be set and must be correct
+    verify_units(temp.water, "degC")
+    verify_units(pressure.air, "mb")
+    verify_units(salinity.water, "PSU")
+  }
+
   # units are stripped regardless
   temp.water <- v(temp.water)
   pressure.air <- v(pressure.air)
