@@ -18,4 +18,5 @@ Imports:
     LakeMetabolizer,
     unitted
 Suggests:
-    testthat
+    testthat,
+    ggplot2
