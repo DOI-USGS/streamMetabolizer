@@ -9,8 +9,9 @@ model_zenith_angle(latitude, declination.angle, hour.angle,
   format = c("degrees", "radians"))
 }
 \arguments{
-\item{latitude}{numeric value or vector indicating the site latitude as a
-decimal number between -90 (South Pole) and 90 (North Pole).}
+\item{latitude}{numeric value or vector indicating the site latitude in
+decimal degrees (never radians or deg-min-sec, no matter what \code{format}
+is) between -90 (South Pole) and 90 (North Pole).}
 
 \item{declination.angle}{numeric value or vector, in the units specified by
 \code{format}, indicating the declination angle.}
@@ -18,8 +19,7 @@ decimal number between -90 (South Pole) and 90 (North Pole).}
 \item{hour.angle}{numeric value or vector, in the units specified by
 \code{format}, indicating the angle.}
 
-\item{format}{The format of both the input and the output. May be "degrees"
-or "radians".}
+\item{format}{The format of both the output. May be "degrees" or "radians".}
 }
 \description{
 Calculate zenith angle as in
@@ -37,8 +37,8 @@ zendf <- transform(zendf,
   zen=streamMetabolizer:::model_zenith_angle(lat, dec, hragl))
 \dontrun{
   library(ggplot2)
-  ggplot(zendf, aes(color=factor(jday), y=zen, x=hour)) +
-    geom_line() + facet_wrap(~lat)
+  ggplot(zendf, aes(x=jday, y=zen, color=factor(lat))) +
+    geom_line()
 }
 }
 
