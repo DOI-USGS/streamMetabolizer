@@ -12,6 +12,8 @@ Class and function definitions for a metabolism model
 \describe{
 \item{\code{fit}}{An internal representation of a fitted model.}
 
+\item{\code{pkg_version}}{A string indicating the package version used to create this metab_model object.}
+
 \item{\code{args}}{A list of arguments, excluding data, that were supplied to the fitting function.}
 
 \item{\code{data}}{The data that were used to fit the model.}
