@@ -54,14 +54,14 @@ setClass(
 #' @examples
 #' metab_model() 
 #' @export
-metab_model <- function() {
+metab_model <- function(
+  fit=lm(GPP~DO, data=data.frame(GPP=1:5, DO=1:5+0.1)), # trivial and wrong
+  args=list(),
+  data=data.frame(GPP=1:5, DO=1:5+0.1),
+  pkg_version=as.character(packageVersion("streamMetabolizer"))) {
   
   # Create a dummy metab_model object
-  new("metab_model",
-      fit=lm(GPP~DO, data=data.frame(GPP=1:5, DO=1:5+0.1)), # trivial and wrong
-      pkg_version=as.character(packageVersion("streamMetabolizer")),
-      args=list(arg1="none"),
-      data=data.frame(GPP=1:5, DO=1:5+0.1))
+  new("metab_model", fit=fit, args=args, data=data, pkg_version=pkg_version)
 }
 
 #### loadModelInterface ####

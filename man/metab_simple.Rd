@@ -36,12 +36,17 @@ Fits a model to estimate GPP and ER from input data on DO,
 The model has inputs and parameters
 }
 \examples{
-metab_simple(data=data.frame(
-   date.time=rep(as.Date("2015-04-15"), 24), DO=1:24,
-   DO.deficit=rep(2, 24), depth=sin((1:24)*pi/24)^8, k.DO=15))
- \dontrun{
+\dontrun{
  metab_simple(data=data.frame(empty="shouldbreak"))
- }
+
+ # use a subset of data from Bob
+ library(dplyr)
+ french_data <- read.csv("data/french_data.csv") \%>\% mutate(date.time=as.POSIXct(strptime(date.time, format="\%Y-\%m-\%d \%H:\%M:\%S")))
+ french_units <- as.character(c("", read.csv("data/french_units.csv")$x))
+ library(unitted); french <- u(french_data, french_units)
+ mm <- metab_simple(data=v(french))
+ slot(mm, "fit")
+}
 }
 \author{
 Alison Appling, Jordan Read; modeled on lakeMetabolizer

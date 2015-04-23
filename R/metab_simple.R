@@ -24,19 +24,33 @@
 #'   
 #' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
 #' @examples
-#'  metab_simple(data=data.frame(
-#'    date.time=rep(as.Date("2015-04-15"), 24), DO=1:24, 
-#'    DO.deficit=rep(2, 24), depth=sin((1:24)*pi/24)^8, k.DO=15))
-#'  \dontrun{
+#' \dontrun{
 #'  metab_simple(data=data.frame(empty="shouldbreak"))
-#'  }
+#'  
+#'  # use a subset of data from Bob
+#'  library(dplyr)
+#'  french_data <- read.csv("data/french_data.csv") %>% mutate(date.time=as.POSIXct(strptime(date.time, format="%Y-%m-%d %H:%M:%S")))
+#'  french_units <- as.character(c("", read.csv("data/french_units.csv")$x))
+#'  library(unitted); french <- u(french_data, french_units)
+#'  mm <- metab_simple(data=v(french))
+#'  slot(mm, "fit")
+#' }
 #' @export
 metab_simple <- function(data, ...) {
   
   # Check data for correct column names
-  expected_colnames <- c("date.time","DO","DO.deficit","depth","k.DO")
-  if(!all(expected_colnames %in% names(data))) {
-    stop(paste0("data must contain (at least) columns with the names ", paste0(expected_colnames, collapse=", ")))
+  expected.colnames <- c("date.time","DO.obs","DO.deficit","depth","k.O2","light")
+  if(!all(expected.colnames %in% names(data))) {
+    stop(paste0("data must contain (at least) columns with the names ", paste0(expected.colnames, collapse=", ")))
+  }
+  
+  # Require that date.time have a single, consistent time step which we'll extract
+  timestep.days <- unique(as.numeric(diff(data$date.time), units="days"))
+  if(length(timestep.days) != 1) {
+    stop("expected one and only one timestep length within date.time")
+  }
+  if(timestep.days * nrow(data) != 1) {
+    stop("number * duration of time intervals doesn't sum to 1 day")
   }
   
   #' Return the likelihood value for a given set of parameters and observations
@@ -48,31 +62,37 @@ metab_simple <- function(data, ...) {
   #' 
   #' @param params a vector of length 2, where the first element is GPP and the second element is ER (both mg/L/d)
   #' @param 
-#   onestation_likelihood <- function(params, DO, DO.deficit, oxy, light, z, bp, ts, K) {
-#     
-#     GPP <- params[1]
-#     ER <- params[2]
-#     
-#     DO.modeled <- numeric(nrow(data))
-#     DO.modeled[1] <- oxy[1]
-#     for (i in 2:length(DO)) {
-#       DO.modeled[i] <- 
-#         DO.modeled[i-1] +
-#         (GPP/z)*(light[i]/sum(light)) + 
-#         ER * ts / z + 
-#         Kcor(temp[i],K)*ts*DO.deficit 
-#     }
-#   
-#     ##below is MLE calculation
-#     sqdiff<-(oxy-metab)^2 
-#     length(oxy)*(log(((sum(sqdiff)/length(oxy))^0.5)) +0.5*log(6.28))   + ((2*sum(sqdiff)/length(oxy))^-1)*sum(sqdiff)
-#   }
-  
+  onestation_negloglik <- function(params, DO.obs, DO.deficit, depth, k.O2, frac.GPP, frac.ER, frac.D) {
+    
+    # parse params vector (passed from nlm)
+    GPP <- params[1]
+    ER <- params[2]
+    
+    # model DO with given params
+    DO.mod <- numeric(length(DO.obs))
+    DO.mod[1] <- DO.obs[1]
+    DO.delta <- 
+      GPP * frac.GPP / depth + 
+      ER * frac.ER / depth + 
+      k.O2 * DO.deficit * frac.D # Must we use DO.mod[t-1] instead of DO.obs[t-1] (i.e., from DO.deficit) here?
+    DO.mod[-1] <- DO.mod[1]+cumsum(DO.delta[-1])
+    
+    # calculate & return the negative log likelihood of DO.mod values relative
+    # to DO.obs values. equivalent to Bob's original code & formula at
+    # http://www.statlect.com/normal_distribution_maximum_likelihood.htm
+    n <- length(DO.obs)
+    diffs.sq <- (DO.obs-DO.mod)^2 
+    sigma.sq <- sum(diffs.sq)/n
+    (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
+  }
   
   # Calculate metabolism by non linear minimization of an MLE function
-#   river.mle <- nlm(mlefunction, p=c(3,-5), oxy=oxy, z=z,temp=temp,light=light, bp=bp, ts=ts, K=K)
+  river.mle <- with(
+    data, 
+    nlm(onestation_negloglik, p=c(GPP=3,ER=-5), 
+        DO.obs=DO.obs, DO.deficit=DO.deficit, depth=depth, k.O2=k.O2, 
+        frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
+  )
   
-#   b<-c(river.mle$estimate[1], river.mle$estimate[2],river.mle$estimate[3],  river.mle$minimum[1])
-  
-  metab_model()
+  metab_model(fit=river.mle)
 }

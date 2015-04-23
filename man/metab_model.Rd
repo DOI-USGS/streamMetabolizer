@@ -4,7 +4,9 @@
 \alias{metab_model}
 \title{Create a metab_model object.}
 \usage{
-metab_model()
+metab_model(fit = lm(GPP ~ DO, data = data.frame(GPP = 1:5, DO = 1:5 + 0.1)),
+  args = list(), data = data.frame(GPP = 1:5, DO = 1:5 + 0.1),
+  pkg_version = as.character(packageVersion("streamMetabolizer")))
 }
 \value{
 An empty metab_model.
