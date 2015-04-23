@@ -8,7 +8,7 @@ install:
   ps: Bootstrap
 
 build_script:
-  - Rscript -e 'library(devtools);install_url("https://github.com/appling/unitted/archive/v0.2.0.zip")'
+  - travis-tool.sh install_github appling/unitted@v0.2.0
   - travis-tool.sh install_deps
 
 test_script:
