@@ -91,5 +91,92 @@ metab_simple <- function(data, ...) {
   
   # Package and return results. There are no args, just data, for this
   # particular model
-  metab_model(fit=river.mle, args=list(), data=data[expected.colnames])
+  new("metab_simple", 
+      fit=river.mle,
+      args=list(),
+      data=data[expected.colnames],
+      pkg_version=as.character(packageVersion("streamMetabolizer")))
+}
+
+
+#### metab_simple class ####
+
+#' A metabolism model class specific to a very simple model.
+#' 
+#' metab_simple models expect K as an input and use non-linear minimization to
+#' fit values of GPP and ER for a given DO curve.
+#' 
+#' @exportClass metab_simple
+#' @family metab.model.classes
+setClass(
+  "metab_simple", 
+  contains="metab_model"
+)
+
+
+#' Make metabolism predictions from a fitted metab_model.
+#' 
+#' Makes daily predictions of GPP, ER, and NEP.
+#' 
+#' @inheritParams predict_metab
+#' @return A data.frame of predictions, as for the generic 
+#'   \code{\link{predict_metab}}.
+#' @export
+#' @family predict_metab
+predict_metab.metab_simple <- function(metab_model) {
+  
+  # at the moment this will only work if there's only one date
+  date <- unique(as.Date(format(get_data(metab_model)$date.time, "%Y-%m-%d")))
+  GPP <- get_fit(metab_model)$estimate[1]
+  ER <- get_fit(metab_model)$estimate[2]
+  
+  data.frame(date=date, GPP=GPP, ER=ER, NEP=GPP+ER)
+}
+
+
+
+#' Make dissolved oxygen predictions from a fitted metab_model.
+#' 
+#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
+#' etc. from the metabolism model.
+#' 
+#' @import dplyr
+#' @inheritParams predict_DO
+#' @return A data.frame of predictions, as for the generic 
+#'   \code{\link{predict_DO}}.
+#' @export
+#' @family predict_DO
+predict_DO.metab_simple <- function(metab_model) {
+
+  # get the metabolism (GPP, ER) estimates
+  metab_ests <- predict_metab(metab_model)
+  
+  # re-process the input data with the metabolism estimates to predict dissolved
+  # oxygen
+  get_data(metab_model) %>%
+    mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
+    group_by(date) %>%
+    do(with(., {
+      # get today's metabolism estimates
+      GPP <- metab_ests[metab_ests$date==date[1], "GPP"]
+      ER <- metab_ests[metab_ests$date==date[1], "ER"]
+
+      # prepare other data
+      timestep.days <- unique(as.numeric(diff(date.time), units="days"))
+      frac.GPP=light/sum(light)
+      frac.ER=timestep.days
+      frac.D=timestep.days
+      
+      # model DO
+      DO.mod <- numeric(length(DO.obs))
+      DO.mod[1] <- DO.obs[1]
+      DO.delta <- 
+        GPP * frac.GPP / depth + 
+        ER * frac.ER / depth + 
+        k.O2 * DO.deficit * frac.D
+      DO.mod[-1] <- DO.mod[1] + cumsum(DO.delta[-1])
+      
+      data.frame(., DO.mod=DO.mod)
+    }))
+    
 }

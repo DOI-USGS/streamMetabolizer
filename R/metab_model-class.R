@@ -80,7 +80,7 @@ metab_model <- function(
 setMethod(
   "show", "metab_model", 
   function(object) {
-    cat("metab_model", if(class(object)[1] != "metab_model") paste0(" of type ", class(object)[1]), "\n")
+    cat("metab_model", if(class(object)[1] != "metab_model") paste0("of type ", class(object)[1]), "\n")
     cat("  Fitted model (access with get_fit()):\n")
     cat("    class: ", paste0(class(object@fit), collapse=" & "),"\n")
     cat("  Fitting arguments (access with get_args()):\n")

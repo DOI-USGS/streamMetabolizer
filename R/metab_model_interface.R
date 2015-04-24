@@ -112,14 +112,14 @@ get_version <- function(metab_model) {
 #'   metab_model_interface, to use in predicting metabolism
 #' @return A data.frame of daily metabolism estimates. Columns: \describe{
 #'   
-#'   \item{GPP}{numeric estimate of Gross Primary Production, \eqn{mg O_2 L^{-1}
-#'   d^{-1}}{mg O2 / L / d}}
+#'   \item{GPP}{numeric estimate of Gross Primary Production, always positive,
+#'   \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{R}{numeric estimate of Respiration, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 
-#'   / L / d}}
+#'   \item{R}{numeric estimate of Respiration, always negative, \eqn{mg O_2
+#'   L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{NEP}{numeric estimate of Net Ecosystem Production, \eqn{mg O_2 L^{-1}
-#'   d^{-1}}{mg O2 / L / d}}
+#'   \item{NEP}{numeric estimate of Net Ecosystem Production, positive for net
+#'   autotrophy, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
 #'   }
 #' @export
