@@ -25,8 +25,8 @@
 #' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
 #' @examples
 #'  metab_simple(data=data.frame(
-#'    date.time=rep(as.Date("2015-04-15"), 24), DO.obs=1:24, 
-#'    DO.sat=rep(14, 24), PAR=sin((1:24)*pi/24)^8, temp.water=15))
+#'    date.time=rep(as.Date("2015-04-15"), 24), DO=1:24, 
+#'    DO.deficit=rep(2, 24), depth=sin((1:24)*pi/24)^8, k.DO=15))
 #'  \dontrun{
 #'  metab_simple(data=data.frame(empty="shouldbreak"))
 #'  }
@@ -34,9 +34,45 @@
 metab_simple <- function(data, ...) {
   
   # Check data for correct column names
-  if(!all(c("date.time","DO.obs","DO.sat","PAR","temp.water") %in% names(data))) {
-    stop("data must contain (at least) columns with the names date.time, DO.obs, DO.sat, PAR, and temp.water")
+  expected_colnames <- c("date.time","DO","DO.deficit","depth","k.DO")
+  if(!all(expected_colnames %in% names(data))) {
+    stop(paste0("data must contain (at least) columns with the names ", paste0(expected_colnames, collapse=", ")))
   }
+  
+  #' Return the likelihood value for a given set of parameters and observations
+  #' 
+  #' From ?nlm, this function should be "the function to be minimized, returning
+  #' a single numeric value. This should be a function with first argument a 
+  #' vector of the length of p followed by any other arguments specified by the 
+  #' ... argument."
+  #' 
+  #' @param params a vector of length 2, where the first element is GPP and the second element is ER (both mg/L/d)
+  #' @param 
+#   onestation_likelihood <- function(params, DO, DO.deficit, oxy, light, z, bp, ts, K) {
+#     
+#     GPP <- params[1]
+#     ER <- params[2]
+#     
+#     DO.modeled <- numeric(nrow(data))
+#     DO.modeled[1] <- oxy[1]
+#     for (i in 2:length(DO)) {
+#       DO.modeled[i] <- 
+#         DO.modeled[i-1] +
+#         (GPP/z)*(light[i]/sum(light)) + 
+#         ER * ts / z + 
+#         Kcor(temp[i],K)*ts*DO.deficit 
+#     }
+#   
+#     ##below is MLE calculation
+#     sqdiff<-(oxy-metab)^2 
+#     length(oxy)*(log(((sum(sqdiff)/length(oxy))^0.5)) +0.5*log(6.28))   + ((2*sum(sqdiff)/length(oxy))^-1)*sum(sqdiff)
+#   }
+  
+  
+  # Calculate metabolism by non linear minimization of an MLE function
+#   river.mle <- nlm(mlefunction, p=c(3,-5), oxy=oxy, z=z,temp=temp,light=light, bp=bp, ts=ts, K=K)
+  
+#   b<-c(river.mle$estimate[1], river.mle$estimate[2],river.mle$estimate[3],  river.mle$minimum[1])
   
   metab_model()
 }

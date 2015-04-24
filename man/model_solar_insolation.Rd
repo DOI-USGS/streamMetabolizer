@@ -14,10 +14,11 @@ model_solar_insolation(jday, hour, latitude, max.insolation = 1000,
 \item{hour}{numeric value or vector. hour since [solar] midnight as number
 between 0 and 23.999}
 
-\item{latitude}{numeric value or vector indicating the site latitude as a
-decimal number between -90 (South Pole) and 90 (North Pole).}
+\item{latitude}{numeric value or vector indicating the site latitude in
+decimal degrees (never radians or deg-min-sec, no matter what \code{format}
+is) between -90 (South Pole) and 90 (North Pole).}
 
-\item{max.insolation}{insolation rate at solar noon, W/m == J/s/m2. varies greatly with atmospheric conditions}
+\item{max.insolation}{insolation rate at solar noon, W/m2 == J/s/m2. varies greatly with atmospheric conditions}
 
 \item{format}{The format of both the input and the output. May be "degrees"
 or "radians".}

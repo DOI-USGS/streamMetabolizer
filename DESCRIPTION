@@ -20,4 +20,5 @@ Imports:
     methods
 Suggests:
     testthat,
+    dplyr,
     ggplot2
