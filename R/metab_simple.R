@@ -153,6 +153,7 @@ predict_DO.metab_simple <- function(metab_model) {
   
   # re-process the input data with the metabolism estimates to predict dissolved
   # oxygen
+  . <- date.time <- ".dplyr.var"
   get_data(metab_model) %>%
     mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
     group_by(date) %>%
