@@ -18,7 +18,10 @@ A function in the metab_model_interface. Returns the arguments that were
 passed to a metabolism model.
 }
 \seealso{
-Other metab_model_interface: \code{\link{get_fitting_data}};
-  \code{\link{predict_metab}}
+Other get_args: \code{\link{get_args.metab_model}}
+
+Other metab_model_interface: \code{\link{get_data}};
+  \code{\link{get_fit}}; \code{\link{get_version}};
+  \code{\link{predict_DO}}; \code{\link{predict_metab}}
 }
 

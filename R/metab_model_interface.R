@@ -5,11 +5,26 @@
 #' common set of core functions. These functions are conceptually packaged as 
 #' the \code{metab_model_interface} defined here.
 #' 
-#' @section Functions in the interface: \itemize{ \item 
-#'   \code{\link{show}(metab_model) \{ print(metab_model) \}} \item 
-#'   \code{\link{get_args}(metab_model) \{ return(args.list) \}} \item 
-#'   \code{\link{get_fitting_data}(metab_model) \{ return(data.frame) \}} \item 
-#'   \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame) \}} }
+#' @section Functions in the interface:
+#'   
+#'   \itemize{
+#'   
+#'   \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
+#'   
+#'   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
+#'   
+#'   \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
+#'   
+#'   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
+#'   
+#'   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
+#'   
+#'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
+#'   \}}
+#'   
+#'   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
+#'   
+#'   }
 #'   
 #' @name metab_model_interface
 #' @rdname metab_model_interface
@@ -20,6 +35,25 @@ NULL
 
 #### show ####
 # show() is already a generic S4 function.
+
+
+#### S3 generics ####
+
+#' Extract the internal model from a metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns the internal model 
+#' representation as fitted to the supplied data and arguments.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the data
+#' @return An internal model representation; may have any class
+#' @export
+#' @family metab_model_interface
+#' @family get_fit
+get_fit <- function(metab_model) {
+  UseMethod("get_fit")
+}
+
 
 #' Extract the fitting arguments from a metabolism model.
 #' 
@@ -47,22 +81,56 @@ get_args <- function(metab_model) {
 #' @return A data.frame
 #' @export
 #' @family metab_model_interface
-#' @family get_fitting_data
-get_fitting_data <- function(metab_model) {
-  UseMethod("get_fitting_data")
+#' @family get_data
+get_data <- function(metab_model) {
+  UseMethod("get_data")
 }
+
+
+#' Extract the version of streamMetabolizer that was used to fit the model.
+#' 
+#' A function in the metab_model_interface. Returns the version of
+#' streamMetabolizer that was used to fit the model.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the data
+#' @return character representation of the package version
+#' @export
+#' @family metab_model_interface
+#' @family get_version
+get_version <- function(metab_model) {
+  UseMethod("get_version")
+}
+
 
 #' Predict metabolism from a fitted model.
 #' 
-#' A function in the metab_model_interface. Returns predictions of GPP, ER, and 
-#' NEP.
+#' A function in the metab_model_interface. Returns predictions (estimates) of
+#' GPP, ER, and NEP.
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @return A list of arguments
+#' @return A data.frame of daily metabolism estimates
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
 predict_metab <- function(metab_model) {
   UseMethod("predict_metab")
+}
+
+
+#' Predict DO from a fitted model.
+#' 
+#' A function in the metab_model_interface. Returns predictions of dissolved 
+#' oxygen.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, to use in predicting metabolism
+#' @return A data.frame of dissolved oxygen predictions at the temporal
+#'   resolution of the input data
+#' @export
+#' @family metab_model_interface
+#' @family predict_DO
+predict_DO <- function(metab_model) {
+  UseMethod("predict_DO")
 }

@@ -13,4 +13,7 @@ metab_model_interface, for which to return the arguments}
 \description{
 Retrieve the arguments that were used to fit the metab_model
 }
+\seealso{
+Other get_args: \code{\link{get_args}}
+}
 
