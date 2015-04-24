@@ -26,14 +26,6 @@
 #' @examples
 #' \dontrun{
 #'  metab_simple(data=data.frame(empty="shouldbreak"))
-#'  
-#'  # use a subset of data from Bob
-#'  library(dplyr)
-#'  french_data <- read.csv("data/french_data.csv") %>% mutate(date.time=as.POSIXct(strptime(date.time, format="%Y-%m-%d %H:%M:%S")))
-#'  french_units <- as.character(c("", read.csv("data/french_units.csv")$x))
-#'  library(unitted); french <- u(french_data, french_units)
-#'  mm <- metab_simple(data=v(french))
-#'  slot(mm, "fit")
 #' }
 #' @export
 metab_simple <- function(data, ...) {
@@ -64,18 +56,18 @@ metab_simple <- function(data, ...) {
   #' @param 
   onestation_negloglik <- function(params, DO.obs, DO.deficit, depth, k.O2, frac.GPP, frac.ER, frac.D) {
     
-    # parse params vector (passed from nlm)
+    # Parse params vector (passed from nlm)
     GPP <- params[1]
     ER <- params[2]
     
-    # model DO with given params
+    # Model DO with given params
     DO.mod <- numeric(length(DO.obs))
     DO.mod[1] <- DO.obs[1]
     DO.delta <- 
       GPP * frac.GPP / depth + 
       ER * frac.ER / depth + 
-      k.O2 * DO.deficit * frac.D # Must we use DO.mod[t-1] instead of DO.obs[t-1] (i.e., from DO.deficit) here?
-    DO.mod[-1] <- DO.mod[1]+cumsum(DO.delta[-1])
+      k.O2 * DO.deficit * frac.D # Bob - pros & cons of using DO.mod[t-1] instead of DO.obs[t] or DO.obs[t-1] (i.e., from DO.deficit) here?
+    DO.mod[-1] <- DO.mod[1] + cumsum(DO.delta[-1])
     
     # calculate & return the negative log likelihood of DO.mod values relative
     # to DO.obs values. equivalent to Bob's original code & formula at
@@ -94,5 +86,7 @@ metab_simple <- function(data, ...) {
         frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
   )
   
-  metab_model(fit=river.mle)
+  # Package and return results. There are no args, just data, for this
+  # particular model
+  metab_model(fit=river.mle, args=list(), data=data[expected.colnames])
 }

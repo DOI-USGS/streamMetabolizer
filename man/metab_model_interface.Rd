@@ -13,10 +13,25 @@ common set of core functions. These functions are conceptually packaged as
 the \code{metab_model_interface} defined here.
 }
 \section{Functions in the interface}{
- \itemize{ \item
-  \code{\link{show}(metab_model) \{ print(metab_model) \}} \item
-  \code{\link{get_args}(metab_model) \{ return(args.list) \}} \item
-  \code{\link{get_fitting_data}(metab_model) \{ return(data.frame) \}} \item
-  \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame) \}} }
+
+
+  \itemize{
+
+  \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
+
+  \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
+
+  \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
+
+  \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
+
+  \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
+
+  \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
+  \}}
+
+  \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
+
+  }
 }
 

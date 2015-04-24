@@ -38,14 +38,6 @@ The model has inputs and parameters
 \examples{
 \dontrun{
  metab_simple(data=data.frame(empty="shouldbreak"))
-
- # use a subset of data from Bob
- library(dplyr)
- french_data <- read.csv("data/french_data.csv") \%>\% mutate(date.time=as.POSIXct(strptime(date.time, format="\%Y-\%m-\%d \%H:\%M:\%S")))
- french_units <- as.character(c("", read.csv("data/french_units.csv")$x))
- library(unitted); french <- u(french_data, french_units)
- mm <- metab_simple(data=v(french))
- slot(mm, "fit")
 }
 }
 \author{

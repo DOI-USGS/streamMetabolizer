@@ -4,17 +4,27 @@
 \alias{metab_model}
 \title{Create a metab_model object.}
 \usage{
-metab_model(fit = lm(GPP ~ DO, data = data.frame(GPP = 1:5, DO = 1:5 + 0.1)),
-  args = list(), data = data.frame(GPP = 1:5, DO = 1:5 + 0.1),
+metab_model(fit = "generic metab_model class; no actual fit", args = list(),
+  data = data.frame(date.time = as.POSIXct(NA), DO.obs = as.numeric(NA)),
   pkg_version = as.character(packageVersion("streamMetabolizer")))
 }
+\arguments{
+\item{fit}{An internal representation of a fitted model.}
+
+\item{args}{A list of arguments, excluding data, that were supplied to the fitting function.}
+
+\item{data}{The data that were used to fit the model.}
+
+\item{pkg_version}{A string indicating the package version used to create this metab_model object.}
+}
 \value{
-An empty metab_model.
+A metab_model object.
 }
 \description{
 Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 }
 \examples{
 metab_model()
+metab_model(fit=1:5, args=list(length=5))
 }
 
