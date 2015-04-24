@@ -11,7 +11,18 @@ predict_metab(metab_model)
 metab_model_interface, to use in predicting metabolism}
 }
 \value{
-A data.frame of daily metabolism estimates
+A data.frame of daily metabolism estimates. Columns: \describe{
+
+  \item{GPP}{numeric estimate of Gross Primary Production, \eqn{mg O_2 L^{-1}
+  d^{-1}}{mg O2 / L / d}}
+
+  \item{R}{numeric estimate of Respiration, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2
+  / L / d}}
+
+  \item{NEP}{numeric estimate of Net Ecosystem Production, \eqn{mg O_2 L^{-1}
+  d^{-1}}{mg O2 / L / d}}
+
+  }
 }
 \description{
 A function in the metab_model_interface. Returns predictions (estimates) of

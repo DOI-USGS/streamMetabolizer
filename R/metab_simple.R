@@ -2,25 +2,27 @@
 #' @description Fits a model to estimate GPP and ER from input data on DO, 
 #'   temperature, light, etc.
 #'   
-#' @param data data.frame with columns \itemize{ \item{ DO.obs Vector of 
-#'   dissolved oxygen concentration observations, \eqn{mg O[2] L^{-1}}{mg O2 / 
-#'   L}} \item{ DO.sat Vector of dissolved oxygen saturation values based on 
-#'   water temperature. Calculate using \link{o2.at.sat}} \item{ k.gas Vector of
-#'   kGAS values calculated from any of the gas flux models (e.g., 
-#'   \link{k.cole}) and converted to kGAS using \link{k600.2.kGAS}} \item{ PAR 
-#'   Vector of photosynthetically active radiation in \eqn{\mu mol\ m^{-2} 
-#'   s^{-1}}{micro mols / m^2 / s}} \item{ temp.water Vector of water 
-#'   temperatures in \eqn{^{\circ}C}{degrees C}. Used in scaling respiration 
-#'   with temperature} }
-#' @param ... additional arguments
-#' @return A data.frame with columns corresponding to components of metabolism 
-#'   \describe{ \item{GPP}{numeric estimate of Gross Primary Production, \eqn{mg
-#'   O_2 L^{-1} d^{-1}}{mg O2 / L / d}} \item{R}{numeric estimate of
-#'   Respiration, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}} \item{NEP}{numeric
-#'   estimate of Net Ecosystem production, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L
-#'   / d}} }
+#' @param data data.frame with columns \itemize{
 #'   
-#' @details The model has inputs and parameters
+#'   \item{ \code{date.time} date-time values in POSIXct format
+#'   
+#'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
+#'   O[2] L^{-1}}{mg O2 / L}}
+#'   
+#'   \item{ \code{DO.deficit} dissolved oxygen saturation deficit values,
+#'   positive when observed DO is less than the equilibrium DO concentration,
+#'   \eqn{mg O[2] L^{-1}}{mg O2 / L}}. Calculate using \link{calc_DO_deficit}}
+#'   
+#'   \item{ \code{depth} stream depth, \eqn{m}{m}}.
+#'   
+#'   \item{ \code{k.O2} gas exchange coefficients, \eqn{m d^{-1}}{m / d}}.
+#'   
+#'   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
+#'   s^{-1}}{micro mols / m^2 / s}}
+#'   
+#'   }
+#' @param ... additional arguments
+#' @return A metab_simple object containing the fitted model.
 #'   
 #' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
 #' @examples
@@ -28,6 +30,7 @@
 #'  metab_simple(data=data.frame(empty="shouldbreak"))
 #' }
 #' @export
+#' @family metab_model
 metab_simple <- function(data, ...) {
   
   # Check data for correct column names
