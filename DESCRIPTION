@@ -17,8 +17,8 @@ Depends:
 Imports:
     LakeMetabolizer,
     unitted,
+    dplyr,
     methods
 Suggests:
     testthat,
-    dplyr,
     ggplot2

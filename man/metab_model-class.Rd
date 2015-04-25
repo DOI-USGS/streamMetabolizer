@@ -18,4 +18,7 @@ Class and function definitions for a metabolism model
 
 \item{\code{data}}{The data that were used to fit the model.}
 }}
+\seealso{
+Other metab.model.classes: \code{\link{metab_simple-class}}
+}
 
