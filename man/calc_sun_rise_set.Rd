@@ -24,7 +24,7 @@ calc_sun_rise_set(lat=40.75,datetimes=as.POSIXlt('2013-03-31'))
 Luke A. Winslow
 }
 \seealso{
-\link{is_daytime}
+\link{calc_is_daytime}
 }
 \keyword{internal}
 
