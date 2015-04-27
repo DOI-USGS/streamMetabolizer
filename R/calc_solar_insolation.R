@@ -26,12 +26,12 @@ to_degrees <- function(radians) {
 #'   \code{jday}.
 #' @examples
 #' decdf <- data.frame(jday=1:366, 
-#'   dec=streamMetabolizer:::model_declination_angle(1:366))
+#'   dec=streamMetabolizer:::calc_declination_angle(1:366))
 #' \dontrun{
 #'   library(ggplot2)
 #'   ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
 #' }
-model_declination_angle <- function(jday, format=c("degrees", "radians")) {
+calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
   declination.angle <- asin(sin(to_radians(23.45))*sin(to_radians((360/365)*(jday-81))))
   if(format == "degrees") {
@@ -54,13 +54,13 @@ model_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #'   indicating the angle corresponding to each value supplied in \code{hour}.
 #' @examples
 #' hourdf <- data.frame(hour=c(0:12,12.5:23.5), 
-#'   hragl=streamMetabolizer:::model_hour_angle(c(0:12,12.5:23.5)))
+#'   hragl=streamMetabolizer:::calc_hour_angle(c(0:12,12.5:23.5)))
 #' \dontrun{
 #'   library(ggplot2)
 #'   ggplot(hourdf, aes(x=hour, y=hragl)) + 
 #'     geom_hline(yintercept=0, color="gold") + geom_line()
 #' }
-model_hour_angle <- function(hour, format=c("degrees", "radians")) {
+calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
   hour.angle <- 15*(hour-12)
   if(format=="radians") hour.angle <- to_radians(hour.angle)
@@ -84,16 +84,16 @@ model_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #'   jday=rep(rep(c(1,101,201,301), each=24), times=4), 
 #'   hour=rep(c(0:12,13.5:23.5), times=4*4))
 #' zendf <- transform(zendf, 
-#'   dec=streamMetabolizer:::model_declination_angle(jday),
-#'   hragl=streamMetabolizer:::model_hour_angle(hour))
+#'   dec=streamMetabolizer:::calc_declination_angle(jday),
+#'   hragl=streamMetabolizer:::calc_hour_angle(hour))
 #' zendf <- transform(zendf,
-#'   zen=streamMetabolizer:::model_zenith_angle(lat, dec, hragl))
+#'   zen=streamMetabolizer:::calc_zenith_angle(lat, dec, hragl))
 #' \dontrun{
 #'   library(ggplot2)
 #'   ggplot(zendf, aes(x=jday, y=zen, color=factor(lat))) + 
 #'     geom_line()
 #' }
-model_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
+calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
   format <- match.arg(format)
   latitude <- to_radians(latitude)
   if(format == "degrees") {
@@ -114,9 +114,9 @@ model_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c
 #' http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
 #' 
 #' @importFrom unitted u
-#' @inheritParams model_declination_angle
-#' @inheritParams model_hour_angle
-#' @inheritParams model_zenith_angle
+#' @inheritParams calc_declination_angle
+#' @inheritParams calc_hour_angle
+#' @inheritParams calc_zenith_angle
 #' @param max.insolation insolation rate at solar noon, W/m2 == J/s/m2. varies greatly with atmospheric conditions
 #' @param attach.units logical. Should the returned vector be a unitted object?
 #' @examples
@@ -124,18 +124,18 @@ model_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c
 #'   lat=rep(c(0,20,40,60), each=24*4),
 #'   jday=rep(rep(c(1,101,201,301), each=24), times=4), 
 #'   hour=rep(c(0:12,13.5:23.5), times=4*4))
-#' insdf <- transform(insdf, ins=model_solar_insolation(jday, hour, lat))
+#' insdf <- transform(insdf, ins=calc_solar_insolation(jday, hour, lat))
 #' \dontrun{
 #'   library(ggplot2)
 #'   ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-model_solar_insolation <- function(jday, hour, latitude, max.insolation=1000, format=c("degrees", "radians"), attach.units=FALSE) {
+calc_solar_insolation <- function(jday, hour, latitude, max.insolation=1000, format=c("degrees", "radians"), attach.units=FALSE) {
   format <- match.arg(format)
-  declination.angle <- model_declination_angle(jday, format=format)
-  hour.angle <- model_hour_angle(hour, format=format)
-  zenith.angle <- model_zenith_angle(latitude, declination.angle, hour.angle, format=format)
+  declination.angle <- calc_declination_angle(jday, format=format)
+  hour.angle <- calc_hour_angle(hour, format=format)
+  zenith.angle <- calc_zenith_angle(latitude, declination.angle, hour.angle, format=format)
   if(format=="degrees") zenith.angle <- to_radians(zenith.angle)
   insolation <- max.insolation * cos(zenith.angle)
   insolation <- pmax(insolation, 0)
