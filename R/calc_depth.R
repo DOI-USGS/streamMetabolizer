@@ -1,7 +1,7 @@
 #' Estimate depth from discharge and hydraulic geometry coefficients
 #' 
 #' Uses the relationship \eqn{d=c*Q^f} (parameter names and definitions as in 
-#' Leopold and Maddock, 1953; default values for c and f as in Raymond et al.
+#' Leopold and Maddock, 1953; default values for c and f as in Raymond et al. 
 #' 2012)
 #' 
 #' @param Q discharge (m^3 s^-1)
@@ -14,6 +14,18 @@
 #' library(unitted)
 #' calc_depth(Q=u(1:10, "m^3 s^-1"), c=u(40,"cm"))
 #' calc_depth(Q=u(1:10, "m^3 s^-1"), f=u(0.36))
+#' 
+#' @references Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. 
+#'   Bott, Jody Potter, Patrick Mulholland, Andrew E. Laursen, William H. 
+#'   McDowell, and Denis Newbold. \emph{Scaling the gas transfer velocity and 
+#'   hydraulic geometry in streams and small rivers}. Limnology & Oceanography: 
+#'   Fluids & Environments 2 (2012): 41-53.
+#'   
+#'   Leopold, L.B., and Thomas Maddock Jr. \emph{The Hydraulic Geometry of
+#'   Stream Channels and Some Physiographic Implications}. Report. Professional
+#'   Paper, 1953. USGS Publications Warehouse.
+#'   http://pubs.er.usgs.gov/publication/pp252.
+#'   
 #' @importFrom unitted u v verify_units
 #' @export
 calc_depth <- function(Q, c=u(0.409,"m"), f=u(0.294,"")) {
