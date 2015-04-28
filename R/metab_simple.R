@@ -100,7 +100,7 @@ metab_simple <- function(data, ...) {
 #' @param DO.obs dissolved oxygen concentration observations, \eqn{mg O[2]
 #'   L^{-1}}{mg O2 / L}
 #' @param DO.sat dissolved oxygen concentrations if the water were at 
-#'   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}}. Calculate using 
+#'   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
 #'   \link{calc_DO_at_sat}
 #' @param depth stream depth, \eqn{m}{m}.
 #' @param k.O2 gas exchange coefficients, \eqn{m d^{-1}}{m / d}.
@@ -109,6 +109,7 @@ metab_simple <- function(data, ...) {
 #' @param DO.obs.1 the first DO.obs value, to which the first DO.mod value will be set
 #' @param n number of DO.mod values to produce
 #'   
+#' @name core_model_metab_simple
 #' @keywords internal
 .core_model_metab_simple <- function(GPP.daily, ER.daily, DO.sat, depth, k.O2, frac.GPP, frac.ER, frac.D, DO.obs.1, n) {
   # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
