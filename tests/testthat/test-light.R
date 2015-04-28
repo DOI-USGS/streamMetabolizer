@@ -57,7 +57,7 @@ test_that("can generate light predictions from basic light model", {
 })
 
 
-test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and is_daytime", {
+test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and calc_is_daytime", {
   library(dplyr)
   insdf <- data.frame(
     #   lat=rep(c(0,20,40,60,80), each=366),
@@ -80,8 +80,8 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
       else 
         sm_daytime <- c(NA,NA)
       
-      # compare to is_daytime method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- is_daytime(date.time+hours*60*60, lat=lat)
+      # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
+      isday <- calc_is_daytime(date.time+hours*60*60, lat=lat)
       whichdaytime <- which(isday)
       if(any(!is.na(whichdaytime)))
         id_daytime <- date.time + hours[range(whichdaytime)]*60*60

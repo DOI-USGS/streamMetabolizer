@@ -18,6 +18,7 @@ Imports:
     LakeMetabolizer,
     unitted,
     dplyr,
+    lubridate,
     methods
 Suggests:
     testthat,

@@ -12,7 +12,7 @@
 #' @author
 #' Luke A. Winslow
 #' @seealso 
-#' \link{is_daytime}
+#' \link{calc_is_daytime}
 #' @export
 calc_sun_rise_set <- function(datetimes, lat) {
   sun.rise.set <- LakeMetabolizer::sun.rise.set(datetimes, lat)
