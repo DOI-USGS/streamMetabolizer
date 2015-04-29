@@ -48,8 +48,9 @@ kable(head(beaty_creek))
 There are nearly six years of data, with pronounced seasonal patterns in DO and temperature.
 ```{r}
 beaty_creek_tidy <- beaty_creek %>%
-  rename(DO_mgL=ts_doobs, WaterTemp_C=ts_wtr, Discharge_cfs=ts_disch) %>%
-  gather(variable, value, DO_mgL, WaterTemp_C, Discharge_cfs)  
+  rename(DO_mgL=ts_doobs, WaterTemp_C=ts_wtr) %>%
+  mutate(Discharge_log_cfs=log(ts_disch)) %>%
+  gather(variable, value, DO_mgL, WaterTemp_C, Discharge_log_cfs)  
 # Plot to see data range and multi-year patterns
 ggplot(beaty_creek_tidy, aes(x=DateTime, y=value)) + geom_point(size=0.5) + facet_grid(variable~., scales="free_y") + theme_bw()
 ```
