@@ -8,7 +8,7 @@ install:
   ps: Bootstrap
 
 build_script:
-  - travis-tool.sh install_github appling/unitted@v0.2.0
+  - travis-tool.sh install_github appling/unitted@v0.2.0 USGS-R/mda.streams USGS-R/powstreams
   - travis-tool.sh install_deps
 
 test_script:
