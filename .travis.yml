@@ -5,6 +5,8 @@ sudo: required
 r_github_packages:
  - jimhester/covr
  - appling/unitted@v0.2.0
+ - USGS-R/sbtools
+ - USGS-R/geoknife
  - USGS-R/mda.streams
  - USGS-R/powstreams
 
