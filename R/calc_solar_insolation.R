@@ -18,7 +18,8 @@ to_degrees <- function(radians) {
 #' http://pveducation.org/pvcdrom/properties-of-sunlight/declination-angle which
 #' cites http://www.sciencedirect.com/science/article/pii/0038092X69900474
 #' 
-#' @param jday The day of year as a number between 1 and 365 (366 also OK)
+#' @param jday The day of year as a number between 0 (Jan 1) and 364 (365 also
+#'   OK for leap year)
 #' @param format The format of both the input and the output. May be "degrees" 
 #'   or "radians".
 #' @return numeric value or vector, in the units specified by \code{format}, 
@@ -33,7 +34,7 @@ to_degrees <- function(radians) {
 #' }
 calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  declination.angle <- asin(sin(to_radians(23.45))*sin(to_radians((360/365)*(jday-81))))
+  declination.angle <- asin(sin(to_radians(23.439))*sin(to_radians((360/365)*(283+jday))))
   if(format == "degrees") {
     declination.angle <- to_degrees(declination.angle)
   }
@@ -62,7 +63,7 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #' }
 calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  hour.angle <- 15*(hour-12)
+  hour.angle <- (360/24)*(hour-12)
   if(format=="radians") hour.angle <- to_radians(hour.angle)
   hour.angle
 }
@@ -109,6 +110,10 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
   zenith.angle
 }
 
+#' Calculate mean solar time from clock time and longitude
+#' 
+#' @param date.time
+
 
 #' Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
 #' http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
@@ -131,7 +136,7 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-calc_solar_insolation <- function(jday, hour, latitude, max.insolation=1000, format=c("degrees", "radians"), attach.units=FALSE) {
+calc_solar_insolation <- function(jday, hour, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=FALSE) {
   format <- match.arg(format)
   declination.angle <- calc_declination_angle(jday, format=format)
   hour.angle <- calc_hour_angle(hour, format=format)
