@@ -9,7 +9,8 @@ cites http://www.sciencedirect.com/science/article/pii/0038092X69900474}
 calc_declination_angle(jday, format = c("degrees", "radians"))
 }
 \arguments{
-\item{jday}{The day of year as a number between 1 and 365 (366 also OK)}
+\item{jday}{The day of year as a number between 0 (Jan 1) and 364 (365 also
+OK for leap year)}
 
 \item{format}{The format of both the input and the output. May be "degrees"
 or "radians".}

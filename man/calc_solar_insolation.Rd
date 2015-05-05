@@ -2,14 +2,14 @@
 % Please edit documentation in R/calc_solar_insolation.R
 \name{calc_solar_insolation}
 \alias{calc_solar_insolation}
-\title{Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
-http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
+\title{Calculate mean solar time from clock time and longitude}
 \usage{
-calc_solar_insolation(jday, hour, latitude, max.insolation = 1000,
+calc_solar_insolation(jday, hour, latitude, max.insolation = 2326,
   format = c("degrees", "radians"), attach.units = FALSE)
 }
 \arguments{
-\item{jday}{The day of year as a number between 1 and 365 (366 also OK)}
+\item{jday}{The day of year as a number between 0 (Jan 1) and 364 (365 also
+OK for leap year)}
 
 \item{hour}{numeric value or vector. hour since [solar] midnight as number
 between 0 and 23.999}
@@ -24,10 +24,12 @@ is) between -90 (South Pole) and 90 (North Pole).}
 or "radians".}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
+
+\item{date.time}{Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
+http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
 }
 \description{
-Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
-http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
+Calculate mean solar time from clock time and longitude
 }
 \examples{
 insdf <- data.frame(
