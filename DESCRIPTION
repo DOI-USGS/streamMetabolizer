@@ -20,6 +20,8 @@ Imports:
     unitted,
     dplyr,
     lubridate,
+    RCurl,
+    XML,
     methods
 Suggests:
     knitr,

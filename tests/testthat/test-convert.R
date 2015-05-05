@@ -43,3 +43,72 @@ test_that("converting between date and DOY works", {
   expect_equal(convert_doyhr_to_date(convert_date_to_doyhr(as.POSIXct("2007-06-15 12:00:00", tz="MST7MDT")), 2007, tz="MST7MDT"), 
                as.POSIXct("2007-06-15 12:00:00", tz="MST7MDT"), info="preserve date in there&back") 
 })
+
+test_that("converting between GMT and solar time works", {
+  library(unitted)
+  adate <- as.POSIXct("2014-04-01 00:00:00", tz="GMT")
+  somedates <- seq(adate, adate+as.difftime(365*2, units="days"), by=as.difftime(10.35, units="days"))
+  # GMT to solar
+  expect_equal(convert_GMT_to_solartime(adate, longitude=u(0, "degW"), time.type="mean solar"), adate)
+  expect_equal(convert_GMT_to_solartime(adate, longitude=u(0, "degW"), time.type="apparent solar"), adate+as.difftime(-4.661701, units="mins"), tol=0.0001)
+  expect_error(convert_GMT_to_solartime(adate, longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
+  expect_less_than(convert_GMT_to_solartime(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), 10, info="go east, be later")
+  expect_less_than(convert_GMT_to_solartime(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), 10, info="go west, be earlier")
+  expect_equal(convert_GMT_to_solartime(adate, longitude=u(89, "degW"), time.type="apparent solar"), 
+               convert_GMT_to_solartime(adate, longitude=-89, time.type="apparent solar"), info="negative degrees are degW")
+  expect_equal(convert_GMT_to_solartime(u(adate), longitude=71, time.type="apparent solar"), 
+               convert_GMT_to_solartime(adate, longitude=u(-71, "degW"), time.type="apparent solar"), info="mix&match units is OK for this fun")
+  expect_equal(convert_GMT_to_solartime(somedates, longitude=u(0, "degW"), time.type="mean solar"), somedates, info="handle multiple dates")
+  # solar to GMT
+  expect_equal(convert_solartime_to_GMT(adate, longitude=u(0, "degW"), time.type="mean solar"), adate)
+  expect_equal(convert_solartime_to_GMT(adate, longitude=u(0, "degW"), time.type="apparent solar"), adate+as.difftime(+4.661701, units="mins"), tol=0.0001)
+  expect_error(convert_solartime_to_GMT(adate, longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
+  expect_less_than(convert_solartime_to_GMT(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), 10, info="go east, be later")
+  expect_less_than(convert_solartime_to_GMT(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), 10, info="go west, be earlier")
+  expect_equal(convert_solartime_to_GMT(somedates, longitude=u(0, "degW"), time.type="mean solar"), somedates, info="handle multiple dates")
+  expect_equal(as.numeric(convert_solartime_to_GMT(somedates, longitude=u(0, "degW"), time.type="apparent solar")), as.numeric(somedates), tol=1000, info="handle multiple dates")
+  # there and back
+  expect_equal(convert_GMT_to_solartime(convert_solartime_to_GMT(adate, longitude=-103.8, time.type="mean solar"), longitude=-103.8, time.type="mean solar"), adate)
+  expect_equal(convert_solartime_to_GMT(convert_GMT_to_solartime(adate, longitude=-103.8, time.type="mean solar"), longitude=-103.8, time.type="mean solar"), adate)
+  expect_equal(as.numeric(convert_GMT_to_solartime(convert_solartime_to_GMT(adate, longitude=-103.8, time.type="app"), longitude=-103.8, time.type="apparent solar")), as.numeric(adate), tol=6)
+  expect_equal(as.numeric(convert_solartime_to_GMT(convert_GMT_to_solartime(adate, longitude=-103.8, time.type="app"), longitude=-103.8, time.type="appar")), as.numeric(adate), tol=6)
+  expect_equal(convert_GMT_to_solartime(convert_solartime_to_GMT(somedates, longitude=-103.8, time.type="mean solar"), longitude=-103.8, time.type="mean solar"), somedates)
+  expect_equal(convert_solartime_to_GMT(convert_GMT_to_solartime(somedates, longitude=-103.8, time.type="mean solar"), longitude=-103.8, time.type="mean solar"), somedates)
+  expect_equal(as.numeric(convert_GMT_to_solartime(convert_solartime_to_GMT(somedates, longitude=-103.8, time.type="app"), longitude=-103.8, time.type="apparent solar")), as.numeric(somedates), tol=10)
+  expect_equal(as.numeric(convert_solartime_to_GMT(convert_GMT_to_solartime(somedates, longitude=-103.8, time.type="app"), longitude=-103.8, time.type="appar")), as.numeric(somedates), tol=10)  
+})
+
+
+test_that("converting between GMT and local time works", {
+  library(unitted)
+  adate <- as.POSIXct("2014-02-01 00:00:00", tz="GMT")
+  asummerdate <- as.POSIXct("2014-07-04 12:14:16", tz="GMT")
+  somedates <- seq(adate, adate+as.difftime(365*2, units="days"), by=as.difftime(10.35, units="days"))
+  # GMT to local
+  #   what happens in london stays in london:
+  expect_equal(convert_GMT_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="standard local"), adate)
+  expect_equal(as.numeric(convert_GMT_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="daylight local")), as.numeric(adate), info="still the same #s")
+  expect_equal(lubridate::tz(convert_GMT_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="daylight local")), "Europe/London", info="different tz name")
+  #   error checking
+  expect_error(convert_GMT_to_localtime(adate, latitude=u(51.48, "degN"), longitude=0, time.type="standard"), "unitted")
+  expect_error(convert_GMT_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
+  #   real time changes
+  expect_equal(lubridate::tz(convert_GMT_to_localtime(adate, latitude=u(41, "degN"), longitude=u(105.3, "degE"), time.type="standard")), "Etc/GMT+8", info="go east, be positive")
+  expect_equal(lubridate::tz(convert_GMT_to_localtime(adate, latitude=u(37, "degN"), longitude=u(105.3, "degW"), time.type="standard")), "Etc/GMT-7", info="go west, be negative")
+  expect_equal(convert_GMT_to_localtime(somedates, latitude=u(34, "degN"), longitude=u(80, "degW"), time.type="daylight"), lubridate::with_tz(somedates, "America/New_York"), info="handle multiple dates")
+  expect_equal(convert_GMT_to_localtime(somedates, latitude=u(34, "degN"), longitude=u(80, "degW"), time.type="standard"), lubridate::with_tz(somedates, "Etc/GMT-5"), info="handle multiple dates")
+
+  # local to GMT
+  #   std/daylight, winter/summer
+  expect_equal(convert_localtime_to_GMT(adate), adate)
+  expect_equal(convert_localtime_to_GMT(asummerdate), asummerdate)
+  #   real time changes
+  expect_equal(convert_localtime_to_GMT(lubridate::with_tz(adate, "Etc/GMT+8")), adate)
+  expect_equal(convert_localtime_to_GMT(lubridate::with_tz(adate, "Etc/GMT-5")), adate)
+  
+  # there and back
+  expect_equal(convert_GMT_to_localtime(convert_localtime_to_GMT(with_tz(adate, "America/Denver")), latitude=40, longitude=-103.8, time.type="daylight"), with_tz(adate, "America/Denver"))
+  expect_equal(convert_localtime_to_GMT(convert_GMT_to_localtime(adate, latitude=40, longitude=-103.8, time.type="daylight")), adate)
+  expect_equal(convert_localtime_to_GMT(convert_GMT_to_localtime(adate, latitude=40, longitude=-103.8, time.type="standard")), adate)
+  
+})
