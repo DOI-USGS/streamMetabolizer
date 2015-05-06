@@ -22,7 +22,7 @@
 #' @export
 calc_DO_at_sat <- function(temp.water, pressure.air, salinity.water = u(0,'PSU'), ...){
 
-  with.units <- any(sapply(list(temp.water, pressure.air, salinity.water), is.unitted))
+  with.units <- any(sapply(list(temp.water, pressure.air), is.unitted)) || (if(!missing(salinity.water)) is.unitted(salinity.water) else FALSE)
   
   if (with.units){
     # if any units are set, they all must be set and must be correct

@@ -14,16 +14,16 @@ metab_simple(data, ...)
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
   O[2] L^{-1}}{mg O2 / L}}
 
-  \item{ \code{DO.deficit} dissolved oxygen saturation deficit values,
-  positive when observed DO is less than the equilibrium DO concentration,
-  \eqn{mg O[2] L^{-1}}{mg O2 / L}}. Calculate using \link{calc_DO_deficit}}
+  \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at
+  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}}. Calculate using
+  \link{calc_DO_at_sat}}
 
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
 
   \item{ \code{k.O2} gas exchange coefficients, \eqn{m d^{-1}}{m / d}}.
 
-  \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
-  s^{-1}}{micro mols / m^2 / s}}
+  \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\
+  m^{-2} s^{-1}}{micro mols / m^2 / s}}
 
   }}
 

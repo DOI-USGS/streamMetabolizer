@@ -1,6 +1,8 @@
 
 context("basic light model")
 test_that("can generate light predictions from basic light model", {
+  library(plyr); library(dplyr)
+  
   # radian-degree conversions
   expect_equal(streamMetabolizer:::to_radians(180), pi)
   expect_equal(streamMetabolizer:::to_degrees(pi*3/2), 270)
@@ -8,8 +10,8 @@ test_that("can generate light predictions from basic light model", {
   # declination angle
   decdf <- data.frame(
     jday=1:366, 
-    dec=streamMetabolizer:::calc_declination_angle(1:366, format="degrees"),
-    dec_rad=streamMetabolizer:::calc_declination_angle(1:366, format="radia"))
+    dec=streamMetabolizer:::calc_declination_angle(0:365, format="degrees"),
+    dec_rad=streamMetabolizer:::calc_declination_angle(0:365, format="radia"))
   expect_true(all(!is.na(decdf$dec)), "valid return for days between 1 and 366")
   equinox <- which(decdf$jday == as.numeric(format(as.Date("2015-03-20"), "%j")))
   solstice <- which(decdf$jday == as.numeric(format(as.Date("2015-06-21"), "%j")))
@@ -26,7 +28,6 @@ test_that("can generate light predictions from basic light model", {
   expect_equal(streamMetabolizer:::to_radians(hourdf$hragl), streamMetabolizer:::calc_hour_angle(0:24, format="radians"))
   
   # zenith angle
-  library(dplyr)
   zendf <- 
     data.frame(
       lat=rep(c(0,20,40,60, 80), each=365),
@@ -44,28 +45,30 @@ test_that("can generate light predictions from basic light model", {
     lat=rep(c(0,20,40,60,80), each=24*4),
     jday=rep(rep(c(1,101,201,301), each=24), times=5), 
     hour=rep(c(0:12,13.5:23.5), times=4*5))
-  insdf <- transform(insdf, ins=calc_solar_insolation(jday, hour, lat))
+  insdf <- transform(insdf, datetime=convert_GMT_to_solartime(convert_doyhr_to_date(jday+(hour/24), year=2011, tz="GMT"), long=100, time.type="apparent"))
+  insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
   expect_true(all(insdf$ins >= 0), "non-negative insolation, always")
   expect_true(all(
-    (insdf %>% group_by(lat, jday) %>% 
-      summarize(daily_peak=max(ins)) %>% 
+    (insdf %>% select(lat, jday, ins) %>%
+       group_by(lat, jday) %>% 
+      summarise(daily_peak=max(ins)) %>% 
       summarize(summer_more_than_winter=all(daily_peak[jday==201] >= daily_peak[jday==1])))$summer_more_than_winter), 
     info="summertime noon insolation exceeds wintertime noon insolation at all latitudes")
-  ins_u <- transform(insdf, ins=calc_solar_insolation(jday, hour, lat, attach.units=TRUE))$ins
-  expect_true(verify_units(ins_u, "J s^-1 m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
+  ins_u <- transform(insdf, ins=calc_solar_insolation(datetime, lat, attach.units=TRUE))$ins
+  expect_true(unitted::verify_units(ins_u, "J s^-1 m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
   
 })
 
 
 test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and calc_is_daytime", {
-  library(dplyr)
+  library(plyr); library(dplyr)
   insdf <- data.frame(
     #   lat=rep(c(0,20,40,60,80), each=366),
     #   jday=rep(1:366, times=5)) %>%
     lat=rep(c(0,20,40,60,80), each=18),
     jday=rep(seq(1, 360, by=20), times=5)) %>%
     transform(
-      date.time=strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H")) %>% 
+      date.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="GMT")) %>% 
     transform(
       lm_sunrise=calc_sun_rise_set(date.time, lat)[,1],
       lm_sunset=calc_sun_rise_set(date.time, lat)[,2]) %>%
@@ -73,18 +76,18 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
     do(with(., {
       # compare to streamMetabolizer method, which determines light at any given time
       hours <- seq(0,23.95,by=0.05)
-      insol <- calc_solar_insolation(jday, hour=hours, lat=lat)
+      insol <- calc_solar_insolation(date.time+as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(insol > 0.00001)
       if(any(!is.na(whichdaytime)))
-        sm_daytime <- date.time + hours[range(whichdaytime)]*60*60
+        sm_daytime <- date.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         sm_daytime <- c(NA,NA)
       
       # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- calc_is_daytime(date.time+hours*60*60, lat=lat)
+      isday <- calc_is_daytime(date.time+as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(isday)
       if(any(!is.na(whichdaytime)))
-        id_daytime <- date.time + hours[range(whichdaytime)]*60*60
+        id_daytime <- date.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         id_daytime <- c(NA,NA)
       
@@ -98,10 +101,10 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
   #   gather(pkg, sunrise, lm_sunrise, sm_sunrise) %>%
   #   gather(pkg, sunset, lm_sunset, sm_sunset)) %>%
   #   transform(
-  #     sunrise=as.numeric(as.POSIXct(sunrise, origin="1970-01-01") - trunc(as.POSIXct(sunrise, origin="1970-01-01"), "day"), units="hours"), 
-  #     sunset=as.numeric(as.POSIXct(sunset, origin="1970-01-01") - trunc(as.POSIXct(sunset, origin="1970-01-01"), "day"), units="hours"))
+  #     sunrise=as.numeric(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT"), "day"), units="hours"), 
+  #     sunset=as.numeric(as.POSIXct(sunset, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunset, origin="1970-01-01", tz="GMT"), "day"), units="hours"))
   # library(ggplot2)
-  # ggplot(instidy, aes(x=date.time, y=sunrise, color=pkg, group=lat)) + geom_point() + theme_bw()
+  # ggplot(instidy, aes(x=date.time, y=sunrise, color=pkg, linetype=factor(lat))) + geom_line() + geom_point() + theme_bw()
   
   # expect_that inspection
   diffs <- insdf %>%

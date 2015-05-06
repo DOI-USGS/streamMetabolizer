@@ -18,7 +18,8 @@ to_degrees <- function(radians) {
 #' http://pveducation.org/pvcdrom/properties-of-sunlight/declination-angle which
 #' cites http://www.sciencedirect.com/science/article/pii/0038092X69900474
 #' 
-#' @param jday The day of year as a number between 1 and 365 (366 also OK)
+#' @param jday The day of year as a number between 0 (Jan 1) and 364 (365 also
+#'   OK for leap year)
 #' @param format The format of both the input and the output. May be "degrees" 
 #'   or "radians".
 #' @return numeric value or vector, in the units specified by \code{format}, 
@@ -33,7 +34,7 @@ to_degrees <- function(radians) {
 #' }
 calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  declination.angle <- asin(sin(to_radians(23.45))*sin(to_radians((360/365)*(jday-81))))
+  declination.angle <- asin(sin(to_radians(23.439))*sin(to_radians((360/365)*(283+jday))))
   if(format == "degrees") {
     declination.angle <- to_degrees(declination.angle)
   }
@@ -62,7 +63,7 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #' }
 calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  hour.angle <- 15*(hour-12)
+  hour.angle <- (360/24)*(hour-12)
   if(format=="radians") hour.angle <- to_radians(hour.angle)
   hour.angle
 }
@@ -114,25 +115,32 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
 #' 
 #' @importFrom unitted u
+#' @param date.time POSIXct vector of date-time values in apparent solar time,
+#'   e.g., as returned by \code{convert_GMT_to_solartime(...,
+#'   time.type="apparent solar")}
 #' @inheritParams calc_declination_angle
 #' @inheritParams calc_hour_angle
 #' @inheritParams calc_zenith_angle
-#' @param max.insolation insolation rate at solar noon, W/m2 == J/s/m2. varies greatly with atmospheric conditions
+#' @param max.insolation insolation rate at solar noon, W/m2 == J/s/m2. varies
+#'   greatly with atmospheric conditions
 #' @param attach.units logical. Should the returned vector be a unitted object?
 #' @examples
 #' insdf <- data.frame(
 #'   lat=rep(c(0,20,40,60), each=24*4),
 #'   jday=rep(rep(c(1,101,201,301), each=24), times=4), 
 #'   hour=rep(c(0:12,13.5:23.5), times=4*4))
-#' insdf <- transform(insdf, ins=calc_solar_insolation(jday, hour, lat))
+#' insdf <- transform(insdf, datetime=convert_doyhr_to_date(jday + hour/24, year=2004))
+#' insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 #' \dontrun{
 #'   library(ggplot2)
 #'   ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-calc_solar_insolation <- function(jday, hour, latitude, max.insolation=1000, format=c("degrees", "radians"), attach.units=FALSE) {
+calc_solar_insolation <- function(date.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=FALSE) {
   format <- match.arg(format)
+  jday <- floor(convert_date_to_doyhr(date.time)) - 1
+  hour <- (convert_date_to_doyhr(date.time) %% 1) * 24
   declination.angle <- calc_declination_angle(jday, format=format)
   hour.angle <- calc_hour_angle(hour, format=format)
   zenith.angle <- calc_zenith_angle(latitude, declination.angle, hour.angle, format=format)
