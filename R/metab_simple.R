@@ -40,11 +40,12 @@ metab_simple <- function(data, ...) {
   }
   
   # Require that date.time have a single, consistent time step which we'll extract
-  timestep.days <- unique(as.numeric(diff(data$date.time), units="days"))
-  if(length(timestep.days) != 1) {
-    stop("expected one and only one timestep length within date.time")
+  timestep.days <- mean(as.numeric(diff(data$date.time), units="days"))
+  timestep.deviations <- diff(range(as.numeric(diff(data$date.time), units="days")))
+  if((timestep.deviations / timestep.days) > 0.001) { # threshold: max-min timestep length can't be more than 1% of mean timestep length
+    stop("expected essentially one timestep length within date.time")
   }
-  if(timestep.days * nrow(data) != 1) {
+  if(abs(timestep.days * nrow(data) - 1) > 0.001) { # threshold: all timesteps per day must add up to 1, plus or minus 0.001
     stop("number * duration of time intervals doesn't sum to 1 day")
   }
   
@@ -198,7 +199,7 @@ predict_DO.metab_simple <- function(metab_model) {
     do(with(., {
       # prepare auxiliary data
       n <- length(date.time)
-      timestep.days <- unique(as.numeric(diff(date.time), units="days"))
+      timestep.days <- mean(as.numeric(diff(date.time), units="days"))
       frac.GPP=light/sum(light)
       frac.ER=timestep.days
       frac.D=timestep.days
