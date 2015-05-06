@@ -19,6 +19,7 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5, echo=FALSE, message=FALSE, warn
 ```
 
 ```{r}
+library(plyr)
 library(dplyr)
 library(dataRetrieval)
 #library(sbtools)
@@ -65,13 +66,14 @@ ggplot(beaty_creek_tiny, aes(x=DateTime, y=value)) + geom_point(size=0.5) + face
 ```{r}
 # Add and rename data columns as needed to pass to metab_simple
 beaty_creek_may15 <- beaty_creek %>% 
-  rename(date.time=DateTime, DO.obs=ts_doobs) %>%
+  rename(DO.obs=ts_doobs) %>%
+  mutate(date.time=convert_GMT_to_solartime(DateTime, longitude=site_location(beaty_creek_id)$longitude, time.type="apparent solar")) %>%
   filter(format(date.time, "%Y-%m-%d")=="2011-05-15") %>%
   mutate(doyhr=convert_date_to_doyhr(date.time)) %>%
   mutate(DO.sat=calc_DO_at_sat(temp.water=ts_wtr, pressure.air=1000),
          depth=calc_depth(Q=ts_disch*v(u(0.0283168466,"m3/s cfs^-1"))),
          k.O2=convert_k600_to_kGAS(k600=4, temperature=ts_wtr, gas="O2"), # yes, there's a legit warning for temperature out of range
-         light=calc_solar_insolation(jday=floor(doyhr), hour=24*(doyhr %% 1), latitude=site_location(beaty_creek_id)$latitude)) %>%
+         light=calc_solar_insolation(date.time, latitude=site_location(beaty_creek_id)$latitude)) %>%
   select(date.time, DO.obs, DO.sat, depth, k.O2, light)
 ```
 
@@ -88,7 +90,7 @@ kable(predict_metab(beaty_creek_may15_metab))
 beaty_creek_may15_DO <- predict_DO(beaty_creek_may15_metab)
 ```
 
-Here are the observed and modeled DO concentrations. Looks like maybe the timestamps are off on the observations?
+Here are the observed and modeled DO concentrations. The timestamps are much better.
 ```{r}
 # Plot the predicted and observed DO values
 ggplot(gather(rename(beaty_creek_may15_DO, obs=DO.obs, mod=DO.mod), method, DO.mgL, obs, mod), aes(x=date.time, y=DO.mgL, color=method)) + geom_point() + theme_bw()
