@@ -66,81 +66,109 @@ metab_simple <- function(data, ...) {
     (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
   }
   
-  # make daily metabolism estimates from the input data
+  # define function to make daily metabolism estimates from the input data
   mle.dummy <- list(minimum=NA, estimate=c(NA,NA,NA), gradient=c(NA,NA,NA), code=NA, iterations=NA)
-  . <- ".dplyr.var"
-  river.mle <- data %>%
-    mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
-    group_by(date) %>%
-    do(with(., {
-      
-      # Provide ability to skip a poorly-formatted day for calculating 
-      # metabolism, without breaking the whole loop. Just collect 
-      # problems/errors as a list of strings and proceed. Also collect warnings.
-      stop_strs <- warn_strs <- list()
-        
-      # Error checks: Require that on each day date.time has a single,
-      # consistent time step which we'll extract
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(date.time), units="days"), na.rm=TRUE))
-      timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(date.time), units="days"), na.rm=TRUE)))
-      if(is.finite(timestep.days) & is.finite(timestep.deviations)) {
-        if((timestep.deviations / timestep.days) > 0.001) { # threshold: max-min timestep length can't be more than 1% of mean timestep length
-          stop_strs <- c(stop_strs, "uneven timesteps")
-        }
-        if(abs(timestep.days * nrow(.) - 1) > 0.001) { # threshold: all timesteps per day must add up to 1, plus or minus 0.001
-          stop_strs <- c(stop_strs, paste0("sum(timesteps) != 1 day"))
-        }
-      } else {
-        stop_strs <- c(stop_strs, "can't measure timesteps")
+  est_metab_1d <- function(day) {
+    
+    # Provide ability to skip a poorly-formatted day for calculating 
+    # metabolism, without breaking the whole loop. Just collect 
+    # problems/errors as a list of strings and proceed. Also collect warnings.
+    stop_strs <- warn_strs <- list()
+    
+    ## Error checks:
+    # Require that the data consist of three consecutive days (10:30 pm on Day 1 to 6 am on Day 3)
+    if(!isTRUE(all.equal(diff(range(day$date.time)) %>% as.numeric(units="days"), 
+                         as.difftime(31.5, units="hours") %>% as.numeric(units="days"), 
+                         tol=as.difftime(31, units="mins") %>% as.numeric(units="days")))) {
+      stop_strs <- c(stop_strs, "incomplete time series")
+    }
+    # Require that on each day date.time has a ~single, ~consistent time step
+    timestep.days <- suppressWarnings(mean(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE))
+    timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE)))
+    if(length(stop_strs) == 0 & is.finite(timestep.days) & is.finite(timestep.deviations)) {
+      # max-min timestep length can't be more than 1% of mean timestep length
+      if((timestep.deviations / timestep.days) > 0.001) { 
+        stop_strs <- c(stop_strs, "uneven timesteps")
       }
-      # Require complete data
-      if(any(is.na(DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
-      if(any(is.na(DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
-      if(any(is.na(depth))) stop_strs <- c(stop_strs, "NAs in depth")
-      if(any(is.na(temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
-      if(any(is.na(light))) stop_strs <- c(stop_strs, "NAs in light")
-      
-      # Calculate metabolism by non linear minimization of an MLE function
-      if(length(stop_strs) == 0) {
-        mle.1d <- tryCatch({
-          # first: try to run the MLE fitting function
+      # all timesteps per day must add up to 31.5 hrs (31.5/24 days), plus or minus 0.51 hrs
+      if(abs(timestep.days * length(day$date.time) - 31.5/24) > 0.51/24) { 
+        stop_strs <- c(stop_strs, paste0("sum(timesteps) != 31.5 hours"))
+      }
+    } else {
+      stop_strs <- c(stop_strs, "can't measure timesteps")
+    }
+    # Require complete data
+    if(any(is.na(day$DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
+    if(any(is.na(day$DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
+    if(any(is.na(day$depth))) stop_strs <- c(stop_strs, "NAs in depth")
+    if(any(is.na(day$temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
+    if(any(is.na(day$light))) stop_strs <- c(stop_strs, "NAs in light")
+    
+    # Calculate metabolism by non linear minimization of an MLE function
+    if(length(stop_strs) == 0) {
+      mle.1d <- tryCatch({
+        # first: try to run the MLE fitting function
+        nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+            DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
+            frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
+      }, warning=function(war) {
+        # on warning: record the warning and run nlm again
+        warn_strs <- c(warn_strs, war$message)
+        suppressWarnings(
           nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
-              DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
-              frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
-        }, warning=function(war) {
-          # on warning: record the warning and run nlm again
-          warn_strs <- c(warn_strs, war$message)
-          suppressWarnings(
-            nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
-                DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
-                frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
-          )
-        }, error=function(err) {
-          # on error: give up, remembering error. dummy values provided below
-          stop_strs <- c(stop_strs, err$message)
-        })
-      } 
-      
-      # Check again - stop_strs may have accumulated during nlm() call. If
-      # stopped, record why.
-      if(length(stop_strs) > 0) {
-        mle.1d <- mle.dummy
-      }
-        
-      # Return
-      data.frame(date=date[1], 
-                 GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=mle.1d$estimate[3],
-                 grad.GPP=mle.1d$gradient[1], grad.ER=mle.1d$gradient[2], grad.K600=mle.1d$gradient[3],
-                 minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
-                 warnings=paste0(unlist(warn_strs), collapse="; "), 
-                 errors=paste0(unlist(stop_strs), collapse="; "),
-                 stringsAsFactors=FALSE)
-    }))
+              DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
+              frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
+        )
+      }, error=function(err) {
+        # on error: give up, remembering error. dummy values provided below
+        stop_strs <- c(stop_strs, err$message)
+      })
+    } 
+    
+    # Check again - stop_strs may have accumulated during nlm() call. If
+    # stopped, record why.
+    if(length(stop_strs) > 0) {
+      mle.1d <- mle.dummy
+    }
+    
+    # Return
+    data.frame(GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=mle.1d$estimate[3],
+               grad.GPP=mle.1d$gradient[1], grad.ER=mle.1d$gradient[2], grad.K600=mle.1d$gradient[3],
+               minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
+               warnings=paste0(unlist(warn_strs), collapse="; "), 
+               errors=paste0(unlist(stop_strs), collapse="; "),
+               stringsAsFactors=FALSE)
+  }
+  
+  # Identify the data plys that will let us use a 31.5-hr window for each date -
+  # this labeling can be stored in two additional columns (odd.- and even.- 
+  # date.group)
+  data.plys <- data %>% 
+    mutate(date=as.Date(format(date.time, "%Y-%m-%d")),
+           hour=24*(convert_date_to_doyhr(date.time) %% 1))
+  unique.dates <- unique(data.plys$date)
+  odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
+  even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
+  data.plys <- data.plys %>% 
+    group_by(date) %>%
+    mutate(odd.date.group=if(date[1] %in% odd.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= 6, 1, ifelse(hour < 22.5, 2, 3))],
+           even.date.group=if(date[1] %in% even.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= 6, 1, ifelse(hour < 22.5, 2, 3))]) %>%
+    ungroup() %>% select(-date)
+  
+  # Make daily metabolism estimates for each ply of the data, using two
+  # group_by/do combinations to cover the odd and even groupings
+  . <- ".dplyr.var"
+  mle.all <- 
+    bind_rows(
+      data.plys %>% group_by(date=odd.date.group) %>% do(est_metab_1d(.)), # filter(!is.na(odd.date.group)) %>%, filter(!is.na(even.date.group)) %>% 
+      data.plys %>% group_by(date=even.date.group) %>% do(est_metab_1d(.))) %>% 
+    filter(!is.na(date), date %in% unique.dates) %>%
+    arrange(date) 
   
   # Package and return results. There are no args, just data, for this
   # particular model
   new("metab_simple", 
-      fit=river.mle,
+      fit=mle.all,
       args=list(),
       data=data[expected.colnames],
       pkg_version=as.character(packageVersion("streamMetabolizer")))

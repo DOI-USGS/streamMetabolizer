@@ -67,7 +67,7 @@ ggplot(beaty_creek_tiny, aes(x=date.time, y=value)) + geom_point(size=0.5) + fac
 # Add and rename data columns as needed to pass to metab_simple
 beaty_creek_may15 <- beaty_creek %>% 
   rename(DO.obs=ts_doobs, temp.water=ts_wtr) %>%
-  filter(format(date.time, "%Y-%m-%d")=="2011-05-15") %>%
+  filter(format(date.time, "%Y-%m-%d") %in% c("2011-05-14","2011-05-15","2011-05-16")) %>%
   mutate(doyhr=convert_date_to_doyhr(date.time)) %>%
   mutate(DO.sat=calc_DO_at_sat(temp.water=temp.water, pressure.air=1000),
          depth=calc_depth(Q=ts_disch*v(u(0.0283168466,"m3/s cfs^-1"))),
@@ -84,12 +84,15 @@ We'll estimate GPP and ER for just a single day, May 15, 2011, for now.
 ```{r, results="markup"}
 # Estimate metabolism for a single day
 beaty_creek_may15_metab <- metab_simple(beaty_creek_may15)
-kable(predict_metab(beaty_creek_may15_metab))
+
+bc_may15_metab_est <- predict_metab(beaty_creek_may15_metab) %>% filter(format(date, "%Y-%m-%d") == "2011-05-15")
+kable(bc_may15_metab_est)
 beaty_creek_may15_DO <- predict_DO(beaty_creek_may15_metab)
 ```
 
 Here are the observed and modeled DO concentrations. The timestamps are much better.
 ```{r}
 # Plot the predicted and observed DO values
-ggplot(gather(rename(beaty_creek_may15_DO, obs=DO.obs, mod=DO.mod), method, DO.mgL, obs, mod), aes(x=date.time, y=DO.mgL, color=method)) + geom_point() + theme_bw()
+ggplot(gather(rename(beaty_creek_may15_DO, obs=DO.obs, mod=DO.mod), method, DO.mgL, obs, mod) %>% filter(!is.na(DO.mgL)), aes(x=date.time, y=DO.mgL, color=method)) + 
+  geom_line() + geom_point() + theme_bw()
 ```
