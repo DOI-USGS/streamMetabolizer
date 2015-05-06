@@ -4,7 +4,15 @@
 #' savings. Recommended for post-analysis visualization only; most functions in 
 #' streamMetabolizer use times in GMT.
 #' 
-#' @importFrom lubridate with_tz floor_date
+#' @param date.time POSIXct object
+#' @param latitude numeric, in degrees, either positive and unitted ("degN" or 
+#'   "degS") or with sign indicating direction (positive = North)
+#' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
+#'   "degW") or with sign indicating direction (positive = East)
+#' @param time.type character. The type of time zone desired - either standard 
+#'   time without any daylight savings time or daylight time where daylight
+#'   savings is on during the appropriate days
+#' @importFrom lubridate with_tz
 #' @importFrom XML xmlParse
 #' @importFrom RCurl getURL
 #' @importFrom unitted u v
@@ -48,9 +56,8 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
   #' @param timestamp POSIXct representation of a time - determines daylight
   #'   savings offset, if any
   #' @references https://developers.google.com/maps/documentation/timezone/
-  google_timezone <- function(latitude, longitude, timestamp, out.format="xml") {
-    api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/%s?location=%s,%s&timestamp=%d&sensor=false", 
-                       out.format, 
+  google_timezone <- function(latitude, longitude, timestamp) {
+    api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d&sensor=false", 
                        latitude, 
                        longitude, 
                        as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 GMT")))

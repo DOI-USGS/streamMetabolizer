@@ -10,6 +10,9 @@ convert_GMT_to_solartime(date.time, longitude, time.type = c("apparent solar",
 \arguments{
 \item{date.time}{date-time values in POSIXct format.}
 
+\item{longitude}{numeric, in degrees, either positive and unitted ("degE" or
+"degW") or with sign indicating direction (positive = East)}
+
 \item{time.type}{character. "apparent solar", i.e. true solar time, is noon
 when the sun is at its zenith. "mean solar" approximates apparent solar
 time but with noons exactly 24 hours apart.}

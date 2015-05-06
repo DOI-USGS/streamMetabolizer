@@ -7,6 +7,19 @@
 convert_GMT_to_localtime(date.time, latitude, longitude,
   time.type = c("standard local", "daylight local"))
 }
+\arguments{
+\item{date.time}{POSIXct object}
+
+\item{latitude}{numeric, in degrees, either positive and unitted ("degN" or
+"degS") or with sign indicating direction (positive = North)}
+
+\item{longitude}{numeric, in degrees, either positive and unitted ("degE" or
+"degW") or with sign indicating direction (positive = East)}
+
+\item{time.type}{character. The type of time zone desired - either standard
+time without any daylight savings time or daylight time where daylight
+savings is on during the appropriate days}
+}
 \description{
 Convert time from GMT to local time, either standard or with daylight
 savings. Recommended for post-analysis visualization only; most functions in

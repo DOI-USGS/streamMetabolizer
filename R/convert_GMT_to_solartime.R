@@ -1,6 +1,8 @@
 #' @title Convert DateTime from GMT to local solar time
 #'   
 #' @param date.time date-time values in POSIXct format.
+#' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
+#'   "degW") or with sign indicating direction (positive = East)
 #' @param time.type character. "apparent solar", i.e. true solar time, is noon 
 #'   when the sun is at its zenith. "mean solar" approximates apparent solar 
 #'   time but with noons exactly 24 hours apart.
@@ -50,10 +52,12 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
 
 #' @title Convert DateTime from local solar time to GMT
 #'   
-#' @param date.time date-time values in POSIXct format. Timezone will be
-#'   assumed/coerced to GMT.
-#' @param time.type character. "apparent solar", i.e. true solar time, is noon 
-#'   when the sun is at its zenith. "mean solar" approximates apparent solar 
+#' @param date.time date-time values in POSIXct format. Timezone must be GMT.
+#' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
+#'   "degW") or with sign indicating direction (positive = East)
+#' @param time.type character describing location of the site where date.time
+#'   values are in solar time. "apparent solar", i.e. true solar time, is noon
+#'   when the sun is at its zenith. "mean solar" approximates apparent solar
 #'   time but with noons exactly 24 hours apart.
 #' @return a POSIXct object in GMT
 #' @importFrom lubridate force_tz
@@ -63,7 +67,6 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
 #'   Influence of topographic complexity on solar insolation estimates for the 
 #'   Colorado River, Grand Canyon, AZ. Ecological Modelling.
 convert_solartime_to_GMT <- function(date.time, longitude, time.type=c("apparent solar", "mean solar")) {
-  pretend.gmt <- lubridate::force_tz(date.time, "GMT")
-  conversion <- pretend.gmt - convert_GMT_to_solartime(pretend.gmt, longitude, time.type)
+  conversion <- date.time - convert_GMT_to_solartime(date.time, longitude, time.type)
   return(date.time + conversion)
 }
