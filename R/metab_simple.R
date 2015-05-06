@@ -23,7 +23,8 @@
 #'   }
 #' @param ... additional arguments
 #' @return A metab_simple object containing the fitted model.
-#'   
+#' 
+#' @import dplyr  
 #' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
 #' @examples
 #' \dontrun{
@@ -39,16 +40,6 @@ metab_simple <- function(data, ...) {
     stop(paste0("data must contain (at least) columns with the names ", paste0(expected.colnames, collapse=", ")))
   }
   
-  # Require that date.time have a single, consistent time step which we'll extract
-  timestep.days <- mean(as.numeric(diff(data$date.time), units="days"))
-  timestep.deviations <- diff(range(as.numeric(diff(data$date.time), units="days")))
-  if((timestep.deviations / timestep.days) > 0.001) { # threshold: max-min timestep length can't be more than 1% of mean timestep length
-    stop("expected essentially one timestep length within date.time")
-  }
-  if(abs(timestep.days * nrow(data) - 1) > 0.001) { # threshold: all timesteps per day must add up to 1, plus or minus 0.001
-    stop("number * duration of time intervals doesn't sum to 1 day")
-  }
-  
   #' Return the likelihood value for a given set of parameters and observations
   #' 
   #' From ?nlm, this function should be "the function to be minimized, returning
@@ -58,7 +49,7 @@ metab_simple <- function(data, ...) {
   #' 
   #' @param params a vector of length 2, where the first element is GPP and the second element is ER (both mg/L/d)
   onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D) {
-    
+
     # Count how many DO observations/predictions there should be
     n <- length(DO.obs)
     
@@ -75,13 +66,76 @@ metab_simple <- function(data, ...) {
     (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
   }
   
-  # Calculate metabolism by non linear minimization of an MLE function
-  river.mle <- with(
-    data, 
-    nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
-        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
-        frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
-  )
+  # make daily metabolism estimates from the input data
+  mle.dummy <- list(minimum=NA, estimate=c(NA,NA,NA), gradient=c(NA,NA,NA), code=NA, iterations=NA)
+  . <- ".dplyr.var"
+  river.mle <- data %>%
+    mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
+    group_by(date) %>%
+    do(with(., {
+      
+      # Provide ability to skip a poorly-formatted day for calculating 
+      # metabolism, without breaking the whole loop. Just collect 
+      # problems/errors as a list of strings and proceed. Also collect warnings.
+      stop_strs <- warn_strs <- list()
+        
+      # Error checks: Require that on each day date.time has a single,
+      # consistent time step which we'll extract
+      timestep.days <- suppressWarnings(mean(as.numeric(diff(date.time), units="days"), na.rm=TRUE))
+      timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(date.time), units="days"), na.rm=TRUE)))
+      if(is.finite(timestep.days) & is.finite(timestep.deviations)) {
+        if((timestep.deviations / timestep.days) > 0.001) { # threshold: max-min timestep length can't be more than 1% of mean timestep length
+          stop_strs <- c(stop_strs, "uneven timesteps")
+        }
+        if(abs(timestep.days * nrow(.) - 1) > 0.001) { # threshold: all timesteps per day must add up to 1, plus or minus 0.001
+          stop_strs <- c(stop_strs, paste0("sum(timesteps) != 1 day"))
+        }
+      } else {
+        stop_strs <- c(stop_strs, "can't measure timesteps")
+      }
+      # Require complete data
+      if(any(is.na(DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
+      if(any(is.na(DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
+      if(any(is.na(depth))) stop_strs <- c(stop_strs, "NAs in depth")
+      if(any(is.na(temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
+      if(any(is.na(light))) stop_strs <- c(stop_strs, "NAs in light")
+      
+      # Calculate metabolism by non linear minimization of an MLE function
+      if(length(stop_strs) == 0) {
+        mle.1d <- tryCatch({
+          # first: try to run the MLE fitting function
+          nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+              DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
+              frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
+        }, warning=function(war) {
+          # on warning: record the warning and run nlm again
+          warn_strs <- c(warn_strs, war$message)
+          suppressWarnings(
+            nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+                DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
+                frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
+          )
+        }, error=function(err) {
+          # on error: give up, remembering error. dummy values provided below
+          stop_strs <- c(stop_strs, err$message)
+        })
+      } 
+      
+      # Check again - stop_strs may have accumulated during nlm() call. If
+      # stopped, record why.
+      if(length(stop_strs) > 0) {
+        mle.1d <- mle.dummy
+      }
+        
+      # Return
+      data.frame(date=date[1], 
+                 GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=mle.1d$estimate[3],
+                 grad.GPP=mle.1d$gradient[1], grad.ER=mle.1d$gradient[2], grad.K600=mle.1d$gradient[3],
+                 minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
+                 warnings=paste0(unlist(warn_strs), collapse="; "), 
+                 errors=paste0(unlist(stop_strs), collapse="; "),
+                 stringsAsFactors=FALSE)
+    }))
   
   # Package and return results. There are no args, just data, for this
   # particular model
@@ -160,16 +214,14 @@ setClass(
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @export
+#' @import dplyr
 #' @family predict_metab
 predict_metab.metab_simple <- function(metab_model) {
   
-  # at the moment this will only work if there's only one date
-  date <- unique(as.Date(format(get_data(metab_model)$date.time, "%Y-%m-%d")))
-  GPP <- get_fit(metab_model)$estimate[1]
-  ER <- get_fit(metab_model)$estimate[2]
-  K600 <- get_fit(metab_model)$estimate[3]
+  get_fit(metab_model) %>% 
+    mutate(NEP=GPP+ER) %>%
+    select(date, GPP, ER, NEP, K600)
   
-  data.frame(date=date, GPP=GPP, ER=ER, NEP=GPP+ER, K600=K600)
 }
 
 
@@ -186,7 +238,7 @@ predict_metab.metab_simple <- function(metab_model) {
 #' @export
 #' @family predict_DO
 predict_DO.metab_simple <- function(metab_model) {
-
+  
   # get the metabolism (GPP, ER) estimates
   metab_ests <- predict_metab(metab_model)
   
@@ -197,6 +249,12 @@ predict_DO.metab_simple <- function(metab_model) {
     mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
     group_by(date) %>%
     do(with(., {
+      # get the daily metabolism estimates, and skip today if they're missing
+      metab_est <- metab_ests[metab_ests$date==date[1],]
+      if(is.na(metab_est$GPP)) {
+        return(data.frame(., DO.mod=NA))
+      }
+      
       # prepare auxiliary data
       n <- length(date.time)
       timestep.days <- mean(as.numeric(diff(date.time), units="days"))
@@ -206,12 +264,12 @@ predict_DO.metab_simple <- function(metab_model) {
       
       # produce DO.mod estimates for today's GPP and ER
       DO.mod <- .core_model_metab_simple(
-        GPP.daily=metab_ests[metab_ests$date==date[1], "GPP"], 
-        ER.daily=metab_ests[metab_ests$date==date[1], "ER"], 
-        k.600.daily=metab_ests[metab_ests$date==date[1], "K600"], 
+        GPP.daily=metab_est$GPP, 
+        ER.daily=metab_est$ER, 
+        k.600.daily=metab_est$K600, 
         DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
       
       data.frame(., DO.mod=DO.mod)
     }))
-    
+  
 }

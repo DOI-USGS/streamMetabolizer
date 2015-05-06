@@ -22,7 +22,6 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5, echo=FALSE, message=FALSE, warn
 library(plyr)
 library(dplyr)
 library(dataRetrieval)
-#library(sbtools)
 library(mda.streams)
 library(powstreams)
 library(streamMetabolizer)
@@ -44,7 +43,7 @@ beaty_creek <- load_timeseries(site=beaty_creek_id, variables=get_ts_variables(b
 
 Here are a few lines of the data we can pull from ScienceBase:
 ```{r, results="markup"}
-kable(head(beaty_creek))
+kable(head(select(beaty_creek, date.time, ts_disch, ts_doobs, ts_stage, ts_wtr)))
 ```
 
 There are nearly six years of data, with pronounced seasonal patterns in DO and temperature.
