@@ -15,7 +15,7 @@
 #'   
 #'   \item{ \code{depth} stream depth, \eqn{m}{m}}.
 #'   
-#'   \item{ \code{k.O2} gas exchange coefficients, \eqn{m d^{-1}}{m / d}}.
+#'   \item{ \code{temp.water} water temperature, \eqn{degC}}.
 #'   
 #'   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
 #'   m^{-2} s^{-1}}{micro mols / m^2 / s}}
@@ -34,7 +34,7 @@
 metab_simple <- function(data, ...) {
   
   # Check data for correct column names
-  expected.colnames <- c("date.time","DO.obs","DO.sat","depth","k.O2","light")
+  expected.colnames <- c("date.time","DO.obs","DO.sat","depth","temp.water","light")
   if(!all(expected.colnames %in% names(data))) {
     stop(paste0("data must contain (at least) columns with the names ", paste0(expected.colnames, collapse=", ")))
   }
@@ -57,15 +57,15 @@ metab_simple <- function(data, ...) {
   #' ... argument."
   #' 
   #' @param params a vector of length 2, where the first element is GPP and the second element is ER (both mg/L/d)
-  onestation_negloglik <- function(params, DO.obs, DO.sat, depth, k.O2, frac.GPP, frac.ER, frac.D) {
+  onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D) {
     
     # Count how many DO observations/predictions there should be
     n <- length(DO.obs)
     
     # Parse params vector (passed from nlm) and produce DO.mod estimates
     DO.mod <- .core_model_metab_simple(
-      GPP.daily=params[1], ER.daily=params[2], 
-      DO.sat, depth, k.O2, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
+      GPP.daily=params[1], ER.daily=params[2], k.600.daily=params[3],
+      DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
     
     # calculate & return the negative log likelihood of DO.mod values relative
     # to DO.obs values. equivalent to Bob's original code & formula at
@@ -78,8 +78,8 @@ metab_simple <- function(data, ...) {
   # Calculate metabolism by non linear minimization of an MLE function
   river.mle <- with(
     data, 
-    nlm(onestation_negloglik, p=c(GPP=3,ER=-5), 
-        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, k.O2=k.O2, 
+    nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
         frac.GPP=light/sum(light), frac.ER=timestep.days, frac.D=timestep.days)
   )
   
@@ -112,16 +112,15 @@ metab_simple <- function(data, ...) {
 #'   
 #' @name core_model_metab_simple
 #' @keywords internal
-.core_model_metab_simple <- function(GPP.daily, ER.daily, DO.sat, depth, k.O2, frac.GPP, frac.ER, frac.D, DO.obs.1, n) {
+.core_model_metab_simple <- function(GPP.daily, ER.daily, k.600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs.1, n) {
   # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
   # each timestep)
   GPP <- GPP.daily * frac.GPP / depth
   ER <- ER.daily * frac.ER / depth
+  K <- convert_k600_to_kGAS(k.600.daily, temperature=temp.water, gas="O2") * frac.D
   
   # make sure anything in the following loop has n observations
-  if(length(k.O2) != n) k.O2 <- rep(k.O2, length.out=n) # this is possible but unlikely
   if(length(DO.sat) != n) DO.sat <- rep(DO.sat, length.out=n) # this would be odd
-  if(length(frac.D) != n) frac.D <- rep(frac.D, length.out=n) # this is probable. guaranteed? not if there's a missing timestep.
   
   # Model DO with given params
   DO.mod <- numeric(n)
@@ -130,7 +129,7 @@ metab_simple <- function(data, ...) {
     DO.mod[i] <- DO.mod[i-1] +
       GPP[i] + 
       ER[i] + 
-      k.O2[i] * (DO.sat[i] - DO.mod[i-1]) * frac.D[i]
+      K[i] * (DO.sat[i] - DO.mod[i-1])
   } 
   
   # Return
@@ -168,8 +167,9 @@ predict_metab.metab_simple <- function(metab_model) {
   date <- unique(as.Date(format(get_data(metab_model)$date.time, "%Y-%m-%d")))
   GPP <- get_fit(metab_model)$estimate[1]
   ER <- get_fit(metab_model)$estimate[2]
+  K600 <- get_fit(metab_model)$estimate[3]
   
-  data.frame(date=date, GPP=GPP, ER=ER, NEP=GPP+ER)
+  data.frame(date=date, GPP=GPP, ER=ER, NEP=GPP+ER, K600=K600)
 }
 
 
@@ -206,8 +206,10 @@ predict_DO.metab_simple <- function(metab_model) {
       
       # produce DO.mod estimates for today's GPP and ER
       DO.mod <- .core_model_metab_simple(
-        GPP.daily=metab_ests[metab_ests$date==date[1], "GPP"], ER.daily=metab_ests[metab_ests$date==date[1], "ER"], 
-        DO.sat, depth, k.O2, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
+        GPP.daily=metab_ests[metab_ests$date==date[1], "GPP"], 
+        ER.daily=metab_ests[metab_ests$date==date[1], "ER"], 
+        k.600.daily=metab_ests[metab_ests$date==date[1], "K600"], 
+        DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
       
       data.frame(., DO.mod=DO.mod)
     }))

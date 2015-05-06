@@ -6,8 +6,8 @@
 \title{This is the workhorse for metab_simple, used in both metab_simple() and
 predict_DO.metab_simple(). It accepts GPP, ER, etc. and returns DO.mod.}
 \usage{
-.core_model_metab_simple(GPP.daily, ER.daily, DO.sat, depth, k.O2, frac.GPP,
-  frac.ER, frac.D, DO.obs.1, n)
+.core_model_metab_simple(GPP.daily, ER.daily, k.600.daily, DO.sat, depth,
+  temp.water, frac.GPP, frac.ER, frac.D, DO.obs.1, n)
 }
 \arguments{
 \item{GPP.daily}{One GPP rate per day (mg O2 / L / d)}
@@ -20,8 +20,6 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 
 \item{depth}{stream depth, \eqn{m}{m}.}
 
-\item{k.O2}{gas exchange coefficients, \eqn{m d^{-1}}{m / d}.}
-
 \item{DO.obs.1}{the first DO.obs value, to which the first DO.mod value will be set}
 
 \item{n}{number of DO.mod values to produce}
@@ -30,6 +28,8 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 
 \item{DO.obs}{dissolved oxygen concentration observations, \eqn{mg O[2]
 L^{-1}}{mg O2 / L}}
+
+\item{k.O2}{gas exchange coefficients, \eqn{m d^{-1}}{m / d}.}
 
 \item{light}{photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
 s^{-1}}{micro mols / m^2 / s}}
