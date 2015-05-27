@@ -20,7 +20,7 @@ metab_simple(data, ...)
 
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
 
-  \item{ \code{k.O2} gas exchange coefficients, \eqn{m d^{-1}}{m / d}}.
+  \item{ \code{temp.water} water temperature, \eqn{degC}}.
 
   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\
   m^{-2} s^{-1}}{micro mols / m^2 / s}}
