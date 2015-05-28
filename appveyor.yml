@@ -1,14 +1,14 @@
 init:
   ps: |
         $ErrorActionPreference = "Stop"
-        Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
+        Invoke-WebRequest http://raw.github.com/jread-usgs/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
         Import-Module '..\appveyor-tool.ps1'
 
 install:
   ps: Bootstrap
 
 build_script:
-  - travis-tool.sh install_github appling/unitted@v0.2.0 USGS-R/sbtools USGS-R/geoknife USGS-R/mda.streams USGS-R/powstreams
+  - travis-tool.sh install_github appling/unitted USGS-R/sbtools USGS-R/geoknife USGS-R/mda.streams USGS-R/powstreams
   - travis-tool.sh install_deps
 
 test_script:

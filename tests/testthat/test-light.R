@@ -45,8 +45,9 @@ test_that("can generate light predictions from basic light model", {
     lat=rep(c(0,20,40,60,80), each=24*4),
     jday=rep(rep(c(1,101,201,301), each=24), times=5), 
     hour=rep(c(0:12,13.5:23.5), times=4*5))
-  insdf <- transform(insdf, datetime=convert_GMT_to_solartime(convert_doyhr_to_date(jday+(hour/24), year=2011, tz="GMT"), long=100, time.type="apparent"))
+  insdf <- transform(insdf, datetime=convert_GMT_to_solartime(convert_doyhr_to_date(jday+(hour/24), year=2011, tz="GMT"), long=0, time.type="apparent"))
   insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
+  #ggplot(mutate(insdf,date=format(convert_doyhr_to_date(jday, 2015), "%Y-%m-%d")), aes(x=hour, y=ins, color=factor(lat), group=factor(lat))) + geom_line() + facet_wrap(~date) + scale_color_discrete("Latitude") + ylab("Solar Insolation") + xlab("Hour of Day")
   expect_true(all(insdf$ins >= 0), "non-negative insolation, always")
   expect_true(all(
     (insdf %>% select(lat, jday, ins) %>%
