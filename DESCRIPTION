@@ -29,9 +29,7 @@ Suggests:
     plyr,
     tidyr,
     testthat,
-    dataRetrieval,
-    mda.streams,
-    powstreams
+    dataRetrieval
 Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'

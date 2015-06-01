@@ -7,8 +7,6 @@ r_github_packages:
  - appling/unitted
  - USGS-R/sbtools
  - USGS-R/geoknife
- - USGS-R/mda.streams
- - USGS-R/powstreams
 
 after_success:
   - Rscript -e 'covr::coveralls()'
