@@ -53,14 +53,14 @@ beaty_creek_tidy <- beaty_creek %>%
   mutate(Discharge_log_cfs=log(ts_disch)) %>%
   gather(variable, value, DO_mgL, WaterTemp_C, Discharge_log_cfs)
 # Plot to see data range and multi-year patterns
-ggplot(beaty_creek_tidy, aes(x=date.time, y=value)) + geom_point(size=0.5) + facet_grid(variable~., scales="free_y") + theme_bw()
+ggplot(beaty_creek_tidy, aes(x=date.time, y=value)) + geom_point(size=0.5, na.rm=TRUE) + facet_grid(variable~., scales="free_y") + theme_bw()
 ```
 
 Zooming in, we see well-formed diel DO cycles with observations at at half-hour intervals.
 ```{r}
 # Zoom in to see diel cycles example
 beaty_creek_tiny <- filter(beaty_creek_tidy, between(DateTime, as.POSIXct("2011-05-12 00:00:00"), as.POSIXct("2011-05-17 00:00:00")))
-ggplot(beaty_creek_tiny, aes(x=date.time, y=value)) + geom_point(size=0.5) + facet_grid(variable~., scales="free_y") + theme_bw()
+ggplot(beaty_creek_tiny, aes(x=date.time, y=value)) + geom_point(size=0.5, na.rm=TRUE) + facet_grid(variable~., scales="free_y") + theme_bw()
 ```
 
 ```{r}
