@@ -64,7 +64,7 @@ ggplot(beaty_creek_tiny, aes(x=date.time, y=value)) + geom_point(size=0.5, na.rm
 ```
 
 ```{r}
-# Add and rename data columns as needed to pass to metab_simple
+# Add and rename data columns as needed to pass to metab_mle
 beaty_creek_may15 <- beaty_creek %>% 
   rename(DO.obs=ts_doobs, temp.water=ts_wtr) %>%
   filter(format(date.time, "%Y-%m-%d") %in% c("2011-05-14","2011-05-15","2011-05-16")) %>%
@@ -83,7 +83,7 @@ kable(head(beaty_creek_may15[24:48,]))
 We'll estimate GPP and ER for just a single day, May 15, 2011, for now.
 ```{r, results="markup"}
 # Estimate metabolism for a single day
-beaty_creek_may15_metab <- metab_simple(beaty_creek_may15)
+beaty_creek_may15_metab <- metab_mle(beaty_creek_may15)
 
 bc_may15_metab_est <- predict_metab(beaty_creek_may15_metab) %>% filter(format(date, "%Y-%m-%d") == "2011-05-15")
 kable(bc_may15_metab_est)

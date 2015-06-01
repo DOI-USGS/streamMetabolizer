@@ -3,9 +3,9 @@
 \docType{class}
 \name{metab_model-class}
 \alias{metab_model-class}
-\title{A generic metabolism model class.}
+\title{A metabolism model class.}
 \description{
-Class and function definitions for a metabolism model
+A metabolism model class.
 }
 \section{Slots}{
 
@@ -19,6 +19,6 @@ Class and function definitions for a metabolism model
 \item{\code{data}}{The data that were used to fit the model.}
 }}
 \seealso{
-Other metab.model.classes: \code{\link{metab_simple-class}}
+Other metab.model.classes: \code{\link{metab_mle-class}}
 }
 

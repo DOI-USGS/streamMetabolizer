@@ -41,7 +41,7 @@
 #'   
 #'   \itemize{
 #'   
-#'   \item \code{\link{metab_simple}}
+#'   \item \code{\link{metab_mle}}
 #'   
 #'   }
 #'   
@@ -52,6 +52,10 @@
 #'   \item \code{\link{metab_model-class}}
 #'   
 #'   \item \code{\link{metab_model_interface}}
+#'   
+#'   \item \code{\link{mm_data}}
+#'   
+#'   \item \code{\link{mm_validate_data}}
 #'   
 #'   }
 #'   
