@@ -29,6 +29,24 @@ Suggests:
     plyr,
     tidyr,
     testthat,
-    dataRetrieval,
-    mda.streams,
-    powstreams
+    dataRetrieval
+Collate:
+    '01-onLoad.R'
+    'calc_DO_at_sat.R'
+    'calc_DO_deficit.R'
+    'calc_depth.R'
+    'calc_is_daytime.R'
+    'calc_schmidt.R'
+    'calc_solar_insolation.R'
+    'calc_sun_rise_set.R'
+    'convert_GMT_to_localtime.R'
+    'convert_GMT_to_solartime.R'
+    'convert_PAR_to_SW.R'
+    'convert_date_to_doyhr.R'
+    'convert_k600_to_kGAS.R'
+    'load_french_broad.R'
+    'metab_model-class.R'
+    'metab_mle.R'
+    'metab_model_helpers.R'
+    'metab_model_interface.R'
+    'streamMetabolizer.R'

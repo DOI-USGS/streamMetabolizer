@@ -1,11 +1,7 @@
 #### class definition ####
 
-#' A generic metabolism model class.
+#' A metabolism model class.
 #' 
-#' Class and function definitions for a metabolism model
-#' 
-#' @rdname metab_model-class
-#' @name metab_model-class
 #' @slot fit An internal representation of a fitted model.
 #' @slot pkg_version A string indicating the package version used to create this metab_model object.
 #' @slot args A list of arguments, excluding data, that were supplied to the fitting function.
@@ -62,7 +58,7 @@ setClass(
 metab_model <- function(
   fit="generic metab_model class; no actual fit",
   args=list(),
-  data=data.frame(date.time=as.POSIXct(NA), DO.obs=as.numeric(NA)),
+  data=mm_data(),
   pkg_version=as.character(packageVersion("streamMetabolizer"))) {
   
   # Create a dummy metab_model object

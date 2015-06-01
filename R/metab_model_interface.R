@@ -31,6 +31,8 @@
 #' @docType data
 #' @format A collection of functions which any metabolism model in 
 #'   \code{streamMetabolizer} should implement.
+#' @examples
+#' methods(class="metab_model")
 NULL
 
 #### show ####

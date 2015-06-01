@@ -10,9 +10,9 @@ test_that("metabolism models run & produce reasonable output", {
   french$light <- convert_SW_to_PAR(calc_solar_insolation(date.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
   french <- french[c("date.time","DO.obs","DO.sat","depth","temp.water","light")]
   
-  # metab_simple
-  mm <- metab_simple(data=v(french))
-  expect_is(mm, "metab_simple")
+  # metab_mle
+  mm <- metab_mle(data=v(french))
+  expect_is(mm, "metab_mle")
   expect_is(slot(mm, "fit"), "data.frame") # specific to this model
   expect_is(slot(mm, "args"), "list")
   expect_is(slot(mm, "data"), "data.frame")
@@ -30,8 +30,8 @@ test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
   french$light <- convert_SW_to_PAR(calc_solar_insolation(date.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
   french <- french[c("date.time","DO.obs","DO.sat","depth","temp.water","light")]
   
-  # metab_simple
-  mm <- metab_simple(data=v(french))
+  # metab_mle
+  mm <- metab_mle(data=v(french))
   metab <- predict_metab(mm)
   expect_equal(metab$GPP + metab$ER, metab$NEP)
   DO_preds <- predict_DO(mm)
@@ -50,8 +50,8 @@ test_that("metab_models can be saved", {
   french$light <- convert_SW_to_PAR(calc_solar_insolation(date.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
   french <- french[c("date.time","DO.obs","DO.sat","depth","temp.water","light")]
   
-  # save and reload metab_simple
-  mm <- metab_simple(data=v(french))
+  # save and reload metab_mle
+  mm <- metab_mle(data=v(french))
   save(mm, file="test_temp.RData")
   mm_orig <- mm
   load("test_temp.RData")

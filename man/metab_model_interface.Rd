@@ -34,4 +34,7 @@ the \code{metab_model_interface} defined here.
 
   }
 }
+\examples{
+methods(class="metab_model")
+}
 

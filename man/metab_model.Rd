@@ -5,7 +5,7 @@
 \title{Create a metab_model object.}
 \usage{
 metab_model(fit = "generic metab_model class; no actual fit", args = list(),
-  data = data.frame(date.time = as.POSIXct(NA), DO.obs = as.numeric(NA)),
+  data = mm_data(),
   pkg_version = as.character(packageVersion("streamMetabolizer")))
 }
 \arguments{
