@@ -8,6 +8,7 @@
 #' Most models will require a subset of these data columns. Specialized models 
 #' may deviate from this format, but this is discouraged.
 #' 
+#' @param ... column names to select, as passed to \code{\link[dplyr]{select}}
 #' @return data data.frame with columns \itemize{
 #'   
 #'   \item{ \code{date.time} date-time values in solar time, in POSIXct format
@@ -31,17 +32,20 @@
 #'   
 #' @export
 #' @importFrom unitted u
+#' @import dplyr
 #' @examples
 #' mm_data()
-#' dplyr::select(mm_data(), depth, light)
-mm_data <- function() {
-  u(data.frame(
+#' mm_data(depth, light, date.time)
+mm_data <- function(...) {
+  dat <- u(data.frame(
     date.time= u(as.POSIXct("2050-03-14 15:9:27",tz="UTC"), NA), 
     DO.obs=    u(10.1,"mgO2 L^-1"), 
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1")))
+  .dots = lazyeval::lazy_dots(...)
+  if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
 }
 
 #' Evaluate whether the data argument is properly formatted.
