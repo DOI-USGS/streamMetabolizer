@@ -32,6 +32,7 @@
 #'   
 #' @export
 #' @importFrom unitted u
+#' @importFrom lazyeval lazy_dots
 #' @import dplyr
 #' @examples
 #' mm_data()
@@ -44,9 +45,13 @@ mm_data <- function(...) {
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1")))
-  .dots = lazyeval::lazy_dots(...)
+  .dots = lazy_dots(...)
   if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
 }
+# Because metab_models will call mm_data(...) to define their default data, it
+# makes sense to declare all the potential columns as global variables here;
+# otherwise we'd need to do it before defining any of those functions.
+globalVariables(names(mm_data()))
 
 #' Evaluate whether the data argument is properly formatted.
 #' 

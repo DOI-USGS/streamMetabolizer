@@ -19,6 +19,7 @@ Imports:
     LakeMetabolizer,
     unitted,
     dplyr,
+    lazyeval,
     lubridate,
     RCurl,
     XML,

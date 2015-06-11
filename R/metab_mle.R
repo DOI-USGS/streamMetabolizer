@@ -20,7 +20,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=select_(mm_data(), "date.time", "DO.obs", "DO.sat", "depth", "temp.water", "light"), 
+  data=mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
   ...) {
   
   # Check data for correct column names & units
@@ -67,11 +67,10 @@ metab_mle <- function(
 #' 
 #' Called from metab_mle().
 #' 
-#' @param day data.frame of the form select(mm_data(), date.time, DO.obs, 
-#'   DO.sat, depth, temp.water, light) and containing data for just one 
-#'   estimation-day (this may be >24 hours but only yields estimates for one 
-#'   24-hour period)
-#' @return data.frame of estimates and \code{\link[stats]{nlm}} model
+#' @param day data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+#'   depth, temp.water, light)} and containing data for just one estimation-day
+#'   (this may be >24 hours but only yields estimates for one 24-hour period)
+#' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
 est_metab_1d <- function(day) {
