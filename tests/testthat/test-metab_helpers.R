@@ -12,3 +12,38 @@ test_that("mm_validate_data works", {
   expect_error(mm_validate_data(dplyr::mutate(mm_data(),temp.water=u(temp.water, "degF"), DO.obs=u(DO.obs, "mgO L^-1")), "metab_mle"), "unexpected units")
   expect_equal(mm_validate_data(mm_data(), "metab_mle"), mm_data())
 })
+
+test_that("mm_is_valid_day works", {
+  
+  # use a subset of data from Bob
+  library(plyr); library(dplyr)
+  library(unitted)
+  french <- streamMetabolizer:::load_french_creek()
+  #french$date.time <- convert_GMT_to_solartime(french$date.time, longitude=-106.48059) # seems to already be local time, close enough to solar
+  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
+  french$light <- convert_SW_to_PAR(calc_solar_insolation(date.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
+  french <- french[c("date.time","DO.obs","DO.sat","depth","temp.water","light")]
+  
+  good_day <- u(filter(v(french), v(date.time) >= as.POSIXct("2012-08-24 22:30:00", tz="UTC"),
+                       v(date.time) <= as.POSIXct("2012-08-26 06:00:00", tz="UTC")), get_units(french))
+  bad_day <- u(filter(v(french), v(date.time) >= as.POSIXct("2012-08-28 22:30:00", tz="UTC"),
+                       v(date.time) <= as.POSIXct("2012-08-30 06:00:00", tz="UTC")), get_units(french))
+  
+  # test and pass
+  expect_equal(mm_is_valid_day(good_day), character(0))
+  
+  # test faulty timestep
+  dateless_day <- good_day; dateless_day$date.time <- replace(dateless_day$date.time, 2:(nrow(dateless_day)-1), NA)
+  expect_equal(mm_is_valid_day(dateless_day), c("can't measure timesteps", "NAs in date.time"))
+  
+  # test full_day
+  expect_equal(mm_is_valid_day(good_day, day_start=0), "data don't start when expected")
+  expect_equal(mm_is_valid_day(good_day, day_end=25), "data don't end when expected")
+  
+  # test timestep lengths
+  irregular_day <- good_day[-c(3,20,99),]
+  expect_equal(mm_is_valid_day(irregular_day), "uneven timesteps")
+  
+  # test column completeness
+  expect_equal(mm_is_valid_day(bad_day), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
+})

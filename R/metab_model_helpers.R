@@ -99,43 +99,84 @@ mm_validate_data <- function(data, metab_class) {
 }
 
 
-# mm_validate_day <- function(data, cols) {
-#   stop("only partly implemented")
-#   # Provide ability to skip a poorly-formatted day for calculating 
-#   # metabolism, without breaking the whole loop. Just collect 
-#   # problems/errors as a list of strings and proceed. Also collect warnings.
-#   stop_strs <- warn_strs <- list()
-#   
-#   ## Error checks:
-#   # Require that the data consist of three consecutive days (10:30 pm on Day 1 to 6 am on Day 3)
-#   if(!isTRUE(all.equal(diff(range(day$date.time)) %>% as.numeric(units="days"), 
-#                        as.difftime(31.5, units="hours") %>% as.numeric(units="days"), 
-#                        tol=as.difftime(31, units="mins") %>% as.numeric(units="days")))) {
-#     stop_strs <- c(stop_strs, "incomplete time series")
-#   }
-#   # Require that on each day date.time has a ~single, ~consistent time step
-#   timestep.days <- suppressWarnings(mean(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE))
-#   timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE)))
-#   if(length(stop_strs) == 0 & is.finite(timestep.days) & is.finite(timestep.deviations)) {
-#     # max-min timestep length can't be more than 1% of mean timestep length
-#     if((timestep.deviations / timestep.days) > 0.001) { 
-#       stop_strs <- c(stop_strs, "uneven timesteps")
-#     }
-#     # all timesteps per day must add up to 31.5 hrs (31.5/24 days), plus or minus 0.51 hrs
-#     if(abs(timestep.days * length(day$date.time) - 31.5/24) > 0.51/24) { 
-#       stop_strs <- c(stop_strs, paste0("sum(timesteps) != 31.5 hours"))
-#     }
-#   } else {
-#     stop_strs <- c(stop_strs, "can't measure timesteps")
-#   }
-#   # Require complete data
-#   if(any(is.na(day$DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
-#   if(any(is.na(day$DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
-#   if(any(is.na(day$depth))) stop_strs <- c(stop_strs, "NAs in depth")
-#   if(any(is.na(day$temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
-#   if(any(is.na(day$light))) stop_strs <- c(stop_strs, "NAs in light")
-#   
-#   # Return
-#   list(stop_strs=stop_strs, warn_strs=warn_strs)
-# }
-# 
+#' Validate one day of data, returning a vector of error strings if needed
+#' 
+#' Provides ability to skip a poorly-formatted day for calculating metabolism, 
+#' without breaking the whole loop. Rather than producing errors, quietly 
+#' collects problems/errors as a list of strings for the calling function to 
+#' handle.
+#' 
+#' Assumes that the data have already been validated as in 
+#' \code{\link{mm_validate_data}}
+#' 
+#' @param day data for one day
+#' @param tests list of tests to conduct
+#' @param day_start argument for 'full_day' test: expected start of day data in 
+#'   number of hours from the midnight that begins the modal date. For example, 
+#'   day_start=-1.5 indicates that data describing 2006-06-26 should begin at 
+#'   2006-06-25 22:30, or as near as possible given the timestep.
+#' @param day_end argument for 'full_day' test: expected end of day data in 
+#'   number of hours from the midnight that begins the modal date. For example, 
+#'   day_end=30 indicates that data describing 2006-06-26 should end at 
+#'   2006-06-27 06:00, or as near as possible given the timestep.
+#' @param need_complete character vector of the names of columns in day that
+#'   must be complete (without NAs)
+#' @return character vector of errors, or empty list
+#' @export
+mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete_data'), 
+                            day_start=-1.5, day_end=30,
+                            need_complete=names(day)) {
+  
+  # check input
+  tests <- match.arg(tests, several.ok = TRUE)
+  day_start <- as.difftime(day_start, units="hours")
+  day_end <- as.difftime(day_end, units="hours")
+  
+  # initialize vectors
+  stop_strs <- character(0)
+
+  # estimate time steps - useful for a few tests
+  timestep <- as.difftime(suppressWarnings(mean(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE)), units="days")
+  if(!is.finite(timestep)) {
+    stop_strs <- c(stop_strs, "can't measure timesteps")
+  }
+
+  # Require that the data span the full expected period (e.g., from 10:30pm on
+  # preceding day to 6am on following day)
+  if('full_day' %in% tests & is.finite(timestep)) {
+    date_counts <- table(format(day$date.time, "%Y-%m-%d"))
+    date_start <- as.POSIXct(paste0(names(date_counts)[which.max(date_counts)], " 00:00:00"), tz="UTC")
+    similar_time <- function(a, b, tol=timestep*0.5) {
+      isTRUE(all.equal(as.numeric(a, units="days"), as.numeric(b, units="days"), tol=as.numeric(tol, units="days")))
+    }
+    if(!similar_time(min(day$date.time)-date_start, day_start))
+      stop_strs <- c(stop_strs, "data don't start when expected")
+    if(!similar_time(max(day$date.time)-date_start, day_end))
+      stop_strs <- c(stop_strs, "data don't end when expected")
+  }
+  
+  # Require that on each day date.time has a ~single, ~consistent time step
+  if('even_timesteps' %in% tests & is.finite(timestep)) {
+    timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE)))
+    if(!is.finite(timestep.deviations)) {
+      stop_strs <- c(stop_strs, "can't measure range of timestep lengths")
+    } else {
+      # max-min timestep length shouldn't be more than 2% of mean timestep length
+      if((timestep.deviations / as.numeric(timestep, units="days")) > 0.002) { 
+        stop_strs <- c(stop_strs, "uneven timesteps")
+      }
+    }
+  }
+  
+  if('complete_data' %in% tests) {
+    # Require complete data in all columns
+    for(col in need_complete) {
+      if(any(is.na(day[col]))) 
+        stop_strs <- c(stop_strs, paste0("NAs in ", col))
+    }
+  }
+  
+  # Return
+  stop_strs
+}
+
