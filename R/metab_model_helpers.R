@@ -92,3 +92,45 @@ mm_validate_data <- function(data, metab_class) {
   # return the data, which may have had its columns reordered during validation
   return(data)
 }
+
+
+# mm_validate_day <- function(data, cols) {
+#   stop("only partly implemented")
+#   # Provide ability to skip a poorly-formatted day for calculating 
+#   # metabolism, without breaking the whole loop. Just collect 
+#   # problems/errors as a list of strings and proceed. Also collect warnings.
+#   stop_strs <- warn_strs <- list()
+#   
+#   ## Error checks:
+#   # Require that the data consist of three consecutive days (10:30 pm on Day 1 to 6 am on Day 3)
+#   if(!isTRUE(all.equal(diff(range(day$date.time)) %>% as.numeric(units="days"), 
+#                        as.difftime(31.5, units="hours") %>% as.numeric(units="days"), 
+#                        tol=as.difftime(31, units="mins") %>% as.numeric(units="days")))) {
+#     stop_strs <- c(stop_strs, "incomplete time series")
+#   }
+#   # Require that on each day date.time has a ~single, ~consistent time step
+#   timestep.days <- suppressWarnings(mean(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE))
+#   timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE)))
+#   if(length(stop_strs) == 0 & is.finite(timestep.days) & is.finite(timestep.deviations)) {
+#     # max-min timestep length can't be more than 1% of mean timestep length
+#     if((timestep.deviations / timestep.days) > 0.001) { 
+#       stop_strs <- c(stop_strs, "uneven timesteps")
+#     }
+#     # all timesteps per day must add up to 31.5 hrs (31.5/24 days), plus or minus 0.51 hrs
+#     if(abs(timestep.days * length(day$date.time) - 31.5/24) > 0.51/24) { 
+#       stop_strs <- c(stop_strs, paste0("sum(timesteps) != 31.5 hours"))
+#     }
+#   } else {
+#     stop_strs <- c(stop_strs, "can't measure timesteps")
+#   }
+#   # Require complete data
+#   if(any(is.na(day$DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
+#   if(any(is.na(day$DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
+#   if(any(is.na(day$depth))) stop_strs <- c(stop_strs, "NAs in depth")
+#   if(any(is.na(day$temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
+#   if(any(is.na(day$light))) stop_strs <- c(stop_strs, "NAs in light")
+#   
+#   # Return
+#   list(stop_strs=stop_strs, warn_strs=warn_strs)
+# }
+# 

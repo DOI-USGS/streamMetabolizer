@@ -44,7 +44,7 @@ Collate:
     'convert_PAR_to_SW.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
-    'load_french_broad.R'
+    'load_french_creek.R'
     'metab_model-class.R'
     'metab_mle.R'
     'metab_model_helpers.R'
