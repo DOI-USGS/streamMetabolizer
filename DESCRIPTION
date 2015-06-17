@@ -35,6 +35,7 @@ Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
+    'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
     'calc_schmidt.R'
