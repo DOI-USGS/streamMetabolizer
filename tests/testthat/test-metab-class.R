@@ -18,12 +18,3 @@ test_that("metab_model objects can be created and accessed", {
   get_data(mm)
   get_version(mm)
 })
-
-test_that("metab_model objects generate predictions", {
-  # metab_model parent class
-  mm <- metab_model()
-  
-  # predict
-  #predict_metab(mm)
-  #predict_DO(mm)
-})

@@ -7,10 +7,9 @@
 est_metab_1d(day)
 }
 \arguments{
-\item{day}{data.frame of the form select(mm_data(), date.time, DO.obs,
-DO.sat, depth, temp.water, light) and containing data for just one
-estimation-day (this may be >24 hours but only yields estimates for one
-24-hour period)}
+\item{day}{data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+depth, temp.water, light)} and containing data for just one estimation-day
+(this may be >24 hours but only yields estimates for one 24-hour period)}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

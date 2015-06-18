@@ -5,7 +5,10 @@
 \title{Return the data types that may be used by metab_models using the
 metab_model_interface.}
 \usage{
-mm_data()
+mm_data(...)
+}
+\arguments{
+\item{...}{column names to select, as passed to \code{\link[dplyr]{select}}}
 }
 \value{
 data data.frame with columns \itemize{
@@ -40,6 +43,6 @@ may deviate from this format, but this is discouraged.
 }
 \examples{
 mm_data()
-dplyr::select(mm_data(), depth, light)
+mm_data(depth, light, date.time)
 }
 

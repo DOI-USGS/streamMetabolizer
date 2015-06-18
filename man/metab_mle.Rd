@@ -4,8 +4,8 @@
 \alias{metab_mle}
 \title{Basic metabolism model fitting function}
 \usage{
-metab_mle(data = select_(mm_data(), "date.time", "DO.obs", "DO.sat", "depth",
-  "temp.water", "light"), ...)
+metab_mle(data = mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
+  ...)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format

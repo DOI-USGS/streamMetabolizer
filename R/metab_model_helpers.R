@@ -8,6 +8,7 @@
 #' Most models will require a subset of these data columns. Specialized models 
 #' may deviate from this format, but this is discouraged.
 #' 
+#' @param ... column names to select, as passed to \code{\link[dplyr]{select}}
 #' @return data data.frame with columns \itemize{
 #'   
 #'   \item{ \code{date.time} date-time values in solar time, in POSIXct format
@@ -31,18 +32,26 @@
 #'   
 #' @export
 #' @importFrom unitted u
+#' @importFrom lazyeval lazy_dots
+#' @import dplyr
 #' @examples
 #' mm_data()
-#' dplyr::select(mm_data(), depth, light)
-mm_data <- function() {
-  u(data.frame(
+#' mm_data(depth, light, date.time)
+mm_data <- function(...) {
+  dat <- u(data.frame(
     date.time= u(as.POSIXct("2050-03-14 15:9:27",tz="UTC"), NA), 
     DO.obs=    u(10.1,"mgO2 L^-1"), 
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1")))
+  .dots = lazy_dots(...)
+  if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
 }
+# Because metab_models will call mm_data(...) to define their default data, it
+# makes sense to declare all the potential columns as global variables here;
+# otherwise we'd need to do it before defining any of those functions.
+globalVariables(names(mm_data()))
 
 #' Evaluate whether the data argument is properly formatted.
 #' 
@@ -88,3 +97,86 @@ mm_validate_data <- function(data, metab_class) {
   # return the data, which may have had its columns reordered during validation
   return(data)
 }
+
+
+#' Validate one day of data, returning a vector of error strings if needed
+#' 
+#' Provides ability to skip a poorly-formatted day for calculating metabolism, 
+#' without breaking the whole loop. Rather than producing errors, quietly 
+#' collects problems/errors as a list of strings for the calling function to 
+#' handle.
+#' 
+#' Assumes that the data have already been validated as in 
+#' \code{\link{mm_validate_data}}
+#' 
+#' @param day data for one day
+#' @param tests list of tests to conduct
+#' @param day_start argument for 'full_day' test: expected start of day data in 
+#'   number of hours from the midnight that begins the modal date. For example, 
+#'   day_start=-1.5 indicates that data describing 2006-06-26 should begin at 
+#'   2006-06-25 22:30, or as near as possible given the timestep.
+#' @param day_end argument for 'full_day' test: expected end of day data in 
+#'   number of hours from the midnight that begins the modal date. For example, 
+#'   day_end=30 indicates that data describing 2006-06-26 should end at 
+#'   2006-06-27 06:00, or as near as possible given the timestep.
+#' @param need_complete character vector of the names of columns in day that
+#'   must be complete (without NAs)
+#' @return character vector of errors, or empty list
+#' @export
+mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete_data'), 
+                            day_start=-1.5, day_end=30,
+                            need_complete=names(day)) {
+  
+  # check input
+  tests <- match.arg(tests, several.ok = TRUE)
+  day_start <- as.difftime(day_start, units="hours")
+  day_end <- as.difftime(day_end, units="hours")
+  
+  # initialize vectors
+  stop_strs <- character(0)
+
+  # estimate time steps - useful for a few tests
+  timestep <- as.difftime(suppressWarnings(mean(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE)), units="days")
+  if(!is.finite(timestep)) {
+    stop_strs <- c(stop_strs, "can't measure timesteps")
+  }
+
+  # Require that the data span the full expected period (e.g., from 10:30pm on
+  # preceding day to 6am on following day)
+  if('full_day' %in% tests & is.finite(timestep)) {
+    date_counts <- table(format(day$date.time, "%Y-%m-%d"))
+    date_start <- as.POSIXct(paste0(names(date_counts)[which.max(date_counts)], " 00:00:00"), tz="UTC")
+    similar_time <- function(a, b, tol=timestep*0.5) {
+      isTRUE(all.equal(as.numeric(a, units="days"), as.numeric(b, units="days"), tol=as.numeric(tol, units="days")))
+    }
+    if(!similar_time(min(day$date.time)-date_start, day_start))
+      stop_strs <- c(stop_strs, "data don't start when expected")
+    if(!similar_time(max(day$date.time)-date_start, day_end))
+      stop_strs <- c(stop_strs, "data don't end when expected")
+  }
+  
+  # Require that on each day date.time has a ~single, ~consistent time step
+  if('even_timesteps' %in% tests & is.finite(timestep)) {
+    timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE)))
+    if(!is.finite(timestep.deviations)) {
+      stop_strs <- c(stop_strs, "can't measure range of timestep lengths")
+    } else {
+      # max-min timestep length shouldn't be more than 2% of mean timestep length
+      if((timestep.deviations / as.numeric(timestep, units="days")) > 0.002) { 
+        stop_strs <- c(stop_strs, "uneven timesteps")
+      }
+    }
+  }
+  
+  if('complete_data' %in% tests) {
+    # Require complete data in all columns
+    for(col in need_complete) {
+      if(any(is.na(day[col]))) 
+        stop_strs <- c(stop_strs, paste0("NAs in ", col))
+    }
+  }
+  
+  # Return
+  stop_strs
+}
+

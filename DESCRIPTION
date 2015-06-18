@@ -19,6 +19,7 @@ Imports:
     LakeMetabolizer,
     unitted,
     dplyr,
+    lazyeval,
     lubridate,
     RCurl,
     XML,
@@ -34,6 +35,7 @@ Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
+    'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
     'calc_schmidt.R'
@@ -44,7 +46,7 @@ Collate:
     'convert_PAR_to_SW.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
-    'load_french_broad.R'
+    'load_french_creek.R'
     'metab_model-class.R'
     'metab_mle.R'
     'metab_model_helpers.R'

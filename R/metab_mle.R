@@ -20,7 +20,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=select_(mm_data(), "date.time", "DO.obs", "DO.sat", "depth", "temp.water", "light"), 
+  data=mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
   ...) {
   
   # Check data for correct column names & units
@@ -67,11 +67,10 @@ metab_mle <- function(
 #' 
 #' Called from metab_mle().
 #' 
-#' @param day data.frame of the form select(mm_data(), date.time, DO.obs, 
-#'   DO.sat, depth, temp.water, light) and containing data for just one 
-#'   estimation-day (this may be >24 hours but only yields estimates for one 
-#'   24-hour period)
-#' @return data.frame of estimates and \code{\link[stats]{nlm}} model
+#' @param day data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+#'   depth, temp.water, light)} and containing data for just one estimation-day
+#'   (this may be >24 hours but only yields estimates for one 24-hour period)
+#' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
 est_metab_1d <- function(day) {
@@ -79,39 +78,12 @@ est_metab_1d <- function(day) {
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  stop_strs <- warn_strs <- list()
-  
-  ## Error checks:
-  # Require that the data consist of three consecutive days (10:30 pm on Day 1 to 6 am on Day 3)
-  if(!isTRUE(all.equal(diff(range(day$date.time)) %>% as.numeric(units="days"), 
-                       as.difftime(31.5, units="hours") %>% as.numeric(units="days"), 
-                       tol=as.difftime(31, units="mins") %>% as.numeric(units="days")))) {
-    stop_strs <- c(stop_strs, "incomplete time series")
-  }
-  # Require that on each day date.time has a ~single, ~consistent time step
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE))
-  timestep.deviations <- suppressWarnings(diff(range(as.numeric(diff(day$date.time), units="days"), na.rm=TRUE)))
-  if(length(stop_strs) == 0 & is.finite(timestep.days) & is.finite(timestep.deviations)) {
-    # max-min timestep length can't be more than 1% of mean timestep length
-    if((timestep.deviations / timestep.days) > 0.001) { 
-      stop_strs <- c(stop_strs, "uneven timesteps")
-    }
-    # all timesteps per day must add up to 31.5 hrs (31.5/24 days), plus or minus 0.51 hrs
-    if(abs(timestep.days * length(day$date.time) - 31.5/24) > 0.51/24) { 
-      stop_strs <- c(stop_strs, paste0("sum(timesteps) != 31.5 hours"))
-    }
-  } else {
-    stop_strs <- c(stop_strs, "can't measure timesteps")
-  }
-  # Require complete data
-  if(any(is.na(day$DO.obs))) stop_strs <- c(stop_strs, "NAs in DO.obs")
-  if(any(is.na(day$DO.sat))) stop_strs <- c(stop_strs, "NAs in DO.sat")
-  if(any(is.na(day$depth))) stop_strs <- c(stop_strs, "NAs in depth")
-  if(any(is.na(day$temp.water))) stop_strs <- c(stop_strs, "NAs in temp.water")
-  if(any(is.na(day$light))) stop_strs <- c(stop_strs, "NAs in light")
-  
+  stop_strs <- mm_is_valid_day(day, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+  warn_strs <- character(0)
+
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
+    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE))
     mle.1d <- tryCatch({
       # first: try to run the MLE fitting function
       nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
@@ -141,8 +113,8 @@ est_metab_1d <- function(day) {
   data.frame(GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=mle.1d$estimate[3],
              grad.GPP=mle.1d$gradient[1], grad.ER=mle.1d$gradient[2], grad.K600=mle.1d$gradient[3],
              minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
-             warnings=paste0(unlist(warn_strs), collapse="; "), 
-             errors=paste0(unlist(stop_strs), collapse="; "),
+             warnings=paste0(warn_strs, collapse="; "), 
+             errors=paste0(stop_strs, collapse="; "),
              stringsAsFactors=FALSE)
 }
 
