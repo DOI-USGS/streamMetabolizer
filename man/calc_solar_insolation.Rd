@@ -6,7 +6,7 @@
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
 \usage{
 calc_solar_insolation(date.time, latitude, max.insolation = 2326,
-  format = c("degrees", "radians"), attach.units = FALSE)
+  format = c("degrees", "radians"), attach.units = is.unitted(date.time))
 }
 \arguments{
 \item{date.time}{POSIXct vector of date-time values in apparent solar time,
