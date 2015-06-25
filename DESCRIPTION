@@ -23,7 +23,8 @@ Imports:
     lubridate,
     RCurl,
     XML,
-    methods
+    methods,
+    runjags
 Suggests:
     knitr,
     ggplot2,
@@ -36,6 +37,7 @@ Collate:
     'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
     'calc_DO_mod.R'
+    'calc_DO_mod_by_step.R'
     'calc_DO_mod_with_error.R'
     'calc_air_pressure.R'
     'calc_depth.R'
@@ -50,6 +52,7 @@ Collate:
     'convert_k600_to_kGAS.R'
     'load_french_creek.R'
     'metab_model-class.R'
+    'metab_bayes_simple.R'
     'metab_mle.R'
     'metab_model_helpers.R'
     'metab_model_interface.R'

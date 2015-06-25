@@ -2,16 +2,17 @@
 % Please edit documentation in R/metab_mle.R
 \name{metab_mle}
 \alias{metab_mle}
-\title{Basic metabolism model fitting function}
+\title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(data = mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
-  ...)
+  calc_DO_fun = calc_DO_mod)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format
 as the default. See \code{\link{mm_data}} for a full data description.}
 
-\item{...}{additional arguments}
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
+etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \value{
 A metab_mle object containing the fitted model.
@@ -26,6 +27,9 @@ Fits a model to estimate GPP and ER from input data on DO,
 }
 }
 \author{
-Alison Appling, Jordan Read; modeled on lakeMetabolizer
+Alison Appling, Jordan Read; modeled on LakeMetabolizer
+}
+\seealso{
+Other metab_model: \code{\link{metab_bayes_simple}}
 }
 

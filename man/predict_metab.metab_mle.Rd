@@ -18,7 +18,8 @@ A data.frame of predictions, as for the generic
 Makes daily predictions of GPP, ER, and NEP.
 }
 \seealso{
-Other predict_metab: \code{\link{predict_metab.metab_model}};
+Other predict_metab: \code{\link{predict_metab.metab_bayes_simple}};
+  \code{\link{predict_metab.metab_model}};
   \code{\link{predict_metab}}
 }
 

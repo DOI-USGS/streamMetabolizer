@@ -17,12 +17,13 @@
 #' @param DO.mod.1 the first DO.obs value, to which the first DO.mod value will 
 #'   be set
 #' @param n number of DO.mod values to produce
+#' @param ... additional arguments passed to other variants on calc_DO_mod
 #' @export
 #' @examples
 #' calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100), 
 #'   rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100)
 calc_DO_mod <- function(
-  GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n) {
+  GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, ...) {
   
   # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
   # each timestep)

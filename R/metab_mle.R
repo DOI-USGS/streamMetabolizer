@@ -1,18 +1,19 @@
 #' @include metab_model-class.R
 NULL
 
-#' Basic metabolism model fitting function
+#' Maximum likelihood metabolism model fitting function
 #' 
 #' Fits a model to estimate GPP and ER from input data on DO, 
 #'   temperature, light, etc.
 #'   
 #' @param data data.frame with columns having the same names, units, and format 
 #'   as the default. See \code{\link{mm_data}} for a full data description.
-#' @param ... additional arguments
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return A metab_mle object containing the fitted model.
 #'   
 #' @import dplyr
-#' @author Alison Appling, Jordan Read; modeled on lakeMetabolizer
+#' @author Alison Appling, Jordan Read; modeled on LakeMetabolizer
 #' @examples
 #' \dontrun{
 #'  metab_mle(data=data.frame(empty="shouldbreak"))
@@ -21,45 +22,24 @@ NULL
 #' @family metab_model
 metab_mle <- function(
   data=mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
-  ...) {
+  calc_DO_fun=calc_DO_mod) {
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_mle")
   
-  # Identify the data plys that will let us use a 31.5-hr window for each date -
-  # this labeling can be stored in two additional columns (odd.- and even.- 
-  # date.group)
-  date.time <- hour <- ".dplyr.var"
-  data.plys <- data %>% 
-    mutate(date=as.Date(format(date.time, "%Y-%m-%d")),
-           hour=24*(convert_date_to_doyhr(date.time) %% 1))
-  unique.dates <- unique(data.plys$date)
-  odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
-  even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
-  data.plys <- data.plys %>% 
-    group_by(date) %>%
-    mutate(odd.date.group=if(date[1] %in% odd.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= 6, 1, ifelse(hour < 22.5, 2, 3))],
-           even.date.group=if(date[1] %in% even.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= 6, 1, ifelse(hour < 22.5, 2, 3))]) %>%
-    ungroup() %>% select(-date)
+  # model the data, splitting into overlapping 31.5-hr 'plys' for each date
+  mle.all <- mm_model_by_ply(data, mle_1ply, start_hour=22.5, end_hour=6,
+                             calc_DO_fun=calc_DO_fun)
   
-  # Estimate daily metabolism for each ply of the data, using two group_by/do
-  # combinations to cover the odd and even groupings
-  . <- odd.date.group <- even.date.group <- ".dplyr.var"
-  mle.all <- 
-    bind_rows(
-      data.plys %>% group_by(date=odd.date.group) %>% do(est_metab_1d(.)), # filter(!is.na(odd.date.group)) %>%, filter(!is.na(even.date.group)) %>% 
-      data.plys %>% group_by(date=even.date.group) %>% do(est_metab_1d(.))) %>% 
-    filter(!is.na(date), date %in% unique.dates) %>%
-    arrange(date) 
-  
-  # Package and return results. There are no args, just data, for this 
-  # particular model
+  # Package and return results
   new("metab_mle", 
       fit=mle.all,
-      args=list(),
+      args=list(calc_DO_fun=as.character(substitute(calc_DO_fun)),
+                start_hour=22.5, end_hour=6),
       data=data,
       pkg_version=as.character(packageVersion("streamMetabolizer")))
 }
+
 
 #### helpers ####
 
@@ -67,35 +47,41 @@ metab_mle <- function(
 #' 
 #' Called from metab_mle().
 #' 
-#' @param day data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+#' @param data_ply data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
 #'   depth, temp.water, light)} and containing data for just one estimation-day
 #'   (this may be >24 hours but only yields estimates for one 24-hour period)
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-est_metab_1d <- function(day) {
+mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  stop_strs <- mm_is_valid_day(day, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+  stop_strs <- mm_is_valid_day(data_ply, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
   warn_strs <- character(0)
 
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
-    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE))
+    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$date.time)), units="days"), na.rm=TRUE))
+    date <- names(which.max(table(as.Date(data_ply$date.time))))
+    frac.GPP <- data_ply$light/sum(data_ply[strftime(data_ply$date.time,"%Y-%m-%d")==date,'light'])
     mle.1d <- tryCatch({
       # first: try to run the MLE fitting function
       nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
-          DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
-          frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
+          DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water,
+          frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days,
+          calc_DO_fun=calc_DO_fun)
     }, warning=function(war) {
       # on warning: record the warning and run nlm again
       warn_strs <- c(warn_strs, war$message)
       suppressWarnings(
         nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
-            DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
-            frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
+            DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water,
+            frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days,
+            calc_DO_fun=calc_DO_fun)
       )
     }, error=function(err) {
       # on error: give up, remembering error. dummy values provided below
@@ -120,23 +106,28 @@ est_metab_1d <- function(day) {
 
 #' Return the likelihood value for a given set of parameters and observations
 #' 
-#' Called from est_metab_1d(). From ?nlm, this function should be "the function
+#' Called from mle_1ply(). From ?nlm, this function should be "the function
 #' to be minimized, returning a single numeric value. This should be a function 
 #' with first argument a vector of the length of p followed by any other 
 #' arguments specified by the ... argument."
 #' 
 #' @param params a vector of length 2, where the first element is GPP and the 
 #'   second element is ER (both mg/L/d)
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @keywords internal
-onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D) {
+onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, calc_DO_fun=calc_DO_mod) {
   
   # Count how many DO observations/predictions there should be
   n <- length(DO.obs)
   
-  # Parse params vector (passed from nlm) and produce DO.mod estimates
-  DO.mod <- calc_DO_mod(
+  # Parse params vector (passed from nlm) and produce DO.mod estimates. It's
+  # important that these arguments are named because various calc_DO_funs take 
+  # slightly different subsets of these arguments
+  DO.mod <- calc_DO_fun(
     GPP.daily=params[1], ER.daily=params[2], K600.daily=params[3],
-    DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
+    DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
+    frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.obs[1], n=n)
   
   # calculate & return the negative log likelihood of DO.mod values relative
   # to DO.obs values. equivalent to Bob's original code & formula at
@@ -190,7 +181,6 @@ predict_metab.metab_mle <- function(metab_model) {
 #' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
 #' etc. from the metabolism model.
 #' 
-#' @import dplyr
 #' @inheritParams predict_DO
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
@@ -198,37 +188,20 @@ predict_metab.metab_mle <- function(metab_model) {
 #' @family predict_DO
 predict_DO.metab_mle <- function(metab_model) {
   
-  # get the metabolism (GPP, ER) estimates
+  # pull args from the model
+  calc_DO_fun <- get(get_args(metab_model)$calc_DO_fun)
+  start_hour <- get_args(metab_model)$start_hour
+  end_hour <- get_args(metab_model)$end_hour
+  
+  # get the metabolism (GPP, ER) data and estimates
   metab_ests <- predict_metab(metab_model)
+  data <- get_data(metab_model)
   
-  # re-process the input data with the metabolism estimates to predict dissolved
-  # oxygen
-  . <- date.time <- ".dplyr.var"
-  get_data(metab_model) %>%
-    mutate(date=as.Date(format(date.time, "%Y-%m-%d"))) %>%
-    group_by(date) %>%
-    do(with(., {
-      # get the daily metabolism estimates, and skip today if they're missing
-      metab_est <- metab_ests[metab_ests$date==date[1],]
-      if(is.na(metab_est$GPP)) {
-        return(data.frame(., DO.mod=NA))
-      }
-      
-      # prepare auxiliary data
-      n <- length(date.time)
-      timestep.days <- mean(as.numeric(diff(date.time), units="days"))
-      frac.GPP=light/sum(light)
-      frac.ER=timestep.days
-      frac.D=timestep.days
-      
-      # produce DO.mod estimates for today's GPP and ER
-      DO.mod <- calc_DO_mod(
-        GPP.daily=metab_est$GPP, 
-        ER.daily=metab_est$ER, 
-        K600.daily=metab_est$K600, 
-        DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
-      
-      data.frame(., DO.mod=DO.mod)
-    }))
-  
+  # re-process the input data with the metabolism estimates to predict DO
+  mm_model_by_ply(data=data, 
+                  model_fun=mm_predict_1ply, 
+                  start_hour=start_hour, 
+                  end_hour=end_hour,
+                  calc_DO_fun=calc_DO_fun, 
+                  metab_ests=metab_ests)
 }

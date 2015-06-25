@@ -5,14 +5,17 @@
 \title{Return the likelihood value for a given set of parameters and observations}
 \usage{
 onestation_negloglik(params, DO.obs, DO.sat, depth, temp.water, frac.GPP,
-  frac.ER, frac.D)
+  frac.ER, frac.D, calc_DO_fun = calc_DO_mod)
 }
 \arguments{
 \item{params}{a vector of length 2, where the first element is GPP and the
 second element is ER (both mg/L/d)}
+
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
+etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \description{
-Called from est_metab_1d(). From ?nlm, this function should be "the function
+Called from mle_1ply(). From ?nlm, this function should be "the function
 to be minimized, returning a single numeric value. This should be a function
 with first argument a vector of the length of p followed by any other
 arguments specified by the ... argument."
