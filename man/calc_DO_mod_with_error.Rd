@@ -4,7 +4,7 @@
 \alias{calc_DO_mod_with_error}
 \title{Simulates DO with error}
 \usage{
-calc_DO_mod_with_error(GPP.daily, ER.daily, k.600.daily, DO.sat, depth,
+calc_DO_mod_with_error(GPP.daily, ER.daily, K600.daily, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, obs.err.sd, obs.err.phi,
   proc.err.sd, proc.err.phi)
 }
@@ -13,11 +13,21 @@ calc_DO_mod_with_error(GPP.daily, ER.daily, k.600.daily, DO.sat, depth,
 
 \item{ER.daily}{One ER rate per day (mg O2 / L / d), always non-positive.}
 
+\item{K600.daily}{One K600 per day (1 / d)}
+
 \item{DO.sat}{dissolved oxygen concentrations if the water were at
 equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 \link{calc_DO_at_sat}}
 
 \item{depth}{stream depth, \eqn{m}{m}.}
+
+\item{temp.water}{stream temperature in degC}
+
+\item{frac.GPP}{the fraction of daily GPP to apply to each timestep}
+
+\item{frac.ER}{the fraction of daily ER to apply to each timestep}
+
+\item{frac.D}{the fraction of daily D to apply to each timestep}
 
 \item{DO.mod.1}{the first DO.obs value, to which the first DO.mod value will
 be set}
@@ -62,8 +72,11 @@ preds <- data.frame(
 all(preds$no_err == calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100),
   rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100))
 library(ggplot2); library(tidyr)
-ggplot(gather(preds, type, value, no_err, obs_err, ac_obs_err), aes(x=t, y=value, color=type)) + geom_line()
-ggplot(gather(preds, type, value, no_err, proc_err, ac_proc_err), aes(x=t, y=value, color=type)) + geom_line()
-ggplot(gather(preds, type, value, no_err, all_err), aes(x=t, y=value, color=type)) + geom_line()
+ggplot(gather(preds, type, value, no_err, obs_err, ac_obs_err),
+  aes(x=t, y=value, color=type)) + geom_line()
+ggplot(gather(preds, type, value, no_err, proc_err, ac_proc_err),
+  aes(x=t, y=value, color=type)) + geom_line()
+ggplot(gather(preds, type, value, no_err, all_err),
+  aes(x=t, y=value, color=type)) + geom_line()
 }
 

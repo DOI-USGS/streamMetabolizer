@@ -4,14 +4,15 @@
 \alias{calc_DO_mod}
 \title{The workhorse DO modeling function}
 \usage{
-calc_DO_mod(GPP.daily, ER.daily, k.600.daily, DO.sat, depth, temp.water,
-  frac.GPP, frac.ER, frac.D, DO.mod.1, n, obs.err.sd, proc.err.sd, obs.err.phi,
-  proc.err.phi)
+calc_DO_mod(GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water,
+  frac.GPP, frac.ER, frac.D, DO.mod.1, n)
 }
 \arguments{
 \item{GPP.daily}{One GPP rate per day (mg O2 / L / d)}
 
 \item{ER.daily}{One ER rate per day (mg O2 / L / d), always non-positive.}
+
+\item{K600.daily}{One K600 per day (1 / d)}
 
 \item{DO.sat}{dissolved oxygen concentrations if the water were at
 equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
@@ -19,20 +20,18 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 
 \item{depth}{stream depth, \eqn{m}{m}.}
 
+\item{temp.water}{stream temperature in degC}
+
+\item{frac.GPP}{the fraction of daily GPP to apply to each timestep}
+
+\item{frac.ER}{the fraction of daily ER to apply to each timestep}
+
+\item{frac.D}{the fraction of daily D to apply to each timestep}
+
 \item{DO.mod.1}{the first DO.obs value, to which the first DO.mod value will
 be set}
 
 \item{n}{number of DO.mod values to produce}
-
-\item{date.time}{date-time values in POSIXct format}
-
-\item{DO.obs}{dissolved oxygen concentration observations, \eqn{mg O[2]
-L^{-1}}{mg O2 / L}}
-
-\item{k.O2}{gas exchange coefficients, \eqn{m d^{-1}}{m / d}.}
-
-\item{light}{photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
-s^{-1}}{micro mols / m^2 / s}}
 }
 \description{
 Accepts GPP, ER, etc. and returns DO.mod. Used in many functions, including

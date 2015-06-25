@@ -3,7 +3,7 @@
 #' Will eventually correct for site elevation, but for now just returns standard
 #' pressure
 #' 
-#' @param the site elevation above sea level in m
+#' @param elevation the site elevation above sea level in m
 #' @param attach.units logical. Should the returned vector be a unitted object?
 #' @return a numeric vector of barometric pressures in Pa, with units attached 
 #'   if any of the input vectors are unitted.

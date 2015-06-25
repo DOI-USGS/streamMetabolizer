@@ -86,14 +86,14 @@ est_metab_1d <- function(day) {
     timestep.days <- suppressWarnings(mean(as.numeric(diff(v(day$date.time)), units="days"), na.rm=TRUE))
     mle.1d <- tryCatch({
       # first: try to run the MLE fitting function
-      nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+      nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
           DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
           frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
     }, warning=function(war) {
       # on warning: record the warning and run nlm again
       warn_strs <- c(warn_strs, war$message)
       suppressWarnings(
-        nlm(onestation_negloglik, p=c(GPP=3, ER=-5, k.600=5), 
+        nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
             DO.obs=day$DO.obs, DO.sat=day$DO.sat, depth=day$depth, temp.water=day$temp.water,
             frac.GPP=day$light/sum(day$light), frac.ER=timestep.days, frac.D=timestep.days)
       )
@@ -135,7 +135,7 @@ onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac
   
   # Parse params vector (passed from nlm) and produce DO.mod estimates
   DO.mod <- calc_DO_mod(
-    GPP.daily=params[1], ER.daily=params[2], k.600.daily=params[3],
+    GPP.daily=params[1], ER.daily=params[2], K600.daily=params[3],
     DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
   
   # calculate & return the negative log likelihood of DO.mod values relative
@@ -225,7 +225,7 @@ predict_DO.metab_mle <- function(metab_model) {
       DO.mod <- calc_DO_mod(
         GPP.daily=metab_est$GPP, 
         ER.daily=metab_est$ER, 
-        k.600.daily=metab_est$K600, 
+        K600.daily=metab_est$K600, 
         DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.obs[1], n)
       
       data.frame(., DO.mod=DO.mod)

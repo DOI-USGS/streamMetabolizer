@@ -20,7 +20,7 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
   # format checking - require tz=GMT and expected units
   if(is.unitted(date.time)) date.time <- v(date.time)
   if(class(date.time)[1] != "POSIXct") stop("expecting date.time as a POSIXct object")
-  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0"))) stop("expecting tz=GMT")
+  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0","UTC"))) stop("expecting tz=GMT")
   # alternative to above: date.time <- with_tz(date.time, tzone="GMT") # hidden feature, or bad/weak error checking?
   if(is.unitted(longitude)) {
     if(get_units(longitude) == "degW") longitude <- u(-1*longitude, "degE")
@@ -37,7 +37,7 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
   
   # either return mean solar time or adjust to true (apparent) solar time
   if(time.type=="mean solar") {
-    return(mean.solar)
+    out <- mean.solar
   } else { # always "apparent solar"
     # Use the equation of time to compute the discrepancy between apparent and
     # mean solar time. E is in minutes.
@@ -46,8 +46,11 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
              7.53*cos(to_radians((360*(jday-81))/365)) - 
              1.5*sin(to_radians((360*(jday-81))/365)), 
            units="mins") # Equation of time as in Yard et al. 2005
-    return(mean.solar + as.difftime(E, units=get_units(E)))
+    out <- mean.solar + as.difftime(E, units=get_units(E))
   }
+  
+  if(is.unitted(date.time) && is.unitted(longitude)) out <- u(out)
+  return(out)
 }
 
 #' @title Convert DateTime from local solar time to GMT

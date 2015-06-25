@@ -2,16 +2,28 @@
 #' 
 #' @param degrees angle in degrees
 #' @return angle in radians
+#' @importFrom unitted u is.unitted verify_units
 to_radians <- function(degrees) {
-  degrees * pi / 180
+  if(is.unitted(degrees)) {
+    verify_units(degrees, "deg")
+    degrees * u(pi / 180, "rad deg^-1")
+  } else {
+    degrees * pi / 180
+  }
 }
 
 #' Convert radians to degrees
 #' 
 #' @param radians angle in radians
 #' @return angle in degrees
+#' @importFrom unitted u is.unitted verify_units
 to_degrees <- function(radians) {
-  radians * 180 / pi
+  if(is.unitted(radians)) {
+    verify_units(radians, "rad")
+    radians * u(180 / pi, "deg rad^-1")
+  } else {
+    radians * 180 / pi
+  }
 }
 
 #' Calculate declination angle as in 
@@ -25,6 +37,7 @@ to_degrees <- function(radians) {
 #' @return numeric value or vector, in the units specified by \code{format}, 
 #'   indicating the declination angle corresponding to each value supplied in 
 #'   \code{jday}.
+#' @importFrom unitted u is.unitted
 #' @examples
 #' decdf <- data.frame(jday=1:366, 
 #'   dec=streamMetabolizer:::calc_declination_angle(1:366))
@@ -34,10 +47,11 @@ to_degrees <- function(radians) {
 #' }
 calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  declination.angle <- asin(sin(to_radians(23.439))*sin(to_radians((360/365)*(283+jday))))
+  declination.angle <- asin(sin(to_radians(23.439))*sin(to_radians((360/365)*(283+v(jday)))))
   if(format == "degrees") {
     declination.angle <- to_degrees(declination.angle)
   }
+  if(is.unitted(jday)) declination.angle <- u(declination.angle, substr(format, 1, 3))
   declination.angle
 }
 
@@ -53,6 +67,7 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #'   or "radians".
 #' @return numeric value or vector, in the units specified by \code{format},
 #'   indicating the angle corresponding to each value supplied in \code{hour}.
+#' @importFrom unitted u is.unitted
 #' @examples
 #' hourdf <- data.frame(hour=c(0:12,12.5:23.5), 
 #'   hragl=streamMetabolizer:::calc_hour_angle(c(0:12,12.5:23.5)))
@@ -64,7 +79,9 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
   hour.angle <- (360/24)*(hour-12)
+  if(is.unitted(hour)) hour.angle <- u(hour.angle, "deg")
   if(format=="radians") hour.angle <- to_radians(hour.angle)
+  if(is.unitted(hour)) hour.angle <- u(hour.angle, substr(format, 1, 3))
   hour.angle
 }
 
@@ -79,6 +96,7 @@ calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #' @param hour.angle numeric value or vector, in the units specified by 
 #'   \code{format}, indicating the angle.
 #' @param format The format of both the output. May be "degrees" or "radians".
+#' @importFrom unitted u is.unitted get_units
 #' @examples
 #' zendf <- data.frame(
 #'   lat=rep(c(0,20,40,60), each=24*4),
@@ -96,6 +114,15 @@ calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #' }
 calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
   format <- match.arg(format)
+  if(is.unitted(latitude)) {
+    # convert latitude units to plain 'deg' as needed
+    latitude <- 
+      switch(
+        get_units(latitude),
+        "deg"=latitude,
+        "degN"=u(latitude, "deg"),
+        "degS"=u(-latitude, "deg"))
+  } 
   latitude <- to_radians(latitude)
   if(format == "degrees") {
     declination.angle <- to_radians(declination.angle)
@@ -137,7 +164,7 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-calc_solar_insolation <- function(date.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=FALSE) {
+calc_solar_insolation <- function(date.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=is.unitted(date.time)) {
   format <- match.arg(format)
   jday <- floor(convert_date_to_doyhr(date.time)) - 1
   hour <- (convert_date_to_doyhr(date.time) %% 1) * 24
@@ -149,7 +176,7 @@ calc_solar_insolation <- function(date.time, latitude, max.insolation=2326, form
   insolation <- pmax(insolation, 0)
 
   if(attach.units) {
-    u(insolation,"J s^-1 m^-2")
+    u(insolation,"W m^-2")
   } else {
     insolation
   }

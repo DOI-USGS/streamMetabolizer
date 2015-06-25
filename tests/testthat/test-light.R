@@ -56,7 +56,7 @@ test_that("can generate light predictions from basic light model", {
       summarize(summer_more_than_winter=all(daily_peak[jday==201] >= daily_peak[jday==1])))$summer_more_than_winter), 
     info="summertime noon insolation exceeds wintertime noon insolation at all latitudes")
   ins_u <- transform(insdf, ins=calc_solar_insolation(datetime, lat, attach.units=TRUE))$ins
-  expect_true(unitted::verify_units(ins_u, "J s^-1 m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
+  expect_true(unitted::verify_units(ins_u, "W m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
   
 })
 

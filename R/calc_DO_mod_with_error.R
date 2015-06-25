@@ -35,18 +35,21 @@
 #' all(preds$no_err == calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100), 
 #'   rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100))
 #' library(ggplot2); library(tidyr)
-#' ggplot(gather(preds, type, value, no_err, obs_err, ac_obs_err), aes(x=t, y=value, color=type)) + geom_line()
-#' ggplot(gather(preds, type, value, no_err, proc_err, ac_proc_err), aes(x=t, y=value, color=type)) + geom_line()
-#' ggplot(gather(preds, type, value, no_err, all_err), aes(x=t, y=value, color=type)) + geom_line()
+#' ggplot(gather(preds, type, value, no_err, obs_err, ac_obs_err), 
+#'   aes(x=t, y=value, color=type)) + geom_line()
+#' ggplot(gather(preds, type, value, no_err, proc_err, ac_proc_err), 
+#'   aes(x=t, y=value, color=type)) + geom_line()
+#' ggplot(gather(preds, type, value, no_err, all_err), 
+#'   aes(x=t, y=value, color=type)) + geom_line()
 calc_DO_mod_with_error <- function(
-  GPP.daily, ER.daily, k.600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n,
+  GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n,
   obs.err.sd, obs.err.phi, proc.err.sd, proc.err.phi) {
   
   # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
   # each timestep)
   GPP <- GPP.daily * frac.GPP / depth
   ER <- ER.daily * frac.ER / depth
-  K <- convert_k600_to_kGAS(k.600.daily, temperature=temp.water, gas="O2") * frac.D
+  K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
   
   # make sure anything in the following loop has n observations
   if(length(DO.sat) != n) DO.sat <- rep(DO.sat, length.out=n) # this would be odd

@@ -7,9 +7,9 @@
 calc_air_pressure(elevation, attach.units = FALSE)
 }
 \arguments{
-\item{attach.units}{logical. Should the returned vector be a unitted object?}
+\item{elevation}{the site elevation above sea level in m}
 
-\item{the}{site elevation above sea level in m}
+\item{attach.units}{logical. Should the returned vector be a unitted object?}
 }
 \value{
 a numeric vector of barometric pressures in Pa, with units attached

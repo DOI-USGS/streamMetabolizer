@@ -126,7 +126,7 @@ mm_validate_data <- function(data, metab_class) {
 mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete_data'), 
                             day_start=-1.5, day_end=30,
                             need_complete=names(day)) {
-  
+
   # check input
   tests <- match.arg(tests, several.ok = TRUE)
   day_start <- as.difftime(day_start, units="hours")
@@ -146,8 +146,8 @@ mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete
   if('full_day' %in% tests & is.finite(timestep)) {
     date_counts <- table(format(day$date.time, "%Y-%m-%d"))
     date_start <- as.POSIXct(paste0(names(date_counts)[which.max(date_counts)], " 00:00:00"), tz="UTC")
-    similar_time <- function(a, b, tol=timestep*0.5) {
-      isTRUE(all.equal(as.numeric(a, units="days"), as.numeric(b, units="days"), tol=as.numeric(tol, units="days")))
+    similar_time <- function(a, b, tol=timestep) {
+      abs(as.numeric(a, units="days") - as.numeric(b, units="days")) < as.numeric(tol, units="days")
     }
     if(!similar_time(min(day$date.time)-date_start, day_start))
       stop_strs <- c(stop_strs, "data don't start when expected")

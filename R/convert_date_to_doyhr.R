@@ -9,7 +9,9 @@
 #' @export
 #' @importFrom lubridate floor_date
 convert_date_to_doyhr <- function(date) {
-  1 + as.numeric(date - floor_date(date, unit="year"), units="days") # days_since_dec31
+  out <- 1 + as.numeric(v(date) - floor_date(v(date), unit="year"), units="days") # days_since_dec31
+  if(is.unitted(date)) out <- u(out, get_units(date))
+  out
 }
 
 #' Convert a a day of year (1-366) with decimal hours to a date
@@ -24,6 +26,8 @@ convert_date_to_doyhr <- function(date) {
 #'   
 #' @export
 convert_doyhr_to_date <- function(doyhr, year, tz="GMT", origin=as.POSIXct("1970-01-01 00:00:00",tz="GMT"), ...) {
-  secs_since_jan1 <- (doyhr-1)*24*60*60
-  as.POSIXct(sprintf("%d-01-01 00:00:00",year), tz=tz, origin=origin, ...) + secs_since_jan1
+  secs_since_jan1 <- (v(doyhr)-1)*24*60*60
+  out <- as.POSIXct(sprintf("%d-01-01 00:00:00",v(year)), tz=tz, origin=origin, ...) + secs_since_jan1
+  if(is.unitted(doyhr)) out <- u(out, get_units(doyhr))
+  out
 }
