@@ -28,9 +28,10 @@ test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
   metab <- predict_metab(mm)
   expect_equal(metab$GPP + metab$ER, metab$NEP)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24<- filter(DO_preds, format(date.time, "%Y-%m-%d") == "2012-08-24")
+  DO_preds_Aug24<- filter(DO_preds, date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
   # library(ggplot2); ggplot(DO_preds, aes(x=date.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=date.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
   
 })
 

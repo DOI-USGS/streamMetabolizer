@@ -106,10 +106,12 @@ bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps
 #' Prepare data for passing to JAGS
 #' 
 #' This function accepts exactly one day's worth of data, (one ply, which might 
-#' be 24 hrs or 31.5 or so), which should already be validated. It prepares the
+#' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
 #' data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
 #' 
 #' @param data_ply one day's worth of data
+#' @param priors logical. Should the data list be modified such that JAGS will
+#'   return priors rather than posteriors?
 #' @return list of data for input to runjags
 #' @export
 prepjags_bayes_simple <- function(data_ply, priors=FALSE) {

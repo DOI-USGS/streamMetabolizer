@@ -7,16 +7,16 @@
 mm_predict_1ply(data_ply, calc_DO_fun, metab_ests)
 }
 \arguments{
+\item{data_ply}{a data.frame of predictor data for a single ply (~day)}
+
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 
 \item{metab_ests}{a data.frame of metabolism estimates for all days, from
 which this function will choose the relevant estimates}
-
-\item{data}{a data.frame of predictor data for a single ply (~day)}
 }
 \value{
-a data.frame of
+a data.frame of predictions
 }
 \description{
 Called from mm_model_by_ply

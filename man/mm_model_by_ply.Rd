@@ -11,13 +11,13 @@ mm_model_by_ply(data, model_fun, start_hour, end_hour, ...)
 
 \item{model_fun}{the function to apply to each data ply}
 
+\item{start_hour}{the hour of the preceding day on which a date's metabolism
+calculation should begin}
+
+\item{end_hour}{the hour of the following day on which a date's metabolism
+calculation should end}
+
 \item{...}{additional args passed to model_fun}
-
-\item{the}{hour of the preceding day on which a date's metabolism calculation
-should begin}
-
-\item{the}{hour of the following day on which a date's metabolism calculation
-should end}
 }
 \value{
 a data.frame of fitting results

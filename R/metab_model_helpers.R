@@ -184,10 +184,10 @@ mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete
 #' 
 #' @param data the data.frame containing all relevant, validated modeling data
 #' @param model_fun the function to apply to each data ply
-#' @param the hour of the preceding day on which a date's metabolism calculation
-#'   should begin
-#' @param the hour of the following day on which a date's metabolism calculation
-#'   should end
+#' @param start_hour the hour of the preceding day on which a date's metabolism 
+#'   calculation should begin
+#' @param end_hour the hour of the following day on which a date's metabolism
+#'   calculation should end
 #' @param ... additional args passed to model_fun
 #' @return a data.frame of fitting results
 mm_model_by_ply <- function(data, model_fun, start_hour, end_hour, ...) {
@@ -225,12 +225,12 @@ mm_model_by_ply <- function(data, model_fun, start_hour, end_hour, ...) {
 #' 
 #' Called from mm_model_by_ply
 #' 
-#' @param data a data.frame of predictor data for a single ply (~day)
+#' @param data_ply a data.frame of predictor data for a single ply (~day)
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @param metab_ests a data.frame of metabolism estimates for all days, from
 #'   which this function will choose the relevant estimates
-#' @return a data.frame of
+#' @return a data.frame of predictions
 mm_predict_1ply <- function(data_ply, calc_DO_fun, metab_ests) {
   
   # determine which date these data center on

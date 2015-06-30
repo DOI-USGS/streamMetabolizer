@@ -8,6 +8,9 @@ prepjags_bayes_simple(data_ply, priors = FALSE)
 }
 \arguments{
 \item{data_ply}{one day's worth of data}
+
+\item{priors}{logical. Should the data list be modified such that JAGS will
+return priors rather than posteriors?}
 }
 \value{
 list of data for input to runjags
