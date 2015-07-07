@@ -18,7 +18,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes_simple <- function(
-  data=mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), 
   maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1) {
   
   # Check data for correct column names & units
@@ -46,7 +46,7 @@ metab_bayes_simple <- function(
 #' 
 #' Called from metab_bayes_simple().
 #' 
-#' @param data_ply data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+#' @param data_ply data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
 #'   depth, temp.water, light)} and containing data for just one estimation-day
 #'   (this may be >24 hours but only yields estimates for one 24-hour period)
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
@@ -117,8 +117,8 @@ bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps
 prepjags_bayes_simple <- function(data_ply, priors=FALSE) {
   
   #Useful info for setting JAGS data
-  date <- names(which.max(table(as.Date(data_ply$date.time))))
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$date.time)), units="days"), na.rm=TRUE))
+  date <- names(which.max(table(as.Date(data_ply$local.time))))
+  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
   
   # Format the data for Jags
   dataList = list(
@@ -127,7 +127,7 @@ prepjags_bayes_simple <- function(data_ply, priors=FALSE) {
     n = nrow(data_ply),
     
     # Every timestep
-    frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$date.time,"%Y-%m-%d")==date]),
+    frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$local.time,"%Y-%m-%d")==date]),
     frac.ER = rep(timestep.days, nrow(data_ply)),
     frac.D = rep(timestep.days, nrow(data_ply)),
     KO2.conv = convert_k600_to_kGAS(k600=1, temperature=data_ply$temp.water, gas="O2"),

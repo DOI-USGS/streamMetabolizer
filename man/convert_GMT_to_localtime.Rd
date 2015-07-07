@@ -8,7 +8,7 @@ convert_GMT_to_localtime(date.time, latitude, longitude,
   time.type = c("standard local", "daylight local"))
 }
 \arguments{
-\item{date.time}{POSIXct object}
+\item{date.time}{POSIXct object the date and time in GMT}
 
 \item{latitude}{numeric, in degrees, either positive and unitted ("degN" or
 "degS") or with sign indicating direction (positive = North)}

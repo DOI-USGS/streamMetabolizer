@@ -4,8 +4,8 @@
 \alias{metab_mle}
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
-metab_mle(data = mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
-  calc_DO_fun = calc_DO_mod)
+metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
+  light), calc_DO_fun = calc_DO_mod)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format

@@ -4,7 +4,7 @@
 \alias{metab_bayes_simple}
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
-metab_bayes_simple(data = mm_data(date.time, DO.obs, DO.sat, depth,
+metab_bayes_simple(data = mm_data(local.time, DO.obs, DO.sat, depth,
   temp.water, light), maxCores = 4, adaptSteps = 10, burnInSteps = 40,
   numSavedSteps = 400, thinSteps = 1)
 }

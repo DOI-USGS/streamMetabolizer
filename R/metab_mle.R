@@ -21,7 +21,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(date.time, DO.obs, DO.sat, depth, temp.water, light),
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   calc_DO_fun=calc_DO_mod) {
   
   # Check data for correct column names & units
@@ -47,7 +47,7 @@ metab_mle <- function(
 #' 
 #' Called from metab_mle().
 #' 
-#' @param data_ply data.frame of the form \code{mm_data(date.time, DO.obs, DO.sat,
+#' @param data_ply data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
 #'   depth, temp.water, light)} and containing data for just one estimation-day
 #'   (this may be >24 hours but only yields estimates for one 24-hour period)
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
@@ -65,9 +65,9 @@ mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
 
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
-    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$date.time)), units="days"), na.rm=TRUE))
-    date <- names(which.max(table(as.Date(data_ply$date.time))))
-    frac.GPP <- data_ply$light/sum(data_ply[strftime(data_ply$date.time,"%Y-%m-%d")==date,'light'])
+    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
+    date <- names(which.max(table(as.Date(data_ply$local.time))))
+    frac.GPP <- data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==date,'light'])
     mle.1d <- tryCatch({
       # first: try to run the MLE fitting function
       nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 

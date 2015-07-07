@@ -6,8 +6,9 @@ library(unitted)
 french <- streamMetabolizer:::load_french_creek()
 #french$date.time <- convert_GMT_to_solartime(french$date.time, longitude=-106.48059) # seems to already be local time, close enough to solar
 french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
-french$light <- convert_SW_to_PAR(calc_solar_insolation(date.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
-french <- french[c("date.time","DO.obs","DO.sat","depth","temp.water","light")]
+french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
+french$local.time <- french$date.time
+french <- french[c("local.time","DO.obs","DO.sat","depth","temp.water","light")]
 
 
 test_that("metabolism models run & produce reasonable output", {
@@ -30,8 +31,8 @@ test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- filter(DO_preds, date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
-  # library(ggplot2); ggplot(DO_preds, aes(x=date.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=date.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds, aes(x=local.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
   
 })
 
