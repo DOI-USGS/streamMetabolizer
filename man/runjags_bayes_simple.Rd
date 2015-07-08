@@ -25,6 +25,8 @@ collect MCMC 'data'}
 a data.frame of outputs
 }
 \description{
-Actually run JAGS on a formatted data ply
+Seems to need to import rjags but does not, for now, because I can't get
+rjags to install on the Condor cluster. Including an import rjags line here
+allowed runjags to do its job last time I tried.
 }
 

@@ -24,8 +24,7 @@ Imports:
     RCurl,
     XML,
     methods,
-    runjags,
-    rjags
+    runjags
 Suggests:
     knitr,
     ggplot2,
