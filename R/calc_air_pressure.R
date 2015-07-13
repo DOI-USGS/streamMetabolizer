@@ -41,7 +41,7 @@ calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), att
   Pb <- u(760, "mmHg") # standard pressure
   g0 <- u(9.80665, "m s^-2") # gravitational acceleration
   M <- u(0.0289644, "kg mol^-1") # molar mass of Earth's air
-  Rst <- u(8.31447, "N m mol^-1 K^-1") * u(1, "kg m s^-2 N^-1") # universal gas constant for air: 8.31432 N·m /(mol·K)
+  Rst <- u(8.31447, "N m mol^-1 K^-1") * u(1, "kg m s^-2 N^-1") # universal gas constant for air: 8.31432 N*m /(mol*K)
   Ta <- u(273.15, "K") + temp.air*u(1, "K degC^-1") # actual temperature in Kelvins
   baro <- Pb * exp((-1 * g0 * M * elevation)/(Rst * Ta)) * u(133.322368, "Pa mmHg^-1")
   
