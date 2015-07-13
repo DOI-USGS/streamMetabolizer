@@ -6,6 +6,15 @@ r_github_packages:
  - jimhester/covr
  - appling/unitted
 
+ install:
+  - wget http://downloads.sourceforge.net/project/mcmc-jags/JAGS/3.x/Source/JAGS-3.4.0.tar.gz
+  - tar xfvs JAGS-3.4.0.tar.gz
+  - cd JAGS-3.4.0
+  - sudo ./configure
+  - sudo make
+  - sudo make install
+  - cd ..
+  
 after_success:
   - Rscript -e 'covr::coveralls()'
 
