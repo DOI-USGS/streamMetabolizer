@@ -4,10 +4,10 @@
 \alias{convert_localtime_to_GMT}
 \title{Convert time from local time to GMT.}
 \usage{
-convert_localtime_to_GMT(date.time)
+convert_localtime_to_GMT(local.time)
 }
 \arguments{
-\item{date.time}{POSIXct date+time of interest, already in local time as
+\item{local.time}{POSIXct date+time of interest, already in local time as
 specified by the tz attribute}
 }
 \description{

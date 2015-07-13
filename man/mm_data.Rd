@@ -13,14 +13,17 @@ mm_data(...)
 \value{
 data data.frame with columns \itemize{
 
-  \item{ \code{date.time} date-time values in solar time, in POSIXct format
-  with a nominal time zone of UTC.
+  \item{ \code{local.time} date-time values in local, NON-DAYLIGHT-SAVINGS
+  time, in POSIXct format with the true local tz format.}
+
+  \item{ \code{solar.time} date-time values in solar time, in POSIXct format
+  with a nominal time zone of UTC.}
 
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
   O[2] L^{-1}}{mg O2 / L}}
 
   \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at
-  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}}. Calculate using
+  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
   \link{calc_DO_at_sat}}
 
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
@@ -43,6 +46,6 @@ may deviate from this format, but this is discouraged.
 }
 \examples{
 mm_data()
-mm_data(depth, light, date.time)
+mm_data(depth, light, local.time)
 }
 

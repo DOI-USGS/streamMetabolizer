@@ -52,8 +52,8 @@ test_that("can generate light predictions from basic light model", {
   expect_true(all(
     (insdf %>% select(lat, jday, ins) %>%
        group_by(lat, jday) %>% 
-      summarise(daily_peak=max(ins)) %>% 
-      summarize(summer_more_than_winter=all(daily_peak[jday==201] >= daily_peak[jday==1])))$summer_more_than_winter), 
+      dplyr::summarize(daily_peak=max(ins)) %>% 
+      dplyr::summarize(summer_more_than_winter=all(daily_peak[jday==201] >= daily_peak[jday==1])))$summer_more_than_winter), 
     info="summertime noon insolation exceeds wintertime noon insolation at all latitudes")
   ins_u <- transform(insdf, ins=calc_solar_insolation(datetime, lat, attach.units=TRUE))$ins
   expect_true(unitted::verify_units(ins_u, "W m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
@@ -69,26 +69,27 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
     lat=rep(c(0,20,40,60,80), each=18),
     jday=rep(seq(1, 360, by=20), times=5)) %>%
     transform(
-      date.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="GMT")) %>% 
+      solar.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="GMT")) %>% 
     transform(
-      lm_sunrise=calc_sun_rise_set(date.time, lat)[,1],
-      lm_sunset=calc_sun_rise_set(date.time, lat)[,2]) %>%
+      local.time=solar.time,
+      lm_sunrise=calc_sun_rise_set(solar.time, lat)[,1],
+      lm_sunset=calc_sun_rise_set(solar.time, lat)[,2]) %>%
     group_by(jday, lat) %>%
     do(with(., {
       # compare to streamMetabolizer method, which determines light at any given time
       hours <- seq(0,23.95,by=0.05)
-      insol <- calc_solar_insolation(date.time+as.difftime(hours, units="hours"), lat=lat)
+      insol <- calc_solar_insolation(solar.time+as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(insol > 0.00001)
       if(any(!is.na(whichdaytime)))
-        sm_daytime <- date.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        sm_daytime <- solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         sm_daytime <- c(NA,NA)
       
       # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- calc_is_daytime(date.time+as.difftime(hours, units="hours"), lat=lat)
+      isday <- calc_is_daytime(solar.time+as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(isday)
       if(any(!is.na(whichdaytime)))
-        id_daytime <- date.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        id_daytime <- solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         id_daytime <- c(NA,NA)
       
@@ -105,7 +106,7 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
   #     sunrise=as.numeric(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT"), "day"), units="hours"), 
   #     sunset=as.numeric(as.POSIXct(sunset, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunset, origin="1970-01-01", tz="GMT"), "day"), units="hours"))
   # library(ggplot2)
-  # ggplot(instidy, aes(x=date.time, y=sunrise, color=pkg, linetype=factor(lat))) + geom_line() + geom_point() + theme_bw()
+  # ggplot(instidy, aes(x=solar.time, y=sunrise, color=pkg, linetype=factor(lat))) + geom_line() + geom_point() + theme_bw()
   
   # expect_that inspection
   diffs <- insdf %>%
@@ -113,7 +114,7 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
       diff_sunrise = as.numeric(sm_sunrise - lm_sunrise, units="mins"),
       diff_sunset = as.numeric(sm_sunset - lm_sunset, units="mins")) %>%
     group_by(lat) %>%
-    summarize(
+    dplyr::summarize(
       max_diff_sunrise = max(abs(diff_sunrise), na.rm=TRUE),
       max_diff_sunset = max(abs(diff_sunset), na.rm=TRUE))
   expect_less_than(max(filter(diffs, lat==0)[,c("max_diff_sunrise","max_diff_sunset")]), 3.5)
@@ -122,3 +123,4 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
   expect_less_than(max(filter(diffs, lat==60)[,c("max_diff_sunrise","max_diff_sunset")]), 12)
   expect_less_than(max(filter(diffs, lat==80)[,c("max_diff_sunrise","max_diff_sunset")]), 100) # difference of up to 97 minutes at high lat when run for all days
 })
+

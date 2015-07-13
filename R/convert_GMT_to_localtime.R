@@ -4,7 +4,7 @@
 #' savings. Recommended for post-analysis visualization only; most functions in 
 #' streamMetabolizer use times in GMT.
 #' 
-#' @param date.time POSIXct object
+#' @param date.time POSIXct object the date and time in GMT
 #' @param latitude numeric, in degrees, either positive and unitted ("degN" or 
 #'   "degS") or with sign indicating direction (positive = North)
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
@@ -25,7 +25,7 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
   time.type <- match.arg(time.type)
   if(is.unitted(date.time)) date.time <- v(date.time)
   if(class(date.time)[1] != "POSIXct") stop("expecting date.time as a POSIXct object")
-  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0"))) stop("expecting tz=GMT")
+  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0","UTC"))) stop("expecting tz=GMT")
   # alternative to above: date.time <- with_tz(date.time, tzone="GMT") # hidden feature, or bad/weak error checking?
   with_units <- (is.unitted(longitude) | is.unitted(latitude))
   if(with_units) {
@@ -80,7 +80,8 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
   if(time.type == "daylight local") {
     lubridate::with_tz(date.time, tz.info$tz)
   } else {
-    std.tz <- sprintf("Etc/GMT%s%d", if(tz.info$std_offset < u(0, "hours")) "-" else "+", abs(as.numeric(v(tz.info$std_offset))))
+    # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
+    std.tz <- sprintf("Etc/GMT%s%d", if(tz.info$std_offset > u(0, "hours")) "-" else "+", abs(as.numeric(v(tz.info$std_offset))))
     if(std.tz %in% c("Etc/GMT+0", "Etc/GMT-0")) std.tz <- "GMT"
     lubridate::with_tz(date.time, std.tz)
   }  
@@ -91,12 +92,12 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
 #' Convert time from local time (either standard or with daylight savings) to 
 #' GMT.
 #' 
-#' @param date.time POSIXct date+time of interest, already in local time as
+#' @param local.time POSIXct date+time of interest, already in local time as
 #'   specified by the tz attribute
 #' @importFrom lubridate with_tz
 #' @references 
 #' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 #' @export
-convert_localtime_to_GMT <- function(date.time) {
-  return(with_tz(date.time, "GMT"))
+convert_localtime_to_GMT <- function(local.time) {
+  return(with_tz(local.time, "GMT"))
 }

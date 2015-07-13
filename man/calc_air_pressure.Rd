@@ -4,16 +4,21 @@
 \alias{calc_air_pressure}
 \title{Calculates the average air pressure for a site}
 \usage{
-calc_air_pressure(elevation, attach.units = FALSE)
+calc_air_pressure(temp.air = u(15, "degC"), elevation = u(762, "m"),
+  attach.units = FALSE)
 }
 \arguments{
-\item{elevation}{the site elevation above sea level in m}
+\item{temp.air}{air temperature in degrees C. Default is 15 degC.}
+
+\item{elevation}{the site elevation above sea level in m. Default is the
+rough mean elevation of the USA at 2500 ft (from
+http://www.infoplease.com/ipa/A0001792.html)}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
 }
 \value{
 a numeric vector of barometric pressures in Pa, with units attached
-  if any of the input vectors are unitted.
+  if requested.
 }
 \description{
 Will eventually correct for site elevation, but for now just returns standard

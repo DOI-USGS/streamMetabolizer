@@ -5,11 +5,11 @@
 \title{Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
 \usage{
-calc_solar_insolation(date.time, latitude, max.insolation = 2326,
-  format = c("degrees", "radians"), attach.units = is.unitted(date.time))
+calc_solar_insolation(solar.time, latitude, max.insolation = 2326,
+  format = c("degrees", "radians"), attach.units = is.unitted(solar.time))
 }
 \arguments{
-\item{date.time}{POSIXct vector of date-time values in apparent solar time,
+\item{solar.time}{POSIXct vector of date-time values in apparent solar time,
 e.g., as returned by \code{convert_GMT_to_solartime(...,
 time.type="apparent solar")}}
 

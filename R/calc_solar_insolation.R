@@ -142,7 +142,7 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
 #' 
 #' @importFrom unitted u
-#' @param date.time POSIXct vector of date-time values in apparent solar time,
+#' @param solar.time POSIXct vector of date-time values in apparent solar time,
 #'   e.g., as returned by \code{convert_GMT_to_solartime(...,
 #'   time.type="apparent solar")}
 #' @inheritParams calc_declination_angle
@@ -164,10 +164,10 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-calc_solar_insolation <- function(date.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=is.unitted(date.time)) {
+calc_solar_insolation <- function(solar.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=is.unitted(solar.time)) {
   format <- match.arg(format)
-  jday <- floor(convert_date_to_doyhr(date.time)) - 1
-  hour <- (convert_date_to_doyhr(date.time) %% 1) * 24
+  jday <- floor(convert_date_to_doyhr(solar.time)) - 1
+  hour <- (convert_date_to_doyhr(solar.time) %% 1) * 24
   declination.angle <- calc_declination_angle(jday, format=format)
   hour.angle <- calc_hour_angle(hour, format=format)
   zenith.angle <- calc_zenith_angle(latitude, declination.angle, hour.angle, format=format)

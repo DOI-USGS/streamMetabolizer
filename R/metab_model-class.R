@@ -164,7 +164,7 @@ predict_metab.metab_model <- function(metab_model) {
 predict_DO.metab_model <- function(metab_model) {
   
   # Generate dummy output
-  date.time <- do.call(seq, c(as.list(as.POSIXct(strptime(c("2015-04-16", "2015-04-17"), format="%Y-%m-%d"))), list(by=as.difftime(15, units="mins"))))[-97]
-  DO <- sin(as.numeric(date.time-min(date.time))/86500*2*pi)
-  data.frame(date.time=date.time, DO.mod=DO)
+  local.time <- do.call(seq, c(as.list(as.POSIXct(strptime(c("2015-04-16", "2015-04-17"), format="%Y-%m-%d"))), list(by=as.difftime(15, units="mins"))))[-97]
+  DO <- sin(as.numeric(local.time-min(local.time))/86500*2*pi)
+  data.frame(local.time=local.time, DO.mod=DO)
 }

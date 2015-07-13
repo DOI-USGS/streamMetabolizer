@@ -1,0 +1,59 @@
+model {
+  
+  # Convert daily rates to per-observation rates
+  for(i in 1:n) {
+    GPP[i] <- GPP.daily * frac.GPP[i] / depth[i]
+    ER[i] <- ER.daily * frac.ER[i] / depth[i]
+    K[i] <- K600.daily * KO2.conv[i] * frac.D[i]
+  }
+  
+  # Model DO changes as in Hotchkiss & Hall 2014, eq. 2
+  DO.mod[1] <- DO.obs[1]
+  for(i in 2:n) {
+    DO.mod[i] <- DO.mod[i-1] +
+      GPP[i] + 
+      ER[i] + 
+      K[i] * (DO.sat[i] - DO.mod[i-1])
+  } 
+  
+  # Compare all the DO predictions to their observations
+  for (i in 2:n) {
+    DO.obs[i] ~ dnorm(DO.mod[i], DO.err.tau)
+  }
+  
+  # Prior on the sd of the errors between modeled and observed DO
+  DO.err.tau ~ dgamma(0.001,0.001)
+  
+  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1). 
+  GPP.daily ~ dnorm(GPP.daily.mu, GPP.daily.tau)
+  ER.daily ~ dnorm(ER.daily.mu, ER.daily.tau)
+  K600.daily ~ dnorm(K600.daily.mu, K600.daily.tau)
+  
+}
+
+#### Notes ####
+
+# In JAGS, shape==r=first_parameter and rate==lambda==second_parameter.
+#   GPP_shape <- GPP_mean^2/GPP_sd^2 # shape == r
+#   GPP_rate <- GPP_mean/GPP_sd^2 # rate == lambda
+#   ER_shape <- ER_mean^2/ER_sd^2
+#   ER_rate <- ER_mean/ER_sd^2
+#   K600_shape <- K600_mean^2/K600_sd^2
+#   K600_rate <- K600_mean/K600_sd^2
+
+# Alternative distributions for GPP.daily, ER.daily, and K600.daily:
+# GPP.daily ~ dgamma(GPP_r, GPP_lambda)
+# ER.daily ~ dgamma(ER_r, ER_lambda)
+# K600.daily ~ dgamma(K600_r, K600_lambda)
+
+# Here's how to get the dgamma Jags function straight:
+# dgamma_jags <- function(x, r, lambda) {
+#   # using variable names as in JAGS manual, p. 29 of http://people.math.aau.dk/~kkb/Undervisning/Bayes14/sorenh/docs/jags_user_manual.pdf
+#   (lambda^r * x^(r-1) * exp(-lambda*x)) / (gamma(r)) 
+# }
+# source("lib/DBDA2E-utilities.R")
+# (ps <- gammaShRaFromMeanSD(mean=5,sd=100))
+# x=seq(0,100,by=0.1); r=ps$shape; lambda=ps$rate
+# plot(x=x, y=dgamma_jags(x, 1.01, 0.1), type="l")
+# plot(x=x, y=dgamma_jags(x, r, lambda), type="l")
+# plot(x=x, y=dgamma(x, shape=r, rate=lambda), type="l")
