@@ -6,7 +6,7 @@ r_github_packages:
  - jimhester/covr
  - appling/unitted
 
- install:
+install:
   - wget http://downloads.sourceforge.net/project/mcmc-jags/JAGS/3.x/Source/JAGS-3.4.0.tar.gz
   - tar xfvs JAGS-3.4.0.tar.gz
   - cd JAGS-3.4.0
