@@ -14,6 +14,8 @@ before_install:
   - sudo make
   - sudo make install
   - cd ..
+  - sudo rm -f JAGS-3.4.0.tar.gz
+  - sudo rm -rf JAGS-3.4.0
 
 r_github_packages:
  - jimhester/covr
