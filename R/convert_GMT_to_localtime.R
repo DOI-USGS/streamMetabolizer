@@ -74,7 +74,7 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
   tz.info <- google_timezone(latitude, longitude, date.time.std)
   
   # check the output for validity
-  if(tz.info$tz == "" | is.na(tz.info$std_offset)) stop("sorry, could not find time zone for specified lat/long")
+  if(tz.info$tz == "" || is.na(tz.info$std_offset)) stop("sorry, could not find time zone for specified lat/long")
   
   # return in specified format
   if(time.type == "daylight local") {
