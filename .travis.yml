@@ -7,7 +7,7 @@ sudo: required
 warnings_ar_errors: true
 
 before_install:
-  - wget http://downloads.sourceforge.net/project/mcmc-jags/JAGS/3.x/Source/JAGS-3.4.0.tar.gz
+  - wget http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.tar.gz
   - tar xfvs JAGS-3.4.0.tar.gz
   - cd JAGS-3.4.0
   - sudo ./configure
