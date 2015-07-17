@@ -193,33 +193,73 @@ mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete
 #' @param end_hour the hour of the following day on which a date's metabolism
 #'   calculation should end
 #' @param ... additional args passed to model_fun
+#' @import dplyr
 #' @return a data.frame of fitting results
 mm_model_by_ply <- function(data, model_fun, start_hour, end_hour, ...) {
+  
+  # my use of dplyr might be responsible for seg faults here. try it without
+  # dplyr.
+  use.dplyr <- FALSE
+  
   # Identify the data plys that will let us use a 31.5-hr window for each date -
   # this labeling can be stored in two additional columns (odd.- and even.- 
   # date.group)
-  local.time <- hour <- ".dplyr.var"
-  data.plys <- data %>% 
-    mutate(date=as.Date(format(local.time, "%Y-%m-%d")),
-           hour=24*(convert_date_to_doyhr(local.time) %% 1))
+  if(use.dplyr) {
+    local.time <- hour <- ".dplyr.var"
+    data.plys <- data %>% 
+      mutate(date=as.Date(format(local.time, "%Y-%m-%d")),
+             hour=24*(convert_date_to_doyhr(local.time) %% 1))
+  } else {
+    data.plys <- as.data.frame(v(data))
+    data.plys$date <- as.Date(format(data.plys$local.time, "%Y-%m-%d"))
+    data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$local.time) %% 1)
+  }
+  
   unique.dates <- unique(data.plys$date)
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
-  data.plys <- data.plys %>% 
-    group_by(date) %>%
-    mutate(odd.date.group=if(date[1] %in% odd.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= end_hour, 1, ifelse(hour < start_hour, 2, 3))],
-           even.date.group=if(date[1] %in% even.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= end_hour, 1, ifelse(hour < start_hour, 2, 3))]) %>%
-    ungroup() %>% select(-date)
+  
+  if(use.dplyr) {
+    data.plys <- data.plys %>% 
+      group_by(date) %>%
+      mutate(odd.date.group=if(date[1] %in% odd.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= end_hour, 1, ifelse(hour < start_hour, 2, 3))],
+             even.date.group=if(date[1] %in% even.dates) date else c(date[1]-1, as.Date(NA), date[1]+1)[ifelse(hour <= end_hour, 1, ifelse(hour < start_hour, 2, 3))]) %>%
+      ungroup() %>% select(-date)
+  } else {
+    for(dt in unique(data.plys$date)) {
+      hr <- data.plys[data.plys$date == dt, 'hour']
+      primary.date <- dt
+      secondary.date <- c(dt-1, as.Date(NA), dt+1)[ifelse(hr <= end_hour, 1, ifelse(hr < start_hour, 2, 3))]
+      data.plys[data.plys$date == dt, 'odd.date.group'] <- if(dt %in% odd.dates) primary.date else secondary.date
+      data.plys[data.plys$date == dt, 'even.date.group'] <- if(dt %in% even.dates) primary.date else secondary.date
+    } 
+    data.plys <- data.plys[,-which(names(data.plys)=='date')]
+  }
   
   # Estimate daily metabolism for each ply of the data, using two group_by/do
   # combinations to cover the odd and even groupings
-  . <- odd.date.group <- even.date.group <- ".dplyr.var"
-  out.all <- 
-    bind_rows(
-      data.plys %>% group_by(date=odd.date.group) %>% do(model_fun(., ...)), # filter(!is.na(odd.date.group)) %>%, filter(!is.na(even.date.group)) %>% 
-      data.plys %>% group_by(date=even.date.group) %>% do(model_fun(., ...))) %>% 
-    filter(!is.na(date), date %in% unique.dates) %>%
-    arrange(date) 
+  if(use.dplyr) {
+    . <- odd.date.group <- even.date.group <- ".dplyr.var"
+    out.all <- 
+      bind_rows(
+        data.plys %>% group_by(date=odd.date.group) %>% do(model_fun(., ...)), # filter(!is.na(odd.date.group)) %>%, filter(!is.na(even.date.group)) %>% 
+        data.plys %>% group_by(date=even.date.group) %>% do(model_fun(., ...))) %>% 
+      filter(!is.na(date), date %in% unique.dates) %>%
+      arrange(date) 
+  } else {
+    out.all <- do.call(
+      rbind, 
+      lapply(sort(unique.dates), function(dt) {
+        ply <- if(dt %in% odd.dates) {
+          which(data.plys$odd.date.group == dt)
+        } else {
+          which(data.plys$even.date.group == dt)
+        }
+        out <- model_fun(data.plys[ply,], ...)
+        out$date <- dt
+        out[,c(ncol(out), 1:(ncol(out)-1))]
+      }))
+  } 
   
   out.all
 }
