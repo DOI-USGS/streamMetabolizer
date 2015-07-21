@@ -4,11 +4,15 @@
 \alias{predict_metab.metab_model}
 \title{Make metabolism predictions from a fitted metab_model.}
 \usage{
-\method{predict_metab}{metab_model}(metab_model)
+\method{predict_metab}{metab_model}(metab_model, ci_level = 0.95, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{ci_level}{the alpha level for the confidence or credible interval}
+
+\item{...}{other arguments passed to specific}
 }
 \value{
 A data.frame of predictions, as for the generic
@@ -18,8 +22,6 @@ A data.frame of predictions, as for the generic
 Makes daily predictions of GPP, ER, and NEP.
 }
 \seealso{
-Other predict_metab: \code{\link{predict_metab.metab_bayes_simple}};
-  \code{\link{predict_metab.metab_mle}};
-  \code{\link{predict_metab}}
+Other predict_metab: \code{\link{predict_metab}}
 }
 

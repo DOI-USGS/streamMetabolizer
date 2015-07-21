@@ -42,6 +42,7 @@ metab_bayes_simple <- function(
   new("metab_bayes_simple", 
       info=info,
       fit=bayes.all,
+      # metab_bayes_simple always uses the equivalent of calc_DO_mod
       args=list(calc_DO_fun=calc_DO_mod, day_start=day_start, day_end=day_end,
                 maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 
                 numSavedSteps=numSavedSteps, thinSteps=thinSteps),
@@ -232,55 +233,3 @@ setClass(
   contains="metab_model"
 )
 
-
-#' Make metabolism predictions from a fitted metab_model.
-#' 
-#' Makes daily predictions of GPP, ER, and NEP.
-#' 
-#' @inheritParams predict_metab
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_metab}}.
-#' @export
-#' @import dplyr
-#' @family predict_metab
-predict_metab.metab_bayes_simple <- function(metab_model) {
-  
-  GPP <- ER <- NEP <- K600 <- ".dplyr.var"
-  get_fit(metab_model) %>% 
-    mutate(NEP=GPP+ER) %>%
-    select(date, GPP, ER, NEP, K600)
-  
-}
-
-
-#' Make dissolved oxygen predictions from a fitted metab_model.
-#' 
-#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
-#' etc. from the metabolism model.
-#' 
-#' @inheritParams predict_DO
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_DO}}.
-#' @export
-#' @family predict_DO
-predict_DO.metab_bayes_simple <- function(metab_model) {
-  
-  # metab_bayes_simple always uses the equivalent of calc_DO_mod
-  calc_DO_fun <- calc_DO_mod
-  
-  # pull args from the model
-  start_hour <- get_args(metab_model)$start_hour
-  end_hour <- get_args(metab_model)$end_hour
-  
-  # get the metabolism (GPP, ER) data and estimates
-  metab_ests <- predict_metab(metab_model)
-  data <- get_data(metab_model)
-  
-  # re-process the input data with the metabolism estimates to predict DO
-  mm_model_by_ply(data=data, 
-                  model_fun=mm_predict_1ply, 
-                  start_hour=start_hour, 
-                  end_hour=end_hour,
-                  calc_DO_fun=calc_DO_fun, 
-                  metab_ests=metab_ests)
-}

@@ -19,8 +19,6 @@ Makes fine-scale predictions of dissolved oxygen using fitted coefficients,
 etc. from the metabolism model.
 }
 \seealso{
-Other predict_DO: \code{\link{predict_DO.metab_bayes_simple}};
-  \code{\link{predict_DO.metab_mle}};
-  \code{\link{predict_DO}}
+Other predict_DO: \code{\link{predict_DO}}
 }
 
