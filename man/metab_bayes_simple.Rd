@@ -14,6 +14,9 @@ metab_bayes_simple(data = mm_data(local.time, DO.obs, DO.sat, depth,
 \item{data}{data.frame with columns having the same names, units, and format
 as the default. See \code{\link{mm_data}} for a full data description.}
 
+\item{info}{Any metadata you would like to package within the metabolism
+model.}
+
 \item{maxCores}{the maximum number of cores to apply to this run}
 
 \item{adaptSteps}{the number of steps to use in adapting the model}

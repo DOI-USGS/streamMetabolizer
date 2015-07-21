@@ -91,10 +91,10 @@ setMethod(
     cat("  Fitting arguments (access with get_args()):\n")
     for(arg in names(object@args)) {
       arg_char <- tryCatch(
-        if(is.null(mm@args[[arg]])) {
+        if(is.null(object@args[[arg]])) {
           'NULL' 
         } else {
-          paste0(as.character(mm@args[[arg]]), collapse=", ")
+          paste0(as.character(object@args[[arg]]), collapse=", ")
         }, 
         error=function(e) paste0("see get_args(...)[['",arg,"']]"))
       cat(paste0("    ", arg, ": ", arg_char, "\n"))
