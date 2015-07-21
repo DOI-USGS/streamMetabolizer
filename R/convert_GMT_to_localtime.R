@@ -45,33 +45,8 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
     }    
   }
   
-  #' Use Google API to determine local time zone
-  #' 
-  #' Some parameter definitions below are copied directly from the API webpage.
-  #' 
-  #' @param latitude degrees latitude (positive for north) of the location to 
-  #'   look up.
-  #' @param longitude degrees longitude (positive for east) of the location to 
-  #'   look up.
-  #' @param timestamp POSIXct representation of a time - determines daylight
-  #'   savings offset, if any
-  #' @references https://developers.google.com/maps/documentation/timezone/
-  google_timezone <- function(latitude, longitude, timestamp) {
-    api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d&sensor=false", 
-                       latitude, 
-                       longitude, 
-                       as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 GMT")))
-    api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
-    out.parsed <- XML::xmlParse(api.out)
-    return(list(
-      tz = out.parsed[["string(//time_zone_id)"]],
-      dst_offset = u(as.numeric(out.parsed[["string(//dst_offset)"]])/3600, "hours"),
-      std_offset = u(as.numeric(out.parsed[["string(//raw_offset)"]])/3600, "hours")
-    ))
-  }
-  # find a single wintertime date to pass to Google (i.e., definitely not daylight savings time)
-  date.time.std <- if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="GMT") else as.POSIXct("2015-07-01 00:00:00", tz="GMT")
-  tz.info <- google_timezone(latitude, longitude, date.time.std)
+  # ask google for a time offset
+  tz.info <- lookup_google_timezone(latitude, longitude)
   
   # check the output for validity
   if(tz.info$tz == "" || is.na(tz.info$std_offset)) stop("sorry, could not find time zone for specified lat/long")
@@ -100,4 +75,37 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
 #' @export
 convert_localtime_to_GMT <- function(local.time) {
   return(with_tz(local.time, "GMT"))
+}
+
+
+#' Use Google API to determine local time zone
+#' 
+#' Some parameter definitions below are copied directly from the API webpage.
+#' 
+#' @param latitude degrees latitude (positive for north) of the location to look
+#'   up.
+#' @param longitude degrees longitude (positive for east) of the location to 
+#'   look up.
+#' @param timestamp POSIXct representation of a time - determines daylight 
+#'   savings offset, if any. the default is Jan 1 for northern latitudes and
+#'   July 1 for southern latitudes, i.e., a time surely not during daylight
+#'   savings time.
+#' @references https://developers.google.com/maps/documentation/timezone/
+#' @keywords internal
+lookup_google_timezone <- function(
+  latitude, longitude, 
+  timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="GMT") else as.POSIXct("2015-07-01 00:00:00", tz="GMT")) {
+  
+  # ask google
+  api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d&sensor=false", 
+                     latitude, 
+                     longitude, 
+                     as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 GMT")))
+  api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
+  out.parsed <- XML::xmlParse(api.out)
+  return(list(
+    tz = out.parsed[["string(//time_zone_id)"]],
+    dst_offset = u(as.numeric(out.parsed[["string(//dst_offset)"]])/3600, "hours"),
+    std_offset = u(as.numeric(out.parsed[["string(//raw_offset)"]])/3600, "hours")
+  ))
 }
