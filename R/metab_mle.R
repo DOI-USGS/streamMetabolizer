@@ -116,7 +116,8 @@ mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @keywords internal
-onestation_negloglik <- function(params, DO.obs, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, calc_DO_fun=calc_DO_mod) {
+negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water, 
+                           frac.GPP, frac.ER, frac.D, calc_DO_fun) {
   
   # Count how many DO observations/predictions there should be
   n <- length(DO.obs)
