@@ -3,14 +3,15 @@ NULL
 
 #' Maximum likelihood metabolism model fitting function
 #' 
-#' Fits a model to estimate GPP and ER from input data on DO, 
-#'   temperature, light, etc.
-#'   
+#' Fits a model to estimate GPP and ER from input data on DO, temperature, 
+#' light, etc.
+#' 
 #' @param data data.frame with columns having the same names, units, and format 
 #'   as the default. See \code{\link{mm_data}} for a full data description.
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #' @param info Any metadata you would like to package within the metabolism 
 #'   model.
+#' @inheritParams mm_is_valid_day
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return A metab_mle object containing the fitted model.
 #'   
@@ -26,20 +27,23 @@ metab_mle <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   calc_DO_fun=calc_DO_mod) {
   info=NULL, # args for new('metab_mle')
+  tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
+) {
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_mle")
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
-  mle.all <- mm_model_by_ply(data, mle_1ply, start_hour=22.5, end_hour=6,
-                             calc_DO_fun=calc_DO_fun)
+  mle.all <- mm_model_by_ply(
+    data, mle_1ply, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+    tests=tests, # for mm_is_valid_day
   
   # Package and return results
   new("metab_mle", 
       info=info,
       fit=mle.all,
-      args=list(calc_DO_fun=as.character(substitute(calc_DO_fun)),
-                start_hour=22.5, end_hour=6),
+      args=list(K600=K600, calc_DO_fun=calc_DO_fun, tests=tests, day_start=day_start, day_end=day_end), # keep in order passed to function
       data=data,
       pkg_version=as.character(packageVersion("streamMetabolizer")))
 }
@@ -60,11 +64,16 @@ metab_mle <- function(
 #'   diagnostics
 #' @keywords internal
 mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
+                     tests=tests, day_start=day_start, day_end=day_end, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  stop_strs <- mm_is_valid_day(data_ply, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
+  stop_strs <- mm_is_valid_day(
+    data_ply, # data split by mm_model_by_ply
+    tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
+    timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light")) # args supplied here
   warn_strs <- character(0)
 
   # Calculate metabolism by non linear minimization of an MLE function
@@ -194,19 +203,17 @@ predict_metab.metab_mle <- function(metab_model) {
 predict_DO.metab_mle <- function(metab_model) {
   
   # pull args from the model
-  calc_DO_fun <- get(get_args(metab_model)$calc_DO_fun)
-  start_hour <- get_args(metab_model)$start_hour
-  end_hour <- get_args(metab_model)$end_hour
+  calc_DO_fun <- get_args(metab_model)$calc_DO_fun
+  day_start <- get_args(metab_model)$day_start
+  day_end <- get_args(metab_model)$day_end
   
   # get the metabolism (GPP, ER) data and estimates
   metab_ests <- predict_metab(metab_model)
   data <- get_data(metab_model)
   
   # re-process the input data with the metabolism estimates to predict DO
-  mm_model_by_ply(data=data, 
-                  model_fun=mm_predict_1ply, 
-                  start_hour=start_hour, 
-                  end_hour=end_hour,
-                  calc_DO_fun=calc_DO_fun, 
-                  metab_ests=metab_ests)
+  mm_model_by_ply(
+    data=data, model_fun=mm_predict_1ply, day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    calc_DO_fun=calc_DO_fun, metab_ests=metab_ests) # for mm_predict_1ply
+
 }

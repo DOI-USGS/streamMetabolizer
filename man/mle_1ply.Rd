@@ -4,7 +4,8 @@
 \alias{mle_1ply}
 \title{Make daily metabolism estimates from input parameters}
 \usage{
-mle_1ply(data_ply, calc_DO_fun = calc_DO_mod)
+mle_1ply(data_ply, K600 = NULL, calc_DO_fun = calc_DO_mod, tests = tests,
+  day_start = day_start, day_end = day_end, ...)
 }
 \arguments{
 \item{data_ply}{data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
@@ -13,6 +14,8 @@ depth, temp.water, light)} and containing data for just one estimation-day
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+
+\item{...}{additional args passed from mm_model_by_ply and ignored here}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

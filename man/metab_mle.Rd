@@ -5,7 +5,9 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), calc_DO_fun = calc_DO_mod)
+  light), K600 = NULL, calc_DO_fun = calc_DO_mod, info = NULL,
+  tests = c("full_day", "even_timesteps", "complete_data"),
+  day_start = -1.5, day_end = 30)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format
@@ -16,13 +18,25 @@ etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 
 \item{info}{Any metadata you would like to package within the metabolism
 model.}
+
+\item{tests}{list of tests to conduct}
+
+\item{day_start}{argument for 'full_day' test: expected start of day data in
+number of hours from the midnight that begins the modal date. For example,
+day_start=-1.5 indicates that data describing 2006-06-26 should begin at
+2006-06-25 22:30, or as near as possible given the timestep.}
+
+\item{day_end}{argument for 'full_day' test: expected end of day data in
+number of hours from the midnight that begins the modal date. For example,
+day_end=30 indicates that data describing 2006-06-26 should end at
+2006-06-27 06:00, or as near as possible given the timestep.}
 }
 \value{
 A metab_mle object containing the fitted model.
 }
 \description{
-Fits a model to estimate GPP and ER from input data on DO,
-  temperature, light, etc.
+Fits a model to estimate GPP and ER from input data on DO, temperature,
+light, etc.
 }
 \examples{
 \dontrun{
