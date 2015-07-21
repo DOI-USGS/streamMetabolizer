@@ -12,6 +12,7 @@ NULL
 #' @param info Any metadata you would like to package within the metabolism 
 #'   model.
 #' @inheritParams runjags_bayes_simple
+#' @inheritParams mm_is_valid_day
 #' @return A metab_bayes_simple object containing the fitted model.
 #' @examples
 #' \dontrun{
@@ -20,23 +21,28 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes_simple <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), 
-  maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1) {
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), # args for bayes_simple_1ply
   info=NULL, # args for new("metab_bayes_simple")
+  #fit_distribs=c("GPP","ER","K600"), fit_autocor=c("GPP","ER","K600"), fit_resids=c("K600"), fit_function_K600=c("splineKvT","lmKvQ"),
+  maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1, # args for runjags_bayes_simple
+  tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
+) {
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_bayes_simple")
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
-  bayes.all <- mm_model_by_ply(data, bayes_simple_1ply, start_hour=22.5, end_hour=6, 
-                               maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 
-                               numSavedSteps=numSavedSteps, thinSteps=thinSteps)
+  bayes.all <- mm_model_by_ply(
+    data, bayes_simple_1ply, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+    tests=tests, # for mm_is_valid_day
+    maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps) # for bayes_simple_1ply
   
   # Package and return results
   new("metab_bayes_simple", 
       info=info,
       fit=bayes.all,
-      args=list(calc_DO_fun='calc_DO_mod', start_hour=22.5, end_hour=6,
+      args=list(calc_DO_fun=calc_DO_mod, day_start=day_start, day_end=day_end,
                 maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 
                 numSavedSteps=numSavedSteps, thinSteps=thinSteps),
       data=data,

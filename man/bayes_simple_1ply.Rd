@@ -5,7 +5,7 @@
 \title{Make daily metabolism estimates from input parameters}
 \usage{
 bayes_simple_1ply(data_ply, maxCores = 4, adaptSteps = 1000,
-  burnInSteps = 4000, numSavedSteps = 40000, thinSteps = 1)
+  burnInSteps = 4000, numSavedSteps = 40000, thinSteps = 1, ...)
 }
 \arguments{
 \item{data_ply}{data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
@@ -22,6 +22,8 @@ collect MCMC 'data'}
 \item{numSavedSteps}{the number of MCMC steps to save}
 
 \item{thinSteps}{the number of steps to move before saving another step}
+
+\item{...}{additional args passed from mm_model_by_ply and ignored here}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}

@@ -5,8 +5,10 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes_simple(data = mm_data(local.time, DO.obs, DO.sat, depth,
-  temp.water, light), maxCores = 4, adaptSteps = 10, burnInSteps = 40,
-  numSavedSteps = 400, thinSteps = 1)
+  temp.water, light), info = NULL, maxCores = 4, adaptSteps = 10,
+  burnInSteps = 40, numSavedSteps = 400, thinSteps = 1,
+  tests = c("full_day", "even_timesteps", "complete_data"),
+  day_start = -1.5, day_end = 30)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format
@@ -22,6 +24,18 @@ collect MCMC 'data'}
 \item{numSavedSteps}{the number of MCMC steps to save}
 
 \item{thinSteps}{the number of steps to move before saving another step}
+
+\item{tests}{list of tests to conduct}
+
+\item{day_start}{argument for 'full_day' test: expected start of day data in
+number of hours from the midnight that begins the modal date. For example,
+day_start=-1.5 indicates that data describing 2006-06-26 should begin at
+2006-06-25 22:30, or as near as possible given the timestep.}
+
+\item{day_end}{argument for 'full_day' test: expected end of day data in
+number of hours from the midnight that begins the modal date. For example,
+day_end=30 indicates that data describing 2006-06-26 should end at
+2006-06-27 06:00, or as near as possible given the timestep.}
 }
 \value{
 A metab_bayes_simple object containing the fitted model.
