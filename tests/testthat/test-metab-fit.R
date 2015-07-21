@@ -1,10 +1,9 @@
 context("output of metabolism models")
 
 # use a subset of data from Bob
-library(plyr); library(dplyr)
+library(dplyr)
 library(unitted)
 french <- streamMetabolizer:::load_french_creek()
-#french$date.time <- convert_GMT_to_solartime(french$date.time, longitude=-106.48059) # seems to already be local time, close enough to solar
 french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
 french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
 french$local.time <- french$date.time

@@ -4,18 +4,23 @@
 \alias{metab_model}
 \title{Create a metab_model object.}
 \usage{
-metab_model(fit = "generic metab_model class; no actual fit", args = list(),
+metab_model(info = "user metadata goes here",
+  fit = "generic metab_model class; no actual fit", args = list(),
   data = mm_data(),
   pkg_version = as.character(packageVersion("streamMetabolizer")))
 }
 \arguments{
+\item{info}{User-supplied metadata of any form.}
+
 \item{fit}{An internal representation of a fitted model.}
 
-\item{args}{A list of arguments, excluding data, that were supplied to the fitting function.}
+\item{args}{A list of arguments, excluding data, that were supplied to the
+fitting function.}
 
 \item{data}{The data that were used to fit the model.}
 
-\item{pkg_version}{A string indicating the package version used to create this metab_model object.}
+\item{pkg_version}{A string indicating the package version used to create
+this metab_model object.}
 }
 \value{
 A metab_model object.

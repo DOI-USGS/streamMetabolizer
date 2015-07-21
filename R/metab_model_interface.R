@@ -41,6 +41,19 @@ NULL
 
 #### S3 generics ####
 
+#' Extract the user-supplied metadata about a metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns any user-supplied metadata.
+#' 
+#' @param metab_model A metabolism model, implementing the metab_model_interface, for which to return the metadata information.
+#' @return The user-supplied metadata in the original format.
+#' @export
+#' @family metab_model_interface
+#' @family get_info
+get_info <- function(metab_model) {
+  UseMethod("get_info")
+}
+
 #' Extract the internal model from a metabolism model.
 #' 
 #' A function in the metab_model_interface. Returns the internal model 

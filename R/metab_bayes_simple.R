@@ -9,6 +9,8 @@ NULL
 #' @author Alison Appling, Bob Hall
 #' @param data data.frame with columns having the same names, units, and format 
 #'   as the default. See \code{\link{mm_data}} for a full data description.
+#' @param info Any metadata you would like to package within the metabolism 
+#'   model.
 #' @inheritParams runjags_bayes_simple
 #' @return A metab_bayes_simple object containing the fitted model.
 #' @examples
@@ -20,6 +22,7 @@ NULL
 metab_bayes_simple <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), 
   maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1) {
+  info=NULL, # args for new("metab_bayes_simple")
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_bayes_simple")
@@ -31,6 +34,7 @@ metab_bayes_simple <- function(
   
   # Package and return results
   new("metab_bayes_simple", 
+      info=info,
       fit=bayes.all,
       args=list(calc_DO_fun='calc_DO_mod', start_hour=22.5, end_hour=6,
                 maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 

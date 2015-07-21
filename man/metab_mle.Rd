@@ -13,6 +13,9 @@ as the default. See \code{\link{mm_data}} for a full data description.}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+
+\item{info}{Any metadata you would like to package within the metabolism
+model.}
 }
 \value{
 A metab_mle object containing the fitted model.

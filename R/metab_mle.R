@@ -9,6 +9,8 @@ NULL
 #' @param data data.frame with columns having the same names, units, and format 
 #'   as the default. See \code{\link{mm_data}} for a full data description.
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#' @param info Any metadata you would like to package within the metabolism 
+#'   model.
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return A metab_mle object containing the fitted model.
 #'   
@@ -23,6 +25,7 @@ NULL
 metab_mle <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   calc_DO_fun=calc_DO_mod) {
+  info=NULL, # args for new('metab_mle')
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_mle")
@@ -33,6 +36,7 @@ metab_mle <- function(
   
   # Package and return results
   new("metab_mle", 
+      info=info,
       fit=mle.all,
       args=list(calc_DO_fun=as.character(substitute(calc_DO_fun)),
                 start_hour=22.5, end_hour=6),
