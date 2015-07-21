@@ -56,10 +56,11 @@ metab_bayes_simple <- function(
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @inheritParams runjags_bayes_simple
+#' @param ... additional args passed from mm_model_by_ply and ignored here
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, numSavedSteps=40000, thinSteps=1) {
+bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, numSavedSteps=40000, thinSteps=1, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
@@ -69,23 +70,21 @@ bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps
   
   # Calculate metabolism by Bayesian MCMC
   if(length(stop_strs) == 0) {
-    bayes.1d <- tryCatch({
-      # first: try to run the bayes fitting function
-      data.list <- prepjags_bayes_simple(data_ply)
-      runjags_bayes_simple(dataList=data.list, maxCores=maxCores, adaptSteps=adaptSteps, 
-                           burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps)
-    }, warning=function(war) {
-      # on warning: record the warning and run nlm again
-      warn_strs <- c(warn_strs, war$message)
-      suppressWarnings({
+    bayes.1d <- withCallingHandlers(
+      tryCatch({
+        # first: try to run the bayes fitting function
         data.list <- prepjags_bayes_simple(data_ply)
         runjags_bayes_simple(dataList=data.list, maxCores=maxCores, adaptSteps=adaptSteps, 
                              burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps)
+      }, error=function(err) {
+        # on error: give up, remembering error. dummy values provided below
+        stop_strs <<- c(stop_strs, err$message)
+        NA
+      }), warning=function(war) {
+        # on warning: record the warning and run nlm again
+        warn_strs <<- c(warn_strs, war$message)
+        invokeRestart("muffleWarning")
       })
-    }, error=function(err) {
-      # on error: give up, remembering error. dummy values provided below
-      stop_strs <- c(stop_strs, err$message)
-    })
   } 
   
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 

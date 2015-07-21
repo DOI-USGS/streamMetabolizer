@@ -78,28 +78,36 @@ mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
 
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
-    timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
     date <- names(which.max(table(as.Date(data_ply$local.time))))
-    frac.GPP <- data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==date,'light'])
-    mle.1d <- tryCatch({
-      # first: try to run the MLE fitting function
-      nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
-          DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water,
-          frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days,
-          calc_DO_fun=calc_DO_fun)
-    }, warning=function(war) {
-      # on warning: record the warning and run nlm again
-      warn_strs <- c(warn_strs, war$message)
-      suppressWarnings(
-        nlm(onestation_negloglik, p=c(GPP=3, ER=-5, K600=5), 
-            DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water,
-            frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days,
-            calc_DO_fun=calc_DO_fun)
-      )
-    }, error=function(err) {
-      # on error: give up, remembering error. dummy values provided below
-      stop_strs <- c(stop_strs, err$message)
-    })
+    nlm.args <- c(
+      list(
+        negloglik_1ply,
+        p = c(GPP=3, ER=-5, K600=5)[if(is.null(K600)) 1:3 else 1:2]
+      ),
+      if(!is.null(K600)) list(K600=K600[match(date, K600$Date),"K600"]) else NULL,
+      as.list(
+        data_ply[c("DO.obs","DO.sat","depth","temp.water")]
+      ),
+      list(
+        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==date,'light']),
+        frac.ER = timestep.days,
+        frac.D = timestep.days,
+        calc_DO_fun = calc_DO_fun
+      ))
+    
+    mle.1d <- withCallingHandlers(
+      tryCatch({
+        # first: try to run the MLE fitting function
+        do.call(nlm, nlm.args)
+      }, error=function(err) {
+        # on error: give up, remembering error. dummy values provided below
+        stop_strs <<- c(stop_strs, err$message)
+        NA
+      }), warning=function(war) {
+        # on warning: record the warning and run nlm again
+        warn_strs <<- c(warn_strs, war$message)
+        invokeRestart("muffleWarning")
+      })
   } 
   
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
