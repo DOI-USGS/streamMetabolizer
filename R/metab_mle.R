@@ -11,6 +11,9 @@ NULL
 #' @param info Any metadata you would like to package within the metabolism 
 #'   model.
 #' @inheritParams mm_is_valid_day
+#' @param K600 Optional. NULL if K600 is to be fitted, or a two-column
+#'   data.frame with columns Date (in Date format) and K600 (numeric)
+#'   corresponding to all dates to be modeled from \code{data}.
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return A metab_mle object containing the fitted model.
@@ -24,8 +27,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
-  calc_DO_fun=calc_DO_mod) {
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), K600=NULL, calc_DO_fun=calc_DO_mod, # args for mle_1ply
   info=NULL, # args for new('metab_mle')
   tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
 ) {
@@ -38,6 +40,7 @@ metab_mle <- function(
     data, mle_1ply, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests, # for mm_is_valid_day
+    K600=K600, calc_DO_fun=calc_DO_fun) # for mle_1ply
   
   # Package and return results
   new("metab_mle", 
@@ -60,10 +63,11 @@ metab_mle <- function(
 #'   (this may be >24 hours but only yields estimates for one 24-hour period)
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
+#' @param ... additional args passed from mm_model_by_ply and ignored here
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
+mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod, 
                      tests=tests, day_start=day_start, day_end=day_end, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
@@ -127,14 +131,16 @@ mle_1ply <- function(data_ply, calc_DO_fun=calc_DO_mod) {
 
 #' Return the likelihood value for a given set of parameters and observations
 #' 
-#' Called from mle_1ply(). From ?nlm, this function should be "the function
-#' to be minimized, returning a single numeric value. This should be a function 
+#' Called from mle_1ply(). From ?nlm, this function should be "the function to
+#' be minimized, returning a single numeric value. This should be a function 
 #' with first argument a vector of the length of p followed by any other 
 #' arguments specified by the ... argument."
 #' 
 #' @param params a vector of length 2, where the first element is GPP and the 
 #'   second element is ER (both mg/L/d)
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#' @param K600.daily optional - if K600 is to be fit, leave NULL. If K600 is to
+#'   be supplied, this is where to put it.
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @keywords internal
 negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water, 
@@ -147,7 +153,7 @@ negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water
   # important that these arguments are named because various calc_DO_funs take 
   # slightly different subsets of these arguments
   DO.mod <- calc_DO_fun(
-    GPP.daily=params[1], ER.daily=params[2], K600.daily=params[3],
+    GPP.daily=params[1], ER.daily=params[2], K600.daily=if(missing(K600.daily)) params[3] else K600.daily,
     DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
     frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.obs[1], n=n)
   
@@ -158,8 +164,6 @@ negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water
   sigma.sq <- sum(diffs.sq)/n
   (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
 }
-
-
 
 
 
