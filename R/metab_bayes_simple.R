@@ -9,7 +9,10 @@ NULL
 #' @author Alison Appling, Bob Hall
 #' @param data data.frame with columns having the same names, units, and format 
 #'   as the default. See \code{\link{mm_data}} for a full data description.
+#' @param info Any metadata you would like to package within the metabolism 
+#'   model.
 #' @inheritParams runjags_bayes_simple
+#' @inheritParams mm_is_valid_day
 #' @return A metab_bayes_simple object containing the fitted model.
 #' @examples
 #' \dontrun{
@@ -18,21 +21,29 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes_simple <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), 
-  maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1) {
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), # args for bayes_simple_1ply
+  info=NULL, # args for new("metab_bayes_simple")
+  #fit_distribs=c("GPP","ER","K600"), fit_autocor=c("GPP","ER","K600"), fit_resids=c("K600"), fit_function_K600=c("splineKvT","lmKvQ"),
+  maxCores=4, adaptSteps=10, burnInSteps=40, numSavedSteps=400, thinSteps=1, # args for runjags_bayes_simple
+  tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
+) {
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_bayes_simple")
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
-  bayes.all <- mm_model_by_ply(data, bayes_simple_1ply, start_hour=22.5, end_hour=6, 
-                               maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 
-                               numSavedSteps=numSavedSteps, thinSteps=thinSteps)
+  bayes.all <- mm_model_by_ply(
+    data, bayes_simple_1ply, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+    tests=tests, # for mm_is_valid_day
+    maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps) # for bayes_simple_1ply
   
   # Package and return results
   new("metab_bayes_simple", 
+      info=info,
       fit=bayes.all,
-      args=list(calc_DO_fun='calc_DO_mod', start_hour=22.5, end_hour=6,
+      # metab_bayes_simple always uses the equivalent of calc_DO_mod
+      args=list(calc_DO_fun=calc_DO_mod, day_start=day_start, day_end=day_end,
                 maxCores=maxCores, adaptSteps=adaptSteps, burnInSteps=burnInSteps, 
                 numSavedSteps=numSavedSteps, thinSteps=thinSteps),
       data=data,
@@ -52,10 +63,11 @@ metab_bayes_simple <- function(
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @inheritParams runjags_bayes_simple
+#' @param ... additional args passed from mm_model_by_ply and ignored here
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, numSavedSteps=40000, thinSteps=1) {
+bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, numSavedSteps=40000, thinSteps=1, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
@@ -65,23 +77,21 @@ bayes_simple_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps
   
   # Calculate metabolism by Bayesian MCMC
   if(length(stop_strs) == 0) {
-    bayes.1d <- tryCatch({
-      # first: try to run the bayes fitting function
-      data.list <- prepjags_bayes_simple(data_ply)
-      runjags_bayes_simple(dataList=data.list, maxCores=maxCores, adaptSteps=adaptSteps, 
-                           burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps)
-    }, warning=function(war) {
-      # on warning: record the warning and run nlm again
-      warn_strs <- c(warn_strs, war$message)
-      suppressWarnings({
+    bayes.1d <- withCallingHandlers(
+      tryCatch({
+        # first: try to run the bayes fitting function
         data.list <- prepjags_bayes_simple(data_ply)
         runjags_bayes_simple(dataList=data.list, maxCores=maxCores, adaptSteps=adaptSteps, 
                              burnInSteps=burnInSteps, numSavedSteps=numSavedSteps, thinSteps=thinSteps)
+      }, error=function(err) {
+        # on error: give up, remembering error. dummy values provided below
+        stop_strs <<- c(stop_strs, err$message)
+        NA
+      }), warning=function(war) {
+        # on warning: record the warning and run nlm again
+        warn_strs <<- c(warn_strs, war$message)
+        invokeRestart("muffleWarning")
       })
-    }, error=function(err) {
-      # on error: give up, remembering error. dummy values provided below
-      stop_strs <- c(stop_strs, err$message)
-    })
   } 
   
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
@@ -223,55 +233,3 @@ setClass(
   contains="metab_model"
 )
 
-
-#' Make metabolism predictions from a fitted metab_model.
-#' 
-#' Makes daily predictions of GPP, ER, and NEP.
-#' 
-#' @inheritParams predict_metab
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_metab}}.
-#' @export
-#' @import dplyr
-#' @family predict_metab
-predict_metab.metab_bayes_simple <- function(metab_model) {
-  
-  GPP <- ER <- NEP <- K600 <- ".dplyr.var"
-  get_fit(metab_model) %>% 
-    mutate(NEP=GPP+ER) %>%
-    select(date, GPP, ER, NEP, K600)
-  
-}
-
-
-#' Make dissolved oxygen predictions from a fitted metab_model.
-#' 
-#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
-#' etc. from the metabolism model.
-#' 
-#' @inheritParams predict_DO
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_DO}}.
-#' @export
-#' @family predict_DO
-predict_DO.metab_bayes_simple <- function(metab_model) {
-  
-  # metab_bayes_simple always uses the equivalent of calc_DO_mod
-  calc_DO_fun <- calc_DO_mod
-  
-  # pull args from the model
-  start_hour <- get_args(metab_model)$start_hour
-  end_hour <- get_args(metab_model)$end_hour
-  
-  # get the metabolism (GPP, ER) data and estimates
-  metab_ests <- predict_metab(metab_model)
-  data <- get_data(metab_model)
-  
-  # re-process the input data with the metabolism estimates to predict DO
-  mm_model_by_ply(data=data, 
-                  model_fun=mm_predict_1ply, 
-                  start_hour=start_hour, 
-                  end_hour=end_hour,
-                  calc_DO_fun=calc_DO_fun, 
-                  metab_ests=metab_ests)
-}

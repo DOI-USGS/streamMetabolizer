@@ -4,24 +4,27 @@
 \alias{predict_metab}
 \title{Predict metabolism from a fitted model.}
 \usage{
-predict_metab(metab_model)
+predict_metab(metab_model, ci_level, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{ci_level}{the alpha level for the confidence or credible interval}
+
+\item{...}{other arguments passed to specific}
 }
 \value{
-A data.frame of daily metabolism estimates. Columns: \describe{
+A data.frame of daily metabolism estimates. Columns include:
+  \describe{
 
-  \item{GPP}{numeric estimate of Gross Primary Production, always positive,
-  \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+  \item{GPP}{numeric estimate of Gross Primary Production, positive when
+  realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 
-  \item{R}{numeric estimate of Respiration, always negative, \eqn{mg O_2
-  L^{-1} d^{-1}}{mg O2 / L / d}}
+  \item{ER}{numeric estimate of Ecosystem Respiration, negative when realistic, \eqn{mg
+  O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 
-  \item{NEP}{numeric estimate of Net Ecosystem Production, positive for net
-  autotrophy, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
-
+  \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
   }
 }
 \description{
@@ -31,10 +34,9 @@ GPP, ER, and NEP.
 \seealso{
 Other metab_model_interface: \code{\link{get_args}};
   \code{\link{get_data}}; \code{\link{get_fit}};
-  \code{\link{get_version}}; \code{\link{predict_DO}}
+  \code{\link{get_info}}; \code{\link{get_version}};
+  \code{\link{predict_DO}}
 
-Other predict_metab: \code{\link{predict_metab.metab_bayes_simple}};
-  \code{\link{predict_metab.metab_mle}};
-  \code{\link{predict_metab.metab_model}}
+Other predict_metab: \code{\link{predict_metab.metab_model}}
 }
 

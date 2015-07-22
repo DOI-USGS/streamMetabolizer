@@ -41,6 +41,19 @@ NULL
 
 #### S3 generics ####
 
+#' Extract the user-supplied metadata about a metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns any user-supplied metadata.
+#' 
+#' @param metab_model A metabolism model, implementing the metab_model_interface, for which to return the metadata information.
+#' @return The user-supplied metadata in the original format.
+#' @export
+#' @family metab_model_interface
+#' @family get_info
+get_info <- function(metab_model) {
+  UseMethod("get_info")
+}
+
 #' Extract the internal model from a metabolism model.
 #' 
 #' A function in the metab_model_interface. Returns the internal model 
@@ -112,22 +125,23 @@ get_version <- function(metab_model) {
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @return A data.frame of daily metabolism estimates. Columns: \describe{
+#' @param ci_level the alpha level for the confidence or credible interval
+#' @param ... other arguments passed to specific
+#' @return A data.frame of daily metabolism estimates. Columns include:
+#'   \describe{
 #'   
-#'   \item{GPP}{numeric estimate of Gross Primary Production, always positive,
-#'   \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+#'   \item{GPP}{numeric estimate of Gross Primary Production, positive when 
+#'   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{R}{numeric estimate of Respiration, always negative, \eqn{mg O_2
-#'   L^{-1} d^{-1}}{mg O2 / L / d}}
+#'   \item{ER}{numeric estimate of Ecosystem Respiration, negative when realistic, \eqn{mg
+#'   O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{NEP}{numeric estimate of Net Ecosystem Production, positive for net
-#'   autotrophy, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
-#'   
+#'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
 #'   }
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
-predict_metab <- function(metab_model) {
+predict_metab <- function(metab_model, ci_level, ...) {
   UseMethod("predict_metab")
 }
 

@@ -10,6 +10,8 @@ A metabolism model class.
 \section{Slots}{
 
 \describe{
+\item{\code{info}}{Any metadata the user chooses to package with metabolism model.}
+
 \item{\code{fit}}{An internal representation of a fitted model.}
 
 \item{\code{pkg_version}}{A string indicating the package version used to create this metab_model object.}

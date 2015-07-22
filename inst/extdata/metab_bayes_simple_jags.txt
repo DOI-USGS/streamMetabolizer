@@ -30,30 +30,3 @@ model {
   K600.daily ~ dnorm(K600.daily.mu, K600.daily.tau)
   
 }
-
-#### Notes ####
-
-# In JAGS, shape==r=first_parameter and rate==lambda==second_parameter.
-#   GPP_shape <- GPP_mean^2/GPP_sd^2 # shape == r
-#   GPP_rate <- GPP_mean/GPP_sd^2 # rate == lambda
-#   ER_shape <- ER_mean^2/ER_sd^2
-#   ER_rate <- ER_mean/ER_sd^2
-#   K600_shape <- K600_mean^2/K600_sd^2
-#   K600_rate <- K600_mean/K600_sd^2
-
-# Alternative distributions for GPP.daily, ER.daily, and K600.daily:
-# GPP.daily ~ dgamma(GPP_r, GPP_lambda)
-# ER.daily ~ dgamma(ER_r, ER_lambda)
-# K600.daily ~ dgamma(K600_r, K600_lambda)
-
-# Here's how to get the dgamma Jags function straight:
-# dgamma_jags <- function(x, r, lambda) {
-#   # using variable names as in JAGS manual, p. 29 of http://people.math.aau.dk/~kkb/Undervisning/Bayes14/sorenh/docs/jags_user_manual.pdf
-#   (lambda^r * x^(r-1) * exp(-lambda*x)) / (gamma(r)) 
-# }
-# source("lib/DBDA2E-utilities.R")
-# (ps <- gammaShRaFromMeanSD(mean=5,sd=100))
-# x=seq(0,100,by=0.1); r=ps$shape; lambda=ps$rate
-# plot(x=x, y=dgamma_jags(x, 1.01, 0.1), type="l")
-# plot(x=x, y=dgamma_jags(x, r, lambda), type="l")
-# plot(x=x, y=dgamma(x, shape=r, rate=lambda), type="l")

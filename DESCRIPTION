@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.1.2
-Date: 2015-07-17
+Version: 0.1.3
+Date: 2015-07-21
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -37,7 +37,7 @@ Collate:
     'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
     'calc_DO_mod.R'
-    'calc_DO_mod_by_step.R'
+    'calc_DO_mod_by_diff.R'
     'calc_DO_mod_with_error.R'
     'calc_air_pressure.R'
     'calc_depth.R'
@@ -54,6 +54,10 @@ Collate:
     'metab_model-class.R'
     'metab_bayes_simple.R'
     'metab_mle.R'
-    'metab_model_helpers.R'
     'metab_model_interface.R'
+    'mm_data.R'
+    'mm_is_valid_day.R'
+    'mm_model_by_ply.R'
+    'mm_predict_1ply.R'
+    'mm_validate_data.R'
     'streamMetabolizer.R'

@@ -2,6 +2,7 @@
 
 #' A metabolism model class.
 #' 
+#' @slot info Any metadata the user chooses to package with metabolism model.
 #' @slot fit An internal representation of a fitted model.
 #' @slot pkg_version A string indicating the package version used to create this metab_model object.
 #' @slot args A list of arguments, excluding data, that were supplied to the fitting function.
@@ -11,12 +12,14 @@
 setClass(
   "metab_model",
   slots=c(
+    info="ANY",
     fit="ANY",
     pkg_version="character",
     args="list",
     data="data.frame"),
   
   prototype=c(
+    info=NULL,
     fit=NULL,
     pkg_version="",
     args=NULL,
@@ -45,10 +48,13 @@ setClass(
 #' 
 #' Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 #' 
+#' @param info User-supplied metadata of any form.
 #' @param fit An internal representation of a fitted model.
-#' @param args A list of arguments, excluding data, that were supplied to the fitting function.
+#' @param args A list of arguments, excluding data, that were supplied to the
+#'   fitting function.
 #' @param data The data that were used to fit the model.
-#' @param pkg_version A string indicating the package version used to create this metab_model object.
+#' @param pkg_version A string indicating the package version used to create
+#'   this metab_model object.
 #' @return A metab_model object.
 #'   
 #' @examples
@@ -56,13 +62,14 @@ setClass(
 #' metab_model(fit=1:5, args=list(length=5))
 #' @export
 metab_model <- function(
+  info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
   args=list(),
   data=mm_data(),
   pkg_version=as.character(packageVersion("streamMetabolizer"))) {
   
   # Create a dummy metab_model object
-  new("metab_model", fit=fit, args=args, data=data, pkg_version=pkg_version)
+  new("metab_model", info=info, fit=fit, args=args, data=data, pkg_version=pkg_version)
 }
 
 #### loadModelInterface ####
@@ -77,17 +84,37 @@ setMethod(
   "show", "metab_model", 
   function(object) {
     cat("metab_model", if(class(object)[1] != "metab_model") paste0("of type ", class(object)[1]), "\n")
+    cat("  User-supplied metadata (access with get_info()):\n")
+    print(object@info)
     cat("  Fitted model (access with get_fit()):\n")
     cat("    class: ", paste0(class(object@fit), collapse=" & "),"\n")
     cat("  Fitting arguments (access with get_args()):\n")
     for(arg in names(object@args)) {
-      cat(paste0("    ", arg, ": ", object@args[[arg]], "\n"))
+      arg_char <- tryCatch(
+        if(is.null(object@args[[arg]])) {
+          'NULL' 
+        } else {
+          paste0(as.character(object@args[[arg]]), collapse=", ")
+        }, 
+        error=function(e) paste0(paste0(class(object@args[[arg]]), collapse=","),". see get_args(...)[['",arg,"']]"))
+      if(nchar(arg_char) > 100) arg_char <- paste0(substr(arg_char, 1, 100), "...")
+      cat(paste0("    ", arg, ": ", arg_char, "\n"))
     }
     cat("  Fitting data (truncated; access with get_data()):\n")
     print(head(object@data))
     cat("  Created with streamMetabolizer version", object@pkg_version, "\n")
   }
 )
+
+
+#' Retrieve the user-supplied model metadata
+#' 
+#' @inheritParams get_info
+#' @export 
+#' @family get_info
+get_info.metab_model <- function(metab_model) {
+  metab_model@info
+}
 
 
 #' Retrieve the inner fitted model
@@ -139,14 +166,33 @@ get_version.metab_model <- function(metab_model) {
 #'   \code{\link{predict_metab}}.
 #' @export
 #' @family predict_metab
-predict_metab.metab_model <- function(metab_model) {
+predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
   
-  # Generate dummy output
-  set.seed(3000)
-  date <- as.Date(c("2015-04-15","2015-04-16","2015-04-17"))
-  GPP <- abs(rnorm(3, 4, 1))
-  ER <- -1.6*GPP
-  data.frame(date=date, GPP=GPP, ER=ER, NEP=GPP-ER)
+  fit <- get_fit(metab_model)
+  vars <- c("GPP","ER","K600")
+  if(all(vars %in% names(fit))) {
+    crit <- qnorm((1 + ci_level)/2)
+    c(list(fit['date']),
+      lapply(vars, function(var) {
+        est <- fit[[var]]
+        sd <- fit[[paste0(var,".sd")]]
+        data.frame(
+          est,
+          lower = est - crit * sd,
+          upper = est + crit * sd) %>% 
+          setNames(c(var, paste0(var, ".", c("lower","upper"))))
+      })) %>%
+      bind_cols() %>%
+      as.data.frame()
+  } else {
+    warning("model does not contain all columns ", paste0(vars, collapse=", "))
+    data.frame(
+      date=NA, 
+      GPP=NA, GPP.lower=NA, GPP.upper=NA,
+      ER=NA, ER.lower=NA, ER.upper=NA,
+      K600=NA, K600.lower=NA, K600.upper=NA
+    )[c(),]
+  }
 }
 
 
@@ -163,8 +209,18 @@ predict_metab.metab_model <- function(metab_model) {
 #' @family predict_DO
 predict_DO.metab_model <- function(metab_model) {
   
-  # Generate dummy output
-  local.time <- do.call(seq, c(as.list(as.POSIXct(strptime(c("2015-04-16", "2015-04-17"), format="%Y-%m-%d"))), list(by=as.difftime(15, units="mins"))))[-97]
-  DO <- sin(as.numeric(local.time-min(local.time))/86500*2*pi)
-  data.frame(local.time=local.time, DO.mod=DO)
+  # pull args from the model
+  calc_DO_fun <- get_args(metab_model)$calc_DO_fun
+  day_start <- get_args(metab_model)$day_start
+  day_end <- get_args(metab_model)$day_end
+  
+  # get the metabolism (GPP, ER) data and estimates
+  metab_ests <- predict_metab(metab_model)
+  data <- get_data(metab_model)
+  
+  # re-process the input data with the metabolism estimates to predict DO
+  mm_model_by_ply(
+    data=data, model_fun=mm_predict_1ply, day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    calc_DO_fun=calc_DO_fun, metab_ests=metab_ests) # for mm_predict_1ply
+  
 }
