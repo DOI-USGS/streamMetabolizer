@@ -52,7 +52,7 @@ Collate:
     'convert_k600_to_kGAS.R'
     'load_french_creek.R'
     'metab_model-class.R'
-    'metab_bayes_simple.R'
+    'metab_bayes.R'
     'metab_mle.R'
     'metab_model_interface.R'
     'mm_data.R'

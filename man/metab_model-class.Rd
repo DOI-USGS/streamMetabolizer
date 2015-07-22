@@ -21,7 +21,7 @@ A metabolism model class.
 \item{\code{data}}{The data that were used to fit the model.}
 }}
 \seealso{
-Other metab.model.classes: \code{\link{metab_bayes_simple-class}};
+Other metab.model.classes: \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}}
 }
 

@@ -51,6 +51,6 @@ light, etc.
 Alison Appling, Jordan Read; modeled on LakeMetabolizer
 }
 \seealso{
-Other metab_model: \code{\link{metab_bayes_simple}}
+Other metab_model: \code{\link{metab_bayes}}
 }
 
