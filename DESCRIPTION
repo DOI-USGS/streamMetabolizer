@@ -55,6 +55,7 @@ Collate:
     'metab_bayes.R'
     'metab_mle.R'
     'metab_model_interface.R'
+    'metab_night.R'
     'mm_data.R'
     'mm_is_valid_day.R'
     'mm_model_by_ply.R'
