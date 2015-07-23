@@ -3,13 +3,14 @@
 \docType{class}
 \name{metab_bayes-class}
 \alias{metab_bayes-class}
-\title{Metabolism model fitted by maximum likelihood estimation}
+\title{Metabolism model fitted by Bayesian MCMC}
 \description{
-\code{metab_bayes} models use non-linear minimization of the negative log
-likelihood to fit values of GPP, ER, and K for a given DO curve.
+\code{metab_bayes} models use Bayesian MCMC methods to fit values of GPP, ER,
+and K for a given DO curve.
 }
 \seealso{
 Other metab.model.classes: \code{\link{metab_mle-class}};
-  \code{\link{metab_model-class}}
+  \code{\link{metab_model-class}};
+  \code{\link{metab_night-class}}
 }
 

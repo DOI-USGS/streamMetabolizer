@@ -24,9 +24,6 @@ collect MCMC 'data'}
 \item{thinSteps}{the number of steps to move before saving another step}
 
 \item{...}{additional args passed from mm_model_by_ply and ignored here}
-
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

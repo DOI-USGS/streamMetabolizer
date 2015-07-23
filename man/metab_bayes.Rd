@@ -55,6 +55,7 @@ Fits a model to estimate GPP and ER from input data on DO,
 Alison Appling, Bob Hall
 }
 \seealso{
-Other metab_model: \code{\link{metab_mle}}
+Other metab_model: \code{\link{metab_mle}};
+  \code{\link{metab_night}}
 }
 

@@ -60,8 +60,6 @@ metab_bayes <- function(
 #' @param data_ply data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
 #'   depth, temp.water, light)} and containing data for just one estimation-day
 #'   (this may be >24 hours but only yields estimates for one 24-hour period)
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @inheritParams runjags_bayes
 #' @param ... additional args passed from mm_model_by_ply and ignored here
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
@@ -88,7 +86,7 @@ bayes_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, 
         stop_strs <<- c(stop_strs, err$message)
         NA
       }), warning=function(war) {
-        # on warning: record the warning and run nlm again
+        # on warning: record the warning and run again
         warn_strs <<- c(warn_strs, war$message)
         invokeRestart("muffleWarning")
       })
@@ -98,7 +96,8 @@ bayes_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, 
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
     bayes.1d <- setNames(as.list(rep(NA, 6)), 
-                         c('mean.GPP.daily', 'mean.ER.daily', 'mean.K600.daily', 'sd.GPP.daily', 'sd.ER.daily', 'sd.K600.daily'))
+                         c('mean.GPP.daily', 'mean.ER.daily', 'mean.K600.daily', 
+                           'sd.GPP.daily', 'sd.ER.daily', 'sd.K600.daily'))
   }
   
   # Return, reporting any results, warnings, and errors
@@ -111,7 +110,7 @@ bayes_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, 
 }
 
 
-#### helpers ####
+#### helpers to the helper ####
 
 #' Prepare data for passing to JAGS
 #' 
@@ -221,10 +220,10 @@ runjags_bayes <- function(dataList, maxCores=4, adaptSteps=1000, burnInSteps=400
 
 #### metab_bayes class ####
 
-#' Metabolism model fitted by maximum likelihood estimation
+#' Metabolism model fitted by Bayesian MCMC
 #' 
-#' \code{metab_bayes} models use non-linear minimization of the negative log
-#' likelihood to fit values of GPP, ER, and K for a given DO curve.
+#' \code{metab_bayes} models use Bayesian MCMC methods to fit values of GPP, ER,
+#' and K for a given DO curve.
 #' 
 #' @exportClass metab_bayes
 #' @family metab.model.classes
