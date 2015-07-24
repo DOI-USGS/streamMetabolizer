@@ -68,7 +68,7 @@ metab_mle <- function(
 #'   diagnostics
 #' @keywords internal
 mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod, 
-                     tests=tests, day_start=day_start, day_end=day_end, ...) {
+                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 

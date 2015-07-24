@@ -19,6 +19,23 @@ test_that("metabolism models run & produce reasonable output", {
   expect_is(slot(mm, "args"), "list")
   expect_is(slot(mm, "data"), "data.frame")
   expect_is(slot(mm, "pkg_version"), "character")
+
+  mm <- metab_night(data=v(french))
+  
+  mm <- metab_mle(data=v(french))
+  
+  dontrun <- function() {
+    library(dplyr)
+    library(unitted)
+    library(mda.streams)
+    config <- read.table("../stream_metab_usa/p2_metab/out/150714 0.0.2 local_makefile_run/condor_config.tsv", header=T, sep="\t", colClasses="character")
+    data <- config_to_data(config[40,], 40, metab_night, list())
+    data_ply <- data[which(as.Date(v(data$local.time)+as.difftime(12,units="hours")) %in% as.Date(paste0("2014-04-",c("10","11","12")))),]
+    data_ply <- u(data_ply, get_units(data_ply) %>% replace(., which(.=="mg L^-1"), "mgO2 L^-1"))
+    mm <- metab_night(v(data_ply))
+    mm <- metab_night(data_ply)
+  }
+  
 })
 
 test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
