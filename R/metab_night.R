@@ -71,74 +71,91 @@ metab_night <- function(
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012): 41-53.
 nightreg_1ply <- function(data_ply, 
-                       tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-12, day_end=12, ...) {
+                          tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-12, day_end=12, ...) {
   
-  # Provide ability to skip a poorly-formatted day for calculating K, without
-  # breaking the whole loop. Just collect problems/errors as a list of strings
-  # and proceed. Also collect warnings.
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
-  stop_strs <- mm_is_valid_day(
-    data_ply, # data split by mm_model_by_ply
-    tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_night
-    timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light")) # args supplied here
-  warn_strs <- character(0)
-  
-  # Calculate K by nighttime regression
-  if(length(stop_strs) == 0) {
-    night.1d <- withCallingHandlers(
-      tryCatch({
-        # subset to times of darkness. require that these are all consecutive -
-        # can't look at diffs across 2 nights
-        which_night <- which(data_ply$light < u(0.001, "umol m^-2 s^-1"))
-        if(any(diff(which_night) > 1)) stop("need exactly one night of consecutive DO observations per date")
-        night_dat <- data_ply[which_night,]
-        
-        # smooth DO data
-        night_dat$DO.obs.smooth <- u(c(filter(night_dat$DO.obs, rep(1/3, 3), sides=2)), get_units(night_dat$DO.obs))
-        
-        # calculate dDO/dt
-        dDO <- u(diff(v(night_dat$DO.obs.smooth)), get_units(night_dat$DO.obs.smooth))
-        dt <- u(as.numeric(diff(v(night_dat$local.time)), units='days'), 'd')
-        night_dat$dDO.dt <- (dDO / dt)[c(NA, 1:length(dDO))]
-        
-        # calculate saturation deficit
-        night_dat$DO.sat.def <- night_dat$DO.sat - night_dat$DO.obs.smooth
-        
-        # fit model & extract the important stuff (see Chapra & DiToro 1991)
-        lm_dDOdt <- lm(dDO.dt ~ DO.sat.def, data=v(night_dat))
-        out <- list()
-        out$KO2 <- u(coef(lm_dDOdt)[["DO.sat.def"]], get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1]))
-        out$KO2.sd <- u(summary(lm_dDOdt)$coefficients[["DO.sat.def","Std. Error"]], get_units(out$KO2))
-        out$ER <- u(coef(lm_dDOdt)[["(Intercept)"]], get_units(night_dat$dDO.dt)) * mean(night_dat$depth)
-        out$ER.sd <- u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(out$ER))
-        out$rsq <- summary(lm_dDOdt)$r.squared
-        out$p <- summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
-        
-        # convert from KO2 to K600. the coefficients used here differ for 
-        # Maite's code and that in LakeMetabolizer. Maite and Bob use K600 = 
-        # ((600/(1800.6-(120.1*temp)+(3.7818*temp^2)-(0.047608*temp^3)))^-0.5)*KO2.
-        # LakeMetabolizer & streamMetabolizer use K600 <- ((600/(1568 - 
-        # 86.04*temp + 2.142*temp^2 - 0.0216*temp^3))^-0.5)*KO2. The resulting 
-        # numbers are believable by either method but do differ. I'll stick with
-        # LakeMetabolizer since those are the coefficients from Raymond et al. 
-        # 2012, which is probably the newer source. the sd conversion works
-        # because the conversion is linear in KO2.
-        out$K600 <- convert_kGAS_to_k600(kGAS=out$KO2, temperature=mean(v(night_dat$temp.water)), gas="O2")
-        out$K600.sd <- convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=mean(v(night_dat$temp.water)), gas="O2")
-        
-        # return everything
-        out
+  # Try to run the model. Collect warnings/errors as a list of strings and
+  # proceed to the next data_ply if there are stop-worthy issues.
+  stop_strs <- warn_strs <- character(0)
+  night.1d <- withCallingHandlers(
+    tryCatch({
+      # subset to times of darkness. require that these are all consecutive -
+      # it'd be meaningless to look at the diff from 1 night to the next 2 nights
+      which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
+      if(length(which_night) == 0) stop("no nighttime rows in data_ply")
+      if(any(diff(which_night) > 1)) 
+        stop_strs <<- c(stop_strs, "need exactly one night per data_ply")
+      night_dat <- data_ply[which_night,]
+      # do the full_day test here, rather than in mm_is_valid_day, because
+      # it's not about specific times but about whether night begins and ends
+      # within the ply bounds
+      if(!is.na(full_day_test <- match('full_day',tests))) {
+        which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
+        if(which_twilight[1] < 1)
+          stop_strs <<- c(stop_strs, "data don't start before day-night transition")
+        if(which_twilight[2] > nrow(data_ply))
+          stop_strs <<- c(stop_strs, "data don't end after night-day transition")
+        tests <- tests[-full_day_test]
+      }
       
-      }, error=function(err) {
-        # on error: give up, remembering error
-        stop_strs <<- c(stop_strs, err$message)
-        NA
-      }), warning=function(war) {
-        # on warning: record the warning and run again
-        warn_strs <<- c(warn_strs, war$message)
-        invokeRestart("muffleWarning")
-      })
-  } 
+      # check for data validity here, after subsetting to the time window we
+      # really care about
+      timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$local.time)), units="days"), na.rm=TRUE))
+      stop_strs <<- c(stop_strs, mm_is_valid_day(
+        night_dat, # data split by mm_model_by_ply and subsetted here
+        tests=tests, day_start=day_start, day_end=day_start, # args passed from metab_night
+        timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))) # args supplied here
+      
+      # actually stop if anything has broken so far
+      if(length(stop_strs) > 1) stop("invalid data ply")
+      
+      # smooth DO data
+      night_dat$DO.obs.smooth <- u(c(stats::filter(night_dat$DO.obs, rep(1/3, 3), sides=2)), get_units(night_dat$DO.obs))
+      
+      # calculate dDO/dt
+      dDO <- u(diff(v(night_dat$DO.obs.smooth)), get_units(night_dat$DO.obs.smooth))
+      dt <- u(as.numeric(diff(v(night_dat$local.time)), units='days'), 'd')
+      night_dat$dDO.dt <- (dDO / dt)[c(NA, 1:length(dDO))]
+      
+      # calculate saturation deficit
+      night_dat$DO.sat.def <- night_dat$DO.sat - night_dat$DO.obs.smooth
+      
+      # fit model & extract the important stuff (see Chapra & DiToro 1991)
+      lm_dDOdt <- lm(dDO.dt ~ DO.sat.def, data=v(night_dat))
+      out <- list()
+      out$KO2 <- u(coef(lm_dDOdt)[["DO.sat.def"]], get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1]))
+      out$KO2.sd <- u(summary(lm_dDOdt)$coefficients[["DO.sat.def","Std. Error"]], get_units(out$KO2))
+      out$ER.vol <- u(coef(lm_dDOdt)[["(Intercept)"]], get_units(night_dat$dDO.dt))
+      out$ER.sd.vol <- u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(night_dat$dDO.dt))
+      out$ER <- out$ER.vol * mean(night_dat$depth)
+      out$ER.sd <- out$ER.sd.vol * mean(night_dat$depth)
+      out$rsq <- summary(lm_dDOdt)$r.squared
+      out$p <- summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
+      
+      # convert from KO2 to K600. the coefficients used here differ for 
+      # Maite's code and that in LakeMetabolizer. Maite and Bob use K600 = 
+      # ((600/(1800.6-(120.1*temp)+(3.7818*temp^2)-(0.047608*temp^3)))^-0.5)*KO2.
+      # LakeMetabolizer & streamMetabolizer use K600 <- ((600/(1568 - 
+      # 86.04*temp + 2.142*temp^2 - 0.0216*temp^3))^-0.5)*KO2. The resulting 
+      # numbers are believable by either method but do differ. I'll stick with
+      # LakeMetabolizer since those are the coefficients from Raymond et al. 
+      # 2012, which is probably the newer source. the sd conversion works
+      # because the conversion is linear in KO2.
+      out$K600 <- convert_kGAS_to_k600(kGAS=out$KO2, temperature=mean(v(night_dat$temp.water)), gas="O2")
+      out$K600.sd <- convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=mean(v(night_dat$temp.water)), gas="O2")
+      
+      # return everything. remove units since we can't fully support them
+      # elsewhere yet
+      lapply(out, v)
+      
+    }, error=function(err) {
+      # on error: give up, remembering error
+      stop_strs <<- c(stop_strs, err$message)
+      NA
+    }), warning=function(war) {
+      # on warning: record the warning and run again
+      warn_strs <<- c(warn_strs, war$message)
+      invokeRestart("muffleWarning")
+    })
   
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
   # to fill in the model output with NAs.
@@ -172,3 +189,18 @@ setClass(
   contains="metab_model"
 )
 
+
+#' Explain why we can't make dissolved oxygen predictions from a metab_night.
+#' 
+#' metab_night only fits ER and K, and only for the darkness hours. While it 
+#' would be possible to make predictions just for those hours, it'd be costly to
+#' implement and has not-yet-obvious benefits.
+#' 
+#' @inheritParams predict_DO
+#' @return A data.frame of predictions, as for the generic 
+#'   \code{\link{predict_DO}}.
+#' @export
+#' @family predict_DO
+predict_DO.metab_night <- function(metab_model) {
+  stop("predicting DO would be limited & difficult for metab_night, so we won't do it")
+}
