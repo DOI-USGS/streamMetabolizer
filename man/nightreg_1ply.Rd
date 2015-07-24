@@ -23,15 +23,15 @@ data.frame of estimates and \code{\link[stats]{nlm}} model
 Called from metab_night().
 }
 \references{
-Hornberger, George M., and Mahlon G. Kelly. “Atmospheric
-  Reaeration in a River Using Productivity Analysis.” Journal of the
-  Environmental Engineering Division 101, no. 5 (October 1975): 729–39.
+Hornberger, George M., and Mahlon G. Kelly. Atmospheric
+  Reaeration in a River Using Productivity Analysis. Journal of the
+  Environmental Engineering Division 101, no. 5 (October 1975): 729-39.
 
   Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. Bott, Jody
   Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and
   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
-  (2012): 41-53.
+  (2012); 41:53.
 }
 \keyword{internal}
 
