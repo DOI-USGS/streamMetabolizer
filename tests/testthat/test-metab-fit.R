@@ -5,8 +5,11 @@ library(dplyr)
 library(unitted)
 french <- streamMetabolizer:::load_french_creek()
 french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
-french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$date.time), latitude=41.22668, attach.units=TRUE))
-french$local.time <- french$date.time
+# assuming this is the french creek near buffalo
+french$utc.time <- convert_localtime_to_GMT(force_tz(french$local.time,"MST"))
+french$local.time <- force_tz(convert_GMT_to_localtime(french$utc.time, longitude=-106.753099, latitude=44.362594), "UTC")
+french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.753099, time.type='apparent solar')
+french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$solar.time), latitude=44.362594, attach.units=TRUE))
 french <- french[c("local.time","DO.obs","DO.sat","depth","temp.water","light")]
 
 
