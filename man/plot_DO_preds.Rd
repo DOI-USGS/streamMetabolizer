@@ -17,7 +17,9 @@ in concentration (conc) or as percent of saturation (pctsat)?}
 Plots modeled values as lines, observed values as points
 }
 \examples{
-mm <- metab_night_data=v(french))
+\dontrun{
+mm <- metab_night(v(french))
 plot_DO_preds(predict_DO(mm)[1:360,])
+}
 }
 

@@ -24,10 +24,10 @@ Imports:
     RCurl,
     XML,
     methods,
-    runjags
+    runjags,
+    ggplot2
 Suggests:
     knitr,
-    ggplot2,
     plyr,
     tidyr,
     testthat,

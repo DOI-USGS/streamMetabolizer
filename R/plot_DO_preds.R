@@ -7,13 +7,17 @@
 #' @param plot_as character. Should the plot display predicted & observed values
 #'   in concentration (conc) or as percent of saturation (pctsat)?
 #' @examples 
-#' mm <- metab_night_data=v(french))
+#' \dontrun{
+#' mm <- metab_night(v(french))
 #' plot_DO_preds(predict_DO(mm)[1:360,])
+#' }
+#' @import ggplot2
 #' @export
 plot_DO_preds <- function(DO_preds, plot_as=c('conc','pctsat')) {
   
   plot_as <- match.arg(plot_as)
   
+  DO.mod <- '.ggplot.var'
   if(plot_as=='conc') {
     g <- ggplot(v(DO_preds), aes(x=local.time)) + 
       geom_line(aes(y=DO.mod, group=date), color='maroon', size=0.8) +
