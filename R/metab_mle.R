@@ -113,7 +113,7 @@ mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod,
         # 'Inverse Fisher information gives the asymptotic variance matrix of the 
         # MLE. From it, we can construct asymptotic confidence intervals.' See also 
         # http://stats.stackexchange.com/questions/27033/in-r-given-an-output-from-optim-with-a-hessian-matrix-how-to-calculate-paramet
-        inv_fish <- solve(-mle.1d$hessian) 
+        inv_fish <- solve(mle.1d$hessian) 
         mle.1d$sd <- sqrt(diag(inv_fish))
         mle.1d
       }, error=function(err) {
