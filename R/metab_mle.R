@@ -11,9 +11,9 @@ NULL
 #' @param info Any metadata you would like to package within the metabolism 
 #'   model.
 #' @inheritParams mm_is_valid_day
-#' @param K600 Optional. NULL if K600 is to be fitted, or a two-column
-#'   data.frame with columns Date (in Date format) and K600 (numeric)
-#'   corresponding to all dates to be modeled from \code{data}.
+#' @param data.daily Optional. Leave missing if K600 is to be fitted, or give a
+#'   three-column data.frame with columns as in default if K600 is to be taken
+#'   as given
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return A metab_mle object containing the fitted model.
@@ -27,7 +27,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), K600=NULL, calc_DO_fun=calc_DO_mod, # args for mle_1ply
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data.daily=mm_data(local.date, K600, optional='all'), calc_DO_fun=calc_DO_mod, # args for mle_1ply
   info=NULL, # args for new('metab_mle')
   tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
 ) {
@@ -37,7 +37,7 @@ metab_mle <- function(
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
   mle.all <- mm_model_by_ply(
-    data, mle_1ply, # for mm_model_by_ply
+    data, if(!missing(daily.data)) daily.data else NULL, mle_1ply, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests, # for mm_is_valid_day
     K600=K600, calc_DO_fun=calc_DO_fun) # for mle_1ply
@@ -47,7 +47,7 @@ metab_mle <- function(
       info=info,
       fit=mle.all,
       args=list(K600=K600, calc_DO_fun=calc_DO_fun, tests=tests, day_start=day_start, day_end=day_end), # keep in order passed to function
-      data=data,
+      data=c(list(data=data), if(!missing(daily.data)) list(data.daily=data.daily)),
       pkg_version=as.character(packageVersion("streamMetabolizer")))
 }
 

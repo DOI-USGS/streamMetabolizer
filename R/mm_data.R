@@ -9,9 +9,14 @@
 #' may deviate from this format, but this is discouraged.
 #' 
 #' @param ... column names to select, as passed to \code{\link[dplyr]{select}}
+#' @param optional one or more character strings listing the columns, if any, 
+#'   that may be excluded. If 'all', the entire data.frame may be omitted. If 
+#'   'none', the entire data.frame must be included as prototyped. If specific 
+#'   column names are given, those columns may be omitted entirely or passed to
+#'   the metab_model() call as all NAs.
 #' @return data data.frame with columns \itemize{
 #'   
-#'   \item{ \code{local.time} date-time values in local, NON-DAYLIGHT-SAVINGS
+#'   \item{ \code{local.time} date-time values in local, NON-DAYLIGHT-SAVINGS 
 #'   time, in POSIXct format with the true local tz format.}
 #'   
 #'   \item{ \code{solar.time} date-time values in solar time, in POSIXct format 
@@ -31,6 +36,14 @@
 #'   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
 #'   m^{-2} s^{-1}}{micro mols / m^2 / s}}
 #'   
+#'   \item{ \code{local.date} dates of interest in Date format}
+#'   
+#'   \item{ \code{K600} daily estimates of K600}
+#'   
+#'   \item{ \code{discharge.daily} daily mean river discharge}
+#'   
+#'   \item{ \code{velocity.daily} daily mean river flow velocity}
+#'   
 #'   }
 #'   
 #' @export
@@ -40,7 +53,7 @@
 #' @examples
 #' mm_data()
 #' mm_data(depth, light, local.time)
-mm_data <- function(...) {
+mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
     local.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 
     solar.time=u(as.POSIXct("2050-03-14 15:9:27",tz="UTC"), NA), 
@@ -48,10 +61,22 @@ mm_data <- function(...) {
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
-    light=     u(300.9,"umol m^-2 s^-1")))
+    light=     u(300.9,"umol m^-2 s^-1"), 
+    local.date=     u(as.Date("2050-03-14"), NA), 
+    K600=           u(5,"d^-1"), 
+    discharge.daily=u(9,"m^3 s^-1"), 
+    velocity.daily= u(2,"m s^-1")))
   .dots = lazy_dots(...)
-  if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
+  dat <- if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
+
+  # add information about which columns, if any, are optional.
+  optional <- if(missing(optional)) 'none' else match.arg(optional, choices=c('all',names(dat)), several.ok=TRUE)
+  attr(dat, 'optional') <- optional
+  
+  # return
+  dat
 }
+
 # Because metab_models will call mm_data(...) to define their default data, it
 # makes sense to declare all the potential columns as global variables here;
 # otherwise we'd need to do it before defining any of those functions.

@@ -5,10 +5,16 @@
 \title{Return the data types that may be used by metab_models using the
 metab_model_interface.}
 \usage{
-mm_data(...)
+mm_data(..., optional = "none")
 }
 \arguments{
 \item{...}{column names to select, as passed to \code{\link[dplyr]{select}}}
+
+\item{optional}{one or more character strings listing the columns, if any,
+that may be excluded. If 'all', the entire data.frame may be omitted. If
+'none', the entire data.frame must be included as prototyped. If specific
+column names are given, those columns may be omitted entirely or passed to
+the metab_model() call as all NAs.}
 }
 \value{
 data data.frame with columns \itemize{
@@ -32,6 +38,14 @@ data data.frame with columns \itemize{
 
   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\
   m^{-2} s^{-1}}{micro mols / m^2 / s}}
+
+  \item{ \code{local.date} dates of interest in Date format}
+
+  \item{ \code{K600} daily estimates of K600}
+
+  \item{ \code{discharge.daily} daily mean river discharge}
+
+  \item{ \code{velocity.daily} daily mean river flow velocity}
 
   }
 }

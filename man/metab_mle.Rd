@@ -5,17 +5,17 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), K600 = NULL, calc_DO_fun = calc_DO_mod, info = NULL,
-  tests = c("full_day", "even_timesteps", "complete_data"),
-  day_start = -1.5, day_end = 30)
+  light), data.daily = mm_data(local.date, K600, optional = "all"),
+  calc_DO_fun = calc_DO_mod, info = NULL, tests = c("full_day",
+  "even_timesteps", "complete_data"), day_start = -1.5, day_end = 30)
 }
 \arguments{
 \item{data}{data.frame with columns having the same names, units, and format
 as the default. See \code{\link{mm_data}} for a full data description.}
 
-\item{K600}{Optional. NULL if K600 is to be fitted, or a two-column
-data.frame with columns Date (in Date format) and K600 (numeric)
-corresponding to all dates to be modeled from \code{data}.}
+\item{data.daily}{Optional. Leave missing if K600 is to be fitted, or give a
+three-column data.frame with columns as in default if K600 is to be taken
+as given}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
@@ -51,7 +51,7 @@ light, etc.
 Alison Appling, Jordan Read; modeled on LakeMetabolizer
 }
 \seealso{
-Other metab_model: \code{\link{metab_bayes}};
-  \code{\link{metab_night}}
+Other metab_model: \code{\link{metab_Kvpred}};
+  \code{\link{metab_bayes}}; \code{\link{metab_night}}
 }
 
