@@ -4,10 +4,13 @@
 \alias{mm_model_by_ply}
 \title{Split and label data into >=24-hr days for fitting daily metabolism}
 \usage{
-mm_model_by_ply(data, model_fun, day_start, day_end, ...)
+mm_model_by_ply(data, data.daily, model_fun, day_start, day_end, ...)
 }
 \arguments{
 \item{data}{the data.frame containing all relevant, validated modeling data}
+
+\item{data.daily}{a second data.frame, often optional, containing inputs with
+a daily timestep}
 
 \item{model_fun}{the function to apply to each data ply}
 
