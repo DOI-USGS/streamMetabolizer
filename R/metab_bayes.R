@@ -35,6 +35,12 @@ metab_bayes <- function(
       tests=tests, # for mm_is_valid_day
       model_file=model_file, max_cores=max_cores, adapt_steps=adapt_steps, burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps) # for bayes_1ply
       
+  } else if(model_file %in% c('metab_bayes_procerr_KfQ.txt')) {
+    # all days at a time, after first filtering out bad days
+    filtered <- mm_filter_valid_days(data, data_daily, day_start=6, day_end=30, tests=tests)
+    bayes_all <- bayes_allply(
+      data_all=filtered$data, data_daily_all=filtered$data_daily,
+      model_file=model_file, max_cores=max_cores, adapt_steps=adapt_steps, burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps)
   }
   
   # Package and return results
@@ -114,6 +120,33 @@ bayes_1ply <- function(
              stringsAsFactors=FALSE)
 }
 
+
+#' Make daily metabolism estimates from input parameters
+#' 
+#' Called from metab_bayes().
+#' 
+#' @param data_all data.frame of the form \code{mm_data(local.time, DO.obs,
+#'   DO.sat, depth, temp.water, light)} and containing data for just one
+#'   estimation-day (this may be >24 hours but only yields estimates for one
+#'   24-hour period)
+#' @param data_daily_all data.frame of daily priors, if appropriate to the given
+#'   model_file
+#' @inheritParams runjags_bayes
+#' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
+#'   diagnostics
+#' @keywords internal
+bayes_allply <- function(data_all, data_daily_all, model_file, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, ...) {
+  
+  stop_strs <- warn_strs <- character(0)
+  
+  # Calculate metabolism by Bayesian MCMC
+  if(length(stop_strs) == 0) {
+    bayes.1d <- withCallingHandlers(
+      tryCatch({
+        # first: try to run the bayes fitting function
+        data_list <- prepjags_bayes(data_all, model_file)
+        runjags_bayes(data_list=data_list, model_file, max_cores=max_cores, adapt_steps=adapt_steps, 
+                      burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps)
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -152,11 +185,12 @@ bayes_1ply <- function(
 #' data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
 #' 
 #' @param data_ply one day's worth of data
+#' @param model_file the JAGS model file to use
 #' @param priors logical. Should the data list be modified such that JAGS will
 #'   return priors rather than posteriors?
 #' @return list of data for input to runjags
 #' @export
-prepjags_bayes <- function(data_ply, priors=FALSE) {
+prepjags_bayes <- function(data_ply, model_file, priors=FALSE) {
   
   #Useful info for setting JAGS data
   local.date <- names(which.max(table(as.Date(data_ply$local.time))))
@@ -179,11 +213,11 @@ prepjags_bayes <- function(data_ply, priors=FALSE) {
     
     # Constants
     GPP.daily.mu = 10,
-    GPP.daily.tau = 1/(10^2),
+    GPP.daily.sigma = 10,
     ER.daily.mu = -10,
-    ER.daily.tau = 1/(10^2),
-    K600.daily.mu = 10,
-    K600.daily.tau = 1/(10^2)
+    ER.daily.sigma = 10,
+    #K600.daily.mu = 10,
+    K600.daily.sigma = 10
   )
   if(priors) {
     data_list <- data_list[-which(names(data_list)=="DO.obs")]
