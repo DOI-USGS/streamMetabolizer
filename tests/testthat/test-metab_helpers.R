@@ -19,14 +19,7 @@ test_that("mm_is_valid_day works", {
   library(plyr); library(dplyr)
   library(unitted)
   french <- streamMetabolizer:::load_french_creek()
-  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
-  # assuming this is the french creek near buffalo
-  french$utc.time <- convert_localtime_to_GMT(force_tz(french$local.time,"MST"))
-  french$local.time <- force_tz(convert_GMT_to_localtime(french$utc.time, longitude=-106.753099, latitude=44.362594), "UTC")
-  french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.753099, time.type='apparent solar')
-  french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$solar.time), latitude=44.362594, attach.units=TRUE))
-  french <- french[c("local.time","DO.obs","DO.sat","depth","temp.water","light")]
-  
+ 
   good_day <- u(filter(v(french), v(local.time) >= as.POSIXct("2012-08-24 22:30:00", tz="UTC"),
                        v(local.time) <= as.POSIXct("2012-08-26 06:00:00", tz="UTC")), get_units(french))
   bad_day <- u(filter(v(french), v(local.time) >= as.POSIXct("2012-08-28 22:30:00", tz="UTC"),
@@ -56,12 +49,9 @@ test_that("mm_filter_valid_days works", {
   library(plyr); library(dplyr)
   library(unitted); library(lubridate)
   french <- streamMetabolizer:::load_french_creek()
-  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
-  french$utc.time <- convert_localtime_to_GMT(force_tz(french$local.time,"MST"))
-  french$local.time <- force_tz(convert_GMT_to_localtime(french$utc.time, longitude=-106.753099, latitude=44.362594), "UTC")
-  french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.753099, time.type='apparent solar')
-  french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$solar.time), latitude=44.362594, attach.units=TRUE))
-  french <- french[c("local.time","DO.obs","DO.sat","depth","temp.water","light")]
   
-  mm_filter_valid_days(french)
+  french_daily <- data.frame(local.date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
+  
+  mm_filter_valid_days(french, day_start=10, day_end=12)
+  mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)
 })
