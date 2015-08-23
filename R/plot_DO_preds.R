@@ -20,13 +20,13 @@ plot_DO_preds <- function(DO_preds, plot_as=c('conc','pctsat')) {
   DO.mod <- '.ggplot.var'
   if(plot_as=='conc') {
     g <- ggplot(v(DO_preds), aes(x=local.time)) + 
-      geom_line(aes(y=DO.mod, group=date), color='maroon', size=0.8) +
+      geom_line(aes(y=DO.mod, group=local.date), color='maroon', size=0.8) +
       geom_point(aes(y=DO.obs), color='navy', alpha=0.5) +
       theme_bw() + ylab('DO (mg/L)')
   
   } else if(plot_as=='pctsat') {
     g <- ggplot(v(DO_preds), aes(x=local.time)) + 
-      geom_line(aes(y=100*DO.mod/DO.sat, group=date), color='purple3', size=0.8) +
+      geom_line(aes(y=100*DO.mod/DO.sat, group=local.date), color='purple3', size=0.8) +
       geom_point(aes(y=100*DO.obs/DO.sat), color='forestgreen', alpha=0.5) +
       theme_bw() + ylab('DO (% sat)')
   }

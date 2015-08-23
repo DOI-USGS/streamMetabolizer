@@ -5,7 +5,7 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), data.daily = mm_data(local.date, K600, optional = "all"),
+  light), data_daily = mm_data(local.date, K600, optional = "all"),
   calc_DO_fun = calc_DO_mod, info = NULL, tests = c("full_day",
   "even_timesteps", "complete_data"), day_start = -1.5, day_end = 30)
 }
@@ -13,7 +13,7 @@ metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
 \item{data}{data.frame with columns having the same names, units, and format
 as the default. See \code{\link{mm_data}} for a full data description.}
 
-\item{data.daily}{Optional. Leave missing if K600 is to be fitted, or give a
+\item{data_daily}{Optional. Leave missing if K600 is to be fitted, or give a
 three-column data.frame with columns as in default if K600 is to be taken
 as given}
 
@@ -25,15 +25,17 @@ model.}
 
 \item{tests}{list of tests to conduct}
 
-\item{day_start}{argument for 'full_day' test: expected start of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_start=-1.5 indicates that data describing 2006-06-26 should begin at
-2006-06-25 22:30, or as near as possible given the timestep.}
+\item{day_start}{expected start of day data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
+first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time.}
 
-\item{day_end}{argument for 'full_day' test: expected end of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_end=30 indicates that data describing 2006-06-26 should end at
-2006-06-27 06:00, or as near as possible given the timestep.}
+\item{day_end}{expected end of day data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
+observation time that occurs before that time if day_end doesn't fall
+exactly on an observation time.}
 }
 \value{
 A metab_mle object containing the fitted model.

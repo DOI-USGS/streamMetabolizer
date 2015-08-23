@@ -50,8 +50,8 @@ mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete
   # preceding day to 6am on following day)
   if('full_day' %in% tests & is.finite(timestep)) {
     date_counts <- table(format(day$local.time, "%Y-%m-%d"))
-    date <- names(date_counts)[which.max(date_counts)]
-    date_start <- as.POSIXct(paste0(date, " 00:00:00"), tz="UTC")
+    local_date <- names(date_counts)[which.max(date_counts)]
+    date_start <- as.POSIXct(paste0(local_date, " 00:00:00"), tz="UTC")
     similar_time <- function(a, b, tol=timestep) {
       abs(as.numeric(a, units="days") - as.numeric(b, units="days")) < as.numeric(tol, units="days")
     }

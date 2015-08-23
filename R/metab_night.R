@@ -230,9 +230,11 @@ predict_DO.metab_night <- function(metab_model) {
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @param metab_ests a data.frame of metabolism estimates for all days, from 
 #'   which this function will choose the relevant estimates
-#' @param ... additional args passed from mm_model_by_ply and ignored here
+#' @param day_start arg passed from mm_model_by_ply and ignored here
+#' @param day_end arg passed from mm_model_by_ply and ignored here
+#' @param local_date the single date to which data and data_daily refer
 #' @return a data.frame of predictions
-metab_night_predict_1ply <- function(data_ply, calc_DO_fun, metab_ests, ...) {
+metab_night_predict_1ply <- function(data, data_daily, calc_DO_fun, metab_ests, day_start, day_end, local_date) {
 
   # subset to times of darkness, just as we did in nightreg_1ply
   which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
@@ -246,13 +248,9 @@ metab_night_predict_1ply <- function(data_ply, calc_DO_fun, metab_ests, ...) {
     return(night_dat)
   }
   
-  # determine which date these data END on, because that's the date where we're
-  # storing these K+ER estimates
-  date <- as.character(as.Date(data_ply$local.time[nrow(data_ply)]))
-  
   # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
   # they're missing
-  metab_est <- metab_ests[metab_ests$date==date,]
+  metab_est <- metab_ests[metab_ests$local.date==local_date,]
   if(!complete.cases(metab_est[c('K600','ER')])) {
     return(data.frame(night_dat, DO.mod=NA))
   }

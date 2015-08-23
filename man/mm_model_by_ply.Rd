@@ -14,7 +14,7 @@ modeling data. The local.time column must be present.}
 timestep. The local.date column must be present.}
 
 \item{model_fun}{the function to apply to each data ply. This function should
-accept the arguments \code{c(data, data_daily, ..., day_start, day_end, date)}
+accept the arguments \code{c(data, data_daily, ..., day_start, day_end, local_date)}
 where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
 to \code{mm_model_by_ply} is missing or \code{NULL}}
 

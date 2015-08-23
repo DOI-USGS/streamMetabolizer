@@ -127,7 +127,7 @@ bayes_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, 
 prepjags_bayes <- function(data_ply, priors=FALSE) {
   
   #Useful info for setting JAGS data
-  date <- names(which.max(table(as.Date(data_ply$local.time))))
+  local.date <- names(which.max(table(as.Date(data_ply$local.time))))
   timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
   
   # Format the data for Jags
@@ -137,7 +137,7 @@ prepjags_bayes <- function(data_ply, priors=FALSE) {
     n = nrow(data_ply),
     
     # Every timestep
-    frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$local.time,"%Y-%m-%d")==date]),
+    frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$local.time,"%Y-%m-%d")==local.date]),
     frac.ER = rep(timestep.days, nrow(data_ply)),
     frac.D = rep(timestep.days, nrow(data_ply)),
     KO2.conv = convert_k600_to_kGAS(k600=1, temperature=data_ply$temp.water, gas="O2"),

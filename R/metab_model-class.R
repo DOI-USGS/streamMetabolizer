@@ -172,7 +172,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
   vars <- c("GPP","ER","K600")
   if(all(vars %in% names(fit))) {
     crit <- qnorm((1 + ci_level)/2)
-    c(list(fit['date']),
+    c(list(fit['local_date']),
       lapply(vars, function(var) {
         est <- fit[[var]]
         sd <- fit[[paste0(var,".sd")]]
@@ -187,7 +187,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
   } else {
     warning("model does not contain all columns ", paste0(vars, collapse=", "))
     data.frame(
-      date=NA, 
+      local_date=NA, 
       GPP=NA, GPP.lower=NA, GPP.upper=NA,
       ER=NA, ER.lower=NA, ER.upper=NA,
       K600=NA, K600.lower=NA, K600.upper=NA

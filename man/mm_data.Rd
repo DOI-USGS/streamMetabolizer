@@ -19,11 +19,9 @@ the metab_model() call as all NAs.}
 \value{
 data data.frame with columns \itemize{
 
-  \item{ \code{local.time} date-time values in local, NON-DAYLIGHT-SAVINGS
-  time, in POSIXct format with the true local tz format.}
-
-  \item{ \code{solar.time} date-time values in solar time, in POSIXct format
-  with a nominal time zone of UTC.}
+  \item{ \code{local.time} date-time values in solar mean time (local,
+  longitude-specific, NON-DAYLIGHT-SAVINGS time), in POSIXct format with a
+  nominal time zone of UTC.}
 
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
   O[2] L^{-1}}{mg O2 / L}}

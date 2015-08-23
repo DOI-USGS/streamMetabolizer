@@ -4,10 +4,11 @@
 \alias{mm_predict_1ply}
 \title{Helper to predict_DO.metab_model}
 \usage{
-mm_predict_1ply(data_ply, calc_DO_fun, metab_ests, ...)
+mm_predict_1ply(data, data_daily, calc_DO_fun, metab_ests, day_start, day_end,
+  local_date)
 }
 \arguments{
-\item{data_ply}{a data.frame of predictor data for a single ply (~day)}
+\item{data}{a data.frame of predictor data for a single ply (~day)}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
@@ -15,7 +16,11 @@ etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 \item{metab_ests}{a data.frame of metabolism estimates for all days, from
 which this function will choose the relevant estimates}
 
-\item{...}{additional args passed from mm_model_by_ply and ignored here}
+\item{day_start}{arg passed from mm_model_by_ply and ignored here}
+
+\item{day_end}{arg passed from mm_model_by_ply and ignored here}
+
+\item{local_date}{the single date to which data and data_daily refer}
 }
 \value{
 a data.frame of predictions

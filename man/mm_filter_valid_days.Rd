@@ -4,12 +4,15 @@
 \alias{mm_filter_valid_days}
 \title{Remove entries in data}
 \usage{
-mm_filter_valid_days(data, data_daily, tests = c("full_day", "even_timesteps",
-  "complete_data"), day_start = 6, day_end = 30, timestep_days = NA,
-  need_complete = names(data))
+mm_filter_valid_days(data, data_daily = NULL, tests = c("full_day",
+  "even_timesteps", "complete_data"), day_start = 6, day_end = 30,
+  timestep_days = NA, need_complete = names(data))
 }
 \arguments{
-\item{data}{}
+\item{data}{data.frame of instantaneous observations}
+
+\item{data_daily}{data.frame of daily estimates/statistics, to be filtered in
+accordance with the filtering of data}
 
 \item{tests}{list of tests to conduct}
 
@@ -33,7 +36,8 @@ the function if timestep_days is NA.}
 must be complete (without NAs)}
 }
 \value{
-list of data and data_daily with same structure as inputs but with invalid days removed
+list of data and data_daily with same structure as inputs but with
+  invalid days removed
 }
 \description{
 Remove entries in data

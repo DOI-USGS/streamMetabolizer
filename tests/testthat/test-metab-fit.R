@@ -36,13 +36,26 @@ test_that("metabolism models run & produce reasonable output", {
 test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
   
   # metab_mle
+  mm <- metab_bayes(data=v(french), adaptSteps=100, burnInSteps=400, numSavedSteps=4000)
+  metab <- predict_metab(mm)
+  DO_preds <- predict_DO(mm)
+  DO_preds_Aug24<- filter(DO_preds, local.date == "2012-08-24")
+  expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
+  # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  
+})
+
+test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
+  
+  # metab_mle
   mm <- metab_mle(data=v(french))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24<- filter(DO_preds, date == "2012-08-24")
+  DO_preds_Aug24<- filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
-  # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
   
 })
 
@@ -53,10 +66,10 @@ test_that("metabolism models can be fit with K specified", {
   mm <- metab_mle(data=v(french), K600=K600)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24<- filter(DO_preds, date == "2012-08-24")
+  DO_preds_Aug24<- filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
-  # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
+  # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
   
 })
 

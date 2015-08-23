@@ -12,15 +12,13 @@
 #' @param optional one or more character strings listing the columns, if any, 
 #'   that may be excluded. If 'all', the entire data.frame may be omitted. If 
 #'   'none', the entire data.frame must be included as prototyped. If specific 
-#'   column names are given, those columns may be omitted entirely or passed to
+#'   column names are given, those columns may be omitted entirely or passed to 
 #'   the metab_model() call as all NAs.
 #' @return data data.frame with columns \itemize{
 #'   
-#'   \item{ \code{local.time} date-time values in local, NON-DAYLIGHT-SAVINGS 
-#'   time, in POSIXct format with the true local tz format.}
-#'   
-#'   \item{ \code{solar.time} date-time values in solar time, in POSIXct format 
-#'   with a nominal time zone of UTC.}
+#'   \item{ \code{local.time} date-time values in solar mean time (local,
+#'   longitude-specific, NON-DAYLIGHT-SAVINGS time), in POSIXct format with a
+#'   nominal time zone of UTC.}
 #'   
 #'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
 #'   O[2] L^{-1}}{mg O2 / L}}
@@ -56,7 +54,6 @@
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
     local.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 
-    solar.time=u(as.POSIXct("2050-03-14 15:9:27",tz="UTC"), NA), 
     DO.obs=    u(10.1,"mgO2 L^-1"), 
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 

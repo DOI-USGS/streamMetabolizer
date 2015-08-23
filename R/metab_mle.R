@@ -67,8 +67,8 @@ metab_mle <- function(
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod, 
-                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, date, ...) {
+mle_1ply <- function(data_ply, data_daily=NULL, calc_DO_fun=calc_DO_mod, 
+                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, local_date, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
@@ -87,10 +87,10 @@ mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod,
       list(
         negloglik_1ply,
         hessian=TRUE,
-        p = c(GPP=3, ER=-5, K600=5)[if(is.null(K600)) 1:3 else 1:2]
+        p = c(GPP=3, ER=-5, K600=5)[if(is.null(data_daily)) 1:3 else 1:2]
       ),
-      if(!is.null(K600)) {
-        list(K600=K600[match(date, as.character(K600$date)),"K600"])
+      if(!is.null(data_daily)) {
+        list(K600=data_daily$K600)
       } else {
         list()
       },
@@ -98,7 +98,7 @@ mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod,
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(date),'light']),
+        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date),'light']),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = calc_DO_fun
