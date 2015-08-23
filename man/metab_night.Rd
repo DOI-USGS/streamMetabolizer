@@ -51,7 +51,7 @@ for which light is very low.
 Alison Appling, Maite Arroita
 }
 \seealso{
-Other metab_model: \code{\link{metab_bayes}};
-  \code{\link{metab_mle}}
+Other metab_model: \code{\link{metab_Kvpred}};
+  \code{\link{metab_bayes}}; \code{\link{metab_mle}}
 }
 

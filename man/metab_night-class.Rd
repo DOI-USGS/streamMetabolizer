@@ -9,7 +9,8 @@
 given DO time series.
 }
 \seealso{
-Other metab.model.classes: \code{\link{metab_bayes-class}};
+Other metab.model.classes: \code{\link{metab_Kvpred-class}};
+  \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}};
   \code{\link{metab_model-class}}
 }
