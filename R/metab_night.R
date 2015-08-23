@@ -9,10 +9,7 @@ NULL
 #' for which light is very low.
 #' 
 #' @author Alison Appling, Maite Arroita
-#' @param data data.frame with columns having the same names, units, and format 
-#'   as the default. See \code{\link{mm_data}} for a full data description.
-#' @param info Any metadata you would like to package within the metabolism 
-#'   model.
+#' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
 #' @return A metab_night object containing the fitted model.
 #' @examples
@@ -22,27 +19,27 @@ NULL
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), # args for nightreg_1ply
-  info=NULL, # args for new("metab_night")
-  tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-12, day_end=12 # args for mm_is_valid_day, mm_model_by_ply
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=NULL, info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   
   # Check data for correct column names & units
   data <- mm_validate_data(data, "metab_night")
   
   # model the data, splitting into overlapping ~31.5-hr 'plys' for each date
-  night.all <- mm_model_by_ply(
-    data, nightreg_1ply, # for mm_model_by_ply
+  night_all <- mm_model_by_ply(
+    nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests) # for mm_is_valid_day
   
   # Package and return results
-  new("metab_night", 
-      info=info,
-      fit=night.all,
-      args=list(calc_DO_fun=NA, day_start=day_start, day_end=day_end),
-      data=data,
-      pkg_version=as.character(packageVersion("streamMetabolizer")))
+  metab_model(
+    model_class="metab_night", 
+    info=info,
+    fit=night_all,
+    args=list(day_start=day_start, day_end=day_end, tests=tests),
+    data=data,
+    data_daily=data_daily)
 }
 
 
@@ -52,12 +49,8 @@ metab_night <- function(
 #' 
 #' Called from metab_night().
 #' 
-#' @param data_ply data.frame of the form \code{mm_data(local.time, DO.obs, 
-#'   DO.sat, depth, temp.water, light)} and containing data for just one 
-#'   estimation-day (this may be >24 hours but only yields estimates for one 
-#'   24-hour period)
-#' @inheritParams runjags_bayes
-#' @param ... additional args passed from mm_model_by_ply and ignored here
+#' @inheritParams mm_model_by_ply_prototype
+#' @inheritParams mm_is_valid_day
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
@@ -70,8 +63,10 @@ metab_night <- function(
 #'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
-nightreg_1ply <- function(data_ply, 
-                          tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-12, day_end=12, ...) {
+nightreg_1ply <- function(
+  data_ply, data_daily_ply, day_start=-12, day_end=12, local_date,
+  tests=c('full_day', 'even_timesteps', 'complete_data')
+) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and
   # proceed to the next data_ply if there are stop-worthy issues.
@@ -216,8 +211,9 @@ predict_DO.metab_night <- function(metab_model) {
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function
   mm_model_by_ply(
-    data=data, model_fun=metab_night_predict_1ply, day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_mod, metab_ests=metab_ests) # for mm_predict_1ply
+    model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    calc_DO_fun=calc_DO_fun) # for mm_predict_1ply
   
 }
 
@@ -225,16 +221,14 @@ predict_DO.metab_night <- function(metab_model) {
 #' 
 #' Usually assigned to model_fun within mm_model_by_ply, called from there
 #' 
-#' @param data_ply a data.frame of predictor data for a single ply (~day)
+#' @inheritParams mm_model_by_ply_prototype
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
-#' @param metab_ests a data.frame of metabolism estimates for all days, from 
-#'   which this function will choose the relevant estimates
-#' @param day_start arg passed from mm_model_by_ply and ignored here
-#' @param day_end arg passed from mm_model_by_ply and ignored here
-#' @param local_date the single date to which data and data_daily refer
 #' @return a data.frame of predictions
-metab_night_predict_1ply <- function(data, data_daily, calc_DO_fun, metab_ests, day_start, day_end, local_date) {
+metab_night_predict_1ply <- function(
+  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
+  calc_DO_fun
+) {
 
   # subset to times of darkness, just as we did in nightreg_1ply
   which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
@@ -250,7 +244,7 @@ metab_night_predict_1ply <- function(data, data_daily, calc_DO_fun, metab_ests, 
   
   # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
   # they're missing
-  metab_est <- metab_ests[metab_ests$local.date==local_date,]
+  metab_est <- data_daily_ply
   if(!complete.cases(metab_est[c('K600','ER')])) {
     return(data.frame(night_dat, DO.mod=NA))
   }

@@ -6,36 +6,36 @@
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(local.date, K600, optional = "all"),
-  calc_DO_fun = calc_DO_mod, info = NULL, tests = c("full_day",
-  "even_timesteps", "complete_data"), day_start = -1.5, day_end = 30)
+  info = NULL, day_start = -1.5, day_end = 30, tests = c("full_day",
+  "even_timesteps", "complete_data"), calc_DO_fun = calc_DO_mod)
 }
 \arguments{
-\item{data}{data.frame with columns having the same names, units, and format
-as the default. See \code{\link{mm_data}} for a full data description.}
+\item{data}{data.frame of input data at the temporal resolution of raw
+observations. Columns must have the same names, units, and format as the
+default. See \code{\link{mm_data}} for a full data description.}
 
-\item{data_daily}{Optional. Leave missing if K600 is to be fitted, or give a
-three-column data.frame with columns as in default if K600 is to be taken
-as given}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See
+\code{\link{mm_data}} for a full data description.}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+\item{info}{any information, in any format, that you would like to store
+within the metab_model object}
 
-\item{info}{Any metadata you would like to package within the metabolism
-model.}
+\item{day_start}{start time of a day's data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first
+observation time that occurs after that time if day_start doesn't fall
+exactly on an observation time.}
+
+\item{day_end}{end time of a day's data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
+time that occurs before that time if day_end doesn't fall exactly on an
+observation time.}
 
 \item{tests}{list of tests to conduct}
 
-\item{day_start}{expected start of day data in number of hours from the
-midnight that begins the modal date. For example, day_start=-1.5 indicates
-that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
-first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time.}
-
-\item{day_end}{expected end of day data in number of hours from the midnight
-that begins the modal date. For example, day_end=30 indicates that data
-describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
-observation time that occurs before that time if day_end doesn't fall
-exactly on an observation time.}
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
+etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \value{
 A metab_mle object containing the fitted model.

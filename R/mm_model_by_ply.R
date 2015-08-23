@@ -5,19 +5,18 @@
 #' data.frame) are modified to include the data as a first column, then 
 #' row-bound together into a single data.frame containing results from all days.
 #' 
-#' @param data required. the data.frame containing all relevant, validated 
-#'   modeling data. The local.time column must be present.
-#' @param data_daily optional. a data.frame containing inputs with a daily 
-#'   timestep. The local.date column must be present.
 #' @param model_fun the function to apply to each data ply. This function should
 #'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, local_date)}
 #'   where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
 #'   to \code{mm_model_by_ply} is missing or \code{NULL}
-#' @inheritParams mm_is_valid_day
-#' @param ... additional args passed to model_fun (data, day_start, and day_end 
-#'   will also be passed)
-#' @return a data.frame of fitting results
-mm_model_by_ply <- function(data, data_daily, model_fun, day_start, day_end, ...) {
+#' @param data required. the data.frame containing all relevant, validated 
+#'   modeling data. The local.time column must be present.
+#' @param data_daily optional. a data.frame containing inputs with a daily 
+#'   timestep. The local.date column must be present.
+#' @inheritParams mm_model_by_ply_prototype
+#' @param ... other args to be passed through mm_model_by_ply to model_fun
+#' @return a data.frame of model results
+mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...) {
   
   # Identify the data plys that will let us use a user-specified-hr window for 
   # each date (day_start to day_end, which may be != 24). store this labeling in
@@ -43,8 +42,8 @@ mm_model_by_ply <- function(data, data_daily, model_fun, day_start, day_end, ...
     data.plys[data.plys$local.date == dt, 'even.date.group'] <- if(dt %in% even.dates) primary.date else secondary.date
   } 
   
-  # Estimate daily metabolism for each ply of the data, using two
-  # group_by/do==lapply loops to cover the odd and even groupings
+  # Estimate daily metabolism for each ply of the data, using if-else in the
+  # lapply loop to cover both the odd and even groupings in date order
   out.all <- do.call(
     rbind, 
     lapply(sort(unique.dates), function(dt) {
@@ -54,9 +53,10 @@ mm_model_by_ply <- function(data, data_daily, model_fun, day_start, day_end, ...
         which(data.plys$even.date.group == dt)
       }
       out <- model_fun(
-        data=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
-        data_daily=if(!missing(data_daily) && !is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
-        ..., day_start=day_start, day_end=day_end, local_date=dt)
+        data_ply=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
+        data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
+        day_start=day_start, day_end=day_end, local_date=dt,
+        ...)
       if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=dt, out)
     }))
   

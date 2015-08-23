@@ -4,22 +4,25 @@
 \alias{runjags_bayes}
 \title{Actually run JAGS on a formatted data ply}
 \usage{
-runjags_bayes(dataList, maxCores = 4, adaptSteps = 1000,
-  burnInSteps = 4000, numSavedSteps = 40000, thinSteps = 1)
+runjags_bayes(data_list, model_file = "metab_bayes_simple.txt",
+  max_cores = 4, adapt_steps = 1000, burnin_steps = 4000,
+  num_saved_steps = 40000, thin_steps = 1)
 }
 \arguments{
-\item{dataList}{a formatted list of inputs to the JAGS model}
+\item{data_list}{a formatted list of inputs to the JAGS model}
 
-\item{maxCores}{the maximum number of cores to apply to this run}
+\item{model_file}{the JAGS model file to use}
 
-\item{adaptSteps}{the number of steps to use in adapting the model}
+\item{max_cores}{the maximum number of cores to apply to this run}
 
-\item{burnInSteps}{the number of steps to run and ignore before starting to
+\item{adapt_steps}{the number of steps to use in adapting the model}
+
+\item{burnin_steps}{the number of steps to run and ignore before starting to
 collect MCMC 'data'}
 
-\item{numSavedSteps}{the number of MCMC steps to save}
+\item{num_saved_steps}{the number of MCMC steps to save}
 
-\item{thinSteps}{the number of steps to move before saving another step}
+\item{thin_steps}{the number of steps to move before saving another step}
 }
 \value{
 a data.frame of outputs

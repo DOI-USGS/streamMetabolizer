@@ -9,17 +9,8 @@
 #' \code{\link{mm_validate_data}}
 #' 
 #' @param day data for one day
+#' @inheritParams mm_model_by_ply_prototype
 #' @param tests list of tests to conduct
-#' @param day_start expected start of day data in number of hours from the
-#'   midnight that begins the modal date. For example, day_start=-1.5 indicates
-#'   that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
-#'   first observation time that occurs after that time if day_start doesn't
-#'   fall exactly on an observation time.
-#' @param day_end expected end of day data in number of hours from the midnight
-#'   that begins the modal date. For example, day_end=30 indicates that data
-#'   describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
-#'   observation time that occurs before that time if day_end doesn't fall
-#'   exactly on an observation time.
 #' @param timestep_days the expected timestep length in fraction of a day; for 
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA.
@@ -27,8 +18,9 @@
 #'   must be complete (without NAs)
 #' @return character vector of errors, or empty list
 #' @export
-mm_is_valid_day <- function(day, tests=c('full_day', 'even_timesteps', 'complete_data'), 
-                            day_start=-1.5, day_end=30, timestep_days=NA,
+mm_is_valid_day <- function(day, day_start=-1.5, day_end=30, 
+                            tests=c('full_day', 'even_timesteps', 'complete_data'), 
+                            timestep_days=NA,
                             need_complete=names(day)) {
   
   # check input

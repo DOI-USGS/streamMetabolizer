@@ -4,40 +4,33 @@
 \alias{mm_filter_valid_days}
 \title{Remove entries in data}
 \usage{
-mm_filter_valid_days(data, data_daily = NULL, tests = c("full_day",
-  "even_timesteps", "complete_data"), day_start = 6, day_end = 30,
-  timestep_days = NA, need_complete = names(data))
+mm_filter_valid_days(data, data_daily = NULL, day_start = 6, day_end = 30,
+  tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{data}{data.frame of instantaneous observations}
+\item{data}{data.frame of instantaneous observations, to be filtered to only
+those points on days that pass the specified tests in mm_is_valid_day}
 
 \item{data_daily}{data.frame of daily estimates/statistics, to be filtered in
 accordance with the filtering of data}
 
-\item{tests}{list of tests to conduct}
-
-\item{day_start}{expected start of day data in number of hours from the
+\item{day_start}{start time of a day's data in number of hours from the
 midnight that begins the modal date. For example, day_start=-1.5 indicates
-that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
-first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time.}
-
-\item{day_end}{expected end of day data in number of hours from the midnight
-that begins the modal date. For example, day_end=30 indicates that data
-describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
-observation time that occurs before that time if day_end doesn't fall
+that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first
+observation time that occurs after that time if day_start doesn't fall
 exactly on an observation time.}
 
-\item{timestep_days}{the expected timestep length in fraction of a day; for
-example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within
-the function if timestep_days is NA.}
+\item{day_end}{end time of a day's data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
+time that occurs before that time if day_end doesn't fall exactly on an
+observation time.}
 
-\item{need_complete}{character vector of the names of columns in day that
-must be complete (without NAs)}
+\item{tests}{list of tests to conduct}
 }
 \value{
 list of data and data_daily with same structure as inputs but with
-  invalid days removed
+  invalid days removed, plus a third data.frame of dates that were removed
 }
 \description{
 Remove entries in data

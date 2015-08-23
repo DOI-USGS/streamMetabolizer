@@ -6,16 +6,9 @@ NULL
 #' Fits a model to estimate GPP and ER from input data on DO, temperature, 
 #' light, etc.
 #' 
-#' @param data data.frame with columns having the same names, units, and format 
-#'   as the default. See \code{\link{mm_data}} for a full data description.
-#' @param info Any metadata you would like to package within the metabolism 
-#'   model.
+#' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
-#' @param data_daily Optional. Leave missing if K600 is to be fitted, or give a
-#'   three-column data.frame with columns as in default if K600 is to be taken
-#'   as given
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
+#' @inheritParams negloglik_1ply
 #' @return A metab_mle object containing the fitted model.
 #'   
 #' @import dplyr
@@ -27,9 +20,9 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), calc_DO_fun=calc_DO_mod, # args for mle_1ply
-  info=NULL, # args for new('metab_mle')
-  tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  calc_DO_fun=calc_DO_mod # inheritParams negloglik_1ply
 ) {
   
   # Check data for correct column names & units
@@ -37,18 +30,19 @@ metab_mle <- function(
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
   mle_all <- mm_model_by_ply(
-    mle_1ply, data, if(!missing(daily.data)) daily.data else NULL, # for mm_model_by_ply
+    mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests, # for mm_is_valid_day
-    K600=K600, calc_DO_fun=calc_DO_fun) # for mle_1ply
+    calc_DO_fun=calc_DO_fun) # for mle_1ply and negloglik_1ply
   
   # Package and return results
-  new("metab_mle", 
-      info=info,
-      fit=mle_all,
-      args=list(K600=K600, calc_DO_fun=calc_DO_fun, tests=tests, day_start=day_start, day_end=day_end), # keep in order passed to function
-      data=c(list(data=data), if(!missing(data_daily)) list(data_daily=data_daily)),
-      pkg_version=as.character(packageVersion("streamMetabolizer")))
+  metab_model(
+    model_class="metab_mle",
+    info=info,
+    fit=mle_all,
+    args=list(day_start=day_start, day_end=day_end, tests=tests, calc_DO_fun=calc_DO_fun), # keep in order passed to function
+    data=data,
+    data_daily=data_daily)
 }
 
 
@@ -58,17 +52,17 @@ metab_mle <- function(
 #' 
 #' Called from metab_mle().
 #' 
-#' @param data_ply data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
-#'   depth, temp.water, light)} and containing data for just one estimation-day
-#'   (this may be >24 hours but only yields estimates for one 24-hour period)
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
-#' @param ... additional args passed from mm_model_by_ply and ignored here
+#' @inheritParams mm_model_by_ply_prototype
+#' @inheritParams mm_is_valid_day
+#' @inheritParams negloglik_1ply
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
-mle_1ply <- function(data_ply, data_daily=NULL, calc_DO_fun=calc_DO_mod, 
-                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, local_date, ...) {
+mle_1ply <- function(
+  data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  calc_DO_fun=calc_DO_mod # inheritParams negloglik_1ply
+) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
@@ -85,12 +79,12 @@ mle_1ply <- function(data_ply, data_daily=NULL, calc_DO_fun=calc_DO_mod,
   if(length(stop_strs) == 0) {
     nlm.args <- c(
       list(
-        negloglik_1ply,
-        hessian=TRUE,
-        p = c(GPP=3, ER=-5, K600=5)[if(is.null(data_daily)) 1:3 else 1:2]
+        f = negloglik_1ply,
+        p = c(GPP=3, ER=-5, K600=5)[if(is.null(data_daily_ply)) 1:3 else 1:2],
+        hessian = TRUE
       ),
-      if(!is.null(data_daily)) {
-        list(K600=data_daily$K600)
+      if(!is.null(data_daily_ply)) {
+        list(K600=data_daily_ply$K600)
       } else {
         list()
       },

@@ -5,41 +5,48 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), info = NULL, maxCores = 4, adaptSteps = 10, burnInSteps = 40,
-  numSavedSteps = 400, thinSteps = 1, tests = c("full_day",
-  "even_timesteps", "complete_data"), day_start = -1.5, day_end = 30)
+  light), data_daily = NULL, info = NULL, day_start = -1.5,
+  day_end = 30, tests = c("full_day", "even_timesteps", "complete_data"),
+  model_file = "metab_bayes_simple.txt", max_cores = 4, adapt_steps = 10,
+  burnin_steps = 40, num_saved_steps = 400, thin_steps = 1)
 }
 \arguments{
-\item{data}{data.frame with columns having the same names, units, and format
-as the default. See \code{\link{mm_data}} for a full data description.}
+\item{data}{data.frame of input data at the temporal resolution of raw
+observations. Columns must have the same names, units, and format as the
+default. See \code{\link{mm_data}} for a full data description.}
 
-\item{info}{Any metadata you would like to package within the metabolism
-model.}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See
+\code{\link{mm_data}} for a full data description.}
 
-\item{maxCores}{the maximum number of cores to apply to this run}
+\item{info}{any information, in any format, that you would like to store
+within the metab_model object}
 
-\item{adaptSteps}{the number of steps to use in adapting the model}
+\item{day_start}{start time of a day's data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first
+observation time that occurs after that time if day_start doesn't fall
+exactly on an observation time.}
 
-\item{burnInSteps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
-
-\item{numSavedSteps}{the number of MCMC steps to save}
-
-\item{thinSteps}{the number of steps to move before saving another step}
+\item{day_end}{end time of a day's data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
+time that occurs before that time if day_end doesn't fall exactly on an
+observation time.}
 
 \item{tests}{list of tests to conduct}
 
-\item{day_start}{expected start of day data in number of hours from the
-midnight that begins the modal date. For example, day_start=-1.5 indicates
-that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
-first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time.}
+\item{model_file}{the JAGS model file to use}
 
-\item{day_end}{expected end of day data in number of hours from the midnight
-that begins the modal date. For example, day_end=30 indicates that data
-describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
-observation time that occurs before that time if day_end doesn't fall
-exactly on an observation time.}
+\item{max_cores}{the maximum number of cores to apply to this run}
+
+\item{adapt_steps}{the number of steps to use in adapting the model}
+
+\item{burnin_steps}{the number of steps to run and ignore before starting to
+collect MCMC 'data'}
+
+\item{num_saved_steps}{the number of MCMC steps to save}
+
+\item{thin_steps}{the number of steps to move before saving another step}
 }
 \value{
 A metab_bayes object containing the fitted model.

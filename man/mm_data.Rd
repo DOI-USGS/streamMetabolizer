@@ -17,47 +17,55 @@ column names are given, those columns may be omitted entirely or passed to
 the metab_model() call as all NAs.}
 }
 \value{
-data data.frame with columns \itemize{
-
-  \item{ \code{local.time} date-time values in solar mean time (local,
-  longitude-specific, NON-DAYLIGHT-SAVINGS time), in POSIXct format with a
-  nominal time zone of UTC.}
-
-  \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
-  O[2] L^{-1}}{mg O2 / L}}
-
-  \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at
-  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
-  \link{calc_DO_at_sat}}
-
-  \item{ \code{depth} stream depth, \eqn{m}{m}}.
-
-  \item{ \code{temp.water} water temperature, \eqn{degC}}.
-
-  \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\
-  m^{-2} s^{-1}}{micro mols / m^2 / s}}
-
-  \item{ \code{local.date} dates of interest in Date format}
-
-  \item{ \code{K600} daily estimates of K600}
-
-  \item{ \code{discharge.daily} daily mean river discharge}
-
-  \item{ \code{velocity.daily} daily mean river flow velocity}
-
-  }
+data data.frame with columns as in the description
 }
 \description{
-Produces a unitted data.frame with the column names, units, and data format
-to be used by metab_models that comply strictly with the
-metab_model_interface.
+Produces a unitted data.frame with the column names, units, and
+data format to be used by metab_models that comply strictly with the
+metab_model_interface. These are the columns that may be included:
+
+\itemize{
+
+\item{ \code{local.time} date-time values in solar mean time (local,
+longitude-specific, NON-DAYLIGHT-SAVINGS time), in POSIXct format with a
+nominal time zone of UTC.}
+
+\item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
+O[2] L^{-1}}{mg O2 / L}}
+
+\item{ \code{DO.sat} dissolved oxygen concentrations if the water were at
+equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
+\link{calc_DO_at_sat}}
+
+\item{ \code{depth} stream depth, \eqn{m}{m}}.
+
+\item{ \code{temp.water} water temperature, \eqn{degC}}.
+
+\item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
+s^{-1}}{micro mols / m^2 / s}}
+
+\item{ \code{local.date} dates of interest in Date format}
+
+\item{ \code{K600} daily estimates of K600}
+
+\item{ \code{discharge.daily} daily mean river discharge}
+
+\item{ \code{velocity.daily} daily mean river flow velocity}
+
+}
 }
 \details{
-Most models will require a subset of these data columns. Specialized models
-may deviate from this format, but this is discouraged.
+Most models will require a subset of these data columns. Specialized
+models may deviate from this format, but this is discouraged.
 }
 \examples{
+# all possible columns
 mm_data()
-mm_data(depth, light, local.time)
+
+# columns typical of instantaneous data
+mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light)
+
+# columns typical of daily data
+mm_data(local.date, K600, discharge.daily, velocity.daily)
 }
 

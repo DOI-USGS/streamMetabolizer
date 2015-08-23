@@ -19,6 +19,8 @@ A metabolism model class.
 \item{\code{args}}{A list of arguments, excluding data, that were supplied to the fitting function.}
 
 \item{\code{data}}{The data that were used to fit the model.}
+
+\item{\code{data_daily}}{The daily data, if any, that were used to fit the model.}
 }}
 \seealso{
 Other metab.model.classes: \code{\link{metab_bayes-class}};

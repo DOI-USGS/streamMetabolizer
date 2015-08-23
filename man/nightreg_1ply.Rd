@@ -4,16 +4,33 @@
 \alias{nightreg_1ply}
 \title{Make daily reaeration estimates from input parameters}
 \usage{
-nightreg_1ply(data_ply, tests = c("full_day", "even_timesteps",
-  "complete_data"), day_start = -12, day_end = 12, ...)
+nightreg_1ply(data_ply, data_daily_ply, day_start = -12, day_end = 12,
+  local_date, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{data_ply}{data.frame of the form \code{mm_data(local.time, DO.obs,
-DO.sat, depth, temp.water, light)} and containing data for just one
-estimation-day (this may be >24 hours but only yields estimates for one
-24-hour period)}
+\item{data_ply}{a data.frame containing all relevant, validated modeling data
+for a single ply of data. (1 ply ~= 1 date, although the day length has
+been specified by day_start and day_end and may not be exactly 24 hours)}
 
-\item{...}{additional args passed from mm_model_by_ply and ignored here}
+\item{data_daily_ply}{NULL or a data.frame containing inputs with a daily
+timestep. The local.date column must be present.}
+
+\item{day_start}{start time of a day's data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first
+observation time that occurs after that time if day_start doesn't fall
+exactly on an observation time.}
+
+\item{day_end}{end time of a day's data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
+time that occurs before that time if day_end doesn't fall exactly on an
+observation time.}
+
+\item{local_date}{the modal date of this ply of data and data_daily, and the
+date by which this ply should be referred}
+
+\item{tests}{list of tests to conduct}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model
