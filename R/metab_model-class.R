@@ -220,7 +220,7 @@ predict_DO.metab_model <- function(metab_model) {
   
   # re-process the input data with the metabolism estimates to predict DO
   mm_model_by_ply(
-    data=data, model_fun=mm_predict_1ply, day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    model_fun=mm_predict_1ply, data=data, data_daily=NULL, day_start=day_start, day_end=day_end, # for mm_model_by_ply
     calc_DO_fun=calc_DO_fun, metab_ests=metab_ests) # for mm_predict_1ply
   
 }

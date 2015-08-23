@@ -29,15 +29,17 @@ collect MCMC 'data'}
 
 \item{tests}{list of tests to conduct}
 
-\item{day_start}{argument for 'full_day' test: expected start of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_start=-1.5 indicates that data describing 2006-06-26 should begin at
-2006-06-25 22:30, or as near as possible given the timestep.}
+\item{day_start}{expected start of day data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
+first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time.}
 
-\item{day_end}{argument for 'full_day' test: expected end of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_end=30 indicates that data describing 2006-06-26 should end at
-2006-06-27 06:00, or as near as possible given the timestep.}
+\item{day_end}{expected end of day data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
+observation time that occurs before that time if day_end doesn't fall
+exactly on an observation time.}
 }
 \value{
 A metab_bayes object containing the fitted model.

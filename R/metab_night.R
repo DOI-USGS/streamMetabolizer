@@ -100,10 +100,11 @@ nightreg_1ply <- function(data_ply,
       # check for data validity here, after subsetting to the time window we
       # really care about
       timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$local.time)), units="days"), na.rm=TRUE))
-      stop_strs <<- c(stop_strs, mm_is_valid_day(
+      validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
         tests=tests, day_start=day_start, day_end=day_start, # args passed from metab_night
-        timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))) # args supplied here
+        timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light")) # args supplied here
+      if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
       
       # actually stop if anything has broken so far
       if(length(stop_strs) > 1) stop("invalid data ply")

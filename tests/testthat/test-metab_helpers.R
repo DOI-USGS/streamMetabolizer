@@ -50,3 +50,18 @@ test_that("mm_is_valid_day works", {
   # test column completeness
   expect_equal(mm_is_valid_day(bad_day), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
 })
+
+test_that("mm_filter_valid_days works", {
+  
+  library(plyr); library(dplyr)
+  library(unitted); library(lubridate)
+  french <- streamMetabolizer:::load_french_creek()
+  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(1000, "mb"))
+  french$utc.time <- convert_localtime_to_GMT(force_tz(french$local.time,"MST"))
+  french$local.time <- force_tz(convert_GMT_to_localtime(french$utc.time, longitude=-106.753099, latitude=44.362594), "UTC")
+  french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.753099, time.type='apparent solar')
+  french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$solar.time), latitude=44.362594, attach.units=TRUE))
+  french <- french[c("local.time","DO.obs","DO.sat","depth","temp.water","light")]
+  
+  mm_filter_valid_days(french)
+})

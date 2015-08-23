@@ -6,7 +6,7 @@
 \usage{
 mle_1ply(data_ply, K600 = NULL, calc_DO_fun = calc_DO_mod,
   tests = c("full_day", "even_timesteps", "complete_data"),
-  day_start = -1.5, day_end = 30, ...)
+  day_start = -1.5, day_end = 30, date, ...)
 }
 \arguments{
 \item{data_ply}{data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,

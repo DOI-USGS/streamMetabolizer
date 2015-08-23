@@ -70,7 +70,8 @@ bayes_1ply <- function(data_ply, maxCores=4, adaptSteps=1000, burnInSteps=4000, 
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  stop_strs <- mm_is_valid_day(data_ply, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+  validity <- mm_is_valid_day(data_ply, need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+  stop_strs <- if(isTRUE(validity)) character(0) else validity
   warn_strs <- character(0)
   
   # Calculate metabolism by Bayesian MCMC

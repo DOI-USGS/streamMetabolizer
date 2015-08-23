@@ -4,25 +4,31 @@
 \alias{mm_model_by_ply}
 \title{Split and label data into >=24-hr days for fitting daily metabolism}
 \usage{
-mm_model_by_ply(data, data.daily, model_fun, day_start, day_end, ...)
+mm_model_by_ply(data, data_daily, model_fun, day_start, day_end, ...)
 }
 \arguments{
-\item{data}{the data.frame containing all relevant, validated modeling data}
+\item{data}{required. the data.frame containing all relevant, validated
+modeling data. The local.time column must be present.}
 
-\item{data.daily}{a second data.frame, often optional, containing inputs with
-a daily timestep}
+\item{data_daily}{optional. a data.frame containing inputs with a daily
+timestep. The local.date column must be present.}
 
-\item{model_fun}{the function to apply to each data ply}
+\item{model_fun}{the function to apply to each data ply. This function should
+accept the arguments \code{c(data, data_daily, ..., day_start, day_end, date)}
+where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
+to \code{mm_model_by_ply} is missing or \code{NULL}}
 
-\item{day_start}{argument for 'full_day' test: expected start of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_start=-1.5 indicates that data describing 2006-06-26 should begin at
-2006-06-25 22:30, or as near as possible given the timestep.}
+\item{day_start}{expected start of day data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 should begin at 2006-06-25 22:30, or at the
+first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time.}
 
-\item{day_end}{argument for 'full_day' test: expected end of day data in
-number of hours from the midnight that begins the modal date. For example,
-day_end=30 indicates that data describing 2006-06-26 should end at
-2006-06-27 06:00, or as near as possible given the timestep.}
+\item{day_end}{expected end of day data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 should end at 2006-06-27 06:00, or at the last
+observation time that occurs before that time if day_end doesn't fall
+exactly on an observation time.}
 
 \item{...}{additional args passed to model_fun (data, day_start, and day_end
 will also be passed)}
@@ -31,6 +37,9 @@ will also be passed)}
 a data.frame of fitting results
 }
 \description{
-Split and label data into >=24-hr days for fitting daily metabolism
+Splits up to two data.frames, data and data_daily, into date-specific chunks.
+These are passed to model_fun, and the results of model_fun (which must be a
+data.frame) are modified to include the data as a first column, then
+row-bound together into a single data.frame containing results from all days.
 }
 

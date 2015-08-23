@@ -11,7 +11,7 @@ NULL
 #' @param info Any metadata you would like to package within the metabolism 
 #'   model.
 #' @inheritParams mm_is_valid_day
-#' @param data.daily Optional. Leave missing if K600 is to be fitted, or give a
+#' @param data_daily Optional. Leave missing if K600 is to be fitted, or give a
 #'   three-column data.frame with columns as in default if K600 is to be taken
 #'   as given
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
@@ -27,7 +27,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data.daily=mm_data(local.date, K600, optional='all'), calc_DO_fun=calc_DO_mod, # args for mle_1ply
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), calc_DO_fun=calc_DO_mod, # args for mle_1ply
   info=NULL, # args for new('metab_mle')
   tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30 # args for mm_is_valid_day, mm_model_by_ply
 ) {
@@ -36,8 +36,8 @@ metab_mle <- function(
   data <- mm_validate_data(data, "metab_mle")
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
-  mle.all <- mm_model_by_ply(
-    data, if(!missing(daily.data)) daily.data else NULL, mle_1ply, # for mm_model_by_ply
+  mle_all <- mm_model_by_ply(
+    mle_1ply, data, if(!missing(daily.data)) daily.data else NULL, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests, # for mm_is_valid_day
     K600=K600, calc_DO_fun=calc_DO_fun) # for mle_1ply
@@ -45,9 +45,9 @@ metab_mle <- function(
   # Package and return results
   new("metab_mle", 
       info=info,
-      fit=mle.all,
+      fit=mle_all,
       args=list(K600=K600, calc_DO_fun=calc_DO_fun, tests=tests, day_start=day_start, day_end=day_end), # keep in order passed to function
-      data=c(list(data=data), if(!missing(daily.data)) list(data.daily=data.daily)),
+      data=c(list(data=data), if(!missing(data_daily)) list(data_daily=data_daily)),
       pkg_version=as.character(packageVersion("streamMetabolizer")))
 }
 
@@ -68,21 +68,21 @@ metab_mle <- function(
 #'   diagnostics
 #' @keywords internal
 mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod, 
-                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, ...) {
+                     tests=c('full_day', 'even_timesteps', 'complete_data'), day_start=-1.5, day_end=30, date, ...) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
   timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
-  stop_strs <- mm_is_valid_day(
+  validity <- mm_is_valid_day(
     data_ply, # data split by mm_model_by_ply
     tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
     timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light")) # args supplied here
+  stop_strs <- if(isTRUE(validity)) character(0) else validity
   warn_strs <- character(0)
 
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
-    date <- names(which.max(table(as.Date(data_ply$local.time))))
     nlm.args <- c(
       list(
         negloglik_1ply,
@@ -98,7 +98,7 @@ mle_1ply <- function(data_ply, K600=NULL, calc_DO_fun=calc_DO_mod,
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==date,'light']),
+        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(date),'light']),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = calc_DO_fun
