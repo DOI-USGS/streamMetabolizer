@@ -2,16 +2,18 @@
 #' 
 #' Will most often be called from within a metab_model constructor.
 #' 
-#' @param data a data.frame that has been (or will be) passed into a metab_model
-#'   constructor
+#' @inheritParams metab_model_prototype
 #' @param metab_class character the class name of the metab_model constructor
+#' @param tests to apply to the input data.frames (before any subsetting with
+#'   mm_model_by_ply, etc. has occurred)
 #' @import dplyr
 #' @examples
 #' \dontrun{
 #' mm_validate_data(dplyr::select(mm_data(),-temp.water), "metab_mle")
 #' }
 #' @export
-mm_validate_data <- function(data, data_daily, metab_class, tests=c('missing_cols','extra_cols','units')) {
+mm_validate_data <- function(data, data_daily, #inheritParams metab_model_prototype
+                             metab_class, tests=c('missing_cols','extra_cols','units')) {
   
   data_types <- setNames(c("data","data_daily"),c("data","data_daily"))
   dat_all <- lapply(data_types, function(data_type) {

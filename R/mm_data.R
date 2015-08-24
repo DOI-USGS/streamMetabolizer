@@ -71,9 +71,10 @@ mm_data <- function(..., optional='none') {
     K600=           u(5,"d^-1"), 
     discharge.daily=u(9,"m^3 s^-1"), 
     velocity.daily= u(2,"m s^-1")))
-  .dots = lazy_dots(...)
-  dat <- if(length(.dots) == 1 && is.null(.dots[[1]]$expr)) {
-    unitted(NULL)
+  .dots <- lazy_dots(...)
+  .nulldot <- length(.dots) == 1 && is.null(.dots[[1]]$expr)
+  dat <- if(isTRUE(.nulldot)) {
+    u(NULL)
   } else if(length(.dots) == 0) {
     dat 
   } else {
@@ -82,7 +83,7 @@ mm_data <- function(..., optional='none') {
 
   # add information about which columns, if any, are optional.
   optional <- if(missing(optional)) {
-    if(length(.dots) == 1 && is.null(dotfun(NULL)[[1]]$expr)) {
+    if(isTRUE(.nulldot)) {
       'all'
     } else {
       'none' 
