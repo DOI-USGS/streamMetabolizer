@@ -5,9 +5,10 @@
 \title{Create a metab_model object.}
 \usage{
 metab_model(model_class = "metab_model", info = "user metadata goes here",
-  fit = "generic metab_model class; no actual fit", args = list(),
-  data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(local.date, K600, discharge.daily, velocity.daily),
+  fit = "generic metab_model class; no actual fit", args = list(day_start =
+  -1.5, day_end = 30, calc_DO_fun = calc_DO_mod), data = mm_data(local.time,
+  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(local.date,
+  K600, discharge.daily, velocity.daily, optional = "all"),
   pkg_version = as.character(packageVersion("streamMetabolizer")), ...)
 }
 \arguments{

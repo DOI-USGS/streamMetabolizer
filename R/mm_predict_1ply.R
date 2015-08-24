@@ -11,8 +11,8 @@ mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_
   # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
   # they're missing
   metab_est <- data_daily_ply
-  if(is.na(metab_est$GPP)) {
-    return(data.frame(data_ply, DO.mod=NA))
+  if(nrow(metab_est)==0 || is.na(metab_est$GPP)) {
+    return(data.frame(data_ply, DO.mod=rep(NA, nrow(data_ply))))
   }
   
   # if we have metab estimates, use them to predict DO

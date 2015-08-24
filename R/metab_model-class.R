@@ -70,9 +70,9 @@ metab_model <- function(
   model_class="metab_model",
   info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
-  args=list(),
+  args=list(day_start=-1.5, day_end=30, calc_DO_fun=calc_DO_mod),
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily),
+  data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
@@ -195,11 +195,11 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
   } else {
     warning("model does not contain all columns ", paste0(vars, collapse=", "))
     data.frame(
-      local_date=NA, 
-      GPP=NA, GPP.lower=NA, GPP.upper=NA,
-      ER=NA, ER.lower=NA, ER.upper=NA,
-      K600=NA, K600.lower=NA, K600.upper=NA
-    )[c(),]
+      local.date=as.Date(NA)[NULL], 
+      GPP=numeric(), GPP.lower=numeric(), GPP.upper=numeric(),
+      ER=numeric(), ER.lower=numeric(), ER.upper=numeric(),
+      K600=numeric(), K600.lower=numeric(), K600.upper=numeric()
+    )
   }
 }
 
