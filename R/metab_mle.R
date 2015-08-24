@@ -77,19 +77,33 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(validity)) character(0) else validity
   warn_strs <- character(0)
 
+  # Collect K600 if it's available
+  K600 <- if(is.null(data_daily_ply)) {
+    NULL 
+  } else {
+    if(nrow(data_daily_ply)==0 || is.na(data_daily_ply$K600)) {
+      # Daily K600 has generally been supplied but isn't available for this 
+      # particular day. What do we do? Do we (A) estimate all three parameters 
+      # because we can (K600 <- NULL), or (B) omit this day because the user
+      # will be expecting consistency in methods across days (K600 <- {stop_strs
+      # <- c(stop_strs, "data_daily$K600 is NA"); NA})? Going with (C) give
+      # warning and then estimate all three parameters.
+      warn_strs <- c(warn_strs, "data_daily$K600 is NA so fitting by MLE")
+      NULL #(C)
+    } else {
+      data_daily_ply$K600
+    }
+  }
+  
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
     nlm.args <- c(
       list(
         f = negloglik_1ply,
-        p = c(GPP=3, ER=-5, K600=5)[if(is.null(data_daily_ply)) 1:3 else 1:2],
-        hessian = TRUE
+        p = c(GPP=3, ER=-5, K600=5)[if(is.null(K600)) 1:3 else 1:2],
+        hessian = TRUE,
+        K600.daily=K600
       ),
-      if(!is.null(data_daily_ply)) {
-        list(K600=data_daily_ply$K600)
-      } else {
-        list()
-      },
       as.list(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
@@ -105,10 +119,13 @@ mle_1ply <- function(
         # first: try to run the MLE fitting function
         mle.1d <- do.call(nlm, nlm.args)
         # if we were successful, also compute the confidence interval as in 
-        # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which says: 
-        # 'Inverse Fisher information gives the asymptotic variance matrix of the 
-        # MLE. From it, we can construct asymptotic confidence intervals.' See also 
+        # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which
+        # says: 'Inverse Fisher information gives the asymptotic variance matrix
+        # of the MLE. From it, we can construct asymptotic confidence
+        # intervals.' See also 
         # http://stats.stackexchange.com/questions/27033/in-r-given-an-output-from-optim-with-a-hessian-matrix-how-to-calculate-paramet
+        # This will be a gross underestimate of true uncertainty because the
+        # errors are autocorrelated. Still, it's a start.
         inv_fish <- solve(mle.1d$hessian) 
         mle.1d$sd <- sqrt(diag(inv_fish))
         mle.1d
@@ -137,7 +154,7 @@ mle_1ply <- function(
       stringsAsFactors=FALSE)
   } else {
     data.frame(
-      GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=if(is.null(K600)) mle.1d$estimate[3] else nlm.args$K600,
+      GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=if(is.null(K600)) mle.1d$estimate[3] else K600,
       GPP.sd=mle.1d$sd[1], ER.sd=mle.1d$sd[2], K600.sd=if(is.null(K600)) mle.1d$sd[3] else NA,
       GPP.grad=mle.1d$gradient[1], ER.grad=mle.1d$gradient[2], K600.grad=if(is.null(K600)) mle.1d$gradient[3] else NA,
       minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
@@ -171,7 +188,7 @@ negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water
   # important that these arguments are named because various calc_DO_funs take 
   # slightly different subsets of these arguments
   DO.mod <- calc_DO_fun(
-    GPP.daily=params[1], ER.daily=params[2], K600.daily=if(missing(K600.daily)) params[3] else K600.daily,
+    GPP.daily=params[1], ER.daily=params[2], K600.daily=if(is.null(K600.daily)) params[3] else K600.daily,
     DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
     frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.obs[1], n=n)
   

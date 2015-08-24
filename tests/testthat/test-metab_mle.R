@@ -15,33 +15,27 @@ test_that("metab_mle models can be created", {
   
 })
 
-test_that("metabolism predictions (predict_metab, predict_DO) make sense", {
+test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
   
   # metab_mle
-  mm <- metab_mle(data=vfrench)
+  mm <- metab_mle(data=vfrench, day_start=-1, day_end=23)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24<- filter(DO_preds, local.date == "2012-08-24")
-  knownbug <- function() {
-    expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
-    # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=factor(local.date))) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-    # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-  }
+  DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
+  expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
+  # plot_DO_preds(DO_preds, plot_as="pctsat")
   
 })
 
-test_that("metabolism models can be fit with K specified", {
+test_that("metab_mle models can be fit with K specified", {
   
-  # metab_mle with K600 - not fixed up yet
-  knownbug <- function() {
-    K600 <- data.frame(date=unique(as.Date(v(french)$local.time)), K600=c(NA, 30, 30, 0, NA, 0, 50, 40))
-    mm <- metab_mle(data=v(french), K600=K600)
-    metab <- predict_metab(mm)
-    DO_preds <- predict_DO(mm)
-    DO_preds_Aug24<- filter(DO_preds, local.date == "2012-08-24")
-    expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
-    # library(ggplot2); ggplot(DO_preds, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-    # library(ggplot2); ggplot(DO_preds_Aug24, aes(x=local.time, group=local.date)) + geom_line(aes(y=DO.obs), color="blue") + geom_line(aes(y=DO.mod), color="red")
-  }
+  # metab_mle with K600
+  K600 <- data.frame(local.date=unique(as.Date(vfrench$local.time)), K600=c(NA, 30, NA, 0, NA, 0, 50, 40)) # 2 matches, one mismatch w/ modeled data
+  mm <- metab_mle(data=vfrench, data_daily=K600, day_start=-1, day_end=23)
+  metab <- predict_metab(mm)
+  DO_preds <- predict_DO(mm)
+  DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
+  expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
+  # plot_DO_preds(DO_preds, plot_as="pctsat")
   
 })
