@@ -23,7 +23,9 @@ metab_Kvpred <- function(
 ) {
   
   # Check data for correct column names & units
-  data <- mm_validate_data(data, "metab_Kvpred")
+  dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kvpred")
+  data <- dat_list[['data']]
+  data_daily <- dat_list[['data_daily']]
   
   # model the data all days at a time, after first filtering out bad days
   data_daily_filtered <- data_daily ## need to finish

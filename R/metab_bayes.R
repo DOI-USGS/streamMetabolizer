@@ -24,7 +24,9 @@ metab_bayes <- function(
 ) {
   
   # Check data for correct column names & units
-  data <- mm_validate_data(data, "metab_bayes")
+  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
+  data <- dat_list[['data']]
+  data_daily <- dat_list[['data_daily']]
   
   # model the data
   if(model_file %in% c('metab_bayes_simple.txt','metab_bayes_procerr.txt')) {

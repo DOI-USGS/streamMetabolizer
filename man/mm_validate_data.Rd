@@ -4,7 +4,8 @@
 \alias{mm_validate_data}
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
-mm_validate_data(data, metab_class)
+mm_validate_data(data, data_daily, metab_class, tests = c("missing_cols",
+  "extra_cols", "units"))
 }
 \arguments{
 \item{data}{a data.frame that has been (or will be) passed into a metab_model

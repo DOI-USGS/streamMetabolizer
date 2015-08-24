@@ -26,7 +26,9 @@ metab_mle <- function(
 ) {
   
   # Check data for correct column names & units
-  data <- mm_validate_data(data, "metab_mle")
+  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
+  data <- dat_list[['data']]
+  data_daily <- dat_list[['data_daily']]
   
   # model the data, splitting into overlapping 31.5-hr 'plys' for each date
   mle_all <- mm_model_by_ply(
