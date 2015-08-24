@@ -81,8 +81,7 @@ bayes_1ply <- function(
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
   validity <- mm_is_valid_day(data_ply, day_start=day_start, day_end=day_end, 
-                              tests=c("full_day","even_timesteps","complete_data"), 
-                              need_complete=c("DO.obs","DO.sat","depth","temp.water","light"))
+                              tests=c("full_day","even_timesteps","complete_data"))
   stop_strs <- if(isTRUE(validity)) character(0) else validity
   warn_strs <- character(0)
   

@@ -73,7 +73,7 @@ mle_1ply <- function(
   validity <- mm_is_valid_day(
     data_ply, # data split by mm_model_by_ply
     tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
-    timestep_days=timestep.days, need_complete=c("DO.obs","DO.sat","depth","temp.water","light")) # args supplied here
+    timestep_days=timestep.days) # arg supplied here to avoid calculating twice
   stop_strs <- if(isTRUE(validity)) character(0) else validity
   warn_strs <- character(0)
 

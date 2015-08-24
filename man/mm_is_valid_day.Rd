@@ -5,8 +5,7 @@
 \title{Validate one day of data, returning a vector of error strings if needed}
 \usage{
 mm_is_valid_day(day, day_start = -1.5, day_end = 30, tests = c("full_day",
-  "even_timesteps", "complete_data"), timestep_days = NA,
-  need_complete = names(day))
+  "even_timesteps", "complete_data"), timestep_days = NA)
 }
 \arguments{
 \item{day}{data for one day}
@@ -28,9 +27,6 @@ observation time.}
 \item{timestep_days}{the expected timestep length in fraction of a day; for
 example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within
 the function if timestep_days is NA.}
-
-\item{need_complete}{character vector of the names of columns in day that
-must be complete (without NAs)}
 }
 \value{
 character vector of errors, or empty list

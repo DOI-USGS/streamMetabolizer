@@ -14,14 +14,11 @@
 #' @param timestep_days the expected timestep length in fraction of a day; for 
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA.
-#' @param need_complete character vector of the names of columns in day that 
-#'   must be complete (without NAs)
 #' @return character vector of errors, or empty list
 #' @export
 mm_is_valid_day <- function(day, day_start=-1.5, day_end=30, 
                             tests=c('full_day', 'even_timesteps', 'complete_data'), 
-                            timestep_days=NA,
-                            need_complete=names(day)) {
+                            timestep_days=NA) {
   
   # check input
   tests <- match.arg(tests, several.ok = TRUE)
@@ -68,7 +65,7 @@ mm_is_valid_day <- function(day, day_start=-1.5, day_end=30,
   
   if('complete_data' %in% tests) {
     # Require complete data in all columns
-    for(col in need_complete) {
+    for(col in names(day)) {
       if(any(is.na(day[col]))) 
         stop_strs <- c(stop_strs, paste0("NAs in ", col))
     }
