@@ -72,10 +72,29 @@ mm_data <- function(..., optional='none') {
     discharge.daily=u(9,"m^3 s^-1"), 
     velocity.daily= u(2,"m s^-1")))
   .dots = lazy_dots(...)
-  dat <- if(length(.dots) == 0) dat else select_(dat, .dots=.dots)
+  dat <- if(length(.dots) == 1 && is.null(.dots[[1]]$expr)) {
+    unitted(NULL)
+  } else if(length(.dots) == 0) {
+    dat 
+  } else {
+    select_(dat, .dots=.dots)
+  }
 
   # add information about which columns, if any, are optional.
-  optional <- if(missing(optional)) 'none' else match.arg(optional, choices=c('all',names(dat)), several.ok=TRUE)
+  optional <- if(missing(optional)) {
+    if(length(.dots) == 1 && is.null(dotfun(NULL)[[1]]$expr)) {
+      'all'
+    } else {
+      'none' 
+    }
+  } else {
+    opt <- match.arg(optional, choices=c('all','none',names(dat)), several.ok=TRUE)
+    if(any(c('all','none') %in% optional) && length(optional) != 1) 
+      stop("if optional is 'all' or 'none', it should be length 1")
+    if(all(names(dat) %in% opt)) 
+      opt <- 'all'
+    opt
+  }
   attr(dat, 'optional') <- optional
   
   # return

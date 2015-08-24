@@ -19,7 +19,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=NULL, info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   

@@ -18,7 +18,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_Kvpred <- function(
-  data=NULL, data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily), info=NULL, # inheritParams metab_model_prototype
+  data=mm_data(NULL), data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily), info=NULL, # inheritParams metab_model_prototype
   method="KvQ_regression"
 ) {
   

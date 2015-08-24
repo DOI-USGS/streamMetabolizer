@@ -4,7 +4,7 @@
 \alias{metab_Kvpred}
 \title{Regress initial daily K estimates against predictors}
 \usage{
-metab_Kvpred(data = NULL, data_daily = mm_data(local.date, K600,
+metab_Kvpred(data = mm_data(NULL), data_daily = mm_data(local.date, K600,
   discharge.daily, velocity.daily), info = NULL, method = "KvQ_regression")
 }
 \arguments{

@@ -5,8 +5,8 @@
 \title{Nighttime regression for K estimation}
 \usage{
 metab_night(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = NULL, info = NULL, day_start = -12, day_end = 12,
-  tests = c("full_day", "even_timesteps", "complete_data"))
+  light), data_daily = mm_data(NULL), info = NULL, day_start = -12,
+  day_end = 12, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw

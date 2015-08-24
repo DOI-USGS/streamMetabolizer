@@ -21,6 +21,16 @@ mm_validate_data <- function(data, data_daily, metab_class, tests=c('missing_col
       
     # the data expectation is set by the default data argument to the specific metabolism class
     expected.data <- formals(metab_class)[[data_type]] %>% eval()
+    optional.data <- attr(expected.data, 'optional')
+    
+    # quick return if dat is NULL
+    if(is.null(v(dat))) {
+      if('all' %in% optional.data) {
+        return(dat)
+      } else {
+        stop(paste0(data_type, " is NULL but required"))
+      }
+    }
     
     # check for missing or extra columns
     if('missing_cols' %in% tests) {
@@ -45,7 +55,7 @@ mm_validate_data <- function(data, data_daily, metab_class, tests=c('missing_col
       if(length(mismatched.units) > 0) {
         data.units <- get_units(dat)[mismatched.units]
         expected.units <- get_units(expected.data)[mismatched.units]
-        stop(paste0("unexpected units: ", paste0(
+        stop(paste0("unexpected units in ", data_type, ": ", paste0(
           "(", 1:length(mismatched.units), ") ", 
           names(data.units), " = ", data.units, ", expected ", expected.units,
           collapse="; ")))

@@ -5,7 +5,7 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = NULL, info = NULL, day_start = -1.5,
+  light), data_daily = mm_data(NULL), info = NULL, day_start = -1.5,
   day_end = 30, tests = c("full_day", "even_timesteps", "complete_data"),
   model_file = "metab_bayes_simple.txt", max_cores = 4, adapt_steps = 10,
   burnin_steps = 40, num_saved_steps = 400, thin_steps = 1)

@@ -18,7 +18,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=NULL, info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_file='metab_bayes_simple.txt', max_cores=4, adapt_steps=10, burnin_steps=40, num_saved_steps=400, thin_steps=1 # inheritParams runjags_bayes
 ) {

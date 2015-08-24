@@ -1,20 +1,67 @@
 context("metab_model_helpers")
 
-test_that("mm_data()", {
-  expect_equivalent(mm_data(local.time), mm_data()["local.time"], info="mm_data can be used for to select columns")
-  expect_equivalent(mm_data(depth, temp.water, local.time), mm_data()[c("depth","temp.water","local.time")], info="mm_data can be used for to select columns")
+test_that("mm_data works", {
+  
+  # runs and can be used to select columns
+  expect_is(mm_data(), "unitted_data.frame")
+  expect_equal(nrow(mm_data()), 1)
+  expect_equivalent(mm_data(local.time), mm_data()["local.time"])
+  expect_equivalent(mm_data(depth, temp.water, local.time), mm_data()[c("depth","temp.water","local.time")])
+  
+  # 'optional' attribute is set sensibly
+  expect_equal(attr(mm_data(NULL), 'optional'), 'all')
+  expect_equal(attr(mm_data(depth, temp.water, local.time), 'optional'), 'none')
+  expect_equal(attr(mm_data(local.time, DO.obs, optional='DO.obs'), 'optional'), 'DO.obs')
+  expect_equal(attr(mm_data(local.time, DO.obs, optional=c('DO.obs','local.time')), 'optional'), 'all')
+
+  # 'optional' attribute is checked
+  expect_error(mm_data(local.time, DO.obs, optional='DO.sat'), "'arg' should be one of")
+  expect_error(mm_data(local.time, DO.obs, optional=c('DO.obs','all')), "should be length 1")
 })
 
 test_that("mm_validate_data works", {
-  expect_error(mm_validate_data(dplyr::select(mm_data(),-temp.water), "metab_mle"), "missing these columns: temp.water")
-  expect_error(mm_validate_data(dplyr::mutate(mm_data(),temp.air=9), "metab_mle"), "should omit these extra columns:")
-  expect_error(mm_validate_data(dplyr::mutate(mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),temp.water=u(temp.water, "degF"), DO.obs=u(DO.obs, "mgO L^-1")), "metab_mle"), "unexpected units")
+  
+  # runs and accepts the defaults without errors
+  ignore <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')
+  ignore <- mm_validate_data(eval(formals(metab_night)$data), eval(formals(metab_night)$data_daily), 'metab_night')
+  ignore <- mm_validate_data(eval(formals(metab_bayes)$data), eval(formals(metab_bayes)$data_daily), 'metab_bayes')
+  ignore <- mm_validate_data(eval(formals(metab_Kvpred)$data), eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  
+  # accepts NULL for the fully optional data.frames
+  ignore <- mm_validate_data(eval(formals(metab_mle)$data), NULL, 'metab_mle')
+  ignore <- mm_validate_data(eval(formals(metab_night)$data), NULL, 'metab_night')
+  ignore <- mm_validate_data(eval(formals(metab_bayes)$data), NULL, 'metab_bayes')
+  ignore <- mm_validate_data(NULL, eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  
+  # returns a list
+  val_out <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')
+  expect_is(val_out, 'list')
+  expect_equal(names(val_out), c('data','data_daily'))
+  expect_is(val_out[[1]], 'data.frame')
+  
+  # notices missing, extra, badly unitted columns in data; accepts non-unitted data
+  ok_data <- eval(formals(metab_mle)$data)
+  expect_error(mm_validate_data(NULL, NULL, "metab_mle"), "data is NULL but required")
+  expect_error(mm_validate_data(data.frame(), NULL, "metab_mle"), "data is missing these columns: local.time, DO.obs, DO.sat, depth, temp.water, light")
+  expect_error(mm_validate_data(dplyr::select(ok_data,-temp.water), NULL, "metab_mle"), "data is missing these columns: temp.water")
+  expect_error(mm_validate_data(dplyr::mutate(ok_data,temp.air=9), mm_data('temp.air'), "metab_mle"), "data should omit these extra columns: temp.air")
+  expect_error(mm_validate_data(dplyr::mutate(ok_data,temp.water=u(temp.water, "degF"), DO.obs=u(DO.obs, "mgO L^-1")), NULL, "metab_mle"), "unexpected units in data:")
+  expect_is(mm_validate_data(unitted::v(ok_data), NULL, "metab_mle"), 'list')
+
+  # notices missing, extra, badly unitted columns in data_daily
+  ok_data_daily <- eval(formals(metab_mle)$data_daily)
+  expect_is(mm_validate_data(ok_data, NULL, "metab_mle"), 'list')
+  expect_error(mm_validate_data(ok_data, data.frame(), "metab_mle"), "missing these columns: local.date, K600")
+  expect_error(mm_validate_data(ok_data, dplyr::select(ok_data_daily, -K600), "metab_mle"), "data_daily is missing these columns: K600")
+  expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, temp.air=9), "metab_mle"), "data_daily should omit these extra columns: temp.air")
+  expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, K600=u(K600, "mgO L^-1")), "metab_mle"), "unexpected units in data_daily:")
+  expect_is(mm_validate_data(ok_data, unitted::v(ok_data_daily), "metab_mle"), 'list') # should we accept units for one but not other? for now, we do.
+  
 })
 
 test_that("mm_is_valid_day works", {
   
   # use a subset of data from Bob
-  library(plyr); library(dplyr)
   library(unitted)
   french <- streamMetabolizer:::load_french_creek()
  
