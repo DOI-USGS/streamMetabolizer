@@ -1,4 +1,4 @@
-context("calc_schmidt works as expected w/ unitted")
+context("calc_schmidt")
 
 test_that("proper units checked and returned for schmidt", {
   temp.water <- 25
