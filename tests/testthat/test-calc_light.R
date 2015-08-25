@@ -1,5 +1,5 @@
+context("calc_light")
 
-context("basic light model")
 test_that("can generate light predictions from basic light model", {
   library(plyr); library(dplyr)
   
@@ -59,7 +59,6 @@ test_that("can generate light predictions from basic light model", {
   expect_true(unitted::verify_units(ins_u, "W m^-2", list(TRUE,FALSE)), "if requested, returns expected units")
   
 })
-
 
 test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and calc_is_daytime", {
   library(plyr); library(dplyr)

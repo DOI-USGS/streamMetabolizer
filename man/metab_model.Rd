@@ -4,12 +4,17 @@
 \alias{metab_model}
 \title{Create a metab_model object.}
 \usage{
-metab_model(info = "user metadata goes here",
-  fit = "generic metab_model class; no actual fit", args = list(),
-  data = mm_data(),
-  pkg_version = as.character(packageVersion("streamMetabolizer")))
+metab_model(model_class = "metab_model", info = "user metadata goes here",
+  fit = "generic metab_model class; no actual fit", args = list(day_start =
+  -1.5, day_end = 30, calc_DO_fun = calc_DO_mod), data = mm_data(local.time,
+  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(local.date,
+  K600, discharge.daily, velocity.daily, optional = "all"),
+  pkg_version = as.character(packageVersion("streamMetabolizer")), ...)
 }
 \arguments{
+\item{model_class}{character name of a class inheriting from metab_model - the
+type of object to create}
+
 \item{info}{User-supplied metadata of any form.}
 
 \item{fit}{An internal representation of a fitted model.}
@@ -19,8 +24,12 @@ fitting function.}
 
 \item{data}{The data that were used to fit the model.}
 
+\item{data_daily}{The data_daily that were used to fit the model. May be NULL.}
+
 \item{pkg_version}{A string indicating the package version used to create
-this metab_model object.}
+this metab_model object. The default should almost always be appropriate.}
+
+\item{...}{other arguments passed to new() for this particular model_class}
 }
 \value{
 A metab_model object.
@@ -31,5 +40,6 @@ Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 \examples{
 metab_model()
 metab_model(fit=1:5, args=list(length=5))
+metab_model("metab_mle", fit=1:5, args=list(length=5))
 }
 

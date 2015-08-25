@@ -4,10 +4,12 @@
 \alias{prepjags_bayes}
 \title{Prepare data for passing to JAGS}
 \usage{
-prepjags_bayes(data_ply, priors = FALSE)
+prepjags_bayes(data_ply, model_file, priors = FALSE)
 }
 \arguments{
 \item{data_ply}{one day's worth of data}
+
+\item{model_file}{the JAGS model file to use}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}

@@ -4,13 +4,21 @@
 \alias{mm_validate_data}
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
-mm_validate_data(data, metab_class)
+mm_validate_data(data, data_daily, metab_class, tests = c("missing_cols",
+  "extra_cols", "units"))
 }
 \arguments{
-\item{data}{a data.frame that has been (or will be) passed into a metab_model
-constructor}
+\item{data}{data.frame of input data at the temporal resolution of raw
+observations. Columns must have the same names, units, and format as the
+default. See \code{\link{mm_data}} for a full data description.}
+
+\item{data_daily}{data.frame containing inputs with a daily timestep. See
+\code{\link{mm_data}} for a full data description.}
 
 \item{metab_class}{character the class name of the metab_model constructor}
+
+\item{tests}{to apply to the input data.frames (before any subsetting with
+mm_model_by_ply, etc. has occurred)}
 }
 \description{
 Will most often be called from within a metab_model constructor.

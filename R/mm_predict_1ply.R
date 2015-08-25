@@ -2,23 +2,17 @@
 #' 
 #' Usually assigned to model_fun within mm_model_by_ply, called from there
 #' 
-#' @param data_ply a data.frame of predictor data for a single ply (~day)
+#' @inheritParams mm_model_by_ply_prototype
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
-#' @param metab_ests a data.frame of metabolism estimates for all days, from 
-#'   which this function will choose the relevant estimates
-#' @param ... additional args passed from mm_model_by_ply and ignored here
 #' @return a data.frame of predictions
-mm_predict_1ply <- function(data_ply, calc_DO_fun, metab_ests, ...) {
-  
-  # determine which date these data center on
-  date <- names(which.max(table(as.Date(data_ply$local.time))))
+mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_date, calc_DO_fun) {
   
   # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
   # they're missing
-  metab_est <- metab_ests[metab_ests$date==date,]
-  if(is.na(metab_est$GPP)) {
-    return(data.frame(data_ply, DO.mod=NA))
+  metab_est <- data_daily_ply
+  if(nrow(metab_est)==0 || is.na(metab_est$GPP)) {
+    return(data.frame(data_ply, DO.mod=rep(NA, nrow(data_ply))))
   }
   
   # if we have metab estimates, use them to predict DO
@@ -29,7 +23,7 @@ mm_predict_1ply <- function(data_ply, calc_DO_fun, metab_ests, ...) {
       # prepare auxiliary data
       n <- length(local.time)
       timestep.days <- suppressWarnings(mean(as.numeric(diff(local.time), units="days"), na.rm=TRUE))
-      frac.GPP <- light/sum(light[strftime(local.time,"%Y-%m-%d")==date])
+      frac.GPP <- light/sum(light[strftime(local.time,"%Y-%m-%d")==local_date])
       
       # produce DO.mod estimates for today's GPP and ER
       DO.mod <- calc_DO_fun(

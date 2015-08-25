@@ -9,7 +9,8 @@
 likelihood to fit values of GPP, ER, and K for a given DO curve.
 }
 \seealso{
-Other metab.model.classes: \code{\link{metab_bayes-class}};
+Other metab.model.classes: \code{\link{metab_Kvpred-class}};
+  \code{\link{metab_bayes-class}};
   \code{\link{metab_model-class}};
   \code{\link{metab_night-class}}
 }

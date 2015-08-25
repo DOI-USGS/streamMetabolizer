@@ -4,26 +4,48 @@
 \alias{bayes_1ply}
 \title{Make daily metabolism estimates from input parameters}
 \usage{
-bayes_1ply(data_ply, maxCores = 4, adaptSteps = 1000, burnInSteps = 4000,
-  numSavedSteps = 40000, thinSteps = 1, ...)
+bayes_1ply(data_ply, data_daily_ply, day_start = -1.5, day_end = 30,
+  local_date, tests = c("full_day", "even_timesteps", "complete_data"),
+  model_file, max_cores = 4, adapt_steps = 10, burnin_steps = 40,
+  num_saved_steps = 400, thin_steps = 1)
 }
 \arguments{
-\item{data_ply}{data.frame of the form \code{mm_data(local.time, DO.obs, DO.sat,
-depth, temp.water, light)} and containing data for just one estimation-day
-(this may be >24 hours but only yields estimates for one 24-hour period)}
+\item{data_ply}{a data.frame containing all relevant, validated modeling data
+for a single ply of data. (1 ply ~= 1 date, although the day length has
+been specified by day_start and day_end and may not be exactly 24 hours)}
 
-\item{maxCores}{the maximum number of cores to apply to this run}
+\item{data_daily_ply}{NULL or a data.frame containing inputs with a daily
+timestep. The local.date column must be present.}
 
-\item{adaptSteps}{the number of steps to use in adapting the model}
+\item{day_start}{start time of a day's data in number of hours from the
+midnight that begins the modal date. For example, day_start=-1.5 indicates
+that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first
+observation time that occurs after that time if day_start doesn't fall
+exactly on an observation time.}
 
-\item{burnInSteps}{the number of steps to run and ignore before starting to
+\item{day_end}{end time of a day's data in number of hours from the midnight
+that begins the modal date. For example, day_end=30 indicates that data
+describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
+time that occurs before that time if day_end doesn't fall exactly on an
+observation time.}
+
+\item{local_date}{the modal date of this ply of data and data_daily, and the
+date by which this ply should be referred}
+
+\item{tests}{list of tests to conduct}
+
+\item{model_file}{the JAGS model file to use}
+
+\item{max_cores}{the maximum number of cores to apply to this run}
+
+\item{adapt_steps}{the number of steps to use in adapting the model}
+
+\item{burnin_steps}{the number of steps to run and ignore before starting to
 collect MCMC 'data'}
 
-\item{numSavedSteps}{the number of MCMC steps to save}
+\item{num_saved_steps}{the number of MCMC steps to save}
 
-\item{thinSteps}{the number of steps to move before saving another step}
-
-\item{...}{additional args passed from mm_model_by_ply and ignored here}
+\item{thin_steps}{the number of steps to move before saving another step}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model
