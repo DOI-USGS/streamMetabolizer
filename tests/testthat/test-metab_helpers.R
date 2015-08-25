@@ -78,8 +78,10 @@ test_that("mm_is_valid_day works", {
   expect_equal(mm_is_valid_day(dateless_day), c("can't measure timesteps", "NAs in local.time"))
   
   # test full_day
+  expect_equal(mm_is_valid_day(good_day, day_start=-10), "data don't start when expected")
   expect_equal(mm_is_valid_day(good_day, day_start=0), "data don't start when expected")
   expect_equal(mm_is_valid_day(good_day, day_end=25), "data don't end when expected")
+  expect_equal(mm_is_valid_day(good_day, day_end=35), "data don't end when expected")
   
   # test timestep lengths
   irregular_day <- good_day[-c(3,20,99),]
@@ -91,8 +93,7 @@ test_that("mm_is_valid_day works", {
 
 test_that("mm_filter_valid_days works", {
   
-  library(plyr); library(dplyr)
-  library(unitted); library(lubridate)
+  library(dplyr); library(unitted)
   french <- streamMetabolizer:::load_french_creek()
   
   french_daily <- data.frame(local.date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
