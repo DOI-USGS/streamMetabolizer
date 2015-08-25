@@ -45,18 +45,24 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
     }    
   }
   
-  # ask google for a time offset
-  tz.info <- lookup_google_timezone(latitude, longitude)
-  
-  # check the output for validity
-  if(tz.info$tz == "" || is.na(tz.info$std_offset)) stop("sorry, could not find time zone for specified lat/long")
+  # ask the cache or Google for a time offset. The Google API limits requests to
+  # 5/sec, so caching helps limit the number of requests we have to make.
+  lookup_key <- sprintf("%.10f,%.10f", latitude, longitude)
+  tz_info <- pkg.env$tz_lookups[[lookup_key]]
+  if(is.null(tz_info) || tz_info$retry > 0) { # give lookup a second chance if it didn't come out right
+    retry <- tz_info$retry # save the retry info
+    tz_info <- lookup_google_timezone(latitude, longitude) # ask Google
+    tz_info$retry <- if(tz_info$tz == "" || is.na(tz_info$std_offset)) retry - 1 else 0 # check the output for validity
+    pkg.env$tz_lookups[[lookup_key]] <- tz_info # update tz_lookups
+    if(tz_info$retry > 0) stop("sorry, could not find time zone for specified lat/long") # if there was a problem, throw the error now
+  }
   
   # return in specified format
   if(time.type == "daylight local") {
-    lubridate::with_tz(date.time, tz.info$tz)
+    lubridate::with_tz(date.time, tz_info$tz)
   } else {
     # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
-    std.tz <- sprintf("Etc/GMT%s%d", if(tz.info$std_offset > u(0, "hours")) "-" else "+", abs(as.numeric(v(tz.info$std_offset))))
+    std.tz <- sprintf("Etc/GMT%s%d", if(tz_info$std_offset > u(0, "hours")) "-" else "+", abs(as.numeric(v(tz_info$std_offset))))
     if(std.tz %in% c("Etc/GMT+0", "Etc/GMT-0")) std.tz <- "GMT"
     lubridate::with_tz(date.time, std.tz)
   }  
@@ -97,7 +103,8 @@ lookup_google_timezone <- function(
   timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="GMT") else as.POSIXct("2015-07-01 00:00:00", tz="GMT")) {
   
   # ask google
-  api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d&sensor=false", 
+  api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d", 
+                     # &sensor=false - "The Google Maps API previously required that you include the sensor parameter to indicate whether your application used a sensor to determine the user's location. This parameter is no longer required."
                      latitude, 
                      longitude, 
                      as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 GMT")))
