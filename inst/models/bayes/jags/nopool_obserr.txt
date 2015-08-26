@@ -16,17 +16,16 @@ model {
       K[i] * (DO.sat[i] - DO.mod[i-1])
   } 
   
-  # Compare all the DO predictions to their observations
+  # Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {
-    DO.obs[i] ~ dnorm(DO.mod[i], DO.err.tau)
+    DO.obs[i] ~ dnorm(DO.mod[i], pow(err.obs.sigma, -2))
   }
-  
   # Prior on the sd of the errors between modeled and observed DO
-  DO.err.tau ~ dgamma(0.001,0.001)
+  err.obs.sigma ~ dunif(err.obs.sigma.min, err.obs.sigma.max)
   
-  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1). 
-  GPP.daily ~ dnorm(GPP.daily.mu, GPP.daily.tau)
-  ER.daily ~ dnorm(ER.daily.mu, ER.daily.tau)
-  K600.daily ~ dnorm(K600.daily.mu, K600.daily.tau)
+  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
+  GPP.daily ~ dnorm(GPP.daily.mu, pow(GPP.daily.sigma, -2))
+  ER.daily ~ dnorm(ER.daily.mu, pow(ER.daily.sigma, -2))
+  K600.daily ~ dnorm(K600.daily.mu, pow(K600.daily.sigma, -2))
   
 }

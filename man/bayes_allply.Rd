@@ -2,11 +2,10 @@
 % Please edit documentation in R/metab_bayes.R
 \name{bayes_allply}
 \alias{bayes_allply}
-\title{Make daily metabolism estimates from input parameters}
+\title{Make daily metabolism estimates from input parameters using a hierarchical
+approach.}
 \usage{
-bayes_allply(data_all, data_daily_all, model_file, max_cores = 4,
-  adapt_steps = 1000, burnin_steps = 4000, num_saved_steps = 40000,
-  thin_steps = 1, ...)
+bayes_allply(data_all, data_daily_all, model_specs)
 }
 \arguments{
 \item{data_all}{data.frame of the form \code{mm_data(local.time, DO.obs,
@@ -15,23 +14,16 @@ estimation-day (this may be >24 hours but only yields estimates for one
 24-hour period)}
 
 \item{data_daily_all}{data.frame of daily priors, if appropriate to the given
-model_file}
+model_path}
 
-\item{model_file}{the JAGS model file to use}
-
-\item{max_cores}{the maximum number of cores to apply to this run}
-
-\item{adapt_steps}{the number of steps to use in adapting the model}
-
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
-
-\item{num_saved_steps}{the number of MCMC steps to save}
-
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{\link{specs_bayes}} family with a name beginning
+with "specs_bayes". The help file for that function lists the necessary
+parameters, describes them in detail, and gives default values.}
 }
 \value{
-data.frame of estimates and \code{\link[stats]{nlm}} model
+data.frame of estimates and MCMC model
   diagnostics
 }
 \description{

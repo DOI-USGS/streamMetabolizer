@@ -4,14 +4,13 @@
 \alias{runjags_bayes}
 \title{Actually run JAGS on a formatted data ply}
 \usage{
-runjags_bayes(data_list, model_file = "metab_bayes_simple.txt",
-  max_cores = 4, adapt_steps = 1000, burnin_steps = 4000,
-  num_saved_steps = 40000, thin_steps = 1)
+runjags_bayes(data_list, model_path, max_cores = 4, adapt_steps = 1000,
+  burnin_steps = 4000, num_saved_steps = 40000, thin_steps = 1)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}
 
-\item{model_file}{the JAGS model file to use}
+\item{model_path}{the JAGS model file to use, as a full file path}
 
 \item{max_cores}{the maximum number of cores to apply to this run}
 
