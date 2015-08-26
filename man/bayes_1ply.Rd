@@ -6,8 +6,7 @@
 \usage{
 bayes_1ply(data_ply, data_daily_ply, day_start = -1.5, day_end = 30,
   local_date, tests = c("full_day", "even_timesteps", "complete_data"),
-  model_file, max_cores = 4, adapt_steps = 10, burnin_steps = 40,
-  num_saved_steps = 400, thin_steps = 1)
+  model_specs)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -34,21 +33,14 @@ date by which this ply should be referred}
 
 \item{tests}{list of tests to conduct}
 
-\item{model_file}{the JAGS model file to use}
-
-\item{max_cores}{the maximum number of cores to apply to this run}
-
-\item{adapt_steps}{the number of steps to use in adapting the model}
-
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
-
-\item{num_saved_steps}{the number of MCMC steps to save}
-
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{\link{specs_bayes}} family with a name beginning
+with "specs_bayes". The help file for that function lists the necessary
+parameters, describes them in detail, and gives default values.}
 }
 \value{
-data.frame of estimates and \code{\link[stats]{nlm}} model
+data.frame of estimates and MCMC model
   diagnostics
 }
 \description{

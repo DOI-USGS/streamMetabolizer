@@ -20,24 +20,22 @@ model {
   # Process error: Build an error timeseries with a fitted autocorrelation structure
   err.proc[1] <- 0
   for(i in 2:n) {
-    err.proc[i] ~ dnorm(err.proc.phi*err.proc[i-1], tao.proc)
+    err.proc[i] ~ dnorm(err.proc.phi*err.proc[i-1], pow(err.proc.sigma, -2))
   }
   # Prior on the autocorrelation & sd of the process errors
-  err.proc.phi <- dunif(0, 1)
-  err.proc.tau <- pow(err.proc.sigma, -2)
-  err.proc.sigma ~ dunif(0, 0.5)
+  err.proc.phi <- dunif(err.proc.phi.min, err.proc.phi.max)
+  err.proc.sigma ~ dunif(err.proc.sigma.min, err.proc.sigma.max)
   
   # Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {
-    DO.obs[i] ~ dnorm(DO.mod[i], err.obs.tau)
+    DO.obs[i] ~ dnorm(DO.mod[i], pow(err.obs.sigma, -2))
   }
   # Prior on the sd of the errors between modeled and observed DO
-  err.obs.tau <- pow(err.obs.sigma, -2)
-  err.obs.sigma ~ dunif(0, 0.5)
+  err.obs.sigma ~ dunif(err.obs.sigma.min, err.obs.sigma.max)
   
-  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1). 
-  GPP.daily ~ dnorm(GPP.daily.mu, GPP.daily.tau)
-  ER.daily ~ dnorm(ER.daily.mu, ER.daily.tau)
-  K600.daily ~ dnorm(K600.daily.mu, K600.daily.tau)
+  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
+  GPP.daily ~ dnorm(GPP.daily.mu, pow(GPP.daily.sigma, -2))
+  ER.daily ~ dnorm(ER.daily.mu, pow(ER.daily.sigma, -2))
+  K600.daily ~ dnorm(K600.daily.mu, pow(K600.daily.sigma, -2))
   
 }

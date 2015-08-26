@@ -4,12 +4,24 @@
 \alias{prepjags_bayes}
 \title{Prepare data for passing to JAGS}
 \usage{
-prepjags_bayes(data_ply, model_file, priors = FALSE)
+prepjags_bayes(data, data_daily, local_date, model_specs, priors = FALSE)
 }
 \arguments{
-\item{data_ply}{one day's worth of data}
+\item{data}{data.frame of input data at the temporal resolution of raw
+observations. Columns must have the same names, units, and format as the
+default. See \code{\link{mm_data}} for a full data description.}
 
-\item{model_file}{the JAGS model file to use}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See
+\code{\link{mm_data}} for a full data description.}
+
+\item{local_date}{the modal date of this ply of data and data_daily, and the
+date by which this ply should be referred}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{\link{specs_bayes}} family with a name beginning
+with "specs_bayes". The help file for that function lists the necessary
+parameters, describes them in detail, and gives default values.}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}

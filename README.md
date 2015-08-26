@@ -5,7 +5,7 @@ stream metabolism R package
 | :------------ |:-------------|  
 | Linux Build: | [![Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg)](https://travis-ci.org/USGS-R/streamMetabolizer)  |
 | Windows Build: | [![Build status](https://ci.appveyor.com/api/projects/status/n2u0tpmkaetj7kjp/branch/master?svg=true)](https://ci.appveyor.com/project/jread-usgs/streammetabolizer/branch/master) |  
-| Package tests: | [![Coverage Status](https://coveralls.io/repos/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/r/USGS-R/streamMetabolizer?branch=master) |  
+| Package Tests: | [![Coverage Status](https://coveralls.io/repos/USGS-R/streamMetabolizer/badge.svg?branch=master&service=github)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) |  
 
 
 Disclaimer
