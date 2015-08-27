@@ -5,15 +5,15 @@ init:
         Import-Module '..\appveyor-tool.ps1'
 
 install:
-  - cmd: dir '..'
-  - cmd: dir '..\..'
+  - cmd: dir ..
+  - cmd: dir ..\..
   - ps: Bootstrap
   - ps: (new-object net.webclient).DownloadFile('http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.exe', 'C:\projects\JAGS-3.4.0.exe')
   - cmd: dir
   - cmd: C:\projects\JAGS-3.4.0.exe /S
   - cmd: dir
-  - cmd: dir '..'
-  - cmd: dir '..\..'
+  - cmd: dir ..
+  - cmd: dir ..\..
 
 build_script:
   - travis-tool.sh install_github appling/unitted
