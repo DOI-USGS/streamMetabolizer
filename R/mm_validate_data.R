@@ -7,6 +7,7 @@
 #' @param tests to apply to the input data.frames (before any subsetting with
 #'   mm_model_by_ply, etc. has occurred)
 #' @import dplyr
+#' @importFrom stats setNames
 #' @examples
 #' \dontrun{
 #' mm_validate_data(dplyr::select(mm_data(),-temp.water), "metab_mle")

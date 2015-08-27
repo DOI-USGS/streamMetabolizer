@@ -96,8 +96,8 @@ metab_bayes <- function(
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
 #' @inheritParams metab_bayes
-#' @return data.frame of estimates and MCMC model 
-#'   diagnostics
+#' @return data.frame of estimates and MCMC model diagnostics
+#' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
   data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype

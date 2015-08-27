@@ -59,6 +59,7 @@ metab_mle <- function(
 #' @inheritParams negloglik_1ply
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
+#' @importFrom stats nlm
 #' @keywords internal
 mle_1ply <- function(
   data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype

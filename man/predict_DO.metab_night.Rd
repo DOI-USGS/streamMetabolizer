@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_night.R
 \name{predict_DO.metab_night}
 \alias{predict_DO.metab_night}
-\title{Explain why we can't make dissolved oxygen predictions from a metab_night.}
+\title{Nighttime dissolved oxygen predictions from a metab_night.}
 \usage{
 \method{predict_DO}{metab_night}(metab_model)
 }
@@ -15,9 +15,8 @@ A data.frame of predictions, as for the generic
   \code{\link{predict_DO}}.
 }
 \description{
-metab_night only fits ER and K, and only for the darkness hours. While it
-would be possible to make predictions just for those hours, it'd be costly to
-implement and has not-yet-obvious benefits.
+metab_night only fits ER and K, and only for the darkness hours. We will
+therefore make predictions just for those hours.
 }
 \seealso{
 Other predict_DO: \code{\link{predict_DO.metab_model}};

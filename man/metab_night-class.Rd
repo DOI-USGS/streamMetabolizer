@@ -5,7 +5,7 @@
 \alias{metab_night-class}
 \title{Reaeration model fitted by nighttime regression}
 \description{
-\code{metab_bayes} models use nighttime regression to fit values of K for a
+\code{metab_night} models use nighttime regression to fit values of K for a
 given DO time series.
 }
 \seealso{

@@ -40,8 +40,7 @@ with "specs_bayes". The help file for that function lists the necessary
 parameters, describes them in detail, and gives default values.}
 }
 \value{
-data.frame of estimates and MCMC model
-  diagnostics
+data.frame of estimates and MCMC model diagnostics
 }
 \description{
 Called from metab_bayes().

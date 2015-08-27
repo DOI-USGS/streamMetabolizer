@@ -65,6 +65,8 @@ metab_night <- function(
 #'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
+#' @importFrom utils head tail
+#' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
   data_ply, data_daily_ply, day_start=-12, day_end=12, local_date,
   tests=c('full_day', 'even_timesteps', 'complete_data')
@@ -177,7 +179,7 @@ nightreg_1ply <- function(
 
 #' Reaeration model fitted by nighttime regression
 #' 
-#' \code{metab_bayes} models use nighttime regression to fit values of K for a
+#' \code{metab_night} models use nighttime regression to fit values of K for a
 #' given DO time series.
 #' 
 #' @exportClass metab_night
@@ -188,11 +190,10 @@ setClass(
 )
 
 
-#' Explain why we can't make dissolved oxygen predictions from a metab_night.
+#' Nighttime dissolved oxygen predictions from a metab_night.
 #' 
-#' metab_night only fits ER and K, and only for the darkness hours. While it 
-#' would be possible to make predictions just for those hours, it'd be costly to
-#' implement and has not-yet-obvious benefits.
+#' metab_night only fits ER and K, and only for the darkness hours. We will
+#' therefore make predictions just for those hours.
 #' 
 #' @inheritParams predict_DO
 #' @return A data.frame of predictions, as for the generic 
@@ -227,6 +228,7 @@ predict_DO.metab_night <- function(metab_model) {
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return a data.frame of predictions
+#' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   calc_DO_fun
