@@ -8,7 +8,7 @@ install:
   - ps: Bootstrap
   - ps: pwd
   - cmd: dir
-  - ps: (new-object net.webclient).DownloadFile('http://downloads.sourceforge.net/project/mcmc-jags/JAGS/3.x/Windows/JAGS-3.4.0.exe?r=&ts=1440685498', '.\JAGS-3.4.0.exe')
+  - ps: (new-object net.webclient).DownloadFile('http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.exe', '.\JAGS-3.4.0.exe')
   - cmd: dir
   - cmd: .\JAGS-3.4.0.exe /S
   - cmd: dir
