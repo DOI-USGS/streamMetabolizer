@@ -2,9 +2,7 @@
 % Please edit documentation in R/calc_solar_insolation.R
 \name{calc_declination_angle}
 \alias{calc_declination_angle}
-\title{Calculate declination angle as in
-http://pveducation.org/pvcdrom/properties-of-sunlight/declination-angle which
-cites http://www.sciencedirect.com/science/article/pii/0038092X69900474}
+\title{Calculate declination angle as in Yard et al. (2005)}
 \usage{
 calc_declination_angle(jday, format = c("degrees", "radians"))
 }
@@ -21,9 +19,7 @@ numeric value or vector, in the units specified by \code{format},
   \code{jday}.
 }
 \description{
-Calculate declination angle as in
-http://pveducation.org/pvcdrom/properties-of-sunlight/declination-angle which
-cites http://www.sciencedirect.com/science/article/pii/0038092X69900474
+Calculate declination angle as in Yard et al. (2005)
 }
 \examples{
 decdf <- data.frame(jday=1:366,
@@ -32,5 +28,12 @@ decdf <- data.frame(jday=1:366,
   library(ggplot2)
   ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
 }
+}
+\references{
+Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G.
+  Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn.
+  \emph{Influence of Topographic Complexity on Solar Insolation Estimates for
+  the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2–3
+  (April 25, 2005): 157–72. doi:10.1016/j.ecolmodel.2004.07.027.
 }
 
