@@ -20,12 +20,7 @@ test_that("French Creek data are similar for streamMetabolizer & Bob Hall's code
   expect_equal(fxy$DO.obs.x, fxy$DO.obs.y)
   expect_equal(fxy$depth.x, fxy$depth.y)
   expect_equal(fxy$temp.water.x, fxy$temp.water.y)
-  
-  # check values that should be pretty much equal - DO.sat
-  expect_more_than(cor(fxy$DO.sat.x, fxy$DO.sat.y), 0.99)
-  expect_less_than(abs(coef(lm(fxy$DO.sat.y ~ fxy$DO.sat.x))['(Intercept)']), 0.1)
-  expect_less_than(abs(coef(lm(fxy$DO.sat.y ~ fxy$DO.sat.x))['fxy$DO.sat.x'] - 1), 0.1)
-  # library(ggplot2); ggplot(fxy, aes(x=DO.sat.x, y=DO.sat.y)) + geom_abline() + geom_point(alpha=0.5) + theme_bw()
+  expect_equal(fxy$DO.sat.x, fxy$DO.sat.y)
   
   # check values that should be pretty much equal - light
   expect_more_than(cor(fxy$light.x, fxy$light.y), 0.9999)
