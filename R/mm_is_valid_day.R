@@ -15,6 +15,7 @@
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA.
 #' @return character vector of errors, or empty list
+#' @importFrom lubridate tz
 #' @export
 mm_is_valid_day <- function(day, day_start=-1.5, day_end=30, 
                             tests=c('full_day', 'even_timesteps', 'complete_data'), 
@@ -40,7 +41,7 @@ mm_is_valid_day <- function(day, day_start=-1.5, day_end=30,
   if('full_day' %in% tests & is.finite(timestep)) {
     date_counts <- table(format(day$local.time, "%Y-%m-%d"))
     local_date <- names(date_counts)[which.max(date_counts)]
-    date_start <- as.POSIXct(paste0(local_date, " 00:00:00"), tz="UTC")
+    date_start <- as.POSIXct(paste0(local_date, " 00:00:00"), tz=lubridate::tz(v(day$local.time)))
     similar_time <- function(a, b, tol=timestep) {
       abs(as.numeric(a, units="days") - as.numeric(b, units="days")) < as.numeric(tol, units="days")
     }
