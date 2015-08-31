@@ -38,6 +38,7 @@ Alison Appling
 }
 \seealso{
 Other metab_model: \code{\link{metab_bayes}};
-  \code{\link{metab_mle}}; \code{\link{metab_night}}
+  \code{\link{metab_mle}}; \code{\link{metab_night}};
+  \code{\link{metab_sim}}
 }
 

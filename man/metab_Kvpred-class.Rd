@@ -13,6 +13,7 @@ available data to reach better, less variable daily estimates of K
 Other metab.model.classes: \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}};
   \code{\link{metab_model-class}};
-  \code{\link{metab_night-class}}
+  \code{\link{metab_night-class}};
+  \code{\link{metab_sim-class}}
 }
 

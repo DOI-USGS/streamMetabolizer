@@ -20,6 +20,7 @@ therefore make predictions just for those hours.
 }
 \seealso{
 Other predict_DO: \code{\link{predict_DO.metab_model}};
+  \code{\link{predict_DO.metab_sim}};
   \code{\link{predict_DO}}
 }
 

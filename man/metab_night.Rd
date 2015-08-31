@@ -52,6 +52,7 @@ Alison Appling, Maite Arroita
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kvpred}};
-  \code{\link{metab_bayes}}; \code{\link{metab_mle}}
+  \code{\link{metab_bayes}}; \code{\link{metab_mle}};
+  \code{\link{metab_sim}}
 }
 
