@@ -12,7 +12,7 @@ load_french_creek <- function(attach.units=TRUE) {
   french <- read.csv(file.name, stringsAsFactors=FALSE, header=TRUE) 
   french <- french[french$station=="low",] # subset to data from only one station (also, low has the cleanest data) (already subset in extdata)
   french_creek_units <- c(station=NA, siteno=NA, sonde=NA, date=NA, time=NA, temp='degC', oxy='mg L^-1')
-  french <- u(french, french_creek_units)
+  french <- unitted::u(french, french_creek_units)
   
   # remove NA oxys (1658) and remaining duplicates (n=1)
   french <- unique(french[!is.na(french$oxy),])
@@ -21,18 +21,19 @@ load_french_creek <- function(attach.units=TRUE) {
   french <- unitted::rename_.unitted_data.frame(french, DO.obs='oxy', temp.water='temp')
   
   # datetime
-  french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), "MST") # it's in MDT
+  french$local.time <- lubridate::with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), "MST") # it's in MDT
+  #french$local.time <- force_tz(french$local.time, 'UTC') # we require nominal UTC
   
   # DO at sat
-  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=u(523, "mmHg")*u(1.33322368, "mb mmHg^-1")) # ~10000 ft, 523 mmHg -> 697.27 mb
+  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=unitted::u(523, "mmHg")*unitted::u(1.33322368, "mb mmHg^-1")) # ~10000 ft, 523 mmHg -> 697.27 mb
     
   # depth
-  french$depth <- u(0.16, "m")
+  french$depth <- unitted::u(0.16, "m")
   
   # light
   french$utc.time <- convert_localtime_to_GMT(french$local.time)
   french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.3, time.type='apparent solar')
-  french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=v(french$solar.time), latitude=41.33, max.insolation=convert_PAR_to_SW(2326), attach.units=TRUE))
+  french$light <- convert_SW_to_PAR(calc_solar_insolation(solar.time=unitted::v(french$solar.time), latitude=41.33, max.insolation=convert_PAR_to_SW(2326), attach.units=TRUE))
   
   # return w/ proper units & columns
   french <- if(attach.units) french else v(french)

@@ -31,3 +31,56 @@ test_that("French Creek data are similar for streamMetabolizer & Bob Hall's code
   # library(ggplot2); ggplot(fxy[7100:7350,], aes(x=local.time)) + geom_line(aes(y=light.x), color='red') + geom_line(aes(y=light.y), color='blue') + theme_bw()
   
 })
+
+
+test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall's code", {
+  
+  # set the date in several formats
+  start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+  end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+  start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="MST")
+  end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="MST")
+  mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+  start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="MST"), units='hours')
+  end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="MST"), units='hours')
+  
+  # get, format, & subset data
+  vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+  vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+  
+  # dates & subsetting specific to nighttime regression
+  first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
+  stop.dark <- 100 + which(format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+  night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
+  night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
+  vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
+  
+  # PRK (metab_mle)
+  smest <- get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+  expect_less_than(abs(smest$GPP - bobest$GPP), 0.01)
+  expect_less_than(abs(smest$ER - bobest$ER), 0.01)
+  expect_less_than(abs(smest$K600 - bobest$K), 0.01)
+  expect_less_than(abs(smest$minimum - bobest$lik), 0.000001)
+  
+  # K (metab_night)
+  smest <- predict_metab(metab_night(data=vfrenchnight, day_start=night.start, day_end=night.end))[c("GPP","ER","K600")]
+  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
+  expect_less_than(abs(smest$K600 - bobest$K), 0.0001)
+  
+  # PR (metab_mle)
+  smest <- get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
+  expect_less_than(abs(smest$GPP - bobest$GPP), 0.02)
+  expect_less_than(abs(smest$ER - bobest$ER), 0.01)
+  expect_less_than(abs(smest$minimum - bobest$lik), 0.000001)
+  
+  # Bayes w/ Bob's MLE-PRK for comparison
+  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+  mb <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_obserr(), day_start=start.numeric, day_end=end.numeric)
+  smest <- predict_metab(mb)[2,c("GPP","ER","K600")]
+  expect_less_than(abs(smest$GPP - bobest$GPP), 0.03)
+  expect_less_than(abs(smest$ER - bobest$ER), 0.03)
+  expect_less_than(abs(smest$K600 - bobest$K), 0.3)
+  
+})

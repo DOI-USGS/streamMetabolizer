@@ -101,7 +101,7 @@ mle_1ply <- function(
     nlm.args <- c(
       list(
         f = negloglik_1ply,
-        p = c(GPP=3, ER=-5, K600=5)[if(is.null(K600)) 1:3 else 1:2],
+        p = c(GPP=3, ER=-5, K600=10)[if(is.null(K600)) 1:3 else 1:2],
         hessian = TRUE,
         K600.daily=K600
       ),
@@ -199,6 +199,7 @@ negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water
   diffs.sq <- (DO.obs-DO.mod)^2 
   sigma.sq <- sum(diffs.sq)/n
   (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
+  
 }
 
 
