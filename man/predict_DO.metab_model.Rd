@@ -4,14 +4,11 @@
 \alias{predict_DO.metab_model}
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
-\method{predict_DO}{metab_model}(metab_model, predict_fun = mm_predict_1ply)
+\method{predict_DO}{metab_model}(metab_model)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
-
-\item{predict_fun}{A function that accepts one day's worth of data and
-data_daily, then returns predictions}
 }
 \value{
 A data.frame of predictions, as for the generic

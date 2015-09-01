@@ -214,13 +214,11 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 #' etc. from the metabolism model.
 #' 
 #' @inheritParams predict_DO
-#' @param predict_fun A function that accepts one day's worth of data and
-#'   data_daily, then returns predictions
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, predict_fun=mm_predict_1ply) {
+predict_DO.metab_model <- function(metab_model) {
   
   # pull args from the model
   calc_DO_fun <- get_args(metab_model)$calc_DO_fun
@@ -233,7 +231,7 @@ predict_DO.metab_model <- function(metab_model, predict_fun=mm_predict_1ply) {
   
   # re-process the input data with the metabolism estimates to predict DO
   mm_model_by_ply(
-    predict_fun, data=data, data_daily=metab_ests, # for mm_model_by_ply
+    mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply
     calc_DO_fun=calc_DO_fun) # for mm_predict_1ply
   
