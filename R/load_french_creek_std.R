@@ -96,6 +96,7 @@ load_french_creek_std <- function(attach.units=TRUE) {
 #'   The vector should have 2 elements, dates and times, to pass to chron()
 #' @import dplyr
 #' @importFrom unitted u v
+#' @importFrom graphics abline plot points
 load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'), 
                                       start=c(dates="08/23/12", times="22:00:00"),
                                       end=c(dates="08/25/12", times="06:00:00")) {
