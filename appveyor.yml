@@ -12,6 +12,7 @@ install:
 
 build_script:
   - travis-tool.sh install_github appling/unitted
+  - travis-tool.sh install_github aappling-usgs/LakeMetabolizer
   - travis-tool.sh install_deps
 
 test_script:

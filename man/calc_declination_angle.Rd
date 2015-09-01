@@ -31,7 +31,7 @@ decdf <- data.frame(jday=1:366,
 }
 \references{
 Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G.
-  COggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn.
+  Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn.
   \emph{Influence of Topographic Complexity on Solar Insolation Estimates for
   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2-3
   (April 25, 2005): 157-72. doi:10.1016/j.ecolmodel.2004.07.027.
