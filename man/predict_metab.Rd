@@ -12,7 +12,8 @@ metab_model_interface, to use in predicting metabolism}
 
 \item{ci_level}{the alpha level for the confidence or credible interval}
 
-\item{...}{other arguments passed to specific}
+\item{...}{Other arguments passed to class-specific implementations of
+\code{predict_metab}}
 }
 \value{
 A data.frame of daily metabolism estimates. Columns include:

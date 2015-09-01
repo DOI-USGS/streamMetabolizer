@@ -4,11 +4,14 @@
 \alias{predict_DO.metab_night}
 \title{Nighttime dissolved oxygen predictions from a metab_night.}
 \usage{
-\method{predict_DO}{metab_night}(metab_model)
+\method{predict_DO}{metab_night}(metab_model, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{...}{Other arguments passed to class-specific implementations of
+\code{predict_DO}}
 }
 \value{
 A data.frame of predictions, as for the generic

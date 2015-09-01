@@ -3,8 +3,8 @@ context("calc_DO")
 library(unitted)
 
 test_that("proper units checked and returned for calc_DO_at_sat", {
-  expect_equal(calc_DO_at_sat(temp=u(21,"degC"), press=u(1.1,"mb"), sal=u(0,"PSU")), u(0.0087838, "L^-1 mg"), tol=0.0001, info="with units")
-  expect_equal(calc_DO_at_sat(temp=21, press=1.1, sal=0), 0.0087838, tol=0.0001, info="with no units")
+  expect_equal(calc_DO_at_sat(temp=u(21,"degC"), press=u(1013.25,"mb"), sal=u(0,"PSU")), u(8.914559, "L^-1 mg"), tol=0.0001, info="with units")
+  expect_equal(calc_DO_at_sat(temp=21, press=1013.25, sal=0), 8.914559, tol=0.0001, info="with no units")
   expect_error(calc_DO_at_sat(temp=u(77,"degF"), press=u(1.1,"atm"), sal=0), "Unexpected units", info="with wrong units")  
 })
 

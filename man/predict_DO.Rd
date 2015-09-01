@@ -4,11 +4,14 @@
 \alias{predict_DO}
 \title{Predict DO from a fitted model.}
 \usage{
-predict_DO(metab_model)
+predict_DO(metab_model, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{...}{Other arguments passed to class-specific implementations of
+\code{predict_DO}}
 }
 \value{
 A data.frame of dissolved oxygen predictions at the temporal

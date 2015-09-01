@@ -4,7 +4,7 @@
 \alias{metab_model_prototype}
 \title{A prototype for the fitting function of each metab_model type}
 \usage{
-metab_model_prototype(data, data_daily, info, day_start, day_end)
+metab_model_prototype(data, data_daily, info, day_start, day_end, model_specs)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -28,6 +28,13 @@ that begins the modal date. For example, day_end=30 indicates that data
 describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
 time that occurs before that time if day_end doesn't fall exactly on an
 observation time.}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 }
 \description{
 This function does nothing but has the proper form for the constructor of an

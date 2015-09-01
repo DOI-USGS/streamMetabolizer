@@ -1,7 +1,7 @@
 context("calc_light")
 
 test_that("can generate light predictions from basic light model", {
-  library(plyr); library(dplyr)
+  library(dplyr); library(unitted)
   
   # radian-degree conversions
   expect_equal(streamMetabolizer:::to_radians(180), pi)
@@ -15,7 +15,7 @@ test_that("can generate light predictions from basic light model", {
   expect_true(all(!is.na(decdf$dec)), "valid return for days between 1 and 366")
   equinox <- which(decdf$jday == as.numeric(format(as.Date("2015-03-20"), "%j")))
   solstice <- which(decdf$jday == as.numeric(format(as.Date("2015-06-21"), "%j")))
-  expect_more_than(decdf[solstice,"dec"], decdf[equinox,"dec"], "solstice more declined than equinox")
+  expect_more_than(v(decdf[solstice,"dec"]), v(decdf[equinox,"dec"]), "solstice more declined than equinox") # units don't work for expect_more_than
   expect_equal(max(decdf$dec), -1*(min(decdf$dec)), info="equal & opposite declination on summer/winter solstices")
   expect_equal(streamMetabolizer:::to_radians(decdf$dec), decdf$dec_rad, info="degree & radian formats agree")
   
@@ -61,7 +61,7 @@ test_that("can generate light predictions from basic light model", {
 })
 
 test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and calc_is_daytime", {
-  library(plyr); library(dplyr)
+  library(dplyr); library(unitted)
   insdf <- data.frame(
     #   lat=rep(c(0,20,40,60,80), each=366),
     #   jday=rep(1:366, times=5)) %>%

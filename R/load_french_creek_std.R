@@ -1,7 +1,13 @@
 #' Load a short dataset from French Creek using Bob Hall's code
 #' 
-#' Line numbers in comments (L22, etc.) refer to those in 
-#' 'stream_metab_usa/starter_files/One station metab code.R'
+#' This function requires \code{chron}, a package that is not formally required
+#' by the \code{streamMetabolizer} package overall. Ensure that you have
+#' \code{chron} installed or install it with \code{install.packages('chron')}.
+#' 
+#' This function produces a version of the French Creek dataset that agrees as 
+#' much as possible with raw code from Bob Hall, for comparison to functions 
+#' written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to 
+#' those in 'stream_metab_usa/starter_files/One station metab code.R'
 #' 
 #' @import dplyr
 #' @importFrom unitted u
@@ -20,10 +26,10 @@ load_french_creek_std <- function(attach.units=TRUE) {
   
   # datetime
   if (!requireNamespace("chron", quietly = TRUE)) {
-    stop("chron package is needed for this function. Try install.packages('chron')", call. = FALSE)
+    stop("chron package is needed for this function. Try install.packages('chron')")
   }
   french$dtime <- chron::chron(dates=as.character(french$date), times=as.character(french$time)) # L22. TZ is MST (L108, 142)
-  french$local.time <- lubridate::with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), "MST") # need POSIXct for streamMetabolizer
+  french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), "MST") # need POSIXct for streamMetabolizer
   #french$local.time <- force_tz(french$local.time, 'UTC') # we require nominal UTC
   
   # DO at sat
@@ -66,18 +72,42 @@ load_french_creek_std <- function(attach.units=TRUE) {
   french$light <- lightest(time=french$dtime, lat=41.33,  longobs=106.3, longstd=90, year="2012-01-01") # L142
 
   # return w/ columns needed by streamMetabolzier
+  oxy <- temp <- light <- ".dplyr.var"
   french <- dplyr::select(french, local.time, DO.obs=oxy, DO.sat, depth, temp.water=temp, light=light)  
 }
 
 #' Generate outputs using Bob's code for comparison
 #' 
-#' Bob's code includes options for 
+#' Bob's code includes MLE and nighttime regression models. This function 
+#' generates the output from those models, keeping the code as much intact as 
+#' possible. The function requires the \code{chron} package, which is only 
+#' suggested rather than requried for the \code{streamMetabolizer} package. If 
+#' you wish to run this function, ensure that \code{chron} is installed or 
+#' install it with \code{install.packages('chron')}.
 #' 
+#' @param french the French Creek dataset
+#' @param K optional. If specified, a number for the K600 to assume (units of 
+#'   1/d)
+#' @param estimate character indicating the type of model to fit
+#' @param start a character vector specifying the time at which the 'day' (the 
+#'   time period to use in producing an estimate for a single date) begins. The
+#'   vector should have 2 elements, dates and times, to pass to chron()
+#' @param end a character vector specifying the time at which the 'day' ends. 
+#'   The vector should have 2 elements, dates and times, to pass to chron()
 #' @import dplyr
 #' @importFrom unitted u v
 load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'), 
-                                      start=chron::chron(dates="08/23/12", times="22:00:00"),
-                                      end=chron::chron(dates="08/25/12", times="06:00:00")) {
+                                      start=c(dates="08/23/12", times="22:00:00"),
+                                      end=c(dates="08/25/12", times="06:00:00")) {
+  
+  # require chron package
+  if (!requireNamespace("chron", quietly = TRUE)) {
+    stop("chron package is needed for this function. Try install.packages('chron')")
+  }
+  
+  # define defaults for start and end here since they rely on the optional chron package
+  if(missing(start)) start <- chron::chron(dates="08/23/12", times="22:00:00")
+  if(missing(end)) end <- chron::chron(dates="08/25/12", times="06:00:00")
   
   # reformat, subset the data to just the requested day
   french <- v(french)

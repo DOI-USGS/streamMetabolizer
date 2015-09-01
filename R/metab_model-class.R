@@ -218,7 +218,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model) {
+predict_DO.metab_model <- function(metab_model, ...) {
   
   # pull args from the model
   calc_DO_fun <- get_args(metab_model)$calc_DO_fun

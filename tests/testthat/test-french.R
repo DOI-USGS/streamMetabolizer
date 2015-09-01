@@ -51,9 +51,9 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   # dates & subsetting specific to nighttime regression
   first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
   stop.dark <- 100 + which(format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+  vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
   night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
   night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
-  vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
   
   # PRK (metab_mle)
   smest <- get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
@@ -76,8 +76,9 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   expect_less_than(abs(smest$minimum - bobest$lik), 0.000001)
   
   # Bayes w/ Bob's MLE-PRK for comparison
+  prkest <- get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
-  mb <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_obserr(), day_start=start.numeric, day_end=end.numeric)
+  mb <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_obserr(num_saved_steps = 4000), day_start=start.numeric, day_end=end.numeric)
   smest <- predict_metab(mb)[2,c("GPP","ER","K600")]
   expect_less_than(abs(smest$GPP - bobest$GPP), 0.03)
   expect_less_than(abs(smest$ER - bobest$ER), 0.03)

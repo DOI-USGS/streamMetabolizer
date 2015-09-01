@@ -200,7 +200,7 @@ setClass(
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_night <- function(metab_model) {
+predict_DO.metab_night <- function(metab_model, ...) {
   
   # pull args from the model
   calc_DO_fun <- calc_DO_mod # this isn't used in the model fitting but makes sense for prediction

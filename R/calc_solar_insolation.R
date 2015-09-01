@@ -46,8 +46,8 @@ to_degrees <- function(radians) {
 #' @references Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G. 
 #'   Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn. 
 #'   \emph{Influence of Topographic Complexity on Solar Insolation Estimates for
-#'   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2–3
-#'   (April 25, 2005): 157–72. doi:10.1016/j.ecolmodel.2004.07.027.
+#'   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2-3
+#'   (April 25, 2005): 157-72. doi:10.1016/j.ecolmodel.2004.07.027.
 calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
   declination.angle <- u(23.439,"deg")*sin(to_radians((360/365)*(283+v(jday))))

@@ -36,16 +36,18 @@ observation time.}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier to use a predefined
-function from the \code{\link{specs_bayes}} family with a name beginning
-with "specs_bayes". The help file for that function lists the necessary
-parameters, describes them in detail, and gives default values.}
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 }
 \value{
 A metab_bayes object containing the fitted model.
 }
 \description{
-Fits a model to estimate GPP and ER from input data on DO, temperature,
-light, etc.
+Fits a Bayesian model to estimate GPP and ER from input data on DO,
+temperature, light, etc. See \code{\link{specs_bayes}} for relevant options
+for the \code{model_specs} argument.
 }
 \details{
 Current and future models: models/bayes/jags/nopool_obserr.txt

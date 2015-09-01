@@ -109,7 +109,7 @@ mle_1ply <- function(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date),'light']),
+        frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = calc_DO_fun
