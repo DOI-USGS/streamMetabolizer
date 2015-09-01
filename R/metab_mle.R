@@ -102,7 +102,7 @@ mle_1ply <- function(
     'strftime(data_ply$local.time,"%Y-%m-%d"): ', paste0(head(strftime(data_ply$local.time,"%Y-%m-%d")), collapse=", "), "\n",
     "head(local.time==local_date): ", paste0(head(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "), "\n",
     "tail(local.time==local_date): ", paste0(tail(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "))
-  stop(msg)
+  message(msg)
   
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
@@ -117,7 +117,7 @@ mle_1ply <- function(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply$light[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
+        frac.GPP = data_ply$light/sum(data_ply$light), #[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = calc_DO_fun
