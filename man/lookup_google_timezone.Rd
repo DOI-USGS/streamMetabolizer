@@ -21,6 +21,12 @@ July 1 for southern latitudes, i.e., a time surely not during daylight
 savings time.}
 }
 \description{
+This function uses two packages, \code{RCurl} and \code{XML}, that are not
+required for the \code{streamMetabolizer} package as a whole. If these are
+not already installed, run \code{install.packages(c('RCurl','XML'))} before
+calling \code{lookup_google_timezone}.
+}
+\details{
 Some parameter definitions below are copied directly from the API webpage.
 }
 \references{
