@@ -96,11 +96,13 @@ mle_1ply <- function(
     }
   }
   
-  message("lubridate::tz(data_ply$local.time): ", lubridate::tz(data_ply$local.time))
-  message("as.character(local_date)", as.character(local_date))
-  message('strftime(data_ply$local.time,"%Y-%m-%d")', paste0(head(strftime(data_ply$local.time,"%Y-%m-%d")), collapse=", "))
-  message("head(local.time==local_date): ", paste0(head(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), ]), collapse=", "))
-  message("tail(local.time==local_date): ", paste0(tail(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), ]), collapse=", "))
+  msg <- paste0(
+    "lubridate::tz(data_ply$local.time): ", lubridate::tz(data_ply$local.time), "\n",
+    "as.character(local_date): ", as.character(local_date), "\n",
+    'strftime(data_ply$local.time,"%Y-%m-%d"): ', paste0(head(strftime(data_ply$local.time,"%Y-%m-%d")), collapse=", "), "\n",
+    "head(local.time==local_date): ", paste0(head(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "), "\n",
+    "tail(local.time==local_date): ", paste0(tail(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "))
+  stop(msg)
   
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
