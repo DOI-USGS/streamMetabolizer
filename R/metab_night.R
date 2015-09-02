@@ -19,8 +19,6 @@ NULL
 #' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="MST")
 #' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="MST")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
-#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="MST"), units='hours')
-#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="MST"), units='hours')
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
@@ -28,13 +26,15 @@ NULL
 #' 
 #' # dates & subsetting specific to nighttime regression
 #' first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
-#' stop.dark <- 100 + which(format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+#' stop.dark <- 100 + which(
+#'   format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
 #' vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
 #' night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
 #' night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
 #' 
 #' # K (metab_night)
-#' predict_metab(metab_night(data=vfrenchnight, day_start=night.start, day_end=night.end))[c("GPP","ER","K600")]
+#' predict_metab(metab_night(data=vfrenchnight, day_start=night.start, 
+#'   day_end=night.end))[c("GPP","ER","K600")]
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
 #' 
 #' \dontrun{

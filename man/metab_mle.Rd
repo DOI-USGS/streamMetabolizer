@@ -51,19 +51,23 @@ end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
 start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
 end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
 mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"), tz="Etc/GMT+7"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"), tz="Etc/GMT+7"), units='hours')
+start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+   tz="Etc/GMT+7"), units='hours')
+end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+  tz="Etc/GMT+7"), units='hours')
 
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
 
 # PRK (metab_mle)
-get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric,
+  day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 
 # PR (metab_mle)
-get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
+  day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 
 \dontrun{
