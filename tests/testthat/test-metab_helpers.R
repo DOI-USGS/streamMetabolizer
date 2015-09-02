@@ -66,8 +66,8 @@ test_that("mm_is_valid_day works", {
   library(unitted)
   french <- streamMetabolizer:::load_french_creek()
  
-  good_day <- u(dplyr::filter(v(french), local.time >= as.POSIXct("2012-08-24 22:30:00", tz="MST"),
-                       local.time <= as.POSIXct("2012-08-26 06:00:00", tz="MST")), get_units(french))
+  good_day <- u(dplyr::filter(v(french), local.time >= as.POSIXct("2012-08-24 22:30:00", tz="Etc/GMT+7"),
+                       local.time <= as.POSIXct("2012-08-26 06:00:00", tz="Etc/GMT+7")), get_units(french))
   bad_day <- dplyr::mutate(
     good_day,
     DO.obs=replace(DO.obs, 40, u(NA, get_units(DO.obs))),
