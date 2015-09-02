@@ -29,8 +29,8 @@ load_french_creek_std <- function(attach.units=TRUE) {
     stop("chron package is needed for this function. Try install.packages('chron')")
   }
   french$dtime <- chron::chron(dates=as.character(french$date), times=as.character(french$time)) # L22. TZ is MST (L108, 142)
-  french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), "MST") # need POSIXct for streamMetabolizer
-  #french$local.time <- force_tz(french$local.time, 'UTC') # we require nominal UTC
+  tz_french <- lubridate::tz(convert_GMT_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="GMT"), latitude=41.33, longitude=-106.3, time.type="standard"))
+  french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), tz_french) # need POSIXct for streamMetabolizer
   
   # DO at sat
   osat <- function(temp, bp){ # L26-32

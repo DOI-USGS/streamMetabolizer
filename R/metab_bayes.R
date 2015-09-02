@@ -204,7 +204,7 @@ prepjags_bayes <- function(
       n = nrow(data),
       
       # Every timestep
-      frac.GPP = data$light/sum(data$light[strftime(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
+      frac.GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
       frac.ER = rep(timestep_days, nrow(data)),
       frac.D = rep(timestep_days, nrow(data)),
       KO2.conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),

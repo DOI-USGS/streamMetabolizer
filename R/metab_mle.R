@@ -14,6 +14,27 @@ NULL
 #' @import dplyr
 #' @author Alison Appling, Jordan Read; modeled on LakeMetabolizer
 #' @examples
+#' # set the date in several formats
+#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="Etc/GMT+7"), units='hours')
+#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="Etc/GMT+7"), units='hours')
+#' 
+#' # get, format, & subset data
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' 
+#' # PRK (metab_mle)
+#' get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+#' 
+#' # PR (metab_mle)
+#' get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
+#' 
 #' \dontrun{
 #'  metab_mle(data=data.frame(empty="shouldbreak"))
 #' }
@@ -97,11 +118,11 @@ mle_1ply <- function(
   }
   
   msg <- paste0(
-    "lubridate::tz(data_ply$local.time): ", lubridate::tz(data_ply$local.time), "\n",
     "as.character(local_date): ", as.character(local_date), "\n",
-    'strftime(data_ply$local.time,"%Y-%m-%d"): ', paste0(head(strftime(data_ply$local.time,"%Y-%m-%d")), collapse=", "), "\n",
-    "head(local.time==local_date): ", paste0(head(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "), "\n",
-    "tail(local.time==local_date): ", paste0(tail(data_ply[(strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"]), collapse=", "))
+    "lubridate::tz(data_ply$local.time): ", lubridate::tz(data_ply$local.time), "\n",
+    'as.character(data_ply$local.time,"%Y-%m-%d"): ', paste0(data_ply$local.time[c(1,nrow(data_ply))], " (", as.character(data_ply$local.time,"%Y-%m-%d")[c(1,nrow(data_ply))], ")", collapse=" - "), "\n",
+    "head(local.time==local_date): ", paste0(head(data_ply[(as.character(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"], 3), collapse=", "), "\n",
+    "tail(local.time==local_date): ", paste0(tail(data_ply[(as.character(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)), "local.time"], 3), collapse=", "))
   message(msg)
   
   # Calculate metabolism by non linear minimization of an MLE function
@@ -117,7 +138,7 @@ mle_1ply <- function(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply$light), #[strftime(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
+        frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = calc_DO_fun
