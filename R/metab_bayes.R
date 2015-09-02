@@ -15,7 +15,6 @@ NULL
 #' @author Alison Appling, Bob Hall
 #' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams runjags_bayes
 #' @return A metab_bayes object containing the fitted model.
 #' @examples
 #' \dontrun{
@@ -24,9 +23,10 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs_bayes_jags_nopool_obserr() # model_specs in inheritParams runjags_bayes
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
+  model_specs=specs_bayes_jags_nopool_obserr(), # inheritParams metab_model_prototype
+  info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
   # Check data for correct column names & units
@@ -74,9 +74,9 @@ metab_bayes <- function(
     info=info,
     fit=bayes_all,
     args=list(
+      model_specs=model_specs,
       day_start=day_start, day_end=day_end, tests=tests, 
-      calc_DO_fun=calc_DO_mod, # metab_bayes always uses the equivalent of calc_DO_mod. specify here for predict_DO
-      model_specs=model_specs
+      calc_DO_fun=calc_DO_mod # metab_bayes always uses the equivalent of calc_DO_mod. specify here for predict_DO
     ),
     data=data,
     data_daily=data_daily)
@@ -91,14 +91,14 @@ metab_bayes <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams metab_bayes
+#' @inheritParams metab_model_prototype
 #' @return data.frame of estimates and MCMC model diagnostics
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
   data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs # inheritParams metab_bayes
+  model_specs # inheritParams metab_model_prototype
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
@@ -159,13 +159,13 @@ bayes_1ply <- function(
 #'   24-hour period)
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
-#' @inheritParams metab_bayes
+#' @inheritParams metab_model_prototype
 #' @return data.frame of estimates and MCMC model 
 #'   diagnostics
 #' @keywords internal
 bayes_allply <- function(
   data_all, data_daily_all, 
-  model_specs # inheritParams metab_bayes
+  model_specs # inheritParams metab_model_prototype
 ) {
   stop("this function is not yet implemented")
 }

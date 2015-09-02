@@ -221,7 +221,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 predict_DO.metab_model <- function(metab_model, ...) {
   
   # pull args from the model
-  calc_DO_fun <- get_args(metab_model)$calc_DO_fun
+  calc_DO_fun <- get_args(metab_model)$model_specs$calc_DO_fun
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   

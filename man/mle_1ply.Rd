@@ -6,7 +6,7 @@
 \usage{
 mle_1ply(data_ply, data_daily_ply, day_start = -1.5, day_end = 30,
   local_date, tests = c("full_day", "even_timesteps", "complete_data"),
-  calc_DO_fun = calc_DO_mod)
+  model_specs = specs_mle_obserr())
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -33,8 +33,12 @@ date by which this ply should be referred}
 
 \item{tests}{list of tests to conduct}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

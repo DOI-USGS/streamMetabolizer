@@ -7,21 +7,22 @@
 \title{Functions giving specifications for metab_bayes model variants}
 \usage{
 specs_bayes_jags_nopool_obserr(model_file = "jags/nopool_obserr.txt",
-  bayes_fun = "bayes_1ply", bayes_software = "jags", GPP.daily.mu = 10,
-  GPP.daily.sigma = 10, ER.daily.mu = -10, ER.daily.sigma = 10,
-  K600.daily.mu = 10, K600.daily.sigma = 10, err.obs.sigma.min = 0,
+  calc_DO_fun = calc_DO_mod_by_diff, bayes_fun = "bayes_1ply",
+  bayes_software = "jags", GPP.daily.mu = 10, GPP.daily.sigma = 10,
+  ER.daily.mu = -10, ER.daily.sigma = 10, K600.daily.mu = 10,
+  K600.daily.sigma = 10, err.obs.sigma.min = 0, err.obs.sigma.max = 0.5,
+  priors = FALSE, max_cores = 4, adapt_steps = 100, burnin_steps = 40,
+  num_saved_steps = 400, thin_steps = 1)
+
+specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_obserr.txt",
+  calc_DO_fun = calc_DO_mod, bayes_fun = "bayes_1ply",
+  bayes_software = "jags", GPP.daily.mu = 10, GPP.daily.sigma = 10,
+  ER.daily.mu = -10, ER.daily.sigma = 10, K600.daily.mu = 10,
+  K600.daily.sigma = 10, err.proc.phi.min = 0, err.proc.phi.max = 1,
+  err.proc.sigma.min = 0, err.proc.sigma.max = 0.5, err.obs.sigma.min = 0,
   err.obs.sigma.max = 0.5, priors = FALSE, max_cores = 4,
   adapt_steps = 100, burnin_steps = 40, num_saved_steps = 400,
   thin_steps = 1)
-
-specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_obserr.txt",
-  bayes_fun = "bayes_1ply", bayes_software = "jags", GPP.daily.mu = 10,
-  GPP.daily.sigma = 10, ER.daily.mu = -10, ER.daily.sigma = 10,
-  K600.daily.mu = 10, K600.daily.sigma = 10, err.proc.phi.min = 0,
-  err.proc.phi.max = 1, err.proc.sigma.min = 0, err.proc.sigma.max = 0.5,
-  err.obs.sigma.min = 0, err.obs.sigma.max = 0.5, priors = FALSE,
-  max_cores = 4, adapt_steps = 100, burnin_steps = 40,
-  num_saved_steps = 400, thin_steps = 1)
 }
 \arguments{
 \item{model_file}{character. The model definition file to use. The file may
@@ -35,6 +36,11 @@ The containing folder (in this case \code{"jags"}) will determine which
 MCMC software package is used. The file name (in this case
 \code{"metab_bayes_simple.txt"}) will determine not only the model file to
 use but also which variables are packaged and sent to the MCMC software.}
+
+\item{calc_DO_fun}{function with which DO should be re-predicted from the
+fitted coefficients, probably either \code{calc_DO_mod} or
+\code{calc_DO_mod_by_diff}. The default value is set to match the default
+value of \code{model_file} in each \code{specs_bayes} function.}
 
 \item{bayes_fun}{character in \code{c('bayes_1ply', 'bayes_all')} indicating
 whether the data should be split into daily chunks first ('bayes_1ply') or
@@ -101,5 +107,18 @@ observation error
 
 \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and
 both process and observation error
+}
+\seealso{
+Other model_specs: \code{\link{specs_mle}},
+  \code{\link{specs_mle_obserr}},
+  \code{\link{specs_mle_procerr}};
+  \code{\link{specs_night}},
+  \code{\link{specs_night_basic}}
+
+Other model_specs: \code{\link{specs_mle}},
+  \code{\link{specs_mle_obserr}},
+  \code{\link{specs_mle_procerr}};
+  \code{\link{specs_night}},
+  \code{\link{specs_night_basic}}
 }
 

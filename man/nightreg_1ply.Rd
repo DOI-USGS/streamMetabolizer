@@ -5,7 +5,8 @@
 \title{Make daily reaeration estimates from input parameters}
 \usage{
 nightreg_1ply(data_ply, data_daily_ply, day_start = -12, day_end = 12,
-  local_date, tests = c("full_day", "even_timesteps", "complete_data"))
+  local_date, tests = c("full_day", "even_timesteps", "complete_data"),
+  model_specs = specs_night_basic())
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -31,6 +32,13 @@ observation time.}
 date by which this ply should be referred}
 
 \item{tests}{list of tests to conduct}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

@@ -4,14 +4,15 @@
 \alias{plot_DO_preds}
 \title{Plot predictions produced with predict_DO}
 \usage{
-plot_DO_preds(DO_preds, plot_as = c("conc", "pctsat"))
+plot_DO_preds(DO_preds, plot_as = c("both", "conc", "pctsat"))
 }
 \arguments{
 \item{DO_preds}{a data.frame of predictions such as that returned by
 predict_DO()}
 
 \item{plot_as}{character. Should the plot display predicted & observed values
-in concentration (conc) or as percent of saturation (pctsat)?}
+in concentration (conc) or as percent of saturation (pctsat)? The default
+is to plot both.}
 }
 \description{
 Plots modeled values as lines, observed values as points

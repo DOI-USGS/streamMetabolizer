@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc_DO_mod_by_diff.R
 \name{calc_DO_mod_by_diff}
 \alias{calc_DO_mod_by_diff}
-\title{Simulates DO using a process model}
+\title{Simulates DO using a process error model, i.e., AKA one-step-ahead prediction}
 \usage{
 calc_DO_mod_by_diff(GPP.daily, ER.daily, K600.daily, DO.obs, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, n, ...)
@@ -38,6 +38,8 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 \description{
 Accepts GPP, ER, etc. and returns DO.mod. This is a process model, in the
 sense that DO.mod[t] is a function of DO.obs[t-1], so each DO.mod value
-essentially describes only the processes occurring between times t-1 and t.
+essentially describes only the processes occurring between times t-1 and t,
+and the difference between DO.mod[t] and DO.obs[t] is interpreted as error in
+the process (as a rate of mg/L per timestep)
 }
 

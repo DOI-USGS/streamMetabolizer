@@ -1,4 +1,4 @@
-#' \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and
+#' \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and 
 #' both process and observation error
 #' 
 #' @rdname specs_bayes
@@ -14,6 +14,10 @@
 #'   MCMC software package is used. The file name (in this case 
 #'   \code{"metab_bayes_simple.txt"}) will determine not only the model file to 
 #'   use but also which variables are packaged and sent to the MCMC software.
+#' @param calc_DO_fun function with which DO should be re-predicted from the 
+#'   fitted coefficients, probably either \code{calc_DO_mod} or 
+#'   \code{calc_DO_mod_by_diff}. The default value is set to match the default
+#'   value of \code{model_file} in each \code{specs_bayes} function.
 #' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 #'   whether the data should be split into daily chunks first ('bayes_1ply') or 
 #'   passed to the model fitting function in one big chunk ('bayes_all')
@@ -54,6 +58,7 @@ specs_bayes_jags_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
   model_file = 'jags/nopool_obserr.txt',
+  calc_DO_fun = calc_DO_mod,
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   
@@ -87,6 +92,7 @@ specs_bayes_jags_nopool_procobserr <- function(
   list(
     
     model_file = model_file,
+    calc_DO_fun = calc_DO_fun,
     bayes_fun = bayes_fun,
     bayes_software = bayes_software,
     

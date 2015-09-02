@@ -32,10 +32,22 @@ NULL
 #' night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
 #' night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
 #' 
-#' # K (metab_night)
-#' predict_metab(metab_night(data=vfrenchnight, day_start=night.start, 
-#'   day_end=night.end))[c("GPP","ER","K600")]
+#' # estimate metabolism parameters
+#' predict_metab(metab_night(data=vfrenchnight, 
+#'   day_start=night.start, day_end=night.end))[c("GPP","ER","K600")]
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
+#' 
+#' # predict DO
+#' as_ts <- predict_DO(metab_night(data=vfrenchnight, 
+#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod),
+#'   day_start=night.start, day_end=night.end))
+#' as_diffs <- predict_DO(metab_night(data=vfrenchnight, 
+#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff),
+#'   day_start=night.start, day_end=night.end))
+#' do_preds <- rbind(data.frame(fun='calc_DO_mod', as_ts), 
+#'   data.frame(fun='calc_DO_mod_by_diff', as_diffs))
+#' library(ggplot2); ggplot(do_preds, aes(x=local.time, y=DO.mod, color=fun)) + 
+#'   geom_line() + geom_point(aes(y=DO.obs), color="purple") + theme_bw()
 #' 
 #' \dontrun{
 #'  metab_night(data=data.frame(empty="shouldbreak"))
@@ -43,7 +55,9 @@ NULL
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
+  model_specs=specs_night_basic(), # inheritParams metab_model_prototype
+  info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   
@@ -56,14 +70,15 @@ metab_night <- function(
   night_all <- mm_model_by_ply(
     nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-    tests=tests) # for mm_is_valid_day
+    tests=tests, # for mm_is_valid_day
+    model_specs=model_specs) # for nightreg_1ply
   
   # Package and return results
   metab_model(
     model_class="metab_night", 
     info=info,
     fit=night_all,
-    args=list(day_start=day_start, day_end=day_end, tests=tests),
+    args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
     data=data,
     data_daily=data_daily)
 }
@@ -77,6 +92,7 @@ metab_night <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
+#' @inheritParams metab_model_prototype
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
@@ -92,8 +108,9 @@ metab_night <- function(
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start=-12, day_end=12, local_date,
-  tests=c('full_day', 'even_timesteps', 'complete_data')
+  data_ply, data_daily_ply, day_start=-12, day_end=12, local_date, # inheritParams mm_model_by_ply_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  model_specs=specs_night_basic() # inheritParams metab_model_prototype
 ) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and
@@ -125,7 +142,7 @@ nightreg_1ply <- function(
       timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$local.time)), units="days"), na.rm=TRUE))
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
-        tests=tests, day_start=day_start, day_end=day_start, # args passed from metab_night
+        tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_night (after modifying tests)
         timestep_days=timestep.days) # arg supplied here to avoid calculating twice
       if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
       
@@ -227,14 +244,14 @@ setClass(
 predict_DO.metab_night <- function(metab_model, ...) {
   
   # pull args from the model
-  calc_DO_fun <- calc_DO_mod # this isn't used in the model fitting but makes sense for prediction
+  calc_DO_fun <- get_args(metab_model)$model_specs$calc_DO_fun
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
   # get the metabolism (GPP, ER) data and estimates
   metab_ests <- predict_metab(metab_model)
   data <- get_data(metab_model)
-   
+  
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function
   mm_model_by_ply(

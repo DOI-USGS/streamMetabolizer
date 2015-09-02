@@ -72,23 +72,14 @@ setClass(
 #' @export
 #' @family predict_DO
 predict_DO.metab_sim <- function(metab_model, ...) {
+
+  # call the generic, which generally does what we want
+  preds <- NextMethod()
   
-  # pull args from the model
-  calc_DO_fun <- calc_DO_mod # this isn't used in the model fitting but makes sense for prediction
-  day_start <- get_args(metab_model)$day_start
-  day_end <- get_args(metab_model)$day_end
+  # copy the predictions into the DO.obs column to complete the simulation
+  preds$DO.obs <- preds$DO.mod
   
-  # get the metabolism (GPP, ER) data and estimates
-  metab_ests <- predict_metab(metab_model)
-  data <- get_data(metab_model)
-  
-  # re-process the input data with the metabolism estimates to predict DO, using
-  # our special nighttime regression prediction function
-  mm_model_by_ply(
-    model_fun=metab_sim_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_fun) # for mm_predict_1ply
-  
+  preds
 }
 
 #' Helper to predict_DO.metab_model
