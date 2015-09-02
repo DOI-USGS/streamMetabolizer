@@ -21,6 +21,12 @@
 #'   describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation 
 #'   time that occurs before that time if day_end doesn't fall exactly on an 
 #'   observation time.
-metab_model_prototype <- function(data, data_daily, info, day_start, day_end) {
+#' @param model_specs a list of model specifications and parameters for a model.
+#'   Although this may be specified manually, it is easier to use a predefined 
+#'   function from the \code{specs_xxx} family with a name beginning with 
+#'   "specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+#'   etc. The help files for those functions list the necessary parameters,
+#'   describe them in detail, and give default values.
+metab_model_prototype <- function(data, data_daily, info, day_start, day_end, model_specs) {
   message("this function does nothing and should only be called for testing")
 }

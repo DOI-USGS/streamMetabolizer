@@ -65,6 +65,7 @@ setClass(
 #' metab_model() 
 #' metab_model(fit=1:5, args=list(length=5))
 #' metab_model("metab_mle", fit=1:5, args=list(length=5))
+#' @importFrom utils packageVersion
 #' @export
 metab_model <- function(
   model_class="metab_model",
@@ -88,6 +89,7 @@ metab_model <- function(
 #' Print a metab_model object to the console.
 #' 
 #' @param object metab_model to be displayed.
+#' @importFrom utils head
 setMethod(
   "show", "metab_model", 
   function(object) {
@@ -172,6 +174,7 @@ get_version.metab_model <- function(metab_model) {
 #' @inheritParams predict_metab
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
+#' @importFrom stats qnorm setNames
 #' @export
 #' @family predict_metab
 predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
@@ -207,7 +210,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 
 #' Make dissolved oxygen predictions from a fitted metab_model.
 #' 
-#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients,
+#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
 #' etc. from the metabolism model.
 #' 
 #' @inheritParams predict_DO
@@ -215,7 +218,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model) {
+predict_DO.metab_model <- function(metab_model, ...) {
   
   # pull args from the model
   calc_DO_fun <- get_args(metab_model)$calc_DO_fun

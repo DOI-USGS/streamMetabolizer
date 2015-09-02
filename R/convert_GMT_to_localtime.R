@@ -13,8 +13,6 @@
 #'   time without any daylight savings time or daylight time where daylight
 #'   savings is on during the appropriate days
 #' @importFrom lubridate with_tz
-#' @importFrom XML xmlParse
-#' @importFrom RCurl getURL
 #' @importFrom unitted u v
 #' @references 
 #' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
@@ -86,6 +84,11 @@ convert_localtime_to_GMT <- function(local.time) {
 
 #' Use Google API to determine local time zone
 #' 
+#' This function uses two packages, \code{RCurl} and \code{XML}, that are not
+#' required for the \code{streamMetabolizer} package as a whole. If these are
+#' not already installed, run \code{install.packages(c('RCurl','XML'))} before
+#' calling \code{lookup_google_timezone}.
+#' 
 #' Some parameter definitions below are copied directly from the API webpage.
 #' 
 #' @param latitude degrees latitude (positive for north) of the location to look
@@ -93,14 +96,22 @@ convert_localtime_to_GMT <- function(local.time) {
 #' @param longitude degrees longitude (positive for east) of the location to 
 #'   look up.
 #' @param timestamp POSIXct representation of a time - determines daylight 
-#'   savings offset, if any. the default is Jan 1 for northern latitudes and
-#'   July 1 for southern latitudes, i.e., a time surely not during daylight
+#'   savings offset, if any. the default is Jan 1 for northern latitudes and 
+#'   July 1 for southern latitudes, i.e., a time surely not during daylight 
 #'   savings time.
 #' @references https://developers.google.com/maps/documentation/timezone/
 #' @keywords internal
 lookup_google_timezone <- function(
   latitude, longitude, 
   timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="GMT") else as.POSIXct("2015-07-01 00:00:00", tz="GMT")) {
+  
+  # check for required packages specific to this function
+  if(!requireNamespace("RCurl", quietly = TRUE)) {
+    stop("the RCurl package must be installed to use this function")
+  }
+  if(!requireNamespace("XML", quietly = TRUE)) {
+    stop("the XML package must be installed to use this function")
+  }
   
   # ask google
   api.url <- sprintf("https://maps.googleapis.com/maps/api/timezone/xml?location=%s,%s&timestamp=%d", 

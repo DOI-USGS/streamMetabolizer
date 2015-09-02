@@ -5,7 +5,8 @@
 \title{Calculates the equilibrium saturation concentration of oxygen in water at the
 supplied conditions}
 \usage{
-calc_DO_at_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"), ...)
+calc_DO_at_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"),
+  model = "garcia-benson", ...)
 }
 \arguments{
 \item{temp.water}{a numeric vector of water temperature in degrees Celsius,
@@ -16,6 +17,9 @@ or a \linkS4class{unitted} object of water temperatures.}
 
 \item{salinity.water}{a numeric vector of salinity in PSU, or a
 \linkS4class{unitted} object of salinity. Defaults to zero.}
+
+\item{model}{character. One of 'garcia-benson', 'garcia', 'weiss', or
+'benson', but 'garcia-benson' is recommended.}
 
 \item{...}{additional parameters passed to
 \code{\link[LakeMetabolizer]{o2.at.sat.base}}}
@@ -31,7 +35,7 @@ supplied conditions
 }
 \examples{
 library(unitted)
-calc_DO_at_sat(temp=u(21,"degC"), press=u(1.1,"mb"), sal=u(0,"PSU")) # units are checked
-calc_DO_at_sat(temp=21, press=1.1, sal=0) # no units checking if no units provided
+calc_DO_at_sat(temp=u(21,"degC"), press=u(1000.1,"mb"), sal=u(0,"PSU")) # units are checked
+calc_DO_at_sat(temp=21, press=1000.1, sal=0) # no units checking if no units provided
 }
 

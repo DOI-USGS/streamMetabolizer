@@ -13,6 +13,30 @@ NULL
 #' @inheritParams mm_is_valid_day
 #' @return A metab_night object containing the fitted model.
 #' @examples
+#' # set the date in several formats
+#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' 
+#' # get, format, & subset data
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' 
+#' # dates & subsetting specific to nighttime regression
+#' first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
+#' stop.dark <- 100 + which(
+#'   format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+#' vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
+#' night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
+#' night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
+#' 
+#' # K (metab_night)
+#' predict_metab(metab_night(data=vfrenchnight, day_start=night.start, 
+#'   day_end=night.end))[c("GPP","ER","K600")]
+#' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
+#' 
 #' \dontrun{
 #'  metab_night(data=data.frame(empty="shouldbreak"))
 #' }
@@ -65,6 +89,8 @@ metab_night <- function(
 #'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
+#' @importFrom utils head tail
+#' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
   data_ply, data_daily_ply, day_start=-12, day_end=12, local_date,
   tests=c('full_day', 'even_timesteps', 'complete_data')
@@ -177,7 +203,7 @@ nightreg_1ply <- function(
 
 #' Reaeration model fitted by nighttime regression
 #' 
-#' \code{metab_bayes} models use nighttime regression to fit values of K for a
+#' \code{metab_night} models use nighttime regression to fit values of K for a
 #' given DO time series.
 #' 
 #' @exportClass metab_night
@@ -188,18 +214,17 @@ setClass(
 )
 
 
-#' Explain why we can't make dissolved oxygen predictions from a metab_night.
+#' Nighttime dissolved oxygen predictions from a metab_night.
 #' 
-#' metab_night only fits ER and K, and only for the darkness hours. While it 
-#' would be possible to make predictions just for those hours, it'd be costly to
-#' implement and has not-yet-obvious benefits.
+#' metab_night only fits ER and K, and only for the darkness hours. We will
+#' therefore make predictions just for those hours.
 #' 
 #' @inheritParams predict_DO
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_night <- function(metab_model) {
+predict_DO.metab_night <- function(metab_model, ...) {
   
   # pull args from the model
   calc_DO_fun <- calc_DO_mod # this isn't used in the model fitting but makes sense for prediction
@@ -227,6 +252,7 @@ predict_DO.metab_night <- function(metab_model) {
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return a data.frame of predictions
+#' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   calc_DO_fun

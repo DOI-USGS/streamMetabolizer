@@ -40,6 +40,7 @@ test_that("mm_validate_data works", {
   expect_is(val_out[[1]], 'data.frame')
   
   # notices missing, extra, badly unitted columns in data; accepts non-unitted data
+  library(unitted)
   ok_data <- eval(formals(metab_mle)$data)
   expect_error(mm_validate_data(NULL, NULL, "metab_mle"), "data is NULL but required")
   expect_error(mm_validate_data(data.frame(), NULL, "metab_mle"), "data is missing these columns: local.time, DO.obs, DO.sat, depth, temp.water, light")
@@ -65,10 +66,14 @@ test_that("mm_is_valid_day works", {
   library(unitted)
   french <- streamMetabolizer:::load_french_creek()
  
-  good_day <- u(filter(v(french), v(local.time) >= as.POSIXct("2012-08-24 22:30:00", tz="UTC"),
-                       v(local.time) <= as.POSIXct("2012-08-26 06:00:00", tz="UTC")), get_units(french))
-  bad_day <- u(filter(v(french), v(local.time) >= as.POSIXct("2012-08-28 22:30:00", tz="UTC"),
-                       v(local.time) <= as.POSIXct("2012-08-30 06:00:00", tz="UTC")), get_units(french))
+  good_day <- u(dplyr::filter(v(french), local.time >= as.POSIXct("2012-08-24 22:30:00", tz="Etc/GMT+7"),
+                       local.time <= as.POSIXct("2012-08-26 06:00:00", tz="Etc/GMT+7")), get_units(french))
+  bad_day <- dplyr::mutate(
+    good_day,
+    DO.obs=replace(DO.obs, 40, u(NA, get_units(DO.obs))),
+    DO.sat=replace(DO.sat, 51, u(NA, get_units(DO.sat))),
+    temp.water=replace(temp.water, 20:42, u(NA, get_units(temp.water))))
+  
   
   # test and pass
   expect_true(mm_is_valid_day(good_day))
@@ -99,5 +104,5 @@ test_that("mm_filter_valid_days works", {
   french_daily <- data.frame(local.date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
   
   expect_equal(length(mm_filter_valid_days(french, day_start=10, day_end=12)), 3)
-  expect_equal(nrow(mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)[[1]]), 75)
+  expect_equal(nrow(mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)[[1]]), 700)
 })

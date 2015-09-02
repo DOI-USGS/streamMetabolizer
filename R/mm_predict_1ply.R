@@ -23,7 +23,7 @@ mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_
       # prepare auxiliary data
       n <- length(local.time)
       timestep.days <- suppressWarnings(mean(as.numeric(diff(local.time), units="days"), na.rm=TRUE))
-      frac.GPP <- light/sum(light[strftime(local.time,"%Y-%m-%d")==local_date])
+      frac.GPP <- light/sum(light[as.character(local.time,"%Y-%m-%d")==local_date])
       
       # produce DO.mod estimates for today's GPP and ER
       DO.mod <- calc_DO_fun(

@@ -22,10 +22,10 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   # each date (day_start to day_end, which may be != 24). store this labeling in
   # two additional columns (odd.- and even.- date.groups)
   data.plys <- as.data.frame(v(data))
-  data.plys$local.date <- as.Date(format(data.plys$local.time, "%Y-%m-%d"))
+  data.plys$local.date <- format(data.plys$local.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$local.time) %% 1)
   
-  unique.dates <- unique(data.plys$local.date)
+  unique.dates <- unique(as.character(data.plys$local.date))
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
   
@@ -34,12 +34,16 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   day_start <- day_start - 0.0001
   day_end <- day_end + 0.0001
   
-  for(dt in unique(data.plys$local.date)) {
-    hr <- data.plys[data.plys$local.date == dt, 'hour']
-    primary.date <- c(dt, as.Date(NA))[ifelse(hr >= day_start & hr <= day_end, 1, 2)]
-    secondary.date <- c(dt-1, as.Date(NA), dt+1)[ifelse(hr <= (day_end - 24), 1, ifelse(hr < (24 + day_start), 2, 3))]
-    data.plys[data.plys$local.date == dt, 'odd.date.group'] <- if(dt %in% odd.dates) primary.date else secondary.date
-    data.plys[data.plys$local.date == dt, 'even.date.group'] <- if(dt %in% even.dates) primary.date else secondary.date
+  dt.NA <- as.character(NA)
+  for(dt in seq_along(unique.dates)) {
+    dt.today <- unique.dates[dt]
+    dt.yesterday <- if(dt>1) unique.dates[dt-1] else dt.NA
+    dt.tomorrow <- if(dt<length(unique.dates)) unique.dates[dt+1] else dt.NA
+    hr <- data.plys[data.plys$local.date == dt.today, 'hour']
+    primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start & hr <= day_end, 1, 2)]
+    secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end - 24), 1, ifelse(hr < (24 + day_start), 2, 3))]
+    data.plys[data.plys$local.date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
+    data.plys[data.plys$local.date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date
   } 
   
   # Estimate daily metabolism for each ply of the data, using if-else in the
@@ -55,9 +59,9 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
       out <- model_fun(
         data_ply=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
         data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
-        day_start=day_start, day_end=day_end, local_date=dt,
+        day_start=day_start, day_end=day_end, local_date=as.Date(dt),
         ...)
-      if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=dt, out)
+      if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=as.Date(dt), out)
     }))
   
   out.all

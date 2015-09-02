@@ -26,11 +26,9 @@ to_degrees <- function(radians) {
   }
 }
 
-#' Calculate declination angle as in 
-#' http://pveducation.org/pvcdrom/properties-of-sunlight/declination-angle which
-#' cites http://www.sciencedirect.com/science/article/pii/0038092X69900474
+#' Calculate declination angle as in Yard et al. (2005)
 #' 
-#' @param jday The day of year as a number between 0 (Jan 1) and 364 (365 also
+#' @param jday The day of year as a number between 0 (Jan 1) and 364 (365 also 
 #'   OK for leap year)
 #' @param format The format of both the input and the output. May be "degrees" 
 #'   or "radians".
@@ -45,11 +43,16 @@ to_degrees <- function(radians) {
 #'   library(ggplot2)
 #'   ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
 #' }
+#' @references Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G. 
+#'   Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn. 
+#'   \emph{Influence of Topographic Complexity on Solar Insolation Estimates for
+#'   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2-3
+#'   (April 25, 2005): 157-72. doi:10.1016/j.ecolmodel.2004.07.027.
 calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
   format <- match.arg(format)
-  declination.angle <- asin(sin(to_radians(23.439))*sin(to_radians((360/365)*(283+v(jday)))))
-  if(format == "degrees") {
-    declination.angle <- to_degrees(declination.angle)
+  declination.angle <- u(23.439,"deg")*sin(to_radians((360/365)*(283+v(jday))))
+  if(format == "radians") {
+    declination.angle <- to_radians(declination.angle)
   }
   if(is.unitted(jday)) declination.angle <- u(declination.angle, substr(format, 1, 3))
   declination.angle
@@ -164,7 +167,7 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #'     geom_line() + facet_wrap(~lat)
 #' }
 #' @export
-calc_solar_insolation <- function(solar.time, latitude, max.insolation=2326, format=c("degrees", "radians"), attach.units=is.unitted(solar.time)) {
+calc_solar_insolation <- function(solar.time, latitude, max.insolation=convert_PAR_to_SW(2326), format=c("degrees", "radians"), attach.units=is.unitted(solar.time)) {
   format <- match.arg(format)
   jday <- floor(convert_date_to_doyhr(solar.time)) - 1
   hour <- (convert_date_to_doyhr(solar.time) %% 1) * 24

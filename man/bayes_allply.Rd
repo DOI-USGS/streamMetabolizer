@@ -18,9 +18,10 @@ model_path}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier to use a predefined
-function from the \code{\link{specs_bayes}} family with a name beginning
-with "specs_bayes". The help file for that function lists the necessary
-parameters, describes them in detail, and gives default values.}
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 }
 \value{
 data.frame of estimates and MCMC model

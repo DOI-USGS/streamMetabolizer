@@ -15,3 +15,6 @@ inst/doc/*
 .Rproj.user
 *.Rproj
 *.DS_Store
+
+# test side-effects
+tests/testthat/Rplots.pdf

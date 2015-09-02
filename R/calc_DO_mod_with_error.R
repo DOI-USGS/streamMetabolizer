@@ -15,6 +15,7 @@
 #' @param proc.err.phi The autocorrelation coefficient of the process errors, or
 #'   0 for uncorrelated errors.
 #' @export
+#' @importFrom stats rnorm
 #' @examples
 #' fr <- rep(1/100,100) # shorthand for readability of next lines
 #' preds <- data.frame(

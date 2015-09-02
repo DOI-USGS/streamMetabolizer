@@ -17,9 +17,13 @@ before_install:
   - sudo rm -f JAGS-3.4.0.tar.gz
   - sudo rm -rf JAGS-3.4.0
 
+r_packages:
+ - modeest
+
 r_github_packages:
  - jimhester/covr
  - appling/unitted
+ - aappling-usgs/LakeMetabolizer
 
 after_success:
   - Rscript -e 'covr::coveralls()'

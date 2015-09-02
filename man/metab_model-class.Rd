@@ -26,6 +26,7 @@ A metabolism model class.
 Other metab.model.classes: \code{\link{metab_Kvpred-class}};
   \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}};
-  \code{\link{metab_night-class}}
+  \code{\link{metab_night-class}};
+  \code{\link{metab_sim-class}}
 }
 

@@ -45,6 +45,31 @@ Fits a model to estimate GPP and ER from input data on DO, temperature,
 light, etc.
 }
 \examples{
+# set the date in several formats
+start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+   tz="Etc/GMT+7"), units='hours')
+end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+  tz="Etc/GMT+7"), units='hours')
+
+# get, format, & subset data
+vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+
+# PRK (metab_mle)
+get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric,
+  day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+
+# PR (metab_mle)
+get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
+  day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
+
 \dontrun{
  metab_mle(data=data.frame(empty="shouldbreak"))
 }
@@ -54,6 +79,7 @@ Alison Appling, Jordan Read; modeled on LakeMetabolizer
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kvpred}};
-  \code{\link{metab_bayes}}; \code{\link{metab_night}}
+  \code{\link{metab_bayes}}; \code{\link{metab_night}};
+  \code{\link{metab_sim}}
 }
 

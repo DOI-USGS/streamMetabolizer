@@ -3,8 +3,9 @@ NULL
 
 #' Basic Bayesian metabolism model fitting function
 #' 
-#' Fits a model to estimate GPP and ER from input data on DO, temperature, 
-#' light, etc.
+#' Fits a Bayesian model to estimate GPP and ER from input data on DO,
+#' temperature, light, etc. See \code{\link{specs_bayes}} for relevant options
+#' for the \code{model_specs} argument.
 #' 
 #' Current and future models: models/bayes/jags/nopool_obserr.txt 
 #' models/bayes/jags/nopool_procobserr.txt models/bayes/jags/KfQ_procobserr.txt 
@@ -14,11 +15,6 @@ NULL
 #' @author Alison Appling, Bob Hall
 #' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
-#' @param model_specs a list of model specifications and parameters for a model.
-#'   Although this may be specified manually, it is easier to use a predefined
-#'   function from the \code{\link{specs_bayes}} family with a name beginning
-#'   with "specs_bayes". The help file for that function lists the necessary
-#'   parameters, describes them in detail, and gives default values.
 #' @inheritParams runjags_bayes
 #' @return A metab_bayes object containing the fitted model.
 #' @examples
@@ -96,8 +92,8 @@ metab_bayes <- function(
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
 #' @inheritParams metab_bayes
-#' @return data.frame of estimates and MCMC model 
-#'   diagnostics
+#' @return data.frame of estimates and MCMC model diagnostics
+#' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
   data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype
@@ -208,7 +204,7 @@ prepjags_bayes <- function(
       n = nrow(data),
       
       # Every timestep
-      frac.GPP = data$light/sum(data$light[strftime(data$local.time,"%Y-%m-%d")==local_date]),
+      frac.GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
       frac.ER = rep(timestep_days, nrow(data)),
       frac.D = rep(timestep_days, nrow(data)),
       KO2.conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),
