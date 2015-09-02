@@ -6,8 +6,8 @@
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(local.date, K600, optional = "all"),
-  info = NULL, day_start = -1.5, day_end = 30, tests = c("full_day",
-  "even_timesteps", "complete_data"), calc_DO_fun = calc_DO_mod)
+  model_specs = specs_mle_obserr(), info = NULL, day_start = -1.5,
+  day_end = 30, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -16,6 +16,13 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See
 \code{\link{mm_data}} for a full data description.}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -33,9 +40,6 @@ time that occurs before that time if day_end doesn't fall exactly on an
 observation time.}
 
 \item{tests}{list of tests to conduct}
-
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \value{
 A metab_mle object containing the fitted model.
@@ -60,15 +64,27 @@ end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 0
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
 
-# PRK (metab_mle)
-get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric,
+# PRK
+get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric,
   day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+plot_DO_preds(predict_DO(mm))
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 
-# PR (metab_mle)
-get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
+# PR
+get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+plot_DO_preds(predict_DO(mm))
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
+
+# PRK and PR with process error
+get_fit(mm <- metab_mle(data=vfrenchshort,
+  model_specs=specs_mle_procerr(),
+  day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+plot_DO_preds(predict_DO(mm))
+get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
+  model_specs=specs_mle_procerr(),
+  day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+plot_DO_preds(predict_DO(mm))
 
 \dontrun{
  metab_mle(data=data.frame(empty="shouldbreak"))

@@ -8,7 +8,6 @@ NULL
 #' 
 #' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams negloglik_1ply
 #' @return A metab_mle object containing the fitted model.
 #'   
 #' @import dplyr
@@ -29,15 +28,27 @@ NULL
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 #' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
 #' 
-#' # PRK (metab_mle)
-#' get_fit(metab_mle(data=vfrenchshort, day_start=start.numeric, 
+#' # PRK
+#' get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric, 
 #'   day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' 
-#' # PR (metab_mle)
-#' get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
+#' # PR
+#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
 #'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
+#' 
+#' # PRK and PR with process error
+#' get_fit(mm <- metab_mle(data=vfrenchshort, 
+#'   model_specs=specs_mle_procerr(), 
+#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
+#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
+#'   model_specs=specs_mle_procerr(), 
+#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
 #' 
 #' \dontrun{
 #'  metab_mle(data=data.frame(empty="shouldbreak"))
@@ -45,9 +56,10 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  calc_DO_fun=calc_DO_mod # inheritParams negloglik_1ply
+  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), 
+  model_specs=specs_mle_obserr(), # inheritParams metab_model_prototype
+  info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
   # Check data for correct column names & units
@@ -60,14 +72,14 @@ metab_mle <- function(
     mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
     tests=tests, # for mm_is_valid_day
-    calc_DO_fun=calc_DO_fun) # for mle_1ply and negloglik_1ply
+    model_specs=model_specs) # for mle_1ply and negloglik_1ply
   
   # Package and return results
   metab_model(
     model_class="metab_mle",
     info=info,
     fit=mle_all,
-    args=list(day_start=day_start, day_end=day_end, tests=tests, calc_DO_fun=calc_DO_fun), # keep in order passed to function
+    args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests), # keep in order passed to function
     data=data,
     data_daily=data_daily)
 }
@@ -81,7 +93,7 @@ metab_mle <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams negloglik_1ply
+#' @inheritParams metab_model_prototype
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @importFrom stats nlm
@@ -89,7 +101,7 @@ metab_mle <- function(
 mle_1ply <- function(
   data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  calc_DO_fun=calc_DO_mod # inheritParams negloglik_1ply
+  model_specs=specs_mle_obserr() # inheritParams metab_model_prototype
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
@@ -126,7 +138,7 @@ mle_1ply <- function(
     nlm.args <- c(
       list(
         f = negloglik_1ply,
-        p = c(GPP=3, ER=-5, K600=10)[if(is.null(K600)) 1:3 else 1:2],
+        p = c(GPP=model_specs$GPP_init, ER=model_specs$ER_init, K600=model_specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
         hessian = TRUE,
         K600.daily=K600
       ),
@@ -137,7 +149,7 @@ mle_1ply <- function(
         frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
-        calc_DO_fun = calc_DO_fun
+        calc_DO_fun = model_specs$calc_DO_fun
       ))
     
     mle.1d <- withCallingHandlers(

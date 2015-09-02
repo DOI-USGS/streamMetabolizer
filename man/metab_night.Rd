@@ -5,8 +5,9 @@
 \title{Nighttime regression for K estimation}
 \usage{
 metab_night(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(NULL), info = NULL, day_start = -12,
-  day_end = 12, tests = c("full_day", "even_timesteps", "complete_data"))
+  light), data_daily = mm_data(NULL), model_specs = specs_night_basic(),
+  info = NULL, day_start = -12, day_end = 12, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -15,6 +16,13 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See
 \code{\link{mm_data}} for a full data description.}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -62,10 +70,22 @@ vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
 night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "\%H + \%M/60")))
 night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "\%H + \%M/60")))
 
-# K (metab_night)
-predict_metab(metab_night(data=vfrenchnight, day_start=night.start,
-  day_end=night.end))[c("GPP","ER","K600")]
+# estimate metabolism parameters
+predict_metab(metab_night(data=vfrenchnight,
+  day_start=night.start, day_end=night.end))[c("GPP","ER","K600")]
 streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
+
+# predict DO
+as_ts <- predict_DO(metab_night(data=vfrenchnight,
+  model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod),
+  day_start=night.start, day_end=night.end))
+as_diffs <- predict_DO(metab_night(data=vfrenchnight,
+  model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff),
+  day_start=night.start, day_end=night.end))
+do_preds <- rbind(data.frame(fun='calc_DO_mod', as_ts),
+  data.frame(fun='calc_DO_mod_by_diff', as_diffs))
+library(ggplot2); ggplot(do_preds, aes(x=local.time, y=DO.mod, color=fun)) +
+  geom_line() + geom_point(aes(y=DO.obs), color="purple") + theme_bw()
 
 \dontrun{
  metab_night(data=data.frame(empty="shouldbreak"))

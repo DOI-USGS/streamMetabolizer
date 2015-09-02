@@ -5,9 +5,10 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(NULL), info = NULL, day_start = -1.5,
-  day_end = 30, tests = c("full_day", "even_timesteps", "complete_data"),
-  model_specs = specs_bayes_jags_nopool_obserr())
+  light), data_daily = mm_data(NULL),
+  model_specs = specs_bayes_jags_nopool_obserr(), info = NULL,
+  day_start = -1.5, day_end = 30, tests = c("full_day", "even_timesteps",
+  "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -16,6 +17,13 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See
 \code{\link{mm_data}} for a full data description.}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -33,13 +41,6 @@ time that occurs before that time if day_end doesn't fall exactly on an
 observation time.}
 
 \item{tests}{list of tests to conduct}
-
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
 }
 \value{
 A metab_bayes object containing the fitted model.

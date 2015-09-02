@@ -13,6 +13,7 @@ specs_bayes_jags_nopool_obserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
   model_file = 'jags/nopool_obserr.txt',
+  calc_DO_fun = calc_DO_mod_by_diff,
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   
@@ -41,6 +42,7 @@ specs_bayes_jags_nopool_obserr <- function(
   
   list(
     model_file = model_file,
+    calc_DO_fun = calc_DO_fun,
     bayes_fun = bayes_fun,
     bayes_software = bayes_software,
     
