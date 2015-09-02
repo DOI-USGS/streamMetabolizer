@@ -40,18 +40,18 @@ NULL
 #' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 #' 
-#' # PRK and PR with process error
-#' get_fit(mm <- metab_mle(data=vfrenchshort, 
-#'   model_specs=specs_mle_procerr(), 
-#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#' plot_DO_preds(predict_DO(mm))
-#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
-#'   model_specs=specs_mle_procerr(), 
-#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#' plot_DO_preds(predict_DO(mm))
-#' 
 #' \dontrun{
-#'  metab_mle(data=data.frame(empty="shouldbreak"))
+#'   metab_mle(data=data.frame(empty="shouldbreak"))
+#'  
+#'   # PRK and PR with process error
+#'   get_fit(mm <- metab_mle(data=vfrenchshort, 
+#'     model_specs=specs_mle_procerr(), 
+#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#'   plot_DO_preds(predict_DO(mm))
+#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
+#'     model_specs=specs_mle_procerr(), 
+#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#'   plot_DO_preds(predict_DO(mm))
 #' }
 #' @export
 #' @family metab_model
