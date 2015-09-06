@@ -1,5 +1,4 @@
-#' \code{specs_night_basic} - maximum likelihood estimation of GPP, ER, and 
-#' optionally also K600, assuming error in [only] the observation of DO.obs
+#' \code{specs_night_basic} - nighttime regression estimation of ER and K600
 #' 
 #' @rdname specs_night
 #'   
@@ -7,7 +6,7 @@
 #'   \code{calc_DO_mod} or \code{calc_DO_mod_by_diff}. For nighttime regression,
 #'   this function is not used for model fitting at all, but is still used to 
 #'   re-predict the trajectory of DO concentrations from the fitted values of 
-#'   K600 and ER. It is unclear to the package authors whether calc_DO_mod or
+#'   K600 and ER. It is unclear to the package authors whether calc_DO_mod or 
 #'   calc_DO_mod_by_diff is more appropriate.
 #' @export
 #' @family model_specs

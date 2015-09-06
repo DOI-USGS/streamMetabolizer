@@ -78,4 +78,6 @@ Collate:
     'specs_mle_procerr.R'
     'specs_night.R'
     'specs_night_basic.R'
+    'specs_sim.R'
+    'specs_sim_basic.R'
     'streamMetabolizer.R'

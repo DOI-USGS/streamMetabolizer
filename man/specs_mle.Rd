@@ -42,12 +42,14 @@ Other model_specs: \code{\link{specs_bayes}},
   \code{\link{specs_bayes_jags_nopool_obserr}},
   \code{\link{specs_bayes_jags_nopool_procobserr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 
 Other model_specs: \code{\link{specs_bayes}},
   \code{\link{specs_bayes_jags_nopool_obserr}},
   \code{\link{specs_bayes_jags_nopool_procobserr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 }
 

@@ -113,12 +113,14 @@ Other model_specs: \code{\link{specs_mle}},
   \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 
 Other model_specs: \code{\link{specs_mle}},
   \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 }
 

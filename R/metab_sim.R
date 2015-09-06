@@ -16,9 +16,11 @@ NULL
 #' @export
 #' @family metab_model
 metab_sim <- function(
-  data=mm_data(local.time, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, GPP, ER, K600), info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # args for mm_is_valid_day
-  model_specs=list(calc_DO_fun=calc_DO_mod)
+  data=mm_data(local.time, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, GPP, ER, K600), # inheritParams metab_model_prototype
+  model_specs=specs_sim_basic(), # inheritParams metab_model_prototype
+  info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
+  
 ) {
   
   # Check data for correct column names & units
@@ -35,7 +37,7 @@ metab_sim <- function(
     model_class="metab_sim", 
     info=info,
     fit=sim_all,
-    args=list(day_start=day_start, day_end=day_end, tests=tests),
+    args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
     data=data,
     data_daily=data_daily)
 }
