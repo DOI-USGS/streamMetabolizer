@@ -187,6 +187,7 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
       lapply(vars, function(var) {
         est <- fit[[var]]
         sd <- fit[[paste0(var,".sd")]]
+        if(is.null(sd)) sd <- NA
         data.frame(
           est,
           lower = est - crit * sd,
@@ -222,6 +223,7 @@ predict_DO.metab_model <- function(metab_model, ...) {
   
   # pull args from the model
   calc_DO_fun <- get_args(metab_model)$model_specs$calc_DO_fun
+  calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
@@ -233,6 +235,6 @@ predict_DO.metab_model <- function(metab_model, ...) {
   mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_fun) # for mm_predict_1ply
+    calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) # for mm_predict_1ply
   
 }

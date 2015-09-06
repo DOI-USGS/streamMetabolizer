@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 mm_predict_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
-  calc_DO_fun)
+  calc_DO_fun, calc_DO_args = list())
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -32,6 +32,8 @@ date by which this ply should be referred}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+
+\item{calc_DO_args}{a list of other arguments passed to calc_DO_fun}
 }
 \value{
 a data.frame of predictions

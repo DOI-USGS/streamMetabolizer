@@ -5,8 +5,9 @@
 #' @inheritParams mm_model_by_ply_prototype
 #' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
+#' @param calc_DO_args a list of other arguments passed to calc_DO_fun
 #' @return a data.frame of predictions
-mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_date, calc_DO_fun) {
+mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_date, calc_DO_fun, calc_DO_args=list()) {
   
   # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
   # they're missing
@@ -26,12 +27,13 @@ mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_
       frac.GPP <- light/sum(light[as.character(local.time,"%Y-%m-%d")==local_date])
       
       # produce DO.mod estimates for today's GPP and ER
-      DO.mod <- calc_DO_fun(
+      basic_args <- list(
         GPP.daily=metab_est$GPP, 
         ER.daily=metab_est$ER, 
         K600.daily=metab_est$K600, 
         DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
         frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days, DO.mod.1=DO.obs[1], n=n)
+      DO.mod <- do.call(calc_DO_fun, c(basic_args, calc_DO_args))
       
       data.frame(., DO.mod=DO.mod)
     }))
