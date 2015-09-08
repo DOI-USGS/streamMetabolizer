@@ -16,6 +16,7 @@
 #' @inheritParams mm_model_by_ply_prototype
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
+#' @import dplyr
 mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...) {
   
   # Identify the data plys that will let us use a user-specified-hr window for 
@@ -48,21 +49,26 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   
   # Estimate daily metabolism for each ply of the data, using if-else in the
   # lapply loop to cover both the odd and even groupings in date order
-  out.all <- do.call(
-    rbind, 
-    lapply(sort(unique.dates), function(dt) {
-      ply <- if(dt %in% odd.dates) {
-        which(data.plys$odd.date.group == dt)
-      } else {
-        which(data.plys$even.date.group == dt)
-      }
-      out <- model_fun(
-        data_ply=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
-        data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
-        day_start=day_start, day_end=day_end, local_date=as.Date(dt),
-        ...)
-      if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=as.Date(dt), out)
-    }))
+  out_list <- lapply(sort(unique.dates), function(dt) {
+    ply <- if(dt %in% odd.dates) {
+      which(data.plys$odd.date.group == dt)
+    } else {
+      which(data.plys$even.date.group == dt)
+    }
+    out <- model_fun(
+      data_ply=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
+      data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
+      day_start=day_start, day_end=day_end, local_date=as.Date(dt),
+      ...)
+    if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=as.Date(dt), out)
+  })
+  # combine the 1-row dfs, making sure to start with a 0-row df that represents 
+  # the dfs with the most columns to keep the column ordering consistent across 
+  # runs. dplyr::bind_rows should take care of any missing columns, since these
+  # are matched by name, and missing columns are filled with NAs
+  count_cols <- function(out) { if(is.null(out)) 0 else ncol(out) }
+  out_example <- out_list[[which.max(sapply(out_list, count_cols))]][FALSE,]
+  out_all <- bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
   
-  out.all
+  out_all
 }

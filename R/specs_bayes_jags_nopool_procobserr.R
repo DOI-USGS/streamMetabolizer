@@ -57,7 +57,7 @@
 specs_bayes_jags_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'jags/nopool_obserr.txt',
+  model_file = 'jags/nopool_procobserr.txt',
   calc_DO_fun = calc_DO_mod,
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
@@ -73,7 +73,7 @@ specs_bayes_jags_nopool_procobserr <- function(
   err.proc.phi.min = 0,
   err.proc.phi.max = 1,
   err.proc.sigma.min = 0,
-  err.proc.sigma.max = 0.5,
+  err.proc.sigma.max = 0.005,
   err.obs.sigma.min = 0,
   err.obs.sigma.max = 0.5,
   

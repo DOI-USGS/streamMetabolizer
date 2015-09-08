@@ -45,5 +45,5 @@ plot_DO_preds <- function(DO_preds, plot_as=c('both','conc','pctsat')) {
         theme_bw() + facet_grid(var ~ ., scales="free_y") + 
         xlab('Local time') + ylab("DO predictions (% sat above, mg/L below)")
     })
-  print(g)
+  suppressWarnings(print(g))
 }

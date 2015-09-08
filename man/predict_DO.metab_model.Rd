@@ -4,11 +4,15 @@
 \alias{predict_DO.metab_model}
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
-\method{predict_DO}{metab_model}(metab_model, ...)
+\method{predict_DO}{metab_model}(metab_model, calc_DO_fun = calc_DO_mod, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{calc_DO_fun}{The function to use in predicting DO from metabolism
+estimates. The default is generally recommended, even if the model was fit
+with assumptions of process error.}
 
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_DO}}

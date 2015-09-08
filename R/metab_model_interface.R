@@ -125,7 +125,6 @@ get_version <- function(metab_model) {
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @param ci_level the alpha level for the confidence or credible interval
 #' @param ... Other arguments passed to class-specific implementations of
 #'   \code{predict_metab}
 #' @return A data.frame of daily metabolism estimates. Columns include:
@@ -142,7 +141,7 @@ get_version <- function(metab_model) {
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
-predict_metab <- function(metab_model, ci_level, ...) {
+predict_metab <- function(metab_model, ...) {
   UseMethod("predict_metab")
 }
 

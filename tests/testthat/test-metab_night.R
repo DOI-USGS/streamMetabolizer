@@ -42,8 +42,7 @@ test_that("metab_night predictions can be passed back into metab_mle", {
   DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
   # note that had to raise the maximum error for this model combination, from 0.15 to 0.35 mgO/L
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.35), "DO.mod tracks DO.obs with not too much error")
-  # plot_DO_preds(DO_preds, plot_as="conc")
-  # plot_DO_preds(DO_preds, plot_as="pctsat")
+  # plot_DO_preds(DO_preds)
   
 })
 

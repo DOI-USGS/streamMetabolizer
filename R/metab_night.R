@@ -244,7 +244,6 @@ setClass(
 predict_DO.metab_night <- function(metab_model, ...) {
   
   # pull args from the model
-  calc_DO_fun <- get_args(metab_model)$model_specs$calc_DO_fun
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
@@ -257,7 +256,7 @@ predict_DO.metab_night <- function(metab_model, ...) {
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_fun) # for mm_predict_1ply
+    calc_DO_fun=calc_DO_mod) # for mm_predict_1ply
   
 }
 

@@ -4,10 +4,11 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(data = mm_data(local.time, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(local.date, GPP, ER, K600),
-  model_specs = specs_sim_basic(), info = NULL, day_start = -1.5,
-  day_end = 30, tests = c("full_day", "even_timesteps", "complete_data"))
+metab_sim(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light,
+  optional = "DO.obs"), data_daily = mm_data(local.date, DO.mod.1, GPP, ER,
+  K600, optional = "DO.mod.1"), model_specs = specs_sim_basic(),
+  info = NULL, day_start = -1.5, day_end = 30, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw

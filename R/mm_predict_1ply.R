@@ -9,32 +9,26 @@
 #' @return a data.frame of predictions
 mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_date, calc_DO_fun, calc_DO_args=list()) {
   
-  # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
-  # they're missing
-  metab_est <- data_daily_ply
-  if(nrow(metab_est)==0 || is.na(metab_est$GPP)) {
+  # The daily metabolism estimates are in data_daily_ply. Skip today (return
+  # DO.mod=NAs) if they're missing. Otherwise, proceed to predict DO
+  if(nrow(data_daily_ply)==0 || any(is.na(data_daily_ply[c("GPP","ER","K600")]))) {
     return(data.frame(data_ply, DO.mod=rep(NA, nrow(data_ply))))
   }
   
-  # if we have metab estimates, use them to predict DO
-  . <- local.time <- ".dplyr.var"
-  data_ply %>%
-    do(with(., {
-      
-      # prepare auxiliary data
-      n <- length(local.time)
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(local.time), units="days"), na.rm=TRUE))
-      frac.GPP <- light/sum(light[as.character(local.time,"%Y-%m-%d")==local_date])
-      
-      # produce DO.mod estimates for today's GPP and ER
-      basic_args <- list(
-        GPP.daily=metab_est$GPP, 
-        ER.daily=metab_est$ER, 
-        K600.daily=metab_est$K600, 
-        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
-        frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days, DO.mod.1=DO.obs[1], n=n)
-      DO.mod <- do.call(calc_DO_fun, c(basic_args, calc_DO_args))
-      
-      data.frame(., DO.mod=DO.mod)
-    }))
+  # prepare arguments, appending calc_DO_args if there are any
+  timestep.days <- suppressWarnings(mean(as.numeric(diff(data_ply$local.time), units="days"), na.rm=TRUE))
+  frac.GPP <- data_ply$light/sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==local_date])
+  all_args <- c(
+    list(GPP.daily=data_daily_ply$GPP, ER.daily=data_daily_ply$ER, K600.daily=data_daily_ply$K600, 
+         DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water, 
+         frac.GPP=frac.GPP, frac.ER=timestep.days, frac.D=timestep.days, 
+         DO.mod.1=if('DO.obs' %in% names(data_ply)) data_ply$DO.obs[1] else data_daily_ply$DO.mod.1,
+         n=nrow(data_ply)),
+    calc_DO_args)
+  
+  # call calc_DO_fun with the prepared arguments
+  DO.mod <- do.call(calc_DO_fun, all_args)
+  
+  # return the data with modeled DO attached
+  data.frame(data_ply, DO.mod=DO.mod)
 }

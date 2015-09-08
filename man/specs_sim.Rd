@@ -5,7 +5,28 @@
 \alias{specs_sim_basic}
 \title{Functions giving specifications for metab_sim model variants}
 \usage{
-specs_sim_basic(obs.err.sd, obs.err.phi, proc.err.sd, proc.err.phi)
+specs_sim_basic(err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
+  err.proc.phi = 0, sim.seed = NA)
+}
+\arguments{
+\item{err.obs.sigma}{The sd of observation error, or 0 for no observation
+error. Observation errors are those applied to DO.mod after generating the
+full time series of modeled values.}
+
+\item{err.obs.phi}{The autocorrelation coefficient of the observation errors,
+or 0 for uncorrelated errors.}
+
+\item{err.proc.sigma}{The sd of process error, or 0 for no process error.
+Process errors are applied at each time step, and therefore propagate into
+the next timestep.}
+
+\item{err.proc.phi}{The autocorrelation coefficient of the process errors, or
+0 for uncorrelated errors.}
+
+\item{sim.seed}{NA to specify that each call to predict_DO should generate
+  new values, or an integer, as in the \code{seed} argument to
+  \code{\link{set.seed}}, specifying the seed to set before every execution
+  of predict_DO}
 }
 \description{
 Functions giving specifications for metab_sim model variants

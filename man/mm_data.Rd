@@ -46,6 +46,13 @@ s^{-1}}{micro mols / m^2 / s}}
 
 \item{ \code{local.date} dates of interest in Date format}
 
+\item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
+O[2] L^{-1}}{mg O2 / L}}
+
+\item{ \code{GPP} daily estimates of GPP}
+
+\item{ \code{ER} daily estimates of ER}
+
 \item{ \code{K600} daily estimates of K600}
 
 \item{ \code{discharge.daily} daily mean river discharge}

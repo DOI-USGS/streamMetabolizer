@@ -27,6 +27,13 @@
 #' 
 #' \item{ \code{local.date} dates of interest in Date format}
 #' 
+#' \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
+#' O[2] L^{-1}}{mg O2 / L}}
+#'
+#' \item{ \code{GPP} daily estimates of GPP}
+#' 
+#' \item{ \code{ER} daily estimates of ER}
+#' 
 #' \item{ \code{K600} daily estimates of K600}
 #' 
 #' \item{ \code{discharge.daily} daily mean river discharge}
@@ -68,6 +75,7 @@ mm_data <- function(..., optional='none') {
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1"), 
     local.date=     u(as.Date("2050-03-14"), NA), 
+    DO.mod.1=       u(7.5,"mgO2 L^-1"),
     GPP=            u(5,"gO2 m^-2 d^-1"), 
     ER=             u(5,"gO2 m^-2 d^-1"), 
     K600=           u(5,"d^-1"), 

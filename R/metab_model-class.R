@@ -71,7 +71,7 @@ metab_model <- function(
   model_class="metab_model",
   info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
-  args=list(day_start=-1.5, day_end=30, calc_DO_fun=calc_DO_mod),
+  args=list(day_start=-1.5, day_end=30),
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),
@@ -169,9 +169,10 @@ get_version.metab_model <- function(metab_model) {
 
 #' Make metabolism predictions from a fitted metab_model.
 #' 
-#' Makes daily predictions of GPP, ER, and NEP.
+#' Makes daily predictions of GPP, ER, and K600.
 #' 
 #' @inheritParams predict_metab
+#' @param ci_level the alpha level for the confidence or credible interval
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @importFrom stats qnorm setNames
@@ -215,19 +216,22 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 #' etc. from the metabolism model.
 #' 
 #' @inheritParams predict_DO
+#' @param calc_DO_fun The function to use in predicting DO from metabolism 
+#'   estimates. The default is generally recommended, even if the model was fit
+#'   with assumptions of process error.
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, ...) {
+predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, ...) {
   
   # pull args from the model
-  calc_DO_fun <- get_args(metab_model)$model_specs$calc_DO_fun
   calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
-  # get the metabolism (GPP, ER) data and estimates
+  # get the metabolism estimates (keeping only those columns we actually need)
+  # and input data
   metab_ests <- predict_metab(metab_model)
   data <- get_data(metab_model)
   

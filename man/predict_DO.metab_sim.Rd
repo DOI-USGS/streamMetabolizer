@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_sim.R
 \name{predict_DO.metab_sim}
 \alias{predict_DO.metab_sim}
-\title{Explain why we can't make dissolved oxygen predictions from a metab_sim.}
+\title{Simulate values for DO.obs (with error) and DO.mod (without)}
 \usage{
 \method{predict_DO}{metab_sim}(metab_model, ...)
 }
@@ -18,9 +18,10 @@ A data.frame of predictions, as for the generic
   \code{\link{predict_DO}}.
 }
 \description{
-metab_sim only fits ER and K, and only for the darkness hours. While it
-would be possible to make predictions just for those hours, it'd be costly to
-implement and has not-yet-obvious benefits.
+Generate simulated values for DO.obs (including any error specified in the
+call to \code{metab_sim()}) and DO.mod (with no error, just the predictions
+from the specified GPP, ER, and K600). The errors are randomly generated on
+every new call to predict_DO.
 }
 \seealso{
 Other predict_DO: \code{\link{predict_DO.metab_model}};
