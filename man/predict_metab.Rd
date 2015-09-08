@@ -4,13 +4,11 @@
 \alias{predict_metab}
 \title{Predict metabolism from a fitted model.}
 \usage{
-predict_metab(metab_model, ci_level, ...)
+predict_metab(metab_model, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
-
-\item{ci_level}{the alpha level for the confidence or credible interval}
 
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_metab}}
@@ -38,6 +36,7 @@ Other metab_model_interface: \code{\link{get_args}};
   \code{\link{get_info}}; \code{\link{get_version}};
   \code{\link{predict_DO}}
 
-Other predict_metab: \code{\link{predict_metab.metab_model}}
+Other predict_metab: \code{\link{predict_metab.metab_model}};
+  \code{\link{predict_metab.metab_sim}}
 }
 

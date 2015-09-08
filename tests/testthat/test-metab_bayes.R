@@ -21,14 +21,14 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
-  # plot_DO_preds(DO_preds, plot_as="pctsat")
+  # plot_DO_preds(DO_preds)
   
-  # specs_bayes_jags_nopool_procobserr
-  mm <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_procobserr())
+  # specs_bayes_jags_nopool_procobserr. you really have to crank down the err.proc.sigma.max or else the errors are huge
+  mm <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_procobserr(err.proc.sigma.max = 0.0005))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
-  #plot_DO_preds(DO_preds, plot_as="pctsat")
+  # plot_DO_preds(DO_preds)
   
 })

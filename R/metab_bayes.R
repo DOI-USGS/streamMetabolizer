@@ -75,8 +75,7 @@ metab_bayes <- function(
     fit=bayes_all,
     args=list(
       model_specs=model_specs,
-      day_start=day_start, day_end=day_end, tests=tests, 
-      calc_DO_fun=calc_DO_mod # metab_bayes always uses the equivalent of calc_DO_mod. specify here for predict_DO
+      day_start=day_start, day_end=day_end, tests=tests
     ),
     data=data,
     data_daily=data_daily)
@@ -129,21 +128,22 @@ bayes_1ply <- function(
         invokeRestart("muffleWarning")
       })
   } 
-  
+
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
     bayes_1day <- setNames(as.list(rep(NA, 6)), 
-                           c('mean.GPP.daily', 'mean.ER.daily', 'mean.K600.daily', 
-                             'sd.GPP.daily', 'sd.ER.daily', 'sd.K600.daily'))
+                           c('GPP.daily_Mean', 'ER.daily_Mean', 'K600.daily_Mean', 
+                             'GPP.daily_SD', 'ER.daily_SD', 'K600.daily_SD'))
   }
   
   # Return, reporting any results, warnings, and errors
-  data.frame(GPP=bayes_1day$mean.GPP.daily, GPP.sd=bayes_1day$sd.GPP.daily, 
-             ER=bayes_1day$mean.ER.daily, ER.sd=bayes_1day$sd.ER.daily, 
-             K600=bayes_1day$mean.K600.daily, K600.sd=bayes_1day$sd.K600.daily,
+  data.frame(GPP=bayes_1day$GPP.daily_Mean, GPP.sd=bayes_1day$GPP.daily_SD, 
+             ER=bayes_1day$ER.daily_Mean, ER.sd=bayes_1day$ER.daily_SD, 
+             K600=bayes_1day$K600.daily_Mean, K600.sd=bayes_1day$K600.daily_SD,
              warnings=paste0(warn_strs, collapse="; "), 
              errors=paste0(stop_strs, collapse="; "),
+             bayes_1day,
              stringsAsFactors=FALSE)
 }
 
@@ -259,7 +259,7 @@ runjags_bayes <- function(data_list, model_path, max_cores=4, adapt_steps=1000, 
   parameters = switch(
     basename(model_path),
     'nopool_obserr.txt'=c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma"),
-    'nopool_procobserr.txt'=c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma", "err.proc.sigma")
+    'nopool_procobserr.txt'=c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma", "err.obs.phi", "err.proc.sigma", "err.proc.phi") #, "err.proc"
   )
   
   n_cores = detectCores()
@@ -281,10 +281,13 @@ runjags_bayes <- function(data_list, model_path, max_cores=4, adapt_steps=1000, 
     summarise=TRUE,
     plots=FALSE)
   
-  # format output into a data.frame
-  jags_out <- as.data.frame(c(
-    mean=as.list(runjags_out$summary$statistics[,'Mean']), 
-    sd=as.list(runjags_out$summary$statistics[,'SD'])))
+  # format output into a 1-row data.frame
+  jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) # combine 2 matrices of statistics
+  names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
+  names_stats <- rep(gsub("%", "pct", colnames(jags_mat)), times=nrow(jags_mat)) # add the Mean, SD, etc. part of the name
+  jags_out <- jags_mat %>% as.matrix() %>% t %>% c %>% # get a 1D vector of GPP_Mean, GPP_SD, ..., ER_Mean, ER_SD, ... etc
+    t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+    setNames(paste0(names_params, "_", names_stats))
   
   return(jags_out)
 }

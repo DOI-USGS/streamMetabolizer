@@ -18,14 +18,14 @@ calc_DO_mod_by_diff is more appropriate.}
 \description{
 Functions giving specifications for metab_night model variants
 
-\code{specs_night_basic} - maximum likelihood estimation of GPP, ER, and
-optionally also K600, assuming error in [only] the observation of DO.obs
+\code{specs_night_basic} - nighttime regression estimation of ER and K600
 }
 \seealso{
 Other model_specs: \code{\link{specs_bayes}},
   \code{\link{specs_bayes_jags_nopool_obserr}},
   \code{\link{specs_bayes_jags_nopool_procobserr}};
   \code{\link{specs_mle}}, \code{\link{specs_mle_obserr}},
-  \code{\link{specs_mle_procerr}}
+  \code{\link{specs_mle_procerr}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 }
 

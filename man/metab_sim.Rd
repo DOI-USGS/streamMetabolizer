@@ -4,10 +4,11 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(data = mm_data(local.time, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(local.date, GPP, ER, K600), info = NULL,
-  day_start = -1.5, day_end = 30, tests = c("full_day", "even_timesteps",
-  "complete_data"), model_specs = list(calc_DO_fun = calc_DO_mod))
+metab_sim(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light,
+  optional = "DO.obs"), data_daily = mm_data(local.date, DO.mod.1, GPP, ER,
+  K600, optional = "DO.mod.1"), model_specs = specs_sim_basic(),
+  info = NULL, day_start = -1.5, day_end = 30, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -16,6 +17,13 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See
 \code{\link{mm_data}} for a full data description.}
+
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to use a predefined
+function from the \code{specs_xxx} family with a name beginning with
+"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
+etc. The help files for those functions list the necessary parameters,
+describe them in detail, and give default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -33,13 +41,6 @@ time that occurs before that time if day_end doesn't fall exactly on an
 observation time.}
 
 \item{tests}{list of tests to conduct}
-
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
 }
 \value{
 A metab_sim object containing the fitted model.

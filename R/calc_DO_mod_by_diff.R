@@ -1,11 +1,12 @@
-#' Simulates DO using a process error model, i.e., AKA one-step-ahead prediction
+#' \code{calc_DO_mod_by_diff} simulates DO using a process error model, i.e., 
+#' AKA one-step-ahead prediction. In this model, DO.mod[t] is a function of 
+#' DO.obs[t-1], so each DO.mod value essentially describes only the processes 
+#' occurring between times t-1 and t. The difference between DO.mod[t] and 
+#' DO.obs[t] can therefore be interpreted as error in the process estimate (as a
+#' rate of mg/L per timestep)
 #' 
-#' Accepts GPP, ER, etc. and returns DO.mod. This is a process model, in the 
-#' sense that DO.mod[t] is a function of DO.obs[t-1], so each DO.mod value 
-#' essentially describes only the processes occurring between times t-1 and t, 
-#' and the difference between DO.mod[t] and DO.obs[t] is interpreted as error in
-#' the process (as a rate of mg/L per timestep)
-#' 
+#' @rdname calc_DO_mod
+#'   
 #' @inheritParams calc_DO_mod
 #' @param DO.obs a vector of observed DO, from which values at time t will be 
 #'   used to model values at time t+1

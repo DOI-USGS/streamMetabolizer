@@ -38,6 +38,7 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     # check for missing or extra columns
     if('missing_cols' %in% tests) {
       missing.columns <- setdiff(names(expected.data), names(dat))
+      missing.columns <- setdiff(missing.columns, optional.data) # optional cols don't count
       if(length(missing.columns) > 0) {
         stop(paste0(data_type, " is missing these columns: ", paste0(missing.columns, collapse=", ")))
       }
@@ -49,8 +50,12 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
       }
     }
     
-    # put the data columns in the same order as expected.data and eliminate any extra columns
-    dat <- dat[names(expected.data)]
+    # put the data columns in the same order as expected.data and eliminate any 
+    # extra columns. accommodate (don't try to include) missing columns, which
+    # will necessarily be optional if missing_cols was tested above
+    keeper.columns <- names(expected.data)[names(expected.data) %in% names(dat)]
+    dat <- dat[keeper.columns]
+    expected.data <- expected.data[keeper.columns]
     
     # check for units mismatches. column names will already match exactly.
     if('units' %in% tests) {

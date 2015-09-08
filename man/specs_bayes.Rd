@@ -14,15 +14,15 @@ specs_bayes_jags_nopool_obserr(model_file = "jags/nopool_obserr.txt",
   priors = FALSE, max_cores = 4, adapt_steps = 100, burnin_steps = 40,
   num_saved_steps = 400, thin_steps = 1)
 
-specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_obserr.txt",
+specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_procobserr.txt",
   calc_DO_fun = calc_DO_mod, bayes_fun = "bayes_1ply",
   bayes_software = "jags", GPP.daily.mu = 10, GPP.daily.sigma = 10,
   ER.daily.mu = -10, ER.daily.sigma = 10, K600.daily.mu = 10,
   K600.daily.sigma = 10, err.proc.phi.min = 0, err.proc.phi.max = 1,
-  err.proc.sigma.min = 0, err.proc.sigma.max = 0.5, err.obs.sigma.min = 0,
-  err.obs.sigma.max = 0.5, priors = FALSE, max_cores = 4,
-  adapt_steps = 100, burnin_steps = 40, num_saved_steps = 400,
-  thin_steps = 1)
+  err.proc.sigma.min = 0, err.proc.sigma.max = 0.005,
+  err.obs.sigma.min = 0, err.obs.sigma.max = 0.5, priors = FALSE,
+  max_cores = 4, adapt_steps = 100, burnin_steps = 40,
+  num_saved_steps = 400, thin_steps = 1)
 }
 \arguments{
 \item{model_file}{character. The model definition file to use. The file may
@@ -113,12 +113,14 @@ Other model_specs: \code{\link{specs_mle}},
   \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 
 Other model_specs: \code{\link{specs_mle}},
   \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};
   \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}
+  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
+  \code{\link{specs_sim_basic}}
 }
 

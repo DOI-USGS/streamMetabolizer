@@ -23,7 +23,7 @@ model {
     err.proc[i] ~ dnorm(err.proc.phi*err.proc[i-1], pow(err.proc.sigma, -2))
   }
   # Prior on the autocorrelation & sd of the process errors
-  err.proc.phi <- dunif(err.proc.phi.min, err.proc.phi.max)
+  err.proc.phi ~ dunif(err.proc.phi.min, err.proc.phi.max)
   err.proc.sigma ~ dunif(err.proc.sigma.min, err.proc.sigma.max)
   
   # Observation error: Compare all the DO predictions to their observations
