@@ -117,7 +117,7 @@ bayes_1ply <- function(
           model_specs=model_specs, priors=model_specs$priors)
         do.call(runjags_bayes, c(
           list(data_list=data_list), 
-          model_specs[c('model_path','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
+          model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -229,12 +229,14 @@ prepjags_bayes <- function(
 
 #' Actually run JAGS on a formatted data ply
 #' 
-#' Seems to need to import rjags but does not, for now, because I can't get
-#' rjags to install on the Condor cluster. Including an import rjags line here
+#' Seems to need to import rjags but does not, for now, because I can't get 
+#' rjags to install on the Condor cluster. Including an import rjags line here 
 #' allowed runjags to do its job last time I tried.
 #' 
 #' @param data_list a formatted list of inputs to the JAGS model
 #' @param model_path the JAGS model file to use, as a full file path
+#' @param params_out a character vector of parameters whose values in the MCMC
+#'   runs should be recorded and summarized
 #' @param max_cores the maximum number of cores to apply to this run
 #' @param adapt_steps the number of steps to use in adapting the model
 #' @param burnin_steps the number of steps to run and ignore before starting to 
@@ -245,7 +247,7 @@ prepjags_bayes <- function(
 #' @import runjags
 #' @import parallel
 #' @export
-runjags_bayes <- function(data_list, model_path, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1) {
+runjags_bayes <- function(data_list, model_path, params_out, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1) {
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -256,12 +258,6 @@ runjags_bayes <- function(data_list, model_path, max_cores=4, adapt_steps=1000, 
     # Let JAGS initialize other parameters automatically
   }
   
-  parameters = switch(
-    basename(model_path),
-    'nopool_obserr.txt'=c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma"),
-    'nopool_procobserr.txt'=c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma", "err.obs.phi", "err.proc.sigma", "err.proc.phi") #, "err.proc"
-  )
-  
   n_cores = detectCores()
   if (!is.finite(n_cores)) { n_cores = 1 } 
   n_chains = max(3, min(max_cores , max(1, n_cores)))
@@ -270,7 +266,7 @@ runjags_bayes <- function(data_list, model_path, max_cores=4, adapt_steps=1000, 
   runjags_out <- run.jags(
     method=c("rjags","parallel","snow")[2],
     model=model_path,
-    monitor=parameters,
+    monitor=params_out,
     data=data_list,
     inits=inits_fun,
     n.chains=n_chains,
