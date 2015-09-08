@@ -19,7 +19,7 @@ plot_DO_preds <- function(DO_preds, plot_as=c('both','conc','pctsat')) {
   
   plot_as <- match.arg(plot_as)
   
-  DO.mod <- '.ggplot.var'
+  var <- DO.mod <- '.ggplot.var'
   g <- switch(
     plot_as,
     'conc'={
