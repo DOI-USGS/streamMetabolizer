@@ -4,13 +4,17 @@
 \alias{runjags_bayes}
 \title{Actually run JAGS on a formatted data ply}
 \usage{
-runjags_bayes(data_list, model_path, max_cores = 4, adapt_steps = 1000,
-  burnin_steps = 4000, num_saved_steps = 40000, thin_steps = 1)
+runjags_bayes(data_list, model_path, params_out, max_cores = 4,
+  adapt_steps = 1000, burnin_steps = 4000, num_saved_steps = 40000,
+  thin_steps = 1)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}
 
 \item{model_path}{the JAGS model file to use, as a full file path}
+
+\item{params_out}{a character vector of parameters whose values in the MCMC
+runs should be recorded and summarized}
 
 \item{max_cores}{the maximum number of cores to apply to this run}
 
