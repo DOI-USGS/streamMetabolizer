@@ -95,23 +95,26 @@ setMethod(
   function(object) {
     cat("metab_model", if(class(object)[1] != "metab_model") paste0("of type ", class(object)[1]), "\n")
     cat("  User-supplied metadata (access with get_info()):\n")
-    print(object@info)
+    print(get_info(object))
     cat("  Fitted model (access with get_fit()):\n")
-    cat("    class: ", paste0(class(object@fit), collapse=" & "),"\n")
+    cat("    class: ", paste0(class(get_fit(object)), collapse=" & "),"\n")
     cat("  Fitting arguments (access with get_args()):\n")
-    for(arg in names(object@args)) {
+    args <- get_args(object)
+    for(arg in names(args)) {
       arg_char <- tryCatch(
-        if(is.null(object@args[[arg]])) {
+        if(is.null(args[[arg]])) {
           'NULL' 
         } else {
-          paste0(as.character(object@args[[arg]]), collapse=", ")
+          paste0(as.character(args[[arg]]), collapse=", ")
         }, 
-        error=function(e) paste0(paste0(class(object@args[[arg]]), collapse=","),". see get_args(...)[['",arg,"']]"))
+        error=function(e) paste0(paste0(class(args[[arg]]), collapse=","),". see get_args(...)[['",arg,"']]"))
       if(nchar(arg_char) > 100) arg_char <- paste0(substr(arg_char, 1, 100), "...")
       cat(paste0("    ", arg, ": ", arg_char, "\n"))
     }
     cat("  Fitting data (truncated; access with get_data()):\n")
-    print(head(object@data))
+    print(head(get_data(object)))
+    cat("  Fitting data_daily (truncated; access with get_data_daily()):\n")
+    print(head(get_data_daily(object)))
     cat("  Created with streamMetabolizer version", object@pkg_version, "\n")
   }
 )
@@ -156,6 +159,20 @@ get_data.metab_model <- function(metab_model) {
   metab_model@data
 }
 
+#' Retrieve the data_daily that were used to fit the model
+#' 
+#' @inheritParams get_data_daily
+#' @export
+#' @family get_data_daily
+get_data_daily.metab_model <- function(metab_model) {
+  tryCatch(
+    metab_model@data_daily,
+    error=function(e) {
+      warning('this metab_model is out of date and has no data_daily slot')
+      as.data.frame(NULL)
+    }
+  )
+}
 
 #' Retrieve the version of streamMetabolizer that was used to fit the model
 #' 

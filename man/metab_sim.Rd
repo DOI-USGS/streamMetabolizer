@@ -46,7 +46,14 @@ observation time.}
 A metab_sim object containing the fitted model.
 }
 \description{
-Takes input data
+Takes input data in the form of a sub-daily time series (\code{data}) of
+DO.sat, depth, temperature, and light, and a daily time series
+(\code{data_daily}) of GPP, ER, and K600 values, and turns these into
+simulated DO.obs. Either \code{data} or \code{data_daily} should specify a
+starting DO.obs value for each day; if in \code{data}, this takes the form of
+a DO.obs column with values on at least the first time point of each day (all
+other values are ignored), or if in \code{data_daily}, this takes the form of
+a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
 \dontrun{
