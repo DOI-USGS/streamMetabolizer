@@ -101,6 +101,22 @@ get_data <- function(metab_model) {
   UseMethod("get_data")
 }
 
+#' Extract the daily fitting data, if any, from a metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns the daily data that were
+#' passed to a metabolism model.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the data_daily
+#' @return A data.frame
+#' @export
+#' @family metab_model_interface
+#' @family get_data_daily
+get_data_daily <- function(metab_model) {
+  UseMethod("get_data_daily")
+}
+
+
 
 #' Extract the version of streamMetabolizer that was used to fit the model.
 #' 
