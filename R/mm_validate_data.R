@@ -14,7 +14,7 @@
 #' }
 #' @export
 mm_validate_data <- function(data, data_daily, #inheritParams metab_model_prototype
-                             metab_class, tests=c('missing_cols','extra_cols','units')) {
+                             metab_class, tests=c('missing_cols','extra_cols','na_times','units')) {
   
   data_types <- setNames(c("data","data_daily"),c("data","data_daily"))
   dat_all <- lapply(data_types, function(data_type) {
@@ -47,6 +47,19 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
       extra.columns <- setdiff(names(dat), names(expected.data))
       if(length(extra.columns) > 0) {
         stop(paste0(data_type, " should omit these extra columns: ", paste0(extra.columns, collapse=", ")))
+      }
+    }
+    
+    # check for NA timestamps, better to run after missing_cols so the best 
+    # error can be thrown if timecol is missing. check here, too, in case 
+    # missing_cols was not among the tests or the metab_model data were 
+    # specified without a timestamp column
+    if('na_times' %in% tests) {
+      timecol <- grep('date|time', names(dat), value=TRUE)
+      if(length(timecol) != 1) stop("found ", length(timecol), " possible timestamp columns")
+      na.times <- which(is.na(dat[,timecol]))
+      if(length(na.times) > 0) {
+        stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")))
       }
     }
     

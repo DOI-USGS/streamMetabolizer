@@ -5,7 +5,7 @@
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
 mm_validate_data(data, data_daily, metab_class, tests = c("missing_cols",
-  "extra_cols", "units"))
+  "extra_cols", "na_times", "units"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
