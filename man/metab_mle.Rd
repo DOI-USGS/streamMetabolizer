@@ -73,6 +73,7 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 # PR
 get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+get_fitting_time(mm)
 plot_DO_preds(predict_DO(mm))
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 

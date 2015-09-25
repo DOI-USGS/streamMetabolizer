@@ -56,6 +56,30 @@ other values are ignored), or if in \code{data_daily}, this takes the form of
 a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
+# set the date in several formats
+start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+   tz="Etc/GMT+7"), units='hours')
+end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
+  tz="Etc/GMT+7"), units='hours')
+
+# get, format, & subset data
+vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+vdaily <- data.frame(local.date="2012-08-24", GPP=4, ER=8, K600=5, stringsAsFactors=FALSE)
+
+# sim
+mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
+  day_start=start.numeric, day_end=end.numeric, model_specs=specs_sim_basic(err.proc.sigma=0.07))
+get_fit(mm)
+get_data_daily(mm)
+get_fitting_time(mm)
+plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm))
 \dontrun{
  metab_sim(data=data.frame(empty="shouldbreak"))
 }

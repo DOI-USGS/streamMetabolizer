@@ -30,7 +30,7 @@ predicts daily K, nothing else.
 }
 \examples{
 \dontrun{
- Kvpred(data=data.frame(empty="shouldbreak"))
+ metab_Kvpred(data=data.frame(empty="shouldbreak"))
 }
 }
 \author{

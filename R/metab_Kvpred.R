@@ -13,7 +13,7 @@ NULL
 #' @return A metab_Kvpred object containing the fitted model.
 #' @examples
 #' \dontrun{
-#'  Kvpred(data=data.frame(empty="shouldbreak"))
+#'  metab_Kvpred(data=data.frame(empty="shouldbreak"))
 #' }
 #' @export
 #' @family metab_model
@@ -22,22 +22,25 @@ metab_Kvpred <- function(
   method="KvQ_regression"
 ) {
   
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kvpred")
-  data <- dat_list[['data']]
-  data_daily <- dat_list[['data_daily']]
-  
-  # model the data all days at a time, after first filtering out bad days
-  data_daily_filtered <- data_daily ## need to finish
-  warning("need to actually filter data_daily")
-  Kvpred_all <- Kvpred_allply(
-    data_daily_filtered)
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kvpred")
+    data <- dat_list[['data']]
+    data_daily <- dat_list[['data_daily']]
+    
+    # model the data all days at a time, after first filtering out bad days
+    data_daily_filtered <- data_daily ## need to finish
+    warning("need to actually filter data_daily")
+    Kvpred_all <- Kvpred_allply(
+      data_daily_filtered)
+  })
   
   # Package and return results
   metab_model(
     "metab_Kvpred", 
     info=info,
     fit=Kvpred_all,
+    fitting_time=fitting_time,
     args=list(),
     data=data,
     data_daily=data_daily)
@@ -58,7 +61,7 @@ metab_Kvpred <- function(
 #' @return list of a data.frame of estimates and model diagnostics
 #' @keywords internal
 Kvpred_allply <- function(data_all, method) {
-  
+  stop("sorry; not yet implemented")
   # Return, reporting any results, warnings, and errors
   #   data.frame(local.date=NA,
   #              GPP=bayes.1d$mean.GPP.daily, GPP.sd=bayes.1d$sd.GPP.daily, 
