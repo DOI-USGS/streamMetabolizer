@@ -4,6 +4,7 @@
 #' 
 #' @slot info Any metadata the user chooses to package with metabolism model.
 #' @slot fit An internal representation of a fitted model.
+#' @slot fitting_time Usually stored as a proc_time; the time required to fit the model.
 #' @slot pkg_version A string indicating the package version used to create this metab_model object.
 #' @slot args A list of arguments, excluding data, that were supplied to the fitting function.
 #' @slot data The data that were used to fit the model.
@@ -15,14 +16,16 @@ setClass(
   slots=c(
     info="ANY",
     fit="ANY",
+    fitting_time="ANY",
     args="list",
-    data="data.frame",
-    data_daily="data.frame",
+    data="ANY",
+    data_daily="ANY",
     pkg_version="character"),
   
   prototype=c(
     info=NULL,
     fit=NULL,
+    fitting_time=NULL,
     args=NULL,
     data=NULL,
     data_daily=NULL,
@@ -52,6 +55,7 @@ setClass(
 #'   type of object to create
 #' @param info User-supplied metadata of any form.
 #' @param fit An internal representation of a fitted model.
+#' @param fitting_time A proc_time object giving the time taken to fit the model.
 #' @param args A list of arguments, excluding data, that were supplied to the 
 #'   fitting function.
 #' @param data The data that were used to fit the model.
@@ -71,6 +75,7 @@ metab_model <- function(
   model_class="metab_model",
   info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
+  fitting_time=system.time({}),
   args=list(day_start=-1.5, day_end=30),
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily, optional="all"),
@@ -78,7 +83,7 @@ metab_model <- function(
   ...) {
   
   # Create a dummy metab_model object
-  new(model_class, info=info, fit=fit, args=args, data=data, pkg_version=pkg_version, ...)
+  new(model_class, info=info, fit=fit, fitting_time=fitting_time, args=args, data=data, data_daily=data_daily, pkg_version=pkg_version, ...)
 }
 
 #### loadModelInterface ####
@@ -111,6 +116,8 @@ setMethod(
       if(nchar(arg_char) > 100) arg_char <- paste0(substr(arg_char, 1, 100), "...")
       cat(paste0("    ", arg, ": ", arg_char, "\n"))
     }
+    cat("  Fitting time (access with get_fitting_time()):\n")
+    print(get_fitting_time(object))
     cat("  Fitting data (truncated; access with get_data()):\n")
     print(head(get_data(object)))
     cat("  Fitting data_daily (truncated; access with get_data_daily()):\n")
@@ -137,6 +144,16 @@ get_info.metab_model <- function(metab_model) {
 #' @family get_fit
 get_fit.metab_model <- function(metab_model) {
   metab_model@fit
+}
+
+
+#' Retrieve the time it took to fit the model
+#' 
+#' @inheritParams get_fitting_time
+#' @export 
+#' @family get_fitting_time
+get_fitting_time.metab_model <- function(metab_model) {
+  metab_model@fitting_time
 }
 
 

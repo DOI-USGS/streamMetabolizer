@@ -13,9 +13,13 @@
 #'   
 #'   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
 #'   
+#'   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
+#'   
 #'   \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
 #'   
 #'   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
+#'   
+#'   \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
 #'   
 #'   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
 #'   
@@ -69,6 +73,20 @@ get_fit <- function(metab_model) {
   UseMethod("get_fit")
 }
 
+#' Extract the amount of time that was required to fit the metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns the time that was taken to
+#' fit the model; see \code{\link{proc.time}} for details.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the time
+#' @return An proc_time object
+#' @export
+#' @family metab_model_interface
+#' @family get_fitting_time
+get_fitting_time <- function(metab_model) {
+  UseMethod("get_fitting_time")
+}
 
 #' Extract the fitting arguments from a metabolism model.
 #' 

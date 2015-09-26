@@ -32,22 +32,17 @@ NULL
 #' night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
 #' night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
 #' 
-#' # estimate metabolism parameters
-#' predict_metab(metab_night(data=vfrenchnight, 
-#'   day_start=night.start, day_end=night.end))[c("GPP","ER","K600")]
+#' # fit
+#' mm <- metab_night(data=vfrenchnight, 
+#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff), 
+#'   day_start=night.start, day_end=night.end)
+#'   
+#' # give estimates
+#' predict_metab(mm)
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
 #' 
 #' # predict DO
-#' as_ts <- predict_DO(metab_night(data=vfrenchnight, 
-#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod),
-#'   day_start=night.start, day_end=night.end))
-#' as_diffs <- predict_DO(metab_night(data=vfrenchnight, 
-#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff),
-#'   day_start=night.start, day_end=night.end))
-#' do_preds <- rbind(data.frame(fun='calc_DO_mod', as_ts), 
-#'   data.frame(fun='calc_DO_mod_by_diff', as_diffs))
-#' library(ggplot2); ggplot(do_preds, aes(x=local.time, y=DO.mod, color=fun)) + 
-#'   geom_line() + geom_point(aes(y=DO.obs), color="purple") + theme_bw()
+#' plot_DO_preds(predict_DO(mm))
 #' 
 #' \dontrun{
 #'  metab_night(data=data.frame(empty="shouldbreak"))
@@ -61,23 +56,26 @@ metab_night <- function(
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_night")
-  data <- dat_list[['data']]
-  data_daily <- dat_list[['data_daily']]
-  
-  # model the data, splitting into overlapping ~31.5-hr 'plys' for each date
-  night_all <- mm_model_by_ply(
-    nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-    tests=tests, # for mm_is_valid_day
-    model_specs=model_specs) # for nightreg_1ply
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_night")
+    data <- dat_list[['data']]
+    data_daily <- dat_list[['data_daily']]
+    
+    # model the data, splitting into overlapping ~31.5-hr 'plys' for each date
+    night_all <- mm_model_by_ply(
+      nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
+      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+      tests=tests, # for mm_is_valid_day
+      model_specs=model_specs) # for nightreg_1ply
+  })
   
   # Package and return results
   metab_model(
     model_class="metab_night", 
     info=info,
     fit=night_all,
+    fitting_time=fitting_time,
     args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
     data=data,
     data_daily=data_daily)

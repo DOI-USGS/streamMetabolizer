@@ -18,7 +18,28 @@ NULL
 #' @return A metab_bayes object containing the fitted model.
 #' @examples
 #' \dontrun{
-#'  metab_bayes(data=data.frame(empty="shouldbreak"))
+#' # set the date in several formats
+#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
+#'    tz="Etc/GMT+7"), units='hours')
+#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
+#'   tz="Etc/GMT+7"), units='hours')
+#' 
+#' # get, format, & subset data
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' 
+#' # fit
+#' mm <- metab_bayes(data=vfrenchshort, day_start=start.numeric, 
+#'   day_end=end.numeric)
+#' get_fit(mm)[2,]
+#' get_fitting_time(mm)
+#' plot_DO_preds(predict_DO(mm))
+#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' }
 #' @export
 #' @family metab_model
@@ -29,50 +50,53 @@ metab_bayes <- function(
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
-  data <- dat_list[['data']]
-  data_daily <- dat_list[['data_daily']]
-  
-  # Check and parse model file path. First try the streamMetabolizer models dir,
-  # then try a regular path, then give up / continue depending on whether we
-  # found a file. Add the complete path to model_specs
-  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer")
-  if(!file.exists(model_specs$model_path)) 
-    model_specs$model_path <- model_specs$model_file 
-  if(!file.exists(model_specs$model_path)) 
-    stop(suppressWarnings(paste0(
-      "could not locate the model file at either\n",
-      normalizePath(file.path(system.file("models", package="streamMetabolizer"), model_specs$model_file)), " or\n",
-      normalizePath(model_specs$model_file))))
-  
-  # model the data
-  switch(
-    model_specs$bayes_fun,
-    'bayes_1ply' = {
-      # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
-      bayes_all <- mm_model_by_ply(
-        bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-        day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-        tests=tests, # for mm_is_valid_day
-        model_specs=model_specs) # for bayes_1ply
-    },
-    'bayes_all' = {
-      # all days at a time, after first filtering out bad days
-      filtered <- mm_filter_valid_days(data, data_daily, day_start=6, day_end=30, tests=tests)
-      bayes_all <- bayes_allply(
-        data_all=filtered$data, data_daily_all=filtered$data_daily,
-        model_specs=model_specs)
-    }, {
-      stop("unrecognized bayes_fun")
-    }
-  )
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
+    data <- dat_list[['data']]
+    data_daily <- dat_list[['data_daily']]
+    
+    # Check and parse model file path. First try the streamMetabolizer models dir,
+    # then try a regular path, then give up / continue depending on whether we
+    # found a file. Add the complete path to model_specs
+    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer")
+    if(!file.exists(model_specs$model_path)) 
+      model_specs$model_path <- model_specs$model_file 
+    if(!file.exists(model_specs$model_path)) 
+      stop(suppressWarnings(paste0(
+        "could not locate the model file at either\n",
+        normalizePath(file.path(system.file("models", package="streamMetabolizer"), model_specs$model_file)), " or\n",
+        normalizePath(model_specs$model_file))))
+    
+    # model the data
+    switch(
+      model_specs$bayes_fun,
+      'bayes_1ply' = {
+        # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
+        bayes_all <- mm_model_by_ply(
+          bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
+          day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+          tests=tests, # for mm_is_valid_day
+          model_specs=model_specs) # for bayes_1ply
+      },
+      'bayes_all' = {
+        # all days at a time, after first filtering out bad days
+        filtered <- mm_filter_valid_days(data, data_daily, day_start=6, day_end=30, tests=tests)
+        bayes_all <- bayes_allply(
+          data_all=filtered$data, data_daily_all=filtered$data_daily,
+          model_specs=model_specs)
+      }, {
+        stop("unrecognized bayes_fun")
+      }
+    )
+  })
   
   # Package and return results
   metab_model(
     model_class="metab_bayes", 
     info=info,
     fit=bayes_all,
+    fitting_time=fitting_time,
     args=list(
       model_specs=model_specs,
       day_start=day_start, day_end=day_end, tests=tests

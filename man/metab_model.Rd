@@ -5,10 +5,11 @@
 \title{Create a metab_model object.}
 \usage{
 metab_model(model_class = "metab_model", info = "user metadata goes here",
-  fit = "generic metab_model class; no actual fit", args = list(day_start =
-  -1.5, day_end = 30), data = mm_data(local.time, DO.obs, DO.sat, depth,
-  temp.water, light), data_daily = mm_data(local.date, K600, discharge.daily,
-  velocity.daily, optional = "all"),
+  fit = "generic metab_model class; no actual fit",
+  fitting_time = system.time({ }), args = list(day_start = -1.5, day_end =
+  30), data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
+  data_daily = mm_data(local.date, K600, discharge.daily, velocity.daily,
+  optional = "all"),
   pkg_version = as.character(packageVersion("streamMetabolizer")), ...)
 }
 \arguments{
@@ -18,6 +19,8 @@ type of object to create}
 \item{info}{User-supplied metadata of any form.}
 
 \item{fit}{An internal representation of a fitted model.}
+
+\item{fitting_time}{A proc_time object giving the time taken to fit the model.}
 
 \item{args}{A list of arguments, excluding data, that were supplied to the
 fitting function.}

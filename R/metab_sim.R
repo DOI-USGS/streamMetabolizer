@@ -17,6 +17,30 @@ NULL
 #' @inheritParams mm_is_valid_day
 #' @return A metab_sim object containing the fitted model.
 #' @examples
+#' # set the date in several formats
+#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
+#'    tz="Etc/GMT+7"), units='hours')
+#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
+#'   tz="Etc/GMT+7"), units='hours')
+#' 
+#' # get, format, & subset data
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' vdaily <- data.frame(local.date="2012-08-24", GPP=4, ER=8, K600=5, stringsAsFactors=FALSE)
+#' 
+#' # sim
+#' mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
+#'   day_start=start.numeric, day_end=end.numeric, model_specs=specs_sim_basic(err.proc.sigma=0.07))
+#' get_fit(mm)
+#' get_data_daily(mm)
+#' get_fitting_time(mm)
+#' plot_DO_preds(predict_DO(mm))
+#' plot_DO_preds(predict_DO(mm))
 #' \dontrun{
 #'  metab_sim(data=data.frame(empty="shouldbreak"))
 #' }
@@ -31,19 +55,22 @@ metab_sim <- function(
   
 ) {
   
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
-  
-  # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
-  calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi')
-  model_specs$calc_DO_args = model_specs[calc_DO_arg_names]
-  model_specs <- model_specs[-which(names(model_specs) %in% calc_DO_arg_names)]
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
+    
+    # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
+    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi')
+    model_specs$calc_DO_args = model_specs[calc_DO_arg_names]
+    model_specs <- model_specs[-which(names(model_specs) %in% calc_DO_arg_names)]
+  })
   
   # Package and return results
   metab_model(
     model_class="metab_sim", 
     info=info,
     fit=dat_list[['data_daily']], # GPP, ER, etc. were given as data but will become our predictors
+    fitting_time=fitting_time,
     args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
     data=dat_list[['data']],
     data_daily=dat_list[['data_daily']])

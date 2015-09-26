@@ -21,9 +21,13 @@ the \code{metab_model_interface} defined here.
 
   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
 
+  \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
+
   \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
 
   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
+
+  \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
 
   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
 

@@ -37,6 +37,7 @@ NULL
 #' # PR
 #' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
 #'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 #' 
@@ -62,26 +63,27 @@ metab_mle <- function(
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
-  data <- dat_list[['data']]
-  data_daily <- dat_list[['data_daily']]
-  
-  # model the data, splitting into overlapping 31.5-hr 'plys' for each date
-  mle_all <- mm_model_by_ply(
-    mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-    tests=tests, # for mm_is_valid_day
-    model_specs=model_specs) # for mle_1ply and negloglik_1ply
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
+    
+    # model the data, splitting into overlapping 31.5-hr 'plys' for each date
+    mle_all <- mm_model_by_ply(
+      mle_1ply, data=dat_list[['data']], data_daily=dat_list[['data_daily']], # for mm_model_by_ply
+      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+      tests=tests, # for mm_is_valid_day
+      model_specs=model_specs) # for mle_1ply and negloglik_1ply
+  })
   
   # Package and return results
   metab_model(
     model_class="metab_mle",
     info=info,
     fit=mle_all,
+    fitting_time=fitting_time,
     args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests), # keep in order passed to function
-    data=data,
-    data_daily=data_daily)
+    data=dat_list[['data']],
+    data_daily=dat_list[['data_daily']])
 }
 
 
