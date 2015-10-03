@@ -76,7 +76,7 @@ metab_model <- function(
   info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
   fitting_time=system.time({}),
-  args=list(day_start=-1.5, day_end=30),
+  args=list(day_start=4, day_end=27.99),
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
   data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),

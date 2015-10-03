@@ -52,7 +52,7 @@ NULL
 metab_night <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
   model_specs=specs_night_basic(), # inheritParams metab_model_prototype
-  info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
+  info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   
@@ -62,7 +62,7 @@ metab_night <- function(
     data <- dat_list[['data']]
     data_daily <- dat_list[['data_daily']]
     
-    # model the data, splitting into overlapping ~31.5-hr 'plys' for each date
+    # model the data, splitting into potentially overlapping 'plys' for each date
     night_all <- mm_model_by_ply(
       nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
       day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
@@ -106,7 +106,7 @@ metab_night <- function(
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start=-12, day_end=12, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs_night_basic() # inheritParams metab_model_prototype
 ) {

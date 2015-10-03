@@ -4,8 +4,8 @@
 \alias{nightreg_1ply}
 \title{Make daily reaeration estimates from input parameters}
 \usage{
-nightreg_1ply(data_ply, data_daily_ply, day_start = -12, day_end = 12,
-  local_date, tests = c("full_day", "even_timesteps", "complete_data"),
+nightreg_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
+  tests = c("full_day", "even_timesteps", "complete_data"),
   model_specs = specs_night_basic())
 }
 \arguments{

@@ -4,8 +4,8 @@
 \alias{mle_1ply}
 \title{Make daily metabolism estimates from input parameters}
 \usage{
-mle_1ply(data_ply, data_daily_ply, day_start = -1.5, day_end = 30,
-  local_date, tests = c("full_day", "even_timesteps", "complete_data"),
+mle_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
+  tests = c("full_day", "even_timesteps", "complete_data"),
   model_specs = specs_mle_obserr())
 }
 \arguments{
