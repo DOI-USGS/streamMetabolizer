@@ -247,6 +247,7 @@ predict_DO.metab_night <- function(metab_model, ...) {
   
   # get the metabolism (GPP, ER) data and estimates
   metab_ests <- predict_metab(metab_model)
+  metab_ests$GPP <- metab_ests$GPP.lower <- metab_ests$GPP.upper <- 0
   data <- get_data(metab_model)
   
   # re-process the input data with the metabolism estimates to predict DO, using
@@ -271,11 +272,11 @@ metab_night_predict_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   calc_DO_fun
 ) {
-
+  
   # subset to times of darkness, just as we did in nightreg_1ply
   which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
   night_dat <- data_ply[which_night,]
-
+  
   # for metab_night, sometimes data_plys (especially night_dat) are entirely empty. if that's today,
   # return right quick now.
   if(nrow(night_dat)==0) {
@@ -284,30 +285,8 @@ metab_night_predict_1ply <- function(
     return(night_dat)
   }
   
-  # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
-  # they're missing
-  metab_est <- data_daily_ply
-  if(!complete.cases(metab_est[c('K600','ER')])) {
-    return(data.frame(night_dat, DO.mod=NA))
-  }
+  # apply the regular prediction function
+  mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
+                  day_start, day_end, local_date, calc_DO_fun)
   
-  # if we have metab estimates, use them to predict DO
-  . <- local.time <- ".dplyr.var"
-  night_dat %>%
-    do(with(., {
-      
-      # prepare auxiliary data
-      n <- length(local.time)
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(local.time), units="days"), na.rm=TRUE))
-      
-      # produce DO.mod estimates for today's GPP and ER
-      DO.mod <- calc_DO_fun(
-        GPP.daily=0, # nighttime regression assumes GPP is 0 during the [night] times modeled
-        ER.daily=metab_est$ER, 
-        K600.daily=metab_est$K600, 
-        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
-        frac.GPP=0, frac.ER=timestep.days, frac.D=timestep.days, DO.mod.1=DO.obs[1], n=n)
-      
-      data.frame(., DO.mod=DO.mod)
-    }))
 }

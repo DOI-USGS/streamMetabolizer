@@ -17,7 +17,8 @@ mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, local_
   
   # prepare arguments, appending calc_DO_args if there are any
   timestep.days <- suppressWarnings(mean(as.numeric(diff(data_ply$local.time), units="days"), na.rm=TRUE))
-  frac.GPP <- data_ply$light/sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==local_date])
+  tot.GPP <- sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==local_date])
+  frac.GPP <- if(tot.GPP > 0) data_ply$light/tot.GPP else rep(1/nrow(data_ply), nrow(data_ply))
   all_args <- c(
     list(GPP.daily=data_daily_ply$GPP, ER.daily=data_daily_ply$ER, K600.daily=data_daily_ply$K600, 
          DO.obs=data_ply$DO.obs, DO.sat=data_ply$DO.sat, depth=data_ply$depth, temp.water=data_ply$temp.water, 
