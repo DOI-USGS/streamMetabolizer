@@ -1,20 +1,18 @@
 # History files
 .Rhistory
 .Rapp.history
-
 # Example code in package build process
 *-Ex.R
-
 # RStudio files
 .Rproj.user/
-
-# produced vignettes
+# Produced vignettes
 vignettes/*.html
 vignettes/*.pdf
 inst/doc/*
 .Rproj.user
 *.Rproj
 *.DS_Store
-
-# test side-effects
+# Side-effects of tests
 tests/testthat/Rplots.pdf
+# Temporary files
+temp
