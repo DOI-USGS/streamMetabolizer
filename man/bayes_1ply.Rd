@@ -4,9 +4,8 @@
 \alias{bayes_1ply}
 \title{Make daily metabolism estimates from input parameters}
 \usage{
-bayes_1ply(data_ply, data_daily_ply, day_start = -1.5, day_end = 30,
-  local_date, tests = c("full_day", "even_timesteps", "complete_data"),
-  model_specs)
+bayes_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
+  tests = c("full_day", "even_timesteps", "complete_data"), model_specs)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

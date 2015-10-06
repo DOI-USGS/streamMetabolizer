@@ -46,7 +46,7 @@ NULL
 metab_bayes <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
   model_specs=specs_bayes_jags_nopool_obserr(), # inheritParams metab_model_prototype
-  info=NULL, day_start=-1.5, day_end=30, # inheritParams metab_model_prototype
+  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
@@ -81,7 +81,8 @@ metab_bayes <- function(
       },
       'bayes_all' = {
         # all days at a time, after first filtering out bad days
-        filtered <- mm_filter_valid_days(data, data_daily, day_start=6, day_end=30, tests=tests)
+        if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
+        filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
         bayes_all <- bayes_allply(
           data_all=filtered$data, data_daily_all=filtered$data_daily,
           model_specs=model_specs)
@@ -119,7 +120,7 @@ metab_bayes <- function(
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
-  data_ply, data_daily_ply, day_start=-1.5, day_end=30, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs # inheritParams metab_model_prototype
 ) {

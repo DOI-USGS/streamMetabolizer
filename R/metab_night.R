@@ -52,7 +52,7 @@ NULL
 metab_night <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
   model_specs=specs_night_basic(), # inheritParams metab_model_prototype
-  info=NULL, day_start=-12, day_end=12, # inheritParams metab_model_prototype
+  info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
   
@@ -62,7 +62,7 @@ metab_night <- function(
     data <- dat_list[['data']]
     data_daily <- dat_list[['data_daily']]
     
-    # model the data, splitting into overlapping ~31.5-hr 'plys' for each date
+    # model the data, splitting into potentially overlapping 'plys' for each date
     night_all <- mm_model_by_ply(
       nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
       day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
@@ -106,7 +106,7 @@ metab_night <- function(
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start=-12, day_end=12, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs_night_basic() # inheritParams metab_model_prototype
 ) {
@@ -145,7 +145,7 @@ nightreg_1ply <- function(
       if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
       
       # actually stop if anything has broken so far
-      if(length(stop_strs) > 1) stop("invalid data ply")
+      if(length(stop_strs) > 0) stop("invalid data ply")
       
       # smooth DO data
       night_dat$DO.obs.smooth <- u(c(stats::filter(night_dat$DO.obs, rep(1/3, 3), sides=2)), get_units(night_dat$DO.obs))
@@ -160,15 +160,23 @@ nightreg_1ply <- function(
       
       # fit model & extract the important stuff (see Chapra & DiToro 1991)
       lm_dDOdt <- lm(dDO.dt ~ DO.sat.def, data=v(night_dat))
-      out <- list()
-      out$KO2 <- u(coef(lm_dDOdt)[["DO.sat.def"]], get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1]))
-      out$KO2.sd <- u(summary(lm_dDOdt)$coefficients[["DO.sat.def","Std. Error"]], get_units(out$KO2))
-      out$ER.vol <- u(coef(lm_dDOdt)[["(Intercept)"]], get_units(night_dat$dDO.dt))
-      out$ER.sd.vol <- u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(night_dat$dDO.dt))
-      out$ER <- out$ER.vol * mean(night_dat$depth)
-      out$ER.sd <- out$ER.sd.vol * mean(night_dat$depth)
-      out$rsq <- summary(lm_dDOdt)$r.squared
-      out$p <- summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
+      KO2_units <-get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1])
+      out <- list(
+        row.first = which_night[1],
+        row.last = which_night[length(which_night)],
+        KO2 = u(coef(lm_dDOdt)[["DO.sat.def"]], KO2_units),
+        KO2.sd = u(summary(lm_dDOdt)$coefficients[["DO.sat.def","Std. Error"]], KO2_units),
+        ER.vol = u(coef(lm_dDOdt)[["(Intercept)"]], get_units(night_dat$dDO.dt)),
+        ER.sd.vol = u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(night_dat$dDO.dt)),
+        rsq = summary(lm_dDOdt)$r.squared,
+        p = summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
+      )
+      # convert ER from volumetric to area-based
+      mean_depth <- mean(night_dat$depth)
+      out <- c(out, list(
+        ER = out$ER.vol * mean_depth,
+        ER.sd = out$ER.sd.vol * mean_depth
+      ))
       
       # convert from KO2 to K600. the coefficients used here differ for 
       # Maite's code and that in LakeMetabolizer. Maite and Bob use K600 = 
@@ -179,8 +187,10 @@ nightreg_1ply <- function(
       # LakeMetabolizer since those are the coefficients from Raymond et al. 
       # 2012, which is probably the newer source. the sd conversion works
       # because the conversion is linear in KO2.
-      out$K600 <- convert_kGAS_to_k600(kGAS=out$KO2, temperature=mean(v(night_dat$temp.water)), gas="O2")
-      out$K600.sd <- convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=mean(v(night_dat$temp.water)), gas="O2")
+      out <- c(out, list(
+        K600 = convert_kGAS_to_k600(kGAS=out$KO2, temperature=mean(v(night_dat$temp.water)), gas="O2"),
+        K600.sd = convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=mean(v(night_dat$temp.water)), gas="O2")
+      ))
       
       # return everything. remove units since we can't fully support them
       # elsewhere yet
@@ -199,7 +209,7 @@ nightreg_1ply <- function(
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
-    night.1d <- setNames(as.list(rep(NA, 8)), c('KO2','KO2.sd','ER','ER.sd','rsq','p','K600','K600.sd'))
+    night.1d <- setNames(as.list(rep(NA, 10)), c('KO2','KO2.sd','ER','ER.sd','rsq','p','K600','K600.sd','row.first','row.last'))
   }
   
   # Return, reporting any results, warnings, and errors
@@ -207,6 +217,7 @@ nightreg_1ply <- function(
              ER=night.1d$ER, ER.sd=night.1d$ER.sd, 
              K600=night.1d$K600, K600.sd=night.1d$K600.sd,
              r.squared=night.1d$rsq, p.value=night.1d$p,
+             row.first=night.1d$row.first, row.last=night.1d$row.last,
              warnings=paste0(warn_strs, collapse="; "), 
              errors=paste0(stop_strs, collapse="; "),
              stringsAsFactors=FALSE)
@@ -238,6 +249,7 @@ setClass(
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
+#' @import dplyr
 #' @family predict_DO
 predict_DO.metab_night <- function(metab_model, ...) {
   
@@ -246,7 +258,11 @@ predict_DO.metab_night <- function(metab_model, ...) {
   day_end <- get_args(metab_model)$day_end
   
   # get the metabolism (GPP, ER) data and estimates
-  metab_ests <- predict_metab(metab_model)
+  local.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
+  metab_ests <- get_fit(metab_model) %>%
+    dplyr::select(local.date, ER, K600, row.first, row.last)
+  metab_ests$GPP <- 0
+  # and the DO, temperature, etc. data
   data <- get_data(metab_model)
   
   # re-process the input data with the metabolism estimates to predict DO, using
@@ -271,43 +287,22 @@ metab_night_predict_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   calc_DO_fun
 ) {
-
+  
   # subset to times of darkness, just as we did in nightreg_1ply
-  which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
-  night_dat <- data_ply[which_night,]
-
-  # for metab_night, sometimes data_plys (especially night_dat) are entirely empty. if that's today,
-  # return right quick now.
-  if(nrow(night_dat)==0) {
-    # return a variant on night_dat with more columns and just 1 row, all NAs
+  if(!is.na(data_daily_ply$row.first) && !is.na(data_daily_ply$row.last)) {
+    which_night <- seq(min(nrow(data_ply), data_daily_ply$row.first), 
+                       min(nrow(data_ply), data_daily_ply$row.last))
+    night_dat <- data_ply[which_night,]
+  } else {
+    # for metab_night, sometimes data_plys (especially night_dat) are entirely empty. if that's today,
+    # return right quick now.
+    night_dat <- data_ply[c(),]
     night_dat[1,'DO.mod'] <- as.numeric(NA)
     return(night_dat)
   }
   
-  # get the daily metabolism estimates, and skip today (return DO.mod=NAs) if
-  # they're missing
-  metab_est <- data_daily_ply
-  if(!complete.cases(metab_est[c('K600','ER')])) {
-    return(data.frame(night_dat, DO.mod=NA))
-  }
+  # apply the regular prediction function
+  mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
+                  day_start, day_end, local_date, calc_DO_fun)
   
-  # if we have metab estimates, use them to predict DO
-  . <- local.time <- ".dplyr.var"
-  night_dat %>%
-    do(with(., {
-      
-      # prepare auxiliary data
-      n <- length(local.time)
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(local.time), units="days"), na.rm=TRUE))
-      
-      # produce DO.mod estimates for today's GPP and ER
-      DO.mod <- calc_DO_fun(
-        GPP.daily=0, # nighttime regression assumes GPP is 0 during the [night] times modeled
-        ER.daily=metab_est$ER, 
-        K600.daily=metab_est$K600, 
-        DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
-        frac.GPP=0, frac.ER=timestep.days, frac.D=timestep.days, DO.mod.1=DO.obs[1], n=n)
-      
-      data.frame(., DO.mod=DO.mod)
-    }))
 }

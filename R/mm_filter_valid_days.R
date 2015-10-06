@@ -11,7 +11,7 @@
 #' @export
 mm_filter_valid_days <- function(
   data, data_daily=NULL, # inheritParams metab_model_prototype (but actually, redefine them for specificity to this function)
-  day_start=6, day_end=30, # inheritParams metab_model_prototype
+  day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   

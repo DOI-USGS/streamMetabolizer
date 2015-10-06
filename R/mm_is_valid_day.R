@@ -17,7 +17,7 @@
 #' @return character vector of errors, or empty list
 #' @importFrom lubridate tz
 #' @export
-mm_is_valid_day <- function(day, day_start=-1.5, day_end=30, 
+mm_is_valid_day <- function(day, day_start=4, day_end=27.99, 
                             tests=c('full_day', 'even_timesteps', 'complete_data'), 
                             timestep_days=NA) {
   

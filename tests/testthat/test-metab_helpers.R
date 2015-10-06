@@ -67,7 +67,7 @@ test_that("mm_is_valid_day works", {
   french <- streamMetabolizer:::load_french_creek()
  
   good_day <- u(dplyr::filter(v(french), local.time >= as.POSIXct("2012-08-24 22:30:00", tz="Etc/GMT+7"),
-                       local.time <= as.POSIXct("2012-08-26 06:00:00", tz="Etc/GMT+7")), get_units(french))
+                              local.time <= as.POSIXct("2012-08-26 06:00:00", tz="Etc/GMT+7")), get_units(french))
   bad_day <- dplyr::mutate(
     good_day,
     DO.obs=replace(DO.obs, 40, u(NA, get_units(DO.obs))),
@@ -76,24 +76,24 @@ test_that("mm_is_valid_day works", {
   
   
   # test and pass
-  expect_true(mm_is_valid_day(good_day))
+  expect_true(mm_is_valid_day(good_day, day_start=-1.5, day_end=30))
   
   # test faulty timestep
   dateless_day <- good_day; dateless_day$local.time <- replace(dateless_day$local.time, 2:(nrow(dateless_day)-1), NA)
   expect_equal(mm_is_valid_day(dateless_day), c("can't measure timesteps", "NAs in local.time"))
   
   # test full_day
-  expect_equal(mm_is_valid_day(good_day, day_start=-10), "data don't start when expected")
-  expect_equal(mm_is_valid_day(good_day, day_start=0), "data don't start when expected")
-  expect_equal(mm_is_valid_day(good_day, day_end=25), "data don't end when expected")
-  expect_equal(mm_is_valid_day(good_day, day_end=35), "data don't end when expected")
+  expect_equal(mm_is_valid_day(good_day, day_start=-10, day_end=30), "data don't start when expected")
+  expect_equal(mm_is_valid_day(good_day, day_start=0, day_end=30), "data don't start when expected")
+  expect_equal(mm_is_valid_day(good_day, day_start=-1.5, day_end=25), "data don't end when expected")
+  expect_equal(mm_is_valid_day(good_day, day_start=-1.5, day_end=35), "data don't end when expected")
   
   # test timestep lengths
   irregular_day <- good_day[-c(3,20,99),]
-  expect_equal(mm_is_valid_day(irregular_day), "uneven timesteps")
+  expect_equal(mm_is_valid_day(irregular_day, day_start=-1.5, day_end=30), "uneven timesteps")
   
   # test column completeness
-  expect_equal(mm_is_valid_day(bad_day), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
+  expect_equal(mm_is_valid_day(bad_day, day_start=-1.5, day_end=30), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
 })
 
 test_that("mm_filter_valid_days works", {
