@@ -1,0 +1,44 @@
+model {
+  
+  # Convert daily rates to per-observation rates
+  for(i in 2:n) {
+    GPP[i] <- GPP.daily * (frac.GPP[i]+frac.GPP[i-1])/2 / ((depth[i]+depth[i-1])/2)
+    ER[i] <- ER.daily * (frac.ER[i]+frac.ER[i-1])/2 / ((depth[i]+depth[i-1])/2)
+    K[i] <- K600.daily * (KO2.conv[i]+KO2.conv[i-1])/2 * (frac.D[i]+frac.D[i-1])/2
+
+  }
+  
+  # Model DO changes as in Hotchkiss & Hall 2014, eq. 2
+  DO.mod[1] <- DO.obs[1]
+  for(i in 2:n) {
+    DO.mod[i] <- (
+      DO.mod[i-1] +
+      GPP[i] + 
+      ER[i] + 
+      K[i] * (DO.sat[i] - DO.mod[i-1]/2) +
+      err.proc[i]
+    ) / (1 + K[i]/2) 
+  }
+  
+  # Process error: Build an error timeseries with a fitted autocorrelation structure
+  err.proc[1] <- 0
+  for(i in 2:n) {
+    err.proc[i] ~ dnorm(err.proc.phi*err.proc[i-1], pow(err.proc.sigma, -2))
+  }
+  # Prior on the autocorrelation & sd of the process errors
+  err.proc.phi ~ dunif(err.proc.phi.min, err.proc.phi.max)
+  err.proc.sigma ~ dunif(err.proc.sigma.min, err.proc.sigma.max)
+  
+  # Observation error: Compare all the DO predictions to their observations
+  for (i in 2:n) {
+    DO.obs[i] ~ dnorm(DO.mod[i], pow(err.obs.sigma, -2))
+  }
+  # Prior on the sd of the errors between modeled and observed DO
+  err.obs.sigma ~ dunif(err.obs.sigma.min, err.obs.sigma.max)
+  
+  # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
+  GPP.daily ~ dnorm(GPP.daily.mu, pow(GPP.daily.sigma, -2))
+  ER.daily ~ dnorm(ER.daily.mu, pow(ER.daily.sigma, -2))
+  K600.daily ~ dnorm(K600.daily.mu, pow(K600.daily.sigma, -2))
+  
+}

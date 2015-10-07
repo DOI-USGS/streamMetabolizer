@@ -34,7 +34,7 @@ NULL
 #' 
 #' # fit
 #' mm <- metab_night(data=vfrenchnight, 
-#'   model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff), 
+#'   model_specs=specs_night_basic(), 
 #'   day_start=night.start, day_end=night.end)
 #'   
 #' # give estimates
@@ -269,8 +269,7 @@ predict_DO.metab_night <- function(metab_model, ...) {
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_mod) # for mm_predict_1ply
+    day_start=day_start, day_end=day_end) # for mm_model_by_ply
   
 }
 
@@ -279,13 +278,10 @@ predict_DO.metab_night <- function(metab_model, ...) {
 #' Usually assigned to model_fun within mm_model_by_ply, called from there
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER, 
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
-  calc_DO_fun
+  data_ply, data_daily_ply, day_start, day_end, local_date # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -303,6 +299,6 @@ metab_night_predict_1ply <- function(
   
   # apply the regular prediction function
   mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
-                  day_start, day_end, local_date, calc_DO_fun)
+                  day_start, day_end, local_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
   
 }

@@ -1,5 +1,7 @@
 #' \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and 
-#' both process and observation error
+#' both process and observation error. Compatible \code{model_file} options are 
+#' \code{c('jags/nopool_procobserr_pairmeans.txt',
+#' 'jags/nopool_procobserr_Euler.txt')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -49,11 +51,10 @@
 #' @inheritParams runjags_bayes
 #'   
 #' @export
-#' @family model_specs
 specs_bayes_jags_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'jags/nopool_procobserr.txt',
+  model_file = 'jags/nopool_procobserr_pairmeans.txt',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   

@@ -10,7 +10,8 @@ model {
   # Model DO changes as in Hotchkiss & Hall 2014, eq. 2
   DO.mod[1] <- DO.obs[1]
   for(i in 2:n) {
-    DO.mod[i] <- DO.mod[i-1] +
+    DO.mod[i] <- 
+      DO.mod[i-1] +
       GPP[i] + 
       ER[i] + 
       K[i] * (DO.sat[i] - DO.mod[i-1])

@@ -6,7 +6,8 @@
 \alias{specs_bayes_jags_nopool_procobserr}
 \title{Functions giving specifications for metab_bayes model variants}
 \usage{
-specs_bayes_jags_nopool_obserr(model_file = "jags/nopool_obserr.txt",
+
+  specs_bayes_jags_nopool_obserr(model_file = "jags/nopool_obserr_pairmeans.txt",
   bayes_fun = "bayes_1ply", bayes_software = "jags", GPP.daily.mu = 10,
   GPP.daily.sigma = 10, ER.daily.mu = -10, ER.daily.sigma = 10,
   K600.daily.mu = 10, K600.daily.sigma = 10, err.obs.sigma.min = 0,
@@ -15,7 +16,8 @@ specs_bayes_jags_nopool_obserr(model_file = "jags/nopool_obserr.txt",
   adapt_steps = 100, burnin_steps = 40, num_saved_steps = 400,
   thin_steps = 1)
 
-specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_procobserr.txt",
+
+  specs_bayes_jags_nopool_procobserr(model_file = "jags/nopool_procobserr_pairmeans.txt",
   bayes_fun = "bayes_1ply", bayes_software = "jags", GPP.daily.mu = 10,
   GPP.daily.sigma = 10, ER.daily.mu = -10, ER.daily.sigma = 10,
   K600.daily.mu = 10, K600.daily.sigma = 10, err.proc.phi.min = 0,
@@ -103,19 +105,15 @@ err.proc.sigma, the standard deviation of the process error}
 Functions giving specifications for metab_bayes model variants
 
 \code{specs_bayes_jags_nopool_obserr} - a JAGS model with no pooling and only
-observation error
+observation error. Compatible \code{model_file} options are
+\code{c('jags/nopool_obserr_pairmeans.txt', 'jags/nopool_obserr_Euler.txt')}.
 
 \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and
-both process and observation error
+both process and observation error. Compatible \code{model_file} options are
+\code{c('jags/nopool_procobserr_pairmeans.txt',
+'jags/nopool_procobserr_Euler.txt')}.
 }
 \seealso{
-Other model_specs: \code{\link{specs_mle}},
-  \code{\link{specs_mle_obserr}},
-  \code{\link{specs_mle_procerr}};
-  \code{\link{specs_night}},
-  \code{\link{specs_night_basic}}; \code{\link{specs_sim}},
-  \code{\link{specs_sim_basic}}
-
 Other model_specs: \code{\link{specs_mle}},
   \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};

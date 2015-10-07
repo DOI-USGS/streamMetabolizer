@@ -16,6 +16,7 @@ specs_sim_basic <- function(
   err.obs.phi=0, 
   err.proc.sigma=0, 
   err.proc.phi=0,
+  ODE_method="pairmeans",
   sim.seed=NA
 ) {
   list(
@@ -23,6 +24,7 @@ specs_sim_basic <- function(
     err.obs.phi=err.obs.phi, 
     err.proc.sigma=err.proc.sigma, 
     err.proc.phi=err.proc.phi,
+    ODE_method=ODE_method,
     sim.seed=sim.seed
   )
 }

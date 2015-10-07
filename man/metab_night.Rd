@@ -80,7 +80,7 @@ night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)],
 
 # fit
 mm <- metab_night(data=vfrenchnight,
-  model_specs=specs_night_basic(calc_DO_fun=calc_DO_mod_by_diff),
+  model_specs=specs_night_basic(),
   day_start=night.start, day_end=night.end)
 
 # give estimates

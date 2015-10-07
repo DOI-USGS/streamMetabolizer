@@ -26,9 +26,19 @@ test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
   DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.25), "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(DO_preds_Aug24)
-  # plot_DO_preds(DO_preds_Aug24, plot_as="pctsat")
-  # plot_DO_preds(DO_preds, plot_as="pctsat")
+  # plot_DO_preds(DO_preds)
   
+  # fit with different ODE methods
+  mmE <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs_mle_obserr(ODE_method="Euler"))
+  mmP <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs_mle_obserr(ODE_method="pairmeans"))
+  plot_DO_preds(predict_DO(mmE))
+  plot_DO_preds(predict_DO(mmP))
+  predict_metab(mmE) - predict_metab(mmP)
+
+  # predict with different ODE methods
+  mm <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23)
+  plot_DO_preds(predict_DO(mm, calc_DO_args=list(ODE_method="Euler")))
+  plot_DO_preds(predict_DO(mm))
 })
 
 test_that("metab_mle models can be fit with K specified", {

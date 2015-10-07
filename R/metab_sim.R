@@ -60,7 +60,7 @@ metab_sim <- function(
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
     
     # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
-    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi')
+    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi','ODE_method')
     model_specs$calc_DO_args = model_specs[calc_DO_arg_names]
     model_specs <- model_specs[-which(names(model_specs) %in% calc_DO_arg_names)]
   })

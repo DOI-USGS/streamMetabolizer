@@ -15,11 +15,12 @@
 #' @export
 #' @family model_specs
 specs_mle_obserr <- function(
-  calc_DO_fun=calc_DO_mod, # inheritParams negloglik_1ply
+  calc_DO_fun=calc_DO_mod, ODE_method="pairmeans", # inheritParams negloglik_1ply
   GPP_init=3, ER_init=-5, K600_init=10
 ) {
   list(
     calc_DO_fun=calc_DO_fun,
+    ODE_method=ODE_method,
     GPP_init=GPP_init,
     ER_init=ER_init,
     K600_init=K600_init
