@@ -9,18 +9,19 @@
 inputs}
 \usage{
 calc_DO_mod(GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water,
-  frac.GPP, frac.ER, frac.D, DO.mod.1, n, ...)
+  frac.GPP, frac.ER, frac.D, DO.mod.1, n, ODE_method = "pairmeans", ...)
 
 calc_DO_mod_by_diff(GPP.daily, ER.daily, K600.daily, DO.obs, DO.sat, depth,
-  temp.water, frac.GPP, frac.ER, frac.D, n, ...)
+  temp.water, frac.GPP, frac.ER, frac.D, n, ODE_method = c("pairmeans",
+  "Euler"), ...)
 
 calc_DO_mod_w_fixed_error(GPP.daily, ER.daily, K600.daily, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, err.obs = rep(0, n),
-  err.proc = rep(0, n), ...)
+  err.proc = rep(0, n), ODE_method = c("pairmeans", "Euler"), ...)
 
 calc_DO_mod_w_sim_error(GPP.daily, ER.daily, K600.daily, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, err.obs.sigma,
-  err.obs.phi, err.proc.sigma, err.proc.phi, ...)
+  err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method = "pairmeans", ...)
 }
 \arguments{
 \item{GPP.daily}{One GPP rate per day (mg O2 / L / d)}
@@ -47,6 +48,15 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 be set}
 
 \item{n}{number of DO.mod values to produce}
+
+\item{ODE_method}{character specifying the numerical integration method to
+use. The default is pairmeans, where the change in DO between times t-1 and
+t is a function of the mean DO.sat between times t-1 and t, mean temp.water
+between times t-1 and t, mean light between times t-1 and t, etc. The Euler
+method is currently more common in the literature, with each time step
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are
+imprecise and fast, relative to Runge-Kutta or other numerical integration
+methods}
 
 \item{...}{additional arguments passed to other variants on calc_DO_mod}
 
@@ -96,31 +106,52 @@ metab_mle() and predict_DO.metab_mle()
 }
 \examples{
 calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100),
-  rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100)
-fr <- rep(1/100,100) # shorthand for readability of next lines
-preds <- data.frame(
- t=1:100,
- no_err = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100, 0, 0),
- obs_err_const = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100, 0.1, 0),
- obs_err_rnorm = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100, stats::rnorm(100,0,0.1), 0),
- proc_err_const = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100, 0, 0.01),
- proc_err_rnorm = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100, 0, stats::rnorm(100,0,0.05)),
- all_err = calc_DO_mod_w_fixed_error(
-  10, -13, 2.5, 14, 1, rep(12,100), fr, fr, fr, 11, 100,
-  stats::rnorm(100,0,0.1), stats::rnorm(100,0,0.05))
-)
-all(preds$no_err == calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100),
-  rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100))
+  rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100, ODE_method="Euler")
+fr <- rep(1/48,48) # shorthand for readability of next lines
+gfr <- sin((1:48)/(4*pi))^8; gfr <- gfr/sum(gfr)
+do <- 2*sin((1:48 - 10)/(4*pi))^4 + 10
+domod_pm <- calc_DO_mod_by_diff(10, -13, 2.5, do, 14, 1, rep(12,48), gfr, fr, fr, 48, "pairmeans")
+domod_eu <- calc_DO_mod_by_diff(10, -13, 2.5, do, 14, 1, rep(12,48), gfr, fr, fr, 48, "Euler")
 \dontrun{
-library(ggplot2); library(tidyr)
-ggplot(gather(preds, type, value, no_err, obs_err_const, obs_err_rnorm,
+plot(domod_eu)
+points(domod_pm, col='red')
+}
+fr <- rep(1/48,48) # shorthand for readability of next lines
+gfr <- sin((1:48)/(4*pi))^8; gfr <- gfr/sum(gfr)
+obsrnorm <- stats::rnorm(48,0,0.4)
+procrnorm <- stats::rnorm(48,0,0.2)
+preds <- lapply(c("Euler","pairmeans"), function(method) {
+ data.frame(
+  t=1:48,
+  method=method,
+  no_err = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48, 0, 0, method),
+  obs_err_const = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48, 0.1, 0, method),
+  obs_err_rnorm = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48, obsrnorm, 0, method),
+  proc_err_const = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48, 0, 0.01, method),
+  proc_err_rnorm = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48, 0, procrnorm, method),
+  all_err = calc_DO_mod_w_fixed_error(
+   10, -13, 2.5, 14, 1, rep(12,48), gfr, fr, fr, 11, 48,
+   obsrnorm, procrnorm, method),
+  stringsAsFactors=FALSE
+ )
+})
+\dontrun{
+library(ggplot2); library(tidyr); library(dplyr)
+ggplot(gather(bind_rows(preds), type, value, no_err, obs_err_const, obs_err_rnorm,
               proc_err_const, proc_err_rnorm, all_err),
-  aes(x=t, y=value, color=type)) + geom_line() + theme_bw()
+  aes(x=t, y=value, color=type)) + geom_line(aes(linetype=method)) + theme_bw() +
+  facet_wrap(~ type)
+ggplot(preds \%>\% bind_rows \%>\%
+  mutate(perfect = rep(no_err[method=="pairmeans"], times=2)) \%>\%
+  gather(type, value, no_err, obs_err_const, obs_err_rnorm,
+         proc_err_const, proc_err_rnorm, all_err),
+  aes(x=t, y=value-perfect, color=type)) + geom_line(aes(linetype=method)) +
+  theme_bw() + facet_wrap(~ type)
 }
 fr <- rep(1/100,100) # shorthand for readability of next lines
 preds <- data.frame(

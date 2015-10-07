@@ -6,15 +6,24 @@
 \alias{specs_mle_procerr}
 \title{Functions giving specifications for metab_mle model variants}
 \usage{
-specs_mle_obserr(calc_DO_fun = calc_DO_mod, GPP_init = 3, ER_init = -5,
-  K600_init = 10)
+specs_mle_obserr(calc_DO_fun = calc_DO_mod, ODE_method = "pairmeans",
+  GPP_init = 3, ER_init = -5, K600_init = 10)
 
-specs_mle_procerr(calc_DO_fun = calc_DO_mod_by_diff, GPP_init = 3,
-  ER_init = -5, K600_init = 10)
+specs_mle_procerr(calc_DO_fun = calc_DO_mod_by_diff,
+  ODE_method = "pairmeans", GPP_init = 3, ER_init = -5, K600_init = 10)
 }
 \arguments{
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
+
+\item{ODE_method}{character specifying the numerical integration method to
+use. The default is pairmeans, where the change in DO between times t-1 and
+t is a function of the mean DO.sat between times t-1 and t, mean temp.water
+between times t-1 and t, mean light between times t-1 and t, etc. The Euler
+method is currently more common in the literature, with each time step
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are
+imprecise and fast, relative to Runge-Kutta or other numerical integration
+methods}
 
 \item{GPP_init}{the inital value of daily GPP to use in the NLM fitting
 process}

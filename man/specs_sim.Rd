@@ -6,7 +6,7 @@
 \title{Functions giving specifications for metab_sim model variants}
 \usage{
 specs_sim_basic(err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
-  err.proc.phi = 0, sim.seed = NA)
+  err.proc.phi = 0, ODE_method = "pairmeans", sim.seed = NA)
 }
 \arguments{
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation
@@ -22,6 +22,15 @@ the next timestep.}
 
 \item{err.proc.phi}{The autocorrelation coefficient of the process errors, or
 0 for uncorrelated errors.}
+
+\item{ODE_method}{character specifying the numerical integration method to
+use. The default is pairmeans, where the change in DO between times t-1 and
+t is a function of the mean DO.sat between times t-1 and t, mean temp.water
+between times t-1 and t, mean light between times t-1 and t, etc. The Euler
+method is currently more common in the literature, with each time step
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are
+imprecise and fast, relative to Runge-Kutta or other numerical integration
+methods}
 
 \item{sim.seed}{NA to specify that each call to predict_DO should generate
   new values, or an integer, as in the \code{seed} argument to

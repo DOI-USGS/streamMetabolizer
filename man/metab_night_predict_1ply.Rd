@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 metab_night_predict_1ply(data_ply, data_daily_ply, day_start, day_end,
-  local_date, calc_DO_fun)
+  local_date)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -29,9 +29,6 @@ observation time.}
 
 \item{local_date}{the modal date of this ply of data and data_daily, and the
 date by which this ply should be referred}
-
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 }
 \value{
 a data.frame of predictions

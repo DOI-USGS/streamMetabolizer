@@ -46,7 +46,7 @@
 #' }
 calc_DO_mod_w_sim_error <- function(
   GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n,
-  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, ...) {
+  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method="pairmeans", ...) {
   
   # compute errors to add to modeled data
   err.obs <- as.numeric(stats::filter(rnorm(n, 0, err.obs.sigma), filter=err.obs.phi, method="recursive"))
@@ -57,5 +57,5 @@ calc_DO_mod_w_sim_error <- function(
     GPP.daily=GPP.daily, ER.daily=ER.daily, K600.daily=K600.daily, 
     DO.sat=DO.sat, depth=depth, temp.water=temp.water, 
     frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.mod.1, n=n,
-    err.obs=err.obs, err.proc=err.proc)
+    err.obs=err.obs, err.proc=err.proc, ODE_method=ODE_method, ...)
 }

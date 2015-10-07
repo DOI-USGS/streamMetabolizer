@@ -48,4 +48,30 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_more_than(acf_out$acf[acf_out$lag==1], 0.6)
   # plot_DO_preds(predict_DO(mm))
   
+  # should be able to switch ODE methods in fitting
+  mmE <- metab_sim(data=vfrenchshort[-which(names(vfrenchshort)=="DO.obs")], 
+                  model_specs=specs_sim_basic(err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4, ODE_method="Euler"), 
+                  data_daily=dd, day_start=-1, day_end=23)
+  mmP <- metab_sim(data=vfrenchshort[-which(names(vfrenchshort)=="DO.obs")], 
+                  model_specs=specs_sim_basic(err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4, ODE_method="pairmeans"), 
+                  data_daily=dd, day_start=-1, day_end=23)
+  DO_preds <- bind_rows(
+    data.frame(predict_DO(mmE), method="Euler", stringsAsFactors=FALSE),
+    data.frame(predict_DO(mmP), method="pairmeans", stringsAsFactors=FALSE))
+  # ggplot(DO_preds, aes(x=local.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=local.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
+  # ggplot(spread(select(filter(DO_preds, local.date=="2012-08-24"), local.time, method, DO.mod), method, DO.mod), aes(x=local.time, y=pairmeans, color=method)) + geom_line() + theme_bw()
+  # ggplot(spread(select(filter(DO_preds, local.date=="2012-08-24"), local.time, method, DO.mod), method, DO.mod), aes(x=local.time, y=Euler-pairmeans, color=method)) + geom_line() + theme_bw()
+  
+  # should be able to switch ODE methods in prediction
+  mm <- metab_sim(data=vfrenchshort[-which(names(vfrenchshort)=="DO.obs")], 
+                  model_specs=specs_sim_basic(err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), 
+                  data_daily=dd, day_start=-1, day_end=23)
+  DO_preds <- bind_rows(
+    data.frame(predict_DO(mm, calc_DO_args=replace(get_args(mm)$model_specs$calc_DO_args, "ODE_method", "Euler")), method="Euler", stringsAsFactors=FALSE),
+    data.frame(predict_DO(mm), method="pairmeans", stringsAsFactors=FALSE))
+  # ggplot(DO_preds, aes(x=local.time, y=DO.mod, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=local.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=local.time, y=DO.obs, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=local.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
 })

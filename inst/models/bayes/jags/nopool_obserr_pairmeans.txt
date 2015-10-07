@@ -1,30 +1,22 @@
 model {
   
   # Convert daily rates to per-observation rates
-  for(i in 1:n) {
-    GPP[i] <- GPP.daily * frac.GPP[i] / depth[i]
-    ER[i] <- ER.daily * frac.ER[i] / depth[i]
-    K[i] <- K600.daily * KO2.conv[i] * frac.D[i]
+  for(i in 2:n) {
+    GPP[i] <- GPP.daily * (frac.GPP[i]+frac.GPP[i-1])/2 / ((depth[i]+depth[i-1])/2)
+    ER[i] <- ER.daily * (frac.ER[i]+frac.ER[i-1])/2 / ((depth[i]+depth[i-1])/2)
+    K[i] <- K600.daily * (KO2.conv[i]+KO2.conv[i-1])/2 * (frac.D[i]+frac.D[i-1])/2
   }
   
   # Model DO changes as in Hotchkiss & Hall 2014, eq. 2
   DO.mod[1] <- DO.obs[1]
   for(i in 2:n) {
-    DO.mod[i] <- DO.mod[i-1] +
+    DO.mod[i] <- (
+      DO.mod[i-1] +
       GPP[i] + 
       ER[i] + 
-      K[i] * (DO.sat[i] - DO.mod[i-1]) +
-      err.proc[i]
-  } 
-  
-  # Process error: Build an error timeseries with a fitted autocorrelation structure
-  err.proc[1] <- 0
-  for(i in 2:n) {
-    err.proc[i] ~ dnorm(err.proc.phi*err.proc[i-1], pow(err.proc.sigma, -2))
+      K[i] * (DO.sat[i] + DO.sat[i-1] - DO.mod[i-1])/2
+    ) / (1 + K[i]/2)
   }
-  # Prior on the autocorrelation & sd of the process errors
-  err.proc.phi ~ dunif(err.proc.phi.min, err.proc.phi.max)
-  err.proc.sigma ~ dunif(err.proc.sigma.min, err.proc.sigma.max)
   
   # Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {

@@ -5,15 +5,7 @@
 \alias{specs_night_basic}
 \title{Functions giving specifications for metab_night model variants}
 \usage{
-specs_night_basic(calc_DO_fun = calc_DO_mod)
-}
-\arguments{
-\item{calc_DO_fun}{The function to use in calculating DO; probably either
-\code{calc_DO_mod} or \code{calc_DO_mod_by_diff}. For nighttime regression,
-this function is not used for model fitting at all, but is still used to
-re-predict the trajectory of DO concentrations from the fitted values of
-K600 and ER. It is unclear to the package authors whether calc_DO_mod or
-calc_DO_mod_by_diff is more appropriate.}
+specs_night_basic()
 }
 \description{
 Functions giving specifications for metab_night model variants

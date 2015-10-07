@@ -251,16 +251,19 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
 #' 
 #' @inheritParams predict_DO
 #' @param calc_DO_fun The function to use in predicting DO from metabolism 
-#'   estimates. The default is generally recommended, even if the model was fit
+#'   estimates. The default is generally recommended, even if the model was fit 
 #'   with assumptions of process error.
+#' @param calc_DO_args Any arguments to pass to calc_DO_fun. If not supplied, 
+#'   the original args used when fitting the model will be used; this is the 
+#'   recommended option.
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, ...) {
+predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, calc_DO_args, ...) {
   
   # pull args from the model
-  calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
+  if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
