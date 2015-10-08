@@ -1,18 +1,18 @@
 #' \code{specs_bayes_jags_nopool_obserr} - a JAGS model with no pooling and only
-#' observation error. Compatible \code{model_file} options are
-#' \code{c('jags/nopool_obserr_pairmeans.txt', 'jags/nopool_obserr_Euler.txt')}.
+#' observation error. Compatible \code{model_file} options are 
+#' \code{c('nopool_obserr_pairmeans.jags', 'nopool_obserr_Euler.jags')}.
 #' 
 #' @rdname specs_bayes
 #'   
 #' @inheritParams specs_bayes_jags_nopool_procobserr
-#' @inheritParams prepjags_bayes
+#' @inheritParams prepdata_bayes
 #' @inheritParams runjags_bayes
 #'   
 #' @export
 specs_bayes_jags_nopool_obserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'jags/nopool_obserr_pairmeans.txt', # or 'jags/nopool_obserr_Euler.txt'
+  model_file = 'nopool_obserr_pairmeans.jags', # or 'nopool_obserr_Euler.jags'
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   
@@ -27,7 +27,7 @@ specs_bayes_jags_nopool_obserr <- function(
   err.obs.sigma.min = 0,
   err.obs.sigma.max = 0.5,
   
-  # inheritParams prepjags_bayes
+  # inheritParams prepdata_bayes
   priors = FALSE,
   
   # inheritParams runjags_bayes

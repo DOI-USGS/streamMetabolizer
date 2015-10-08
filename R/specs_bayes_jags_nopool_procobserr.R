@@ -1,7 +1,6 @@
 #' \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and 
 #' both process and observation error. Compatible \code{model_file} options are 
-#' \code{c('jags/nopool_procobserr_pairmeans.txt',
-#' 'jags/nopool_procobserr_Euler.txt')}.
+#' \code{c('nopool_procobserr_pairmeans.jags', 'nopool_procobserr_Euler.jags')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -11,11 +10,13 @@
 #'   with \code{system.file("models/bayes", package="streamMetabolizer")}) or as
 #'   an absolute path or a path relative to the current working directory (the 
 #'   second assumption, if the first assumption turns up no files of the given 
-#'   name). For example, the default is \code{"jags/metab_bayes_simple.txt"}. 
-#'   The containing folder (in this case \code{"jags"}) will determine which 
-#'   MCMC software package is used. The file name (in this case 
-#'   \code{"metab_bayes_simple.txt"}) will determine not only the model file to 
-#'   use but also which variables are packaged and sent to the MCMC software.
+#'   name). For example, the default is
+#'   \code{"nopool_procobserr_pairmeans.jags"}. The containing folder is in this
+#'   case \code{"models/bayes"}. The suffix, 'jags', will determine which MCMC
+#'   software package is used. The file name (in this case 
+#'   \code{"nopool_procobserr_pairmeans.jags"}) will determine not only the
+#'   model file to use but also which variables are packaged and sent to the
+#'   MCMC software.
 #' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 #'   whether the data should be split into daily chunks first ('bayes_1ply') or 
 #'   passed to the model fitting function in one big chunk ('bayes_all')
@@ -47,14 +48,14 @@
 #' @param err.obs.sigma.max The upper bound on a dunif distribution for 
 #'   err.obs.sigma, the standard deviation of the observation error
 #'   
-#' @inheritParams prepjags_bayes
+#' @inheritParams prepdata_bayes
 #' @inheritParams runjags_bayes
 #'   
 #' @export
 specs_bayes_jags_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'jags/nopool_procobserr_pairmeans.txt',
+  model_file = 'nopool_procobserr_pairmeans.jags',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   
@@ -73,7 +74,7 @@ specs_bayes_jags_nopool_procobserr <- function(
   err.obs.sigma.min = 0,
   err.obs.sigma.max = 0.5,
   
-  # inheritParams prepjags_bayes
+  # inheritParams prepdata_bayes
   priors = FALSE,
   
   # inheritParams runjags_bayes
