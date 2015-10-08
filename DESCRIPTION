@@ -23,6 +23,7 @@ Imports:
     lubridate,
     methods,
     runjags,
+    rstan,
     ggplot2
 Suggests:
     chron,

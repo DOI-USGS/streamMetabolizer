@@ -137,12 +137,21 @@ bayes_1ply <- function(
     bayes_1day <- withCallingHandlers(
       tryCatch({
         # first: try to run the bayes fitting function
-        data_list <- prepjags_bayes(
+        data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, local_date=local_date,
           model_specs=model_specs, priors=model_specs$priors)
-        do.call(runjags_bayes, c(
-          list(data_list=data_list), 
-          model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
+        switch(
+          model_specs$bayes_software, 
+          jags = {
+            do.call(runjags_bayes, c(
+              list(data_list=data_list), 
+              model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
+          }, 
+          stan = {
+            do.call(runstan_bayes, c(
+              list(data_list=data_list), 
+              model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
+          })
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -209,9 +218,9 @@ bayes_allply <- function(
 #' @inheritParams metab_bayes
 #' @param priors logical. Should the data list be modified such that JAGS will 
 #'   return priors rather than posteriors?
-#' @return list of data for input to runjags
+#' @return list of data for input to runjags_bayes or runstan_bayes
 #' @export
-prepjags_bayes <- function(
+prepdata_bayes <- function(
   data, data_daily, local_date, # inheritParams metab_model_prototype
   model_specs, # inheritParams metab_bayes
   priors=FALSE
@@ -313,6 +322,62 @@ runjags_bayes <- function(data_list, model_path, params_out, max_cores=4, adapt_
   return(jags_out)
 }
 
+#' Actually run JAGS on a formatted data ply
+#' 
+#' Seems to need to import rjags but does not, for now, because I can't get 
+#' rjags to install on the Condor cluster. Including an import rjags line here 
+#' allowed runjags to do its job last time I tried.
+#' 
+#' @param data_list a formatted list of inputs to the JAGS model
+#' @param model_path the Stan model file to use, as a full file path
+#' @param params_out a character vector of parameters whose values in the MCMC
+#'   runs should be recorded and summarized
+#' @param max_cores the maximum number of cores to apply to this run
+#' @param adapt_steps the number of steps to use in adapting the model
+#' @param burnin_steps the number of steps to run and ignore before starting to 
+#'   collect MCMC 'data'
+#' @param num_saved_steps the number of MCMC steps to save
+#' @param thin_steps the number of steps to move before saving another step
+#' @return a data.frame of outputs
+#' @import rstan
+#' @import parallel
+#' @export
+runstan_bayes <- function(data_list, model_path, params_out, max_cores=4, burnin_steps=4000, num_saved_steps=40000, thin_steps=1) {
+  
+  n_cores = detectCores()
+  if (!is.finite(n_cores)) { n_cores = 1 } 
+  n_chains = max(3, min(max_cores , max(1, n_cores)))
+  message(paste0("Found ",n_cores," cores; requesting ",n_chains," chains.\n"))
+  
+  runstan_out <- rstan(
+    file=model_path,
+    data=data_list,
+    pars=params_out,
+    include=TRUE,
+    chains=n_chains,
+    warmup=burnin_steps,
+    iter=num_saved_steps+burnin_steps,
+    thin=thin_steps,
+    init="random",
+    #sample_file,
+    #diagnostic_file,
+    #save_dso,
+    #verbose,
+    cores=n_cores)
+  
+  # format output into a 1-row data.frame
+  #   jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) # combine 2 matrices of statistics
+  #   names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
+  #   names_stats <- rep(gsub("%", "pct", colnames(jags_mat)), times=nrow(jags_mat)) # add the Mean, SD, etc. part of the name
+  #   jags_out <- jags_mat %>% as.matrix() %>% t %>% c %>% # get a 1D vector of GPP_Mean, GPP_SD, ..., ER_Mean, ER_SD, ... etc
+  #     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+  #     setNames(paste0(names_params, "_", names_stats))
+  
+  # this will require more work
+  stan_out <- runstan_out
+  
+  return(stan_out)
+}
 
 
 #### metab_bayes class ####
