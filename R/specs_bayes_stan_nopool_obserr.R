@@ -32,39 +32,15 @@ specs_bayes_stan_nopool_obserr <- function(
   
   # inheritParams mcmc_bayes
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
-  max_cores = 4, 
-  adapt_steps = 100, 
-  burnin_steps = 40, 
-  num_saved_steps = 400, 
+  n_chains = 4, 
+  n_cores = 1, 
+  burnin_steps = 500, 
+  num_saved_steps = 500,
   thin_steps = 1,
-  verbose = TRUE
+  verbose = FALSE
   
 ) {
-  
-  list(
-    model_file = model_file,
-    bayes_fun = bayes_fun,
-    bayes_software = bayes_software,
-    
-    GPP_daily_mu = GPP_daily_mu,
-    GPP_daily_sigma = GPP_daily_sigma,
-    ER_daily_mu = ER_daily_mu,
-    ER_daily_sigma = ER_daily_sigma,
-    K600_daily_mu = K600_daily_mu,
-    K600_daily_sigma = K600_daily_sigma,
-    
-    err_obs_sigma_min = err_obs_sigma_min,
-    err_obs_sigma_max = err_obs_sigma_max,
-    
-    priors = priors,
-    
-    params_out = params_out,
-    max_cores = max_cores, 
-    adapt_steps = adapt_steps, 
-    burnin_steps = burnin_steps, 
-    num_saved_steps = num_saved_steps, 
-    thin_steps = thin_steps,
-    verbose = verbose
-  )
+
+  as.list(environment())
   
 }
