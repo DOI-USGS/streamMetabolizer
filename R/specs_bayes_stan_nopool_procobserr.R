@@ -1,6 +1,6 @@
-#' \code{specs_bayes_stan_nopool_obserr} - a Stan model with no pooling and only
-#' observation error. Compatible \code{model_file} options are 
-#' \code{c('nopool_obserr_pairmeans.stan', 'nopool_obserr_Euler.stan')}.
+#' \code{specs_bayes_stan_nopool_obserr} - a Stan model with no pooling and both
+#' process and observation error. Compatible \code{model_file} options are 
+#' \code{c('nopool_procobserr_pairmeans.stan', 'nopool_procobserr_Euler.stan')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -9,7 +9,7 @@
 #' @inheritParams mcmc_bayes
 #'   
 #' @export
-specs_bayes_stan_nopool_obserr <- function(
+specs_bayes_stan_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
   model_file = 'nopool_obserr_pairmeans.stan', # or 'nopool_obserr_Euler.stan'

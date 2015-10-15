@@ -77,6 +77,8 @@ Collate:
     'specs_bayes.R'
     'specs_bayes_jags_nopool_obserr.R'
     'specs_bayes_jags_nopool_procobserr.R'
+    'specs_bayes_stan_nopool_obserr.R'
+    'specs_bayes_stan_nopool_procobserr.R'
     'specs_mle.R'
     'specs_mle_obserr.R'
     'specs_mle_procerr.R'
