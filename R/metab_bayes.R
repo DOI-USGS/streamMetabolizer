@@ -140,18 +140,9 @@ bayes_1ply <- function(
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, local_date=local_date,
           model_specs=model_specs, priors=model_specs$priors)
-        switch(
-          model_specs$bayes_software, 
-          jags = {
-            do.call(runjags_bayes, c(
-              list(data_list=data_list), 
-              model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
-          }, 
-          stan = {
-            do.call(runstan_bayes, c(
-              list(data_list=data_list), 
-              model_specs[c('model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps')]))
-          })
+        do.call(mcmc_bayes, c(
+          list(data_list=data_list),
+          model_specs[c('bayes_software','model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')]))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -167,14 +158,14 @@ bayes_1ply <- function(
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
     bayes_1day <- setNames(as.list(rep(NA, 6)), 
-                           c('GPP.daily_Mean', 'ER.daily_Mean', 'K600.daily_Mean', 
-                             'GPP.daily_SD', 'ER.daily_SD', 'K600.daily_SD'))
+                           c('GPP_daily_mean', 'ER_daily_mean', 'K600_daily_mean', 
+                             'GPP_daily_sd', 'ER_daily_sd', 'K600_daily_sd'))
   }
   
   # Return, reporting any results, warnings, and errors
-  data.frame(GPP=bayes_1day$GPP.daily_Mean, GPP.sd=bayes_1day$GPP.daily_SD, 
-             ER=bayes_1day$ER.daily_Mean, ER.sd=bayes_1day$ER.daily_SD, 
-             K600=bayes_1day$K600.daily_Mean, K600.sd=bayes_1day$K600.daily_SD,
+  data.frame(GPP=bayes_1day$GPP_daily_mean, GPP.sd=bayes_1day$GPP_daily_sd, 
+             ER=bayes_1day$ER_daily_mean, ER.sd=bayes_1day$ER_daily_sd, 
+             K600=bayes_1day$K600_daily_mean, K600.sd=bayes_1day$K600_daily_sd,
              warnings=paste0(warn_strs, collapse="; "), 
              errors=paste0(stop_strs, collapse="; "),
              bayes_1day,
@@ -207,7 +198,7 @@ bayes_allply <- function(
 
 #### helpers to the helper ####
 
-#' Prepare data for passing to JAGS
+#' Prepare data for passing to JAGS or Stan
 #' 
 #' This function accepts exactly one day's worth of data, (one ply, which might 
 #' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
@@ -219,18 +210,20 @@ bayes_allply <- function(
 #' @param priors logical. Should the data list be modified such that JAGS will 
 #'   return priors rather than posteriors?
 #' @return list of data for input to runjags_bayes or runstan_bayes
-#' @export
+#' @keywords internal
 prepdata_bayes <- function(
   data, data_daily, local_date, # inheritParams metab_model_prototype
   model_specs, # inheritParams metab_bayes
   priors=FALSE
 ) {
   
-  # Useful info for setting JAGS data
+  # Useful info for setting the MCMC data
   timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$local.time)), units="days"), na.rm=TRUE))
   has_procerr <- grepl('_proc[[:alpha:]]*err[[:punct:]]', basename(model_specs$model_path))
   
-  # Format the data for JAGS
+  # Format the data for JAGS/Stan. Stan disallows period-separated names, so
+  # change all the input data to underscore-separated. parameters given in
+  # model_specs are already underscore-separated for this reason
   data_list = c(
     list(
       
@@ -238,36 +231,33 @@ prepdata_bayes <- function(
       n = nrow(data),
       
       # Every timestep
-      frac.GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
-      frac.ER = rep(timestep_days, nrow(data)),
-      frac.D = rep(timestep_days, nrow(data)),
-      KO2.conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),
+      frac_GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
+      frac_ER = rep(timestep_days, nrow(data)),
+      frac_D = rep(timestep_days, nrow(data)),
+      KO2_conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),
       depth = data$depth,
-      DO.sat = data$DO.sat,
-      DO.obs = data$DO.obs
+      DO_sat = data$DO.sat,
+      DO_obs = data$DO.obs
     ),
     
     model_specs[c(
       # Hyperparameters
-      c('GPP.daily.mu','GPP.daily.sigma','ER.daily.mu','ER.daily.sigma','K600.daily.mu','K600.daily.sigma'), # metabolism
-      if(has_procerr) c('err.proc.phi.min','err.proc.phi.max','err.proc.sigma.min','err.proc.sigma.max') else c(), # process error
-      c('err.obs.sigma.min','err.obs.sigma.max') # observation error
+      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_mu','K600_daily_sigma'), # metabolism
+      if(has_procerr) c('err_proc_phi_min','err_proc_phi_max','err_proc_sigma_min','err_proc_sigma_max') else c(), # process error
+      c('err_obs_sigma_min','err_obs_sigma_max') # observation error
     )]
   )
   if(priors) {
-    data_list <- data_list[-which(names(data_list)=="DO.obs")]
+    data_list <- data_list[-which(names(data_list)=="DO_obs")]
   }
   
   data_list
 }
 
-#' Actually run JAGS on a formatted data ply
-#' 
-#' Seems to need to import rjags but does not, for now, because I can't get 
-#' rjags to install on the Condor cluster. Including an import rjags line here 
-#' allowed runjags to do its job last time I tried.
+#' Run an MCMC simulation on a formatted data ply
 #' 
 #' @param data_list a formatted list of inputs to the JAGS model
+#' @param bayes_software character string indicating which software to use
 #' @param model_path the JAGS model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC
 #'   runs should be recorded and summarized
@@ -277,11 +267,37 @@ prepdata_bayes <- function(
 #'   collect MCMC 'data'
 #' @param num_saved_steps the number of MCMC steps to save
 #' @param thin_steps the number of steps to move before saving another step
+#' @param verbose logical. give status messages?
 #' @return a data.frame of outputs
-#' @import runjags
 #' @import parallel
-#' @export
-runjags_bayes <- function(data_list, model_path, params_out, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1) {
+#' @keywords internal
+mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
+  bayes_software <- match.arg(bayes_software)
+  bayes_function <- switch(bayes_software, jags = runjags_bayes, stan = runstan_bayes)
+  
+  n_cores = detectCores()
+  if (!is.finite(n_cores)) { n_cores = 1 } 
+  n_chains = max(3, min(max_cores , max(1, n_cores)))
+  message(paste0("Found ",n_cores," cores; requesting ",n_chains," chains.\n"))
+  
+  bayes_function(
+    data_list=data_list, model_path=model_path, params_out=params_out, n_chains=n_chains, n_cores=n_cores, 
+    adapt_steps=adapt_steps, burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps, verbose=verbose)
+}
+
+#' Run JAGS on a formatted data ply
+#' 
+#' Seems to need to import rjags but does not, for now, because I can't get 
+#' rjags to install on the Condor cluster. Including an import rjags line here 
+#' allowed runjags to do its job last time I tried.
+#' 
+#' @inheritParams mcmc_bayes
+#' @param ... args passed to other runxx_bayes functions but ignored here
+#' @param n_chains number of chains to use
+#' @importFrom runjags run.jags
+#' @import dplyr
+#' @keywords internal
+runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -291,11 +307,6 @@ runjags_bayes <- function(data_list, model_path, params_out, max_cores=4, adapt_
              "base::Mersenne-Twister")[chain])
     # Let JAGS initialize other parameters automatically
   }
-  
-  n_cores = detectCores()
-  if (!is.finite(n_cores)) { n_cores = 1 } 
-  n_chains = max(3, min(max_cores , max(1, n_cores)))
-  message(paste0("Found ",n_cores," cores; requesting ",n_chains," chains.\n"))
   
   runjags_out <- run.jags(
     method=c("rjags","parallel","snow")[2],
@@ -309,47 +320,35 @@ runjags_bayes <- function(data_list, model_path, params_out, max_cores=4, adapt_
     sample=ceiling(num_saved_steps/n_chains),
     thin=thin_steps,
     summarise=TRUE,
-    plots=FALSE)
+    plots=FALSE,
+    silent.jags=!verbose)
   
   # format output into a 1-row data.frame
-  jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) # combine 2 matrices of statistics
+  jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
   names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
-  names_stats <- rep(gsub("%", "pct", colnames(jags_mat)), times=nrow(jags_mat)) # add the Mean, SD, etc. part of the name
-  jags_out <- jags_mat %>% as.matrix() %>% t %>% c %>% # get a 1D vector of GPP_Mean, GPP_SD, ..., ER_Mean, ER_SD, ... etc
+  names_stats <- rep(tolower(gsub("%", "pct", colnames(jags_mat))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
+  jags_out <- jags_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
     setNames(paste0(names_params, "_", names_stats))
   
   return(jags_out)
 }
 
-#' Actually run JAGS on a formatted data ply
+#' Run Stan on a formatted data ply
 #' 
-#' Seems to need to import rjags but does not, for now, because I can't get 
-#' rjags to install on the Condor cluster. Including an import rjags line here 
-#' allowed runjags to do its job last time I tried.
-#' 
-#' @param data_list a formatted list of inputs to the JAGS model
-#' @param model_path the Stan model file to use, as a full file path
-#' @param params_out a character vector of parameters whose values in the MCMC
-#'   runs should be recorded and summarized
-#' @param max_cores the maximum number of cores to apply to this run
-#' @param adapt_steps the number of steps to use in adapting the model
-#' @param burnin_steps the number of steps to run and ignore before starting to 
-#'   collect MCMC 'data'
-#' @param num_saved_steps the number of MCMC steps to save
-#' @param thin_steps the number of steps to move before saving another step
-#' @return a data.frame of outputs
-#' @import rstan
+#' @inheritParams mcmc_bayes
+#' @param ... args passed to other runxx_bayes functions but ignored here
+#' @param n_chains number of chains to use
+#' @param n_cores number of parallel cores to use
+#' @importFrom rstan stan
 #' @import parallel
-#' @export
-runstan_bayes <- function(data_list, model_path, params_out, max_cores=4, burnin_steps=4000, num_saved_steps=40000, thin_steps=1) {
+#' @import dplyr
+#' @keywords internal
+runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores=4, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
-  n_cores = detectCores()
-  if (!is.finite(n_cores)) { n_cores = 1 } 
-  n_chains = max(3, min(max_cores , max(1, n_cores)))
-  message(paste0("Found ",n_cores," cores; requesting ",n_chains," chains.\n"))
+  requireNamespace('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
   
-  runstan_out <- rstan(
+  runstan_out <- stan(
     file=model_path,
     data=data_list,
     pars=params_out,
@@ -359,22 +358,18 @@ runstan_bayes <- function(data_list, model_path, params_out, max_cores=4, burnin
     iter=num_saved_steps+burnin_steps,
     thin=thin_steps,
     init="random",
-    #sample_file,
-    #diagnostic_file,
-    #save_dso,
-    #verbose,
+    save_dso=FALSE,
+    verbose=verbose,
+    open_progress=FALSE,
     cores=n_cores)
-  
-  # format output into a 1-row data.frame
-  #   jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) # combine 2 matrices of statistics
-  #   names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
-  #   names_stats <- rep(gsub("%", "pct", colnames(jags_mat)), times=nrow(jags_mat)) # add the Mean, SD, etc. part of the name
-  #   jags_out <- jags_mat %>% as.matrix() %>% t %>% c %>% # get a 1D vector of GPP_Mean, GPP_SD, ..., ER_Mean, ER_SD, ... etc
-  #     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-  #     setNames(paste0(names_params, "_", names_stats))
-  
-  # this will require more work
-  stan_out <- runstan_out
+
+  # format output into a 1-row data.frame. see ls('package:rstan')
+  stan_mat <- rstan::summary(runstan_out)$summary
+  names_params <- rep(rownames(stan_mat), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
+  names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
+  stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
+    t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+    setNames(paste0(names_params, "_", names_stats))
   
   return(stan_out)
 }
