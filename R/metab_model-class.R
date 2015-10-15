@@ -203,20 +203,25 @@ get_version.metab_model <- function(metab_model) {
 
 #' Make metabolism predictions from a fitted metab_model.
 #' 
-#' Makes daily predictions of GPP, ER, and K600.
+#' Makes daily predictions of GPP, ER, and K600 with upper and lower bounds
+#' reflecting a 95% CI.
 #' 
 #' @inheritParams predict_metab
-#' @param ci_level the alpha level for the confidence or credible interval
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @importFrom stats qnorm setNames
 #' @export
 #' @family predict_metab
-predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
+predict_metab.metab_model <- function(metab_model, ...) {
   
   fit <- get_fit(metab_model)
   vars <- c("GPP","ER","K600")
-  if(all(vars %in% names(fit))) {
+  precalc_cis <- grep(paste0("^(GPP|ER|K600)_daily_(mean|2\\.5pct|97\\.5pct)$"), names(fit), value=TRUE)
+  if(length(precalc_cis) == 9) {
+    fit[c('local.date', precalc_cis)] %>% 
+      setNames(c('local.date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3))))
+  } else if(all(vars %in% names(fit))) {
+    ci_level <- 0.95
     crit <- qnorm((1 + ci_level)/2)
     c(list(fit['local.date']),
       lapply(vars, function(var) {
@@ -237,7 +242,8 @@ predict_metab.metab_model <- function(metab_model, ci_level=0.95, ...) {
       local.date=as.Date(NA)[NULL], 
       GPP=numeric(), GPP.lower=numeric(), GPP.upper=numeric(),
       ER=numeric(), ER.lower=numeric(), ER.upper=numeric(),
-      K600=numeric(), K600.lower=numeric(), K600.upper=numeric()
+      K600=numeric(), K600.lower=numeric(), K600.upper=numeric(),
+      ci_level=ci_level
     )
   }
 }
