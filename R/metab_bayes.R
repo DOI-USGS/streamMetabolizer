@@ -140,9 +140,10 @@ bayes_1ply <- function(
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, local_date=local_date,
           model_specs=model_specs, priors=model_specs$priors)
+        all_mcmc_args <- c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
-          model_specs[c('bayes_software','model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+          model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -157,18 +158,13 @@ bayes_1ply <- function(
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
-    bayes_1day <- setNames(as.list(rep(NA, 6)), 
-                           c('GPP_daily_mean', 'ER_daily_mean', 'K600_daily_mean', 
-                             'GPP_daily_sd', 'ER_daily_sd', 'K600_daily_sd'))
+    bayes_1day <- data.frame(GPP_daily_mean=NA)
   }
   
   # Return, reporting any results, warnings, and errors
-  data.frame(GPP=bayes_1day$GPP_daily_mean, GPP.sd=bayes_1day$GPP_daily_sd, 
-             ER=bayes_1day$ER_daily_mean, ER.sd=bayes_1day$ER_daily_sd, 
-             K600=bayes_1day$K600_daily_mean, K600.sd=bayes_1day$K600_daily_sd,
+  data.frame(bayes_1day,
              warnings=paste0(warn_strs, collapse="; "), 
              errors=paste0(stop_strs, collapse="; "),
-             bayes_1day,
              stringsAsFactors=FALSE)
 }
 
@@ -261,7 +257,8 @@ prepdata_bayes <- function(
 #' @param model_path the JAGS model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC
 #'   runs should be recorded and summarized
-#' @param max_cores the maximum number of cores to apply to this run
+#' @param n_chains the number of chains to run
+#' @param n_cores the number of cores to apply to this run
 #' @param adapt_steps the number of steps to use in adapting the model
 #' @param burnin_steps the number of steps to run and ignore before starting to 
 #'   collect MCMC 'data'
@@ -271,14 +268,13 @@ prepdata_bayes <- function(
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, max_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
   bayes_software <- match.arg(bayes_software)
   bayes_function <- switch(bayes_software, jags = runjags_bayes, stan = runstan_bayes)
   
-  n_cores = detectCores()
-  if (!is.finite(n_cores)) { n_cores = 1 } 
-  n_chains = max(3, min(max_cores , max(1, n_cores)))
-  message(paste0("Found ",n_cores," cores; requesting ",n_chains," chains.\n"))
+  tot_cores = detectCores()
+  if (!is.finite(tot_cores)) { tot_cores = 1 } 
+  message(paste0("MCMC: requesting ",n_chains," chains on ",n_cores," of ",tot_cores," total cores\n"))
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, n_chains=n_chains, n_cores=n_cores, 
@@ -324,9 +320,11 @@ runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_s
     silent.jags=!verbose)
   
   # format output into a 1-row data.frame
-  jags_mat <- cbind(runjags_out$summary$statistics, runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
+  jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
+                    runjags_out$summaries,
+                    runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
   names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
-  names_stats <- rep(tolower(gsub("%", "pct", colnames(jags_mat))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
+  names_stats <- rep(tolower(gsub(" |-", "_", gsub("%", "pct", colnames(jags_mat)))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
   jags_out <- jags_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
     setNames(paste0(names_params, "_", names_stats))
@@ -344,7 +342,7 @@ runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_s
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores=4, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
   requireNamespace('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
   
@@ -358,7 +356,7 @@ runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores
     iter=num_saved_steps+burnin_steps,
     thin=thin_steps,
     init="random",
-    save_dso=FALSE,
+    save_dso=TRUE, # must be true if you're using more than one core
     verbose=verbose,
     open_progress=FALSE,
     cores=n_cores)

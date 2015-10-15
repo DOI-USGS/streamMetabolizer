@@ -28,7 +28,7 @@ test_that("prepdata_bayes and mcmc_bayes run with JAGS", {
   # mcmc
   mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
     list(data_list=data_list),
-    model_specs[c('bayes_software','model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')]))
   expect_is(mcmc_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
   
@@ -43,7 +43,7 @@ test_that("prepdata_bayes and mcmc_bayes run with JAGS", {
 })
 
 test_that("prepdata_bayes and mcmc_bayes run with Stan", {
-  model_specs <- specs_bayes_stan_nopool_obserr()
+  model_specs <- specs_bayes_stan_nopool_obserr(n_cores=2)
   model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
   
   # prepdata
@@ -55,7 +55,7 @@ test_that("prepdata_bayes and mcmc_bayes run with Stan", {
   # mcmc
   mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
     list(data_list=data_list),
-    model_specs[c('bayes_software','model_path','params_out','max_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
   expect_is(mcmc_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
   
@@ -101,7 +101,7 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   
   # specs_bayes_stan_nopool_obserr
-  mmSOP <- mm <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_obserr())
+  mmSOP <- mm <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_obserr(n_cores=4))
   metab <- predict_metab(mm)
   expect_equal(metab$GPP.lower, get_fit(mm)$GPP_daily_2.5pct)
   DO_preds <- predict_DO(mm)
@@ -111,10 +111,10 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   # plot_DO_preds(DO_preds)
   
   # compare models
-  # library(dplyr); library(ggplot2)
-  # preds <- bind_rows(lapply(list(mmOP, mmOE, mmOPP, mmOPE), function(mm) 
-  #   bind_cols(predict_metab(mm)[2,], data_frame(file=get_args(mm)$model_specs$model_file))
-  # ))
+  library(dplyr); library(ggplot2)
+  preds <- bind_rows(lapply(list(mmOP, mmOE, mmOPP, mmOPE, mmSOP), function(mm) 
+    bind_cols(predict_metab(mm)[2,], data_frame(file=get_args(mm)$model_specs$model_file))
+  ))
   # ggplot(preds, aes(x=file, y=GPP)) + geom_point() + geom_errorbar(aes(ymin=GPP.lower, ymax=GPP.upper)) + theme_bw() + ylim(0, NA)
   # ggplot(preds, aes(x=file, y=ER)) + geom_point() + geom_errorbar(aes(ymin=ER.lower, ymax=ER.upper)) + theme_bw() + ylim(NA, 0)
   # ggplot(preds, aes(x=file, y=K600)) + geom_point() + geom_errorbar(aes(ymin=K600.lower, ymax=K600.upper)) + theme_bw() + ylim(0, NA)

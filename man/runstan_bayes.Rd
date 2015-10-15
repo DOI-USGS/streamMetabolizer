@@ -5,7 +5,7 @@
 \title{Run Stan on a formatted data ply}
 \usage{
 runstan_bayes(data_list, model_path, params_out, n_chains = 4, n_cores = 4,
-  burnin_steps = 4000, num_saved_steps = 40000, thin_steps = 1,
+  burnin_steps = 1000, num_saved_steps = 1000, thin_steps = 1,
   verbose = FALSE, ...)
 }
 \arguments{
