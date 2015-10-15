@@ -12,7 +12,7 @@
 specs_bayes_stan_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_obserr_pairmeans.stan', # or 'nopool_obserr_Euler.stan'
+  model_file = 'nopool_procobserr_pairmeans.stan',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'stan',
   
@@ -23,7 +23,11 @@ specs_bayes_stan_nopool_procobserr <- function(
   ER_daily_sigma = 10,
   K600_daily_mu = 10,
   K600_daily_sigma = 10,
-  
+ 
+  err_proc_phi_min = 0,
+  err_proc_phi_max = 1,
+  err_proc_sigma_min = 0,
+  err_proc_sigma_max = 0.0005,
   err_obs_sigma_min = 0,
   err_obs_sigma_max = 0.5,
   
@@ -31,7 +35,7 @@ specs_bayes_stan_nopool_procobserr <- function(
   priors = FALSE,
   
   # inheritParams mcmc_bayes
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
   n_chains = 4, 
   n_cores = 1, 
   burnin_steps = 500, 

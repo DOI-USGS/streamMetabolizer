@@ -39,14 +39,16 @@ specs_bayes_stan_nopool_obserr(model_file = "nopool_obserr_pairmeans.stan",
   verbose = FALSE)
 
 
-  specs_bayes_stan_nopool_procobserr(model_file = "nopool_obserr_pairmeans.stan",
+  specs_bayes_stan_nopool_procobserr(model_file = "nopool_procobserr_pairmeans.stan",
   bayes_fun = "bayes_1ply", bayes_software = "stan", GPP_daily_mu = 10,
   GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
-  K600_daily_mu = 10, K600_daily_sigma = 10, err_obs_sigma_min = 0,
+  K600_daily_mu = 10, K600_daily_sigma = 10, err_proc_phi_min = 0,
+  err_proc_phi_max = 1, err_proc_sigma_min = 0,
+  err_proc_sigma_max = 5e-04, err_obs_sigma_min = 0,
   err_obs_sigma_max = 0.5, priors = FALSE, params_out = c("GPP_daily",
-  "ER_daily", "K600_daily", "err_obs_sigma"), n_chains = 4, n_cores = 1,
-  burnin_steps = 500, num_saved_steps = 500, thin_steps = 1,
-  verbose = FALSE)
+  "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
+  n_chains = 4, n_cores = 1, burnin_steps = 500, num_saved_steps = 500,
+  thin_steps = 1, verbose = FALSE)
 }
 \arguments{
 \item{model_file}{character. The model definition file to use. The file may

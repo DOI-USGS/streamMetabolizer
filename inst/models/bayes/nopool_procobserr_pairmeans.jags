@@ -5,7 +5,6 @@ model {
     GPP[i] <- GPP_daily * (frac_GPP[i]+frac_GPP[i-1])/2 / ((depth[i]+depth[i-1])/2)
     ER[i] <- ER_daily * (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2)
     K[i] <- K600_daily * (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2
-
   }
   
   # Model DO changes as in Hotchkiss & Hall 2014, eq. 2

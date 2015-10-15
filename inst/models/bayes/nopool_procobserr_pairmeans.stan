@@ -8,6 +8,10 @@ data {
   real K600_daily_mu;
   real K600_daily_sigma;
   
+  real err_proc_phi_min;
+  real err_proc_phi_max;
+  real err_proc_sigma_min;
+  real err_proc_sigma_max;
   real err_obs_sigma_min;
   real err_obs_sigma_max;
   
@@ -28,8 +32,11 @@ parameters {
   real GPP_daily;
   real ER_daily;
   real K600_daily;
+  vector [n] err_proc;
   
   // bounded prior (implied uniform) on the sd of the errors between modeled and observed DO
+  real <lower=err_proc_phi_min, upper=err_proc_phi_max> err_proc_phi;
+  real <lower=err_proc_sigma_min, upper=err_proc_sigma_max> err_proc_sigma;
   real <lower=err_obs_sigma_min, upper=err_obs_sigma_max> err_obs_sigma;
   
 }
@@ -56,16 +63,26 @@ model {
       DO_mod[i-1] +
         GPP[i] + 
         ER[i] + 
-        K[i] * (DO_sat[i] + DO_sat[i-1] - DO_mod[i-1])/2
+        K[i] * (DO_sat[i] + DO_sat[i-1] - DO_mod[i-1])/2 +
+        err_proc[i]
     ) / (1 + K[i]/2);
   }
+  
+  // Process error: Build an error timeseries with a fitted autocorrelation structure
+  err_proc[1] ~ normal(0, err_proc_sigma);
+  for(i in 2:n) {
+    err_proc[i] ~ normal(err_proc_phi*err_proc[i-1], err_proc_sigma);
+  }
+  // Prior on the autocorrelation & sd of the process errors
+  //err_proc_phi ~ uniform(err_proc_phi_min, err_proc_phi_max);
+  //err_proc_sigma ~ uniform(err_proc_sigma_min, err_proc_sigma_max);
   
   // Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_sigma);
   }
   // Prior on the sd of the errors between modeled and observed DO; this is actually unnecessary to specify
-  err_obs_sigma ~ uniform(err_obs_sigma_min, err_obs_sigma_max);
+  //err_obs_sigma ~ uniform(err_obs_sigma_min, err_obs_sigma_max);
   
   // Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
