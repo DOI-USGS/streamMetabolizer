@@ -274,7 +274,7 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
   
   tot_cores = detectCores()
   if (!is.finite(tot_cores)) { tot_cores = 1 } 
-  message(paste0("MCMC: requesting ",n_chains," chains on ",n_cores," of ",tot_cores," total cores\n"))
+  message(paste0("MCMC: requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, n_chains=n_chains, n_cores=n_cores, 
@@ -344,7 +344,7 @@ runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_s
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  requireNamespace('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
+  library('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
   
   runstan_out <- stan(
     file=model_path,
