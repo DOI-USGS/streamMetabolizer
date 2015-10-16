@@ -27,11 +27,31 @@ data {
   
 }
 
+// manual says: the statements in the transformed data block are only ever evaluated once
+transformed data {
+  
+  vector [n] coef_GPP;
+  vector [n] coef_ER;
+  vector [n] coef_K600;
+
+  // Convert daily rates to per-observation rates, using pairmeans except for the first observation
+  coef_GPP[1]  <- frac_GPP[1] / depth[1];
+  coef_ER[1]   <- frac_ER[1] / depth[1];
+  coef_K600[1] <- KO2_conv[1] * frac_D[1];
+  for(i in 2:n) {
+    coef_GPP[i]  <- (frac_GPP[i]+frac_GPP[i-1])/2 / ((depth[i]+depth[i-1])/2);
+    coef_ER[i]   <- (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2);
+    coef_K600[i] <- (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2;
+  }
+  
+}
+
 parameters {
   
   real GPP_daily;
   real ER_daily;
   real K600_daily;
+  // real DO_mod_1;
   vector [n] err_proc;
   
   // bounded prior (implied uniform) on the sd of the errors between modeled and observed DO
@@ -41,7 +61,8 @@ parameters {
   
 }
 
-model {
+// manual says: evaluated once per leapfrog step
+transformed parameters {
   
   // Declare temporary variables
   vector [n] GPP;
@@ -49,15 +70,13 @@ model {
   vector [n] K;
   vector [n] DO_mod;
   
-  // Convert daily rates to per-observation rates
-  for(i in 2:n) {
-    GPP[i] <- GPP_daily * (frac_GPP[i]+frac_GPP[i-1])/2 / ((depth[i]+depth[i-1])/2);
-    ER[i] <- ER_daily * (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2);
-    K[i] <- K600_daily * (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2;
-  }
-  
+  // Convert daily rates to per-observation rates (vectorized)
+  GPP <- GPP_daily * coef_GPP;
+  ER <- ER_daily * coef_ER;
+  K <- K600_daily * coef_K600;
+
   // Model DO time series
-  DO_mod[1] <- DO_obs[1];
+  DO_mod[1] <- DO_obs[1]; // DO_mod_1;
   for(i in 2:n) {
     DO_mod[i] <- (
       DO_mod[i-1] +
@@ -67,22 +86,25 @@ model {
         err_proc[i]
     ) / (1 + K[i]/2);
   }
+
+}
+
+model {
   
   // Process error: Build an error timeseries with a fitted autocorrelation structure
-  err_proc[1] ~ normal(0, err_proc_sigma);
+  // err_proc[1] ~ normal(0, err_proc_sigma);
   for(i in 2:n) {
     err_proc[i] ~ normal(err_proc_phi*err_proc[i-1], err_proc_sigma);
   }
   // Prior on the autocorrelation & sd of the process errors
-  //err_proc_phi ~ uniform(err_proc_phi_min, err_proc_phi_max);
-  //err_proc_sigma ~ uniform(err_proc_sigma_min, err_proc_sigma_max);
+  //err_proc_phi ~ uniform(err_proc_phi_min, err_proc_phi_max); // implied in parameters declaration
+  //err_proc_sigma ~ uniform(err_proc_sigma_min, err_proc_sigma_max); // implied in parameters declaration
   
   // Observation error: Compare all the DO predictions to their observations
-  for (i in 2:n) {
-    DO_obs[i] ~ normal(DO_mod[i], err_obs_sigma);
-  }
+  //DO_mod_1 ~ normal(DO_obs[1], err_obs_sigma);
+  DO_obs ~ normal(DO_mod, err_obs_sigma);
   // Prior on the sd of the errors between modeled and observed DO; this is actually unnecessary to specify
-  //err_obs_sigma ~ uniform(err_obs_sigma_min, err_obs_sigma_max);
+  //err_obs_sigma ~ uniform(err_obs_sigma_min, err_obs_sigma_max); // implied in parameters declaration
   
   // Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
