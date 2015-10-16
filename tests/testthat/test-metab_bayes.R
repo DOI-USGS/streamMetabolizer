@@ -70,7 +70,7 @@ test_that("prepdata_bayes and mcmc_bayes run with Stan", {
 })
 
 test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
-  model_specs <- specs_bayes_stan_nopool_procobserr(n_cores=4, burnin_steps=100, num_saved_steps = 200)
+  model_specs <- specs_bayes_stan_nopool_procobserr(n_cores=4, burnin_steps=2000, num_saved_steps=1000, err_proc_phi_max=1)
   model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
   
   # prepdata
@@ -80,11 +80,17 @@ test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
   expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
   
   # mcmc
-  mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
-    list(data_list=data_list),
-    model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  system.time({
+    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+      list(data_list=data_list, keep_mcmc=TRUE),
+      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  })
   expect_is(mcmc_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
+  expect_output(show(mcmc_out$stanfit[[1]]), "Inference for Stan model")
+  plot(mcmc_out$stanfit[[1]])
+  pairs(mcmc_out$stanfit[[1]])
+  traceplot(mcmc_out$stanfit[[1]])
   
   # in plys
   ply_out <- streamMetabolizer:::bayes_1ply(
