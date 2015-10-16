@@ -4,9 +4,9 @@
 \alias{runstan_bayes}
 \title{Run Stan on a formatted data ply}
 \usage{
-runstan_bayes(data_list, model_path, params_out, n_chains = 4, n_cores = 4,
-  burnin_steps = 1000, num_saved_steps = 1000, thin_steps = 1,
-  verbose = FALSE, ...)
+runstan_bayes(data_list, model_path, params_out, keep_mcmc = FALSE,
+  n_chains = 4, n_cores = 4, burnin_steps = 1000,
+  num_saved_steps = 1000, thin_steps = 1, verbose = FALSE, ...)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}
@@ -15,6 +15,10 @@ runstan_bayes(data_list, model_path, params_out, n_chains = 4, n_cores = 4,
 
 \item{params_out}{a character vector of parameters whose values in the MCMC
 runs should be recorded and summarized}
+
+\item{keep_mcmc}{logical. If TRUE, the Jags or Stan output object will be
+saved. Be careful; these can be big, and a run with many models might
+overwhelm R's memory.}
 
 \item{n_chains}{number of chains to use}
 

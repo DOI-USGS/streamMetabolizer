@@ -255,8 +255,11 @@ prepdata_bayes <- function(
 #' @param data_list a formatted list of inputs to the JAGS model
 #' @param bayes_software character string indicating which software to use
 #' @param model_path the JAGS model file to use, as a full file path
-#' @param params_out a character vector of parameters whose values in the MCMC
+#' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
+#' @param keep_mcmc logical. If TRUE, the Jags or Stan output object will be
+#'   saved. Be careful; these can be big, and a run with many models might
+#'   overwhelm R's memory.
 #' @param n_chains the number of chains to run
 #' @param n_cores the number of cores to apply to this run
 #' @param adapt_steps the number of steps to use in adapting the model
@@ -268,7 +271,7 @@ prepdata_bayes <- function(
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
   bayes_software <- match.arg(bayes_software)
   bayes_function <- switch(bayes_software, jags = runjags_bayes, stan = runstan_bayes)
   
@@ -277,7 +280,7 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
   message(paste0("MCMC: requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
   
   bayes_function(
-    data_list=data_list, model_path=model_path, params_out=params_out, n_chains=n_chains, n_cores=n_cores, 
+    data_list=data_list, model_path=model_path, params_out=params_out, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
     adapt_steps=adapt_steps, burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps, verbose=verbose)
 }
 
@@ -293,7 +296,7 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
 #' @importFrom runjags run.jags
 #' @import dplyr
 #' @keywords internal
-runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -329,6 +332,13 @@ runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_s
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
     setNames(paste0(names_params, "_", names_stats))
   
+  # add the model object if requested. this will make the output unprintable
+  # (unless you leave off the last column), but it will make the model object
+  # accessible for further inspection
+  if(keep_mcmc == TRUE) {
+    jags_out <- mutate(jags_out, jagsfit=list(runjags_out))
+  }
+
   return(jags_out)
 }
 
@@ -342,7 +352,7 @@ runjags_bayes <- function(data_list, model_path, params_out, n_chains=4, adapt_s
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
   library('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
   
@@ -361,13 +371,26 @@ runstan_bayes <- function(data_list, model_path, params_out, n_chains=4, n_cores
     open_progress=FALSE,
     cores=n_cores)
 
+  # this is a good place for a breakpoint when running small numbers of models manually
+  #   show(runstan_out)
+  #   rstan::plot(runstan_out)
+  #   pairs(runstan_out)
+  #   traceplot(runstan_out)
+  
   # format output into a 1-row data.frame. see ls('package:rstan')
   stan_mat <- rstan::summary(runstan_out)$summary
   names_params <- rep(rownames(stan_mat), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
   names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
   stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-    setNames(paste0(names_params, "_", names_stats))
+    setNames(paste0(names_params, "_", names_stats)) 
+  
+  # add the model object if requested. this will make the output unprintable
+  # (unless you leave off the last column), but it will make the model object
+  # accessible for further inspection
+  if(keep_mcmc == TRUE) {
+    stan_out <- mutate(stan_out, stanfit=list(runstan_out))
+  }
   
   return(stan_out)
 }

@@ -5,9 +5,9 @@
 \title{Run an MCMC simulation on a formatted data ply}
 \usage{
 mcmc_bayes(data_list, bayes_software = c("stan", "jags"), model_path,
-  params_out, n_chains = 4, n_cores = 4, adapt_steps = 1000,
-  burnin_steps = 4000, num_saved_steps = 40000, thin_steps = 1,
-  verbose = FALSE)
+  params_out, keep_mcmc = FALSE, n_chains = 4, n_cores = 4,
+  adapt_steps = 1000, burnin_steps = 4000, num_saved_steps = 40000,
+  thin_steps = 1, verbose = FALSE)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}
@@ -18,6 +18,10 @@ mcmc_bayes(data_list, bayes_software = c("stan", "jags"), model_path,
 
 \item{params_out}{a character vector of parameters whose values in the MCMC
 runs should be recorded and summarized}
+
+\item{keep_mcmc}{logical. If TRUE, the Jags or Stan output object will be
+saved. Be careful; these can be big, and a run with many models might
+overwhelm R's memory.}
 
 \item{n_chains}{the number of chains to run}
 
