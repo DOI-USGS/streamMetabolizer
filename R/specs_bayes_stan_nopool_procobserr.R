@@ -15,6 +15,7 @@ specs_bayes_stan_nopool_procobserr <- function(
   model_file = 'nopool_procobserr_pairmeans.stan',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'stan',
+  keep_mcmcs = FALSE,
   
   # hyperparameters
   GPP_daily_mu = 10,
@@ -35,7 +36,7 @@ specs_bayes_stan_nopool_procobserr <- function(
   priors = FALSE,
   
   # inheritParams mcmc_bayes
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"), #"DO_mod_1", 
   n_chains = 4, 
   n_cores = 1, 
   burnin_steps = 500, 
