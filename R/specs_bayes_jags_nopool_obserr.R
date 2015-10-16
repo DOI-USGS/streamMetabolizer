@@ -15,6 +15,7 @@ specs_bayes_jags_nopool_obserr <- function(
   model_file = 'nopool_obserr_pairmeans.jags', # or 'nopool_obserr_Euler.jags'
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
+  keep_mcmcs = FALSE,
   
   # hyperparameters
   GPP_daily_mu = 10,

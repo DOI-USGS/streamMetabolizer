@@ -15,6 +15,7 @@ specs_bayes_stan_nopool_obserr <- function(
   model_file = 'nopool_obserr_pairmeans.stan', # or 'nopool_obserr_Euler.stan'
   bayes_fun = 'bayes_1ply',
   bayes_software = 'stan',
+  keep_mcmcs = FALSE,
   
   # hyperparameters
   GPP_daily_mu = 10,

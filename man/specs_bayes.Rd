@@ -9,13 +9,13 @@
 \title{Functions giving specifications for metab_bayes model variants}
 \usage{
 specs_bayes_jags_nopool_obserr(model_file = "nopool_obserr_pairmeans.jags",
-  bayes_fun = "bayes_1ply", bayes_software = "jags", GPP_daily_mu = 10,
-  GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
-  K600_daily_mu = 10, K600_daily_sigma = 10, err_obs_sigma_min = 0,
-  err_obs_sigma_max = 0.5, priors = FALSE, params_out = c("GPP_daily",
-  "ER_daily", "K600_daily", "err_obs_sigma"), n_chains = 4, n_cores = 1,
-  adapt_steps = 100, burnin_steps = 40, num_saved_steps = 400,
-  thin_steps = 1, verbose = FALSE)
+  bayes_fun = "bayes_1ply", bayes_software = "jags", keep_mcmcs = FALSE,
+  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
+  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
+  err_obs_sigma_min = 0, err_obs_sigma_max = 0.5, priors = FALSE,
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  n_chains = 4, n_cores = 1, adapt_steps = 100, burnin_steps = 40,
+  num_saved_steps = 400, thin_steps = 1, verbose = FALSE)
 
 
   specs_bayes_jags_nopool_procobserr(model_file = "nopool_procobserr_pairmeans.jags",
@@ -30,13 +30,13 @@ specs_bayes_jags_nopool_obserr(model_file = "nopool_obserr_pairmeans.jags",
   num_saved_steps = 400, thin_steps = 1, verbose = FALSE)
 
 specs_bayes_stan_nopool_obserr(model_file = "nopool_obserr_pairmeans.stan",
-  bayes_fun = "bayes_1ply", bayes_software = "stan", GPP_daily_mu = 10,
-  GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
-  K600_daily_mu = 10, K600_daily_sigma = 10, err_obs_sigma_min = 0,
-  err_obs_sigma_max = 0.5, priors = FALSE, params_out = c("GPP_daily",
-  "ER_daily", "K600_daily", "err_obs_sigma"), n_chains = 4, n_cores = 1,
-  burnin_steps = 500, num_saved_steps = 500, thin_steps = 1,
-  verbose = FALSE)
+  bayes_fun = "bayes_1ply", bayes_software = "stan", keep_mcmcs = FALSE,
+  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
+  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
+  err_obs_sigma_min = 0, err_obs_sigma_max = 0.5, priors = FALSE,
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  n_chains = 4, n_cores = 1, burnin_steps = 500, num_saved_steps = 500,
+  thin_steps = 1, verbose = FALSE)
 
 
   specs_bayes_stan_nopool_procobserr(model_file = "nopool_procobserr_pairmeans.stan",
@@ -70,7 +70,12 @@ whether the data should be split into daily chunks first ('bayes_1ply') or
 passed to the model fitting function in one big chunk ('bayes_all')}
 
 \item{bayes_software}{character in \code{c('jags','stan')} indicating the
-  software package to use for the MCMC process}
+software package to use for the MCMC process}
+
+\item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates
+  (coerced with as.Date if character, etc.) indicating whether to keep all of
+  the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
+  default is FALSE because these objects can be very large.}
 
 \item{GPP_daily_mu}{The mean of a dnorm distribution for GPP_daily, the daily
 rate of gross primary production}

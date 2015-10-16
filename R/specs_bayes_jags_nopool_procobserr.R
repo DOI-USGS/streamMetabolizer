@@ -10,18 +10,22 @@
 #'   with \code{system.file("models/bayes", package="streamMetabolizer")}) or as
 #'   an absolute path or a path relative to the current working directory (the 
 #'   second assumption, if the first assumption turns up no files of the given 
-#'   name). For example, the default is
+#'   name). For example, the default is 
 #'   \code{"nopool_procobserr_pairmeans.jags"}. The containing folder is in this
-#'   case \code{"models/bayes"}. The suffix, 'jags', will determine which MCMC
+#'   case \code{"models/bayes"}. The suffix, 'jags', will determine which MCMC 
 #'   software package is used. The file name (in this case 
-#'   \code{"nopool_procobserr_pairmeans.jags"}) will determine not only the
-#'   model file to use but also which variables are packaged and sent to the
+#'   \code{"nopool_procobserr_pairmeans.jags"}) will determine not only the 
+#'   model file to use but also which variables are packaged and sent to the 
 #'   MCMC software.
 #' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 #'   whether the data should be split into daily chunks first ('bayes_1ply') or 
 #'   passed to the model fitting function in one big chunk ('bayes_all')
 #' @param bayes_software character in \code{c('jags','stan')} indicating the 
 #'   software package to use for the MCMC process
+#' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
+#'   (coerced with as.Date if character, etc.) indicating whether to keep all of
+#'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
+#'   default is FALSE because these objects can be very large.
 #'   
 #' @param GPP_daily_mu The mean of a dnorm distribution for GPP_daily, the daily
 #'   rate of gross primary production

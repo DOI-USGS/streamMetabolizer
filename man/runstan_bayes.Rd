@@ -20,9 +20,9 @@ runs should be recorded and summarized}
 saved. Be careful; these can be big, and a run with many models might
 overwhelm R's memory.}
 
-\item{n_chains}{number of chains to use}
+\item{n_chains}{the number of chains to run}
 
-\item{n_cores}{number of parallel cores to use}
+\item{n_cores}{the number of cores to apply to this run}
 
 \item{burnin_steps}{the number of steps to run and ignore before starting to
 collect MCMC 'data'}

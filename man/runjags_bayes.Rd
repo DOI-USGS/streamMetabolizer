@@ -20,7 +20,7 @@ runs should be recorded and summarized}
 saved. Be careful; these can be big, and a run with many models might
 overwhelm R's memory.}
 
-\item{n_chains}{number of chains to use}
+\item{n_chains}{the number of chains to run}
 
 \item{adapt_steps}{the number of steps to use in adapting the model}
 

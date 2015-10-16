@@ -68,16 +68,31 @@ metab_bayes <- function(
         normalizePath(file.path(system.file("models", package="streamMetabolizer"), model_specs$model_file)), " or\n",
         normalizePath(model_specs$model_file))))
     
+    # check the format of keep_mcmcs (more checks, below, are bayes_fun-specific)
+    if(is.logical(model_specs$keep_mcmcs) && length(model_specs$keep_mcmcs) != 1) {
+      stop("if keep_mcmcs is logical, it must have length 1")
+    }
+    
     # model the data
     switch(
       model_specs$bayes_fun,
       'bayes_1ply' = {
+        if(!is.logical(model_specs$keep_mcmcs)) {
+          model_specs$keep_mcmcs <- as.Date(model_specs$keep_mcmcs)
+        }
         # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
         bayes_all <- mm_model_by_ply(
           bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
           day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
           tests=tests, # for mm_is_valid_day
           model_specs=model_specs) # for bayes_1ply
+        if('mcmcfit' %in% names(bayes_all)) {
+          bayes_mcmc <- bayes_all$mcmcfit
+          names(bayes_mcmc) <- bayes_all$local.date
+          bayes_all$mcmcfit <- NULL
+        } else {
+          bayes_mcmc <- NULL
+        }
       },
       'bayes_all' = {
         # all days at a time, after first filtering out bad days
@@ -97,6 +112,7 @@ metab_bayes <- function(
     model_class="metab_bayes", 
     info=info,
     fit=bayes_all,
+    mcmc=bayes_mcmc,
     fitting_time=fitting_time,
     args=list(
       model_specs=model_specs,
@@ -140,7 +156,12 @@ bayes_1ply <- function(
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, local_date=local_date,
           model_specs=model_specs, priors=model_specs$priors)
-        all_mcmc_args <- c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')
+        model_specs$keep_mcmc <- if(is.logical(model_specs$keep_mcmcs)) {
+          isTRUE(model_specs$keep_mcmcs)
+        } else {
+          isTRUE(local_date %in% model_specs$keep_mcmcs)
+        }
+        all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
           model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
@@ -292,7 +313,6 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @param n_chains number of chains to use
 #' @importFrom runjags run.jags
 #' @import dplyr
 #' @keywords internal
@@ -332,11 +352,9 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
     setNames(paste0(names_params, "_", names_stats))
   
-  # add the model object if requested. this will make the output unprintable
-  # (unless you leave off the last column), but it will make the model object
-  # accessible for further inspection
+  # add the model object if requested
   if(keep_mcmc == TRUE) {
-    jags_out <- mutate(jags_out, jagsfit=list(runjags_out))
+    jags_out <- mutate(jags_out, mcmcfit=list(runjags_out))
   }
 
   return(jags_out)
@@ -346,8 +364,6 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @param n_chains number of chains to use
-#' @param n_cores number of parallel cores to use
 #' @importFrom rstan stan
 #' @import parallel
 #' @import dplyr
@@ -371,7 +387,8 @@ runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     open_progress=FALSE,
     cores=n_cores)
 
-  # this is a good place for a breakpoint when running small numbers of models manually
+  # this is a good place for a breakpoint when running small numbers of models
+  # manually (or keep_mcmc also helps with inspection)
   #   show(runstan_out)
   #   rstan::plot(runstan_out)
   #   pairs(runstan_out)
@@ -385,11 +402,9 @@ runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
     setNames(paste0(names_params, "_", names_stats)) 
   
-  # add the model object if requested. this will make the output unprintable
-  # (unless you leave off the last column), but it will make the model object
-  # accessible for further inspection
+  # add the model object if requested
   if(keep_mcmc == TRUE) {
-    stan_out <- mutate(stan_out, stanfit=list(runstan_out))
+    stan_out <- mutate(stan_out, mcmcfit=list(runstan_out))
   }
   
   return(stan_out)
@@ -407,6 +422,30 @@ runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @family metab.model.classes
 setClass(
   "metab_bayes", 
-  contains="metab_model"
+  contains="metab_model",
+  slots=c(mcmc="ANY")
 )
 
+#' Extract any MCMC model objects that were stored with the model
+#' 
+#' A function specific to metab_bayes models. Returns an MCMC object or, for 
+#' nopool models, a list of MCMC objects. These objects are not saved by 
+#' default; see \code{keep_mcmcs} argument to \code{specs_}-type functions for 
+#' options.
+#' 
+#' @param metab_model A Bayesian metabolism model (metab_bayes) from which to
+#'   return the MCMC model object[s]
+#' @return The MCMC model object[s]
+#' @export
+get_mcmc <- function(metab_model) {
+  UseMethod("get_mcmc")
+}
+
+#' Retrieve any MCMC model object[s] that were saved with a metab_bayes model
+#' 
+#' @inheritParams get_mcmc
+#' @export 
+#' @family get_mcmc
+get_mcmc.metab_bayes <- function(metab_model) {
+  metab_model@mcmc
+}
