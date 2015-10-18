@@ -53,9 +53,11 @@ test_that("prepdata_bayes and mcmc_bayes run with Stan", {
   expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
   
   # mcmc
-  mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
-    list(data_list=data_list),
-    model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  system.time({
+    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+      list(data_list=data_list),
+      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  })
   expect_is(mcmc_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
   
@@ -102,6 +104,24 @@ test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
   
 })
 
+test_that("yackulic model runs", {
+  model_specs <- specs_bayes_stan_nopool_procacoriiderr(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
+  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+  data_list <- streamMetabolizer:::prepdata_bayes(
+    data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+  
+  system.time({
+    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+      list(data_list=data_list, keep_mcmc=TRUE),
+      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  })
+  show(mcmc_out$mcmcfit[[1]])
+  plot(mcmc_out$mcmcfit[[1]])
+  # pairs(mcmc_out$mcmcfit[[1]])
+  traceplot(mcmc_out$mcmcfit[[1]])
+  
+})
+
 test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   
   # specs_bayes_jags_nopool_obserr
@@ -144,10 +164,11 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
     expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
     
     # specs_bayes_stan_nopool_procobserr
-    mm <- mmSOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_procobserr(n_cores=3, n_chains=3, keep_mcmcs="2012-08-24", burnin_steps = 100, num_saved_steps = 100))
-    expect_is(mm@mcmc[[2]], "stanfit")
+    mm <- mmSOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_procobserr(n_cores=4, n_chains=4, keep_mcmcs="2012-08-24", burnin_steps = 3000, num_saved_steps = 1000))
+    expect_is(get_fitting_time(mm), "proc_time")
+    expect_is(get_mcmc(mm)[[2]], "stanfit")
     expect_equal(names(mm@mcmc)[2], "2012-08-24")
-    metab <- predict_metab(mm)
+    predict_metab(mm)
     get_fit(mm)[grep("Rhat", names(get_fit(mm)))]
     expect_equal(metab$GPP.lower, get_fit(mm)$GPP_daily_2.5pct)
     DO_preds <- predict_DO(mm)

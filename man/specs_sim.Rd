@@ -48,6 +48,7 @@ Other model_specs: \code{\link{specs_bayes}},
   \code{\link{specs_bayes_jags_nopool_obserr}},
   \code{\link{specs_bayes_jags_nopool_procobserr}},
   \code{\link{specs_bayes_stan_nopool_obserr}},
+  \code{\link{specs_bayes_stan_nopool_procacoriiderr}},
   \code{\link{specs_bayes_stan_nopool_procobserr}};
   \code{\link{specs_mle}}, \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}};
