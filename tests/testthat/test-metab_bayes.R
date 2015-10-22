@@ -42,85 +42,88 @@ test_that("prepdata_bayes and mcmc_bayes run with JAGS", {
   
 })
 
-test_that("prepdata_bayes and mcmc_bayes run with Stan", {
-  model_specs <- specs_bayes_stan_nopool_obserr(n_cores=2)
-  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+dontrun <- function() {
   
-  # prepdata
-  data_list <- streamMetabolizer:::prepdata_bayes(
-    data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
-  expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
-  expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
-  
-  # mcmc
-  system.time({
-    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
-      list(data_list=data_list),
-      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  test_that("prepdata_bayes and mcmc_bayes run with Stan", {
+    model_specs <- specs_bayes_stan_nopool_obserr(n_cores=2)
+    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+    
+    # prepdata
+    data_list <- streamMetabolizer:::prepdata_bayes(
+      data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+    expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
+    expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
+    
+    # mcmc
+    system.time({
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+        list(data_list=data_list),
+        model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    })
+    expect_is(mcmc_out, 'data.frame')
+    expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
+    
+    # in plys
+    ply_out <- streamMetabolizer:::bayes_1ply(
+      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, local_date="2012-08-24",
+      tests=c('full_day', 'even_timesteps', 'complete_data'),
+      model_specs=model_specs)
+    expect_is(ply_out, 'data.frame')
+    expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
+    
   })
-  expect_is(mcmc_out, 'data.frame')
-  expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
   
-  # in plys
-  ply_out <- streamMetabolizer:::bayes_1ply(
-    data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, local_date="2012-08-24",
-    tests=c('full_day', 'even_timesteps', 'complete_data'),
-    model_specs=model_specs)
-  expect_is(ply_out, 'data.frame')
-  expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
-  
-})
-
-test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
-  model_specs <- specs_bayes_stan_nopool_procobserr(n_cores=4, burnin_steps=2000, num_saved_steps=1000, err_proc_phi_max=1)
-  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
-  
-  # prepdata
-  data_list <- streamMetabolizer:::prepdata_bayes(
-    data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
-  expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
-  expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
-  
-  # mcmc
-  system.time({
-    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
-      list(data_list=data_list, keep_mcmc=TRUE),
-      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
+    model_specs <- specs_bayes_stan_nopool_procobserr(n_cores=4, burnin_steps=2000, num_saved_steps=1000, err_proc_phi_max=1)
+    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+    
+    # prepdata
+    data_list <- streamMetabolizer:::prepdata_bayes(
+      data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+    expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
+    expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
+    
+    # mcmc
+    system.time({
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+        list(data_list=data_list, keep_mcmc=TRUE),
+        model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    })
+    expect_is(mcmc_out, 'data.frame')
+    expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
+    expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
+    plot(mcmc_out$mcmcfit[[1]])
+    pairs(mcmc_out$mcmcfit[[1]])
+    traceplot(mcmc_out$mcmcfit[[1]])
+    
+    # in plys
+    ply_out <- streamMetabolizer:::bayes_1ply(
+      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, local_date="2012-08-24",
+      tests=c('full_day', 'even_timesteps', 'complete_data'),
+      model_specs=model_specs)
+    expect_is(ply_out, 'data.frame')
+    expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
+    
   })
-  expect_is(mcmc_out, 'data.frame')
-  expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
-  expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
-  plot(mcmc_out$mcmcfit[[1]])
-  pairs(mcmc_out$mcmcfit[[1]])
-  traceplot(mcmc_out$mcmcfit[[1]])
   
-  # in plys
-  ply_out <- streamMetabolizer:::bayes_1ply(
-    data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, local_date="2012-08-24",
-    tests=c('full_day', 'even_timesteps', 'complete_data'),
-    model_specs=model_specs)
-  expect_is(ply_out, 'data.frame')
-  expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
-  
-})
-
-test_that("yackulic model runs", {
-  model_specs <- specs_bayes_stan_nopool_procacoriiderr(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
-  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
-  data_list <- streamMetabolizer:::prepdata_bayes(
-    data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
-  
-  system.time({
-    mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
-      list(data_list=data_list, keep_mcmc=TRUE),
-      model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+  test_that("yackulic model runs", {
+    model_specs <- specs_bayes_stan_nopool_procacoriiderr(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
+    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+    data_list <- streamMetabolizer:::prepdata_bayes(
+      data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+    
+    system.time({
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+        list(data_list=data_list, keep_mcmc=TRUE),
+        model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    })
+    show(mcmc_out$mcmcfit[[1]])
+    plot(mcmc_out$mcmcfit[[1]])
+    # pairs(mcmc_out$mcmcfit[[1]])
+    traceplot(mcmc_out$mcmcfit[[1]])
+    
   })
-  show(mcmc_out$mcmcfit[[1]])
-  plot(mcmc_out$mcmcfit[[1]])
-  # pairs(mcmc_out$mcmcfit[[1]])
-  traceplot(mcmc_out$mcmcfit[[1]])
-  
-})
+}
 
 test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   

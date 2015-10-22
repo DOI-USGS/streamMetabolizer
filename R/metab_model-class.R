@@ -216,13 +216,15 @@ get_version.metab_model <- function(metab_model) {
 predict_metab.metab_model <- function(metab_model, ...) {
   
   fit <- get_fit(metab_model)
+  var_vec <- c('GPP','ER','K600')
   precalc_cis <- grep("^(GPP|ER|K600)_daily_(50pct|2\\.5pct|97\\.5pct)$", names(fit), value=TRUE)
   calcnow_cis <- grep("^(GPP|ER|K600)(\\.sd)*$", names(fit), value=TRUE)
   if(length(precalc_cis) == 9) {
     # the fit includes columns for GPP_daily_2.5pct, etc.; use these as CIs. first get the columns in order
+    vars <- medlohi <- '.dplyr.var'
     grepstrs <- expand.grid(
       medlohi=c('50pct', '2\\.5pct', '97\\.5pct'),
-      vars=c('GPP','ER','K600')) %>%
+      vars=var_vec) %>%
       with(paste0("^(",vars,")_daily_(",medlohi,")$"))
     precalc_cis <- sapply(grepstrs, grep, names(fit), value=TRUE, USE.NAMES=FALSE)
     fit[c('local.date', precalc_cis)] %>% 
@@ -233,7 +235,7 @@ predict_metab.metab_model <- function(metab_model, ...) {
     ci_level <- 0.95
     crit <- qnorm((1 + ci_level)/2)
     c(list(fit['local.date']),
-      lapply(vars, function(var) {
+      lapply(var_vec, function(var) {
         est <- fit[[var]]
         sd <- fit[[paste0(var,".sd")]]
         if(is.null(sd)) sd <- NA

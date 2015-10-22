@@ -42,11 +42,11 @@ test_that("metab_models have default predict_metab and predict_DO methods", {
   mm <- metab_model()
   
   # predict_metab
-  expect_warning(metab <- predict_metab(mm), "model does not contain all columns GPP, ER, K600")
+  expect_warning(metab <- predict_metab(mm), "model is missing columns")
   expect_equal(names(metab), c("local.date","GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper"))
   
   # predict_DO
-  expect_warning(DO_preds <- predict_DO(mm), "model does not contain all columns GPP, ER, K600")
+  expect_warning(DO_preds <- predict_DO(mm), "model is missing columns")
   expect_equal(names(DO_preds), c("local.date", names(get_data(mm)), "DO.mod"))
 
 })
