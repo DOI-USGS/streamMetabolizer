@@ -1,6 +1,6 @@
-#' \code{specs_bayes_jags_nopool_obserr} - a JAGS model with no pooling and only
-#' observation error. Compatible \code{model_file} options are 
-#' \code{c('nopool_obserr_pairmeans.jags', 'nopool_obserr_Euler.jags')}.
+#' \code{specs_bayes_stan_nopool_obserr} - a Stan model with no pooling and both
+#' process and observation error. Compatible \code{model_file} options are 
+#' \code{c('nopool_procobserr_pairmeans.stan', 'nopool_procobserr_Euler.stan')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -9,12 +9,12 @@
 #' @inheritParams mcmc_bayes
 #'   
 #' @export
-specs_bayes_jags_nopool_obserr <- function(
+specs_bayes_stan_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_obserr_pairmeans.jags', # or 'nopool_obserr_Euler.jags'
+  model_file = 'nopool_procobserr_pairmeans.stan',
   bayes_fun = 'bayes_1ply',
-  bayes_software = 'jags',
+  bayes_software = 'stan',
   keep_mcmcs = FALSE,
   
   # hyperparameters
@@ -24,7 +24,11 @@ specs_bayes_jags_nopool_obserr <- function(
   ER_daily_sigma = 10,
   K600_daily_mu = 10,
   K600_daily_sigma = 10,
-  
+ 
+  err_proc_phi_min = 0,
+  err_proc_phi_max = 1,
+  err_proc_sigma_min = 0,
+  err_proc_sigma_max = 0.0005,
   err_obs_sigma_min = 0,
   err_obs_sigma_max = 0.5,
   
@@ -32,12 +36,11 @@ specs_bayes_jags_nopool_obserr <- function(
   priors = FALSE,
   
   # inheritParams mcmc_bayes
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"), #"DO_mod_1", 
   n_chains = 4, 
   n_cores = 1, 
-  adapt_steps = 100, 
-  burnin_steps = 40, 
-  num_saved_steps = 400, 
+  burnin_steps = 500, 
+  num_saved_steps = 500, 
   thin_steps = 1,
   verbose = FALSE
   

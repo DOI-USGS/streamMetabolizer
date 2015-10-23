@@ -15,7 +15,10 @@ Functions giving specifications for metab_night model variants
 \seealso{
 Other model_specs: \code{\link{specs_bayes}},
   \code{\link{specs_bayes_jags_nopool_obserr}},
-  \code{\link{specs_bayes_jags_nopool_procobserr}};
+  \code{\link{specs_bayes_jags_nopool_procobserr}},
+  \code{\link{specs_bayes_stan_nopool_obserr}},
+  \code{\link{specs_bayes_stan_nopool_procacoriiderr}},
+  \code{\link{specs_bayes_stan_nopool_procobserr}};
   \code{\link{specs_mle}}, \code{\link{specs_mle_obserr}},
   \code{\link{specs_mle_procerr}}; \code{\link{specs_sim}},
   \code{\link{specs_sim_basic}}

@@ -1,7 +1,6 @@
 #' \code{specs_bayes_jags_nopool_procobserr} - a JAGS model with no pooling and 
 #' both process and observation error. Compatible \code{model_file} options are 
-#' \code{c('jags/nopool_procobserr_pairmeans.txt',
-#' 'jags/nopool_procobserr_Euler.txt')}.
+#' \code{c('nopool_procobserr_pairmeans.jags', 'nopool_procobserr_Euler.jags')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -11,110 +10,90 @@
 #'   with \code{system.file("models/bayes", package="streamMetabolizer")}) or as
 #'   an absolute path or a path relative to the current working directory (the 
 #'   second assumption, if the first assumption turns up no files of the given 
-#'   name). For example, the default is \code{"jags/metab_bayes_simple.txt"}. 
-#'   The containing folder (in this case \code{"jags"}) will determine which 
-#'   MCMC software package is used. The file name (in this case 
-#'   \code{"metab_bayes_simple.txt"}) will determine not only the model file to 
-#'   use but also which variables are packaged and sent to the MCMC software.
+#'   name). For example, the default is 
+#'   \code{"nopool_procobserr_pairmeans.jags"}. The containing folder is in this
+#'   case \code{"models/bayes"}. The suffix, 'jags', will determine which MCMC 
+#'   software package is used. The file name (in this case 
+#'   \code{"nopool_procobserr_pairmeans.jags"}) will determine not only the 
+#'   model file to use but also which variables are packaged and sent to the 
+#'   MCMC software.
 #' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 #'   whether the data should be split into daily chunks first ('bayes_1ply') or 
 #'   passed to the model fitting function in one big chunk ('bayes_all')
 #' @param bayes_software character in \code{c('jags','stan')} indicating the 
 #'   software package to use for the MCMC process
+#' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
+#'   (coerced with as.Date if character, etc.) indicating whether to keep all of
+#'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
+#'   default is FALSE because these objects can be very large.
 #'   
-#' @param GPP.daily.mu The mean of a dnorm distribution for GPP.daily, the daily
+#' @param GPP_daily_mu The mean of a dnorm distribution for GPP_daily, the daily
 #'   rate of gross primary production
-#' @param GPP.daily.sigma The standard deviation of a dnorm distribution for 
-#'   GPP.daily, the daily rate of gross primary production
-#' @param ER.daily.mu The mean of a dnorm distribution for ER.daily, the daily 
+#' @param GPP_daily_sigma The standard deviation of a dnorm distribution for 
+#'   GPP_daily, the daily rate of gross primary production
+#' @param ER_daily_mu The mean of a dnorm distribution for ER_daily, the daily 
 #'   rate of ecosystem respiration
-#' @param ER.daily.sigma The standard deviation of a dnorm distribution for 
-#'   ER.daily, the daily rate of ecosystem respiration
-#' @param K600.daily.mu The mean of a dnorm distribution for K600.daily, the 
+#' @param ER_daily_sigma The standard deviation of a dnorm distribution for 
+#'   ER_daily, the daily rate of ecosystem respiration
+#' @param K600_daily_mu The mean of a dnorm distribution for K600_daily, the 
 #'   daily rate of reaeration
-#' @param K600.daily.sigma The standard deviation of a dnorm distribution for 
-#'   K600.daily, the daily rate of reaeration
-#' @param err.proc.phi.min The lower bound on a dunif distribution for 
-#'   err.proc.phi, the process error autocorrelation coefficient
-#' @param err.proc.phi.max The upper bound on a dunif distribution for 
-#'   err.proc.phi, the process error autocorrelation coefficient
-#' @param err.proc.sigma.min The lower bound on a dunif distribution for 
-#'   err.proc.sigma, the standard deviation of the process error
-#' @param err.proc.sigma.max The upper bound on a dunif distribution for 
-#'   err.proc.sigma, the standard deviation of the process error
-#' @param err.obs.sigma.min The lower bound on a dunif distribution for 
-#'   err.obs.sigma, the standard deviation of the observation error
-#' @param err.obs.sigma.max The upper bound on a dunif distribution for 
-#'   err.obs.sigma, the standard deviation of the observation error
+#' @param K600_daily_sigma The standard deviation of a dnorm distribution for 
+#'   K600_daily, the daily rate of reaeration
+#' @param err_proc_phi_min The lower bound on a dunif distribution for 
+#'   err_proc_phi, the process error autocorrelation coefficient
+#' @param err_proc_phi_max The upper bound on a dunif distribution for 
+#'   err_proc_phi, the process error autocorrelation coefficient
+#' @param err_proc_sigma_min The lower bound on a dunif distribution for 
+#'   err_proc_sigma, the standard deviation of the process error
+#' @param err_proc_sigma_max The upper bound on a dunif distribution for 
+#'   err_proc_sigma, the standard deviation of the process error
+#' @param err_obs_sigma_min The lower bound on a dunif distribution for 
+#'   err_obs_sigma, the standard deviation of the observation error
+#' @param err_obs_sigma_max The upper bound on a dunif distribution for 
+#'   err_obs_sigma, the standard deviation of the observation error
 #'   
-#' @inheritParams prepjags_bayes
-#' @inheritParams runjags_bayes
+#' @inheritParams prepdata_bayes
+#' @inheritParams mcmc_bayes
 #'   
 #' @export
 specs_bayes_jags_nopool_procobserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'jags/nopool_procobserr_pairmeans.txt',
+  model_file = 'nopool_procobserr_pairmeans.jags',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
+  keep_mcmcs = FALSE,
   
   # hyperparameters
-  GPP.daily.mu = 10,
-  GPP.daily.sigma = 10,
-  ER.daily.mu = -10,
-  ER.daily.sigma = 10,
-  K600.daily.mu = 10,
-  K600.daily.sigma = 10,
+  GPP_daily_mu = 10,
+  GPP_daily_sigma = 10,
+  ER_daily_mu = -10,
+  ER_daily_sigma = 10,
+  K600_daily_mu = 10,
+  K600_daily_sigma = 10,
   
-  err.proc.phi.min = 0,
-  err.proc.phi.max = 1,
-  err.proc.sigma.min = 0,
-  err.proc.sigma.max = 0.0005,
-  err.obs.sigma.min = 0,
-  err.obs.sigma.max = 0.5,
+  err_proc_phi_min = 0,
+  err_proc_phi_max = 1,
+  err_proc_sigma_min = 0,
+  err_proc_sigma_max = 0.0005,
+  err_obs_sigma_min = 0,
+  err_obs_sigma_max = 0.5,
   
-  # inheritParams prepjags_bayes
+  # inheritParams prepdata_bayes
   priors = FALSE,
   
-  # inheritParams runjags_bayes
-  params_out = c("GPP.daily", "ER.daily", "K600.daily", "err.obs.sigma", "err.proc.sigma", "err.proc.phi"),
-  max_cores = 4, 
+  # inheritParams mcmc_bayes
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
+  n_chains = 4, 
+  n_cores = 1, 
   adapt_steps = 100, 
   burnin_steps = 40, 
   num_saved_steps = 400, 
-  thin_steps = 1
+  thin_steps = 1,
+  verbose = FALSE
   
 ) {
   
-  list(
-    
-    model_file = model_file,
-    bayes_fun = bayes_fun,
-    bayes_software = bayes_software,
-    
-    GPP.daily.mu = GPP.daily.mu,
-    GPP.daily.sigma = GPP.daily.sigma,
-    ER.daily.mu = ER.daily.mu,
-    ER.daily.sigma = ER.daily.sigma,
-    K600.daily.mu = K600.daily.mu,
-    K600.daily.sigma = K600.daily.sigma,
-    
-    err.proc.phi.min = err.proc.phi.min,
-    err.proc.phi.max = err.proc.phi.max,
-    err.proc.sigma.min = err.proc.sigma.min,
-    err.proc.sigma.max = err.proc.sigma.max,
-    err.obs.sigma.min = err.obs.sigma.min,
-    err.obs.sigma.max = err.obs.sigma.max,
-    
-    priors = priors,
-    
-    params_out = params_out,
-    max_cores = max_cores, 
-    adapt_steps = adapt_steps, 
-    burnin_steps = burnin_steps, 
-    num_saved_steps = num_saved_steps, 
-    thin_steps = thin_steps
-    
-  )
+  as.list(environment())
   
 }

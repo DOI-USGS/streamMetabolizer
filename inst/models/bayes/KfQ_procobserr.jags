@@ -1,0 +1,59 @@
+model {
+  
+  # DAY-SPECIFIC PARAMETERS
+  for(d in 1:nday) {
+    
+    # Daily mean values of GPP and ER (gO2 m^-2 d^-1)
+    GPP_daily[d] ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
+    ER_daily[d] ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))
+    
+    # Linear relationship between K600 (m d^-1) and daily, standardized, centered, logged Q
+    K600_daily[d] ~ dnorm(KQ_icpt + KQ_slope*log(standardize(center(Q))), K600_daily_tau)
+
+    # Convert daily rates to per-observation rates
+    for(i in 1:n[d]) {
+      GPP[i,d] <- GPP_daily[d] * frac_GPP[i,d] / depth[i,d]
+      ER[i,d] <- ER_daily[d] * frac_ER[i,d] / depth[i,d]
+      K[i,d] <- K600_daily[d] * KO2_conv[i,d] * frac_D[i,d]
+    }
+    
+    # Set up initial DO_mod and err_proc for the day
+    DO_mod[1,d] <- DO_obs[1,d]
+    err_proc[1,d] <- 0
+
+    # TIMESTEP-SPECIFIC PARAMETERS
+    for(i in 2:n[d]) {
+      # Model DO changes as in Hotchkiss & Hall 2014, eq. 2
+      DO_mod[i,d] <- DO_mod[i-1,d] +
+        GPP[i,d] + 
+        ER[i,d] + 
+        K[i,d] * (DO_sat[i,d] - DO_mod[i-1,d]) +
+        err_proc[i,d]
+
+      # Process error: Build an error timeseries with a fitted autocorrelation structure
+      err_proc[i,d] ~ dnorm(err_proc_phi*err_proc[i-1,d], pow(err_proc_sigma, -2))
+  
+      # Observation error: Compare all the DO predictions to their observations
+      DO_obs[i,d] ~ dnorm(DO_mod[i,d], pow(err_obs_sigma, -2))
+   
+    }
+  }
+  
+  # TIME-INDEPENDENT PARAMETERS
+  
+  # Prior on the sd of the errors between modeled and observed DO
+  err_obs_sigma ~ dunif(0, 0.5)
+
+  # Prior on the autocorrelation & sd of the process errors
+  err_proc_phi <- 1
+  err_proc_sigma ~ dunif(0, 0.5)
+
+  # Priors on the intercept and slope of the K ~ Q relationshipo
+  KQ_icpt ~ dnorm(3, 1)
+  KQ_slope ~ dnorm(0, 1)
+  
+  # Supplied by the input
+  # GPP_daily_mu, GPP_daily_sigma
+  # ER_daily_mu, ER_daily_sigma
+
+}

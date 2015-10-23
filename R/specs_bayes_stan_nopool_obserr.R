@@ -1,6 +1,6 @@
-#' \code{specs_bayes_jags_nopool_obserr} - a JAGS model with no pooling and only
+#' \code{specs_bayes_stan_nopool_obserr} - a Stan model with no pooling and only
 #' observation error. Compatible \code{model_file} options are 
-#' \code{c('nopool_obserr_pairmeans.jags', 'nopool_obserr_Euler.jags')}.
+#' \code{c('nopool_obserr_pairmeans.stan', 'nopool_obserr_Euler.stan')}.
 #' 
 #' @rdname specs_bayes
 #'   
@@ -9,12 +9,12 @@
 #' @inheritParams mcmc_bayes
 #'   
 #' @export
-specs_bayes_jags_nopool_obserr <- function(
+specs_bayes_stan_nopool_obserr <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_obserr_pairmeans.jags', # or 'nopool_obserr_Euler.jags'
+  model_file = 'nopool_obserr_pairmeans.stan', # or 'nopool_obserr_Euler.stan'
   bayes_fun = 'bayes_1ply',
-  bayes_software = 'jags',
+  bayes_software = 'stan',
   keep_mcmcs = FALSE,
   
   # hyperparameters
@@ -35,14 +35,13 @@ specs_bayes_jags_nopool_obserr <- function(
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
   n_chains = 4, 
   n_cores = 1, 
-  adapt_steps = 100, 
-  burnin_steps = 40, 
-  num_saved_steps = 400, 
+  burnin_steps = 500, 
+  num_saved_steps = 500,
   thin_steps = 1,
   verbose = FALSE
   
 ) {
-  
+
   as.list(environment())
   
 }
