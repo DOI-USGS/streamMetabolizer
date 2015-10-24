@@ -1,12 +1,9 @@
-#' \code{specs_bayes_jags_nopool_obserr} - a JAGS model with no pooling and only
-#' observation error. Compatible \code{model_file} options are 
+#' MCMC estimation by JAGS with no pooling and only observation error
+#' 
+#' Compatible \code{model_file} options are
 #' \code{c('nopool_obserr_pairmeans.jags', 'nopool_obserr_Euler.jags')}.
 #' 
-#' @rdname specs_bayes
-#'   
-#' @inheritParams specs_bayes_jags_nopool_procobserr
-#' @inheritParams prepdata_bayes
-#' @inheritParams mcmc_bayes
+#' @inheritParams specs_all
 #'   
 #' @export
 specs_bayes_jags_nopool_obserr <- function(

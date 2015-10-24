@@ -55,7 +55,7 @@ A metab_bayes object containing the fitted model.
 }
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO,
-temperature, light, etc. See \code{\link{specs_bayes}} for relevant options
+temperature, light, etc. See \code{\link{specs_funs}} for relevant options
 for the \code{model_specs} argument.
 }
 \details{

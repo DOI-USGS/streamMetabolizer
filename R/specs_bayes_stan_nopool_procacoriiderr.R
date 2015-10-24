@@ -1,24 +1,10 @@
-#' \code{specs_bayes_stan_nopool_obserr} - a Stan model with no pooling and both
-#' process and observation error. Compatible \code{model_file} options are 
+#' MCMC estimation by Stan with no pooling and both process and observation
+#' error
+#' 
+#' Compatible \code{model_file} options are 
 #' \code{c('nopool_procobserr_pairmeans.stan', 'nopool_procobserr_Euler.stan')}.
 #' 
-#' @rdname specs_bayes
-#'   
-#' @param err_proc_acor_phi_min lower bound on the autocorrelation coefficient
-#'   for the autocorrelated component of process & observation error
-#' @param err_proc_acor_phi_max upper bound on the autocorrelation coefficient
-#'   for the autocorrelated component of process & observation error
-#' @param err_proc_acor_sigma_min lower bound on the standard deviation of the 
-#'   autocorrelated component of process & observation error
-#' @param err_proc_acor_sigma_max upper bound on the standard deviation of the 
-#'   autocorrelated component of process & observation error
-#' @param err_proc_iid_sigma_min lower bound on the standard deviation of the 
-#'   uncorrelated (IID) component of process & observation error
-#' @param err_proc_iid_sigma_max upper bound on the standard deviation of the 
-#'   uncorrelated (IID) component of process & observation error
-#' @inheritParams specs_bayes_jags_nopool_procobserr
-#' @inheritParams prepdata_bayes
-#' @inheritParams mcmc_bayes
+#' @inheritParams specs_all
 #'   
 #' @export
 specs_bayes_stan_nopool_procacoriiderr <- function(

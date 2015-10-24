@@ -4,7 +4,7 @@ NULL
 #' Basic Bayesian metabolism model fitting function
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO,
-#' temperature, light, etc. See \code{\link{specs_bayes}} for relevant options
+#' temperature, light, etc. See \code{\link{specs_funs}} for relevant options
 #' for the \code{model_specs} argument.
 #' 
 #' Current and future models: models/bayes/jags/nopool_obserr.txt 
@@ -373,7 +373,7 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  library('rstan') # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
+  library(rstan) # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
   
   runstan_out <- stan(
     file=model_path,

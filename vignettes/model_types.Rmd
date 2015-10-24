@@ -1,0 +1,81 @@
+---
+title: "Metabolism Model Options"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Metabolism Model Options}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo=FALSE}
+suppressPackageStartupMessages(library(streamMetabolizer))
+```
+
+## Model Types
+
+streamMetabolizer provides many options for customizing your metabolism model. At a very high level, these are grouped by their fitting method. Each fitting method has its own fitting function; see the `metab_fun` column of `metab_funs()` for a complete list.
+```{r}
+metab_funs()
+```
+It is most common to use `metab_bayes` or `metab_mle`.
+
+## Model Arguments
+
+A few modeling options are directly specified as arguments to the fitting functions. These typically include `data`, `data_daily`, `info`, `day_start`, `day_end`, and `tests`. See the fitting function help files, e.g., `?metab_mle`, for more details.
+```{r, eval=FALSE}
+?metab_mle
+```
+
+## Specification Groups
+
+All the rest of the modeling options are contained within a single argument, `model_specs` (where `specs` is short for 'specifications'). `model_specs` is just an R list and could therefore be defined manually, but it's a long list whose elements depend on the modeling approach you're taking. To simplify the process of setting these specifications, we've therefore defined a series of functions, each of which has a name beginning with `specs_`, to generate the list for you. These functions know which arguments need to be supplied for a given modeling approach, and each produces a list of mutually compatible default specifications. Commonly used `specs_` functions include `specs_mle_obserr` and `specs_bayes_stan_nopool_obserr`; to give you a taste but keep the output short, we'll just print the list element names here:
+```{r}
+names(specs_mle_obserr())
+names(specs_bayes_stan_nopool_obserr())
+```
+
+Once defined, an options list can be passed directly to the corresponding `metab_` function to run your model. The appropriate `metab_` function is the one whose name matches the `specs_` function name; e.g., `specs_bayes_` functions should be used within `metab_bayes()` calls, and `specs_mle_` functions should be used within `metab_mle()` calls.
+```{r, eval=FALSE}
+fit <- metab_mle(data=mydat, model_specs=specs_mle_obserr())
+```
+
+You can override the defaults by passing values to the `specs_` function; see the function's help file (e.g., `?specs_mle_obserr)` for the list of options and their definitions.
+```{r, eval=FALSE}
+?specs_mle_obserr
+fit <- metab_mle(data=mydat, model_specs=specs_mle_obserr(GPP_init=7, K600_init=35))
+```
+
+
+## Choosing a Specification Group
+
+Specification groups define aspects of the modeling approach such as the degree of hierarchy in the model, additional software or packages to employ, and the types of error to model. To find the group of specifications you want, you can: 
+
+1. Browse the `specs_` functions (e.g., using tab-complete at the RStudio command line by typing 'specs_-*tab*'). The two special functions `specs_all` and `specs_funs` don't produce specification lists, but every other function beginning with `specs_` is a valid option.
+
+2. Search for an options group using `specs_funs()`. See `?specs_funs` for model traits you can search. The return value is a data.frame with all rows matching the traits you selected, where the `specs_fun` column contains specification function names.
+```{r, eval=FALSE}
+?specs_funs
+```
+```{r}
+specs_funs(metab_fun="metab_bayes", software="jags", pool_days=FALSE, err_obs_iid=TRUE)
+```
+
+Once you've identified the function you want, use its help file to determine whether you want to modify any arguments, then pass the final arguments list as the `model_specs` argument to the appropriate `metab_` function. 
+```{r, eval=FALSE}
+?specs_bayes_stan_nopool_procobserr
+fit <- metab_bayes(model_specs=specs_bayes_jags_nopool_procobserr())
+```
+
+## Specification Group Types
+
+Here is the full set of `specs_` functions and their traits.
+
+```{r, echo=FALSE, results='asis'}
+models <- specs_funs()
+models_chr <- as.data.frame(lapply(models, as.character))
+knitr::kable(models_chr)
+```
