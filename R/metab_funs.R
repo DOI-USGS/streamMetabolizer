@@ -8,7 +8,6 @@ metab_funs <- function() {
   mtb_funs <- ls("package:streamMetabolizer") %>%
     grep("^metab_", ., value=TRUE) %>% 
     grep("model*|funs", ., invert=TRUE, value=TRUE)
-  warning(mtb_funs)
   
   if(!all(mtb_funs %in% c("metab_bayes","metab_Kvpred", "metab_mle", "metab_night", "metab_sim")) || length(mtb_funs) != 5)
     stop("metab_funs() output is out of date")

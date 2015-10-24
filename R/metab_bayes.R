@@ -3,9 +3,10 @@ NULL
 
 #' Basic Bayesian metabolism model fitting function
 #' 
-#' Fits a Bayesian model to estimate GPP and ER from input data on DO,
-#' temperature, light, etc. See \code{\link{specs_funs}} for relevant options
-#' for the \code{model_specs} argument.
+#' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
+#' temperature, light, etc. See
+#' \code{\link{specs_funs}(metab_fun="metab_bayes")} for relevant options for
+#' the \code{model_specs} argument.
 #' 
 #' Current and future models: models/bayes/jags/nopool_obserr.txt 
 #' models/bayes/jags/nopool_procobserr.txt models/bayes/jags/KfQ_procobserr.txt 
@@ -45,7 +46,7 @@ NULL
 #' @family metab_model
 metab_bayes <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs_bayes_jags_nopool_obserr(), # inheritParams metab_model_prototype
+  model_specs=specs_bayes_jags_nopool_oi(), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {

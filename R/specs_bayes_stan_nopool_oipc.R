@@ -7,7 +7,7 @@
 #' @inheritParams specs_all
 #'   
 #' @export
-specs_bayes_stan_nopool_procobserr <- function(
+specs_bayes_stan_nopool_oipc <- function(
   
   # model setup (model_path will be added in metab_bayes)
   model_file = 'nopool_procobserr_pairmeans.stan',

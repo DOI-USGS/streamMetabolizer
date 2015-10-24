@@ -168,6 +168,6 @@ List all possible arguments and the specs lists in which they occur
 \examples{
 specs_table <- specs_all()
 specs_table$spec
-specs_table[specs_table$specs_bayes_jags_nopool_obserr, 'spec']
+specs_table[specs_table$specs_bayes_jags_nopool_oi, 'spec']
 }
 

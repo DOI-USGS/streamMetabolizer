@@ -3,8 +3,8 @@ context("metab_bayes")
 test_that("bayes metab_spec functions work", {
 
   # ?specs_bayes should give useful help
-  expect_is(specs_bayes_jags_nopool_obserr(), "list")
-  expect_is(specs_bayes_jags_nopool_procobserr(), "list")
+  expect_is(specs_bayes_jags_nopool_oi(), "list")
+  expect_is(specs_bayes_jags_nopool_oipc(), "list")
   
 })
 
@@ -16,7 +16,7 @@ vfrench1day <- vfrench[vfrench$local.time >= as.POSIXct("2012-08-24 04:00:00", t
                          vfrench$local.time <= as.POSIXct("2012-08-25 04:00:00", tz="Etc/GMT+7"), ]
 
 test_that("prepdata_bayes and mcmc_bayes run with JAGS", {
-  model_specs <- specs_bayes_jags_nopool_obserr()
+  model_specs <- specs_bayes_jags_nopool_oi()
   model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
   
   # prepdata
@@ -45,7 +45,7 @@ test_that("prepdata_bayes and mcmc_bayes run with JAGS", {
 dontrun <- function() {
   
   test_that("prepdata_bayes and mcmc_bayes run with Stan", {
-    model_specs <- specs_bayes_stan_nopool_obserr(n_cores=2)
+    model_specs <- specs_bayes_stan_nopool_oi(n_cores=2)
     model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
     
     # prepdata
@@ -74,7 +74,7 @@ dontrun <- function() {
   })
   
   test_that("prepdata_bayes and mcmc_bayes run with Stan procobserr", {
-    model_specs <- specs_bayes_stan_nopool_procobserr(n_cores=4, burnin_steps=2000, num_saved_steps=1000, err_proc_phi_max=1)
+    model_specs <- specs_bayes_stan_nopool_oipc(n_cores=4, burnin_steps=2000, num_saved_steps=1000, err_proc_phi_max=1)
     model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
     
     # prepdata
@@ -107,7 +107,7 @@ dontrun <- function() {
   })
   
   test_that("yackulic model runs", {
-    model_specs <- specs_bayes_stan_nopool_procacoriiderr(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
+    model_specs <- specs_bayes_stan_nopool_pcpi(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
     model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
       data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
@@ -127,29 +127,29 @@ dontrun <- function() {
 
 test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   
-  # specs_bayes_jags_nopool_obserr
+  # specs_bayes_jags_nopool_oi
   mm <- mmOP <- metab_bayes(data=vfrenchshort)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   # now with Euler solution
-  mm <- mmOE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_obserr(
+  mm <- mmOE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_oi(
     model_file="nopool_obserr_Euler.jags", num_saved_steps=500, GPP_daily_mu=2))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   
-  # specs_bayes_jags_nopool_procobserr. you really have to crank down the err.proc.sigma.max or else the errors are huge
-  mm <- mmOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_procobserr(keep_mcmcs = TRUE))
+  # specs_bayes_jags_nopool_oipc. you really have to crank down the err.proc.sigma.max or else the errors are huge
+  mm <- mmOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_oipc(keep_mcmcs = TRUE))
   #plot(get_mcmc(mm)[[2]], "trace", vars=mm@args$model_specs$params_out, layout=c(2,3))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   # now with Euler solution
-  mm <- mmOPE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_procobserr(
+  mm <- mmOPE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_oipc(
     model_file="nopool_procobserr_Euler.jags", num_saved_steps=800, GPP_daily_mu=2, verbose=FALSE))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
@@ -158,16 +158,16 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   
   # these just take forever; keep them as manual tests for now
   dontrun <- function() {
-    # specs_bayes_stan_nopool_obserr
-    mm <- mmSOP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_obserr(n_cores=4))
+    # specs_bayes_stan_nopool_oi
+    mm <- mmSOP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_oi(n_cores=4))
     metab <- predict_metab(mm)
     expect_equal(metab$GPP.lower, get_fit(mm)$GPP_daily_2.5pct)
     DO_preds <- predict_DO(mm)
     DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
     expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
     
-    # specs_bayes_stan_nopool_procobserr
-    mm <- mmSOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_procobserr(n_cores=4, n_chains=4, keep_mcmcs="2012-08-24", burnin_steps = 3000, num_saved_steps = 1000))
+    # specs_bayes_stan_nopool_oipc
+    mm <- mmSOPP <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_stan_nopool_oipc(n_cores=4, n_chains=4, keep_mcmcs="2012-08-24", burnin_steps = 3000, num_saved_steps = 1000))
     expect_is(get_fitting_time(mm), "proc_time")
     expect_is(get_mcmc(mm)[[2]], "stanfit")
     expect_equal(names(mm@mcmc)[2], "2012-08-24")
