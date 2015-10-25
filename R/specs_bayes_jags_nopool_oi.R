@@ -31,10 +31,10 @@ specs_bayes_jags_nopool_oi <- function(
   # inheritParams mcmc_bayes
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
   n_chains = 4, 
-  n_cores = 1, 
+  n_cores = 4, 
   adapt_steps = 250, 
   burnin_steps = 250, 
-  num_saved_steps = 500, 
+  saved_steps = 500, 
   thin_steps = 1,
   verbose = FALSE
   

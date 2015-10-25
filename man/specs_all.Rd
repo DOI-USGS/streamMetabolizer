@@ -11,7 +11,7 @@ specs_all(GPP_init, ER_init, K600_init, calc_DO_fun, ODE_method, model_file,
   err_obs_sigma_min, err_obs_sigma_max, err_proc_acor_phi_min,
   err_proc_acor_phi_max, err_proc_acor_sigma_min, err_proc_acor_sigma_max,
   err_proc_iid_sigma_min, err_proc_iid_sigma_max, priors, params_out, n_chains,
-  n_cores, adapt_steps, burnin_steps, num_saved_steps, thin_steps, verbose,
+  n_cores, adapt_steps, burnin_steps, saved_steps, thin_steps, verbose,
   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed)
 }
 \arguments{
@@ -128,14 +128,15 @@ runs should be recorded and summarized}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{adapt_steps}{the number of steps to use in adapting the model}
+\item{adapt_steps}{the number of steps per chain to use in adapting the model}
 
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
+\item{burnin_steps}{the number of steps per chain to run and ignore before
+starting to collect MCMC 'data'}
 
-\item{num_saved_steps}{the number of MCMC steps to save}
+\item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{thin_steps}{the number of steps to move before saving another step. 1
+means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 

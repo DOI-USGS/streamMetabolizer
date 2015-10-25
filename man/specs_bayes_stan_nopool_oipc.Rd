@@ -13,7 +13,7 @@ specs_bayes_stan_nopool_oipc(model_file = "nopool_oipc_pairmeans.stan",
   err_proc_sigma_max = 5e-04, err_obs_sigma_min = 0,
   err_obs_sigma_max = 0.5, priors = FALSE, params_out = c("GPP_daily",
   "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
-  n_chains = 4, n_cores = 1, burnin_steps = 500, num_saved_steps = 500,
+  n_chains = 4, n_cores = 4, burnin_steps = 500, saved_steps = 500,
   thin_steps = 1, verbose = FALSE)
 }
 \arguments{
@@ -89,12 +89,13 @@ runs should be recorded and summarized}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
+\item{burnin_steps}{the number of steps per chain to run and ignore before
+starting to collect MCMC 'data'}
 
-\item{num_saved_steps}{the number of MCMC steps to save}
+\item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{thin_steps}{the number of steps to move before saving another step. 1
+means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 }

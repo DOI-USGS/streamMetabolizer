@@ -162,7 +162,7 @@ bayes_1ply <- function(
         } else {
           isTRUE(local_date %in% model_specs$keep_mcmcs)
         }
-        all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','num_saved_steps','thin_steps','verbose')
+        all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
           model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
@@ -282,31 +282,33 @@ prepdata_bayes <- function(
 #' @param model_path the JAGS model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
-#' @param keep_mcmc logical. If TRUE, the Jags or Stan output object will be
-#'   saved. Be careful; these can be big, and a run with many models might
+#' @param keep_mcmc logical. If TRUE, the Jags or Stan output object will be 
+#'   saved. Be careful; these can be big, and a run with many models might 
 #'   overwhelm R's memory.
 #' @param n_chains the number of chains to run
 #' @param n_cores the number of cores to apply to this run
-#' @param adapt_steps the number of steps to use in adapting the model
-#' @param burnin_steps the number of steps to run and ignore before starting to 
-#'   collect MCMC 'data'
-#' @param num_saved_steps the number of MCMC steps to save
-#' @param thin_steps the number of steps to move before saving another step
+#' @param adapt_steps the number of steps per chain to use in adapting the model
+#' @param burnin_steps the number of steps per chain to run and ignore before
+#'   starting to collect MCMC 'data'
+#' @param saved_steps the number of MCMC steps per chain to save
+#' @param thin_steps the number of steps to move before saving another step. 1
+#'   means save all steps.
 #' @param verbose logical. give status messages?
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
   bayes_software <- match.arg(bayes_software)
   bayes_function <- switch(bayes_software, jags = runjags_bayes, stan = runstan_bayes)
   
-  tot_cores = detectCores()
-  if (!is.finite(tot_cores)) { tot_cores = 1 } 
-  message(paste0("MCMC: requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
+  tot_cores <- detectCores()
+  if (!is.finite(tot_cores)) { tot_cores <- 1 } 
+  n_cores <- min(tot_cores, n_cores)
+  message(paste0("MCMC (",bayes_software,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
-    adapt_steps=adapt_steps, burnin_steps=burnin_steps, num_saved_steps=num_saved_steps, thin_steps=thin_steps, verbose=verbose)
+    adapt_steps=adapt_steps, burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
 }
 
 #' Run JAGS on a formatted data ply
@@ -320,7 +322,7 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
 #' @importFrom runjags run.jags
 #' @import dplyr
 #' @keywords internal
-runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, num_saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -340,7 +342,7 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     n.chains=n_chains,
     adapt=adapt_steps,
     burnin=burnin_steps,
-    sample=ceiling(num_saved_steps/n_chains),
+    sample=saved_steps,
     thin=thin_steps,
     summarise=TRUE,
     plots=FALSE,
@@ -372,9 +374,10 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, num_saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  library(rstan) # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
+  # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
+  suppressPackageStartupMessages(library(rstan))
   
   runstan_out <- stan(
     file=model_path,
@@ -383,7 +386,7 @@ runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     include=TRUE,
     chains=n_chains,
     warmup=burnin_steps,
-    iter=num_saved_steps+burnin_steps,
+    iter=saved_steps+burnin_steps,
     thin=thin_steps,
     init="random",
     save_dso=TRUE, # must be true if you're using more than one core

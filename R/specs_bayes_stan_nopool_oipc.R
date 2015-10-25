@@ -36,9 +36,9 @@ specs_bayes_stan_nopool_oipc <- function(
   # inheritParams mcmc_bayes
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"), #"DO_mod_1", 
   n_chains = 4, 
-  n_cores = 1, 
+  n_cores = 4, 
   burnin_steps = 500, 
-  num_saved_steps = 500, 
+  saved_steps = 500, 
   thin_steps = 1,
   verbose = FALSE
   

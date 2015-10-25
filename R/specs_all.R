@@ -145,7 +145,7 @@ specs_all <- function(
   n_cores,
   adapt_steps,
   burnin_steps,
-  num_saved_steps,
+  saved_steps,
   thin_steps,
   verbose,
   

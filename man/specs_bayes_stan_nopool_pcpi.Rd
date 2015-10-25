@@ -7,14 +7,14 @@ error}
 \usage{
 specs_bayes_stan_nopool_pcpi(model_file = "nopool_pcpi_pairmeans.stan",
   bayes_fun = "bayes_1ply", bayes_software = "stan", keep_mcmcs = FALSE,
-  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
+  GPP_daily_mu = 0, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
   err_proc_acor_phi_min = 0, err_proc_acor_phi_max = 1,
-  err_proc_acor_sigma_min = 0, err_proc_acor_sigma_max = 5,
-  err_proc_iid_sigma_min = 0, err_proc_iid_sigma_max = 50, priors = FALSE,
+  err_proc_acor_sigma_min = 0, err_proc_acor_sigma_max = 20,
+  err_proc_iid_sigma_min = 0, err_proc_iid_sigma_max = 20, priors = FALSE,
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_proc_acor_phi",
-  "err_proc_acor_sigma", "err_proc_iid_sigma"), n_chains = 4, n_cores = 1,
-  burnin_steps = 500, num_saved_steps = 500, thin_steps = 1,
+  "err_proc_acor_sigma", "err_proc_iid_sigma"), n_chains = 4, n_cores = 4,
+  burnin_steps = 500, saved_steps = 500, thin_steps = 1,
   verbose = FALSE)
 }
 \arguments{
@@ -90,17 +90,19 @@ runs should be recorded and summarized}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
+\item{burnin_steps}{the number of steps per chain to run and ignore before
+starting to collect MCMC 'data'}
 
-\item{num_saved_steps}{the number of MCMC steps to save}
+\item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{thin_steps}{the number of steps to move before saving another step. 1
+means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 }
 \description{
 Compatible \code{model_file} options are
-\code{c('nopool_pcpi_pairmeans.stan')}.
+\code{c('nopool_pcpi_Euler_b2.stan')}, \code{c('nopool_pcpi_Euler.stan')},
+and \code{c('nopool_pcpi_pairmeans.stan')}.
 }
 
