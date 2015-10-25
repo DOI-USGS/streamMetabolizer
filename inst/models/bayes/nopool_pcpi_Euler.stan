@@ -1,5 +1,5 @@
-// Differs from nopool_pcpi_Euler only in the transformed data block. 
-// This is possible because although we're doing pairmeans, we're using DO_obs rather than DO_mod to compute the DO deficit.
+// This version follows from nopool_pcpi_Euler_b2.stan but attempts to 
+// gain speed by vectorization, transforming data & parameters early, etc.
 
 data {
  
@@ -37,15 +37,15 @@ transformed data {
   vector [n-1] coef_K600;
   vector [n-1] dDOdt_obs;
   
-  // coefficients by pairmeans (e.g., (frac_GPP[i] + frac_GPP[i+1])/2 applies to the DO step from i to i+1)
+  // coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
   for(i in 1:(n-1)) {
-    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2);
-    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2);
-    coef_K600[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 * 
-      ((DO_sat[i] + DO_sat[i+1])/2 - (DO_obs[i] + DO_obs[i+1])/2);
+    coef_GPP[i]  <- frac_GPP[i] / depth[i];
+    coef_ER[i]   <- frac_ER[ i] / depth[i];
+    coef_K600[i] <- KO2_conv[i] * frac_D[i] * 
+      (DO_sat[i] - DO_obs[i]);
     dDOdt_obs[i] <- DO_obs[i+1] - DO_obs[i];
-  }
-
+  }  
+  
 }
 
 parameters {

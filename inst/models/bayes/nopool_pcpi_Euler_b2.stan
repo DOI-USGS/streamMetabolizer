@@ -1,3 +1,9 @@
+// This script intended to stay as close to nopool_pcpi_Euler_b1.stan
+// as possible except for renaming to streamMetabolizer standards and
+// transforming data where the b1 version implies it was done before
+// calling the model. Spacing in this file should correspond closely
+// to that in nopool_pcpi_Euler_b1.stan.
+
 data {
  
   real GPP_daily_mu;

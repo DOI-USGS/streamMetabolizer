@@ -1,6 +1,8 @@
+// Observation error model with pairmeans ODE solution
+// yep.
+
 data {
   
-  # hyperparameters
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;

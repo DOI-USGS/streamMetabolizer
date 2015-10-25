@@ -1,3 +1,9 @@
+// This script taken from Bob Hall (email 10/13/15) with modified spacing. He writes, "Warning, 
+// this failed miserably, ER and K way too low, chains did not converge. I attempted to follow 
+// Charles’ code, but either I 1. Failed because I did not get the coding translation correct
+// between BUGS and Stan, or 2. it failed because of [our current theories on process models].
+// It was quick."
+
 data {
  
  
