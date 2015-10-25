@@ -4,7 +4,7 @@
 \alias{specs_bayes_stan_nopool_oi}
 \title{MCMC estimation by Stan with no pooling and only observation error}
 \usage{
-specs_bayes_stan_nopool_oi(model_file = "nopool_obserr_pairmeans.stan",
+specs_bayes_stan_nopool_oi(model_file = "nopool_oi_pairmeans.stan",
   bayes_fun = "bayes_1ply", bayes_software = "stan", keep_mcmcs = FALSE,
   GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
@@ -85,6 +85,6 @@ collect MCMC 'data'}
 }
 \description{
 Compatible \code{model_file} options are
-\code{c('nopool_obserr_pairmeans.stan', 'nopool_obserr_Euler.stan')}.
+\code{c('nopool_oi_pairmeans.stan', 'nopool_oi_Euler.stan')}.
 }
 

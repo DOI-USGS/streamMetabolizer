@@ -9,11 +9,12 @@ metab_funs <- function() {
     grep("^metab_", ., value=TRUE) %>% 
     grep("model*|funs", ., invert=TRUE, value=TRUE)
   
-  if(!all(mtb_funs %in% c("metab_bayes","metab_Kvpred", "metab_mle", "metab_night", "metab_sim")) || length(mtb_funs) != 5)
+  known_funs <- c("metab_bayes","metab_Kvpred", "metab_mle", "metab_night", "metab_sim")
+  if(!all(mtb_funs %in% known_funs) || length(mtb_funs) != 5)
     stop("metab_funs() output is out of date")
   
   data.frame(
-    metab_fun=c("metab_bayes","metab_Kvpred", "metab_mle", "metab_night", "metab_sim"),
+    metab_fun=known_funs,
     method=c("Bayesian MCMC","regression of daily values","maximum likelihood estimation","nighttime regression","data simulation")
   )
   

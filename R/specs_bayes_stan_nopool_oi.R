@@ -1,7 +1,7 @@
 #' MCMC estimation by Stan with no pooling and only observation error
 #' 
 #' Compatible \code{model_file} options are 
-#' \code{c('nopool_obserr_pairmeans.stan', 'nopool_obserr_Euler.stan')}.
+#' \code{c('nopool_oi_pairmeans.stan', 'nopool_oi_Euler.stan')}.
 #' 
 #' @inheritParams specs_all
 #'   
@@ -9,7 +9,7 @@
 specs_bayes_stan_nopool_oi <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_obserr_pairmeans.stan', # or 'nopool_obserr_Euler.stan'
+  model_file = 'nopool_oi_pairmeans.stan',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'stan',
   keep_mcmcs = FALSE,

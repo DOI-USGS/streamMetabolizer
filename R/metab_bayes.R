@@ -237,9 +237,9 @@ prepdata_bayes <- function(
   
   # Useful info for setting the MCMC data
   timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$local.time)), units="days"), na.rm=TRUE))
-  has_obserr <- grepl('_(proc)*obserr[[:punct:]]', basename(model_specs$model_path))
-  has_procerr <- grepl('_proc(obs)*err[[:punct:]]', basename(model_specs$model_path))
-  has_procacoriiderr <- grepl('_procacoriiderr[[:punct:]]', basename(model_specs$model_path))
+  has_obserr <- grepl('_oi(pc|pi)*[[:punct:]]', basename(model_specs$model_path))
+  has_procerr <- grepl('_(oi)*(pc|pi)[[:punct:]]', basename(model_specs$model_path))
+  has_procacoriiderr <- grepl('_pcpi[[:punct:]]', basename(model_specs$model_path))
   
   # Format the data for JAGS/Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -264,7 +264,7 @@ prepdata_bayes <- function(
       # Hyperparameters
       c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_mu','K600_daily_sigma'), # metabolism
       if(has_obserr) c('err_obs_sigma_min','err_obs_sigma_max') else c(), # observation error
-      if(has_procerr) c('err_proc_phi_min','err_proc_phi_max','err_proc_sigma_min','err_proc_sigma_max') else c(), # process error
+      if(has_procerr) c('err_proc_phi_min','err_proc_phi_max','err_proc_sigma_min','err_proc_sigma_max') else c(), # autocorrelated process error
       if(has_procacoriiderr) c('err_proc_acor_phi_min','err_proc_acor_phi_max','err_proc_acor_sigma_min','err_proc_acor_sigma_max','err_proc_iid_sigma_min','err_proc_iid_sigma_max') else c() # error split into autocorrelated & uncorrelated components
     )]
   )

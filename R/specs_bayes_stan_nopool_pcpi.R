@@ -2,7 +2,7 @@
 #' error
 #' 
 #' Compatible \code{model_file} options are 
-#' \code{c('nopool_procobserr_pairmeans.stan', 'nopool_procobserr_Euler.stan')}.
+#' \code{c('nopool_pcpi_pairmeans.stan')}.
 #' 
 #' @inheritParams specs_all
 #'   
@@ -10,7 +10,7 @@
 specs_bayes_stan_nopool_pcpi <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_procacoriiderr_pairmeans.stan',
+  model_file = 'nopool_pcpi_pairmeans.stan',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'stan',
   keep_mcmcs = FALSE,

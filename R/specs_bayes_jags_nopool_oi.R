@@ -1,7 +1,7 @@
 #' MCMC estimation by JAGS with no pooling and only observation error
 #' 
 #' Compatible \code{model_file} options are
-#' \code{c('nopool_obserr_pairmeans.jags', 'nopool_obserr_Euler.jags')}.
+#' \code{c('nopool_oi_pairmeans.jags', 'nopool_oi_Euler.jags')}.
 #' 
 #' @inheritParams specs_all
 #'   
@@ -9,7 +9,7 @@
 specs_bayes_jags_nopool_oi <- function(
   
   # model setup (model_path will be added in metab_bayes)
-  model_file = 'nopool_obserr_pairmeans.jags', # or 'nopool_obserr_Euler.jags'
+  model_file = 'nopool_oi_pairmeans.jags',
   bayes_fun = 'bayes_1ply',
   bayes_software = 'jags',
   keep_mcmcs = FALSE,

@@ -4,7 +4,7 @@
 \alias{specs_bayes_jags_nopool_oipc}
 \title{MCMC estimation by JAGS with no pooling and both process and observation error}
 \usage{
-specs_bayes_jags_nopool_oipc(model_file = "nopool_procobserr_pairmeans.jags",
+specs_bayes_jags_nopool_oipc(model_file = "nopool_oipc_pairmeans.jags",
   bayes_fun = "bayes_1ply", bayes_software = "jags", keep_mcmcs = FALSE,
   GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
@@ -101,6 +101,6 @@ collect MCMC 'data'}
 }
 \description{
 Compatible \code{model_file} options are
-\code{c('nopool_procobserr_pairmeans.jags', 'nopool_procobserr_Euler.jags')}.
+\code{c('nopool_oipc_pairmeans.jags', 'nopool_oipc_Euler.jags')}.
 }
 

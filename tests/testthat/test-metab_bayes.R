@@ -135,7 +135,7 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   # now with Euler solution
   mm <- mmOE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_oi(
-    model_file="nopool_obserr_Euler.jags", num_saved_steps=500, GPP_daily_mu=2))
+    model_file="nopool_oi_Euler.jags", num_saved_steps=500, GPP_daily_mu=2))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
@@ -150,7 +150,7 @@ test_that("metab_bayes predictions (predict_metab, predict_DO) make sense", {
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), "DO.mod tracks DO.obs with not too much error")
   # now with Euler solution
   mm <- mmOPE <- metab_bayes(data=vfrenchshort, model_specs=specs_bayes_jags_nopool_oipc(
-    model_file="nopool_procobserr_Euler.jags", num_saved_steps=800, GPP_daily_mu=2, verbose=FALSE))
+    model_file="nopool_oipc_Euler.jags", num_saved_steps=800, GPP_daily_mu=2, verbose=FALSE))
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24<- dplyr::filter(DO_preds, local.date == "2012-08-24")
