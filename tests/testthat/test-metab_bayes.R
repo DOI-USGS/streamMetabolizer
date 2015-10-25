@@ -102,6 +102,17 @@ test_that("specs_bayes_stan_nopool_oi prepdata_bayes, mcmc_bayes, bayes_1ply", {
     model_specs=model_specs)
   expect_is(ply_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
+
+  # mcmc - nopool_oi_Euler.stan
+  model_specs$model_file <- "nopool_oi_Euler.stan"
+  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+  system.time({
+    suppressWarnings(
+      {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
+  })
+  expect_is(mcmc_out, 'data.frame')
+  expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
+  expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
   
 })
 
@@ -116,11 +127,12 @@ test_that("specs_bayes_stan_nopool_oipc prepdata_bayes, mcmc_bayes, bayes_1ply",
   expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
   expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
   
-  # mcmc
+  # mcmc - nopool_oipc_pairmeans.stan
+  model_specs$model_file <- "nopool_oipc_pairmeans.stan"
+  model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
   system.time({
-    expect_warning(
-      {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))},
-      "transitions|pairs()")
+    suppressWarnings(
+      {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
   })
   expect_is(mcmc_out, 'data.frame')
   expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
@@ -128,7 +140,7 @@ test_that("specs_bayes_stan_nopool_oipc prepdata_bayes, mcmc_bayes, bayes_1ply",
   #   plot(mcmc_out$mcmcfit[[1]])
   #   pairs(mcmc_out$mcmcfit[[1]])
   #   traceplot(mcmc_out$mcmcfit[[1]])
-  
+
 })
 
 #### specs_bayes_stan_nopool_pcpi ####
@@ -227,6 +239,10 @@ manual_tests <- function() {
   specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_file="nopool_oi_Euler.jags"), jags_specs))
   mm <- nopool_oi_Euler.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   
+  # nopool_oi_Euler.stan
+  specs <- do.call(specs_bayes_stan_nopool_oi, c(list(model_file="nopool_oi_Euler.stan"), stan_specs))
+  mm <- nopool_oi_Euler.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
+
   # nopool_oi_pairmeans.jags
   specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_file="nopool_oi_pairmeans.jags"), jags_specs))
   mm <- nopool_oi_pairmeans.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
