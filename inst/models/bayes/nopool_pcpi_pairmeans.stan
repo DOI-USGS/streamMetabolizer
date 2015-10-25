@@ -15,13 +15,13 @@ data {
   real err_proc_iid_sigma_min;
   real err_proc_iid_sigma_max;
   
-  int <lower=0> n; // number of observations in the day
+  int <lower=0> n;
   
   vector [n] DO_obs;
   vector [n] DO_sat;
-  vector [n] frac_GPP; // fractions, summing to 1, to partition GPP_daily into per-timestep rates
-  vector [n] frac_ER; // fractions, summing to 1, to partition ER_daily into per-timestep rates
-  vector [n] frac_D; // fractions, summing to 1, to partition K600_daily into per-timestep rates
+  vector [n] frac_GPP;
+  vector [n] frac_ER;
+  vector [n] frac_D;
   vector [n] depth;
   vector [n] KO2_conv;
   
@@ -51,9 +51,9 @@ transformed data {
     coef_ER[i]   <- (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2);
     coef_K600[i] <- (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2;
     DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i-1])/2;
-    # Not pairmeans, but also needs the 2:n loop: compute stepwise differences in DO
-    dDOdt_obs[i] <- (DO_obs[i] - DO_obs[i-1])/frac_D[i]; // assumes frac_D is timestep in days
-    # Not pairmeans, but permits a vectorized computation of dDOdt_mod
+    # Compute stepwise differences in DO
+    dDOdt_obs[i] <- (DO_obs[i] - DO_obs[i-1]);
+    # Compute lagged DO_obs to permit a vectorized computation of dDOdt_mod
     DO_obs_prev[i] <- DO_obs[i-1];
   }
 

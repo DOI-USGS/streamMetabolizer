@@ -106,7 +106,33 @@ dontrun <- function() {
     
   })
   
-  test_that("yackulic model runs", {
+  test_that("bob's version of yackulic model runs", {
+    model_specs <- specs_bayes_stan_nopool_pcpi(
+      model_file="nopool_pcpi_Euler_b2.stan",
+      GPP_daily_mu = 0, GPP_daily_sigma = 10,
+      ER_daily_mu = -10, ER_daily_sigma = 10,
+      K600_daily_mu = 10, K600_daily_sigma = 10,
+      err_proc_acor_phi_min=0, err_proc_acor_phi_max = 1, 
+      err_proc_iid_sigma_min=0, err_proc_iid_sigma_max=20,
+      err_proc_acor_sigma_min=0, err_proc_acor_sigma_max=20, 
+      n_cores=4, burnin_steps = 3000, num_saved_steps = 1000)
+    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
+    data_list <- streamMetabolizer:::prepdata_bayes(
+      data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+    
+    system.time({
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(
+        list(data_list=data_list, keep_mcmc=TRUE),
+        model_specs[c('bayes_software','model_path','params_out','n_chains','n_cores','burnin_steps','num_saved_steps','thin_steps','verbose')]))
+    })
+    # looks pretty good after 3000 burnin, 1000 saved: GPP=1.96243 ER=-2.332625 K600=22.14574, Rhats=1.038339 1.01461 1.031686 1.074818 1.038068 1.012045 1.032597
+    # show(mcmc_out$mcmcfit[[1]])
+    # plot(mcmc_out$mcmcfit[[1]])
+    # pairs(mcmc_out$mcmcfit[[1]])
+    # traceplot(mcmc_out$mcmcfit[[1]])
+  })
+  
+  test_that("alison's version of yackulic model runs", {
     model_specs <- specs_bayes_stan_nopool_pcpi(n_cores=4, err_proc_acor_phi_min=0.99, err_proc_acor_sigma_max = 0.0001, burnin_steps = 3000, num_saved_steps = 1000)
     model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer") # usually added in metab_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(

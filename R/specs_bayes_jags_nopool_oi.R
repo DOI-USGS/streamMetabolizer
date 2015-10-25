@@ -32,9 +32,9 @@ specs_bayes_jags_nopool_oi <- function(
   params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
   n_chains = 4, 
   n_cores = 1, 
-  adapt_steps = 100, 
-  burnin_steps = 40, 
-  num_saved_steps = 400, 
+  adapt_steps = 250, 
+  burnin_steps = 250, 
+  num_saved_steps = 500, 
   thin_steps = 1,
   verbose = FALSE
   
