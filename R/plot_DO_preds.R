@@ -15,35 +15,32 @@
 #' @import ggplot2
 #' @import dplyr
 #' @export
-plot_DO_preds <- function(DO_preds, plot_as=c('both','conc','pctsat')) {
+plot_DO_preds <- function(DO_preds, plot_as=c('conc','pctsat','ddodt')) {
   
-  plot_as <- match.arg(plot_as)
+  plot_as <- match.arg(plot_as, several.ok=TRUE)
   
-  var <- DO.mod <- '.ggplot.var'
-  g <- switch(
-    plot_as,
-    'conc'={
-      ggplot(v(DO_preds), aes(x=local.time)) + 
-        geom_line(aes(y=DO.mod, group=local.date), color='maroon', size=0.8) +
-        geom_point(aes(y=DO.obs), color='navy', alpha=0.5) +
-        theme_bw() + xlab('Local time') + ylab('DO (mg/L)') 
-    },
-    'pctsat'={
-      ggplot(v(DO_preds), aes(x=local.time)) + 
-        geom_line(aes(y=100*DO.mod/DO.sat, group=local.date), color='purple3', size=0.8) +
-        geom_point(aes(y=100*DO.obs/DO.sat), color='forestgreen', alpha=0.5) +
-        theme_bw() + xlab('Local time') + ylab('DO (% sat)')
-    },
-    'both'={
-      DO_recast <- rbind(
-        mutate(DO_preds, var='DO (mg/L)', DO.mod=DO.mod, DO.obs=DO.obs),
-        mutate(DO_preds, var='DO (% sat)', DO.mod=100*DO.mod/DO.sat, DO.obs=100*DO.obs/DO.sat))
-      ggplot(DO_recast, aes(x=local.time, y=DO.mod, group=local.date)) + 
-        geom_line(aes(color=var), size=0.8) +
-        geom_point(aes(y=DO.obs, color=var), alpha=0.5) +
-        scale_color_discrete(guide='none') +
-        theme_bw() + facet_grid(var ~ ., scales="free_y") + 
-        xlab('Local time') + ylab("DO predictions (% sat above, mg/L below)")
-    })
+  DO_preds_conc <- mutate(
+    DO_preds, as='conc', var='DO (mg/L)', col='red4', lab='DO (mg/L)',
+    mod=DO.mod, 
+    obs=DO.obs)
+  DO_preds_pctsat <- mutate(
+    DO_preds, as='pctsat', var='DO (% sat)', col='forestgreen', lab='DO (% sat)',
+    mod=100*DO.mod/DO.sat, 
+    obs=100*DO.obs/DO.sat)
+  DO_preds_ddodt <- mutate(
+    DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', col='navy', lab='dDO/dt~(mg~L^-1~d^-1)',
+    mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$local.time), units="days"),
+    obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$local.time), units="days"))
+  DO_preds_all <- bind_rows(DO_preds_conc, DO_preds_pctsat, DO_preds_ddodt) %>%
+    mutate(var=ordered(var, c(conc='DO (mg/L)', pctsat='DO (% sat)', ddodt='dDO/dt (mg/L/d)')[plot_as]))
+  
+  local.time <- mod <- local.date <- col <- obs <- '.ggplot.var'
+  g <- ggplot(v(DO_preds_all)[DO_preds_all$as %in% plot_as,], aes(x=local.time, group=local.date, color=col)) +
+    geom_line(aes(y=mod), size=0.8) +
+    geom_point(aes(y=obs), alpha=0.3) +
+    scale_color_identity(guide='none') +
+    theme_bw() + facet_grid(var ~ ., scales="free_y") + 
+    xlab('Local time') + ylab("Predictions (lines) and observations (points)")
+  
   suppressWarnings(print(g))
 }
