@@ -376,8 +376,10 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  # stan() can't find its own function cpp_object_initializer() unless the namespace is loaded
-  suppressPackageStartupMessages(library(rstan))
+  # stan() can't find its own function cpp_object_initializer() unless the
+  # namespace is loaded. requireNamespace is somehow not doing this.
+  if(!suppressPackageStartupMessages(require(rstan)))
+    stop("the rstan package is required for Stan MCMC models")
   
   runstan_out <- stan(
     file=model_path,
