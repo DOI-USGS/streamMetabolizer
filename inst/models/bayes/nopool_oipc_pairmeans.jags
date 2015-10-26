@@ -15,25 +15,25 @@ model {
       GPP[i] + 
       ER[i] + 
       K[i] * (DO_sat[i] - DO_mod[i-1]/2) +
-      err_proc[i]
+      err_proc_acor[i]
     ) / (1 + K[i]/2) 
   }
   
   # Process error: Build an error timeseries with a fitted autocorrelation structure
-  err_proc[1] <- 0
+  err_proc_acor[1] <- 0
   for(i in 2:n) {
-    err_proc[i] ~ dnorm(err_proc_phi*err_proc[i-1], pow(err_proc_sigma, -2))
+    err_proc_acor[i] ~ dnorm(err_proc_acor_phi*err_proc_acor[i-1], pow(err_proc_acor_sigma, -2))
   }
   # Prior on the autocorrelation & sd of the process errors
-  err_proc_phi ~ dunif(err_proc_phi_min, err_proc_phi_max)
-  err_proc_sigma ~ dunif(err_proc_sigma_min, err_proc_sigma_max)
+  err_proc_acor_phi ~ dunif(err_proc_acor_phi_min, err_proc_acor_phi_max)
+  err_proc_acor_sigma ~ dunif(err_proc_acor_sigma_min, err_proc_acor_sigma_max)
   
   # Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {
-    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_sigma, -2))
+    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_iid_sigma, -2))
   }
   # Prior on the sd of the errors between modeled and observed DO
-  err_obs_sigma ~ dunif(err_obs_sigma_min, err_obs_sigma_max)
+  err_obs_iid_sigma ~ dunif(err_obs_iid_sigma_min, err_obs_iid_sigma_max)
   
   # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
   GPP_daily ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))

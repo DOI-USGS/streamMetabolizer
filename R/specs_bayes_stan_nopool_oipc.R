@@ -23,18 +23,18 @@ specs_bayes_stan_nopool_oipc <- function(
   K600_daily_mu = 10,
   K600_daily_sigma = 10,
  
-  err_proc_phi_min = 0,
-  err_proc_phi_max = 1,
-  err_proc_sigma_min = 0,
-  err_proc_sigma_max = 0.0005,
-  err_obs_sigma_min = 0,
-  err_obs_sigma_max = 0.5,
+  err_proc_acor_phi_min = 0,
+  err_proc_acor_phi_max = 1,
+  err_proc_acor_sigma_min = 0,
+  err_proc_acor_sigma_max = 0.0005,
+  err_obs_iid_sigma_min = 0,
+  err_obs_iid_sigma_max = 0.5,
   
   # inheritParams prepdata_bayes
   priors = FALSE,
   
   # inheritParams mcmc_bayes
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"), #"DO_mod_1", 
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_iid_sigma", "err_proc_acor_sigma", "err_proc_acor_phi"), #"DO_mod_1", 
   n_chains = 4, 
   n_cores = 4, 
   burnin_steps = 500, 

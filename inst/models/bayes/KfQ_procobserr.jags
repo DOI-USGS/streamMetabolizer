@@ -17,9 +17,9 @@ model {
       K[i,d] <- K600_daily[d] * KO2_conv[i,d] * frac_D[i,d]
     }
     
-    # Set up initial DO_mod and err_proc for the day
+    # Set up initial DO_mod and err_proc_acor for the day
     DO_mod[1,d] <- DO_obs[1,d]
-    err_proc[1,d] <- 0
+    err_proc_acor[1,d] <- 0
 
     # TIMESTEP-SPECIFIC PARAMETERS
     for(i in 2:n[d]) {
@@ -28,13 +28,13 @@ model {
         GPP[i,d] + 
         ER[i,d] + 
         K[i,d] * (DO_sat[i,d] - DO_mod[i-1,d]) +
-        err_proc[i,d]
+        err_proc_acor[i,d]
 
       # Process error: Build an error timeseries with a fitted autocorrelation structure
-      err_proc[i,d] ~ dnorm(err_proc_phi*err_proc[i-1,d], pow(err_proc_sigma, -2))
+      err_proc_acor[i,d] ~ dnorm(err_proc_acor_phi*err_proc_acor[i-1,d], pow(err_proc_acor_sigma, -2))
   
       # Observation error: Compare all the DO predictions to their observations
-      DO_obs[i,d] ~ dnorm(DO_mod[i,d], pow(err_obs_sigma, -2))
+      DO_obs[i,d] ~ dnorm(DO_mod[i,d], pow(err_obs_iid_sigma, -2))
    
     }
   }
@@ -42,11 +42,11 @@ model {
   # TIME-INDEPENDENT PARAMETERS
   
   # Prior on the sd of the errors between modeled and observed DO
-  err_obs_sigma ~ dunif(0, 0.5)
+  err_obs_iid_sigma ~ dunif(0, 0.5)
 
   # Prior on the autocorrelation & sd of the process errors
-  err_proc_phi <- 1
-  err_proc_sigma ~ dunif(0, 0.5)
+  err_proc_acor_phi <- 1
+  err_proc_acor_sigma ~ dunif(0, 0.5)
 
   # Priors on the intercept and slope of the K ~ Q relationshipo
   KQ_icpt ~ dnorm(3, 1)

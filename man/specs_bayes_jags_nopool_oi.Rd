@@ -8,8 +8,8 @@ specs_bayes_jags_nopool_oi(model_file = "nopool_oi_pairmeans.jags",
   bayes_fun = "bayes_1ply", bayes_software = "jags", keep_mcmcs = FALSE,
   GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
-  err_obs_sigma_min = 0, err_obs_sigma_max = 0.5, priors = FALSE,
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  err_obs_iid_sigma_min = 0, err_obs_iid_sigma_max = 0.5, priors = FALSE,
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_iid_sigma"),
   n_chains = 4, n_cores = 4, adapt_steps = 250, burnin_steps = 250,
   saved_steps = 500, thin_steps = 1, verbose = FALSE)
 }
@@ -58,11 +58,11 @@ daily rate of reaeration}
 \item{K600_daily_sigma}{The standard deviation of a dnorm distribution for
   K600_daily, the daily rate of reaeration}
 
-\item{err_obs_sigma_min}{The lower bound on a dunif distribution for
-err_obs_sigma, the standard deviation of the observation error}
+\item{err_obs_iid_sigma_min}{The lower bound on a dunif distribution for
+err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_obs_sigma_max}{The upper bound on a dunif distribution for
-  err_obs_sigma, the standard deviation of the observation error}
+\item{err_obs_iid_sigma_max}{The upper bound on a dunif distribution for
+  err_obs_iid_sigma, the standard deviation of the observation error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}

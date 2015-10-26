@@ -22,14 +22,14 @@ specs_bayes_stan_nopool_oi <- function(
   K600_daily_mu = 10,
   K600_daily_sigma = 10,
   
-  err_obs_sigma_min = 0,
-  err_obs_sigma_max = 0.5,
+  err_obs_iid_sigma_min = 0,
+  err_obs_iid_sigma_max = 0.5,
   
   # inheritParams prepdata_bayes
   priors = FALSE,
   
   # inheritParams mcmc_bayes
-  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_sigma"),
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_iid_sigma"),
   n_chains = 4, 
   n_cores = 4, 
   burnin_steps = 500, 

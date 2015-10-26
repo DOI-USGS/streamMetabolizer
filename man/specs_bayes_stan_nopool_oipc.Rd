@@ -9,12 +9,13 @@ specs_bayes_stan_nopool_oipc(model_file = "nopool_oipc_pairmeans.stan",
   bayes_fun = "bayes_1ply", bayes_software = "stan", keep_mcmcs = FALSE,
   GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
-  err_proc_phi_min = 0, err_proc_phi_max = 1, err_proc_sigma_min = 0,
-  err_proc_sigma_max = 5e-04, err_obs_sigma_min = 0,
-  err_obs_sigma_max = 0.5, priors = FALSE, params_out = c("GPP_daily",
-  "ER_daily", "K600_daily", "err_obs_sigma", "err_proc_sigma", "err_proc_phi"),
-  n_chains = 4, n_cores = 4, burnin_steps = 500, saved_steps = 500,
-  thin_steps = 1, verbose = FALSE)
+  err_proc_acor_phi_min = 0, err_proc_acor_phi_max = 1,
+  err_proc_acor_sigma_min = 0, err_proc_acor_sigma_max = 5e-04,
+  err_obs_iid_sigma_min = 0, err_obs_iid_sigma_max = 0.5, priors = FALSE,
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_obs_iid_sigma",
+  "err_proc_acor_sigma", "err_proc_acor_phi"), n_chains = 4, n_cores = 4,
+  burnin_steps = 500, saved_steps = 500, thin_steps = 1,
+  verbose = FALSE)
 }
 \arguments{
 \item{model_file}{character. The model definition file to use. The file may
@@ -61,23 +62,23 @@ daily rate of reaeration}
 \item{K600_daily_sigma}{The standard deviation of a dnorm distribution for
   K600_daily, the daily rate of reaeration}
 
-\item{err_proc_phi_min}{The lower bound on a dunif distribution for
-err_proc_phi, the process error autocorrelation coefficient}
+\item{err_proc_acor_phi_min}{lower bound on the autocorrelation coefficient
+for the autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_phi_max}{The upper bound on a dunif distribution for
-err_proc_phi, the process error autocorrelation coefficient}
+\item{err_proc_acor_phi_max}{upper bound on the autocorrelation coefficient
+for the autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_sigma_min}{The lower bound on a dunif distribution for
-err_proc_sigma, the standard deviation of the process error}
+\item{err_proc_acor_sigma_min}{lower bound on the standard deviation of the
+autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_sigma_max}{The upper bound on a dunif distribution for
-err_proc_sigma, the standard deviation of the process error}
+\item{err_proc_acor_sigma_max}{upper bound on the standard deviation of the
+autocorrelated component of process [& sometimes observation] error}
 
-\item{err_obs_sigma_min}{The lower bound on a dunif distribution for
-err_obs_sigma, the standard deviation of the observation error}
+\item{err_obs_iid_sigma_min}{The lower bound on a dunif distribution for
+err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_obs_sigma_max}{The upper bound on a dunif distribution for
-  err_obs_sigma, the standard deviation of the observation error}
+\item{err_obs_iid_sigma_max}{The upper bound on a dunif distribution for
+  err_obs_iid_sigma, the standard deviation of the observation error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}

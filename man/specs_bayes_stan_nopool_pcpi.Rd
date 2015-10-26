@@ -63,22 +63,22 @@ daily rate of reaeration}
   K600_daily, the daily rate of reaeration}
 
 \item{err_proc_acor_phi_min}{lower bound on the autocorrelation coefficient
-for the autocorrelated component of process & observation error}
+for the autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_phi_max}{upper bound on the autocorrelation coefficient
-for the autocorrelated component of process & observation error}
+for the autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_sigma_min}{lower bound on the standard deviation of the
-autocorrelated component of process & observation error}
+autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_sigma_max}{upper bound on the standard deviation of the
-autocorrelated component of process & observation error}
+autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_iid_sigma_min}{lower bound on the standard deviation of the
-uncorrelated (IID) component of process & observation error}
+uncorrelated (IID) component of process [& sometimes observation] error}
 
 \item{err_proc_iid_sigma_max}{upper bound on the standard deviation of the
-  uncorrelated (IID) component of process & observation error}
+  uncorrelated (IID) component of process [& sometimes observation] error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}

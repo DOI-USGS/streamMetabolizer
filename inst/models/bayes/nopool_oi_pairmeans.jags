@@ -20,10 +20,10 @@ model {
   
   # Observation error: Compare all the DO predictions to their observations
   for (i in 2:n) {
-    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_sigma, -2))
+    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_iid_sigma, -2))
   }
   # Prior on the sd of the errors between modeled and observed DO
-  err_obs_sigma ~ dunif(err_obs_sigma_min, err_obs_sigma_max)
+  err_obs_iid_sigma ~ dunif(err_obs_iid_sigma_min, err_obs_iid_sigma_max)
   
   # Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
   GPP_daily ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))

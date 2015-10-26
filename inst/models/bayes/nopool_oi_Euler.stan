@@ -10,8 +10,8 @@ data {
   real K600_daily_mu;
   real K600_daily_sigma;
   
-  real err_obs_sigma_min;
-  real err_obs_sigma_max;
+  real err_obs_iid_sigma_min;
+  real err_obs_iid_sigma_max;
   
   int <lower=0> n;
   
@@ -50,7 +50,7 @@ parameters {
   real K600_daily;
   // real DO_mod_1;
   
-  real <lower=err_obs_sigma_min, upper=err_obs_sigma_max> err_obs_sigma;
+  real <lower=err_obs_iid_sigma_min, upper=err_obs_iid_sigma_max> err_obs_iid_sigma;
   
 }
 
@@ -77,9 +77,9 @@ model {
   
   
   // Observation error: Compare all the DO predictions to their observations
-  DO_obs ~ normal(DO_mod, err_obs_sigma);
+  DO_obs ~ normal(DO_mod, err_obs_iid_sigma);
   // Prior on the sd of the errors between modeled and observed DO; this is actually unnecessary to specify
-  //err_obs_sigma ~ uniform(err_obs_sigma_min, err_obs_sigma_max);
+  //err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max);
   
   // Daily mean values of GPP and ER (gO2 m^-2 d^-1) and K600 (m d^-1)
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

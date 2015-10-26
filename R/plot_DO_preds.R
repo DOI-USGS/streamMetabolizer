@@ -19,6 +19,7 @@ plot_DO_preds <- function(DO_preds, plot_as=c('conc','pctsat','ddodt')) {
   
   plot_as <- match.arg(plot_as, several.ok=TRUE)
   
+  DO.obs <- DO.mod <- DO.sat <- '.dplyr.var'
   DO_preds_conc <- mutate(
     DO_preds, as='conc', var='DO (mg/L)', col='red4', lab='DO (mg/L)',
     mod=DO.mod, 
