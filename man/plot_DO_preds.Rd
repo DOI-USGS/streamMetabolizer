@@ -4,7 +4,7 @@
 \alias{plot_DO_preds}
 \title{Plot predictions produced with predict_DO}
 \usage{
-plot_DO_preds(DO_preds, plot_as = c("both", "conc", "pctsat"))
+plot_DO_preds(DO_preds, plot_as = c("conc", "pctsat", "ddodt"))
 }
 \arguments{
 \item{DO_preds}{a data.frame of predictions such as that returned by

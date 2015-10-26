@@ -6,9 +6,8 @@
 \usage{
 metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(NULL),
-  model_specs = specs_bayes_jags_nopool_obserr(), info = NULL,
-  day_start = 4, day_end = 27.99, tests = c("full_day", "even_timesteps",
-  "complete_data"))
+  model_specs = specs_bayes_jags_nopool_oi(), info = NULL, day_start = 4,
+  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw
@@ -55,8 +54,9 @@ A metab_bayes object containing the fitted model.
 }
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO,
-temperature, light, etc. See \code{\link{specs_funs}} for relevant options
-for the \code{model_specs} argument.
+temperature, light, etc. See
+\code{\link{specs_funs}(metab_fun="metab_bayes")} for relevant options for
+the \code{model_specs} argument.
 }
 \details{
 Current and future models: models/bayes/jags/nopool_obserr.txt

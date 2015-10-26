@@ -6,7 +6,7 @@
 \usage{
 mle_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
   tests = c("full_day", "even_timesteps", "complete_data"),
-  model_specs = specs_mle_obserr())
+  model_specs = specs_mle_nopool_oi())
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

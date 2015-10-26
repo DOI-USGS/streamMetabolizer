@@ -46,11 +46,11 @@ NULL
 #'  
 #'   # PRK and PR with process error
 #'   get_fit(mm <- metab_mle(data=vfrenchshort, 
-#'     model_specs=specs_mle_procerr(), 
+#'     model_specs=specs_mle_nopool_pi(), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
 #'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
-#'     model_specs=specs_mle_procerr(), 
+#'     model_specs=specs_mle_nopool_pi(), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
 #' }
@@ -58,7 +58,7 @@ NULL
 #' @family metab_model
 metab_mle <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), 
-  model_specs=specs_mle_obserr(), # inheritParams metab_model_prototype
+  model_specs=specs_mle_nopool_oi(), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
@@ -103,7 +103,7 @@ metab_mle <- function(
 mle_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs_mle_obserr() # inheritParams metab_model_prototype
+  model_specs=specs_mle_nopool_oi() # inheritParams metab_model_prototype
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 

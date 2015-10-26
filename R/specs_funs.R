@@ -29,15 +29,15 @@ specs_funs <- function(metab_fun=c("metab_bayes","metab_mle","metab_night","meta
   models <- data.frame(
     specs_fun=paste0(
       "specs_",
-      c("bayes_jags_nopool_obserr",
-        "bayes_jags_nopool_procobserr",
-        "bayes_stan_nopool_obserr",
-        "bayes_stan_nopool_procacoriiderr",
-        "bayes_stan_nopool_procobserr",
-        "mle_obserr",
-        "mle_procerr",
-        "night_basic",
-        "sim_basic"
+      c("bayes_jags_nopool_oi", # was bayes_jags_nopool_obserr
+        "bayes_jags_nopool_oipc", # was bayes_jags_nopool_procobserr
+        "bayes_stan_nopool_oi", # was bayes_stan_nopool_obserr
+        "bayes_stan_nopool_pcpi", # was bayes_stan_nopool_procacoriiderr
+        "bayes_stan_nopool_oipc", # was bayes_stan_nopool_procobserr
+        "mle_nopool_oi", # was mle_obserr
+        "mle_nopool_pi", # was mle_procerr
+        "night_basic", # was & is night_basic
+        "sim_basic" # was & is sim_basic
       )),
     metab_fun=paste0("metab_", c(rep("bayes",5), rep("mle",2), "night", "sim")),
     software=c(rep("jags",2), rep("stan",3), rep(NA,4)), 

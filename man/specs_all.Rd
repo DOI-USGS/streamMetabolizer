@@ -7,11 +7,10 @@
 specs_all(GPP_init, ER_init, K600_init, calc_DO_fun, ODE_method, model_file,
   bayes_fun, bayes_software, keep_mcmcs, GPP_daily_mu, GPP_daily_sigma,
   ER_daily_mu, ER_daily_sigma, K600_daily_mu, K600_daily_sigma,
-  err_proc_phi_min, err_proc_phi_max, err_proc_sigma_min, err_proc_sigma_max,
-  err_obs_sigma_min, err_obs_sigma_max, err_proc_acor_phi_min,
+  err_obs_iid_sigma_min, err_obs_iid_sigma_max, err_proc_acor_phi_min,
   err_proc_acor_phi_max, err_proc_acor_sigma_min, err_proc_acor_sigma_max,
   err_proc_iid_sigma_min, err_proc_iid_sigma_max, priors, params_out, n_chains,
-  n_cores, adapt_steps, burnin_steps, num_saved_steps, thin_steps, verbose,
+  n_cores, adapt_steps, burnin_steps, saved_steps, thin_steps, verbose,
   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed)
 }
 \arguments{
@@ -82,41 +81,29 @@ daily rate of reaeration}
 \item{K600_daily_sigma}{The standard deviation of a dnorm distribution for
   K600_daily, the daily rate of reaeration}
 
-\item{err_proc_phi_min}{The lower bound on a dunif distribution for
-err_proc_phi, the process error autocorrelation coefficient}
+\item{err_obs_iid_sigma_min}{The lower bound on a dunif distribution for
+err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_proc_phi_max}{The upper bound on a dunif distribution for
-err_proc_phi, the process error autocorrelation coefficient}
-
-\item{err_proc_sigma_min}{The lower bound on a dunif distribution for
-err_proc_sigma, the standard deviation of the process error}
-
-\item{err_proc_sigma_max}{The upper bound on a dunif distribution for
-err_proc_sigma, the standard deviation of the process error}
-
-\item{err_obs_sigma_min}{The lower bound on a dunif distribution for
-err_obs_sigma, the standard deviation of the observation error}
-
-\item{err_obs_sigma_max}{The upper bound on a dunif distribution for
-  err_obs_sigma, the standard deviation of the observation error}
+\item{err_obs_iid_sigma_max}{The upper bound on a dunif distribution for
+  err_obs_iid_sigma, the standard deviation of the observation error}
 
 \item{err_proc_acor_phi_min}{lower bound on the autocorrelation coefficient
-for the autocorrelated component of process & observation error}
+for the autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_phi_max}{upper bound on the autocorrelation coefficient
-for the autocorrelated component of process & observation error}
+for the autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_sigma_min}{lower bound on the standard deviation of the
-autocorrelated component of process & observation error}
+autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_acor_sigma_max}{upper bound on the standard deviation of the
-autocorrelated component of process & observation error}
+autocorrelated component of process [& sometimes observation] error}
 
 \item{err_proc_iid_sigma_min}{lower bound on the standard deviation of the
-uncorrelated (IID) component of process & observation error}
+uncorrelated (IID) component of process [& sometimes observation] error}
 
 \item{err_proc_iid_sigma_max}{upper bound on the standard deviation of the
-  uncorrelated (IID) component of process & observation error}
+  uncorrelated (IID) component of process [& sometimes observation] error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will
 return priors rather than posteriors?}
@@ -128,14 +115,15 @@ runs should be recorded and summarized}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{adapt_steps}{the number of steps to use in adapting the model}
+\item{adapt_steps}{the number of steps per chain to use in adapting the model}
 
-\item{burnin_steps}{the number of steps to run and ignore before starting to
-collect MCMC 'data'}
+\item{burnin_steps}{the number of steps per chain to run and ignore before
+starting to collect MCMC 'data'}
 
-\item{num_saved_steps}{the number of MCMC steps to save}
+\item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step}
+\item{thin_steps}{the number of steps to move before saving another step. 1
+means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
@@ -168,6 +156,6 @@ List all possible arguments and the specs lists in which they occur
 \examples{
 specs_table <- specs_all()
 specs_table$spec
-specs_table[specs_table$specs_bayes_jags_nopool_obserr, 'spec']
+specs_table[specs_table$specs_bayes_jags_nopool_oi, 'spec']
 }
 
