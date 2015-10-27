@@ -1,0 +1,43 @@
+# np_oi_pm_km.jags
+
+data {
+
+  for(i in 1:n) {
+    DO_obs_copy[i] <- DO_obs[i]
+  }
+  
+}
+
+model {
+
+  # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
+  for(i in 1:(n-1)) {
+    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2)
+    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2)
+    coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2
+    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2
+  }
+  
+  # Model DO time series (pairmeans version)
+  DO_mod[1] <- DO_obs_copy[1]
+  for(i in 1:(n-1)) {
+    DO_mod[i+1] <- (
+      DO_mod[i] +
+      GPP_daily * coef_GPP[i] +
+      ER_daily * coef_ER[i] +
+      K600_daily * coef_K600_part[i] * (DO_sat_pairmean[i] - DO_mod[i]/2)
+    ) / (1 + K600_daily * coef_K600_part[i] / 2)
+  }
+  
+  # Priors on observation error
+  for(i in 1:n) {
+    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_iid_sigma, -2))
+  }
+  err_obs_iid_sigma ~ dunif(err_obs_iid_sigma_min, err_obs_iid_sigma_max)
+  
+  # Priors on daily metabolism values
+  GPP_daily ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
+  ER_daily ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))
+  K600_daily ~ dnorm(K600_daily_mu, pow(K600_daily_sigma, -2))
+  
+}

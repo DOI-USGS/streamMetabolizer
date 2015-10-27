@@ -9,7 +9,7 @@ model {
       DO_mod[i] +
       GPP_daily * frac_GPP[i] / depth[i] + 
       ER_daily * frac_ER[i] / depth[i] + 
-      K600_daily * KO2_conv[i] * frac_D[i] * (DO_sat[i] - DO_mod[i])
+      K600_daily * KO2_conv[i] * frac_D[i] * (DO_sat[i] - DO_obs[i])
   } 
   
   # Priors on observation error

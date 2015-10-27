@@ -1,5 +1,5 @@
 // Observation error model with pairmeans ODE solution
-// yep.
+// 
 
 data {
   
@@ -63,25 +63,16 @@ parameters {
 // manual says: evaluated once per leapfrog step
 transformed parameters {
   
-  // Declare temporary variables
-  vector [n] GPP;
-  vector [n] ER;
-  vector [n] K;
   vector [n] DO_mod;
   
-  // Convert daily rates to per-observation rates (vectorized)
-  GPP <- GPP_daily * coef_GPP;
-  ER <- ER_daily * coef_ER;
-  K <- K600_daily * coef_K600;
-
   // Model DO time series
   DO_mod[1] <- DO_obs[1]; // DO_mod_1;
   for(i in 2:n) {
     DO_mod[i] <- (
       DO_mod[i-1] +
-        GPP[i] + 
-        ER[i] + 
-        K[i] * (DO_sat_pairmean[i] - DO_mod[i-1]/2)
+        GPP_daily * coef_GPP[i] + 
+        ER_daily * coef_ER[i] + 
+        (K600_daily * coef_K600[i]) .* (DO_sat_pairmean[i] - DO_mod[i-1]/2)
     ) / (1 + K[i]/2);
   }
 
