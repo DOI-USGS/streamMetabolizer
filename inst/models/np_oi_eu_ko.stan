@@ -1,8 +1,7 @@
-// Observation error model with Eulerian ODE solution
-// 
+// np_oi_eu_ko.stan
 
 data {
-  
+
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;
@@ -25,57 +24,61 @@ data {
   
 }
 
-// manual says: the statements in the transformed data block are only ever evaluated once
 transformed data {
-  
+
   vector [n-1] coef_GPP;
   vector [n-1] coef_ER;
-  vector [n-1] coef_K600;
+  vector [n-1] coef_K600_full;
+  vector [n] DO_obs_copy;
   
-  // coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
+  for(i in 1:n) {
+    DO_obs_copy[i] <- DO_obs[i];
+  }
+  
+  // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
   for(i in 1:(n-1)) {
     coef_GPP[i]  <- frac_GPP[i] / depth[i];
     coef_ER[i]   <- frac_ER[ i] / depth[i];
-    coef_K600[i] <- KO2_conv[i] * frac_D[i];
-  }  
-
+    coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * 
+      (DO_sat[i] - DO_obs_copy[i]);
+  }
+  
 }
 
 parameters {
-  
+
   real GPP_daily;
   real ER_daily;
-  real K600_daily; // real DO_mod_1;
+  real K600_daily;
   
   real <lower=err_obs_iid_sigma_min, upper=err_obs_iid_sigma_max> err_obs_iid_sigma;
   
 }
 
-// manual says: evaluated once per leapfrog step
 transformed parameters {
-  
-  // Declare temporary variables
-  vector [n] DO_mod;
 
-  // Model DO time series
-  DO_mod[1] <- DO_obs[1]; // DO_mod_1;
+  vector [n] DO_mod;
+  
+  // Model DO time series (Euler version)
+  DO_mod[1] <- DO_obs_copy[1];
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +
-      GPP_daily * coef_GPP[i] + 
-      ER_daily * coef_ER[i] + 
-      K600_daily * coef_K600[i] * (DO_sat[i] - DO_mod[i])
+      GPP_daily * coef_GPP[i] +
+      ER_daily * coef_ER[i] +
+      K600_daily * coef_K600_full[i]
     );
   }
   
 }
 
 model {
-  
-  
+
   // Priors on observation error
-  DO_obs ~ normal(DO_mod, err_obs_iid_sigma);
-  //err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max); // implied above
+  for(i in 1:n) {
+    DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
+  }
+  err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max);
   
   // Priors on daily metabolism values
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

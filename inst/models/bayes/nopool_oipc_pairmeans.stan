@@ -1,6 +1,8 @@
+// Full state space model for a single day. Matches most closely with
+// nopool_pcpi_pairmeans.stan and nopool_oipc_Euler.jags
+
 data {
   
-  # hyperparameters
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;
@@ -15,13 +17,13 @@ data {
   real err_obs_iid_sigma_min;
   real err_obs_iid_sigma_max;
   
-  int <lower=0> n; // number of observations in the day
+  int <lower=0> n;
   
   vector [n] DO_obs;
   vector [n] DO_sat;
-  vector [n] frac_GPP; // fractions, summing to 1, to partition GPP_daily into per-timestep rates
-  vector [n] frac_ER; // fractions, summing to 1, to partition ER_daily into per-timestep rates
-  vector [n] frac_D; // fractions, summing to 1, to partition K600_daily into per-timestep rates
+  vector [n] frac_GPP;
+  vector [n] frac_ER;
+  vector [n] frac_D;
   vector [n] depth;
   vector [n] KO2_conv;
   
@@ -30,22 +32,26 @@ data {
 // manual says: the statements in the transformed data block are only ever evaluated once
 transformed data {
   
-  vector [n] coef_GPP;
-  vector [n] coef_ER;
-  vector [n] coef_K600;
-  vector [n] DO_sat_pairmean;
+  vector [n-1] coef_GPP;
+  vector [n-1] coef_ER;
+  vector [n-1] coef_K600;
+  vector [n-1] DO_sat_pairmean;
 
   // Convert daily rates to per-observation rates using pairmeans. The first 
   // observation is never actually used but must be specified, so is set to 0
-  coef_GPP[1]  <- 0; //frac_GPP[1] / depth[1];
-  coef_ER[1]   <- 0; //frac_ER[1] / depth[1];
-  coef_K600[1] <- 0; //KO2_conv[1] * frac_D[1];
-  DO_sat_pairmean[1] <- 0; //DO_sat[1];
-  for(i in 2:n) {
-    coef_GPP[i]  <- (frac_GPP[i]+frac_GPP[i-1])/2 / ((depth[i]+depth[i-1])/2);
-    coef_ER[i]   <- (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2);
-    coef_K600[i] <- (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2;
-    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i-1])/2;
+//   for(i in 2:n) {
+//     coef_GPP[i]  <- (frac_GPP[i]+frac_GPP[i-1])/2 / ((depth[i]+depth[i-1])/2);
+//     coef_ER[i]   <- (frac_ER[i]+frac_ER[i-1])/2 / ((depth[i]+depth[i-1])/2);
+//     coef_K600[i] <- (KO2_conv[i]+KO2_conv[i-1])/2 * (frac_D[i]+frac_D[i-1])/2;
+//     DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i-1])/2;
+//   }
+  
+  // coefficients by pairmeans (e.g., (frac_GPP[i] + frac_GPP[i+1])/2 applies to the DO step from i to i+1)
+  for(i in 1:(n-1)) {
+    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2);
+    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2);
+    coef_K600[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2;
+    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2;
   }
   
 }
@@ -55,40 +61,28 @@ parameters {
   real GPP_daily;
   real ER_daily;
   real K600_daily;
-  // real DO_mod_1;
-  vector [n] err_proc_acor;
-  
-  // bounded prior (implied uniform) on the sd of the errors between modeled and observed DO
-  real <lower=err_proc_acor_phi_min, upper=err_proc_acor_phi_max> err_proc_acor_phi;
+  real <lower=err_proc_acor_phi_min,   upper=err_proc_acor_phi_max>   err_proc_acor_phi;
   real <lower=err_proc_acor_sigma_min, upper=err_proc_acor_sigma_max> err_proc_acor_sigma;
-  real <lower=err_obs_iid_sigma_min, upper=err_obs_iid_sigma_max> err_obs_iid_sigma;
+  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
+  vector[n-1] err_proc_acor;
+  // real DO_mod_1;
   
 }
 
 // manual says: evaluated once per leapfrog step
 transformed parameters {
   
-  // Declare temporary variables
-  vector [n] GPP;
-  vector [n] ER;
-  vector [n] K;
   vector [n] DO_mod;
   
-  // Convert daily rates to per-observation rates (vectorized)
-  GPP <- GPP_daily * coef_GPP;
-  ER <- ER_daily * coef_ER;
-  K <- K600_daily * coef_K600;
-
   // Model DO time series
   DO_mod[1] <- DO_obs[1]; // DO_mod_1;
   for(i in 2:n) {
     DO_mod[i] <- (
       DO_mod[i-1] +
-        GPP[i] + 
-        ER[i] + 
-        K[i] * (DO_sat_pairmean[i] - DO_mod[i-1]/2) +
-        err_proc_acor[i]
-    ) / (1 + K[i]/2);
+        GPP_daily * coef_GPP[i] + 
+        ER_daily * coef_ER[i] + 
+        (K600_daily * coef_K600[i]) .* (DO_sat_pairmean[i] - DO_mod[i-1]/2)
+    ) / (1 + K600_daily * coef_K600[i] / 2);
   }
 
 }
