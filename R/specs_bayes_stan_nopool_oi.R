@@ -23,7 +23,7 @@ specs_bayes_stan_nopool_oi <- function(
   K600_daily_sigma = 10,
   
   err_obs_iid_sigma_min = 0,
-  err_obs_iid_sigma_max = 0.5,
+  err_obs_iid_sigma_max = 5,
   
   # inheritParams prepdata_bayes
   priors = FALSE,

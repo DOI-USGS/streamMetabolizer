@@ -17,7 +17,7 @@ specs_bayes_stan_nopool_pcpi <- function(
   keep_mcmcs = FALSE,
   
   # hyperparameters
-  GPP_daily_mu = 0,
+  GPP_daily_mu = 10,
   GPP_daily_sigma = 10,
   ER_daily_mu = -10,
   ER_daily_sigma = 10,
@@ -27,9 +27,9 @@ specs_bayes_stan_nopool_pcpi <- function(
   err_proc_acor_phi_min = 0,
   err_proc_acor_phi_max = 1,
   err_proc_acor_sigma_min = 0,
-  err_proc_acor_sigma_max = 20,
+  err_proc_acor_sigma_max = 5,
   err_proc_iid_sigma_min = 0,
-  err_proc_iid_sigma_max = 20,
+  err_proc_iid_sigma_max = 5,
   
   # inheritParams prepdata_bayes
   priors = FALSE,

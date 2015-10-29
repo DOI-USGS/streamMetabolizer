@@ -1,4 +1,4 @@
-# np_oi_pm_km.jags
+# np_oipc_pm_km.jags
 
 data {
 
@@ -15,17 +15,28 @@ data {
 
 model {
 
-  # Model DO time series (pairmeans version, without process error)
+  # Model DO time series (pairmeans version, with process error)
   DO_mod[1] <- DO_obs_1
+  err_proc_acor[1] <- err_proc_acor_inc[1]
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
+      err_proc_acor[i] +
       DO_mod[i] +
       GPP_daily * coef_GPP[i] +
       ER_daily * coef_ER[i] +
       K600_daily * coef_K600_part[i] * (DO_sat_pairmean[i] - DO_mod[i]/2)
     ) / (1 + K600_daily * coef_K600_part[i] / 2)
+    err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i]
     
   }
+  
+  # Process error
+  for(i in 1:(n-1)) {
+    err_proc_acor_inc[i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
+  }
+  # Autocorrelation (phi) & SD (sigma) of the process errors
+  err_proc_acor_phi ~ dunif(err_proc_acor_phi_min, err_proc_acor_phi_max)
+  err_proc_acor_sigma ~ dunif(err_proc_acor_sigma_min, err_proc_acor_sigma_max)
   
   # Observation error
   for(i in 1:n) {

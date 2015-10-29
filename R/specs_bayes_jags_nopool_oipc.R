@@ -25,9 +25,9 @@ specs_bayes_jags_nopool_oipc <- function(
   err_proc_acor_phi_min = 0,
   err_proc_acor_phi_max = 1,
   err_proc_acor_sigma_min = 0,
-  err_proc_acor_sigma_max = 0.0005,
+  err_proc_acor_sigma_max = 5,
   err_obs_iid_sigma_min = 0,
-  err_obs_iid_sigma_max = 0.5,
+  err_obs_iid_sigma_max = 5,
   
   # inheritParams prepdata_bayes
   priors = FALSE,
