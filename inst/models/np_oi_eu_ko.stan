@@ -13,6 +13,7 @@ data {
   real err_obs_iid_sigma_max;
   
   int <lower=0> n;
+  real DO_obs_1;
   
   vector [n] DO_obs;
   vector [n] DO_sat;
@@ -29,18 +30,13 @@ transformed data {
   vector [n-1] coef_GPP;
   vector [n-1] coef_ER;
   vector [n-1] coef_K600_full;
-  vector [n] DO_obs_copy;
-  
-  for(i in 1:n) {
-    DO_obs_copy[i] <- DO_obs[i];
-  }
   
   // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
   for(i in 1:(n-1)) {
     coef_GPP[i]  <- frac_GPP[i] / depth[i];
     coef_ER[i]   <- frac_ER[ i] / depth[i];
     coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * 
-      (DO_sat[i] - DO_obs_copy[i]);
+      (DO_sat[i] - DO_obs[i]);
   }
   
 }
@@ -60,7 +56,7 @@ transformed parameters {
   vector [n] DO_mod;
   
   // Model DO time series (Euler version)
-  DO_mod[1] <- DO_obs_copy[1];
+  DO_mod[1] <- DO_obs_1;
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +

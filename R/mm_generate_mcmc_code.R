@@ -91,7 +91,8 @@ mm_generate_mcmc_file <- function(
         'real err_obs_iid_sigma_max;'),
       
       chunk(
-        'int <lower=0> n;'),
+        'int <lower=0> n;',
+        'real DO_obs_1;'),
       
       chunk(
         'vector [n] DO_obs;',
@@ -105,9 +106,12 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    ## transformed data ## - statements evaluated exactly once
+    ## Stan: transformed data ## - statements evaluated exactly once
+    ## JAGS: data ##
     if(bayes_software == 'stan') c(
       'transformed data {',''
+    ) else if(bayes_software == 'jags') c(
+      'data {',''
     ),
     
     if(bayes_software == 'stan') c(
@@ -119,26 +123,7 @@ mm_generate_mcmc_file <- function(
           DO_mod = 'vector [n-1] coef_K600_part;',
           DO_obs = 'vector [n-1] coef_K600_full;'
         ),
-        if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector [n-1] DO_sat_pairmean;',
-        'vector [n] DO_obs_copy;')
-    ),
-    
-    if(bayes_software == 'jags') c(
-      'data {',''
-    ),
-    # chunk(
-    #   s('DO_mod_1 ~ ', f('normal', 'DO_obs[1]', '0.1'))),
-    chunk(
-      p('for(i in 1:n) {'),
-      s('  DO_obs_copy[i] <- DO_obs[i]'),
-      p('}')),
-    if(bayes_software == 'jags') c(
-      '}', ''
-    ),
-    
-    ## JAGS model ##
-    if(bayes_software == 'jags') c(
-      'model {', ''
+        if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector [n-1] DO_sat_pairmean;')
     ),
     
     if(ode_method == 'Euler') { chunk(
@@ -153,7 +138,7 @@ mm_generate_mcmc_file <- function(
         ),
         DO_obs = c(
           p('  coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * '),
-          s('    (DO_sat[i] - DO_obs_copy[i])')
+          s('    (DO_sat[i] - DO_obs[i])')
         )
       ),
       p('}')
@@ -170,17 +155,18 @@ mm_generate_mcmc_file <- function(
         ),
         DO_obs = c(
           p('  coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 *'),
-          s('    (DO_sat[i] + DO_sat[i+1] - DO_obs_copy[i] - DO_obs_copy[i+1])/2')
+          s('    (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2')
         )
       ),
       p('}')
     )},
     
-    if(bayes_software == 'stan') c(
-     '}',''
+    # close out transformed data (stan) or data (jags)
+    c(
+      '}',''
     ),
-
-    ## parameters ##
+    
+    ## Stan: parameters ##
     if(bayes_software == 'stan') c(
       'parameters {','',
       
@@ -195,17 +181,22 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    ## transformed parameters ## - statements evaluated once per leapfrog step
+    ## Stan: transformed parameters ## - statements evaluated once per leapfrog step
+    ## JAGS: model ##
     if(bayes_software == 'stan') c(
-      'transformed parameters {','',
+      'transformed parameters {',''
+    ) else if(bayes_software == 'jags') c(
+      'model {', ''
+    ),
     
+    if(bayes_software == 'stan') c(
       chunk(
         'vector [n] DO_mod;')
     ),
     
     chunk(
       comment('Model DO time series (',ode_method,' version)'),
-      s('DO_mod[1] <- DO_obs_copy[1]'), # DO_obs[1] or DO_mod_1;
+      s('DO_mod[1] <- DO_obs_1'), # DO_obs[1] or DO_mod_1;
       p('for(i in 1:(n-1)) {'),
       p('  DO_mod[i+1] <- ('),
       #if(err_proc_acor) p('    err_proc_acor[i] +'),
@@ -229,19 +220,20 @@ mm_generate_mcmc_file <- function(
     if(bayes_software == 'stan') c(
       '}',''
     ),
-
+    
     ## model ##
     if(bayes_software == 'stan') c(
       'model {',''
     ),
-
+    
     chunk(
       comment('Priors on observation error'),
+      #s('DO_mod[1] ~ ', f('normal', 'DO_obs_1', 'err_obs_iid_sigma')), # DO_obs[1] or DO_mod_1;
       p('for(i in 1:n) {'),
       s('  DO_obs[i] ~ ', f('normal', 'DO_mod[i]', 'err_obs_iid_sigma')),
       p('}'),
       s('err_obs_iid_sigma ~ ', f('uniform', 'err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'))),
-      
+    
     chunk(
       comment('Priors on daily metabolism values'),
       s('GPP_daily ~ ', f('normal', 'GPP_daily_mu', 'GPP_daily_sigma')),
@@ -252,7 +244,7 @@ mm_generate_mcmc_file <- function(
   )
   
   writeLines(model_text, con=paste0('inst/models/', model_name), sep="\n")
-    
+  
 }
 
 #' Generate MCMC code files with all of the desired combinations of features

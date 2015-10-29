@@ -2,14 +2,6 @@
 
 data {
 
-  for(i in 1:n) {
-    DO_obs_copy[i] <- DO_obs[i]
-  }
-  
-}
-
-model {
-
   # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
   for(i in 1:(n-1)) {
     coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2)
@@ -18,8 +10,12 @@ model {
     DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2
   }
   
+}
+
+model {
+
   # Model DO time series (pairmeans version)
-  DO_mod[1] <- DO_obs_copy[1]
+  DO_mod[1] <- DO_obs_1
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +
