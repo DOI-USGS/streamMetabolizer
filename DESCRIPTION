@@ -1,7 +1,7 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.6.0.10
+Version: 0.6.0.11
 Date: 2015-10-29
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
@@ -56,6 +56,7 @@ Collate:
     'convert_k600_to_kGAS.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
+    'load_spring_creek.R'
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
     'metab_model-class.R'
