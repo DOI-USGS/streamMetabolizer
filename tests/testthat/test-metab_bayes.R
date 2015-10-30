@@ -238,8 +238,8 @@ manual_tests <- function() {
   ## The models
   #   jags_specs <- list(adapt_steps=3000, burnin_steps=7000, saved_steps=3000, keep_mcmcs=TRUE)
   #   stan_specs <- list(burnin_steps=10000, saved_steps=3000, keep_mcmcs=TRUE)
-  jags_specs <- list(adapt_steps=1000, burnin_steps=2000, saved_steps=2000, keep_mcmcs=TRUE)
-  stan_specs <- list(burnin_steps=2000, saved_steps=2000, keep_mcmcs=TRUE)
+  jags_specs <- list(adapt_steps=1000, burnin_steps=500, saved_steps=200, keep_mcmcs=TRUE)
+  stan_specs <- list(burnin_steps=100, saved_steps=100, keep_mcmcs=TRUE)
   
   # for serious debugging:
   debug_metab <- function(model_specs) {
@@ -315,7 +315,6 @@ manual_tests <- function() {
   # np_oipc_eu
   specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_file="../np_oipc_eu_km.jags"), jags_specs))
   mm <- np_oipc_eu_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  #runjags::failed.jags()
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
@@ -323,7 +322,6 @@ manual_tests <- function() {
   # converged!! iid_sigma = 0.0075, acor_sigma = 0.003, phi=0.97, k = 15-30
   specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_file="../np_oipc_eu_km.stan"), stan_specs))
   mm <- np_oipc_eu_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  #mcmc <- debug_metab(specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   rstan::traceplot(get_mcmc(mm)$"2012-08-24")
@@ -344,15 +342,13 @@ manual_tests <- function() {
   # np_oipc_pm
   specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_file="../np_oipc_pm_km.jags"), jags_specs))
   mm <- np_oipc_pm_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  #runjags::failed.jags()
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  # converged!! iid_sigma = 0.0075, acor_sigma = 0.003, phi=0.97, k = 15-30
+  # converged!! very similar to np_oipc_eu
   specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_file="../np_oipc_pm_km.stan"), stan_specs))
   mm <- np_oipc_pm_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  #mcmc <- debug_metab(specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   rstan::traceplot(get_mcmc(mm)$"2012-08-24")
@@ -368,22 +364,36 @@ manual_tests <- function() {
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+
+  
+  ## untested below  
+  
+  # np_pcpi_eu (no kms allowed)
+  specs <- do.call(specs_bayes_jags_nopool_pcpi, c(list(model_file="../np_pcpi_eu_ko.jags"), jags_specs))
+  mm <- np_pcpi_eu_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
+  
+  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_file="../np_pcpi_eu_ko.stan"), stan_specs))
+  mm <- np_pcpi_eu_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
   
   
+  # np_pcpi_pm (no kms allowed)
+  specs <- do.call(specs_bayes_jags_nopool_pcpi, c(list(model_file="../np_pcpi_pm_ko.jags"), jags_specs))
+  mm <- np_pcpi_pm_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  # nopool_oipc_pairmeans.jags
-  specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_file="nopool_oipc_pairmeans.jags"), jags_specs))
-  mm <- nopool_oipc_pairmeans.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  
-  # nopool_oipc_pairmeans.stan
-  specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_file="nopool_oipc_pairmeans.stan"), stan_specs))
-  mm <- nopool_oipc_pairmeans.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  
-  
-  
-  # nopool_pcpi_Euler.stan
-  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_file="nopool_pcpi_Euler.stan"), stan_specs))
-  mm <- nopool_pcpi_Euler.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
+  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_file="../np_pcpi_pm_ko.stan"), stan_specs))
+  mm <- np_pcpi_pm_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
   
   # nopool_pcpi_Euler_b1.stan 
   # this is Bob's code for comparison to nopool_pcpi_Euler_b2.stan; it doesn't actually run
@@ -393,14 +403,11 @@ manual_tests <- function() {
   mm <- nopool_pcpi_Euler_b2.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   
   
-  
-  # nopool_pcpi_pairmeans.stan
-  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_file="nopool_pcpi_pairmeans.stan"), stan_specs))
-  mm <- nopool_pcpi_pairmeans.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
-  
-
-  
   ## Code you can run after fitting any MCMC model
+  # when things go bad
+  runjags::failed.jags()
+  mcmc <- debug_metab(specs)
+  # when things didn't break
   expect_is(get_fitting_time(mm), "proc_time")
   expect_equal(names(mm@mcmc)[2], "2012-08-24")
   expect_accurate(mm)

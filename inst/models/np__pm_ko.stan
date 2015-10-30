@@ -1,4 +1,4 @@
-// np_oi_pm_km.stan
+// np__pm_ko.stan
 
 data {
   // Metabolism distributions
@@ -10,8 +10,6 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_obs_iid_sigma_min;
-  real err_obs_iid_sigma_max;
   
   // Daily data
   int <lower=0> n;
@@ -30,15 +28,17 @@ data {
 transformed data {
   vector [n-1] coef_GPP;
   vector [n-1] coef_ER;
-  vector [n-1] coef_K600_part;
-  vector [n-1] DO_sat_pairmean;
+  vector [n-1] coef_K600_full;
+  vector [n-1] dDO_obs;
   
   for(i in 1:(n-1)) {
     // Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
     coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2);
     coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2);
-    coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2;
-    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2;
+    coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 *
+      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2;
+    // dDO observations
+    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
   }
 }
 
@@ -46,39 +46,25 @@ parameters {
   real GPP_daily;
   real ER_daily;
   real K600_daily;
-  
-  real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
 }
 
 transformed parameters {
-  vector [n] DO_mod;
+  vector [n-1] dDO_mod;
   
   // Model DO time series
   // * pairmeans version
-  // * observation error
+  // * no observation error
   // * no process error
-  // * reaeration depends on DO_mod
+  // * reaeration depends on DO_obs
   
-  // DO model
-  DO_mod[1] <- DO_obs_1;
-  for(i in 1:(n-1)) {
-    DO_mod[i+1] <- (
-      DO_mod[i] +
-      GPP_daily * coef_GPP[i] +
-      ER_daily * coef_ER[i] +
-      K600_daily * coef_K600_part[i] * (DO_sat_pairmean[i] - DO_mod[i]/2)
-    ) / (1 + K600_daily * coef_K600_part[i] / 2);
-  }
+  // dDO model
+  dDO_mod <- 
+    GPP_daily * coef_GPP +
+    ER_daily * coef_ER +
+    K600_daily * coef_K600_full;
 }
 
 model {
-  // Independent, identically distributed observation error
-  for(i in 1:n) {
-    DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
-  }
-  // SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max);
-  
   // Daily metabolism values
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);

@@ -7,7 +7,10 @@
 mm_generate_mcmc_files()
 }
 \description{
-This function gets run on package build
+This function gets run on package build and creates every model within the
+set of factorial combinations of arguments to mm_generate_mcmc_file, with the
+exception of the one pair of incompatible arguments (err_obs_iid=F &&
+deficit_src='DO_mod')
 }
 \keyword{internal}
 

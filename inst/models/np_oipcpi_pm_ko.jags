@@ -1,4 +1,4 @@
-# np_oipc_pm_ko.jags
+# np_oipcpi_pm_ko.jags
 
 data {
   for(i in 1:(n-1)) {
@@ -14,7 +14,7 @@ model {
   # Model DO time series
   # * pairmeans version
   # * observation error
-  # * autocorrelated process error
+  # * IID and autocorrelated process error
   # * reaeration depends on DO_obs
   
   err_proc_acor[1] <- err_proc_acor_inc[1]
@@ -37,6 +37,12 @@ model {
       dDO_mod[i])
   }
 
+  # Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ dnorm(dDO_mod[i], pow(err_proc_iid_sigma, -2))
+  }
+  err_proc_iid_sigma ~ dunif(err_proc_iid_sigma_min, err_proc_iid_sigma_max)
+  
   # Autocorrelated process error
   for(i in 1:(n-1)) {
     err_proc_acor_inc[i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))

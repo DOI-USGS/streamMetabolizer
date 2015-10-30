@@ -6,7 +6,8 @@
 \usage{
 mm_generate_mcmc_file(bayes_software = c("jags", "stan"),
   ode_method = c("Euler", "pairmeans"), deficit_src = c("DO_mod", "DO_obs"),
-  err_proc_acor = c(TRUE, FALSE), pooling = "none")
+  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(TRUE, FALSE),
+  err_proc_iid = c(TRUE, FALSE), pooling = "none")
 }
 \arguments{
 \item{bayes_software}{Which software are we generating code for?}
@@ -18,6 +19,10 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO
 deficit be computed?}
+
+\item{err_obs_iid}{logical. Should IID observation error be included? If not,
+the model will be fit to the differences in successive DO measurements,
+rather than to the DO measurements themselves.}
 
 \item{err_proc_acor}{logical. Should autocorrelated process error (with the
 autocorrelation term phi fitted) be included?}

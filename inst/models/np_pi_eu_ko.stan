@@ -1,4 +1,4 @@
-// np_oi_eu_ko.stan
+// np_pi_eu_ko.stan
 
 data {
   // Metabolism distributions
@@ -10,8 +10,8 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_obs_iid_sigma_min;
-  real err_obs_iid_sigma_max;
+  real err_proc_iid_sigma_min;
+  real err_proc_iid_sigma_max;
   
   // Daily data
   int <lower=0> n;
@@ -31,6 +31,7 @@ transformed data {
   vector [n-1] coef_GPP;
   vector [n-1] coef_ER;
   vector [n-1] coef_K600_full;
+  vector [n-1] dDO_obs;
   
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
@@ -38,6 +39,8 @@ transformed data {
     coef_ER[i]   <- frac_ER[ i] / depth[i];
     coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * 
       (DO_sat[i] - DO_obs[i]);
+    // dDO observations
+    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
   }
 }
 
@@ -46,17 +49,16 @@ parameters {
   real ER_daily;
   real K600_daily;
   
-  real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
+  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
 }
 
 transformed parameters {
-  vector [n] DO_mod;
   vector [n-1] dDO_mod;
   
   // Model DO time series
   // * Euler version
-  // * observation error
-  // * no process error
+  // * no observation error
+  // * IID process error
   // * reaeration depends on DO_obs
   
   // dDO model
@@ -64,23 +66,14 @@ transformed parameters {
     GPP_daily * coef_GPP +
     ER_daily * coef_ER +
     K600_daily * coef_K600_full;
-  
-  // DO model
-  DO_mod[1] <- DO_obs_1;
-  for(i in 1:(n-1)) {
-    DO_mod[i+1] <- (
-      DO_mod[i] +
-      dDO_mod[i]);
-  }
 }
 
 model {
-  // Independent, identically distributed observation error
-  for(i in 1:n) {
-    DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
+  // Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
   }
-  // SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max);
+  err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
   
   // Daily metabolism values
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

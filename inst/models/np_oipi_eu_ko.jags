@@ -1,4 +1,4 @@
-# np_oi_eu_ko.jags
+# np_oipi_eu_ko.jags
 
 data {
   for(i in 1:(n-1)) {
@@ -14,7 +14,7 @@ model {
   # Model DO time series
   # * Euler version
   # * observation error
-  # * no process error
+  # * IID process error
   # * reaeration depends on DO_obs
   
   # dDO model
@@ -31,6 +31,12 @@ model {
       dDO_mod[i])
   }
 
+  # Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ dnorm(dDO_mod[i], pow(err_proc_iid_sigma, -2))
+  }
+  err_proc_iid_sigma ~ dunif(err_proc_iid_sigma_min, err_proc_iid_sigma_max)
+  
   # Independent, identically distributed observation error
   for(i in 1:n) {
     DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_iid_sigma, -2))

@@ -1,42 +1,43 @@
-# np_oipc_pm_ko.jags
+# np_oipcpi_eu_km.jags
 
 data {
   for(i in 1:(n-1)) {
-    # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2)
-    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2)
-    coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 *
-      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2
+    # Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
+    coef_GPP[i]  <- frac_GPP[i] / depth[i]
+    coef_ER[i]   <- frac_ER[ i] / depth[i]
+    coef_K600_part[i] <- KO2_conv[i] * frac_D[i]
   }
 }
 
 model {
   # Model DO time series
-  # * pairmeans version
+  # * Euler version
   # * observation error
-  # * autocorrelated process error
-  # * reaeration depends on DO_obs
+  # * IID and autocorrelated process error
+  # * reaeration depends on DO_mod
   
   err_proc_acor[1] <- err_proc_acor_inc[1]
   for(i in 1:(n-2)) {
     err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]
   }
   
-  # dDO model
-  dDO_mod <- 
-    err_proc_acor +
-    GPP_daily * coef_GPP +
-    ER_daily * coef_ER +
-    K600_daily * coef_K600_full
-  
   # DO model
   DO_mod[1] <- DO_obs_1
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +
-      dDO_mod[i])
+      GPP_daily * coef_GPP[i] +
+      ER_daily * coef_ER[i] +
+      K600_daily * coef_K600_part[i] * (DO_sat[i] - DO_mod[i])
+    )
   }
 
+  # Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ dnorm(dDO_mod[i], pow(err_proc_iid_sigma, -2))
+  }
+  err_proc_iid_sigma ~ dunif(err_proc_iid_sigma_min, err_proc_iid_sigma_max)
+  
   # Autocorrelated process error
   for(i in 1:(n-1)) {
     err_proc_acor_inc[i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))

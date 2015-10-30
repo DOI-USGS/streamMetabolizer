@@ -1,7 +1,6 @@
 // np_oi_eu_km.stan
 
 data {
-
   // Metabolism distributions
   real GPP_daily_mu;
   real GPP_daily_sigma;
@@ -26,11 +25,9 @@ data {
   vector [n] frac_D;
   vector [n] depth;
   vector [n] KO2_conv;
-  
 }
 
 transformed data {
-
   vector [n-1] coef_GPP;
   vector [n-1] coef_ER;
   vector [n-1] coef_K600_part;
@@ -40,26 +37,27 @@ transformed data {
     coef_GPP[i]  <- frac_GPP[i] / depth[i];
     coef_ER[i]   <- frac_ER[ i] / depth[i];
     coef_K600_part[i] <- KO2_conv[i] * frac_D[i];
-    
   }
-  
 }
 
 parameters {
-
   real GPP_daily;
   real ER_daily;
   real K600_daily;
   
   real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
-  
 }
 
 transformed parameters {
-
   vector [n] DO_mod;
   
-  // Model DO time series (Euler version, without process error)
+  // Model DO time series
+  // * Euler version
+  // * observation error
+  // * no process error
+  // * reaeration depends on DO_mod
+  
+  // DO model
   DO_mod[1] <- DO_obs_1;
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
@@ -68,14 +66,11 @@ transformed parameters {
       ER_daily * coef_ER[i] +
       K600_daily * coef_K600_part[i] * (DO_sat[i] - DO_mod[i])
     );
-    
   }
-  
 }
 
 model {
-
-  // Observation error
+  // Independent, identically distributed observation error
   for(i in 1:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
@@ -86,5 +81,4 @@ model {
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
-  
 }

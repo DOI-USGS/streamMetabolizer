@@ -1,4 +1,4 @@
-// np_oi_pm_km.stan
+// np_oipi_pm_km.stan
 
 data {
   // Metabolism distributions
@@ -12,6 +12,8 @@ data {
   // Error distributions
   real err_obs_iid_sigma_min;
   real err_obs_iid_sigma_max;
+  real err_proc_iid_sigma_min;
+  real err_proc_iid_sigma_max;
   
   // Daily data
   int <lower=0> n;
@@ -48,6 +50,7 @@ parameters {
   real K600_daily;
   
   real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
+  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
 }
 
 transformed parameters {
@@ -56,7 +59,7 @@ transformed parameters {
   // Model DO time series
   // * pairmeans version
   // * observation error
-  // * no process error
+  // * IID process error
   // * reaeration depends on DO_mod
   
   // DO model
@@ -72,6 +75,12 @@ transformed parameters {
 }
 
 model {
+  // Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
+  }
+  err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
+  
   // Independent, identically distributed observation error
   for(i in 1:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);

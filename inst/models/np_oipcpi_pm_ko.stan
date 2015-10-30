@@ -1,4 +1,4 @@
-// np_oi_pm_ko.stan
+// np_oipcpi_pm_ko.stan
 
 data {
   // Metabolism distributions
@@ -12,6 +12,12 @@ data {
   // Error distributions
   real err_obs_iid_sigma_min;
   real err_obs_iid_sigma_max;
+  real err_proc_acor_phi_min;
+  real err_proc_acor_phi_max;
+  real err_proc_acor_sigma_min;
+  real err_proc_acor_sigma_max;
+  real err_proc_iid_sigma_min;
+  real err_proc_iid_sigma_max;
   
   // Daily data
   int <lower=0> n;
@@ -46,21 +52,33 @@ parameters {
   real ER_daily;
   real K600_daily;
   
+  vector [n-1] err_proc_acor_inc;
+  
   real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
+  real <lower=err_proc_acor_phi_min,   upper=err_proc_acor_phi_max>   err_proc_acor_phi;
+  real <lower=err_proc_acor_sigma_min, upper=err_proc_acor_sigma_max> err_proc_acor_sigma;
+  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
 }
 
 transformed parameters {
   vector [n] DO_mod;
   vector [n-1] dDO_mod;
+  vector [n-1] err_proc_acor;
   
   // Model DO time series
   // * pairmeans version
   // * observation error
-  // * no process error
+  // * IID and autocorrelated process error
   // * reaeration depends on DO_obs
+  
+  err_proc_acor[1] <- err_proc_acor_inc[1];
+  for(i in 1:(n-2)) {
+    err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1];
+  }
   
   // dDO model
   dDO_mod <- 
+    err_proc_acor +
     GPP_daily * coef_GPP +
     ER_daily * coef_ER +
     K600_daily * coef_K600_full;
@@ -75,6 +93,20 @@ transformed parameters {
 }
 
 model {
+  // Independent, identically distributed process error
+  for (i in 1:(n-1)) {
+    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
+  }
+  err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
+  
+  // Autocorrelated process error
+  for(i in 1:(n-1)) {
+    err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
+  }
+  // Autocorrelation (phi) & SD (sigma) of the process errors
+  err_proc_acor_phi ~ uniform(err_proc_acor_phi_min, err_proc_acor_phi_max);
+  err_proc_acor_sigma ~ uniform(err_proc_acor_sigma_min, err_proc_acor_sigma_max);
+  
   // Independent, identically distributed observation error
   for(i in 1:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
