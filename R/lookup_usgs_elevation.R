@@ -20,6 +20,8 @@
 lookup_usgs_elevation <- function(
   latitude, longitude, units=c("Meters","Feet")) {
   
+  stop("broken because the USGS server has moved; see GitHub issue #176")
+  
   # confirm that units are among the accepted values for ned.usgs.gov
   units <- match.arg(units)
   
