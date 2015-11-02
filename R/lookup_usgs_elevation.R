@@ -20,8 +20,6 @@
 lookup_usgs_elevation <- function(
   latitude, longitude, units=c("Meters","Feet")) {
   
-  stop("broken because the USGS server has moved; see GitHub issue #176")
-  
   # confirm that units are among the accepted values for ned.usgs.gov
   units <- match.arg(units)
   
@@ -34,7 +32,7 @@ lookup_usgs_elevation <- function(
   }
   
   # ask the USGS
-  api.url <- sprintf("http://ned.usgs.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
+  api.url <- sprintf("http://nationalmap.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
                      longitude, latitude, units)
   api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
   out.parsed <- XML::xmlParse(api.out)
