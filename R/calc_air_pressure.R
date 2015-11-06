@@ -1,14 +1,13 @@
 #' Calculates the average air pressure for a site
 #' 
-#' Will eventually correct for site elevation, but for now just returns standard
-#' pressure
+#' Corrects air pressure for air temperature and elevation
 #' 
 #' @param temp.air air temperature in degrees C. Default is 15 degC.
 #' @param elevation the site elevation above sea level in m. Default is the
 #'   rough mean elevation of the USA at 2500 ft (from
 #'   http://www.infoplease.com/ipa/A0001792.html)
 #' @param attach.units logical. Should the returned vector be a unitted object?
-#' @return a numeric vector of barometric pressures in Pa, with units attached 
+#' @return a numeric vector of barometric pressures in mb, with units attached 
 #'   if requested.
 #'   
 #' @importFrom unitted u v get_units verify_units is.unitted
@@ -43,7 +42,7 @@ calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), att
   M <- u(0.0289644, "kg mol^-1") # molar mass of Earth's air
   Rst <- u(8.31447, "N m mol^-1 K^-1") * u(1, "kg m s^-2 N^-1") # universal gas constant for air: 8.31432 N*m /(mol*K)
   Ta <- u(273.15, "K") + temp.air*u(1, "K degC^-1") # actual temperature in Kelvins
-  baro <- Pb * exp((-1 * g0 * M * elevation)/(Rst * Ta)) * u(133.322368, "Pa mmHg^-1")
+  baro <- Pb * exp((-1 * g0 * M * elevation)/(Rst * Ta)) * u(1.33322368, "mb mmHg^-1")
   
   # return
   if(attach.units) baro else v(baro)

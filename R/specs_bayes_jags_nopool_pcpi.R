@@ -1,0 +1,51 @@
+#' MCMC estimation by JAGS with no pooling and both process and observation 
+#' error
+#' 
+#' Compatible \code{model_file} options are 
+#' \code{c('nopool_pcpi_Euler_b2.jags')}, \code{c('nopool_pcpi_Euler.jags')},
+#' and \code{c('nopool_pcpi_pairmeans.jags')}.
+#' 
+#' @inheritParams specs_all
+#'   
+#' @export
+specs_bayes_jags_nopool_pcpi <- function(
+  
+  # model setup (model_path will be added in metab_bayes)
+  model_file = 'nopool_pcpi_pairmeans.jags',
+  bayes_fun = 'bayes_1ply',
+  bayes_software = 'jags',
+  keep_mcmcs = FALSE,
+  
+  # hyperparameters
+  GPP_daily_mu = 10,
+  GPP_daily_sigma = 10,
+  ER_daily_mu = -10,
+  ER_daily_sigma = 10,
+  K600_daily_mu = 10,
+  K600_daily_sigma = 10,
+  
+  err_proc_acor_phi_min = 0,
+  err_proc_acor_phi_max = 1,
+  err_proc_acor_sigma_min = 0,
+  err_proc_acor_sigma_max = 5,
+  err_proc_iid_sigma_min = 0,
+  err_proc_iid_sigma_max = 5,
+  
+  # inheritParams prepdata_bayes
+  priors = FALSE,
+  
+  # inheritParams mcmc_bayes
+  params_out = c("GPP_daily", "ER_daily", "K600_daily", "err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"), #"DO_mod_1", 
+  n_chains = 4, 
+  n_cores = 4, 
+  adapt_steps = 250, 
+  burnin_steps = 250, 
+  saved_steps = 500, 
+  thin_steps = 1,
+  verbose = FALSE
+  
+) {
+  
+  as.list(environment())
+  
+}

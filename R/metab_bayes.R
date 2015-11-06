@@ -249,6 +249,7 @@ prepdata_bayes <- function(
       
       # Daily
       n = nrow(data),
+      DO_obs_1 = data$DO.obs[1],
       
       # Every timestep
       frac_GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
