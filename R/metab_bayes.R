@@ -4,9 +4,8 @@ NULL
 #' Basic Bayesian metabolism model fitting function
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
-#' temperature, light, etc. See
-#' \code{\link{specs_funs}(metab_fun="metab_bayes")} for relevant options for
-#' the \code{model_specs} argument.
+#' temperature, light, etc. See \code{\link{specs}} for relevant options for the
+#' \code{model_specs} argument.
 #' 
 #' Current and future models: models/bayes/jags/nopool_obserr.txt 
 #' models/bayes/jags/nopool_procobserr.txt models/bayes/jags/KfQ_procobserr.txt 
@@ -46,7 +45,7 @@ NULL
 #' @family metab_model
 metab_bayes <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs_bayes_jags_nopool_oi(), # inheritParams metab_model_prototype
+  model_specs=specs('b_np_oi_pm_km.jags'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
@@ -57,17 +56,16 @@ metab_bayes <- function(
     data <- dat_list[['data']]
     data_daily <- dat_list[['data_daily']]
     
-    # Check and parse model file path. First try the streamMetabolizer models dir,
-    # then try a regular path, then give up / continue depending on whether we
-    # found a file. Add the complete path to model_specs
-    model_specs$model_path <- system.file(paste0("models/bayes/", model_specs$model_file), package="streamMetabolizer")
+    # Check and parse model file path. First try the streamMetabolizer models
+    # dir, then try a regular path, then complain / continue depending on
+    # whether we found a file. Add the complete path to model_specs. This is
+    # best done here, in the metab_bayes call, so that models can be defined,
+    # passed to another computer, and still run successfully.
+    model_specs$model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
     if(!file.exists(model_specs$model_path)) 
-      model_specs$model_path <- model_specs$model_file 
+      model_specs$model_path <- model_name
     if(!file.exists(model_specs$model_path)) 
-      stop(suppressWarnings(paste0(
-        "could not locate the model file at either\n",
-        normalizePath(file.path(system.file("models", package="streamMetabolizer"), model_specs$model_file)), " or\n",
-        normalizePath(model_specs$model_file))))
+      stop("could not locate the model file at ", model_specs$model_path)
     
     # check the format of keep_mcmcs (more checks, below, are bayes_fun-specific)
     if(is.logical(model_specs$keep_mcmcs) && length(model_specs$keep_mcmcs) != 1) {
@@ -440,10 +438,9 @@ setClass(
 #' 
 #' A function specific to metab_bayes models. Returns an MCMC object or, for 
 #' nopool models, a list of MCMC objects. These objects are not saved by 
-#' default; see \code{keep_mcmcs} argument to \code{specs_}-type functions for 
-#' options.
+#' default; see \code{keep_mcmcs} argument to \code{\link{specs}} for options.
 #' 
-#' @param metab_model A Bayesian metabolism model (metab_bayes) from which to
+#' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
 #'   return the MCMC model object[s]
 #' @return The MCMC model object[s]
 #' @export

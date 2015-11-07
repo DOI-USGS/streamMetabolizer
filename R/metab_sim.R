@@ -31,11 +31,11 @@ NULL
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 #' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
-#' vdaily <- data.frame(local.date="2012-08-24", GPP=4, ER=8, K600=5, stringsAsFactors=FALSE)
+#' vdaily <- data.frame(local.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 #' 
 #' # sim
 #' mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
-#'   day_start=start.numeric, day_end=end.numeric, model_specs=specs_sim_basic(err.proc.sigma=0.07))
+#'   day_start=start.numeric, day_end=end.numeric, model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
 #' get_fit(mm)
 #' get_data_daily(mm)
 #' get_fitting_time(mm)
@@ -49,7 +49,7 @@ NULL
 metab_sim <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'), # inheritParams metab_model_prototype
   data_daily=mm_data(local.date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'), # inheritParams metab_model_prototype
-  model_specs=specs_sim_basic(), # inheritParams metab_model_prototype
+  model_specs=specs('s_np_oipcpi_eu_.rnorm'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
   
