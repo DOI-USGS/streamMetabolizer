@@ -10,7 +10,10 @@ mm_parse_name(model_name)
 \item{model_name}{character: the model name}
 }
 \description{
-Parse a model name into its features
+Custom model files (for MCMC) may have additional characters after an
+underscore at the end of the name and before the prefix. For example,
+'b_np_pcpi_eu_ko.stan' and 'b_np_pcpi_eu_ko_v2.stan' are parsed the same; the
+_v2 is ignored by this function.
 }
 \seealso{
 The converse of this function is \code{\link{mm_name}}.

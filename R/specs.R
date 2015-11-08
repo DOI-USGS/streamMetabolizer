@@ -168,7 +168,7 @@ specs <- function(
   burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan=500, jags=250, NA),
   saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan=500, jags=1000, NA),
   thin_steps = 1,
-  verbose = TRUE,
+  verbose = FALSE,
   
   
   ## Sim
@@ -193,15 +193,17 @@ specs <- function(
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
   prefer_missing <- all_possible[sapply(formals(specs), is.symbol)] # the arguments w/o defaults
   
-  # check for obvious issues
+  # argument checks
   if(any(required %in% yes_missing))
     stop("missing and required argument: ", paste(required[required %in% yes_missing], collapse=", "))
   if(length(redundant <- not_missing[not_missing %in% prefer_missing]) > 0) 
     warning("argument[s] that should usually not be specified: ", paste(redundant, collapse=", "))
-  if(features$pooling != 'none') stop("models with pooling are not implemented yet")
   
   # parse the model_name
   features <- mm_parse_name(model_name)
+  
+  # logic checks
+  if(features$pooling != 'none') stop("models with pooling are not implemented yet")
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
@@ -239,7 +241,7 @@ specs <- function(
     }
     if('params_out' %in% yes_missing) {
       all_specs$params_out <- c(
-        defaults['params_out'], 
+        c('GPP_daily','ER_daily','K600_daily'), 
         if(features$err_obs_iid) 'err_obs_iid_sigma',
         if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
         if(features$err_proc_iid) 'err_proc_iid_sigma')
@@ -251,6 +253,8 @@ specs <- function(
       model_path <- model_name
     if(!file.exists(model_path)) 
       warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
+    if(features$bayes_software == "NA") 
+      stop('bayes_software must be specified for Bayesian models')
     
   } else if(features$type == 'mle') {
     # list all needed arguments
@@ -272,7 +276,7 @@ specs <- function(
       err_proc_iid=c(FALSE, TRUE),
       ode_method=c('pairmeans','Euler'),
       deficit_src='DO_mod',
-      bayes_software=c('NA'),
+      bayes_software=c('nlm'),
       stringsAsFactors=FALSE)
     incompatible <- (opts$err_obs_iid == opts$err_proc_iid)
     opts <- opts[!incompatible, ]
@@ -285,7 +289,7 @@ specs <- function(
     included <- c('model_name')
     
     # check for errors/inconsistencies
-    valid_names <- mm_name(type='night', pooling='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='NA')
+    valid_names <- mm_name(type='night', pooling='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='lm')
     if(!(model_name %in% valid_names))
       stop("valid metab_night model_names are: ", paste0(valid_names, collapse=", "))
     
@@ -299,8 +303,8 @@ specs <- function(
 
     # check for errors/inconsistencies
     valid_names <- c(
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='NA'),
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', bayes_software='NA')
+      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='rnorm'),
+      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', bayes_software='rnorm')
     )
     if(!(model_name %in% valid_names))
       stop("valid metab_sim model_names are: ", paste0(valid_names, collapse=", "))

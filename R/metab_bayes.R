@@ -61,9 +61,9 @@ metab_bayes <- function(
     # whether we found a file. Add the complete path to model_specs. This is
     # best done here, in the metab_bayes call, so that models can be defined,
     # passed to another computer, and still run successfully.
-    model_specs$model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
+    model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer")
     if(!file.exists(model_specs$model_path)) 
-      model_specs$model_path <- model_name
+      model_specs$model_path <- model_specs$model_name
     if(!file.exists(model_specs$model_path)) 
       stop("could not locate the model file at ", model_specs$model_path)
     
@@ -235,7 +235,7 @@ prepdata_bayes <- function(
   
   # Useful info for setting the MCMC data
   timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$local.time)), units="days"), na.rm=TRUE))
-  has_oierr <- grepl('_oi(pc|pi)*[[:punct:]]', basename(model_specs$model_path))
+  has_oierr <- grepl('_oi(pc)*(pi)*[[:punct:]]', basename(model_specs$model_path))
   has_pierr <- grepl('_(oi)*(pc)*pi[[:punct:]]', basename(model_specs$model_path))
   has_pcerr <- grepl('_(oi)*pc(pi)*[[:punct:]]', basename(model_specs$model_path))
   

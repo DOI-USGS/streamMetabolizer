@@ -18,7 +18,7 @@ specs(model_name = mm_name(), GPP_init = 10, ER_init = -10,
   NA), burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan =
   500, jags = 250, NA),
   saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan = 500,
-  jags = 1000, NA), thin_steps = 1, verbose = TRUE, err.obs.sigma = 0.1,
+  jags = 1000, NA), thin_steps = 1, verbose = FALSE, err.obs.sigma = 0.1,
   err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{

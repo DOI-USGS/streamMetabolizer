@@ -80,7 +80,8 @@ vdaily <- data.frame(local.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFa
 
 # sim
 mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
-  day_start=start.numeric, day_end=end.numeric, model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
+  day_start=start.numeric, day_end=end.numeric,
+  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
 get_fit(mm)
 get_data_daily(mm)
 get_fitting_time(mm)

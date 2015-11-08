@@ -19,8 +19,8 @@ devel_tests <- function() {
   jags_args <- c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
   stan_args <- jags_args[-which(jags_args=='adapt_steps')]
   
-  #### specs_bayes_jags_nopool_oi ####
-  test_that("specs_bayes_jags_nopool_oi prepdata_bayes, mcmc_bayes, bayes_1ply", {
+  #### b_np_oi_pm_km.jags ####
+  test_that("b_np_oi_pm_km.jags prepdata_bayes, mcmc_bayes, bayes_1ply", {
     model_specs <- specs('b_np_oi_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     
@@ -47,9 +47,9 @@ devel_tests <- function() {
     
   })
   
-  #### specs_bayes_jags_nopool_oipc ####
-  test_that("specs_bayes_jags_nopool_oipc prepdata_bayes, mcmc_bayes, bayes_1ply", {
-    model_specs <- specs_bayes_jags_nopool_oipc(adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+  #### b_np_oipc_pm_km.jags ####
+  test_that("b_np_oipc_pm_km.jags prepdata_bayes, mcmc_bayes, bayes_1ply", {
+    model_specs <- specs('b_np_oipc_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     
     # prepdata_bayes
@@ -75,9 +75,9 @@ devel_tests <- function() {
     
   })
   
-  #### specs_bayes_stan_nopool_oi ####
-  test_that("specs_bayes_stan_nopool_oi prepdata_bayes, mcmc_bayes, bayes_1ply", {
-    model_specs <- specs_bayes_stan_nopool_oi(burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
+  #### b_np_oi_pm_km.stan ####
+  test_that("b_np_oi_pm_km.stan prepdata_bayes, mcmc_bayes, bayes_1ply", {
+    model_specs <- specs('b_np_oi_pm_km.stan', burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3, verbose=FALSE)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     
     # prepdata_bayes
@@ -102,7 +102,7 @@ devel_tests <- function() {
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
     
     # mcmc - nopool_oi_Euler.stan
-    model_specs$model_name <- "nopool_oi_Euler.stan"
+    model_specs$model_name <- "b_np_oi_eu_km.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
       suppressWarnings(
@@ -114,9 +114,9 @@ devel_tests <- function() {
     
   })
   
-  #### specs_bayes_stan_nopool_oipc ####
-  test_that("specs_bayes_stan_nopool_oipc prepdata_bayes, mcmc_bayes, bayes_1ply", {
-    model_specs <- specs_bayes_stan_nopool_oipc(burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
+  #### b_np_oipc_pm_km.stan ####
+  test_that("b_np_oipc_pm_km.stan prepdata_bayes, mcmc_bayes, bayes_1ply", {
+    model_specs <- specs('b_np_oipc_pm_km.stan', burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     
     # prepdata
@@ -125,8 +125,17 @@ devel_tests <- function() {
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
-    # mcmc - nopool_oipc_pairmeans.stan
-    model_specs$model_name <- "nopool_oipc_pairmeans.stan"
+    # pairmeans
+    system.time({
+      suppressWarnings(
+        {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
+    })
+    expect_is(mcmc_out, 'data.frame')
+    expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
+    expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
+    
+    # euler
+    model_specs$model_name <- "b_np_oipc_eu_km.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
       suppressWarnings(
@@ -141,20 +150,16 @@ devel_tests <- function() {
     
   })
   
-  #### specs_bayes_stan_nopool_pcpi ####
-  test_that("specs_bayes_stan_nopool_oipc prepdata_bayes, mcmc_bayes, bayes_1ply", {
-    model_specs <- specs_bayes_stan_nopool_pcpi(burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
-    model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+  #### b_np_pcpi_eu_ko.stan ####
+  test_that("b_np_pcpi_eu_ko.stan prepdata_bayes, mcmc_bayes, bayes_1ply", {
     
-    # prepdata
+    # bob's model
+    model_specs <- specs(system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer"), burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
+    model_specs$model_path <- system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
       data=vfrench1day, data_daily=NULL, local_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
-    expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
-    expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
     # mcmc - nopool_pcpi_Euler_b2.stan
-    model_specs$model_name <- "nopool_pcpi_Euler_b2.stan"
-    model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
       mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))
     })
@@ -162,8 +167,10 @@ devel_tests <- function() {
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
     expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
     
+    # standard models
+    
     # mcmc - nopool_pcpi_Euler.stan
-    model_specs$model_name <- "nopool_pcpi_Euler.stan"
+    model_specs$model_name <- "b_np_pcpi_eu_ko.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
       mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))
@@ -173,7 +180,7 @@ devel_tests <- function() {
     expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
     
     # mcmc - nopool_pcpi_pairmeans.stan
-    model_specs$model_name <- "nopool_pcpi_pairmeans.stan"
+    model_specs$model_name <- "b_np_pcpi_pm_ko.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
       mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))
@@ -209,7 +216,7 @@ test_that("simple metab_bayes predictions (predict_metab, predict_DO) match expe
   # this is not yet implemented
   
   # nopool_oi_Euler.jags
-  specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_name="../np_oi_eu_km.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_eu_km.jags"), jags_specs))
   mm <- np_oi_eu_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   expect_accurate(mm)
   
@@ -251,147 +258,145 @@ manual_tests <- function() {
   # this is not yet implemented
 
   # np_oi_eu
-  specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_name="../np_oi_eu_km.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name='b_np_oi_eu_km.jags'), jags_specs))
   mm <- np_oi_eu_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oi, c(list(model_name="../np_oi_eu_km.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_eu_km.stan"), stan_specs))
   mm <- np_oi_eu_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
-  specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_name="../np_oi_eu_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_eu_ko.jags"), jags_specs))
   mm <- np_oi_eu_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oi, c(list(model_name="../np_oi_eu_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_eu_ko.stan"), stan_specs))
   mm <- np_oi_eu_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
   
   
   # np_oi_pm
-  specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_name="../np_oi_pm_km.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_pm_km.jags"), jags_specs))
   mm <- np_oi_pm_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oi, c(list(model_name="../np_oi_pm_km.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_pm_km.stan"), stan_specs))
   mm <- np_oi_pm_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
-  specs <- do.call(specs_bayes_jags_nopool_oi, c(list(model_name="../np_oi_pm_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_pm_ko.jags"), jags_specs))
   mm <- np_oi_pm_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oi, c(list(model_name="../np_oi_pm_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oi_pm_ko.stan"), stan_specs))
   mm <- np_oi_pm_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
   
   
   # np_oipc_eu
-  specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_name="../np_oipc_eu_km.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_eu_km.jags"), jags_specs))
   mm <- np_oipc_eu_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
   # converged!! iid_sigma = 0.0075, acor_sigma = 0.003, phi=0.97, k = 15-30
-  specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_name="../np_oipc_eu_km.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_eu_km.stan"), stan_specs))
   mm <- np_oipc_eu_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
-  specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_name="../np_oipc_eu_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_eu_ko.jags"), jags_specs))
   mm <- np_oipc_eu_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_name="../np_oipc_eu_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_eu_ko.stan"), stan_specs))
   mm <- np_oipc_eu_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
   
   # np_oipc_pm
-  specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_name="../np_oipc_pm_km.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_pm_km.jags"), jags_specs))
   mm <- np_oipc_pm_km.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
   # converged!! very similar to np_oipc_eu
-  specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_name="../np_oipc_pm_km.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_pm_km.stan"), stan_specs))
   mm <- np_oipc_pm_km.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
-  specs <- do.call(specs_bayes_jags_nopool_oipc, c(list(model_name="../np_oipc_pm_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_pm_ko.jags"), jags_specs))
   mm <- np_oipc_pm_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_oipc, c(list(model_name="../np_oipc_pm_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_oipc_pm_ko.stan"), stan_specs))
   mm <- np_oipc_pm_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
 
   
-  ## untested below  
-  
   # np_pcpi_eu (no kms allowed)
-  specs <- do.call(specs_bayes_jags_nopool_pcpi, c(list(model_name="../np_pcpi_eu_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_pcpi_eu_ko.jags"), jags_specs))
   mm <- np_pcpi_eu_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_name="../np_pcpi_eu_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_pcpi_eu_ko.stan"), stan_specs))
   mm <- np_pcpi_eu_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
   
   # np_pcpi_pm (no kms allowed)
-  specs <- do.call(specs_bayes_jags_nopool_pcpi, c(list(model_name="../np_pcpi_pm_ko.jags"), jags_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_pcpi_pm_ko.jags"), jags_specs))
   mm <- np_pcpi_pm_ko.jags <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   library(coda); par(mar=c(2,2,2,0.2)); plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
   
-  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_name="../np_pcpi_pm_ko.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="b_np_pcpi_pm_ko.stan"), stan_specs))
   mm <- np_pcpi_pm_ko.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
-  rstan::traceplot(get_mcmc(mm)$"2012-08-24")
+  rstan::traceplot(get_mcmc(mm)$"2012-08-24", inc_warmup=TRUE)
   
   # nopool_pcpi_Euler_b1.stan 
   # this is Bob's code for comparison to nopool_pcpi_Euler_b2.stan; it doesn't actually run
   
   # nopool_pcpi_Euler_b2.stan (nopool_pcpi_Euler_b1.stan is Bob's code for reference; it doesn't run)
-  specs <- do.call(specs_bayes_stan_nopool_pcpi, c(list(model_name="nopool_pcpi_Euler_b2.stan"), stan_specs))
+  specs <- do.call('specs', c(list(model_name="inst/extdata/b_np_pcpi_eu_ko_v2.stan"), stan_specs))
   mm <- nopool_pcpi_Euler_b2.stan <- metab_bayes(data=vfrenchshort, model_specs=specs)
   
   
@@ -420,15 +425,11 @@ manual_tests <- function() {
   # compare models
   library(dplyr); library(tidyr); library(ggplot2); library(gridExtra)
   preds <- bind_rows(lapply(
-    list(nopool_oi_Euler.jags,
-         nopool_oi_pairmeans.jags,
-         nopool_oi_pairmeans.stan,
-         nopool_oipc_Euler.jags,
-         nopool_oipc_pairmeans.jags,
-         nopool_oipc_pairmeans.stan,
-         nopool_pcpi_Euler.stan,
-         nopool_pcpi_Euler_b2.stan,
-         nopool_pcpi_pairmeans.stan), 
+    list(np_oi_eu_km.jags, np_oi_eu_km.stan, np_oi_eu_ko.jags, np_oi_eu_ko.stan,
+         np_oi_pm_km.jags, np_oi_pm_km.stan, np_oi_pm_ko.jags, np_oi_pm_ko.stan, 
+         np_oipc_eu_km.jags, np_oipc_eu_km.stan, np_oipc_eu_ko.jags, np_oipc_eu_ko.stan, 
+         np_oipc_pm_km.jags, np_oipc_pm_km.stan, np_oipc_pm_ko.jags, np_oipc_pm_ko.stan, 
+         np_pcpi_eu_ko.jags, np_pcpi_eu_ko.stan, np_pcpi_pm_ko.jags, np_pcpi_pm_ko.stan), 
     function(mm) 
       bind_cols(
         predict_metab(mm)[2,], 

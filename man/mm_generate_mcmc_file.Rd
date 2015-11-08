@@ -10,6 +10,9 @@ mm_generate_mcmc_file(type = "bayes", pooling = "none",
   deficit_src = c("DO_mod", "DO_obs"), bayes_software = c("stan", "jags"))
 }
 \arguments{
+\item{type}{the model type, corresponding to the model fitting function
+(\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)}
+
 \item{pooling}{Should the model pool information among days to get more
 consistent daily estimates?}
 
@@ -19,6 +22,8 @@ rather than to the DO measurements themselves.}
 
 \item{err_proc_acor}{logical. Should autocorrelated process error (with the
 autocorrelation term phi fitted) be included?}
+
+\item{err_proc_iid}{logical. Should IID process error be included?}
 
 \item{ode_method}{The method to use in solving the ordinary differential
 equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP,

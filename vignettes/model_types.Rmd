@@ -32,50 +32,50 @@ A few modeling options are directly specified as arguments to the fitting functi
 
 ## Specification Groups
 
-All the rest of the modeling options are contained within a single argument, `model_specs` (where `specs` is short for 'specifications'). `model_specs` is just an R list and could therefore be defined manually, but it's a long list whose elements depend on the modeling approach you're taking. To simplify the process of setting these specifications, we've therefore defined a series of functions, each of which has a name beginning with `specs_`, to generate the list for you. These functions know which arguments need to be supplied for a given modeling approach, and each produces a list of mutually compatible default specifications. Commonly used `specs_` functions include `specs_mle_nopool_oi` and `specs_bayes_stan_nopool_oi`; to give you a taste but keep the output short, we'll just print the list element names here:
+All the rest of the modeling options are contained within a single argument, `model_specs` (where `specs` is short for 'specifications'). `model_specs` is just an R list and could therefore be defined manually, but it's a long list whose elements depend on the modeling approach you're taking. To simplify the process of setting these specifications, we've therefore defined a function called `specs` to generate the list for you. This function uses a model name to determines which arguments need to be supplied, then produces a list of mutually compatible default specifications. Commonly used model names include `m_np_oi_pm_km.nlm` (for a simple MLE model) and `b_np_oi_pm_km.stan` (for a simple Bayesian model); more on model names below. To give you a taste of the resulting specifications lists while keeping the output short, we'll just print the list element names here:
 ```{r}
-names(specs_mle_nopool_oi())
-names(specs_bayes_stan_nopool_oi())
+names(specs('m_np_oi_pm_km.nlm'))
+names(specs('b_np_oi_pm_km.stan'))
 ```
 
-Once defined, an options list can be passed directly to the corresponding `metab_` function to run your model. The appropriate `metab_` function is the one whose name matches the `specs_` function name; e.g., `specs_bayes_` functions should be used within `metab_bayes()` calls, and `specs_mle_` functions should be used within `metab_mle()` calls.
+Once defined, an options list can be passed directly to the corresponding `metab_` function to run your model. The appropriate `metab_` function is the one whose name matches the model name passed to `specs`; e.g., `specs('b_...')` functions should be used within `metab_bayes()` calls, and `specs('m_...')` functions should be used within `metab_mle()` calls.
 ```{r, eval=FALSE}
 fit <- metab_mle(data=mydat, model_specs=specs_mle_nopool_oi())
 ```
 
-You can override the defaults by passing values to the `specs_` function; see the function's help file (e.g., `?specs_mle_nopool_oi)` for the list of options and their definitions.
+You can override the defaults by passing values to the `specs` function; see the `specs` help file at `?specs` for the list of possible options and their definitions. To see which options apply to your model, read the details of the help file or just print out a dummy version with all the defaults
 ```{r, eval=FALSE}
-?specs_mle_nopool_oi
-fit <- metab_mle(data=mydat, model_specs=specs_mle_nopool_oi(GPP_init=7, K600_init=35))
+?specs
+# dummy version to see what's available to override
+specs('m_np_oi_pm_km.nlm')
+# override some defaults
+fit <- metab_mle(data=mydat, model_specs=specs('m_np_oi_pm_km.nlm', GPP_init=7, K600_init=35))
 ```
 
 
-## Choosing a Specification Group
+## Choosing a Model Name
 
-Specification groups define aspects of the modeling approach such as the degree of hierarchy in the model, additional software or packages to employ, and the types of error to model. To find the group of specifications you want, you can: 
-
-1. Browse the `specs_` functions (e.g., using tab-complete at the RStudio command line by typing 'specs_-*tab*'). The two special functions `specs_all` and `specs_funs` don't produce specification lists, but every other function beginning with `specs_` is a valid option.
-
-2. Search for an options group using `specs_funs()`. See `?specs_funs` for model traits you can search. The return value is a data.frame with all rows matching the traits you selected, where the `specs_fun` column contains specification function names.
-```{r, eval=FALSE}
-?specs_funs
-```
-```{r}
-specs_funs(metab_fun="metab_bayes", software="jags", pool_days=FALSE, err_obs_iid=TRUE)
+Model names define aspects of the modeling approach such as the degree of hierarchy in the model, additional software or packages to employ, and the types of error to model. To find the model name you want, you can generate the model name from the traits you want. See `?mm_name` for model traits you can search. The return value is a data.frame with all rows matching the traits you selected, where the `specs_fun` column contains specification function names.
+```{r, eval=2}
+?mm_name
+mm_name(type="bayes", bayes_software="jags", pooling='none', err_obs_iid=TRUE)
 ```
 
-Once you've identified the function you want, use its help file to determine whether you want to modify any arguments, then pass the final arguments list as the `model_specs` argument to the appropriate `metab_` function. 
-```{r, eval=FALSE}
-?specs_bayes_stan_nopool_oipc
-fit <- metab_bayes(model_specs=specs_bayes_stan_nopool_oipc())
-```
 
 ## Specification Group Types
 
-Here is the full set of `specs_` functions and their traits.
+Here is the full set of accepted model names and their traits.
 
 ```{r, echo=FALSE, results='asis'}
-models <- specs_funs()
-models_chr <- as.data.frame(lapply(models, as.character))
-knitr::kable(models_chr)
+opts <- do.call('expand.grid', c(as.list(formals(mm_name)), list(stringsAsFactors=FALSE)))
+attr(opts, 'out.attrs') <- NULL
+opt_names <- sapply(1:nrow(opts), function(opt) do.call(mm_name, opts[opt,]))
+opt_parsed <- mm_parse_name(opt_names)
+opt_ok <- sapply(opt_names, function(opt) tryCatch({specs(opt); TRUE}, warning=function(w) if(mm_parse_name(opt)$type=='bayes') FALSE else TRUE, error=function(e) FALSE))
+opts <- opts[opt_ok, ]
+rownames(opts) <- NULL
+suppressPackageStartupMessages(library(dplyr))
+opts <- bind_cols(dplyr::data_frame(model_name=opt_names[opt_ok]), opts) %>%
+  arrange(model_name)
+knitr::kable(opts)
 ```
