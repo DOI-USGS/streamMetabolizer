@@ -34,7 +34,7 @@ NULL
 #' 
 #' # fit
 #' mm <- metab_night(data=vfrenchnight, 
-#'   model_specs=specs_night_basic(), 
+#'   model_specs=specs('n_np_pi_eu_.lm'), 
 #'   day_start=night.start, day_end=night.end)
 #'   
 #' # give estimates
@@ -44,14 +44,11 @@ NULL
 #' # predict DO
 #' plot_DO_preds(predict_DO(mm))
 #' 
-#' \dontrun{
-#'  metab_night(data=data.frame(empty="shouldbreak"))
-#' }
 #' @export
 #' @family metab_model
 metab_night <- function(
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs_night_basic(), # inheritParams metab_model_prototype
+  model_specs=specs('n_np_pi_eu_.lm'), # inheritParams metab_model_prototype
   info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {
@@ -108,7 +105,7 @@ metab_night <- function(
 nightreg_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs_night_basic() # inheritParams metab_model_prototype
+  model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab_model_prototype
 ) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and

@@ -16,3 +16,4 @@ inst/doc/*
 tests/testthat/Rplots.pdf
 # Temporary files
 temp
+inst/doc

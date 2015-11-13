@@ -32,7 +32,7 @@ lookup_usgs_elevation <- function(
   }
   
   # ask the USGS
-  api.url <- sprintf("http://ned.usgs.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
+  api.url <- sprintf("http://nationalmap.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
                      longitude, latitude, units)
   api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
   out.parsed <- XML::xmlParse(api.out)

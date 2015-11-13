@@ -6,7 +6,7 @@
 \usage{
 nightreg_1ply(data_ply, data_daily_ply, day_start, day_end, local_date,
   tests = c("full_day", "even_timesteps", "complete_data"),
-  model_specs = specs_night_basic())
+  model_specs = specs("n_np_pi_eu_.lm"))
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -34,11 +34,9 @@ date by which this ply should be referred}
 \item{tests}{list of tests to conduct}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
+Although this may be specified manually, it is easier to \code{specs} to
+generate the list. The help file for that functions lists the necessary
+parameters, describes them in detail, and gives default values.}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model

@@ -29,8 +29,8 @@ test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
   # plot_DO_preds(DO_preds)
   
   # fit with different ODE methods
-  mmE <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs_mle_obserr(ODE_method="Euler"))
-  mmP <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs_mle_obserr(ODE_method="pairmeans"))
+  mmE <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs('m_np_oi_eu_km.nlm'))
+  mmP <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23, model_specs=specs('m_np_oi_pm_km.nlm'))
   plot_DO_preds(predict_DO(mmE))
   plot_DO_preds(predict_DO(mmP))
   predict_metab(mmE) - predict_metab(mmP)

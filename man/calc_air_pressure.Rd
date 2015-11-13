@@ -17,12 +17,11 @@ http://www.infoplease.com/ipa/A0001792.html)}
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
 }
 \value{
-a numeric vector of barometric pressures in Pa, with units attached
+a numeric vector of barometric pressures in mb, with units attached
   if requested.
 }
 \description{
-Will eventually correct for site elevation, but for now just returns standard
-pressure
+Corrects air pressure for air temperature and elevation
 }
 \examples{
 library(unitted)

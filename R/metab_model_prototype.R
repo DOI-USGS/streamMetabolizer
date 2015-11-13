@@ -11,9 +11,9 @@
 #'   \code{\link{mm_data}} for a full data description.
 #' @param info any information, in any format, that you would like to store 
 #'   within the metab_model object
-#' @param day_start start time (inclusive) of a day's data in number of hours
-#'   from the midnight that begins the date. For example, day_start=-1.5
-#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
+#' @param day_start start time (inclusive) of a day's data in number of hours 
+#'   from the midnight that begins the date. For example, day_start=-1.5 
+#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
 #'   the first observation time that occurs after that time if day_start doesn't
 #'   fall exactly on an observation time. For single days of input data, it is 
 #'   conventional/useful to begin the day the evening before, e.g., -1.5, and to
@@ -23,18 +23,16 @@
 #'   setup, the date assigned to a section of data should be the date whose 
 #'   evening contains the data. The default is therefore 12 to 36 for 
 #'   metab_night, of which the times of darkness will be used.
-#' @param day_end end time (inclusive) of a day's data in number of hours from
-#'   the midnight that begins the date. For example, day_end=30 indicates that
-#'   data describing 2006-06-26 end at 2006-06-27 06:00, or at the last
-#'   observation time that occurs before that time if day_end doesn't fall
+#' @param day_end end time (inclusive) of a day's data in number of hours from 
+#'   the midnight that begins the date. For example, day_end=30 indicates that 
+#'   data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
+#'   observation time that occurs before that time if day_end doesn't fall 
 #'   exactly on an observation time. See day_start for recommended start and end
 #'   times.
 #' @param model_specs a list of model specifications and parameters for a model.
-#'   Although this may be specified manually, it is easier to use a predefined 
-#'   function from the \code{specs_xxx} family with a name beginning with 
-#'   "specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-#'   etc. The help files for those functions list the necessary parameters, 
-#'   describe them in detail, and give default values.
+#'   Although this may be specified manually, it is easier to \code{specs} to 
+#'   generate the list. The help file for that functions lists the necessary 
+#'   parameters, describes them in detail, and gives default values.
 metab_model_prototype <- function(data, data_daily, info, day_start, day_end, model_specs) {
   message("this function does nothing and should only be called for testing")
 }

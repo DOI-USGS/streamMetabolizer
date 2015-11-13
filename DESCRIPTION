@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.6.0
-Date: 2015-10-16
+Version: 0.7.0
+Date: 2015-11-08
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -56,11 +56,13 @@ Collate:
     'convert_k600_to_kGAS.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
+    'load_spring_creek.R'
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
     'metab_model-class.R'
     'metab_Kvpred.R'
     'metab_bayes.R'
+    'metab_funs.R'
     'metab_mle.R'
     'metab_model_interface.R'
     'metab_model_prototype.R'
@@ -68,23 +70,14 @@ Collate:
     'metab_sim.R'
     'mm_data.R'
     'mm_filter_valid_days.R'
+    'mm_name.R'
+    'mm_generate_mcmc_file.R'
     'mm_is_valid_day.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
+    'mm_parse_name.R'
     'mm_predict_1ply.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
-    'specs_bayes.R'
-    'specs_bayes_jags_nopool_obserr.R'
-    'specs_bayes_jags_nopool_procobserr.R'
-    'specs_bayes_stan_nopool_obserr.R'
-    'specs_bayes_stan_nopool_procacoriiderr.R'
-    'specs_bayes_stan_nopool_procobserr.R'
-    'specs_mle.R'
-    'specs_mle_obserr.R'
-    'specs_mle_procerr.R'
-    'specs_night.R'
-    'specs_night_basic.R'
-    'specs_sim.R'
-    'specs_sim_basic.R'
+    'specs.R'
     'streamMetabolizer.R'

@@ -6,7 +6,7 @@
 \usage{
 metab_mle(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(local.date, K600, optional = "all"),
-  model_specs = specs_mle_obserr(), info = NULL, day_start = 4,
+  model_specs = specs("m_np_oi_pm_km.nlm"), info = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
@@ -18,11 +18,9 @@ default. See \code{\link{mm_data}} for a full data description.}
 \code{\link{mm_data}} for a full data description.}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
+Although this may be specified manually, it is easier to \code{specs} to
+generate the list. The help file for that functions lists the necessary
+parameters, describes them in detail, and gives default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -90,11 +88,11 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 
   # PRK and PR with process error
   get_fit(mm <- metab_mle(data=vfrenchshort,
-    model_specs=specs_mle_procerr(),
+    model_specs=specs('m_np_pi_pm_km.nlm'),
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))
   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35),
-    model_specs=specs_mle_procerr(),
+    model_specs=specs('m_np_pi_pm_km.nlm'),
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))
 }

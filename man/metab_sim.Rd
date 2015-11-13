@@ -6,7 +6,7 @@
 \usage{
 metab_sim(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light,
   optional = "DO.obs"), data_daily = mm_data(local.date, DO.mod.1, GPP, ER,
-  K600, optional = "DO.mod.1"), model_specs = specs_sim_basic(),
+  K600, optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"))
 }
@@ -19,11 +19,9 @@ default. See \code{\link{mm_data}} for a full data description.}
 \code{\link{mm_data}} for a full data description.}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
+Although this may be specified manually, it is easier to \code{specs} to
+generate the list. The help file for that functions lists the necessary
+parameters, describes them in detail, and gives default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -78,11 +76,12 @@ end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 0
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
-vdaily <- data.frame(local.date="2012-08-24", GPP=4, ER=8, K600=5, stringsAsFactors=FALSE)
+vdaily <- data.frame(local.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 
 # sim
 mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
-  day_start=start.numeric, day_end=end.numeric, model_specs=specs_sim_basic(err.proc.sigma=0.07))
+  day_start=start.numeric, day_end=end.numeric,
+  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
 get_fit(mm)
 get_data_daily(mm)
 get_fitting_time(mm)
