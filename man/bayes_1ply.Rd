@@ -33,11 +33,9 @@ date by which this ply should be referred}
 \item{tests}{list of tests to conduct}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
+Although this may be specified manually, it is easier to \code{specs} to
+generate the list. The help file for that functions lists the necessary
+parameters, describes them in detail, and gives default values.}
 }
 \value{
 data.frame of estimates and MCMC model diagnostics

@@ -6,7 +6,7 @@
 \usage{
 metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(NULL),
-  model_specs = specs_bayes_jags_nopool_oi(), info = NULL, day_start = 4,
+  model_specs = specs("b_np_oi_pm_km.jags"), info = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
@@ -18,11 +18,9 @@ default. See \code{\link{mm_data}} for a full data description.}
 \code{\link{mm_data}} for a full data description.}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to use a predefined
-function from the \code{specs_xxx} family with a name beginning with
-"specs_xxx", where "xxx" is the model type - e.g., "mle", "bayes", "night",
-etc. The help files for those functions list the necessary parameters,
-describe them in detail, and give default values.}
+Although this may be specified manually, it is easier to \code{specs} to
+generate the list. The help file for that functions lists the necessary
+parameters, describes them in detail, and gives default values.}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -54,9 +52,8 @@ A metab_bayes object containing the fitted model.
 }
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO,
-temperature, light, etc. See
-\code{\link{specs_funs}(metab_fun="metab_bayes")} for relevant options for
-the \code{model_specs} argument.
+temperature, light, etc. See \code{\link{specs}} for relevant options for the
+\code{model_specs} argument.
 }
 \details{
 Current and future models: models/bayes/jags/nopool_obserr.txt

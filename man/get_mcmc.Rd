@@ -16,7 +16,6 @@ The MCMC model object[s]
 \description{
 A function specific to metab_bayes models. Returns an MCMC object or, for
 nopool models, a list of MCMC objects. These objects are not saved by
-default; see \code{keep_mcmcs} argument to \code{specs_}-type functions for
-options.
+default; see \code{keep_mcmcs} argument to \code{\link{specs}} for options.
 }
 
