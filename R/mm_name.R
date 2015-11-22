@@ -20,6 +20,11 @@
 #'   deficit be computed?
 #' @param bayes_software Which software are we generating code for?
 #' @export
+#' @examples 
+#' mm_name('mle')
+#' mm_name('night')
+#' mm_name('sim')
+#' mm_name('bayes')
 mm_name <- function(
   type=c('bayes','mle','night','sim'), 
   pooling='none',
@@ -38,7 +43,14 @@ mm_name <- function(
   err_proc_iid <- if(!is.logical(err_proc_iid)) stop("need err_proc_iid to be a logical of length 1") else err_proc_iid[1]
   ode_method <- match.arg(ode_method)
   deficit_src <- match.arg(deficit_src)
-  bayes_software <- match.arg(bayes_software)
+  bayes_software <- if(missing(bayes_software)) {
+    c(bayes='stan', mle='nlm', night='lm', sim='rnorm')[type] 
+  } else { 
+    software <- match.arg(bayes_software)
+    if(!(software %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', sim='rnorm')[[type]]))
+      stop("mismatch between type (",type,") and software (",software,")")
+    software
+  }
   
   # make the name
   paste0(

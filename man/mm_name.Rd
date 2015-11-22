@@ -39,6 +39,12 @@ deficit be computed?}
 \description{
 Name the Bayesian model with the desired features
 }
+\examples{
+mm_name('mle')
+mm_name('night')
+mm_name('sim')
+mm_name('bayes')
+}
 \seealso{
 The converse of this function is \code{\link{mm_parse_name}}.
 }
