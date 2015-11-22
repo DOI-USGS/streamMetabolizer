@@ -101,7 +101,7 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 Alison Appling, Jordan Read; modeled on LakeMetabolizer
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kvpred}};
+Other metab_model: \code{\link{metab_Kmodel}};
   \code{\link{metab_bayes}}; \code{\link{metab_night}};
   \code{\link{metab_sim}}
 }

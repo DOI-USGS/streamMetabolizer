@@ -99,12 +99,11 @@ setClass(
 
 #' Make metabolism predictions from a fitted metab_model.
 #' 
-#' Makes daily predictions of GPP, ER, and NEP.
+#' Makes daily predictions of GPP, ER, and K600.
 #' 
 #' @inheritParams predict_metab
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
-#' @importFrom stats qnorm setNames
 #' @export
 #' @family predict_metab
 predict_metab.metab_sim <- function(metab_model, ...) {

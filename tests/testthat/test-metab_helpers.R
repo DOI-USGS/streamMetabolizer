@@ -25,13 +25,13 @@ test_that("mm_validate_data works", {
   ignore <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')
   ignore <- mm_validate_data(eval(formals(metab_night)$data), eval(formals(metab_night)$data_daily), 'metab_night')
   ignore <- mm_validate_data(eval(formals(metab_bayes)$data), eval(formals(metab_bayes)$data_daily), 'metab_bayes')
-  ignore <- mm_validate_data(eval(formals(metab_Kvpred)$data), eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  ignore <- mm_validate_data(eval(formals(metab_Kmodel)$data), eval(formals(metab_Kmodel)$data_daily), 'metab_Kmodel')
   
   # accepts NULL for the fully optional data.frames
   ignore <- mm_validate_data(eval(formals(metab_mle)$data), NULL, 'metab_mle')
   ignore <- mm_validate_data(eval(formals(metab_night)$data), NULL, 'metab_night')
   ignore <- mm_validate_data(eval(formals(metab_bayes)$data), NULL, 'metab_bayes')
-  ignore <- mm_validate_data(NULL, eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  ignore <- mm_validate_data(NULL, eval(formals(metab_Kmodel)$data_daily), 'metab_Kmodel')
   
   # returns a list
   val_out <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')

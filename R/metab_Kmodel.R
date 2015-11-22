@@ -1,0 +1,330 @@
+#' @include metab_model-class.R
+NULL
+
+#' Combine a time series of K estimates to predict unified values
+#' 
+#' Takes daily estimates of K, usually from nighttime regression, and regresses 
+#' against predictors such as discharge. Returns a metab_model that only 
+#' predicts daily K, nothing else.
+#' 
+#' Possible approaches:
+#' 
+#' \itemize{
+#' 
+#' \item{"mean"}{Predict K as the mean of all K values}
+#' 
+#' \item{"weighted mean"}{Predict K as the mean of all K values, weighted by the
+#' inverse of the confidence intervals in the input K values}
+#' 
+#' \item{"KvQ"}{Regress K versus Q, tending toward overall mean in ranges of Q 
+#' with sparse data}
+#' 
+#' \item{"weighted KvQ"}{Regress K versus Q, tending toward overall mean in 
+#' ranges of Q with sparse data, weighting high-confidence K values more 
+#' heavily}
+#' 
+#' \item{"T smoother"}{Predict K using a loess or spline smoother over time}
+#' 
+#' \item{"Q smoother"}{Predict K using a loess or spline smoother over
+#' discharge}
+#' 
+#' \item{"TQ smoother"}{Predict K using a loess or spline smoother over both
+#' time and discharge}
+#' 
+#' }
+#' 
+#' @author Alison Appling
+#' @inheritParams metab_model_prototype
+#' @param method the name of an interpolation or regression method relating K to
+#'   the predictor[s] of choice.
+#' @param ... Other arguments passed to the fitting function given by
+#'   \code{method}. \code{na.rm=TRUE} is already passed to \code{mean}
+#' @return A metab_Kmodel object containing the fitted model.
+#' @examples
+#' \dontrun{
+#' library(dplyr)
+#' fr <- streamMetabolizer:::load_french_creek() %>% unitted::v() %>% 
+#'   filter(format(local.time, "%Y-%m-%d") == "2012-08-24") %>% 
+#'   select(local.time)
+#' fr <- fr %>% mutate(discharge=exp(rnorm(nrow(fr))))
+#' frk2 <- data.frame(local.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
+#'   as.difftime(1,units='days')), discharge=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
+#'   
+#' # 1-day tests
+#' frk <- data.frame(local.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
+#' metab_Kmodel(data=fr, data_daily=frk, method='mean')
+#' #metab_Kmodel(data=fr, data_daily=frk, method='lm') # NaN warning
+#' #metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='local.date') # span error
+#' 
+#' # mean
+#' mm <- metab_Kmodel(data_daily=frk2, method='mean')
+#' 
+#' # lm
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('local.date'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge','local.date'))
+#' 
+#' # loess
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date')
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date', span=0.4)
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge','local.date'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge', span=2)
+#' 
+#' library(ggplot2)
+#' ggplot(get_data_daily(mm), aes(x=local.date)) + geom_line(aes(y=K600)) + 
+#'   geom_point(aes(y=K600.obs)) + geom_ribbon(aes(ymin=K600.lower, ymax=K600.upper), alpha=0.4)
+#' }
+#' @export
+#' @import dplyr
+#' @importFrom magrittr %<>%
+#' @family metab_model
+metab_Kmodel <- function(
+  data=mm_data(local.time, discharge, velocity, optional=c("all")), 
+  data_daily=mm_data(local.date, K600, K600.lower, K600.upper, discharge, velocity, optional=c("K600.lower", "K600.upper", "discharge", "velocity")), # inheritParams metab_model_prototype
+  method=c("mean", "lm", "loess"), weights=c("CI", "CI/K600"), predictors=c("local.date", "velocity", "discharge"), 
+  filters=c(CI.min=NA, discharge.max=NA, velocity.max=NA),
+  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype. day_start and day_end only relevant if !is.null(data)
+  tests=c('full_day', 'even_timesteps', 'complete_data'), # args for mm_is_valid_day. only relevant if !is.null(data)
+  ...
+) {
+  
+  method <- match.arg(method)
+  weights <- if(missing(weights)) c() else match.arg(weights)
+  predictors <- if(missing(predictors)) c() else match.arg(predictors, several.ok=TRUE)
+  if('local.date' %in% predictors) predictors[predictors=='local.date'] <- 'as.numeric(local.date)'
+  
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kmodel")
+    data <- dat_list[['data']]
+    data_daily <- dat_list[['data_daily']]
+    
+    # Prepare data_daily by aggregating any daily data, renaming K600 to 
+    # K600.obs, & setting data_daily$weight to reflect user weights & filters
+    data_daily <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=weights, filters=filters, day_start=day_start, day_end=day_end, tests=tests)
+    
+    # Fit the model
+    Kmodel_all <- Kmodel_allply(data_daily=data_daily, method=method, weights=weights, predictors=predictors, ...)
+    
+  })
+  
+  # Package the results for prediction
+  mm <- metab_model(
+    "metab_Kmodel", 
+    info=info,
+    fit=Kmodel_all,
+    fitting_time=fitting_time,
+    args=list(
+      method=method, weights=weights, predictors=predictors, filters=filters,
+      day_start=day_start, day_end=day_end, tests=tests),
+    data=data,
+    data_daily=data_daily)
+  
+  # Update data_daily with predictions
+  preds <- predict_metab(mm)
+  mm@data_daily %<>% left_join(select(preds, local.date, K600, K600.lower, K600.upper), by='local.date')
+  
+  # Return
+  mm
+}
+
+
+#### helpers ####
+
+#' Prepare data_daily by aggregating any daily data, renaming K600 to 
+#' K600.obs, & setting data_daily$weight to reflect user weights & filters
+#' 
+#' @param data unit data to aggregate to daily_data. may be NULL.
+#' @param data_daily daily data to prepare for K modeling
+prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, tests) {
+  # Aggregate unit data to daily timesteps if needed
+  if(!is.null(data) && nrow(data) > 0) {
+    columns <- c('discharge', 'velocity')[c('discharge', 'velocity') %in% names(data)]
+    if(length(columns) == 0) stop("data arg is pointless without at least one of c('discharge', 'velocity')")
+    aggs_daily <- mm_model_by_ply(Kmodel_aggregate_day, data=data, data_daily=NULL, day_start=day_start, day_end=day_end, tests=tests, columns=columns)
+    data_daily <- left_join(data_daily, aggs_daily, by="local.date")
+  }
+  
+  # Rename the data so it's clear which K values are inputs and which are new model predictions
+  if('K600.lower' %in% names(data_daily)) {
+    data_daily %<>% rename(K600.obs=K600, K600.lower.obs=K600.lower, K600.upper.obs=K600.upper)
+  } else {
+    data_daily %<>% rename(K600.obs=K600)
+  }
+  
+  # Set weights
+  if(length(weights) > 0) {
+    if(!all(c('K600.lower.obs','K600.upper.obs') %in% names(data_daily))) {
+      stop("need 'K600.lower', and 'K600.upper' in data_daily to set weights by CI or CI/K600")
+    }
+    data_daily %<>% mutate(weight=switch(
+      weights, 
+      "CI"=(K600.upper.obs - K600.lower.obs), 
+      "CI/K600"=(K600.upper.obs - K600.lower.obs)/K600.obs))
+  } else {
+    data_daily %<>% mutate(weight=1)
+  }
+  
+  # Filter out undesired days. Indicate filtering by weights
+  if(!isTRUE(is.na(filters[['CI.min']])))
+    data_daily %<>% mutate(weight=weight * if(K600.upper.obs-K600.lower.obs >= filters[['CI.min']]) 1 else 0)
+  if(!isTRUE(is.na(filters[['discharge.max']])))
+    data_daily %<>% mutate(weight=weight * if(discharge <= filters[['discharge.max']]) 1 else 0)
+  if(!isTRUE(is.na(filters[['velocity.max']])))
+    data_daily %<>% mutate(weight=weight * if(velocity <= filters[['velocity.max']]) 1 else 0)
+  
+  data_daily
+}
+
+#' Aggregate unit values to daily values
+#' 
+#' For use in predicting K
+#' 
+#' @inheritParams mm_model_by_ply_prototype
+#' @inheritParams mm_is_valid_day
+#' @inheritParams metab_Kmodel
+Kmodel_aggregate_day <- function(
+  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
+  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  columns=c('discharge', 'velocity')
+) {
+  # Provide ability to skip a poorly-formatted day for calculating 
+  # metabolism, without breaking the whole loop. Just collect 
+  # problems/errors as a list of strings and proceed. Also collect warnings.
+  validity <- mm_is_valid_day(data_ply, day_start=day_start, day_end=day_end, tests=tests)
+  stop_strs <- if(isTRUE(validity)) character(0) else validity
+  
+  # Calculate means of requested columns
+  if(length(stop_strs) == 0) {
+    cmeans_1day <- as.data.frame(t(colMeans(data_ply[columns])))
+  } else {
+    cmeans_1day <- as.data.frame(t(rep(as.numeric(NA),length(columns)))) %>% setNames(columns)
+  }
+  
+  # Return, reporting any results, warnings, and errors
+  data.frame(cmeans_1day,
+             errors.agg=paste0(stop_strs, collapse="; "),
+             stringsAsFactors=FALSE)
+}
+
+#' Fit a K model
+#' 
+#' The model will predict daily K estimates from preliminary daily K estimates.
+#' Called from metab_Kmodel().
+#' 
+#' @param data_daily_all data to use as input, with columns including K600.obs,
+#'   weight, and any predictors
+#' @inheritParams metab_Kmodel
+#' @keywords internal
+Kmodel_allply <- function(data_daily_all, method, weights, predictors, ...) {
+  # remove rows whose weights signal they should be filtered out
+  data_daily_all <- dplyr::filter(data_daily_all, weight > 0)
+  # fit & return the model
+  switch(
+    method,
+    mean = {
+      if(length(predictors) > 0) warning("predictors ignored for method='mean'")
+      list(
+        mean=mean(data_daily_all$K600.obs * (if(length(weights) > 0) data_daily_all$weight else 1), na.rm=TRUE, ...),
+        se=(if(length(weights) > 0) {
+          warning("omitting sd for weighted mean")
+          NA 
+        } else { 
+          sd(data_daily_all$K600.obs, na.rm=TRUE)/sqrt(nrow(data_daily_all)) # SE of the mean
+        }))
+    }, 
+    lm = {
+      if(length(predictors) == 0) predictors <- "1"
+      formul <- formula(paste0("K600.obs ~ ", paste0(predictors, collapse=" + ")))
+      wts <- (if(length(weights) > 0) data_daily_all$weight else NULL)
+      lm(formul, data=data_daily_all, weights=wts, ...)
+    }, 
+    loess = {
+      if(length(predictors) < 1) stop("need at least one predictor for method='loess'")
+      formul <- formula(paste0("K600.obs ~ ", paste0(predictors, collapse=" + ")))
+      if(length(weights) > 0) {
+        loess(formul, data=data_daily_all, weights=data_daily_all$weight, ...)
+      } else {
+        loess(formul, data=data_daily_all, ...)
+      }
+    })
+}
+
+
+#### helpers to the helper ####
+
+
+
+#### metab_Kmodel class ####
+
+#' Interpolation model of daily K for metabolism
+#' 
+#' \code{metab_Kmodel} models use initial daily estimates of K, along with 
+#' predictors such as Q (discharge) or U (velocity) or T (time) to leverage all
+#' available data to reach better, less variable daily estimates of K
+#' 
+#' @exportClass metab_Kmodel
+#' @family metab.model.classes
+setClass(
+  "metab_Kmodel", 
+  contains="metab_model"
+)
+
+#' Make metabolism predictions from a fitted metab_model.
+#' 
+#' Makes daily re-predictions of K600.
+#' 
+#' @inheritParams predict_metab
+#' @return A data.frame of predictions, as for the generic 
+#'   \code{\link{predict_metab}}.
+#' @export
+#' @importFrom magrittr %<>%
+#' @family predict_metab
+predict_metab.metab_Kmodel <- function(metab_model, use_saved=TRUE, ...) {
+  
+  # re-predict K600.mod if saved values are disallowed or unavailable; otherwise
+  # use previously stored values for K600.mod
+  data_daily <- get_data_daily(metab_model)
+  if(!isTRUE(use_saved) || is.null(data_daily) || !("K600.mod" %in% names(data_daily))) {
+    method <- get_args(metab_model)$method
+    fit <- get_fit(metab_model)
+    switch(
+      method,
+      mean = {
+        data_daily %<>% mutate(
+          GPP = NA,
+          GPP.sd = NA,
+          ER = NA,
+          ER.sd = NA,
+          K600 = (fit$mean), # the parens are needed to avoid "Error: invalid subscript type 'closure'"
+          K600.sd = (fit$se))
+      },
+      lm = {
+        preds <- predict(fit, newdata=data_daily, interval='confidence', level=0.95)
+        data_daily %<>% mutate(
+          GPP_daily_50pct = NA,
+          GPP_daily_2.5pct = NA,
+          GPP_daily_97.5pct = NA,
+          ER_daily_50pct = NA,
+          ER_daily_2.5pct = NA,
+          ER_daily_97.5pct = NA,
+          K600_daily_50pct = preds[,'fit'],
+          K600_daily_2.5pct = preds[,'lwr'],
+          K600_daily_97.5pct = preds[,'upr'])
+      },
+      loess = {
+        preds <- predict(fit, newdata=data_daily, se=TRUE)
+        data_daily %<>% mutate(
+          GPP = NA,
+          GPP.sd = NA,
+          ER = NA,
+          ER.sd = NA,
+          K600 = (preds$fit),
+          K600.sd = (preds$se.fit))
+      }
+    )
+  }
+  metab_model@fit <- data_daily # temporary for converting lower/upper/sd to standard colnames
+  NextMethod()
+}

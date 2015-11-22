@@ -95,7 +95,7 @@ plot_DO_preds(predict_DO(mm))
 Alison Appling, Maite Arroita
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kvpred}};
+Other metab_model: \code{\link{metab_Kmodel}};
   \code{\link{metab_bayes}}; \code{\link{metab_mle}};
   \code{\link{metab_night}}
 }
