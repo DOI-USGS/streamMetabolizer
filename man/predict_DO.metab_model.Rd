@@ -5,7 +5,7 @@
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
 \method{predict_DO}{metab_model}(metab_model, calc_DO_fun = calc_DO_mod,
-  calc_DO_args, ...)
+  calc_DO_args, ..., use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the

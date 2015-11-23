@@ -277,7 +277,15 @@ predict_metab.metab_model <- function(metab_model, ...) {
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, calc_DO_args, ...) {
+predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {
+  
+  # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
+  if(isTRUE(use_saved)) {
+    dat <- get_data(metab_model)
+    if(!is.null(dat) && "DO.mod" %in% names(dat)) {
+      return(dat)
+    }
+  }
   
   # pull args from the model
   if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
