@@ -248,26 +248,28 @@ setClass(
 #' @export
 #' @import dplyr
 #' @family predict_DO
-predict_DO.metab_night <- function(metab_model, ...) {
+predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
   # pull args from the model
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
-  # get the metabolism (GPP, ER) data and estimates
+  # get the metabolism (GPP, ER) data and estimates; filter if requested
   local.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
-  metab_ests <- get_fit(metab_model) %>%
-    dplyr::select(local.date, ER, K600, row.first, row.last)
-  metab_ests$GPP <- 0
-  # and the DO, temperature, etc. data
-  data <- get_data(metab_model)
+  metab_ests <- get_fit(metab_model) %>% 
+    dplyr::select(local.date, ER, K600, row.first, row.last) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end) %>%
+    mutate(GPP = 0)
+  # and the DO, temperature, etc. data; filter if requested
+  data <- get_data(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end) # for mm_model_by_ply
-  
+    day_start=day_start, day_end=day_end) %>% # for mm_model_by_ply
+    mm_filter_dates(date_start=date_start, date_end=date_end)
 }
 
 #' Helper to predict_DO.metab_model
@@ -282,7 +284,7 @@ metab_night_predict_1ply <- function(
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
-  if(!is.na(data_daily_ply$row.first) && !is.na(data_daily_ply$row.last)) {
+  if(nrow(data_daily_ply)>0 && !is.na(data_daily_ply$row.first) && !is.na(data_daily_ply$row.last)) {
     which_night <- seq(min(nrow(data_ply), data_daily_ply$row.first), 
                        min(nrow(data_ply), data_daily_ply$row.last))
     night_dat <- data_ply[which_night,]

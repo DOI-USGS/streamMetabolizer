@@ -25,19 +25,22 @@ NULL
 #' 
 #' \item{"T smoother"}{Predict K using a loess or spline smoother over time}
 #' 
-#' \item{"Q smoother"}{Predict K using a loess or spline smoother over
+#' \item{"Q smoother"}{Predict K using a loess or spline smoother over 
 #' discharge}
 #' 
-#' \item{"TQ smoother"}{Predict K using a loess or spline smoother over both
+#' \item{"TQ smoother"}{Predict K using a loess or spline smoother over both 
 #' time and discharge}
 #' 
 #' }
 #' 
 #' @author Alison Appling
-#' @inheritParams metab_model_prototype
 #' @param method the name of an interpolation or regression method relating K to
 #'   the predictor[s] of choice.
-#' @param ... Other arguments passed to the fitting function given by
+#' @inheritParams metab_model_prototype
+#' @inheritParams prepdata_Kmodel
+#' @inheritParams Kmodel_allply
+#' @inheritParams mm_is_valid_day
+#' @param ... Other arguments passed to the fitting function given by 
 #'   \code{method}. \code{na.rm=TRUE} is already passed to \code{mean}
 #' @return A metab_Kmodel object containing the fitted model.
 #' @examples
@@ -105,7 +108,7 @@ metab_Kmodel <- function(
     data_daily <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=weights, filters=filters, day_start=day_start, day_end=day_end, tests=tests)
     
     # Fit the model
-    Kmodel_all <- Kmodel_allply(data_daily=data_daily, method=method, weights=weights, predictors=predictors, ...)
+    Kmodel_all <- Kmodel_allply(data_daily_ply=data_daily, method=method, weights=weights, predictors=predictors, ...)
     
   })
   
@@ -132,11 +135,19 @@ metab_Kmodel <- function(
 
 #### helpers ####
 
-#' Prepare data_daily by aggregating any daily data, renaming K600 to 
-#' K600.obs, & setting data_daily$weight to reflect user weights & filters
+#' Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 
+#' & setting data_daily$weight to reflect user weights & filters
 #' 
 #' @param data unit data to aggregate to daily_data. may be NULL.
 #' @param data_daily daily data to prepare for K modeling
+#' @param weights character vector indicating the type of weighting to use. 
+#'   Leave blank or set to c() for no weights.
+#' @param filters named numeric vector of limits to use in filtering data_daily.
+#'   If an element with a name in c("CI.min","discharge.max","velocity.max") is 
+#'   given, the corresponding filter is applied: K600.upper-K600.lower >= 
+#'   CI.min, discharge <= discharge.max, velocity <= velocity.max
+#' @inheritParams metab_model_prototype
+#' @inheritParams mm_is_valid_day
 prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, tests) {
   # Aggregate unit data to daily timesteps if needed
   if(!is.null(data) && nrow(data) > 0) {
@@ -145,6 +156,9 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
     aggs_daily <- mm_model_by_ply(Kmodel_aggregate_day, data=data, data_daily=NULL, day_start=day_start, day_end=day_end, tests=tests, columns=columns)
     data_daily <- left_join(data_daily, aggs_daily, by="local.date")
   }
+  
+  # Avoid global variable warnings in R CMD check
+  K600.obs <- K600.lower.obs <- K600.upper.obs <- weight <- '.dplyr.var'
   
   # Rename the data so it's clear which K values are inputs and which are new model predictions
   if('K600.lower' %in% names(data_daily)) {
@@ -183,7 +197,7 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams metab_Kmodel
+#' @param columns character vector of names of columns to aggregate
 Kmodel_aggregate_day <- function(
   data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
@@ -215,10 +229,14 @@ Kmodel_aggregate_day <- function(
 #' 
 #' @param data_daily_all data to use as input, with columns including K600.obs,
 #'   weight, and any predictors
+#' @param predictors character vector of variables (column names in data or
+#'   data_daily) to use in predicting K. Leave blank or set to c() for no
+#'   predictors.
 #' @inheritParams metab_Kmodel
 #' @keywords internal
 Kmodel_allply <- function(data_daily_all, method, weights, predictors, ...) {
   # remove rows whose weights signal they should be filtered out
+  weight <- '.dplyr.var'
   data_daily_all <- dplyr::filter(data_daily_all, weight > 0)
   # fit & return the model
   switch(
@@ -281,11 +299,12 @@ setClass(
 #' @export
 #' @importFrom magrittr %<>%
 #' @family predict_metab
-predict_metab.metab_Kmodel <- function(metab_model, use_saved=TRUE, ...) {
+predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, use_saved=TRUE, ...) {
   
   # re-predict K600.mod if saved values are disallowed or unavailable; otherwise
   # use previously stored values for K600.mod
-  data_daily <- get_data_daily(metab_model)
+  data_daily <- get_data_daily(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
   if(!isTRUE(use_saved) || is.null(data_daily) || !("K600.mod" %in% names(data_daily))) {
     method <- get_args(metab_model)$method
     fit <- get_fit(metab_model)

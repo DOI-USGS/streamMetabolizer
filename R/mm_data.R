@@ -65,7 +65,7 @@
 #' mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light)
 #' 
 #' # columns typical of daily data
-#' mm_data(local.date, K600, discharge.daily, velocity.daily)
+#' mm_data(local.date, K600, discharge, velocity)
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
     local.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 

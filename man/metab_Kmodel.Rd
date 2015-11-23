@@ -24,6 +24,18 @@ default. See \code{\link{mm_data}} for a full data description.}
 \item{method}{the name of an interpolation or regression method relating K to
 the predictor[s] of choice.}
 
+\item{weights}{character vector indicating the type of weighting to use.
+Leave blank or set to c() for no weights.}
+
+\item{predictors}{character vector of variables (column names in data or
+data_daily) to use in predicting K. Leave blank or set to c() for no
+predictors.}
+
+\item{filters}{named numeric vector of limits to use in filtering data_daily.
+If an element with a name in c("CI.min","discharge.max","velocity.max") is
+given, the corresponding filter is applied: K600.upper-K600.lower >=
+CI.min, discharge <= discharge.max, velocity <= velocity.max}
+
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
 
@@ -46,6 +58,8 @@ data describing 2006-06-26 end at 2006-06-27 06:00, or at the last
 observation time that occurs before that time if day_end doesn't fall
 exactly on an observation time. See day_start for recommended start and end
 times.}
+
+\item{tests}{list of tests to conduct}
 
 \item{...}{Other arguments passed to the fitting function given by
 \code{method}. \code{na.rm=TRUE} is already passed to \code{mean}}
@@ -92,10 +106,14 @@ fr <- streamMetabolizer:::load_french_creek() \%>\% unitted::v() \%>\%
   filter(format(local.time, "\%Y-\%m-\%d") == "2012-08-24") \%>\%
   select(local.time)
 fr <- fr \%>\% mutate(discharge=exp(rnorm(nrow(fr))))
-frk <- data.frame(local.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
-metab_Kmodel(data=fr, data_daily=frk)
 frk2 <- data.frame(local.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
   as.difftime(1,units='days')), discharge=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
+
+# 1-day tests
+frk <- data.frame(local.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
+metab_Kmodel(data=fr, data_daily=frk, method='mean')
+#metab_Kmodel(data=fr, data_daily=frk, method='lm') # NaN warning
+#metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='local.date') # span error
 
 # mean
 mm <- metab_Kmodel(data_daily=frk2, method='mean')
@@ -108,8 +126,8 @@ mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge','local
 
 # loess
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date')
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge','local.date'))
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date', span=0.4)
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge','local.date'))
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge', span=2)
 
 library(ggplot2)

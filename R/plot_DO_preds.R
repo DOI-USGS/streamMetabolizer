@@ -28,10 +28,15 @@ plot_DO_preds <- function(DO_preds, plot_as=c('conc','pctsat','ddodt')) {
     DO_preds, as='pctsat', var='DO (% sat)', col='forestgreen', lab='DO (% sat)',
     mod=100*DO.mod/DO.sat, 
     obs=100*DO.obs/DO.sat)
-  DO_preds_ddodt <- mutate(
-    DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', col='navy', lab='dDO/dt~(mg~L^-1~d^-1)',
-    mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$local.time), units="days"),
-    obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$local.time), units="days"))
+  DO_preds_ddodt <- 
+    mutate(
+      DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', col='navy', lab='dDO/dt~(mg~L^-1~d^-1)',
+      mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$local.time), units="days"),
+      obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$local.time), units="days")) %>%
+    mutate(
+      mod = ifelse(diff(DO_preds$local.date)==0, mod, NA),
+      obs = ifelse(diff(DO_preds$local.date)==0, obs, NA))
+  
   DO_preds_all <- bind_rows(DO_preds_conc, DO_preds_pctsat, DO_preds_ddodt) %>%
     mutate(var=ordered(var, c(conc='DO (mg/L)', pctsat='DO (% sat)', ddodt='dDO/dt (mg/L/d)')[plot_as]))
   

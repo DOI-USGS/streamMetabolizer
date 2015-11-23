@@ -32,6 +32,8 @@ observation time.}
 date by which this ply should be referred}
 
 \item{tests}{list of tests to conduct}
+
+\item{columns}{character vector of names of columns to aggregate}
 }
 \description{
 For use in predicting K

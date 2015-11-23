@@ -106,11 +106,12 @@ setClass(
 #'   \code{\link{predict_metab}}.
 #' @export
 #' @family predict_metab
-predict_metab.metab_sim <- function(metab_model, ...) {
+predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
   # Select only those columns required for metabolism prediction and available
   # in the fit. At present this is all of the columns, but that could change
-  fit <- get_fit(metab_model)
+  fit <- get_fit(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
   vars <- c("local.date","DO.mod.1","GPP","ER","K600")
   fit[vars[vars %in% names(fit)]]
   
@@ -129,7 +130,7 @@ predict_metab.metab_sim <- function(metab_model, ...) {
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_sim <- function(metab_model, ...) {
+predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
   # call the generic, which generally does what we want
   sim.seed <- get_args(metab_model)$model_specs$sim.seed

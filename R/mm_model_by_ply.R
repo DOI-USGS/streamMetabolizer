@@ -67,8 +67,11 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   # runs. dplyr::bind_rows should take care of any missing columns, since these
   # are matched by name, and missing columns are filled with NAs
   count_cols <- function(out) { if(is.null(out)) 0 else ncol(out) }
-  out_example <- out_list[[which.max(sapply(out_list, count_cols))]][FALSE,]
-  out_all <- bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
-  
-  out_all
+  example_choice <- which.max(sapply(out_list, count_cols))
+  if(length(example_choice) == 0) {
+    data.frame(local.date=as.Date(NA)) 
+  } else {
+    out_example <- out_list[[example_choice]][FALSE,]
+    bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
+  }
 }

@@ -57,7 +57,7 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     # specified without a timestamp column
     if('na_times' %in% tests) {
       timecol <- grep('date|time', names(dat), value=TRUE)
-      if(length(timecol) != 1) stop("found ", length(timecol), " possible timestamp columns")
+      if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns")
       na.times <- which(is.na(dat[,timecol]))
       if(length(na.times) > 0) {
         stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")))

@@ -4,12 +4,21 @@
 \alias{predict_DO.metab_model}
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
-\method{predict_DO}{metab_model}(metab_model, calc_DO_fun = calc_DO_mod,
-  calc_DO_args, ..., use_saved = TRUE)
+\method{predict_DO}{metab_model}(metab_model, date_start = NA,
+  date_end = NA, calc_DO_fun = calc_DO_mod, calc_DO_args, ...,
+  use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
+
+\item{date_start}{Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
+done.}
+
+\item{date_end}{Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
+done.}
 
 \item{calc_DO_fun}{The function to use in predicting DO from metabolism
 estimates. The default is generally recommended, even if the model was fit
@@ -21,6 +30,9 @@ recommended option.}
 
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_DO}}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
+the model?}
 }
 \value{
 A data.frame of predictions, as for the generic

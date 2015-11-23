@@ -4,14 +4,25 @@
 \alias{predict_metab}
 \title{Predict metabolism from a fitted model.}
 \usage{
-predict_metab(metab_model, ...)
+predict_metab(metab_model, date_start = NA, date_end = NA, ..., use_saved)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
 
+\item{date_start}{Date or a class convertible with as.Date. The first date
+(inclusive) for which to report metabolism predictions. If NA, no filtering is
+done.}
+
+\item{date_end}{Date or a class convertible with as.Date. The last date
+(inclusive) for which to report metabolism predictions. If NA, no filtering is
+done.}
+
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_metab}}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
+the model?}
 }
 \value{
 A data.frame of daily metabolism estimates. Columns include:

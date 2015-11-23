@@ -13,6 +13,13 @@ weight, and any predictors}
 \item{method}{the name of an interpolation or regression method relating K to
 the predictor[s] of choice.}
 
+\item{weights}{character vector indicating the type of weighting to use.
+Leave blank or set to c() for no weights.}
+
+\item{predictors}{character vector of variables (column names in data or
+data_daily) to use in predicting K. Leave blank or set to c() for no
+predictors.}
+
 \item{...}{Other arguments passed to the fitting function given by
 \code{method}. \code{na.rm=TRUE} is already passed to \code{mean}}
 }

@@ -318,10 +318,13 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @importFrom runjags run.jags
 #' @import dplyr
 #' @keywords internal
 runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+  
+  if(!requireNamespace("runjags", quietly = TRUE)) {
+    stop("the runjags package is required for JAGS MCMC models")
+  }
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -332,7 +335,7 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     # Let JAGS initialize other parameters automatically
   }
   
-  runjags_out <- run.jags(
+  runjags_out <- runjags::run.jags(
     method=c("rjags","parallel","snow")[2],
     model=model_path,
     monitor=params_out,
@@ -369,7 +372,6 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @importFrom rstan stan
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
@@ -377,10 +379,11 @@ runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
   
   # stan() can't find its own function cpp_object_initializer() unless the
   # namespace is loaded. requireNamespace is somehow not doing this.
-  if(!suppressPackageStartupMessages(require(rstan)))
+  if(!suppressPackageStartupMessages(require(rstan))) {
     stop("the rstan package is required for Stan MCMC models")
+  }
   
-  runstan_out <- stan(
+  runstan_out <- rstan::stan(
     file=model_path,
     data=data_list,
     pars=params_out,

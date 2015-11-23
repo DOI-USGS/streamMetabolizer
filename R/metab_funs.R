@@ -7,7 +7,7 @@ metab_funs <- function() {
   . <- '.dplyr.var'
   mtb_funs <- ls("package:streamMetabolizer") %>%
     grep("^metab_", ., value=TRUE) %>% 
-    grep("model*|funs", ., invert=TRUE, value=TRUE)
+    grep("_model*|_funs", ., invert=TRUE, value=TRUE)
   
   known_funs <- c("metab_bayes","metab_Kmodel", "metab_mle", "metab_night", "metab_sim")
   if(!all(mtb_funs %in% known_funs) || length(mtb_funs) != 5)
