@@ -4,15 +4,24 @@
 \alias{plot_DO_preds}
 \title{Plot predictions produced with predict_DO}
 \usage{
-plot_DO_preds(DO_preds, plot_as = c("conc", "pctsat", "ddodt"))
+plot_DO_preds(DO_preds, y_var = c("conc", "pctsat", "ddodt"),
+  style = c("ggplot2", "dygraphs"), y_lim = list(conc = c(NA, NA), pctsat =
+  c(NA, NA), ddodt = c(NA, NA)))
 }
 \arguments{
 \item{DO_preds}{a data.frame of predictions such as that returned by
 predict_DO()}
 
-\item{plot_as}{character. Should the plot display predicted & observed values
+\item{y_var}{character. Should the plot display predicted & observed values
 in concentration (conc) or as percent of saturation (pctsat)? The default
 is to plot both.}
+
+\item{style}{character indicating which graphics package to use}
+
+\item{y_lim}{list of named vectors, each of which has length 2 and is
+numeric. NA within a vector indicates that the data range should be used.
+for ggplot2, y_lim is only used to exclude values outside that range and is
+ignored if the data span a narrower range}
 }
 \description{
 Plots modeled values as lines, observed values as points

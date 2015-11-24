@@ -22,11 +22,12 @@ Imports:
     lazyeval,
     lubridate,
     magrittr,
-    methods,
-    ggplot2
+    methods
 Suggests:
     chron,
     dataRetrieval,
+    dygraphs,
+    ggplot2,
     knitr,
     plyr,
     RCurl,
@@ -34,7 +35,8 @@ Suggests:
     rstan,
     testthat,
     tidyr,
-    XML
+    XML,
+    xts
 Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'
