@@ -277,6 +277,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @import dplyr
+#' @importFrom lubridate tz
 #' @export
 #' @family predict_DO
 predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {

@@ -5,7 +5,7 @@
 \title{Nighttime dissolved oxygen predictions from a metab_night.}
 \usage{
 \method{predict_DO}{metab_night}(metab_model, date_start = NA,
-  date_end = NA, ...)
+  date_end = NA, ..., use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
@@ -21,6 +21,9 @@ done.}
 
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_DO}}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
+the model?}
 }
 \value{
 A data.frame of predictions, as for the generic

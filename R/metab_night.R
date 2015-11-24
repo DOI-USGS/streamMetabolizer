@@ -18,7 +18,7 @@ NULL
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
 #' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
 #' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
@@ -68,7 +68,7 @@ metab_night <- function(
   })
   
   # Package and return results
-  metab_model(
+  mm <- metab_model(
     model_class="metab_night", 
     info=info,
     fit=night_all,
@@ -76,6 +76,12 @@ metab_night <- function(
     args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
     data=data,
     data_daily=data_daily)
+  
+  # Update data with DO predictions
+  mm@data <- predict_DO(mm)
+  
+  # Return
+  mm
 }
 
 
@@ -248,21 +254,29 @@ setClass(
 #' @export
 #' @import dplyr
 #' @family predict_DO
-predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...) {
+predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # pull args from the model
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
+  # get the DO, temperature, etc. data; filter if requested
+  data <- get_data(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
+  
+  # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
+  if(isTRUE(use_saved)) {
+    if(!is.null(data) && "DO.mod" %in% names(data)) {
+      return(data)
+    }
+  }
+
   # get the metabolism (GPP, ER) data and estimates; filter if requested
   local.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
   metab_ests <- get_fit(metab_model) %>% 
     dplyr::select(local.date, ER, K600, row.first, row.last) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end) %>%
     mutate(GPP = 0)
-  # and the DO, temperature, etc. data; filter if requested
-  data <- get_data(metab_model) %>%
-    mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function

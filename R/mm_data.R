@@ -74,7 +74,7 @@ mm_data <- function(..., optional='none') {
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1"), 
-    local.date=u(as.Date("2050-03-14"), NA), 
+    local.date=u(as.Date("2050-03-14", tz="UTC"), NA), 
     DO.mod.1=  u(7.5,"mgO2 L^-1"),
     GPP=       u(5,"gO2 m^-2 d^-1"), 
     ER=        u(5,"gO2 m^-2 d^-1"), 

@@ -108,7 +108,7 @@ metab_Kmodel <- function(
     data_daily <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=weights, filters=filters, day_start=day_start, day_end=day_end, tests=tests)
     
     # Fit the model
-    Kmodel_all <- Kmodel_allply(data_daily_ply=data_daily, method=method, weights=weights, predictors=predictors, ...)
+    Kmodel_all <- Kmodel_allply(data_daily_all=data_daily, method=method, weights=weights, predictors=predictors, ...)
     
   })
   
@@ -273,7 +273,6 @@ Kmodel_allply <- function(data_daily_all, method, weights, predictors, ...) {
 #### helpers to the helper ####
 
 
-
 #### metab_Kmodel class ####
 
 #' Interpolation model of daily K for metabolism
@@ -299,7 +298,7 @@ setClass(
 #' @export
 #' @importFrom magrittr %<>%
 #' @family predict_metab
-predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, use_saved=TRUE, ...) {
+predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # re-predict K600.mod if saved values are disallowed or unavailable; otherwise
   # use previously stored values for K600.mod
@@ -346,4 +345,30 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   }
   metab_model@fit <- data_daily # temporary for converting lower/upper/sd to standard colnames
   NextMethod()
+}
+
+#' Override generic predict_DO for metab_Kmodel, which can't
+#' 
+#' metab_Kmodel predicts K at daily timesteps and usually knows nothing about 
+#' GPP or ER. So it's not possible to predict DO from this model. Try passing 
+#' the ouptut to metab_mle and THEN predicting DO.
+#' @inheritParams predict_DO
+#' @examples
+#' \dontrun{
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' 
+#' # fit a first-round MLE and extract the K estimates
+#' mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
+#' K600_mm1 <- predict_metab(mm1) %>% select(local.date, K600, K600.lower, K600.upper)
+#' 
+#' # smooth the K600s
+#' mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', day_start=-1, day_end=23)
+#' K600_mm2 <- predict_metab(mm2) %>% select(local.date, K600)
+#' 
+#' # refit the MLE with fixed K
+#' mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)
+#' predict_metab(mm3)
+#' }
+predict_DO.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
+  stop("can only predict K, not DO, from metab_Kmodel")
 }

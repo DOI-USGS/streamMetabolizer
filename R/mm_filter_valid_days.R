@@ -45,7 +45,7 @@ mm_filter_valid_days <- function(
     tests=tests)
   removed <- do.call(rbind, removed) # removed was populated by <<- calls within filter_fun
   
-  # filter the daily data to match & retur
+  # filter the daily data to match & return
   if(!is.null(data_daily)) {
     daily_removed <- data.frame(
       local.date=as.Date(setdiff(as.character(data_daily$local.date), c(unique(format(data$local.time, "%Y-%m-%d")), as.character(removed$local.date)))), 

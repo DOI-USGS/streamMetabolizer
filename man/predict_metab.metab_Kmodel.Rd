@@ -5,7 +5,7 @@
 \title{Make metabolism predictions from a fitted metab_model.}
 \usage{
 \method{predict_metab}{metab_Kmodel}(metab_model, date_start = NA,
-  date_end = NA, use_saved = TRUE, ...)
+  date_end = NA, ..., use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the
@@ -19,11 +19,11 @@ done.}
 (inclusive) for which to report metabolism predictions. If NA, no filtering is
 done.}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with
-the model?}
-
 \item{...}{Other arguments passed to class-specific implementations of
 \code{predict_metab}}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
+the model?}
 }
 \value{
 A data.frame of predictions, as for the generic

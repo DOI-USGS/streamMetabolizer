@@ -107,7 +107,7 @@ metab_bayes <- function(
   })
   
   # Package and return results
-  metab_model(
+  mm <- metab_model(
     model_class="metab_bayes", 
     info=info,
     fit=bayes_all,
@@ -119,6 +119,12 @@ metab_bayes <- function(
     ),
     data=data,
     data_daily=data_daily)
+  
+  # Update data with DO predictions
+  mm@data <- predict_DO(mm)
+  
+  # Return
+  mm
 }
 
 
@@ -377,8 +383,10 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  # stan() can't find its own function cpp_object_initializer() unless the
-  # namespace is loaded. requireNamespace is somehow not doing this.
+  # stan() can't find its own function cpp_object_initializer() unless the 
+  # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
+  # (not solution):
+  # https://stat.ethz.ch/pipermail/r-devel/2014-September/069803.html
   if(!suppressPackageStartupMessages(require(rstan))) {
     stop("the rstan package is required for Stan MCMC models")
   }

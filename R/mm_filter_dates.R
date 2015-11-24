@@ -14,7 +14,8 @@
 mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_end=27.99, date_format="%Y-%m-%d") {
   
   if(is.null(data) || nrow(data) == 0 || (is.character(data) && data == "generic metab_model class; no actual fit")) return(data)
-  date_col <- unlist(sapply(c('local.date','local.time'), grep, names(data), fixed=TRUE, value=TRUE, USE.NAMES = FALSE))[1]
+  date_col <- unlist(sapply(c('local.time','local.date'), grep, names(data), fixed=TRUE, value=TRUE, USE.NAMES = FALSE))[1]
+  data <- data[!is.na(data[[date_col]]),]
   # format dates
   tidy_date <- function(date) { 
     local.tz <- if(date_col=='local.time') tz(data$local.time) else 'UTC'
