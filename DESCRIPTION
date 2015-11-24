@@ -1,7 +1,7 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.6.0.20
+Version: 0.7.0.1
 Date: 2015-11-24
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
