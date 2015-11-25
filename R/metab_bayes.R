@@ -107,7 +107,7 @@ metab_bayes <- function(
   })
   
   # Package and return results
-  metab_model(
+  mm <- metab_model(
     model_class="metab_bayes", 
     info=info,
     fit=bayes_all,
@@ -119,6 +119,12 @@ metab_bayes <- function(
     ),
     data=data,
     data_daily=data_daily)
+  
+  # Update data with DO predictions
+  mm@data <- predict_DO(mm)
+  
+  # Return
+  mm
 }
 
 
@@ -318,10 +324,13 @@ mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, p
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @importFrom runjags run.jags
 #' @import dplyr
 #' @keywords internal
 runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+  
+  if(!requireNamespace("runjags", quietly = TRUE)) {
+    stop("the runjags package is required for JAGS MCMC models")
+  }
   
   inits_fun <- function(chain) {
     list(.RNG.name=
@@ -332,7 +341,7 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
     # Let JAGS initialize other parameters automatically
   }
   
-  runjags_out <- run.jags(
+  runjags_out <- runjags::run.jags(
     method=c("rjags","parallel","snow")[2],
     model=model_path,
     monitor=params_out,
@@ -369,18 +378,20 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' 
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
-#' @importFrom rstan stan
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
-  # stan() can't find its own function cpp_object_initializer() unless the
-  # namespace is loaded. requireNamespace is somehow not doing this.
-  if(!suppressPackageStartupMessages(require(rstan)))
+  # stan() can't find its own function cpp_object_initializer() unless the 
+  # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
+  # (not solution):
+  # https://stat.ethz.ch/pipermail/r-devel/2014-September/069803.html
+  if(!suppressPackageStartupMessages(require(rstan))) {
     stop("the rstan package is required for Stan MCMC models")
+  }
   
-  runstan_out <- stan(
+  runstan_out <- rstan::stan(
     file=model_path,
     data=data_list,
     pars=params_out,

@@ -91,7 +91,7 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 Alison Appling, Bob Hall
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kvpred}};
+Other metab_model: \code{\link{metab_Kmodel}};
   \code{\link{metab_mle}}; \code{\link{metab_night}};
   \code{\link{metab_sim}}
 }

@@ -69,13 +69,18 @@ Here is the full set of accepted model names and their traits.
 ```{r, echo=FALSE, results='asis'}
 opts <- do.call('expand.grid', c(as.list(formals(mm_name)), list(stringsAsFactors=FALSE)))
 attr(opts, 'out.attrs') <- NULL
-opt_names <- sapply(1:nrow(opts), function(opt) do.call(mm_name, opts[opt,]))
+opt_names <- sapply(1:nrow(opts), function(opt) tryCatch(do.call(mm_name, opts[opt,]), error=function(e) NA))
+opts <- opts[!is.na(opt_names),]
+opt_names <- opt_names[!is.na(opt_names)]
+
 opt_parsed <- mm_parse_name(opt_names)
 opt_ok <- sapply(opt_names, function(opt) tryCatch({specs(opt); TRUE}, warning=function(w) if(mm_parse_name(opt)$type=='bayes') FALSE else TRUE, error=function(e) FALSE))
 opts <- opts[opt_ok, ]
 rownames(opts) <- NULL
+opt_names <- opt_names[opt_ok]
+
 suppressPackageStartupMessages(library(dplyr))
-opts <- bind_cols(dplyr::data_frame(model_name=opt_names[opt_ok]), opts) %>%
+opts <- bind_cols(dplyr::data_frame(model_name=opt_names), opts) %>%
   arrange(model_name)
 knitr::kable(opts)
 ```

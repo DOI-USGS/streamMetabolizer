@@ -9,7 +9,7 @@
 including GPP, ER, and K600 values
 }
 \seealso{
-Other metab.model.classes: \code{\link{metab_Kvpred-class}};
+Other metab.model.classes: \code{\link{metab_Kmodel-class}};
   \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}};
   \code{\link{metab_model-class}};

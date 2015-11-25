@@ -23,6 +23,7 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   # each date (day_start to day_end, which may be != 24). store this labeling in
   # two additional columns (odd.- and even.- date.groups)
   data.plys <- as.data.frame(v(data))
+  if(any(is.na(data.plys$local.time))) stop("no values in local.time may be NA")
   data.plys$local.date <- format(data.plys$local.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$local.time) %% 1)
   
@@ -58,17 +59,20 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
     out <- model_fun(
       data_ply=data.plys[ply,!(names(data.plys) %in% c('local.date','hour','odd.date.group','even.date.group'))], 
       data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$local.date == dt,] else NULL,
-      day_start=day_start, day_end=day_end, local_date=as.Date(dt),
+      day_start=day_start, day_end=day_end, local_date=as.Date(dt, tz=tz(dt)),
       ...)
-    if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=as.Date(dt), out)
+    if(is.null(out) || nrow(out)==0) NULL else data.frame(local.date=as.Date(dt, tz=tz(dt)), out)
   })
   # combine the 1-row dfs, making sure to start with a 0-row df that represents 
   # the dfs with the most columns to keep the column ordering consistent across 
   # runs. dplyr::bind_rows should take care of any missing columns, since these
   # are matched by name, and missing columns are filled with NAs
   count_cols <- function(out) { if(is.null(out)) 0 else ncol(out) }
-  out_example <- out_list[[which.max(sapply(out_list, count_cols))]][FALSE,]
-  out_all <- bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
-  
-  out_all
+  example_choice <- which.max(sapply(out_list, count_cols))
+  if(length(example_choice) == 0) {
+    data.frame(local.date=as.Date(NA)) 
+  } else {
+    out_example <- out_list[[example_choice]][FALSE,]
+    bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
+  }
 }

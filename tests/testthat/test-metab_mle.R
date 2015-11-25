@@ -50,6 +50,6 @@ test_that("metab_mle models can be fit with K specified", {
   DO_preds <- predict_DO(mm)
   DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.30), "DO.mod tracks DO.obs with not too much error")
-  # plot_DO_preds(DO_preds, plot_as="pctsat")
+  # plot_DO_preds(DO_preds, y_var="pctsat")
   
 })

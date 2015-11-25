@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.7.0
-Date: 2015-11-08
+Version: 0.7.1
+Date: 2015-11-25
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -21,19 +21,22 @@ Imports:
     dplyr,
     lazyeval,
     lubridate,
-    methods,
-    runjags,
-    rstan,
-    ggplot2
+    magrittr,
+    methods
 Suggests:
     chron,
     dataRetrieval,
+    dygraphs,
+    ggplot2,
     knitr,
     plyr,
     RCurl,
+    runjags,
+    rstan,
     testthat,
     tidyr,
-    XML
+    XML,
+    xts
 Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'
@@ -60,7 +63,7 @@ Collate:
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
     'metab_model-class.R'
-    'metab_Kvpred.R'
+    'metab_Kmodel.R'
     'metab_bayes.R'
     'metab_funs.R'
     'metab_mle.R'
@@ -69,6 +72,7 @@ Collate:
     'metab_night.R'
     'metab_sim.R'
     'mm_data.R'
+    'mm_filter_dates.R'
     'mm_filter_valid_days.R'
     'mm_name.R'
     'mm_generate_mcmc_file.R'
@@ -79,5 +83,6 @@ Collate:
     'mm_predict_1ply.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
+    'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'

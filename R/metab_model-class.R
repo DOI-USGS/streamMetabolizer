@@ -78,7 +78,7 @@ metab_model <- function(
   fitting_time=system.time({}),
   args=list(day_start=4, day_end=27.99),
   data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(local.date, K600, discharge.daily, velocity.daily, optional="all"),
+  data_daily=mm_data(local.date, K600, discharge, velocity, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
@@ -213,9 +213,10 @@ get_version.metab_model <- function(metab_model) {
 #' @import dplyr
 #' @export
 #' @family predict_metab
-predict_metab.metab_model <- function(metab_model, ...) {
+predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
-  fit <- get_fit(metab_model)
+  fit <- get_fit(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
   var_vec <- c('GPP','ER','K600')
   precalc_cis <- grep("^(GPP|ER|K600)_daily_(50pct|2\\.5pct|97\\.5pct)$", names(fit), value=TRUE)
   calcnow_cis <- grep("^(GPP|ER|K600)(\\.sd)*$", names(fit), value=TRUE)
@@ -275,24 +276,36 @@ predict_metab.metab_model <- function(metab_model, ...) {
 #'   recommended option.
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
+#' @import dplyr
+#' @importFrom lubridate tz
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, calc_DO_fun=calc_DO_mod, calc_DO_args, ...) {
+predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {
   
   # pull args from the model
   if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   
-  # get the metabolism estimates (keeping only those columns we actually need)
-  # and input data
-  metab_ests <- predict_metab(metab_model)
-  data <- get_data(metab_model)
+  # Get the input data; filter if requested
+  data <- get_data(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
+  # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
+  if(isTRUE(use_saved)) {
+    if(!is.null(data) && "DO.mod" %in% names(data)) {
+      return(data)
+    }
+  }
+  
+  # get the metabolism estimates; filter as we did for data
+  metab_ests <- predict_metab(metab_model, date_start=date_start, date_end=date_end)
+    
   # re-process the input data with the metabolism estimates to predict DO
   mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, # for mm_model_by_ply
-    calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) # for mm_predict_1ply
+    calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) %>% # for mm_predict_1ply
+    mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
   
 }

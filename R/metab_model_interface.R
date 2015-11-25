@@ -159,8 +159,16 @@ get_version <- function(metab_model) {
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
+#' @param date_start Date or a class convertible with as.Date. The first date
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
+#'   done.
+#' @param date_end Date or a class convertible with as.Date. The last date 
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
+#'   done.
 #' @param ... Other arguments passed to class-specific implementations of
 #'   \code{predict_metab}
+#' @param use_saved logical. Is it OK to use predictions that were saved with
+#'   the model?
 #' @return A data.frame of daily metabolism estimates. Columns include:
 #'   \describe{
 #'   
@@ -175,7 +183,7 @@ get_version <- function(metab_model) {
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
-predict_metab <- function(metab_model, ...) {
+predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
   UseMethod("predict_metab")
 }
 
@@ -187,13 +195,21 @@ predict_metab <- function(metab_model, ...) {
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @param ... Other arguments passed to class-specific implementations of
+#' @param date_start Date or a class convertible with as.Date. The first date 
+#'   (inclusive) for which to report DO predictions. If NA, no filtering is 
+#'   done.
+#' @param date_end Date or a class convertible with as.Date. The last date 
+#'   (inclusive) for which to report DO predictions. If NA, no filtering is 
+#'   done.
+#' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_DO}
+#' @param use_saved logical. Is it OK to use predictions that were saved with
+#'   the model?
 #' @return A data.frame of dissolved oxygen predictions at the temporal 
 #'   resolution of the input data
 #' @export
 #' @family metab_model_interface
 #' @family predict_DO
-predict_DO <- function(metab_model, ...) {
+predict_DO <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
   UseMethod("predict_DO")
 }

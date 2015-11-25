@@ -84,8 +84,8 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   mb <- metab_bayes(data=vfrenchshort, model_specs=specs('b_np_oi_eu_km.jags', saved_steps = 4000),
                     day_start=start.numeric, day_end=end.numeric)
   smest <- predict_metab(mb)[2,c("GPP","ER","K600")]
-  expect_less_than(abs(smest$GPP - bobest$GPP), 0.15, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
-  expect_less_than(abs(smest$ER - bobest$ER), 0.15, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
+  expect_less_than(abs(smest$GPP - bobest$GPP), 0.2, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
+  expect_less_than(abs(smest$ER - bobest$ER), 0.2, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
   expect_less_than(abs(smest$K600 - bobest$K), 3, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
   
 })

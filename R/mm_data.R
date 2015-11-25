@@ -65,7 +65,7 @@
 #' mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light)
 #' 
 #' # columns typical of daily data
-#' mm_data(local.date, K600, discharge.daily, velocity.daily)
+#' mm_data(local.date, K600, discharge, velocity)
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
     local.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 
@@ -74,13 +74,17 @@ mm_data <- function(..., optional='none') {
     depth=     u(0.5,"m"), 
     temp.water=u(21.8,"degC"), 
     light=     u(300.9,"umol m^-2 s^-1"), 
-    local.date=     u(as.Date("2050-03-14"), NA), 
-    DO.mod.1=       u(7.5,"mgO2 L^-1"),
-    GPP=            u(5,"gO2 m^-2 d^-1"), 
-    ER=             u(5,"gO2 m^-2 d^-1"), 
-    K600=           u(5,"d^-1"), 
-    discharge.daily=u(9,"m^3 s^-1"), 
-    velocity.daily= u(2,"m s^-1")))
+    discharge= u(9,"m^3 s^-1"), 
+    velocity=  u(2,"m s^-1"), 
+    local.date=u(as.Date("2050-03-14", tz="UTC"), NA), 
+    DO.mod.1=  u(7.5,"mgO2 L^-1"),
+    GPP=       u(5,"gO2 m^-2 d^-1"), 
+    ER=        u(5,"gO2 m^-2 d^-1"), 
+    K600=      u(5,"d^-1"), 
+    K600.lower=u(4.5,"d^-1"), 
+    K600.upper=u(5.6,"d^-1"), 
+    discharge.daily= u(9,"m^3 s^-1"), 
+    velocity.daily=  u(2,"m s^-1")))
   .dots <- lazy_dots(...)
   .nulldot <- length(.dots) == 1 && is.null(.dots[[1]]$expr)
   dat <- if(isTRUE(.nulldot)) {
