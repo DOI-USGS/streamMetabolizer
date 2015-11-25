@@ -6,7 +6,7 @@
 \title{Interpolation model of daily K for metabolism}
 \description{
 \code{metab_Kmodel} models use initial daily estimates of K, along with
-predictors such as Q (discharge) or U (velocity) or T (time) to leverage all
+predictors such as Q (discharge.daily) or U (velocity.daily) or T (time) to leverage all
 available data to reach better, less variable daily estimates of K
 }
 \seealso{

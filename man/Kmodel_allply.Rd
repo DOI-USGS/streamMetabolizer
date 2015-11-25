@@ -4,7 +4,7 @@
 \alias{Kmodel_allply}
 \title{Fit a K model}
 \usage{
-Kmodel_allply(data_daily_all, method, weights, predictors, ...)
+Kmodel_allply(data_daily_all, method, weights, predictors, transforms, ...)
 }
 \arguments{
 \item{data_daily_all}{data to use as input, with columns including K600.obs,

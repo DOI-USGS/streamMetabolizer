@@ -83,5 +83,6 @@ Collate:
     'mm_predict_1ply.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
+    'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'

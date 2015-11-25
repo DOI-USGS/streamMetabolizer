@@ -6,10 +6,12 @@
 \usage{
 metab_Kmodel(data = mm_data(local.time, discharge, velocity, optional =
   c("all")), data_daily = mm_data(local.date, K600, K600.lower, K600.upper,
-  discharge, velocity, optional = c("K600.lower", "K600.upper", "discharge",
-  "velocity")), method = c("mean", "lm", "loess"), weights = c("CI",
-  "CI/K600"), predictors = c("local.date", "velocity", "discharge"),
-  filters = c(CI.min = NA, discharge.max = NA, velocity.max = NA),
+  discharge.daily, velocity.daily, optional = c("K600.lower", "K600.upper",
+  "discharge.daily", "velocity.daily")), method = c("mean", "lm", "loess"),
+  weights = c("CI", "CI/K600"), predictors = c("local.date",
+  "velocity.daily", "discharge.daily"), filters = c(CI.max = NA,
+  discharge.daily.max = NA, velocity.daily.max = NA), transforms = c(K600 =
+  "log", local.date = NA, velocity.daily = "log", discharge.daily = "log"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"), ...)
 }
@@ -32,9 +34,9 @@ data_daily) to use in predicting K. Leave blank or set to c() for no
 predictors.}
 
 \item{filters}{named numeric vector of limits to use in filtering data_daily.
-If an element with a name in c("CI.min","discharge.max","velocity.max") is
+If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.max") is
 given, the corresponding filter is applied: K600.upper-K600.lower >=
-CI.min, discharge <= discharge.max, velocity <= velocity.max}
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
 
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
@@ -69,7 +71,7 @@ A metab_Kmodel object containing the fitted model.
 }
 \description{
 Takes daily estimates of K, usually from nighttime regression, and regresses
-against predictors such as discharge. Returns a metab_model that only
+against predictors such as discharge.daily. Returns a metab_model that only
 predicts daily K, nothing else.
 }
 \details{
@@ -92,10 +94,10 @@ heavily}
 \item{"T smoother"}{Predict K using a loess or spline smoother over time}
 
 \item{"Q smoother"}{Predict K using a loess or spline smoother over
-discharge}
+discharge.daily}
 
 \item{"TQ smoother"}{Predict K using a loess or spline smoother over both
-time and discharge}
+time and discharge.daily}
 
 }
 }
@@ -105,9 +107,9 @@ library(dplyr)
 fr <- streamMetabolizer:::load_french_creek() \%>\% unitted::v() \%>\%
   filter(format(local.time, "\%Y-\%m-\%d") == "2012-08-24") \%>\%
   select(local.time)
-fr <- fr \%>\% mutate(discharge=exp(rnorm(nrow(fr))))
+fr <- fr \%>\% mutate(discharge.daily=exp(rnorm(nrow(fr))))
 frk2 <- data.frame(local.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
-  as.difftime(1,units='days')), discharge=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
+  as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
 
 # 1-day tests
 frk <- data.frame(local.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
@@ -120,15 +122,15 @@ mm <- metab_Kmodel(data_daily=frk2, method='mean')
 
 # lm
 mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge'))
+mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily'))
 mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('local.date'))
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge','local.date'))
+mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','local.date'))
 
 # loess
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date')
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date', span=0.4)
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge','local.date'))
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge', span=2)
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','local.date'))
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge.daily', span=2)
 
 library(ggplot2)
 ggplot(get_data_daily(mm), aes(x=local.date)) + geom_line(aes(y=K600)) +

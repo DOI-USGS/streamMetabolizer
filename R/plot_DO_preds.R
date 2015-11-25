@@ -8,10 +8,11 @@
 #'   in concentration (conc) or as percent of saturation (pctsat)? The default 
 #'   is to plot both.
 #' @param style character indicating which graphics package to use
-#' @param y_lim list of named vectors, each of which has length 2 and is 
-#'   numeric. NA within a vector indicates that the data range should be used. 
-#'   for ggplot2, y_lim is only used to exclude values outside that range and is
-#'   ignored if the data span a narrower range
+#' @param y_lim list of named vectors, each of which has length 2 and is numeric
+#'   and has a name in the possible values of y_var. NA within a vector
+#'   indicates that the data range should be used. for ggplot2, y_lim is only
+#'   used to exclude values outside that range and is ignored if the data span a
+#'   narrower range
 #' @examples 
 #' \dontrun{
 #' mm <- metab_night(v(french))
@@ -127,7 +128,6 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
           dygraphs::dyRangeSelector(height = 20) %>%
           print()
       })
-      invisible()
     }
   )
 }

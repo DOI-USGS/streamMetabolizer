@@ -16,9 +16,9 @@ prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end, tests)
 Leave blank or set to c() for no weights.}
 
 \item{filters}{named numeric vector of limits to use in filtering data_daily.
-If an element with a name in c("CI.min","discharge.max","velocity.max") is
+If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.max") is
 given, the corresponding filter is applied: K600.upper-K600.lower >=
-CI.min, discharge <= discharge.max, velocity <= velocity.max}
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours
 from the midnight that begins the date. For example, day_start=-1.5
