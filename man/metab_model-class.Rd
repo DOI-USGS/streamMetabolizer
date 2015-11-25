@@ -25,7 +25,7 @@ A metabolism model class.
 \item{\code{data_daily}}{The daily data, if any, that were used to fit the model.}
 }}
 \seealso{
-Other metab.model.classes: \code{\link{metab_Kvpred-class}};
+Other metab.model.classes: \code{\link{metab_Kmodel-class}};
   \code{\link{metab_bayes-class}};
   \code{\link{metab_mle-class}};
   \code{\link{metab_night-class}};

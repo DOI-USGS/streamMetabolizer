@@ -25,6 +25,7 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     # the data expectation is set by the default data argument to the specific metabolism class
     expected.data <- formals(metab_class)[[data_type]] %>% eval()
     optional.data <- attr(expected.data, 'optional')
+    if('all' %in% optional.data) optional.data <- c('all', names(expected.data))
     
     # quick return if dat is NULL
     if(is.null(v(dat))) {
@@ -56,7 +57,7 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     # specified without a timestamp column
     if('na_times' %in% tests) {
       timecol <- grep('date|time', names(dat), value=TRUE)
-      if(length(timecol) != 1) stop("found ", length(timecol), " possible timestamp columns")
+      if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns")
       na.times <- which(is.na(dat[,timecol]))
       if(length(na.times) > 0) {
         stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")))

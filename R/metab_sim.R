@@ -22,7 +22,7 @@ NULL
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
 #' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
 #' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
 #'    tz="Etc/GMT+7"), units='hours')
 #' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
@@ -99,19 +99,19 @@ setClass(
 
 #' Make metabolism predictions from a fitted metab_model.
 #' 
-#' Makes daily predictions of GPP, ER, and NEP.
+#' Makes daily predictions of GPP, ER, and K600.
 #' 
 #' @inheritParams predict_metab
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
-#' @importFrom stats qnorm setNames
 #' @export
 #' @family predict_metab
-predict_metab.metab_sim <- function(metab_model, ...) {
+predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
   # Select only those columns required for metabolism prediction and available
   # in the fit. At present this is all of the columns, but that could change
-  fit <- get_fit(metab_model)
+  fit <- get_fit(metab_model) %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
   vars <- c("local.date","DO.mod.1","GPP","ER","K600")
   fit[vars[vars %in% names(fit)]]
   
@@ -130,7 +130,7 @@ predict_metab.metab_sim <- function(metab_model, ...) {
 #'   \code{\link{predict_DO}}.
 #' @export
 #' @family predict_DO
-predict_DO.metab_sim <- function(metab_model, ...) {
+predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
   # call the generic, which generally does what we want
   sim.seed <- get_args(metab_model)$model_specs$sim.seed

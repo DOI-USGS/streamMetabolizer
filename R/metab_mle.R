@@ -18,7 +18,7 @@ NULL
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
 #' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
 #' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
+#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
 #'    tz="Etc/GMT+7"), units='hours')
 #' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
@@ -75,8 +75,8 @@ metab_mle <- function(
       model_specs=model_specs) # for mle_1ply and negloglik_1ply
   })
   
-  # Package and return results
-  metab_model(
+  # Package results
+  mm <- metab_model(
     model_class="metab_mle",
     info=info,
     fit=mle_all,
@@ -84,6 +84,12 @@ metab_mle <- function(
     args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests), # keep in order passed to function
     data=dat_list[['data']],
     data_daily=dat_list[['data_daily']])
+  
+  # Update data with DO predictions
+  mm@data <- predict_DO(mm)
+  
+  # Return
+  mm
 }
 
 

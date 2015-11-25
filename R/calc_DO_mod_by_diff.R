@@ -54,7 +54,7 @@ calc_DO_mod_by_diff <- function(
   switch(
     ODE_method,
     "Euler"={
-      for(i in 2:n) {
+      for(i in seq_len(n)[-1]) {
         DO.mod[i] <- DO.obs[i-1] +
           GPP[i] + 
           ER[i] + 
@@ -64,7 +64,7 @@ calc_DO_mod_by_diff <- function(
     "pairmeans"={
       # recall that DO.sat[i] is already mean(DO.sat[i], DO.sat[i-1]), and same 
       # for frac.GPP, frac.ER, frac.D, depth, and temp.water
-      for(i in 2:n) {
+      for(i in seq_len(n)[-1]) {
         DO.mod[i] <- DO.obs[i-1] +
           GPP[i] + 
           ER[i] + 

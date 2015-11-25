@@ -25,13 +25,13 @@ test_that("mm_validate_data works", {
   ignore <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')
   ignore <- mm_validate_data(eval(formals(metab_night)$data), eval(formals(metab_night)$data_daily), 'metab_night')
   ignore <- mm_validate_data(eval(formals(metab_bayes)$data), eval(formals(metab_bayes)$data_daily), 'metab_bayes')
-  ignore <- mm_validate_data(eval(formals(metab_Kvpred)$data), eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  ignore <- mm_validate_data(eval(formals(metab_Kmodel)$data), eval(formals(metab_Kmodel)$data_daily), 'metab_Kmodel')
   
   # accepts NULL for the fully optional data.frames
   ignore <- mm_validate_data(eval(formals(metab_mle)$data), NULL, 'metab_mle')
   ignore <- mm_validate_data(eval(formals(metab_night)$data), NULL, 'metab_night')
   ignore <- mm_validate_data(eval(formals(metab_bayes)$data), NULL, 'metab_bayes')
-  ignore <- mm_validate_data(NULL, eval(formals(metab_Kvpred)$data_daily), 'metab_Kvpred')
+  ignore <- mm_validate_data(NULL, eval(formals(metab_Kmodel)$data_daily), 'metab_Kmodel')
   
   # returns a list
   val_out <- mm_validate_data(eval(formals(metab_mle)$data), eval(formals(metab_mle)$data_daily), 'metab_mle')
@@ -52,8 +52,7 @@ test_that("mm_validate_data works", {
   # notices missing, extra, badly unitted columns in data_daily
   ok_data_daily <- eval(formals(metab_mle)$data_daily)
   expect_is(mm_validate_data(ok_data, NULL, "metab_mle"), 'list')
-  expect_error(mm_validate_data(ok_data, data.frame(), "metab_mle"), "missing these columns: local.date, K600")
-  expect_error(mm_validate_data(ok_data, dplyr::select(ok_data_daily, -K600), "metab_mle"), "data_daily is missing these columns: K600")
+  expect_error(mm_validate_data(ok_data, data.frame(), "metab_mle"), "found 0 possible timestamp columns")
   expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, temp.air=9), "metab_mle"), "data_daily should omit these extra columns: temp.air")
   expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, K600=u(K600, "mgO L^-1")), "metab_mle"), "unexpected units in data_daily:")
   expect_is(mm_validate_data(ok_data, unitted::v(ok_data_daily), "metab_mle"), 'list') # should we accept units for one but not other? for now, we do.
@@ -105,4 +104,22 @@ test_that("mm_filter_valid_days works", {
   
   expect_equal(length(mm_filter_valid_days(french, day_start=10, day_end=12)), 3)
   expect_equal(nrow(mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)[[1]]), 700)
+})
+
+test_that("mm_filter_dates works", {
+  
+  start_time <- Sys.time()
+  start_date <- as.Date(start_time)
+  udat <- data.frame(local.time=start_time + as.difftime(1:100, units='hours'), value=1:100)
+  ddat <- data.frame(local.date=start_date + as.difftime(1:100, units='days'), value=1:100)
+  # no filter with defaults
+  expect_equal(streamMetabolizer:::mm_filter_dates(udat), udat)
+  expect_equal(streamMetabolizer:::mm_filter_dates(ddat), ddat)
+  # dates are inclusive
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(udat, date_start=start_date+as.difftime(1, units='days'), date_end=start_date+as.difftime(1, units='days'))), 24)
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(udat, date_start=start_date+as.difftime(1, units='days'), date_end=start_date+as.difftime(2, units='days'))), 48)
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(udat, date_start=start_date+as.difftime(2, units='days'), date_end=start_date+as.difftime(1, units='days'))), 0)
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(ddat, date_start=start_date+as.difftime(20, units='days'), date_end=start_date+as.difftime(20, units='days'))), 1)
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(ddat, date_start=start_date+as.difftime(22, units='days'), date_end=start_date+as.difftime(28, units='days'))), 7)
+  expect_equal(nrow(streamMetabolizer:::mm_filter_dates(ddat, date_start=start_date+as.difftime(22, units='days'), date_end=start_date+as.difftime(8, units='days'))), 0)
 })
