@@ -20,6 +20,10 @@ Leave blank or set to c() for no weights.}
 data_daily) to use in predicting K. Leave blank or set to c() for no
 predictors.}
 
+\item{transforms}{a named character vector of names of functions (probably
+'log' or NA) to apply to K600 and/or the predictors. K600 should probably
+be logged.}
+
 \item{...}{Other arguments passed to the fitting function given by
 \code{method}. \code{na.rm=TRUE} is already passed to \code{mean}}
 }

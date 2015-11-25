@@ -38,6 +38,10 @@ If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.ma
 given, the corresponding filter is applied: K600.upper-K600.lower >=
 CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
 
+\item{transforms}{a named character vector of names of functions (probably
+'log' or NA) to apply to K600 and/or the predictors. K600 should probably
+be logged.}
+
 \item{info}{any information, in any format, that you would like to store
 within the metab_model object}
 

@@ -181,7 +181,7 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
       "CI/K600"=1/(K600.upper.obs - K600.lower.obs)/K600.obs)) %>%
       mutate(weight = weight/sum(weight, na.rm=TRUE))
   } else {
-    data_daily %<>% mutate(weight=1/length(which(!is.na(K600))))
+    data_daily %<>% mutate(weight=1/length(which(!is.na(K600.obs))))
   }
   
   # Filter out undesired days. Indicate filtering by weights
@@ -228,14 +228,17 @@ Kmodel_aggregate_day <- function(
 
 #' Fit a K model
 #' 
-#' The model will predict daily K estimates from preliminary daily K estimates.
+#' The model will predict daily K estimates from preliminary daily K estimates. 
 #' Called from metab_Kmodel().
 #' 
-#' @param data_daily_all data to use as input, with columns including K600.obs,
+#' @param data_daily_all data to use as input, with columns including K600.obs, 
 #'   weight, and any predictors
-#' @param predictors character vector of variables (column names in data or
-#'   data_daily) to use in predicting K. Leave blank or set to c() for no
+#' @param predictors character vector of variables (column names in data or 
+#'   data_daily) to use in predicting K. Leave blank or set to c() for no 
 #'   predictors.
+#' @param transforms a named character vector of names of functions (probably
+#'   'log' or NA) to apply to K600 and/or the predictors. K600 should probably
+#'   be logged.
 #' @inheritParams metab_Kmodel
 #' @keywords internal
 Kmodel_allply <- function(data_daily_all, method, weights, predictors, transforms, ...) {
@@ -243,6 +246,7 @@ Kmodel_allply <- function(data_daily_all, method, weights, predictors, transform
   weight <- '.dplyr.var'
   data_daily_all <- dplyr::filter(data_daily_all, weight > 0)
   # add transformations
+  names(transforms) <- replace(names(transforms), names(transforms)=="K600", "K600.obs")
   trans_preds <- sapply(c("K600.obs", predictors), function(pred) {
     if(!is.na(transforms[pred])) {
       paste0(transforms[pred], "(", pred, ")")
@@ -255,13 +259,14 @@ Kmodel_allply <- function(data_daily_all, method, weights, predictors, transform
     method,
     mean = {
       if(length(predictors) > 0) warning("predictors ignored for method='mean'")
+      Kobs <- eval(parse(text=trans_preds[['K600.obs']]), envir=data_daily_all)
       list(
-        mean=sum(data_daily_all$K600.obs * data_daily_all$weight, na.rm=TRUE, ...),
+        mean=sum(Kobs * data_daily_all$weight, na.rm=TRUE, ...),
         se=(if(length(weights) > 0) {
           warning("omitting sd for weighted mean")
           NA 
         } else { 
-          sd(data_daily_all$K600.obs, na.rm=TRUE)/sqrt(nrow(data_daily_all)) # SE of the mean
+          sd(Kobs, na.rm=TRUE)/sqrt(nrow(data_daily_all)) # SE of the mean
         }))
     }, 
     lm = {
@@ -316,10 +321,11 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   # use previously stored values for K600.mod
   data_daily <- get_data_daily(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
-  if(!isTRUE(use_saved) || is.null(data_daily) || !("K600.mod" %in% names(data_daily))) {
+  if(!isTRUE(use_saved) || is.null(data_daily) || !("K600" %in% names(data_daily))) {
     method <- get_args(metab_model)$method
     ktrans <- get_args(metab_model)$transforms['K600']
     fit <- get_fit(metab_model)
+    . <- '.dplyr.var'
     switch(
       method,
       mean = {
@@ -355,6 +361,19 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
           K600.sd = (preds$se.fit %>% if(!is.na(ktrans) && ktrans=='log') exp(.) else .))
       }
     )
+  } else { # we're not storing GPP or ER, so add them back in for prediction
+    data_daily %<>% 
+      rename(
+        K600_daily_50pct = K600,
+        K600_daily_2.5pct = K600.lower,
+        K600_daily_97.5pct = K600.upper) %>% 
+      mutate(
+        GPP_daily_50pct = NA,
+        GPP_daily_2.5pct = NA,
+        GPP_daily_97.5pct = NA,
+        ER_daily_50pct = NA,
+        ER_daily_2.5pct = NA,
+        ER_daily_97.5pct = NA)
   }
   metab_model@fit <- data_daily # temporary for converting lower/upper/sd to standard colnames
   NextMethod()

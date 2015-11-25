@@ -6,15 +6,15 @@ vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   
   # fit a first-round MLE and extract the K estimates
-  mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
+  expect_warning({mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)}, "temperature out of range")
   K600_mm1 <- predict_metab(mm1) %>% select(local.date, K600, K600.lower, K600.upper)
   
   # smooth the K600s
-  mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean')
+  expect_warning({mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', transforms=c(K600='log'))}, "no SE available")
   K600_mm2 <- predict_metab(mm2) %>% select(local.date, K600)
   
   # refit the MLE with fixed K
-  mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)
+  expect_warning({mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)}, "temperature out of range")
   predict_metab(mm3)
   
   # compare the two MLE results
