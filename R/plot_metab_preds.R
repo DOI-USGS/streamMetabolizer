@@ -52,7 +52,10 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
       
       . <- fit <- upr <- lwr <- local.date <- col1 <- col2 <- '.ggplot.var'
       preds_ggplot <- v(metab_preds_all) %>%
-        filter(as %in% y_var)
+        filter(as %in% y_var) %>%
+        group_by(as) %>%
+        do({ if(all(is.na(.$fit))) .[FALSE,] else . }) %>%
+        ungroup()
       if('GPP' %in% names(y_lim)) {
         lim <- y_lim[['GPP']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'GPP' | is.na(fit) | fit >= lim)
         lim <- y_lim[['GPP']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'GPP' | is.na(fit) | fit <= lim)
@@ -65,8 +68,11 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
         lim <- y_lim[['K600']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit >= lim)
         lim <- y_lim[['K600']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit <= lim)
       }
-      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=local.date)) +
-        ggplot2::geom_errorbar(ggplot2::aes(ymin=lwr, ymax=upr, color=col1), alpha=0.5) +
+      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=local.date))
+      if(any(!is.na(preds_ggplot$lwr) & !is.na(preds_ggplot$upr))) {
+        g <- g + ggplot2::geom_errorbar(ggplot2::aes(ymin=lwr, ymax=upr, color=col1), alpha=0.5)
+      }
+      g <- g + 
         ggplot2::geom_line(ggplot2::aes(y=fit, color=col1)) +
         ggplot2::geom_point(ggplot2::aes(y=fit, color=col1)) +
         ggplot2::scale_color_identity(guide='none') +
