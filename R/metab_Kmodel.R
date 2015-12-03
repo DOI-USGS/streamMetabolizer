@@ -107,10 +107,10 @@ metab_Kmodel <- function(
     
     # Prepare data_daily by aggregating any daily data, renaming K600 to 
     # K600.obs, & setting data_daily$weight to reflect user weights & filters
-    data_daily <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=weights, filters=filters, day_start=day_start, day_end=day_end, tests=tests)
+    data_list <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=weights, filters=filters, day_start=day_start, day_end=day_end, tests=tests)
     
     # Fit the model
-    Kmodel_all <- Kmodel_allply(data_daily_all=data_daily, method=method, weights=weights, predictors=predictors, transforms=transforms, ...)
+    Kmodel_all <- Kmodel_allply(data_daily_all=data_list$filtered, method=method, weights=weights, predictors=predictors, transforms=transforms, ...)
     
   })
   
@@ -124,7 +124,7 @@ metab_Kmodel <- function(
       method=method, weights=weights, predictors=predictors, filters=filters, transforms=transforms,
       day_start=day_start, day_end=day_end, tests=tests),
     data=data,
-    data_daily=data_daily)
+    data_daily=data_list$unfiltered)
   
   # Update data_daily with predictions
   preds <- predict_metab(mm)
@@ -184,6 +184,8 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
     data_daily %<>% mutate(weight=1/length(which(!is.na(K600.obs))))
   }
   
+  out <- list(unfiltered = data_daily)
+  
   # Filter out undesired days. Indicate filtering by weights
   if(!isTRUE(is.na(filters[['CI.max']])))
     data_daily %<>% mutate(weight=weight * if(K600.upper.obs-K600.lower.obs <= filters[['CI.max']]) 1 else 0)
@@ -192,7 +194,8 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
   if(!isTRUE(is.na(filters[['velocity.daily.max']])))
     data_daily %<>% mutate(weight=weight * if(velocity.daily <= filters[['velocity.daily.max']]) 1 else 0)
   
-  data_daily
+  out <- c(out, list(filtered = data_daily))
+  out
 }
 
 #' Aggregate unit values to daily values
