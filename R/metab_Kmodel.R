@@ -404,6 +404,7 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
 #' mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)
 #' predict_metab(mm3)
 #' }
+#' @export
 predict_DO.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   stop("can only predict K, not DO, from metab_Kmodel")
 }
