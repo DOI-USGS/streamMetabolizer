@@ -11,7 +11,7 @@ This package is in development. We are using it for our own early applications a
 | :------------ |:-------------|  
 | Linux Build: | [![Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg)](https://travis-ci.org/USGS-R/streamMetabolizer)  |
 | Windows Build: | [![Build status](https://ci.appveyor.com/api/projects/status/n2u0tpmkaetj7kjp/branch/master?svg=true)](https://ci.appveyor.com/project/jread-usgs/streammetabolizer/branch/master) |  
-| Package Tests: | [![Coverage Status](https://coveralls.io/repos/github/USGS-R/powstreams/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/powstreams?branch=master) |  
+| Package Tests: | [![Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=develop)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=develop) |  
 
 
 ## Installation
