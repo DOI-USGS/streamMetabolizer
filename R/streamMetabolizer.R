@@ -15,8 +15,6 @@
 #'   
 #'   \item \code{\link{calc_is_daytime}}
 #'   
-#'   \item \code{\link{calc_schmidt}}
-#'   
 #'   \item \code{\link{calc_solar_insolation}}
 #'   
 #'   \item \code{\link{calc_sun_rise_set}}
