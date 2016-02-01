@@ -5,7 +5,7 @@ stream metabolism R package
 
 ## Status
 
-This package is in development. We are using it for our own early applications and welcome bold, flexible, resilient new users who can help us make the package better. Please 
+This package is in development. We are using it for our own early applications and welcome bold, flexible, resilient new users who can help us make the package better. Please contact us if you might be one of those.
 
 | Name       | Status           |  
 | :------------ |:-------------|  
