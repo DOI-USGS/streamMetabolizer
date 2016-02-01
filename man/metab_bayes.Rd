@@ -52,14 +52,9 @@ A metab_bayes object containing the fitted model.
 }
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO, 
-temperature, light, etc. See \code{\link{specs}} for relevant options for the
-\code{model_specs} argument.
-}
-\details{
-Current and future models: models/bayes/jags/nopool_obserr.txt 
-models/bayes/jags/nopool_procobserr.txt models/bayes/jags/KfQ_procobserr.txt 
-models/bayes/jags/PRpoolKfQ_procobserr.txt 
-models/bayes/jags/PRKpool_procobserr.txt
+temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
+and \code{\link{specs}} for relevant options for the \code{model_specs}
+argument.
 }
 \examples{
 \dontrun{
