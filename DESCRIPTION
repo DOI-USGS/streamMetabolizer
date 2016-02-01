@@ -86,3 +86,4 @@ Collate:
     'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'
+RoxygenNote: 5.0.1

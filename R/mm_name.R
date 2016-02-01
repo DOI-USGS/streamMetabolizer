@@ -1,4 +1,4 @@
-#' Name the Bayesian model with the desired features
+#' Find the name of a model by its features
 #' 
 #' @seealso The converse of this function is \code{\link{mm_parse_name}}.
 #'   
