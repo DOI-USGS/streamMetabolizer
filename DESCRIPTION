@@ -48,7 +48,6 @@ Collate:
     'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
-    'calc_schmidt.R'
     'calc_solar_insolation.R'
     'calc_sun_rise_set.R'
     'calc_velocity.R'
