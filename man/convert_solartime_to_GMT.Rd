@@ -13,13 +13,18 @@ convert_solartime_to_GMT(solar.time, longitude,
 \item{longitude}{numeric, in degrees, either positive and unitted ("degE" or 
 "degW") or with sign indicating direction (positive = East)}
 
-\item{time.type}{character describing location of the site where solar.time
-values are in solar time. "apparent solar", i.e. true solar time, is noon
-when the sun is at its zenith. "mean solar" approximates apparent solar
+\item{time.type}{character describing location of the site where solar.time 
+values are in solar time. "apparent solar", i.e. true solar time, is noon 
+when the sun is at its zenith. "mean solar" approximates apparent solar 
 time but with noons exactly 24 hours apart.}
 }
 \value{
 a POSIXct object in GMT
+}
+\description{
+Convert DateTime to GMT from local solar time, which may be either apparent 
+solar (perfect match between noon and solar zenith) or mean solar (exactly 24
+hours between solar noons).
 }
 \references{
 Yard, Bennett, Mietz, Coggins, Stevens, Hueftle, and Blinn. 2005.

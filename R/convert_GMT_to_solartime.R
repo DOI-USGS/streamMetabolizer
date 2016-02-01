@@ -1,12 +1,16 @@
-#' @title Convert DateTime from GMT to local solar time
-#'   
+#' Convert DateTime from GMT to local solar time
+#' 
+#' Convert DateTime from GMT to local solar time, which may be either apparent 
+#' solar (perfect match between noon and solar zenith) or mean solar (exactly 24
+#' hours between solar noons).
+#' 
 #' @param date.time date-time values in POSIXct format and GMT timezone.
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
 #'   "degW") or with sign indicating direction (positive = East)
 #' @param time.type character. "apparent solar", i.e. true solar time, is noon 
 #'   when the sun is at its zenith. "mean solar" approximates apparent solar 
 #'   time but with noons exactly 24 hours apart.
-#' @return a POSIXct object that says it's in tz="GMT" but that's actually in
+#' @return a POSIXct object that says it's in tz="GMT" but that's actually in 
 #'   solar time, with noon being very close to solar noon
 #' @importFrom lubridate tz with_tz
 #' @importFrom unitted u v is.unitted
@@ -53,14 +57,18 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
   return(out)
 }
 
-#' @title Convert DateTime from local solar time to GMT
-#'   
+#' Convert DateTime from local solar time to GMT
+#' 
+#' Convert DateTime to GMT from local solar time, which may be either apparent 
+#' solar (perfect match between noon and solar zenith) or mean solar (exactly 24
+#' hours between solar noons).
+#' 
 #' @param solar.time date-time values in POSIXct format. Timezone must be GMT.
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
 #'   "degW") or with sign indicating direction (positive = East)
-#' @param time.type character describing location of the site where solar.time
-#'   values are in solar time. "apparent solar", i.e. true solar time, is noon
-#'   when the sun is at its zenith. "mean solar" approximates apparent solar
+#' @param time.type character describing location of the site where solar.time 
+#'   values are in solar time. "apparent solar", i.e. true solar time, is noon 
+#'   when the sun is at its zenith. "mean solar" approximates apparent solar 
 #'   time but with noons exactly 24 hours apart.
 #' @return a POSIXct object in GMT
 #' @importFrom lubridate force_tz
