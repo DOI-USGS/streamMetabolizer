@@ -8,8 +8,8 @@ convert_doyhr_to_date(doyhr, year, tz = "GMT",
   origin = as.POSIXct("1970-01-01 00:00:00", tz = "GMT"), ...)
 }
 \arguments{
-\item{doyhr}{Numeric value expressing the date as the number of days, with decimal
-hours, since 00:00 of January 1 of the year}
+\item{doyhr}{Numeric value expressing the date as the number of days, with
+decimal hours, since 00:00 of December 31 of the preceding year}
 
 \item{year}{Numeric 4-digit year}
 

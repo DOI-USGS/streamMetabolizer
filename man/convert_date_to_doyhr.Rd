@@ -11,8 +11,8 @@ convert_date_to_doyhr(date)
 }
 \value{
 Numeric value expressing the date as the number of days, with decimal
-  hours, since 00:00 of December 31st of the preceding year (i.e., January
-  1st at 00:01 is 1.01)
+  hours, since 00:00 of December 31 of the preceding year (i.e., January 1st
+  at 00:01 is ~1.01)
 }
 \description{
 Inspired by / copied from LakeMetabolizer date2doy
