@@ -32,16 +32,16 @@ test_that("converting between date and DOY works", {
   expect_equal(convert_date_to_doyhr(as.POSIXct("2020-01-01 01:00:00")), 1+1/24, tol=0.000001, info="decimal should include hours")
   expect_equal(convert_date_to_doyhr(as.POSIXct("2020-01-01 01:03:58")), 1+(60+3+58/60)/(24*60), tol=0.000001, info="decimal should include minutes and seconds")
   expect_equal(convert_date_to_doyhr(as.POSIXct("2004-12-01 00:00:00")), 1+convert_date_to_doyhr(as.POSIXct("2019-12-01 00:00:00")), tol=0.000001, info="should catch leap days")
-  expect_equal(convert_date_to_doyhr(as.POSIXct("2016-05-29 01:00:00", tz="CST6CDT")), 150, info="treat numbers as true time since jan 1, ignoring daylight time")
+  expect_equal(convert_date_to_doyhr(as.POSIXct("2016-05-29 01:00:00", tz="America/Chicago")), 150, info="treat numbers as true time since jan 1, ignoring daylight time")
   # doyhr to date
   expect_equal(convert_doyhr_to_date(1, year=1920), as.POSIXct("1920-01-01 00:00:00", tz="GMT"), info="1 should be Jan 1, default GMT")
   expect_equal(convert_doyhr_to_date(3, year=2016, tz="CST6CDT"), as.POSIXct("2016-01-03 00:00:00", tz="CST6CDT"), info="tz should stay as indicated")
   expect_equal(convert_doyhr_to_date(150, year=2016, tz="CST6CDT"), as.POSIXct("2016-05-29 01:00:00", tz="CST6CDT"), info="treat numbers as true time since jan 1, ignoring daylight time")
   # there and back
   expect_equal(convert_date_to_doyhr(convert_doyhr_to_date(12, year=2024, tz="CST6CDT")), 12, info="should preserve DOY in there&back")
-  expect_equal(convert_date_to_doyhr(convert_doyhr_to_date(120, year=1998, tz="CST6CDT")), 120, info="should preserve DOY in there&back even during daylight savings")
-  expect_equal(convert_doyhr_to_date(convert_date_to_doyhr(as.POSIXct("2007-06-15 12:00:00", tz="MST7MDT")), 2007, tz="MST7MDT"), 
-               as.POSIXct("2007-06-15 12:00:00", tz="MST7MDT"), info="preserve date in there&back") 
+  expect_equal(convert_date_to_doyhr(convert_doyhr_to_date(120, year=1998, tz="America/Chicago")), 120, info="should preserve DOY in there&back even during daylight savings")
+  expect_equal(convert_doyhr_to_date(convert_date_to_doyhr(as.POSIXct("2007-06-15 12:00:00", tz="America/Denver")), 2007, tz="America/Denver"), 
+               as.POSIXct("2007-06-15 12:00:00", tz="America/Denver"), info="preserve date in there&back") 
 })
 
 test_that("converting between GMT and solar time works", {
