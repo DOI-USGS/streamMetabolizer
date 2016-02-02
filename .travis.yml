@@ -4,6 +4,7 @@
 
 language: r
 sudo: required
+dist: trusty
 warnings_ar_errors: true
 
 before_install:
