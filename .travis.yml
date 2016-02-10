@@ -6,6 +6,10 @@ language: r
 sudo: required
 warnings_ar_errors: true
 
+repos:
+  CRAN: http://cran.rstudio.com
+  GRAN: http://owi.usgs.gov/R
+
 before_install:
   - wget http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.tar.gz
   - tar xfvs JAGS-3.4.0.tar.gz
