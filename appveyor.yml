@@ -1,12 +1,19 @@
+# Defines the options for building the project on Windows with ci.appveyor.com.
+# For more configuration options, see https://www.appveyor.com/docs/build-configuration.
+# Note that we're calling a customized version of appveyor-tool.ps1 to get R-stable
+# and to call a customized version of travis-tool.sh which uses GRAN+CRAN by default.
+
 environment:
   R_CHECK_ARGS: --no-build-vignettes --no-manual --no-multiarch
   R_BUILD_ARGS: --no-build-vignettes --no-manual
   R_INSTALL_ARGS: --no-multiarch
+  GITHUB_PAT: 
+    secure: lWDip/KqkDcRmLEPjvsVSpQ7HJcSmE5HwyQVzDBJetaUdaYI1Us5tAs6E9K8kpSj
 
 init:
   ps: |
         $ErrorActionPreference = "Stop"
-        Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
+        Invoke-WebRequest http://raw.github.com/USGS-R/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
         Import-Module '..\appveyor-tool.ps1'
 
 install:
@@ -16,7 +23,7 @@ install:
   - cmd: dir "C:\Program Files\JAGS"
 
 build_script:
-  - travis-tool.sh install_github appling/unitted
+  - R --version
   - travis-tool.sh install_github GLEON/LakeMetabolizer
   - travis-tool.sh install_deps
   - travis-tool.sh install_r modeest
