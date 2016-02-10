@@ -23,7 +23,7 @@ install:
   - cmd: dir "C:\Program Files\JAGS"
 
 build_script:
-  - travis-tool.sh install_github appling/unitted
+  - R --version
   - travis-tool.sh install_github GLEON/LakeMetabolizer
   - travis-tool.sh install_deps
   - travis-tool.sh install_r modeest
