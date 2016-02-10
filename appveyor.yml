@@ -1,4 +1,4 @@
-# Defines the options for building the project on Windows with ci.appveyor.com
+# Defines the options for building the project on Windows with ci.appveyor.com.
 # For more configuration options, see https://www.appveyor.com/docs/build-configuration.
 # Note that we're calling a customized version of appveyor-tool.ps1 to get R-stable
 # and to call a customized version of travis-tool.sh which uses GRAN+CRAN by default.
