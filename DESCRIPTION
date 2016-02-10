@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.7.2
-Date: 2016-01-22
+Version: 0.7.3
+Date: 2016-02-10
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -16,8 +16,8 @@ VignetteBuilder: knitr
 Depends:
     R (>= 3.0)
 Imports:
-    LakeMetabolizer,
-    unitted,
+    LakeMetabolizer (>= 1.4.1),
+    unitted (>= 0.2.5),
     dplyr,
     lazyeval,
     lubridate,
