@@ -9,7 +9,7 @@ This package is in development. We are using it for our own early applications a
 
 | Name       | Status (develop branch)   |  Status (master branch) |
 | :------------ |:-------------|:-------------| 
-| Linux Build: | [![develop Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)  | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master) |
+| Linux Build: | [![develop Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)](https://travis-ci.org/USGS-R/streamMetabolizer/branches)  | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) |
 | Windows Build: | [![develop Build status](https://ci.appveyor.com/api/projects/status/n2u0tpmkaetj7kjp/branch/develop?svg=true)](https://ci.appveyor.com/project/jread-usgs/streammetabolizer/branch/develop) | [![master Build status](https://ci.appveyor.com/api/projects/status/n2u0tpmkaetj7kjp/branch/master?svg=true)](https://ci.appveyor.com/project/jread-usgs/streammetabolizer/branch/master) |  
 | Package Tests: | [![develop Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=develop)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=develop) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) |  
 
