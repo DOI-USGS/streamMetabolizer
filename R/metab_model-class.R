@@ -122,7 +122,7 @@ setMethod(
     print(head(get_data(object)))
     cat("  Fitting data_daily (truncated; access with get_data_daily()):\n")
     print(head(get_data_daily(object)))
-    cat("  Created with streamMetabolizer version", object@pkg_version, "\n")
+    cat("  streamMetabolizer version", object@pkg_version, "\n")
   }
 )
 
