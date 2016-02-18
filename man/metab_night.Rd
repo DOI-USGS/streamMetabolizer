@@ -4,7 +4,7 @@
 \alias{metab_night}
 \title{Nighttime regression for K estimation}
 \usage{
-metab_night(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
+metab_night(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(NULL), model_specs = specs("n_np_pi_eu_.lm"),
   info = NULL, day_start = 12, day_end = 36, tests = c("full_day",
   "even_timesteps", "complete_data"))
@@ -60,21 +60,21 @@ for which light is very low.
 # set the date in several formats
 start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="GMT")
+end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="GMT")
 mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 
 # dates & subsetting specific to nighttime regression
 first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
 stop.dark <- 100 + which(
-  format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "\%H:\%M") == "23:00")[1]
+  format(vfrenchshort$solar.time[101:nrow(vfrenchshort)], "\%H:\%M") == "23:00")[1]
 vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
-night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "\%H + \%M/60")))
-night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "\%H + \%M/60")))
+night.start <- eval(parse(text=format(vfrenchnight$solar.time[1], "\%H + \%M/60")))
+night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "\%H + \%M/60")))
 
 # fit
 mm <- metab_night(data=vfrenchnight, 

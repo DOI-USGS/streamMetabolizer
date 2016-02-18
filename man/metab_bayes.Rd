@@ -4,7 +4,7 @@
 \alias{metab_bayes}
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
-metab_bayes(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water,
+metab_bayes(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(NULL),
   model_specs = specs("b_np_oi_pm_km.jags"), info = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
@@ -61,25 +61,25 @@ argument.
 # set the date in several formats
 start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="GMT")
+end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="GMT")
 mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
 start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="Etc/GMT+7"), units='hours')
+   tz="GMT"), units='hours')
 end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="Etc/GMT+7"), units='hours')
+  tz="GMT"), units='hours')
 
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 
 # fit
 mm <- metab_bayes(data=vfrenchshort, day_start=start.numeric, 
   day_end=end.numeric)
-get_fit(mm)[2,]
+get_fit(mm)[2,c('GPP_daily_median','ER_daily_median','K600_daily_median')]
+streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 get_fitting_time(mm)
 plot_DO_preds(predict_DO(mm))
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 }
 }
 \author{

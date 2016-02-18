@@ -16,17 +16,17 @@ NULL
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'    tz="Etc/GMT+7"), units='hours')
+#'    tz="GMT"), units='hours')
 #' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'   tz="Etc/GMT+7"), units='hours')
+#'   tz="GMT"), units='hours')
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 #' 
 #' # PRK
 #' get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric, 
@@ -35,7 +35,7 @@ NULL
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' 
 #' # PR
-#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
+#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
 #'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
@@ -49,7 +49,7 @@ NULL
 #'     model_specs=specs('m_np_pi_pm_km.nlm'), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(local.date=mid.date, K600=35), 
+#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
 #'     model_specs=specs('m_np_pi_pm_km.nlm'), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
@@ -57,7 +57,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(local.date, K600, optional='all'), 
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(solar.date, K600, optional='all'), 
   model_specs=specs('m_np_oi_pm_km.nlm'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
@@ -107,7 +107,7 @@ metab_mle <- function(
 #' @importFrom stats nlm
 #' @keywords internal
 mle_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab_model_prototype
 ) {
@@ -115,7 +115,7 @@ mle_1ply <- function(
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$local.time)), units="days"), na.rm=TRUE))
+  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$solar.time)), units="days"), na.rm=TRUE))
   validity <- mm_is_valid_day(
     data_ply, # data split by mm_model_by_ply
     tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
@@ -154,7 +154,7 @@ mle_1ply <- function(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$local.time,"%Y-%m-%d")==as.character(local_date)]),
+        frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(solar_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = model_specs$calc_DO_fun,

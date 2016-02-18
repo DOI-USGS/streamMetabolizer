@@ -20,18 +20,18 @@ NULL
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'    tz="Etc/GMT+7"), units='hours')
+#'    tz="GMT"), units='hours')
 #' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'   tz="Etc/GMT+7"), units='hours')
+#'   tz="GMT"), units='hours')
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
-#' vdaily <- data.frame(local.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
+#' vdaily <- data.frame(solar.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 #' 
 #' # sim
 #' mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
@@ -48,8 +48,8 @@ NULL
 #' @export
 #' @family metab_model
 metab_sim <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'), # inheritParams metab_model_prototype
-  data_daily=mm_data(local.date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'), # inheritParams metab_model_prototype
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'), # inheritParams metab_model_prototype
+  data_daily=mm_data(solar.date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'), # inheritParams metab_model_prototype
   model_specs=specs('s_np_oipcpi_eu_.rnorm'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
@@ -112,7 +112,7 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
   # in the fit. At present this is all of the columns, but that could change
   fit <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
-  vars <- c("local.date","DO.mod.1","GPP","ER","K600")
+  vars <- c("solar.date","DO.mod.1","GPP","ER","K600")
   fit[vars[vars %in% names(fit)]]
   
 }

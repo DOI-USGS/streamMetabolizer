@@ -1,12 +1,12 @@
 context("metab_sim")
 
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$local.time >= as.POSIXct("2012-08-23 22:50:00", tz="Etc/GMT+7") & 
-                          vfrench$local.time <= as.POSIXct("2012-08-25 23:50:00", tz="Etc/GMT+7"), ]
+vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 22:50:00", tz="GMT") & 
+                          vfrench$solar.time <= as.POSIXct("2012-08-25 23:50:00", tz="GMT"), ]
 
 test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
-  dd <- data.frame(local.date=unique(as.character(vfrenchshort$local.time, format="%Y-%m-%d")), 
+  dd <- data.frame(solar.date=unique(as.character(vfrenchshort$solar.time, format="%Y-%m-%d")), 
                    DO.mod.1=7.5, GPP=4, ER=-c(NA,2,4), K600=30)
   
   # should be able to fit by specifying either data$DO.obs[d,1] or data_daily$DO.mod.1 
@@ -61,7 +61,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
     data.frame(predict_DO(mmE), method="Euler", stringsAsFactors=FALSE),
     data.frame(predict_DO(mmP), method="pairmeans", stringsAsFactors=FALSE))
   # library(ggplot2); library(tidyr)
-  # ggplot(DO_preds, aes(x=local.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
-  # ggplot(DO_preds, aes(x=local.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=solar.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
+  # ggplot(DO_preds, aes(x=solar.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
   
 })

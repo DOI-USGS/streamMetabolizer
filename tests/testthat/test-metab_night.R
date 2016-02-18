@@ -1,8 +1,8 @@
 context("metab_night")
 
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$local.time >= as.POSIXct("2012-08-23 00:00:00", tz="Etc/GMT+7") & 
-                          vfrench$local.time <= as.POSIXct("2012-08-26 00:00:00", tz="Etc/GMT+7"), ]
+vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 00:00:00", tz="GMT") & 
+                          vfrench$solar.time <= as.POSIXct("2012-08-26 00:00:00", tz="GMT"), ]
 
 test_that("metab_night models can be created", {
   
@@ -23,7 +23,7 @@ test_that("metab_night predictions (predict_metab, predict_DO) make sense", {
   mm <- metab_night(data=vfrenchshort)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
+  DO_preds_Aug24 <- dplyr::filter(DO_preds, solar.date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.15), "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(DO_preds, y_var="conc")
   # plot_DO_preds(DO_preds, y_var="pctsat")
@@ -36,10 +36,10 @@ test_that("metab_night predictions can be passed back into metab_mle", {
   mmk <- metab_night(data=vfrenchshort)
 
   # metab_mle
-  mm <- metab_mle(data=vfrenchshort, data_daily=predict_metab(mmk)[c('local.date', 'K600')])
+  mm <- metab_mle(data=vfrenchshort, data_daily=predict_metab(mmk)[c('solar.date', 'K600')])
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24 <- dplyr::filter(DO_preds, local.date == "2012-08-24")
+  DO_preds_Aug24 <- dplyr::filter(DO_preds, solar.date == "2012-08-24")
   # note that had to raise the maximum error for this model combination, from 0.15 to 0.35 mgO/L
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.35), "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(DO_preds)

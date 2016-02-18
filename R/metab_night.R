@@ -16,21 +16,21 @@ NULL
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 #' 
 #' # dates & subsetting specific to nighttime regression
 #' first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
 #' stop.dark <- 100 + which(
-#'   format(vfrenchshort$local.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+#'   format(vfrenchshort$solar.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
 #' vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
-#' night.start <- eval(parse(text=format(vfrenchnight$local.time[1], "%H + %M/60")))
-#' night.end <- eval(parse(text=format(vfrenchnight$local.time[nrow(vfrenchnight)], "%H + %M/60")))
+#' night.start <- eval(parse(text=format(vfrenchnight$solar.time[1], "%H + %M/60")))
+#' night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
 #' 
 #' # fit
 #' mm <- metab_night(data=vfrenchnight, 
@@ -47,7 +47,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
   model_specs=specs('n_np_pi_eu_.lm'), # inheritParams metab_model_prototype
   info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
@@ -109,7 +109,7 @@ metab_night <- function(
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab_model_prototype
 ) {
@@ -140,7 +140,7 @@ nightreg_1ply <- function(
       
       # check for data validity here, after subsetting to the time window we
       # really care about
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$local.time)), units="days"), na.rm=TRUE))
+      timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$solar.time)), units="days"), na.rm=TRUE))
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
         tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_night (after modifying tests)
@@ -155,7 +155,7 @@ nightreg_1ply <- function(
       
       # calculate dDO/dt
       dDO <- u(diff(v(night_dat$DO.obs.smooth)), get_units(night_dat$DO.obs.smooth))
-      dt <- u(as.numeric(diff(v(night_dat$local.time)), units='days'), 'd')
+      dt <- u(as.numeric(diff(v(night_dat$solar.time)), units='days'), 'd')
       night_dat$dDO.dt <- (dDO / dt)[c(NA, 1:length(dDO))]
       
       # calculate saturation deficit
@@ -272,9 +272,9 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
 
   # get the metabolism (GPP, ER) data and estimates; filter if requested
-  local.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
+  solar.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
   metab_ests <- get_fit(metab_model) %>% 
-    dplyr::select(local.date, ER, K600, row.first, row.last) %>%
+    dplyr::select(solar.date, ER, K600, row.first, row.last) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end) %>%
     mutate(GPP = 0)
   
@@ -294,7 +294,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, local_date # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, solar_date # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -312,6 +312,6 @@ metab_night_predict_1ply <- function(
   
   # apply the regular prediction function
   mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
-                  day_start, day_end, local_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
+                  day_start, day_end, solar_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
   
 }

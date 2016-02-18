@@ -17,30 +17,30 @@ NULL
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="Etc/GMT+7")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
 #' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'    tz="Etc/GMT+7"), units='hours')
+#'    tz="GMT"), units='hours')
 #' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'   tz="Etc/GMT+7"), units='hours')
+#'   tz="GMT"), units='hours')
 #' 
 #' # get, format, & subset data
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
+#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 #' 
 #' # fit
 #' mm <- metab_bayes(data=vfrenchshort, day_start=start.numeric, 
 #'   day_end=end.numeric)
-#' get_fit(mm)[2,]
+#' get_fit(mm)[2,c('GPP_daily_median','ER_daily_median','K600_daily_median')]
+#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' }
 #' @export
 #' @family metab_model
 metab_bayes <- function(
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
   model_specs=specs('b_np_oi_pm_km.jags'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
@@ -83,7 +83,7 @@ metab_bayes <- function(
           model_specs=model_specs) # for bayes_1ply
         if('mcmcfit' %in% names(bayes_all)) {
           bayes_mcmc <- bayes_all$mcmcfit
-          names(bayes_mcmc) <- bayes_all$local.date
+          names(bayes_mcmc) <- bayes_all$solar.date
           bayes_all$mcmcfit <- NULL
         } else {
           bayes_mcmc <- NULL
@@ -137,7 +137,7 @@ metab_bayes <- function(
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, local_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs # inheritParams metab_model_prototype
 ) {
@@ -155,12 +155,12 @@ bayes_1ply <- function(
       tryCatch({
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
-          data=data_ply, data_daily=data_daily_ply, local_date=local_date,
+          data=data_ply, data_daily=data_daily_ply, solar_date=solar_date,
           model_specs=model_specs, priors=model_specs$priors)
         model_specs$keep_mcmc <- if(is.logical(model_specs$keep_mcmcs)) {
           isTRUE(model_specs$keep_mcmcs)
         } else {
-          isTRUE(local_date %in% model_specs$keep_mcmcs)
+          isTRUE(solar_date %in% model_specs$keep_mcmcs)
         }
         all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
@@ -196,7 +196,7 @@ bayes_1ply <- function(
 #' 
 #' Called from metab_bayes().
 #' 
-#' @param data_all data.frame of the form \code{mm_data(local.time, DO.obs, 
+#' @param data_all data.frame of the form \code{mm_data(solar.time, DO.obs, 
 #'   DO.sat, depth, temp.water, light)} and containing data for just one 
 #'   estimation-day (this may be >24 hours but only yields estimates for one 
 #'   24-hour period)
@@ -230,13 +230,13 @@ bayes_allply <- function(
 #' @return list of data for input to runjags_bayes or runstan_bayes
 #' @keywords internal
 prepdata_bayes <- function(
-  data, data_daily, local_date, # inheritParams metab_model_prototype
+  data, data_daily, solar_date, # inheritParams metab_model_prototype
   model_specs, # inheritParams metab_bayes
   priors=FALSE
 ) {
   
   # Useful info for setting the MCMC data
-  timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$local.time)), units="days"), na.rm=TRUE))
+  timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$solar.time)), units="days"), na.rm=TRUE))
   has_oierr <- grepl('_oi(pc)*(pi)*[[:punct:]]', basename(model_specs$model_path))
   has_pierr <- grepl('_(oi)*(pc)*pi[[:punct:]]', basename(model_specs$model_path))
   has_pcerr <- grepl('_(oi)*pc(pi)*[[:punct:]]', basename(model_specs$model_path))
@@ -252,7 +252,7 @@ prepdata_bayes <- function(
       DO_obs_1 = data$DO.obs[1],
       
       # Every timestep
-      frac_GPP = data$light/sum(data$light[as.character(data$local.time,"%Y-%m-%d")==as.character(local_date)]),
+      frac_GPP = data$light/sum(data$light[as.character(data$solar.time,"%Y-%m-%d")==as.character(solar_date)]),
       frac_ER = rep(timestep_days, nrow(data)),
       frac_D = rep(timestep_days, nrow(data)), # the yackulic shortcut models rely on this being even over time
       KO2_conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),

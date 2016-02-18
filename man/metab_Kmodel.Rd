@@ -4,14 +4,14 @@
 \alias{metab_Kmodel}
 \title{Combine a time series of K estimates to predict unified values}
 \usage{
-metab_Kmodel(data = mm_data(local.time, discharge, velocity, optional =
-  c("all")), data_daily = mm_data(local.date, K600, K600.lower, K600.upper,
+metab_Kmodel(data = mm_data(solar.time, discharge, velocity, optional =
+  c("all")), data_daily = mm_data(solar.date, K600, K600.lower, K600.upper,
   discharge.daily, velocity.daily, optional = c("K600.lower", "K600.upper",
   "discharge.daily", "velocity.daily")), method = c("mean", "lm", "loess"),
-  weights = c("CI", "CI/K600"), predictors = c("local.date",
+  weights = c("CI", "CI/K600"), predictors = c("solar.date",
   "velocity.daily", "discharge.daily"), filters = c(CI.max = NA,
   discharge.daily.max = NA, velocity.daily.max = NA), transforms = c(K600 =
-  "log", local.date = NA, velocity.daily = "log", discharge.daily = "log"),
+  "log", solar.date = NA, velocity.daily = "log", discharge.daily = "log"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"), ...)
 }
@@ -109,17 +109,17 @@ time and discharge.daily}
 \dontrun{
 library(dplyr)
 fr <- streamMetabolizer:::load_french_creek() \%>\% unitted::v() \%>\% 
-  filter(format(local.time, "\%Y-\%m-\%d") == "2012-08-24") \%>\% 
-  select(local.time)
+  filter(format(solar.time, "\%Y-\%m-\%d") == "2012-08-24") \%>\% 
+  select(solar.time)
 fr <- fr \%>\% mutate(discharge.daily=exp(rnorm(nrow(fr))))
-frk2 <- data.frame(local.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
+frk2 <- data.frame(solar.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
   
 # 1-day tests
-frk <- data.frame(local.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
+frk <- data.frame(solar.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
 metab_Kmodel(data=fr, data_daily=frk, method='mean')
 #metab_Kmodel(data=fr, data_daily=frk, method='lm') # NaN warning
-#metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='local.date') # span error
+#metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='solar.date') # span error
 
 # mean
 mm <- metab_Kmodel(data_daily=frk2, method='mean')
@@ -127,17 +127,17 @@ mm <- metab_Kmodel(data_daily=frk2, method='mean')
 # lm
 mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
 mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily'))
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('local.date'))
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','local.date'))
+mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('solar.date'))
+mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','solar.date'))
 
 # loess
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date')
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='local.date', span=0.4)
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','local.date'))
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='solar.date')
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='solar.date', span=0.4)
+mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','solar.date'))
 mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge.daily', span=2)
 
 library(ggplot2)
-ggplot(get_data_daily(mm), aes(x=local.date)) + geom_line(aes(y=K600)) + 
+ggplot(get_data_daily(mm), aes(x=solar.date)) + geom_line(aes(y=K600)) + 
   geom_point(aes(y=K600.obs)) + geom_ribbon(aes(ymin=K600.lower, ymax=K600.upper), alpha=0.4)
 }
 }
