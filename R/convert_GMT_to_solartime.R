@@ -9,7 +9,9 @@
 #'   "degW") or with sign indicating direction (positive = East)
 #' @param time.type character. "apparent solar", i.e. true solar time, is noon 
 #'   when the sun is at its zenith. "mean solar" approximates apparent solar 
-#'   time but with noons exactly 24 hours apart.
+#'   time but with noons exactly 24 hours apart. Elsewhere in this package,
+#'   variables named "solar.time" are mean solar time, whereas "app.solar.time"
+#'   is apparent solar and "any.solar.time" is either.
 #' @return a POSIXct object that says it's in tz="GMT" but that's actually in 
 #'   solar time, with noon being very close to solar noon
 #' @importFrom lubridate tz with_tz
@@ -63,21 +65,21 @@ convert_GMT_to_solartime <- function(date.time, longitude, time.type=c("apparent
 #' solar (perfect match between noon and solar zenith) or mean solar (exactly 24
 #' hours between solar noons).
 #' 
-#' @param solar.time date-time values in POSIXct format. Timezone must be GMT.
+#' @param any.solar.time either apparent or mean solar time (specified by 
+#'   time.type); date-time values in POSIXct format. Timezone must be GMT.
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
-#'   "degW") or with sign indicating direction (positive = East)
-#' @param time.type character describing location of the site where solar.time 
-#'   values are in solar time. "apparent solar", i.e. true solar time, is noon 
-#'   when the sun is at its zenith. "mean solar" approximates apparent solar 
-#'   time but with noons exactly 24 hours apart.
+#'   "degW") or with sign indicating direction (positive = East), describing 
+#'   location of the site
+#' @param time.type character indicating whether any.solar.time values are in 
+#'   apparent or mean solar time. "apparent solar", i.e. true solar time, is 
+#'   noon when the sun is at its zenith. "mean solar" approximates apparent 
+#'   solar time but with noons exactly 24 hours apart.
 #' @return a POSIXct object in GMT
-#' @importFrom lubridate force_tz
-#' @importFrom unitted u v is.unitted
 #' @export
 #' @references Yard, Bennett, Mietz, Coggins, Stevens, Hueftle, and Blinn. 2005.
 #'   Influence of topographic complexity on solar insolation estimates for the 
 #'   Colorado River, Grand Canyon, AZ. Ecological Modelling.
-convert_solartime_to_GMT <- function(solar.time, longitude, time.type=c("apparent solar", "mean solar")) {
-  conversion <- solar.time - convert_GMT_to_solartime(solar.time, longitude, time.type)
-  return(solar.time + conversion)
+convert_solartime_to_GMT <- function(any.solar.time, longitude, time.type=c("apparent solar", "mean solar")) {
+  conversion <- any.solar.time - convert_GMT_to_solartime(any.solar.time, longitude, time.type)
+  return(any.solar.time + conversion)
 }

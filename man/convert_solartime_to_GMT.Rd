@@ -4,19 +4,21 @@
 \alias{convert_solartime_to_GMT}
 \title{Convert DateTime from local solar time to GMT}
 \usage{
-convert_solartime_to_GMT(solar.time, longitude,
+convert_solartime_to_GMT(any.solar.time, longitude,
   time.type = c("apparent solar", "mean solar"))
 }
 \arguments{
-\item{solar.time}{date-time values in POSIXct format. Timezone must be GMT.}
+\item{any.solar.time}{either apparent or mean solar time (specified by 
+time.type); date-time values in POSIXct format. Timezone must be GMT.}
 
 \item{longitude}{numeric, in degrees, either positive and unitted ("degE" or 
-"degW") or with sign indicating direction (positive = East)}
+"degW") or with sign indicating direction (positive = East), describing 
+location of the site}
 
-\item{time.type}{character describing location of the site where solar.time 
-values are in solar time. "apparent solar", i.e. true solar time, is noon 
-when the sun is at its zenith. "mean solar" approximates apparent solar 
-time but with noons exactly 24 hours apart.}
+\item{time.type}{character indicating whether any.solar.time values are in 
+apparent or mean solar time. "apparent solar", i.e. true solar time, is 
+noon when the sun is at its zenith. "mean solar" approximates apparent 
+solar time but with noons exactly 24 hours apart.}
 }
 \value{
 a POSIXct object in GMT
