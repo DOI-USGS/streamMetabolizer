@@ -36,11 +36,11 @@ vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 
 # fit a first-round MLE and extract the K estimates
 mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
-K600_mm1 <- predict_metab(mm1) \%>\% select(local.date, K600, K600.lower, K600.upper)
+K600_mm1 <- predict_metab(mm1) \%>\% select(solar.date, K600, K600.lower, K600.upper)
 
 # smooth the K600s
 mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', day_start=-1, day_end=23)
-K600_mm2 <- predict_metab(mm2) \%>\% select(local.date, K600)
+K600_mm2 <- predict_metab(mm2) \%>\% select(solar.date, K600)
 
 # refit the MLE with fixed K
 mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)

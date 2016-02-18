@@ -8,7 +8,7 @@ approach.}
 bayes_allply(data_all, data_daily_all, model_specs)
 }
 \arguments{
-\item{data_all}{data.frame of the form \code{mm_data(local.time, DO.obs, 
+\item{data_all}{data.frame of the form \code{mm_data(solar.time, DO.obs, 
 DO.sat, depth, temp.water, light)} and containing data for just one 
 estimation-day (this may be >24 hours but only yields estimates for one 
 24-hour period)}
