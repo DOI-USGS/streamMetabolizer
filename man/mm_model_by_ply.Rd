@@ -8,15 +8,15 @@ mm_model_by_ply(model_fun, data, data_daily, day_start, day_end, ...)
 }
 \arguments{
 \item{model_fun}{the function to apply to each data ply. This function should
-accept the arguments \code{c(data, data_daily, ..., day_start, day_end, local_date)}
+accept the arguments \code{c(data, data_daily, ..., day_start, day_end, solar_date)}
 where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
 to \code{mm_model_by_ply} is missing or \code{NULL}}
 
 \item{data}{required. the data.frame containing all relevant, validated 
-modeling data. The local.time column must be present.}
+modeling data. The solar.time column must be present.}
 
 \item{data_daily}{optional. a data.frame containing inputs with a daily 
-timestep. The local.date column must be present.}
+timestep. The solar.date column must be present.}
 
 \item{day_start}{start time of a day's data in number of hours from the 
 midnight that begins the modal date. For example, day_start=-1.5 indicates 
