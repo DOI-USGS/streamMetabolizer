@@ -8,7 +8,7 @@ mm_filter_valid_days(data, data_daily = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{data}{data.frame of instantaneous observations, to be filtered to only
+\item{data}{data.frame of instantaneous observations, to be filtered to only 
 those points on days that pass the specified tests in mm_is_valid_day}
 
 \item{data_daily}{data.frame of daily estimates/statistics, to be filtered in
@@ -39,11 +39,16 @@ times.}
 \value{
 list of data and data_daily with same structure as inputs but with 
   invalid days removed, plus a third data.frame of dates that were removed
+Filter the instantaneous data using mm_is_valid_day
+
+Record dates that are removed and the reasons for removal in a parent
+variable named removed
 
 data
 }
 \description{
-Remove entries in data
+Filter out any data rows that don't pass the specified tests for completeness
+and regularity
 }
 \keyword{internal}
 
