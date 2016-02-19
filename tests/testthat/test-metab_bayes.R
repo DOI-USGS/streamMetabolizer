@@ -6,10 +6,10 @@ context("metab_bayes")
 
 #### data prep ####
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 00:00:00", tz="GMT") & 
-                          vfrench$solar.time <= as.POSIXct("2012-08-26 00:00:00", tz="GMT"), ]
-vfrench1day <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-24 04:00:00", tz="GMT") & 
-                         vfrench$solar.time <= as.POSIXct("2012-08-25 04:00:00", tz="GMT"), ]
+vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 00:00:00", tz="UTC") & 
+                          vfrench$solar.time <= as.POSIXct("2012-08-26 00:00:00", tz="UTC"), ]
+vfrench1day <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-24 04:00:00", tz="UTC") & 
+                         vfrench$solar.time <= as.POSIXct("2012-08-25 04:00:00", tz="UTC"), ]
 vspring <- streamMetabolizer:::load_spring_creek(attach.units=FALSE)
 vspring1day <- vspring[vspring$solar.time >= as.POSIXct("2014-10-27 22:00:00", tz="UTC") & 
                        vspring$solar.time <= as.POSIXct("2014-10-29 06:00:00", tz="UTC"), ]

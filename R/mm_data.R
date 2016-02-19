@@ -8,7 +8,7 @@
 #'   \itemize{
 #'   
 #'   \item{ \code{solar.time} date-time values in mean solar time (see 
-#'   \code{\link{convert_GMT_to_solartime}}), in POSIXct format with a nominal 
+#'   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a nominal 
 #'   time zone of UTC. May be approximated by local, non-daylight-savings clock 
 #'   time (still with nominal UTC timezone but with clock noons close to solar 
 #'   noon), but mean solar time is better for matching model time windows to the
@@ -73,7 +73,7 @@
 #' mm_data(solar.date, K600, discharge, velocity)
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
-    solar.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 
+    solar.time=u(as.POSIXct("2050-03-14 15:10:00", tz="UTC"), NA), 
     DO.obs=    u(10.1,"mgO2 L^-1"), 
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 

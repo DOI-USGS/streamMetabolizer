@@ -29,10 +29,10 @@ load_french_creek_std <- function(attach.units=TRUE) {
     stop("chron package is needed for this function. Try install.packages('chron')")
   }
   french$dtime <- chron::chron(dates=as.character(french$date), times=as.character(french$time)) # L22. TZ is MST (L108, 142)
-  tz_french <- lubridate::tz(convert_GMT_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="GMT"), latitude=41.33, longitude=-106.3, time.type="standard"))
+  tz_french <- lubridate::tz(convert_UTC_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="UTC"), latitude=41.33, longitude=-106.3, time.type="standard"))
   french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), tz_french) # need POSIXct for streamMetabolizer
-  french$utc.time <- convert_localtime_to_GMT(french$local.time)
-  french$solar.time <- convert_GMT_to_solartime(french$utc.time, longitude=-106.3, time.type='mean solar')
+  french$utc.time <- convert_localtime_to_UTC(french$local.time)
+  french$solar.time <- convert_UTC_to_solartime(french$utc.time, longitude=-106.3, time.type='mean solar')
   
   # DO at sat
   osat <- function(temp, bp){ # L26-32
@@ -63,7 +63,7 @@ load_french_creek_std <- function(attach.units=TRUE) {
     jday<-as.numeric(trunc(time)-as.numeric(as.Date(year))) # bob does jday before longitude or DST adjustments. sM does after. should mostly affect midnight values, when it's dark anyway.
     E<- 9.87*sin(radi((720*(jday-81))/365)) - 7.53*cos(radi((360*(jday-81))/365)) - 1.5*sin(radi((360*(jday-81))/365))
     LST<-as.numeric (time-trunc(time))
-    ST<-LST+(3.989/1440)*(longstd-longobs)+E/1440 # bob adjusts from local clock time. sM adjusts from GMT. since the earth rotates in 1436 mins rather than 1440, this causes a slight discrepancy (1-2 mins).
+    ST<-LST+(3.989/1440)*(longstd-longobs)+E/1440 # bob adjusts from local clock time. sM adjusts from UTC. since the earth rotates in 1436 mins rather than 1440, this causes a slight discrepancy (1-2 mins).
     solardel<- 23.439*sin(radi(360*((283+jday)/365)))
     hourangle<-(0.5-ST)*360
     theta<- acos(  sin(radi(solardel)) * sin(radi(lat)) +  cos(radi(solardel)) * cos(radi(lat)) *  cos(radi(hourangle)) )

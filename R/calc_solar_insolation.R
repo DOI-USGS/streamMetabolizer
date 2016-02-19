@@ -146,7 +146,7 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' 
 #' @importFrom unitted u
 #' @param app.solar.time POSIXct vector of date-time values in apparent solar time,
-#'   e.g., as returned by \code{convert_GMT_to_solartime(...,
+#'   e.g., as returned by \code{convert_UTC_to_solartime(...,
 #'   time.type="apparent solar")}
 #' @inheritParams calc_declination_angle
 #' @inheritParams calc_hour_angle

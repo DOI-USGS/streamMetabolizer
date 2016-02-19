@@ -18,8 +18,8 @@ calc_sun_rise_set <- function(solar.date, latitude) {
   app.solar.time <- as.POSIXct(strftime(solar.date, "%Y-%m-%d 0"), format="%Y-%m-%d %H") # use local tz, as LakeMetabolizer does
   sun.rise.set <- LakeMetabolizer::sun.rise.set(app.solar.time, latitude)
   # reformat
-  data.frame(sunrise=lubridate::force_tz(sun.rise.set[,1], tz="GMT"), 
-             sunset=lubridate::force_tz(sun.rise.set[,2], tz="GMT"))
+  data.frame(sunrise=lubridate::force_tz(sun.rise.set[,1], tz="UTC"), 
+             sunset=lubridate::force_tz(sun.rise.set[,2], tz="UTC"))
 }
 
 

@@ -1,8 +1,8 @@
 context("metab_sim")
 
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 22:50:00", tz="GMT") & 
-                          vfrench$solar.time <= as.POSIXct("2012-08-25 23:50:00", tz="GMT"), ]
+vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 22:50:00", tz="UTC") & 
+                          vfrench$solar.time <= as.POSIXct("2012-08-25 23:50:00", tz="UTC"), ]
 
 test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   

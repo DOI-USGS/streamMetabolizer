@@ -38,11 +38,11 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   # set the date in several formats
   start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
   end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-  start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
-  end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+  start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
+  end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
   mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
-  start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="GMT"), units='hours')
-  end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="GMT"), units='hours')
+  start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="UTC"), units='hours')
+  end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="UTC"), units='hours')
   
   # get, format, & subset data
   vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)

@@ -6,7 +6,7 @@
 (mean solar time), app.solar.time (apparent solar time), local.time (time in 
 local time zone). Metabolism models now accept solar.time rather than 
 local.time, though it's still possible to pass in local time but just call it
-solar.time.
+solar.time (as long as you don't have daylight savings time).
 
 # streamMetabolizer 0.7.3
 

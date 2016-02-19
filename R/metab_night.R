@@ -16,8 +16,8 @@ NULL
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 #' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="GMT")
+#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
+#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
 #' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 #' 
 #' # get, format, & subset data

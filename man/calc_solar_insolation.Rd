@@ -11,7 +11,7 @@ calc_solar_insolation(app.solar.time, latitude,
 }
 \arguments{
 \item{app.solar.time}{POSIXct vector of date-time values in apparent solar time,
-e.g., as returned by \code{convert_GMT_to_solartime(...,
+e.g., as returned by \code{convert_UTC_to_solartime(...,
 time.type="apparent solar")}}
 
 \item{latitude}{numeric value or vector indicating the site latitude in 
