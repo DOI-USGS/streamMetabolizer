@@ -19,7 +19,7 @@
 #' @export
 lookup_google_timezone <- function(
   latitude, longitude, 
-  timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="GMT") else as.POSIXct("2015-07-01 00:00:00", tz="GMT")) {
+  timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="UTC") else as.POSIXct("2015-07-01 00:00:00", tz="UTC")) {
   
   # check for required packages specific to this function
   if(!requireNamespace("RCurl", quietly = TRUE)) {
@@ -34,7 +34,7 @@ lookup_google_timezone <- function(
                      # &sensor=false - "The Google Maps API previously required that you include the sensor parameter to indicate whether your application used a sensor to determine the user's location. This parameter is no longer required."
                      latitude, 
                      longitude, 
-                     as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 GMT")))
+                     as.numeric(as.POSIXct(timestamp, origin="1970-01-01 00:00:00 UTC")))
   api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
   out.parsed <- XML::xmlParse(api.out)
   return(list(

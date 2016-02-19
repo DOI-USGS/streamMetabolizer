@@ -8,7 +8,8 @@ mm_filter_dates(data, date_start = NA, date_end = NA, day_start = 4,
   day_end = 27.99, date_format = "\%Y-\%m-\%d")
 }
 \arguments{
-\item{data}{either instantaneous/unit or daily data, having columns for local.time or local.date, respectively, to filter}
+\item{data}{either instantaneous/unit or daily data, having columns for
+solar.time or date, respectively, to filter}
 
 \item{date_start}{Date or a class convertible with as.Date. The first date 
 (inclusive) for which to report DO predictions. If NA, no filtering is 
@@ -24,8 +25,8 @@ Filter unit or daily data by inclusive start & end dates
 \examples{
 tm <- Sys.time()
 dt <- Sys.Date()
-udat <- data.frame(local.time=tm + as.difftime(1:100, units='hours'), value=1:100)
-ddat <- data.frame(local.date=dt + as.difftime(1:100, units='days'), value=1:100)
+udat <- data.frame(solar.time=tm + as.difftime(1:100, units='hours'), value=1:100)
+ddat <- data.frame(date=dt + as.difftime(1:100, units='days'), value=1:100)
 streamMetabolizer:::mm_filter_dates(udat, tm)
 streamMetabolizer:::mm_filter_dates(udat, date_start=dt+as.difftime(1, units="days"))
 }

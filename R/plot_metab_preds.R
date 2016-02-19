@@ -50,7 +50,7 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
       
-      . <- fit <- upr <- lwr <- local.date <- col1 <- col2 <- '.ggplot.var'
+      . <- fit <- upr <- lwr <- date <- col1 <- col2 <- '.ggplot.var'
       preds_ggplot <- v(metab_preds_all) %>%
         filter(as %in% y_var) %>%
         group_by(as) %>%
@@ -68,7 +68,7 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
         lim <- y_lim[['K600']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit >= lim)
         lim <- y_lim[['K600']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit <= lim)
       }
-      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=local.date))
+      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=date))
       if(any(!is.na(preds_ggplot$lwr) & !is.na(preds_ggplot$upr))) {
         g <- g + ggplot2::geom_errorbar(ggplot2::aes(ymin=lwr, ymax=upr, color=col1), alpha=0.5)
       }

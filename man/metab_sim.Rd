@@ -4,9 +4,9 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(data = mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light,
-  optional = "DO.obs"), data_daily = mm_data(local.date, DO.mod.1, GPP, ER,
-  K600, optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
+metab_sim(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light,
+  optional = "DO.obs"), data_daily = mm_data(date, DO.mod.1, GPP, ER, K600,
+  optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"))
 }
@@ -65,18 +65,18 @@ a DO.mod.1 column with one starting DO value per day.
 # set the date in several formats
 start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
 end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="Etc/GMT+7")
+start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
+end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
 mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
 start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="Etc/GMT+7"), units='hours')
+   tz="UTC"), units='hours')
 end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="Etc/GMT+7"), units='hours')
+  tz="UTC"), units='hours')
 
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$local.time >= start.posix & vfrench$local.time <= end.posix, ]
-vdaily <- data.frame(local.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
+vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 
 # sim
 mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,

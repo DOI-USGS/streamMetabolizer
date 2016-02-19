@@ -1,10 +1,10 @@
-#' Convert time from GMT to local time.
+#' Convert time from UTC to local time.
 #' 
-#' Convert time from GMT to local time, either standard or with daylight 
+#' Convert time from UTC to local time, either standard or with daylight 
 #' savings. Recommended for post-analysis visualization only; most functions in 
-#' streamMetabolizer use times in GMT.
+#' streamMetabolizer use times in UTC.
 #' 
-#' @param date.time POSIXct object the date and time in GMT
+#' @param date.time POSIXct object the date and time in UTC
 #' @param latitude numeric, in degrees, either positive and unitted ("degN" or 
 #'   "degS") or with sign indicating direction (positive = North)
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
@@ -17,14 +17,14 @@
 #' @references 
 #' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 #' @export
-convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c("standard local", "daylight local")) {
+convert_UTC_to_localtime <- function(date.time, latitude, longitude, time.type=c("standard local", "daylight local")) {
   
-  # format checking - require expected time.type, tz=GMT, and expected units
+  # format checking - require expected time.type, tz=UTC, and expected units
   time.type <- match.arg(time.type)
   if(is.unitted(date.time)) date.time <- v(date.time)
   if(class(date.time)[1] != "POSIXct") stop("expecting date.time as a POSIXct object")
-  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0","UTC"))) stop("expecting tz=GMT")
-  # alternative to above: date.time <- with_tz(date.time, tzone="GMT") # hidden feature, or bad/weak error checking?
+  if(!(tz(date.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0","UTC"))) stop("expecting tz=UTC")
+  # alternative to above: date.time <- with_tz(date.time, tzone="UTC") # hidden feature, or bad/weak error checking?
   with_units <- (is.unitted(longitude) | is.unitted(latitude))
   if(with_units) {
     if(is.unitted(longitude)) {
@@ -61,15 +61,15 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
   } else {
     # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
     std.tz <- sprintf("Etc/GMT%s%d", if(tz_info$std_offset > u(0, "hours")) "-" else "+", abs(as.numeric(v(tz_info$std_offset))))
-    if(std.tz %in% c("Etc/GMT+0", "Etc/GMT-0")) std.tz <- "GMT"
+    if(std.tz %in% c("Etc/GMT+0", "Etc/GMT-0")) std.tz <- "UTC"
     lubridate::with_tz(date.time, std.tz)
   }  
 }
 
-#' Convert time from local time to GMT.
+#' Convert time from local time to UTC.
 #' 
 #' Convert time from local time (either standard or with daylight savings) to 
-#' GMT.
+#' UTC.
 #' 
 #' @param local.time POSIXct date+time of interest, already in local time as
 #'   specified by the tz attribute
@@ -77,7 +77,7 @@ convert_GMT_to_localtime <- function(date.time, latitude, longitude, time.type=c
 #' @references 
 #' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 #' @export
-convert_localtime_to_GMT <- function(local.time) {
-  return(with_tz(local.time, "GMT"))
+convert_localtime_to_UTC <- function(local.time) {
+  return(with_tz(local.time, "UTC"))
 }
 

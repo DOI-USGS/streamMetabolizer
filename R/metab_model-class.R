@@ -77,8 +77,8 @@ metab_model <- function(
   fit="generic metab_model class; no actual fit",
   fitting_time=system.time({}),
   args=list(day_start=4, day_end=27.99),
-  data=mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(local.date, K600, discharge, velocity, optional="all"),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
+  data_daily=mm_data(date, K600, discharge, velocity, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
@@ -122,7 +122,7 @@ setMethod(
     print(head(get_data(object)))
     cat("  Fitting data_daily (truncated; access with get_data_daily()):\n")
     print(head(get_data_daily(object)))
-    cat("  Created with streamMetabolizer version", object@pkg_version, "\n")
+    cat("  streamMetabolizer version", object@pkg_version, "\n")
   }
 )
 
@@ -228,14 +228,14 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       vars=var_vec) %>%
       with(paste0("^(",vars,")_daily_(",medlohi,")$"))
     precalc_cis <- sapply(grepstrs, grep, names(fit), value=TRUE, USE.NAMES=FALSE)
-    fit[c('local.date', precalc_cis)] %>% 
-      setNames(c('local.date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3))))
+    fit[c('date', precalc_cis)] %>% 
+      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3))))
 
   } else if(length(calcnow_cis) == 6) {
     # the fit includes columns for GPP, GPP.sd, ER, ER.sd, K600, and K600.sd; calculate CIs
     ci_level <- 0.95
     crit <- qnorm((1 + ci_level)/2)
-    c(list(fit['local.date']),
+    c(list(fit['date']),
       lapply(var_vec, function(var) {
         est <- fit[[var]]
         sd <- fit[[paste0(var,".sd")]]
@@ -252,7 +252,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
   } else {
     warning("model is missing columns for estimates and/or CIs")
     data.frame(
-      local.date=as.Date(NA)[NULL], 
+      date=as.Date(NA)[NULL], 
       GPP=numeric(), GPP.lower=numeric(), GPP.upper=numeric(),
       ER=numeric(), ER.lower=numeric(), ER.upper=numeric(),
       K600=numeric(), K600.lower=numeric(), K600.upper=numeric()

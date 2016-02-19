@@ -46,11 +46,11 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
   DO_preds_ddodt <- 
     mutate(
       DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', col1=params$colors$ddodt[1], col2=params$colors$ddodt[2], lab='dDO/dt~(mg~L^-1~d^-1)',
-      mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$local.time), units="days"),
-      obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$local.time), units="days")) %>%
+      mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$solar.time), units="days"),
+      obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$solar.time), units="days")) %>%
     mutate(
-      mod = ifelse(diff(DO_preds$local.date)==0, mod, NA),
-      obs = ifelse(diff(DO_preds$local.date)==0, obs, NA))
+      mod = ifelse(diff(DO_preds$date)==0, mod, NA),
+      obs = ifelse(diff(DO_preds$date)==0, obs, NA))
   
   DO_preds_all <- bind_rows(DO_preds_conc, DO_preds_pctsat, DO_preds_ddodt) %>%
     mutate(var=ordered(var, c(conc='DO (mg/L)', pctsat='DO (% sat)', ddodt='dDO/dt (mg/L/d)')[y_var]))
@@ -61,7 +61,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
       
-      . <- local.time <- mod <- local.date <- col1 <- col2 <- obs <- '.ggplot.var'
+      . <- solar.time <- mod <- date <- col1 <- col2 <- obs <- '.ggplot.var'
       preds_ggplot <- v(DO_preds_all) %>%
         filter(as %in% y_var)
       if('conc' %in% names(y_lim)) {
@@ -76,7 +76,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         lim <- y_lim[['ddodt']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod >= lim & obs >= lim))
         lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod <= lim & obs <= lim))
       }
-      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=local.time, group=local.date)) +
+      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
         ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8) +
         ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6) +
         ggplot2::scale_color_identity(guide='none') +
@@ -95,8 +95,8 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       . <- '.dplyr.var'
       preds_xts <- v(DO_preds_all) %>%
         filter(as %in% y_var) %>%
-        arrange(local.time) %>%
-        group_by(local.date) %>%
+        arrange(solar.time) %>%
+        group_by(date) %>%
         do(., {
           out <- .[c(seq_len(nrow(.)),nrow(.)),]
           out[nrow(.)+1,c('mod','obs')] <- NA
@@ -107,10 +107,10 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       prep_dygraph <- function(y_var) { 
         preds_xts %>% 
           filter(as==y_var) %>% 
-          select(mod,obs,local.time) %>%
-          #setNames(c(paste0(y_var,' mod'), paste0(y_var,' obs'), 'local.time')) %>%
-          mutate(local.time=lubridate::force_tz(local.time, 'UTC')) %>%
-          xts::xts(x=select(., -local.time), order.by=.$local.time) 
+          select(mod,obs,solar.time) %>%
+          #setNames(c(paste0(y_var,' mod'), paste0(y_var,' obs'), 'solar.time')) %>%
+          mutate(solar.time=lubridate::force_tz(solar.time, 'UTC')) %>%
+          xts::xts(x=select(., -solar.time), order.by=.$solar.time) 
       }
       if(length(y_var) > 1) warning("can only plot one dygraph y_var at a time for now; plotting y_vars in succession")
       sapply(y_var, function(yvar) {

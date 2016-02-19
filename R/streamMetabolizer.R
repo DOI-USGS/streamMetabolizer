@@ -27,7 +27,7 @@
 #'   
 #'   \item \code{\link{convert_date_to_doyhr}}
 #'   
-#'   \item \code{\link{convert_GMT_to_solartime}}
+#'   \item \code{\link{convert_UTC_to_solartime}}
 #'   
 #'   \item \code{\link{convert_k600_to_kGAS}}
 #'   

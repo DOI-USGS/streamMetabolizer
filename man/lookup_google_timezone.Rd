@@ -5,8 +5,8 @@
 \title{Use Google API to determine local time zone}
 \usage{
 lookup_google_timezone(latitude, longitude, timestamp = if (latitude >= 0)
-  as.POSIXct("2015-01-01 00:00:00", tz = "GMT") else
-  as.POSIXct("2015-07-01 00:00:00", tz = "GMT"))
+  as.POSIXct("2015-01-01 00:00:00", tz = "UTC") else
+  as.POSIXct("2015-07-01 00:00:00", tz = "UTC"))
 }
 \arguments{
 \item{latitude}{degrees latitude (positive for north) of the location to look

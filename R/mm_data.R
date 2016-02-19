@@ -1,50 +1,55 @@
 #' Return the data types that may be used by metab_models using the 
 #' metab_model_interface.
 #' 
-#' @description Produces a unitted data.frame with the column names, units, and
-#' data format to be used by metab_models that comply strictly with the 
-#' metab_model_interface. These are the columns that may be included:
-#' 
-#' \itemize{
-#' 
-#' \item{ \code{local.time} date-time values in solar mean time (local, 
-#' longitude-specific, NON-DAYLIGHT-SAVINGS time), in POSIXct format with a 
-#' nominal time zone of UTC.}
-#' 
-#' \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
-#' O[2] L^{-1}}{mg O2 / L}}
-#' 
-#' \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at 
-#' equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
-#' \link{calc_DO_at_sat}}
-#' 
-#' \item{ \code{depth} stream depth, \eqn{m}{m}}.
-#' 
-#' \item{ \code{temp.water} water temperature, \eqn{degC}}.
-#' 
-#' \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ m^{-2}
-#' s^{-1}}{micro mols / m^2 / s}}
-#' 
-#' \item{ \code{local.date} dates of interest in Date format}
-#' 
-#' \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
-#' O[2] L^{-1}}{mg O2 / L}}
-#'
-#' \item{ \code{GPP} daily estimates of GPP}
-#' 
-#' \item{ \code{ER} daily estimates of ER}
-#' 
-#' \item{ \code{K600} daily estimates of K600}
-#' 
-#' \item{ \code{discharge.daily} daily mean river discharge}
-#' 
-#' \item{ \code{velocity.daily} daily mean river flow velocity}
-#' 
-#' }
-#' 
+#' @description Produces a unitted data.frame with the column names, units, and 
+#'   data format to be used by metab_models that comply strictly with the 
+#'   metab_model_interface. These are the columns that may be included:
+#'   
+#'   \itemize{
+#'   
+#'   \item{ \code{solar.time} date-time values in mean solar time (see 
+#'   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a nominal 
+#'   time zone of UTC. May be approximated by local, non-daylight-savings clock 
+#'   time (still with nominal UTC timezone but with clock noons close to solar 
+#'   noon), but mean solar time is better for matching model time windows to the
+#'   diel cycle of light availability. Throughout this package, variables named 
+#'   "solar.time" are mean solar time, "app.solar.time" means apparent solar
+#'   time, and "any.solar.time" means either.}
+#'   
+#'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
+#'   O[2] L^{-1}}{mg O2 / L}}
+#'   
+#'   \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at 
+#'   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
+#'   \link{calc_DO_at_sat}}
+#'   
+#'   \item{ \code{depth} stream depth, \eqn{m}{m}}.
+#'   
+#'   \item{ \code{temp.water} water temperature, \eqn{degC}}.
+#'   
+#'   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
+#'   m^{-2} s^{-1}}{micro mols / m^2 / s}}
+#'   
+#'   \item{ \code{date} dates of interest in Date format}
+#'   
+#'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
+#'   O[2] L^{-1}}{mg O2 / L}}
+#'   
+#'   \item{ \code{GPP} daily estimates of GPP}
+#'   
+#'   \item{ \code{ER} daily estimates of ER}
+#'   
+#'   \item{ \code{K600} daily estimates of K600}
+#'   
+#'   \item{ \code{discharge.daily} daily mean river discharge}
+#'   
+#'   \item{ \code{velocity.daily} daily mean river flow velocity}
+#'   
+#'   }
+#'   
 #' @details Most models will require a subset of these data columns. Specialized
-#' models may deviate from this format, but this is discouraged.
-#' 
+#'   models may deviate from this format, but this is discouraged.
+#'   
 #' @param ... column names to select, as passed to \code{\link[dplyr]{select}}
 #' @param optional one or more character strings listing the columns, if any, 
 #'   that may be excluded. If 'all', the entire data.frame may be omitted. If 
@@ -62,13 +67,13 @@
 #' mm_data()
 #' 
 #' # columns typical of instantaneous data
-#' mm_data(local.time, DO.obs, DO.sat, depth, temp.water, light)
+#' mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light)
 #' 
 #' # columns typical of daily data
-#' mm_data(local.date, K600, discharge, velocity)
+#' mm_data(date, K600, discharge, velocity)
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
-    local.time=u(as.POSIXct("2050-03-14 15:10:00",tz="UTC"), NA), 
+    solar.time=u(as.POSIXct("2050-03-14 15:10:00", tz="UTC"), NA), 
     DO.obs=    u(10.1,"mgO2 L^-1"), 
     DO.sat=    u(14.2,"mgO2 L^-1"), 
     depth=     u(0.5,"m"), 
@@ -76,7 +81,7 @@ mm_data <- function(..., optional='none') {
     light=     u(300.9,"umol m^-2 s^-1"), 
     discharge= u(9,"m^3 s^-1"), 
     velocity=  u(2,"m s^-1"), 
-    local.date=u(as.Date("2050-03-14", tz="UTC"), NA), 
+    date=      u(as.Date("2050-03-14", tz="UTC"), NA), 
     DO.mod.1=  u(7.5,"mgO2 L^-1"),
     GPP=       u(5,"gO2 m^-2 d^-1"), 
     ER=        u(5,"gO2 m^-2 d^-1"), 

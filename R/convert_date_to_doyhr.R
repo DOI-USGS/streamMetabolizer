@@ -25,7 +25,7 @@ convert_date_to_doyhr <- function(date) {
 #' @return A datetime object as POSIXct
 #'   
 #' @export
-convert_doyhr_to_date <- function(doyhr, year, tz="GMT", origin=as.POSIXct("1970-01-01 00:00:00",tz="GMT"), ...) {
+convert_doyhr_to_date <- function(doyhr, year, tz="UTC", origin=as.POSIXct("1970-01-01 00:00:00",tz="UTC"), ...) {
   secs_since_jan1 <- (v(doyhr)-1)*24*60*60
   out <- as.POSIXct(sprintf("%d-01-01 00:00:00",v(year)), format="%Y-%m-%d %H:%M:%S", tz=tz, origin=origin, ...) + secs_since_jan1
   if(is.unitted(doyhr)) out <- u(out, get_units(doyhr))
