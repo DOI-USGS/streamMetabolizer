@@ -7,11 +7,11 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   
   # fit a first-round MLE and extract the K estimates
   expect_warning({mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)}, "temperature out of range")
-  K600_mm1 <- predict_metab(mm1) %>% select(solar.date, K600, K600.lower, K600.upper)
+  K600_mm1 <- predict_metab(mm1) %>% select(date, K600, K600.lower, K600.upper)
   
   # smooth the K600s
   expect_warning({mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', transforms=c(K600='log'))}, "no SE available")
-  K600_mm2 <- predict_metab(mm2) %>% select(solar.date, K600)
+  K600_mm2 <- predict_metab(mm2) %>% select(date, K600)
   
   # refit the MLE with fixed K
   expect_warning({mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)}, "temperature out of range")
@@ -25,6 +25,6 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   #   mutate(predict_metab(mm3), model='PR')) %>%
   #   filter(!is.na(K600)) %>%
   #   gather(estimate, value, GPP, ER, K600)
-  # ggplot(preds, aes(x=solar.date, y=value, color=model)) + geom_point() + geom_line() + theme_bw() + facet_grid(estimate ~ ., scales = "free_y")
+  # ggplot(preds, aes(x=date, y=value, color=model)) + geom_point() + geom_line() + theme_bw() + facet_grid(estimate ~ ., scales = "free_y")
   
 })

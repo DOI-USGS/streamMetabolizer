@@ -6,7 +6,7 @@ vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 22:50:00", 
 
 test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
-  dd <- data.frame(solar.date=unique(as.character(vfrenchshort$solar.time, format="%Y-%m-%d")), 
+  dd <- data.frame(date=unique(as.character(vfrenchshort$solar.time, format="%Y-%m-%d")), 
                    DO.mod.1=7.5, GPP=4, ER=-c(NA,2,4), K600=30)
   
   # should be able to fit by specifying either data$DO.obs[d,1] or data_daily$DO.mod.1 

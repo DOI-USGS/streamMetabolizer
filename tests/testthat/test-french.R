@@ -71,7 +71,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   expect_less_than(abs(smest$K600 - bobest$K), 0.0001, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
   
   # PR (metab_mle)
-  smest <- get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), day_start=start.numeric, day_end=end.numeric, 
+  smest <- get_fit(metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), day_start=start.numeric, day_end=end.numeric, 
                              model_specs=specs('m_np_oi_eu_km.nlm')))[2,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
   expect_less_than(abs(smest$GPP - bobest$GPP), 0.02, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))

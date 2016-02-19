@@ -49,8 +49,8 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$solar.time), units="days"),
       obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$solar.time), units="days")) %>%
     mutate(
-      mod = ifelse(diff(DO_preds$solar.date)==0, mod, NA),
-      obs = ifelse(diff(DO_preds$solar.date)==0, obs, NA))
+      mod = ifelse(diff(DO_preds$date)==0, mod, NA),
+      obs = ifelse(diff(DO_preds$date)==0, obs, NA))
   
   DO_preds_all <- bind_rows(DO_preds_conc, DO_preds_pctsat, DO_preds_ddodt) %>%
     mutate(var=ordered(var, c(conc='DO (mg/L)', pctsat='DO (% sat)', ddodt='dDO/dt (mg/L/d)')[y_var]))
@@ -61,7 +61,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
       
-      . <- solar.time <- mod <- solar.date <- col1 <- col2 <- obs <- '.ggplot.var'
+      . <- solar.time <- mod <- date <- col1 <- col2 <- obs <- '.ggplot.var'
       preds_ggplot <- v(DO_preds_all) %>%
         filter(as %in% y_var)
       if('conc' %in% names(y_lim)) {
@@ -76,7 +76,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         lim <- y_lim[['ddodt']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod >= lim & obs >= lim))
         lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod <= lim & obs <= lim))
       }
-      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=solar.date)) +
+      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
         ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8) +
         ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6) +
         ggplot2::scale_color_identity(guide='none') +
@@ -96,7 +96,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       preds_xts <- v(DO_preds_all) %>%
         filter(as %in% y_var) %>%
         arrange(solar.time) %>%
-        group_by(solar.date) %>%
+        group_by(date) %>%
         do(., {
           out <- .[c(seq_len(nrow(.)),nrow(.)),]
           out[nrow(.)+1,c('mod','obs')] <- NA

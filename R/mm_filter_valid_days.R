@@ -28,14 +28,14 @@ mm_filter_valid_days <- function(
   #' @return data
   #' @keywords internal
   mm_filter_valid_days_filter_fun <- function(
-    data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
+    data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
     tests # inheritParams mm_is_valid_day
   ) {
     stop_strs <- mm_is_valid_day(day=data_ply, day_start=day_start, day_end=day_end, tests=tests)
     if(isTRUE(stop_strs)) {
       data_ply
     } else {
-      removed <<- c(removed, list(data.frame(solar.date=solar_date, errors=paste0(stop_strs, collapse="; "))))
+      removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(stop_strs, collapse="; "))))
       NULL
     }
   }
@@ -51,12 +51,12 @@ mm_filter_valid_days <- function(
   # filter the daily data to match & return
   if(!is.null(data_daily)) {
     daily_removed <- data.frame(
-      solar.date=as.Date(setdiff(as.character(data_daily$solar.date), c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$solar.date)))), 
-      errors="solar.date in data_daily but not data")
+      date=as.Date(setdiff(as.character(data_daily$date), c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$date)))), 
+      errors="date in data_daily but not data")
     removed <- rbind(removed, daily_removed)
-    removed <- removed[order(removed$solar.date),]
+    removed <- removed[order(removed$date),]
     rownames(removed) <- NULL
-    data_daily_filtered <- data_daily[data_daily$solar.date %in% unique(data_filtered$solar.date),]
+    data_daily_filtered <- data_daily[data_daily$date %in% unique(data_filtered$date),]
   } else {
     data_daily_filtered <- NULL
   }

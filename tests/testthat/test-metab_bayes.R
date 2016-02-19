@@ -26,7 +26,7 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -39,7 +39,7 @@ devel_tests <- function() {
     
     # bayes_1ply
     ply_out <- streamMetabolizer:::bayes_1ply(
-      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, solar_date="2012-08-24",
+      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, ply_date="2012-08-24",
       tests=c('full_day', 'even_timesteps', 'complete_data'),
       model_specs=model_specs)
     expect_is(ply_out, 'data.frame')
@@ -54,7 +54,7 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -67,7 +67,7 @@ devel_tests <- function() {
     
     # bayes_1ply
     ply_out <- streamMetabolizer:::bayes_1ply(
-      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, solar_date="2012-08-24",
+      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, ply_date="2012-08-24",
       tests=c('full_day', 'even_timesteps', 'complete_data'),
       model_specs=model_specs)
     expect_is(ply_out, 'data.frame')
@@ -82,7 +82,7 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -95,7 +95,7 @@ devel_tests <- function() {
     
     # bayes_1ply
     ply_out <- streamMetabolizer:::bayes_1ply(
-      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, solar_date="2012-08-24",
+      data_ply=vfrench1day, data_daily_ply=NULL, day_start=4, day_end=28, ply_date="2012-08-24",
       tests=c('full_day', 'even_timesteps', 'complete_data'),
       model_specs=model_specs)
     expect_is(ply_out, 'data.frame')
@@ -121,7 +121,7 @@ devel_tests <- function() {
     
     # prepdata
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -157,7 +157,7 @@ devel_tests <- function() {
     model_specs <- specs(system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer"), burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     
     # mcmc - nopool_pcpi_Euler_b2.stan
     system.time({
@@ -199,7 +199,7 @@ test_that("simple metab_bayes predictions (predict_metab, predict_DO) match expe
     mfile <- mm@args$model_specs$model_name
     expect_silent(metab <- predict_metab(mm))
     expect_silent(DO_preds <- predict_DO(mm))
-    expect_silent(DO_preds_Aug24 <- dplyr::filter(DO_preds, solar.date == "2012-08-24"))
+    expect_silent(DO_preds_Aug24 <- dplyr::filter(DO_preds, date == "2012-08-24"))
     expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), info=mfile)
   }
   
@@ -230,7 +230,7 @@ manual_tests <- function() {
     mfile <- mm@args$model_specs$model_name
     expect_silent(metab <- predict_metab(mm))
     expect_silent(DO_preds <- predict_DO(mm))
-    expect_silent(DO_preds_Aug24<- dplyr::filter(DO_preds, solar.date == "2012-08-24"))
+    expect_silent(DO_preds_Aug24<- dplyr::filter(DO_preds, date == "2012-08-24"))
     expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.3), info=mfile)
   }
   
@@ -246,7 +246,7 @@ manual_tests <- function() {
     mcmc_args <- if(model_specs$bayes_software == 'jags') jags_args else jags_args[-which(jags_args=='adapt_steps')]
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, solar_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 
     system.time({
       suppressWarnings(
         {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[mcmc_args]))})

@@ -5,7 +5,7 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(solar.date, K600, optional = "all"),
+  light), data_daily = mm_data(date, K600, optional = "all"),
   model_specs = specs("m_np_oi_pm_km.nlm"), info = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
@@ -77,7 +77,7 @@ plot_DO_preds(predict_DO(mm))
 streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 
 # PR
-get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
+get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 get_fitting_time(mm)
 plot_DO_preds(predict_DO(mm))
@@ -91,7 +91,7 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
     model_specs=specs('m_np_pi_pm_km.nlm'), 
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))
-  get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
+  get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
     model_specs=specs('m_np_pi_pm_km.nlm'), 
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))

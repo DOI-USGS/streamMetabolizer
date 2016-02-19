@@ -1,7 +1,7 @@
 #' Filter unit or daily data by inclusive start & end dates
 #' 
 #' @param data either instantaneous/unit or daily data, having columns for
-#'   solar.time or solar.date, respectively, to filter
+#'   solar.time or date, respectively, to filter
 #' @inheritParams predict_DO
 #' @importFrom lubridate tz floor_date
 #' @keywords internal
@@ -9,13 +9,13 @@
 #' tm <- Sys.time()
 #' dt <- Sys.Date()
 #' udat <- data.frame(solar.time=tm + as.difftime(1:100, units='hours'), value=1:100)
-#' ddat <- data.frame(solar.date=dt + as.difftime(1:100, units='days'), value=1:100)
+#' ddat <- data.frame(date=dt + as.difftime(1:100, units='days'), value=1:100)
 #' streamMetabolizer:::mm_filter_dates(udat, tm)
 #' streamMetabolizer:::mm_filter_dates(udat, date_start=dt+as.difftime(1, units="days"))
 mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_end=27.99, date_format="%Y-%m-%d") {
   
   if(is.null(data) || nrow(data) == 0 || (is.character(data) && data == "generic metab_model class; no actual fit")) return(data)
-  date_col <- unlist(sapply(c('solar.time','solar.date'), grep, names(data), fixed=TRUE, value=TRUE, USE.NAMES = FALSE))[1]
+  date_col <- unlist(sapply(c('solar.time','date'), grep, names(data), fixed=TRUE, value=TRUE, USE.NAMES = FALSE))[1]
   data <- data[!is.na(data[[date_col]]),]
   # format dates
   tidy_date <- function(date) { 
@@ -24,7 +24,7 @@ mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_e
     switch(
       date_col,
       'solar.time' = as.POSIXct(format(loc.date, date_format), format=date_format, tz=local.tz),
-      'solar.date' = loc.date
+      'date' = loc.date
     )
   }
   date_start <- tidy_date(date_start)
@@ -38,10 +38,10 @@ mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_e
         if(!is.na(date_start)) solar.time >= (date_start + as.difftime(day_start, units="hours")) else TRUE,
         if(!is.na(date_end)) solar.time <= (date_end + as.difftime(day_end, units="hours")) else TRUE) 
     }, 
-    'solar.date' = {
+    'date' = {
       data %>% dplyr::filter(
-        if(!is.na(date_start)) solar.date >= date_start else TRUE,
-        if(!is.na(date_end)) solar.date <= date_end else TRUE)
+        if(!is.na(date_start)) date >= date_start else TRUE,
+        if(!is.na(date_end)) date <= date_end else TRUE)
     }
   )
 }

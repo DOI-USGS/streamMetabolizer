@@ -83,7 +83,7 @@ metab_bayes <- function(
           model_specs=model_specs) # for bayes_1ply
         if('mcmcfit' %in% names(bayes_all)) {
           bayes_mcmc <- bayes_all$mcmcfit
-          names(bayes_mcmc) <- bayes_all$solar.date
+          names(bayes_mcmc) <- bayes_all$date
           bayes_all$mcmcfit <- NULL
         } else {
           bayes_mcmc <- NULL
@@ -137,7 +137,7 @@ metab_bayes <- function(
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs # inheritParams metab_model_prototype
 ) {
@@ -155,12 +155,12 @@ bayes_1ply <- function(
       tryCatch({
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
-          data=data_ply, data_daily=data_daily_ply, solar_date=solar_date,
+          data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
           model_specs=model_specs, priors=model_specs$priors)
         model_specs$keep_mcmc <- if(is.logical(model_specs$keep_mcmcs)) {
           isTRUE(model_specs$keep_mcmcs)
         } else {
-          isTRUE(solar_date %in% model_specs$keep_mcmcs)
+          isTRUE(ply_date %in% model_specs$keep_mcmcs)
         }
         all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
@@ -230,7 +230,7 @@ bayes_allply <- function(
 #' @return list of data for input to runjags_bayes or runstan_bayes
 #' @keywords internal
 prepdata_bayes <- function(
-  data, data_daily, solar_date, # inheritParams metab_model_prototype
+  data, data_daily, ply_date, # inheritParams metab_model_prototype
   model_specs, # inheritParams metab_bayes
   priors=FALSE
 ) {
@@ -252,7 +252,7 @@ prepdata_bayes <- function(
       DO_obs_1 = data$DO.obs[1],
       
       # Every timestep
-      frac_GPP = data$light/sum(data$light[as.character(data$solar.time,"%Y-%m-%d")==as.character(solar_date)]),
+      frac_GPP = data$light/sum(data$light[as.character(data$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
       frac_ER = rep(timestep_days, nrow(data)),
       frac_D = rep(timestep_days, nrow(data)), # the yackulic shortcut models rely on this being even over time
       KO2_conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),

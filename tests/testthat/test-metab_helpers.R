@@ -100,7 +100,7 @@ test_that("mm_filter_valid_days works", {
   library(dplyr); library(unitted)
   french <- streamMetabolizer:::load_french_creek()
   
-  french_daily <- data.frame(solar.date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
+  french_daily <- data.frame(date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
   
   expect_equal(length(mm_filter_valid_days(french, day_start=10, day_end=12)), 3)
   expect_equal(nrow(mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)$data), 672)
@@ -111,7 +111,7 @@ test_that("mm_filter_dates works", {
   start_time <- Sys.time()
   start_date <- as.Date(start_time)
   udat <- data.frame(solar.time=start_time + as.difftime(1:100, units='hours'), value=1:100)
-  ddat <- data.frame(solar.date=start_date + as.difftime(1:100, units='days'), value=1:100)
+  ddat <- data.frame(date=start_date + as.difftime(1:100, units='days'), value=1:100)
   # no filter with defaults
   expect_equal(streamMetabolizer:::mm_filter_dates(udat), udat)
   expect_equal(streamMetabolizer:::mm_filter_dates(ddat), ddat)

@@ -35,7 +35,7 @@ NULL
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' 
 #' # PR
-#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
+#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
 #'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
@@ -49,7 +49,7 @@ NULL
 #'     model_specs=specs('m_np_pi_pm_km.nlm'), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(solar.date=mid.date, K600=35), 
+#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
 #'     model_specs=specs('m_np_pi_pm_km.nlm'), 
 #'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
 #'   plot_DO_preds(predict_DO(mm))
@@ -57,7 +57,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(solar.date, K600, optional='all'), 
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(date, K600, optional='all'), 
   model_specs=specs('m_np_oi_pm_km.nlm'), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
@@ -107,7 +107,7 @@ metab_mle <- function(
 #' @importFrom stats nlm
 #' @keywords internal
 mle_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab_model_prototype
 ) {
@@ -154,7 +154,7 @@ mle_1ply <- function(
         data_ply[c("DO.obs","DO.sat","depth","temp.water")]
       ),
       list(
-        frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(solar_date)]),
+        frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
         frac.ER = timestep.days,
         frac.D = timestep.days,
         calc_DO_fun = model_specs$calc_DO_fun,

@@ -30,7 +30,7 @@
 #'   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
 #'   m^{-2} s^{-1}}{micro mols / m^2 / s}}
 #'   
-#'   \item{ \code{solar.date} dates of interest in Date format}
+#'   \item{ \code{date} dates of interest in Date format}
 #'   
 #'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
 #'   O[2] L^{-1}}{mg O2 / L}}
@@ -70,7 +70,7 @@
 #' mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light)
 #' 
 #' # columns typical of daily data
-#' mm_data(solar.date, K600, discharge, velocity)
+#' mm_data(date, K600, discharge, velocity)
 mm_data <- function(..., optional='none') {
   dat <- u(data.frame(
     solar.time=u(as.POSIXct("2050-03-14 15:10:00", tz="UTC"), NA), 
@@ -81,7 +81,7 @@ mm_data <- function(..., optional='none') {
     light=     u(300.9,"umol m^-2 s^-1"), 
     discharge= u(9,"m^3 s^-1"), 
     velocity=  u(2,"m s^-1"), 
-    solar.date=u(as.Date("2050-03-14", tz="UTC"), NA), 
+    date=      u(as.Date("2050-03-14", tz="UTC"), NA), 
     DO.mod.1=  u(7.5,"mgO2 L^-1"),
     GPP=       u(5,"gO2 m^-2 d^-1"), 
     ER=        u(5,"gO2 m^-2 d^-1"), 

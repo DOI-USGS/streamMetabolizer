@@ -5,8 +5,8 @@
 \title{Simulate dissolved oxygen data from input data}
 \usage{
 metab_sim(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light,
-  optional = "DO.obs"), data_daily = mm_data(solar.date, DO.mod.1, GPP, ER,
-  K600, optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
+  optional = "DO.obs"), data_daily = mm_data(date, DO.mod.1, GPP, ER, K600,
+  optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"))
 }
@@ -76,7 +76,7 @@ end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 0
 # get, format, & subset data
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-vdaily <- data.frame(solar.date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 
 # sim
 mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,

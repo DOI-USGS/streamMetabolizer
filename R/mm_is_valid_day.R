@@ -40,8 +40,8 @@ mm_is_valid_day <- function(day, day_start=4, day_end=27.99,
   # preceding day to 6am on following day)
   if('full_day' %in% tests & is.finite(timestep)) {
     date_counts <- table(format(day$solar.time, "%Y-%m-%d"))
-    solar_date <- names(date_counts)[which.max(date_counts)]
-    date_start <- as.POSIXct(paste0(solar_date, " 00:00:00"), tz=lubridate::tz(v(day$solar.time)))
+    ply_date <- names(date_counts)[which.max(date_counts)]
+    date_start <- as.POSIXct(paste0(ply_date, " 00:00:00"), tz=lubridate::tz(v(day$solar.time)))
     similar_time <- function(a, b, tol=timestep) {
       abs(as.numeric(a, units="days") - as.numeric(b, units="days")) < as.numeric(tol, units="days")
     }

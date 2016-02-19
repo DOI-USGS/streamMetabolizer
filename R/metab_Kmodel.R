@@ -50,14 +50,14 @@ NULL
 #'   filter(format(solar.time, "%Y-%m-%d") == "2012-08-24") %>% 
 #'   select(solar.time)
 #' fr <- fr %>% mutate(discharge.daily=exp(rnorm(nrow(fr))))
-#' frk2 <- data.frame(solar.date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
+#' frk2 <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
 #'   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
 #'   
 #' # 1-day tests
-#' frk <- data.frame(solar.date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
+#' frk <- data.frame(date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
 #' metab_Kmodel(data=fr, data_daily=frk, method='mean')
 #' #metab_Kmodel(data=fr, data_daily=frk, method='lm') # NaN warning
-#' #metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='solar.date') # span error
+#' #metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='date') # span error
 #' 
 #' # mean
 #' mm <- metab_Kmodel(data_daily=frk2, method='mean')
@@ -65,17 +65,17 @@ NULL
 #' # lm
 #' mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
 #' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily'))
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('solar.date'))
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','solar.date'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('date'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','date'))
 #' 
 #' # loess
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='solar.date')
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='solar.date', span=0.4)
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','solar.date'))
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date')
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date', span=0.4)
+#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','date'))
 #' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge.daily', span=2)
 #' 
 #' library(ggplot2)
-#' ggplot(get_data_daily(mm), aes(x=solar.date)) + geom_line(aes(y=K600)) + 
+#' ggplot(get_data_daily(mm), aes(x=date)) + geom_line(aes(y=K600)) + 
 #'   geom_point(aes(y=K600.obs)) + geom_ribbon(aes(ymin=K600.lower, ymax=K600.upper), alpha=0.4)
 #' }
 #' @export
@@ -84,9 +84,9 @@ NULL
 #' @family metab_model
 metab_Kmodel <- function(
   data=mm_data(solar.time, discharge, velocity, optional=c("all")), 
-  data_daily=mm_data(solar.date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")), # inheritParams metab_model_prototype
-  method=c("mean", "lm", "loess"), weights=c("CI", "CI/K600"), predictors=c("solar.date", "velocity.daily", "discharge.daily"), 
-  filters=c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA), transforms=c(K600='log', solar.date=NA, velocity.daily="log", discharge.daily="log"),
+  data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")), # inheritParams metab_model_prototype
+  method=c("mean", "lm", "loess"), weights=c("CI", "CI/K600"), predictors=c("date", "velocity.daily", "discharge.daily"), 
+  filters=c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA), transforms=c(K600='log', date=NA, velocity.daily="log", discharge.daily="log"),
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype. day_start and day_end only relevant if !is.null(data)
   tests=c('full_day', 'even_timesteps', 'complete_data'), # args for mm_is_valid_day. only relevant if !is.null(data)
   ...
@@ -95,7 +95,7 @@ metab_Kmodel <- function(
   method <- match.arg(method)
   weights <- if(missing(weights)) c() else match.arg(weights)
   predictors <- if(missing(predictors)) c() else match.arg(predictors, several.ok=TRUE)
-  if('solar.date' %in% predictors) predictors[predictors=='solar.date'] <- 'as.numeric(solar.date)'
+  if('date' %in% predictors) predictors[predictors=='date'] <- 'as.numeric(date)'
   if(!(!('K600' %in% names(transforms)) || is.na(transforms[['K600']]) || isTRUE(transforms[['K600']]=='log'))) 
     stop("transforms['K600'] should be NA or 'log'")
   
@@ -128,7 +128,7 @@ metab_Kmodel <- function(
   
   # Update data_daily with predictions
   preds <- predict_metab(mm)
-  mm@data_daily %<>% left_join(select(preds, solar.date, K600, K600.lower, K600.upper), by='solar.date')
+  mm@data_daily %<>% left_join(select(preds, date, K600, K600.lower, K600.upper), by='date')
   
   # Return
   mm
@@ -157,7 +157,7 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
     if(length(columns) == 0) stop("data arg is pointless without at least one of c('discharge', 'velocity')")
     aggs_daily <- mm_model_by_ply(Kmodel_aggregate_day, data=data, data_daily=NULL, day_start=day_start, day_end=day_end, tests=tests, columns=columns)
     names(aggs_daily)[match(columns, names(aggs_daily))] <- paste0(columns, '.daily')
-    data_daily <- left_join(data_daily, aggs_daily, by="solar.date")
+    data_daily <- left_join(data_daily, aggs_daily, by="date")
   }
   
   # Avoid global variable warnings in R CMD check
@@ -206,7 +206,7 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
 #' @inheritParams mm_is_valid_day
 #' @param columns character vector of names of columns to aggregate
 Kmodel_aggregate_day <- function(
-  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   columns=c('discharge', 'velocity')
 ) {
@@ -394,11 +394,11 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
 #' 
 #' # fit a first-round MLE and extract the K estimates
 #' mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
-#' K600_mm1 <- predict_metab(mm1) %>% select(solar.date, K600, K600.lower, K600.upper)
+#' K600_mm1 <- predict_metab(mm1) %>% select(date, K600, K600.lower, K600.upper)
 #' 
 #' # smooth the K600s
 #' mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', day_start=-1, day_end=23)
-#' K600_mm2 <- predict_metab(mm2) %>% select(solar.date, K600)
+#' K600_mm2 <- predict_metab(mm2) %>% select(date, K600)
 #' 
 #' # refit the MLE with fixed K
 #' mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)

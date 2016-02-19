@@ -23,7 +23,7 @@ test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
   mm <- metab_mle(data=vfrenchshort, day_start=-1, day_end=23)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24 <- dplyr::filter(DO_preds, solar.date == "2012-08-24")
+  DO_preds_Aug24 <- dplyr::filter(DO_preds, date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.25), "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(DO_preds_Aug24)
   # plot_DO_preds(DO_preds)
@@ -44,11 +44,11 @@ test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
 test_that("metab_mle models can be fit with K specified", {
   
   # metab_mle with K600
-  K600 <- data.frame(solar.date=unique(as.Date(vfrenchshort$solar.time)), K600=c(NA, 30, NA, 50, 40)) # 2 matches, one mismatch w/ modeled data
+  K600 <- data.frame(date=unique(as.Date(vfrenchshort$solar.time)), K600=c(NA, 30, NA, 50, 40)) # 2 matches, one mismatch w/ modeled data
   mm <- metab_mle(data=vfrenchshort, data_daily=K600, day_start=-1, day_end=23)
   metab <- predict_metab(mm)
   DO_preds <- predict_DO(mm)
-  DO_preds_Aug24 <- dplyr::filter(DO_preds, solar.date == "2012-08-24")
+  DO_preds_Aug24 <- dplyr::filter(DO_preds, date == "2012-08-24")
   expect_true(all(abs(DO_preds_Aug24$DO.obs - DO_preds_Aug24$DO.mod) < 0.30), "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(DO_preds, y_var="pctsat")
   

@@ -4,16 +4,16 @@
 \alias{bayes_1ply}
 \title{Make daily metabolism estimates from input parameters}
 \usage{
-bayes_1ply(data_ply, data_daily_ply, day_start, day_end, solar_date,
+bayes_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
   tests = c("full_day", "even_timesteps", "complete_data"), model_specs)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
-for a single ply of data. (1 ply ~= 1 date, although the day length has
+for a single ply of data. (1 ply ~= 1 date, although the day length has 
 been specified by day_start and day_end and may not be exactly 24 hours)}
 
 \item{data_daily_ply}{NULL or a data.frame containing inputs with a daily 
-timestep. The solar.date column must be present.}
+timestep. The date column must be present.}
 
 \item{day_start}{start time of a day's data in number of hours from the 
 midnight that begins the modal date. For example, day_start=-1.5 indicates 
@@ -27,8 +27,8 @@ describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation
 time that occurs before that time if day_end doesn't fall exactly on an 
 observation time.}
 
-\item{solar_date}{the modal date of this ply of data and data_daily, and the 
-date by which this ply should be referred}
+\item{ply_date}{the modal date of this ply of data and data_daily, and the 
+date by which this ply should be referred to}
 
 \item{tests}{list of tests to conduct}
 

@@ -7,7 +7,7 @@
 #'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #' @param calc_DO_args a list of other arguments passed to calc_DO_fun
 #' @return a data.frame of predictions
-mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, solar_date, calc_DO_fun, calc_DO_args=list()) {
+mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, ply_date, calc_DO_fun, calc_DO_args=list()) {
   
   # The daily metabolism estimates are in data_daily_ply. Skip today (return
   # DO.mod=NAs) if they're missing. Otherwise, proceed to predict DO
@@ -17,7 +17,7 @@ mm_predict_1ply <- function(data_ply, data_daily_ply, day_start, day_end, solar_
   
   # prepare arguments, appending calc_DO_args if there are any
   timestep.days <- suppressWarnings(mean(as.numeric(diff(data_ply$solar.time), units="days"), na.rm=TRUE))
-  tot.GPP <- sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==solar_date])
+  tot.GPP <- sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==ply_date])
   frac.GPP <- if(tot.GPP > 0) data_ply$light/tot.GPP else 1/nrow(data_ply)
   all_args <- c(
     list(GPP.daily=data_daily_ply$GPP, ER.daily=data_daily_ply$ER, K600.daily=data_daily_ply$K600, 

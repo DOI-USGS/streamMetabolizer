@@ -109,7 +109,7 @@ metab_night <- function(
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, solar_date, # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab_model_prototype
 ) {
@@ -272,9 +272,9 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
 
   # get the metabolism (GPP, ER) data and estimates; filter if requested
-  solar.date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
+  date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
   metab_ests <- get_fit(metab_model) %>% 
-    dplyr::select(solar.date, ER, K600, row.first, row.last) %>%
+    dplyr::select(date, ER, K600, row.first, row.last) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end) %>%
     mutate(GPP = 0)
   
@@ -294,7 +294,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, solar_date # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -312,6 +312,6 @@ metab_night_predict_1ply <- function(
   
   # apply the regular prediction function
   mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
-                  day_start, day_end, solar_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
+                  day_start, day_end, ply_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
   
 }

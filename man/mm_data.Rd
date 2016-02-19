@@ -27,7 +27,7 @@ Produces a unitted data.frame with the column names, units, and
   \itemize{
   
   \item{ \code{solar.time} date-time values in mean solar time (see 
-  \code{\link{convert_GMT_to_solartime}}), in POSIXct format with a nominal 
+  \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a nominal 
   time zone of UTC. May be approximated by local, non-daylight-savings clock 
   time (still with nominal UTC timezone but with clock noons close to solar 
   noon), but mean solar time is better for matching model time windows to the
@@ -49,7 +49,7 @@ Produces a unitted data.frame with the column names, units, and
   \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
   m^{-2} s^{-1}}{micro mols / m^2 / s}}
   
-  \item{ \code{solar.date} dates of interest in Date format}
+  \item{ \code{date} dates of interest in Date format}
   
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
   O[2] L^{-1}}{mg O2 / L}}
@@ -78,6 +78,6 @@ mm_data()
 mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light)
 
 # columns typical of daily data
-mm_data(solar.date, K600, discharge, velocity)
+mm_data(date, K600, discharge, velocity)
 }
 

@@ -6,13 +6,13 @@
 #' row-bound together into a single data.frame containing results from all days.
 #' 
 #' @param model_fun the function to apply to each data ply. This function should
-#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, solar_date)}
+#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, ply_date)}
 #'   where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
 #'   to \code{mm_model_by_ply} is missing or \code{NULL}
 #' @param data required. the data.frame containing all relevant, validated 
 #'   modeling data. The solar.time column must be present.
 #' @param data_daily optional. a data.frame containing inputs with a daily 
-#'   timestep. The solar.date column must be present.
+#'   timestep. The date column must be present.
 #' @inheritParams mm_model_by_ply_prototype
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
@@ -24,10 +24,10 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   # two additional columns (odd.- and even.- date.groups)
   data.plys <- as.data.frame(v(data))
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
-  data.plys$solar.date <- format(data.plys$solar.time, "%Y-%m-%d")
+  data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
   
-  unique.dates <- unique(as.character(data.plys$solar.date))
+  unique.dates <- unique(as.character(data.plys$date))
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
   
@@ -41,15 +41,15 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
     dt.today <- unique.dates[dt]
     dt.yesterday <- if(dt>1) unique.dates[dt-1] else dt.NA
     dt.tomorrow <- if(dt<length(unique.dates)) unique.dates[dt+1] else dt.NA
-    hr <- data.plys[data.plys$solar.date == dt.today, 'hour']
+    hr <- data.plys[data.plys$date == dt.today, 'hour']
     primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start & hr <= day_end, 1, 2)]
     secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end - 24), 1, ifelse(hr < (24 + day_start), 2, 3))]
-    data.plys[data.plys$solar.date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
-    data.plys[data.plys$solar.date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date
+    data.plys[data.plys$date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
+    data.plys[data.plys$date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date
   } 
   
-  # Estimate daily metabolism for each ply of the data, using if-else in the
-  # lapply loop to cover both the odd and even groupings in date order
+  # Apply model_fun to each ply of the data, using if-else in the lapply loop to
+  # cover both the odd and even groupings in date order
   out_list <- lapply(sort(unique.dates), function(dt) {
     ply <- if(dt %in% odd.dates) {
       which(data.plys$odd.date.group == dt)
@@ -57,11 +57,11 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
       which(data.plys$even.date.group == dt)
     }
     out <- model_fun(
-      data_ply=data.plys[ply,!(names(data.plys) %in% c('solar.date','hour','odd.date.group','even.date.group'))], 
-      data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$solar.date == dt,] else NULL,
-      day_start=day_start, day_end=day_end, solar_date=as.Date(dt, tz=tz(dt)),
+      data_ply=data.plys[ply,!(names(data.plys) %in% c('date','hour','odd.date.group','even.date.group'))], 
+      data_daily_ply=if(!is.null(data_daily)) data_daily[data_daily$date == dt,] else NULL,
+      day_start=day_start, day_end=day_end, ply_date=as.Date(dt, tz=tz(dt)),
       ...)
-    if(is.null(out) || nrow(out)==0) NULL else data.frame(solar.date=as.Date(dt, tz=tz(dt)), out)
+    if(is.null(out) || nrow(out)==0) NULL else data.frame(date=as.Date(dt, tz=tz(dt)), out)
   })
   # combine the 1-row dfs, making sure to start with a 0-row df that represents 
   # the dfs with the most columns to keep the column ordering consistent across 
@@ -70,7 +70,7 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   count_cols <- function(out) { if(is.null(out)) 0 else ncol(out) }
   example_choice <- which.max(sapply(out_list, count_cols))
   if(length(example_choice) == 0) {
-    data.frame(solar.date=as.Date(NA)) 
+    data.frame(date=as.Date(NA)) 
   } else {
     out_example <- out_list[[example_choice]][FALSE,]
     bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
