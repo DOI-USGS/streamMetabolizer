@@ -12,23 +12,12 @@ mm_generate_mcmc_file <- function(
   deficit_src=c('DO_mod','DO_obs'),
   bayes_software=c('stan','jags')) {
 
-  # choose/check arguments
-  type <- match.arg(type)
-  pooling <- match.arg(pooling)
-  err_obs_iid <- if(!is.logical(err_obs_iid)) stop("need err_obs_iid to be a logical of length 1") else err_obs_iid[1]
-  err_proc_acor <- if(!is.logical(err_proc_acor)) stop("need err_proc_acor to be a logical of length 1") else err_proc_acor[1]
-  err_proc_iid <- if(!is.logical(err_proc_iid)) stop("need err_proc_iid to be a logical of length 1") else err_proc_iid[1]
-  ode_method <- match.arg(ode_method)
-  deficit_src <- match.arg(deficit_src)
-  bayes_software <- match.arg(bayes_software)
-  
-  # check argument compatibility
-  if(!err_obs_iid && deficit_src == 'DO_mod') stop("if there's no err_obs, deficit_src must be DO_obs")
-    
-  # name the model
+  # name the model. much argument checking happens here, even with
+  # check_validity=FALSE (which is needed to avoid circularity)
   model_name <- mm_name(
     type='bayes', bayes_software=bayes_software, ode_method=ode_method, deficit_src=deficit_src, 
-    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pooling=pooling)
+    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pooling=pooling,
+    check_validity=FALSE)
   
   # helper functions
   comment <- function(...) { # prefix with the appropriate comment character[s]
@@ -354,6 +343,9 @@ mm_generate_mcmc_file <- function(
 #' deficit_src='DO_mod')
 #' 
 #' @include mm_name.R
+#' @include mm_parse_name.R
+#' @include mm_valid_names.R
+#' @include mm_validate_name.R
 #' @keywords internal
 mm_generate_mcmc_files <- function() {
   opts <- expand.grid(

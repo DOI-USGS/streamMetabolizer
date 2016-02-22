@@ -1,5 +1,10 @@
 #' Find the name of a model by its features
 #' 
+#' While the \code{Usage} shows the valid values for each argument, defaults 
+#' depend on the value of \code{type}: any argument that is not explicitly 
+#' supplied (besides \code{type} and \code{check_validity}) will default to the
+#' values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
+#' 
 #' @seealso The converse of this function is \code{\link{mm_parse_name}}.
 #'   
 #' @param type the model type, corresponding to the model fitting function 
@@ -19,6 +24,9 @@
 #' @param deficit_src From what DO estimate (observed or modeled) should the DO 
 #'   deficit be computed?
 #' @param bayes_software Which software are we generating code for?
+#' @param check_validity if TRUE, checks the resulting name against 
+#'   mm_valid_names(type).
+#' @import dplyr
 #' @export
 #' @examples 
 #' mm_name('mle')
@@ -33,31 +41,48 @@ mm_name <- function(
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler','NA'),
   deficit_src=c('DO_mod','DO_obs','NA'),
-  bayes_software=c('stan','jags','nlm','lm','rnorm')) {
+  bayes_software=c('stan','jags','nlm','lm','rnorm'),
+  check_validity=TRUE) {
   
-  # choose/check arguments
+  # determine type
   type <- match.arg(type)
-  pooling <- match.arg(pooling)
-  err_obs_iid <- if(!is.logical(err_obs_iid)) stop("need err_obs_iid to be a logical of length 1") else err_obs_iid[1]
-  err_proc_acor <- if(!is.logical(err_proc_acor)) stop("need err_proc_acor to be a logical of length 1") else err_proc_acor[1]
-  err_proc_iid <- if(!is.logical(err_proc_iid)) stop("need err_proc_iid to be a logical of length 1") else err_proc_iid[1]
-  ode_method <- match.arg(ode_method)
-  deficit_src <- match.arg(deficit_src)
-  bayes_software <- if(missing(bayes_software)) {
-    c(bayes='stan', mle='nlm', night='lm', sim='rnorm')[type] 
-  } else { 
-    software <- match.arg(bayes_software)
-    if(!(software %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', sim='rnorm')[[type]]))
-      stop("mismatch between type (",type,") and software (",software,")")
-    software
+  
+  # set type-specific defaults where values weren't specified
+  . <- '.dplyr.var'
+  given_args <- names(formals(mm_name)) %>% .[!(. %in% c('type','check_validity'))]
+  missing_args <- given_args[!(given_args %in% names(match.call()[-1]))]
+  if(length(missing_args) > 0) {
+    default_args <- mm_parse_name(mm_valid_names(type)[1])
+    for(ms in missing_args) {
+      assign(ms, default_args[[ms]])
+    }
   }
   
+  # check arguments and throw errors as needed
+  pooling <- match.arg(pooling)
+  if(!is.logical(err_obs_iid) || length(err_obs_iid) != 1) stop("need err_obs_iid to be a logical of length 1")
+  if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
+  if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
+  ode_method <- match.arg(ode_method)
+  deficit_src <- match.arg(deficit_src)
+  bayes_software <- match.arg(bayes_software)
+  if(!(bayes_software %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', sim='rnorm')[[type]]))
+    stop("mismatch between type (",type,") and bayes_software (",bayes_software,")")
+  if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
+  
   # make the name
-  paste0(
+  mmname <- paste0(
     c(bayes='b', mle='m', night='n', sim='s')[[type]], '_',
     c(none='np', partial='pp')[[pooling]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
     c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
     bayes_software)
+  
+  # check validity if requested
+  check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
+  if(isTRUE(check_validity)) mm_validate_name(mmname)
+  
+  # return
+  mmname
 }

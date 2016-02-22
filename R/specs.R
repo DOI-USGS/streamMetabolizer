@@ -199,6 +199,9 @@ specs <- function(
   if(length(redundant <- not_missing[not_missing %in% prefer_missing]) > 0) 
     warning("argument[s] that should usually not be specified: ", paste(redundant, collapse=", "))
   
+  # check the validity of the model_name against the list of officially accepted model names
+  mm_validate_name(model_name)
+  
   # parse the model_name
   features <- mm_parse_name(model_name)
   
@@ -267,31 +270,9 @@ specs <- function(
       all_specs$ODE_method <- features$ode_method
     }
     
-    # check for errors/inconsistencies
-    opts <- expand.grid(
-      type='mle',
-      pooling='none',
-      err_obs_iid=c(TRUE, FALSE),
-      err_proc_acor=FALSE,
-      err_proc_iid=c(FALSE, TRUE),
-      ode_method=c('pairmeans','Euler'),
-      deficit_src='DO_mod',
-      bayes_software=c('nlm'),
-      stringsAsFactors=FALSE)
-    incompatible <- (opts$err_obs_iid == opts$err_proc_iid)
-    opts <- opts[!incompatible, ]
-    valid_names <- sapply(seq_len(nrow(opts)), function(i) do.call(mm_name, opts[i,]))
-    if(!(model_name %in% valid_names))
-      stop("valid metab_mle model_names are: ", paste0(valid_names, collapse=", "))
-    
   } else if(features$type == 'night') {
     # list all needed arguments
     included <- c('model_name')
-    
-    # check for errors/inconsistencies
-    valid_names <- mm_name(type='night', pooling='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='lm')
-    if(!(model_name %in% valid_names))
-      stop("valid metab_night model_names are: ", paste0(valid_names, collapse=", "))
     
   } else if(features$type == 'sim') {
     # list all needed arguments
@@ -301,14 +282,6 @@ specs <- function(
       all_specs$ODE_method <- features$ode_method
     }
 
-    # check for errors/inconsistencies
-    valid_names <- c(
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='rnorm'),
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', bayes_software='rnorm')
-    )
-    if(!(model_name %in% valid_names))
-      stop("valid metab_sim model_names are: ", paste0(valid_names, collapse=", "))
-    
   }
   
   # stop if truly irrelevant arguments were given

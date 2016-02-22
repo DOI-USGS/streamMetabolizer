@@ -8,7 +8,7 @@ mm_name(type = c("bayes", "mle", "night", "sim"), pooling = "none",
   err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
   err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler", "NA"),
   deficit_src = c("DO_mod", "DO_obs", "NA"), bayes_software = c("stan",
-  "jags", "nlm", "lm", "rnorm"))
+  "jags", "nlm", "lm", "rnorm"), check_validity = TRUE)
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 
@@ -35,9 +35,15 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 deficit be computed?}
 
 \item{bayes_software}{Which software are we generating code for?}
+
+\item{check_validity}{if TRUE, checks the resulting name against 
+mm_valid_names(type).}
 }
 \description{
-Find the name of a model by its features
+While the \code{Usage} shows the valid values for each argument, defaults 
+depend on the value of \code{type}: any argument that is not explicitly 
+supplied (besides \code{type} and \code{check_validity}) will default to the
+values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 }
 \examples{
 mm_name('mle')
