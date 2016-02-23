@@ -50,7 +50,7 @@ NULL
 metab_sim <- function(
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'), # inheritParams metab_model_prototype
   data_daily=mm_data(date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'), # inheritParams metab_model_prototype
-  model_specs=specs('s_np_oipcpi_eu_.rnorm'), # inheritParams metab_model_prototype
+  model_specs=specs(mm_name('sim')), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
   

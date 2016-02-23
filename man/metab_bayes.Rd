@@ -5,9 +5,9 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(NULL),
-  model_specs = specs("b_np_oi_pm_km.jags"), info = NULL, day_start = 4,
-  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
+  light), data_daily = mm_data(NULL), model_specs = specs(mm_name("bayes")),
+  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 

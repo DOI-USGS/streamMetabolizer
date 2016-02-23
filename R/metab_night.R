@@ -48,7 +48,7 @@ NULL
 #' @family metab_model
 metab_night <- function(
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs('n_np_pi_eu_.lm'), # inheritParams metab_model_prototype
+  model_specs=specs(mm_name('night')), # inheritParams metab_model_prototype
   info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
 ) {

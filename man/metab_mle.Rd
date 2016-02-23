@@ -6,7 +6,7 @@
 \usage{
 metab_mle(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
   light), data_daily = mm_data(date, K600, optional = "all"),
-  model_specs = specs("m_np_oi_pm_km.nlm"), info = NULL, day_start = 4,
+  model_specs = specs(mm_name("mle")), info = NULL, day_start = 4,
   day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{

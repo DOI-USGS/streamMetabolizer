@@ -6,9 +6,9 @@
 \usage{
 metab_sim(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light,
   optional = "DO.obs"), data_daily = mm_data(date, DO.mod.1, GPP, ER, K600,
-  optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
-  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
-  "even_timesteps", "complete_data"))
+  optional = "DO.mod.1"), model_specs = specs(mm_name("sim")), info = NULL,
+  day_start = 4, day_end = 27.99, tests = c("full_day", "even_timesteps",
+  "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 

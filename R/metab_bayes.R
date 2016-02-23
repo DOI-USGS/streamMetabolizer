@@ -41,7 +41,7 @@ NULL
 #' @family metab_model
 metab_bayes <- function(
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs('b_np_oi_pm_km.jags'), # inheritParams metab_model_prototype
+  model_specs=specs(mm_name('bayes')), # inheritParams metab_model_prototype
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {

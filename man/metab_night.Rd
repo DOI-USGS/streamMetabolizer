@@ -5,7 +5,7 @@
 \title{Nighttime regression for K estimation}
 \usage{
 metab_night(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(NULL), model_specs = specs("n_np_pi_eu_.lm"),
+  light), data_daily = mm_data(NULL), model_specs = specs(mm_name("night")),
   info = NULL, day_start = 12, day_end = 36, tests = c("full_day",
   "even_timesteps", "complete_data"))
 }
