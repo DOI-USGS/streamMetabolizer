@@ -93,7 +93,7 @@ metab_Kmodel <- function(
   # Check and reformat arguments
   model_specs$engine <- match.arg(model_specs$engine, choices=c("mean", "lm", "loess"))
   model_specs$weights <- if(length(model_specs$weights)==0) model_specs$weights else match.arg(model_specs$weights, choices=c("1/CI","K600/CI"))
-  model_specs$predictors <- if(length(model_specs$predictors)==0) model_specs$predictors else match.arg(model_specs$predictors, several.ok=TRUE)
+  model_specs$predictors <- if(length(model_specs$predictors)==0) model_specs$predictors else match.arg(model_specs$predictors, choices=c("date", "velocity.daily", "discharge.daily"), several.ok=TRUE)
   if('date' %in% model_specs$predictors) 
     model_specs$predictors[model_specs$predictors=='date'] <- 'as.numeric(date)'
   if(!(!('K600' %in% names(model_specs$transforms)) || 
@@ -248,14 +248,15 @@ Kmodel_aggregate_day <- function(
 #' @param predictors For Kmodel, character vector of variables (column names in 
 #'   data or data_daily) to use in predicting K. Leave blank or set to c() for 
 #'   no predictors. Otherwise, one or more of these may be included: c("date", 
-#'   "velocity.daily", "discharge.daily"). Other column names are also possible.
+#'   "velocity.daily", "discharge.daily").
 #' @param transforms For Kmodel, a named character vector of names of functions 
 #'   (probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
 #'   probably be logged. The vector names must match the values of 
 #'   \code{predictors}, although not all elements of \code{predictors} must be 
-#'   included in \code{transforms}. Recommended transforms include
+#'   included in \code{transforms}. Recommended transforms include 
 #'   \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}
 #' @inheritParams metab_Kmodel
+#' @inheritParams specs
 #' @keywords internal
 Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transforms, ...) {
   # remove rows whose weights signal they should be filtered out
@@ -273,7 +274,7 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
   # fit & return the model
   switch(
     engine,
-    mean = {
+    'mean' = {
       if(length(predictors) > 0) warning("predictors ignored for engine='mean'")
       Kobs <- eval(parse(text=trans_preds[['K600.obs']]), envir=data_daily_all)
       list(
@@ -285,13 +286,13 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
           sd(Kobs, na.rm=TRUE)/sqrt(nrow(data_daily_all)) # SE of the mean
         }))
     }, 
-    lm = {
+    'lm' = {
       if(length(predictors) == 0) predictors <- "1"
       formul <- formula(paste0(trans_preds["K600.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
       wts <- (if(length(weights) > 0) data_daily_all$weight else NULL)
       lm(formul, data=data_daily_all, weights=wts, ...)
     }, 
-    loess = {
+    'loess' = {
       if(length(predictors) < 1) stop("need at least one predictor for engine='loess'")
       formul <- formula(paste0(trans_preds["K600.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
       if(length(weights) > 0) {
@@ -338,8 +339,8 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   data_daily <- get_data_daily(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
   if(!isTRUE(use_saved) || is.null(data_daily) || !("K600" %in% names(data_daily))) {
-    engine <- get_args(metab_model)$engine
-    ktrans <- get_args(metab_model)$transforms['K600']
+    engine <- get_args(metab_model)$model_specs$engine
+    ktrans <- get_args(metab_model)$model_specs$transforms['K600']
     fit <- get_fit(metab_model)
     . <- '.dplyr.var'
     switch(

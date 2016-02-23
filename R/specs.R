@@ -16,10 +16,10 @@
 #' 
 #' @section Relevant arguments:
 #'   
-#'   * metab_bayes: Always relevant: \code{model_name, bayes_fun, 
-#'   bayes_software, keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, 
-#'   ER_daily_sigma, K600_daily_mu, K600_daily_sigma, priors, params_out, 
-#'   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. If 
+#'   * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine,
+#'   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma,
+#'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores,
+#'   burnin_steps, saved_steps, thin_steps, verbose}. If 
 #'   \code{mm_parse_name(model_name)$err_obs_iid} then also 
 #'   \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
 #'   \code{mm_parse_name(model_name)$err_proc_acor} then also 
@@ -27,7 +27,7 @@
 #'   err_proc_acor_sigma_min, err_proc_acor_sigma_max}. If 
 #'   \code{mm_parse_name(model_name)$err_proc_iid} then also 
 #'   \code{err_proc_iid_sigma_min, err_proc_iid_sigma_max}. If 
-#'   \code{features$bayes_software == 'jags'} then also \code{adapt_steps},
+#'   \code{features$engine == 'jags'} then also \code{adapt_steps},
 #'   
 #'   * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
 #'   K600_init}
@@ -51,16 +51,15 @@
 #'   second assumption, if the first assumption turns up no files of the given 
 #'   name).
 #'   
-#' @param engine The software or function to use in fitting the model. For 
-#'   type='bayes', one of \code{c('jags','stan')} indicating the software 
-#'   package to use for the MCMC process. For type='Kmodel', the name of an
-#'   interpolation or regression method relating K to the predictor[s] of
-#'   choice. One of \code{c("mean", "lm", "loess")}. For types in
-#'   \code{c('mle','night','sim')} there's only one option so it's not included
-#'   in \code{specs()} (but is nonetheless noted in the suffix of the model
-#'   name, e.g., \code{"m_np_oi_pm_km.nlm"} uses \code{nlm()} for model fitting)
-#' @param bayes_software character in \code{c('jags','stan')} indicating the 
-#'   software package to use for the MCMC process
+#' @param engine The software or function to use in fitting the model. Should be
+#'   specified via \code{mm_name} rather than here. For type='bayes', one of
+#'   \code{c('jags','stan')} indicating the software package to use for the MCMC
+#'   process. For type='Kmodel', the name of an interpolation or regression
+#'   method relating K to the predictor[s] of choice. One of \code{c("mean",
+#'   "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only
+#'   one option so it's not included in \code{specs()} (but is nonetheless noted
+#'   in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses
+#'   \code{nlm()} for model fitting)
 #'   
 #' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
 #'   process
@@ -132,9 +131,10 @@
 #' @export
 specs <- function(
   
-  ## All models
+  ## All or several models
   
   model_name = mm_name(),
+  engine,
   
   
   ## MLE
@@ -153,7 +153,6 @@ specs <- function(
   
   # model setup
   bayes_fun,
-  bayes_software,
   keep_mcmcs = TRUE,
   
   # hyperparameters
@@ -180,17 +179,14 @@ specs <- function(
   params_out,
   n_chains = 4,
   n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$bayes_software, jags=250, NA),
-  burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan=500, jags=250, NA),
-  saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan=500, jags=1000, NA),
+  adapt_steps = switch(mm_parse_name(model_name)$engine, jags=250, NA),
+  burnin_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=250, NA),
+  saved_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=1000, NA),
   thin_steps = 1,
   verbose = FALSE,
   
   
   ## Kmodel
-  
-  # model setup
-  engine = "lm",
   
   #inheritParams prepdata_Kmodel
   weights = c("K600/CI"),
@@ -248,7 +244,7 @@ specs <- function(
     # list all needed arguments
     included <- c(
       # model setup
-      'model_name', 'bayes_fun', 'bayes_software', 'keep_mcmcs',
+      'model_name', 'bayes_fun', 'engine', 'keep_mcmcs',
       
       # hyperparameters
       'GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma', 'K600_daily_mu', 'K600_daily_sigma',
@@ -261,7 +257,7 @@ specs <- function(
       
       # inheritParams mcmc_bayes
       'params_out', 'n_chains', 'n_cores', 
-      if(features$bayes_software == 'jags') 'adapt_steps', 
+      if(features$engine == 'jags') 'adapt_steps', 
       'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
     )
 
@@ -269,8 +265,8 @@ specs <- function(
     if('bayes_fun' %in% yes_missing) {
       all_specs$bayes_fun <- switch(features$pooling, none='bayes_1ply', NA)
     }
-    if('bayes_software' %in% yes_missing) {
-      all_specs$bayes_software <- features$bayes_software
+    if('engine' %in% yes_missing) {
+      all_specs$engine <- features$engine
     }
     if('params_out' %in% yes_missing) {
       all_specs$params_out <- c(
@@ -286,8 +282,8 @@ specs <- function(
       model_path <- model_name
     if(!file.exists(model_path)) 
       warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
-    if(features$bayes_software == "NA") 
-      stop('bayes_software must be specified for Bayesian models')
+    if(features$engine == "NA") 
+      stop('engine must be specified for Bayesian models')
     
   } else if(features$type == 'mle') {
     # list all needed arguments
@@ -308,6 +304,10 @@ specs <- function(
     # list all needed arguments
     included <- c('model_name', 'engine', 'weights', 'filters', 'predictors', 'transforms')
     
+    if('engine' %in% yes_missing) {
+      all_specs$engine <- features$engine
+    }
+
   } else if(features$type == 'sim') {
     # list all needed arguments
     included <- c('model_name', 'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi', 'ODE_method', 'sim.seed')

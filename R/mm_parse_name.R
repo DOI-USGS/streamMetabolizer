@@ -20,7 +20,7 @@ mm_parse_name <- function(model_name) {
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
   ode_method <- unname(c(eu='Euler', pm='pairmeans')[sapply(parsed, `[`, 4)])
   deficit_src <- unname(c(km='DO_mod', ko='DO_obs')[sapply(parsed, `[`, 5)])
-  bayes_software <- sapply(parsed, function(vec) vec[length(vec)]) # the last one - leaves room for custom name endings before the suffix
+  engine <- sapply(parsed, function(vec) vec[length(vec)]) # the last one - leaves room for custom name endings before the suffix
   
   data.frame(
     type=type,
@@ -30,6 +30,6 @@ mm_parse_name <- function(model_name) {
     err_proc_iid=err_proc_iid,
     ode_method=ifelse(is.na(ode_method), 'NA', ode_method),
     deficit_src=ifelse(is.na(deficit_src), 'NA', deficit_src),
-    bayes_software=ifelse(is.na(bayes_software), 'NA', bayes_software), 
+    engine=ifelse(is.na(engine), 'NA', engine), 
     stringsAsFactors=FALSE)
 }

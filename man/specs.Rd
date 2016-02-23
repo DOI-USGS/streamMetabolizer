@@ -4,21 +4,19 @@
 \alias{specs}
 \title{Generate a coherent list of model specs}
 \usage{
-specs(model_name = mm_name(), GPP_init = 10, ER_init = -10,
-  K600_init = 10, calc_DO_fun, ODE_method, bayes_fun, bayes_software,
-  keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
-  ER_daily_mu = -10, ER_daily_sigma = 10, K600_daily_mu = 10,
-  K600_daily_sigma = 10, err_obs_iid_sigma_min = 0,
-  err_obs_iid_sigma_max = 5, err_proc_acor_phi_min = 0,
-  err_proc_acor_phi_max = 1, err_proc_acor_sigma_min = 0,
-  err_proc_acor_sigma_max = 5, err_proc_iid_sigma_min = 0,
-  err_proc_iid_sigma_max = 5, priors = FALSE, params_out, n_chains = 4,
-  n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$bayes_software, jags = 250,
-  NA), burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan =
-  500, jags = 250, NA),
-  saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan = 500,
-  jags = 1000, NA), thin_steps = 1, verbose = FALSE, engine = "lm",
+specs(model_name = mm_name(), engine, GPP_init = 10, ER_init = -10,
+  K600_init = 10, calc_DO_fun, ODE_method, bayes_fun, keep_mcmcs = TRUE,
+  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
+  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
+  err_obs_iid_sigma_min = 0, err_obs_iid_sigma_max = 5,
+  err_proc_acor_phi_min = 0, err_proc_acor_phi_max = 1,
+  err_proc_acor_sigma_min = 0, err_proc_acor_sigma_max = 5,
+  err_proc_iid_sigma_min = 0, err_proc_iid_sigma_max = 5, priors = FALSE,
+  params_out, n_chains = 4, n_cores = 4,
+  adapt_steps = switch(mm_parse_name(model_name)$engine, jags = 250, NA),
+  burnin_steps = switch(mm_parse_name(model_name)$engine, stan = 500, jags =
+  250, NA), saved_steps = switch(mm_parse_name(model_name)$engine, stan = 500,
+  jags = 1000, NA), thin_steps = 1, verbose = FALSE,
   weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
   velocity.daily.max = NA), predictors = c("discharge.daily"),
   transforms = c(K600 = "log", date = NA, velocity.daily = "log",
@@ -36,6 +34,16 @@ directory (the first assumption; this directory can be found with
 absolute path or a path relative to the current working directory (the 
 second assumption, if the first assumption turns up no files of the given 
 name).}
+
+\item{engine}{The software or function to use in fitting the model. Should be
+specified via \code{mm_name} rather than here. For type='bayes', one of
+\code{c('jags','stan')} indicating the software package to use for the MCMC
+process. For type='Kmodel', the name of an interpolation or regression
+method relating K to the predictor[s] of choice. One of \code{c("mean",
+"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only
+one option so it's not included in \code{specs()} (but is nonetheless noted
+in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses
+\code{nlm()} for model fitting)}
 
 \item{GPP_init}{the inital value of daily GPP to use in the NLM fitting 
 process}
@@ -63,9 +71,6 @@ methods}
 \item{bayes_fun}{character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 whether the data should be split into daily chunks first ('bayes_1ply') or 
 passed to the model fitting function in one big chunk ('bayes_all')}
-
-\item{bayes_software}{character in \code{c('jags','stan')} indicating the 
-software package to use for the MCMC process}
 
 \item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates 
 (coerced with as.Date if character, etc.) indicating whether to keep all of
@@ -136,15 +141,6 @@ means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
-\item{engine}{The software or function to use in fitting the model. For 
-type='bayes', one of \code{c('jags','stan')} indicating the software 
-package to use for the MCMC process. For type='Kmodel', the name of an
-interpolation or regression method relating K to the predictor[s] of
-choice. One of \code{c("mean", "lm", "loess")}. For types in
-\code{c('mle','night','sim')} there's only one option so it's not included
-in \code{specs()} (but is nonetheless noted in the suffix of the model
-name, e.g., \code{"m_np_oi_pm_km.nlm"} uses \code{nlm()} for model fitting)}
-
 \item{weights}{For Kmodel, character vector indicating the type of weighting 
 to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 
@@ -158,13 +154,13 @@ velocity.daily.max}
 \item{predictors}{For Kmodel, character vector of variables (column names in 
 data or data_daily) to use in predicting K. Leave blank or set to c() for 
 no predictors. Otherwise, one or more of these may be included: c("date", 
-"velocity.daily", "discharge.daily"). Other column names are also possible.}
+"velocity.daily", "discharge.daily").}
 
 \item{transforms}{For Kmodel, a named character vector of names of functions 
 (probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
 probably be logged. The vector names must match the values of 
 \code{predictors}, although not all elements of \code{predictors} must be 
-included in \code{transforms}. Recommended transforms include
+included in \code{transforms}. Recommended transforms include 
 \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
@@ -209,10 +205,10 @@ arguments whose default is a vector, e.g.,
 \section{Relevant arguments}{
 
   
-  * metab_bayes: Always relevant: \code{model_name, bayes_fun, 
-  bayes_software, keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, 
-  ER_daily_sigma, K600_daily_mu, K600_daily_sigma, priors, params_out, 
-  n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. If 
+  * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine,
+  keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma,
+  K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores,
+  burnin_steps, saved_steps, thin_steps, verbose}. If 
   \code{mm_parse_name(model_name)$err_obs_iid} then also 
   \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
   \code{mm_parse_name(model_name)$err_proc_acor} then also 
@@ -220,7 +216,7 @@ arguments whose default is a vector, e.g.,
   err_proc_acor_sigma_min, err_proc_acor_sigma_max}. If 
   \code{mm_parse_name(model_name)$err_proc_iid} then also 
   \code{err_proc_iid_sigma_min, err_proc_iid_sigma_max}. If 
-  \code{features$bayes_software == 'jags'} then also \code{adapt_steps},
+  \code{features$engine == 'jags'} then also \code{adapt_steps},
   
   * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
   K600_init}

@@ -16,7 +16,7 @@ vspring1day <- vspring[vspring$solar.time >= as.POSIXct("2014-10-27 22:00:00", t
 
 devel_tests <- function() {
   
-  jags_args <- c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+  jags_args <- c('engine','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
   stan_args <- jags_args[-which(jags_args=='adapt_steps')]
   
   #### b_np_oi_pm_km.jags ####
@@ -242,8 +242,8 @@ manual_tests <- function() {
   
   # for serious debugging:
   debug_metab <- function(model_specs) {
-    jags_args <- c('bayes_software','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
-    mcmc_args <- if(model_specs$bayes_software == 'jags') jags_args else jags_args[-which(jags_args=='adapt_steps')]
+    jags_args <- c('engine','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+    mcmc_args <- if(model_specs$engine == 'jags') jags_args else jags_args[-which(jags_args=='adapt_steps')]
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
       data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", model_specs=model_specs, priors=FALSE) 

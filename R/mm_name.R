@@ -23,7 +23,7 @@
 #'   mean values of GPP, ER, etc. across t=1 and t=2.
 #' @param deficit_src From what DO estimate (observed or modeled) should the DO 
 #'   deficit be computed?
-#' @param bayes_software Which software are we generating code for?
+#' @param engine Which software are we generating code for?
 #' @param check_validity if TRUE, checks the resulting name against 
 #'   mm_valid_names(type).
 #' @import dplyr
@@ -41,7 +41,7 @@ mm_name <- function(
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler','NA'),
   deficit_src=c('DO_mod','DO_obs','NA'),
-  bayes_software=c('stan','jags','nlm','lm','mean','loess','rnorm'),
+  engine=c('stan','jags','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
   
   # determine type
@@ -53,7 +53,7 @@ mm_name <- function(
     relevant_args <- names(formals(mm_name)) %>% .[!(. %in% c('type','check_validity'))]
   } else {
     # only one argument allowed for Kmodel
-    relevant_args <- 'bayes_software' 
+    relevant_args <- 'engine' 
     # directly specify all the rest
     pooling='none'
     err_obs_iid=FALSE
@@ -81,12 +81,12 @@ mm_name <- function(
     deficit_src <- match.arg(deficit_src)
     if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
   } else {
-    if(any(!(given_args %in% c('type','bayes_software','check_validity'))))
-       stop("for Kmodel, only type, bayes_software, and check_validity may be specified")
+    if(any(!(given_args %in% c('type','engine','check_validity'))))
+       stop("for Kmodel, only type, engine, and check_validity may be specified")
   }
-  bayes_software <- match.arg(bayes_software)
-  if(!(bayes_software %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
-    stop("mismatch between type (",type,") and bayes_software (",bayes_software,")")
+  engine <- match.arg(engine)
+  if(!(engine %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
+    stop("mismatch between type (",type,") and engine (",engine,")")
   
   # make the name
   mmname <- paste0(
@@ -95,7 +95,7 @@ mm_name <- function(
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
     c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
-    bayes_software)
+    engine)
   
   # check validity if requested
   check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]

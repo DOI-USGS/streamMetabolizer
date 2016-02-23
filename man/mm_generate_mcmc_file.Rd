@@ -7,7 +7,7 @@
 mm_generate_mcmc_file(type = "bayes", pooling = "none",
   err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
   err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler"),
-  deficit_src = c("DO_mod", "DO_obs"), bayes_software = c("stan", "jags"))
+  deficit_src = c("DO_mod", "DO_obs"), engine = c("stan", "jags"))
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 
@@ -33,7 +33,7 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
 
-\item{bayes_software}{Which software are we generating code for?}
+\item{engine}{Which software are we generating code for?}
 }
 \description{
 Generate the models in inst/models/bayes

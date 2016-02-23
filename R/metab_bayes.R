@@ -162,7 +162,7 @@ bayes_1ply <- function(
         } else {
           isTRUE(ply_date %in% model_specs$keep_mcmcs)
         }
-        all_mcmc_args <- c('bayes_software','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+        all_mcmc_args <- c('engine','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
           model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
@@ -279,7 +279,7 @@ prepdata_bayes <- function(
 #' Run an MCMC simulation on a formatted data ply
 #' 
 #' @param data_list a formatted list of inputs to the JAGS model
-#' @param bayes_software character string indicating which software to use
+#' @param engine character string indicating which software to use
 #' @param model_path the JAGS model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
@@ -298,14 +298,14 @@ prepdata_bayes <- function(
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, bayes_software=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
-  bayes_software <- match.arg(bayes_software)
-  bayes_function <- switch(bayes_software, jags = runjags_bayes, stan = runstan_bayes)
+mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
+  engine <- match.arg(engine)
+  bayes_function <- switch(engine, jags = runjags_bayes, stan = runstan_bayes)
   
   tot_cores <- detectCores()
   if (!is.finite(tot_cores)) { tot_cores <- 1 } 
   n_cores <- min(tot_cores, n_cores)
-  message(paste0("MCMC (",bayes_software,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
+  message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 

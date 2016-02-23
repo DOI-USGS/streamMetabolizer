@@ -8,8 +8,8 @@ mm_name(type = c("bayes", "mle", "night", "Kmodel", "sim"),
   pooling = c("none", "partial"), err_obs_iid = c(TRUE, FALSE),
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
   ode_method = c("pairmeans", "Euler", "NA"), deficit_src = c("DO_mod",
-  "DO_obs", "NA"), bayes_software = c("stan", "jags", "nlm", "lm", "mean",
-  "loess", "rnorm"), check_validity = TRUE)
+  "DO_obs", "NA"), engine = c("stan", "jags", "nlm", "lm", "mean", "loess",
+  "rnorm"), check_validity = TRUE)
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 
@@ -35,7 +35,7 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
 
-\item{bayes_software}{Which software are we generating code for?}
+\item{engine}{Which software are we generating code for?}
 
 \item{check_validity}{if TRUE, checks the resulting name against 
 mm_valid_names(type).}

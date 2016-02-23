@@ -10,18 +10,18 @@ mm_generate_mcmc_file <- function(
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler'),
   deficit_src=c('DO_mod','DO_obs'),
-  bayes_software=c('stan','jags')) {
+  engine=c('stan','jags')) {
 
   # name the model. much argument checking happens here, even with
   # check_validity=FALSE (which is needed to avoid circularity)
   model_name <- mm_name(
-    type='bayes', bayes_software=bayes_software, ode_method=ode_method, deficit_src=deficit_src, 
+    type='bayes', engine=engine, ode_method=ode_method, deficit_src=deficit_src, 
     err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pooling=pooling,
     check_validity=FALSE)
   
   # helper functions
   comment <- function(...) { # prefix with the appropriate comment character[s]
-    chr <- switch(bayes_software, jags='#', stan='//')
+    chr <- switch(engine, jags='#', stan='//')
     paste0(chr, ' ', paste0(...))
   }
   chunk <- function(..., indent=2, newline=TRUE) { # indent a chunk & add a newline
@@ -40,7 +40,7 @@ mm_generate_mcmc_file <- function(
   }
   f <- function(distrib, ...) { # switch things to JAGS format if needed
     args <- c(list(...))
-    if(bayes_software=='jags') {
+    if(engine=='jags') {
       switch(
         distrib,
         normal = {
@@ -59,7 +59,7 @@ mm_generate_mcmc_file <- function(
   }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) { # line with stop/semicolon: combine strings into string & add semicolon if needed
-    p(p(...), switch(bayes_software, jags='', stan=';'))
+    p(p(...), switch(engine, jags='', stan=';'))
   }
   
   # define the model
@@ -68,7 +68,7 @@ mm_generate_mcmc_file <- function(
     comment(model_name), '',
     
     ## data ##
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       
       'data {',
       
@@ -115,13 +115,13 @@ mm_generate_mcmc_file <- function(
     
     ## Stan: transformed data ## - statements evaluated exactly once
     ## JAGS: data ##
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       'transformed data {'
-    ) else if(bayes_software == 'jags') c(
+    ) else if(engine == 'jags') c(
       'data {'
     ),
     
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       chunk(
         'vector [n-1] coef_GPP;',
         'vector [n-1] coef_ER;',
@@ -184,7 +184,7 @@ mm_generate_mcmc_file <- function(
     ),
     
     ## Stan: parameters ##
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       'parameters {',
       
       indent(
@@ -211,13 +211,13 @@ mm_generate_mcmc_file <- function(
     
     ## Stan: transformed parameters ## - statements evaluated once per leapfrog step
     ## JAGS: model ##
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       'transformed parameters {'
-    ) else if(bayes_software == 'jags') c(
+    ) else if(engine == 'jags') c(
       'model {'
     ),
     
-    if(bayes_software == 'stan') chunk(
+    if(engine == 'stan') chunk(
       if(err_obs_iid)
         'vector [n] DO_mod;',
       if(deficit_src == 'DO_obs')
@@ -287,14 +287,14 @@ mm_generate_mcmc_file <- function(
       )
     ),
       
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       '}',''
-    ) else if(bayes_software == 'jags') c(
+    ) else if(engine == 'jags') c(
       ''
     ),
     
     ## model ##
-    if(bayes_software == 'stan') c(
+    if(engine == 'stan') c(
       'model {'
     ),
     
@@ -355,7 +355,7 @@ mm_generate_mcmc_files <- function() {
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('pairmeans','Euler'),
     deficit_src=c('DO_mod','DO_obs'),
-    bayes_software=c('stan','jags'),
+    engine=c('stan','jags'),
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   

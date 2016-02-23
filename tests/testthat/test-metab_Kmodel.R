@@ -10,7 +10,7 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   K600_mm1 <- predict_metab(mm1) %>% select(date, K600, K600.lower, K600.upper)
   
   # smooth the K600s
-  expect_warning({mm2 <- metab_Kmodel(data_daily=K600_mm1, method='mean', transforms=c(K600='log'))}, "no SE available")
+  expect_warning({mm2 <- metab_Kmodel(data_daily=K600_mm1, model_specs=specs(mm_name("Kmodel", engine='mean'), transforms=c(K600='log'), weights=c(), predictors=c()))}, "no SE available")
   K600_mm2 <- predict_metab(mm2) %>% select(date, K600)
   
   # refit the MLE with fixed K
