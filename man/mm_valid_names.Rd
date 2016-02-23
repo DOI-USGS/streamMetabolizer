@@ -4,7 +4,7 @@
 \alias{mm_valid_names}
 \title{Get the valid names for a given model type or types}
 \usage{
-mm_valid_names(type = c("bayes", "mle", "night", "sim"))
+mm_valid_names(type = c("bayes", "mle", "night", "Kmodel", "sim"))
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 

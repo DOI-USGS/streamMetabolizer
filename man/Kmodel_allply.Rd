@@ -4,28 +4,27 @@
 \alias{Kmodel_allply}
 \title{Fit a K model}
 \usage{
-Kmodel_allply(data_daily_all, method, weights, predictors, transforms, ...)
+Kmodel_allply(data_daily_all, engine, weights, predictors, transforms, ...)
 }
 \arguments{
 \item{data_daily_all}{data to use as input, with columns including K600.obs, 
 weight, and any predictors}
 
-\item{method}{the name of an interpolation or regression method relating K to
-the predictor[s] of choice.}
+\item{predictors}{For Kmodel, character vector of variables (column names in 
+data or data_daily) to use in predicting K. Leave blank or set to c() for 
+no predictors. Otherwise, one or more of these may be included: c("date", 
+"velocity.daily", "discharge.daily"). Other column names are also possible.}
 
-\item{weights}{character vector indicating the type of weighting to use. 
-Leave blank or set to c() for no weights.}
-
-\item{predictors}{character vector of variables (column names in data or 
-data_daily) to use in predicting K. Leave blank or set to c() for no 
-predictors.}
-
-\item{transforms}{a named character vector of names of functions (probably
-'log' or NA) to apply to K600 and/or the predictors. K600 should probably
-be logged.}
+\item{transforms}{For Kmodel, a named character vector of names of functions 
+(probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
+probably be logged. The vector names must match the values of 
+\code{predictors}, although not all elements of \code{predictors} must be 
+included in \code{transforms}. Recommended transforms include
+\code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{...}{Other arguments passed to the fitting function given by 
-\code{method}. \code{na.rm=TRUE} is already passed to \code{mean}}
+\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to
+\code{mean}}
 }
 \description{
 The model will predict daily K estimates from preliminary daily K estimates. 

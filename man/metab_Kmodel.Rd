@@ -7,13 +7,10 @@
 metab_Kmodel(data = mm_data(solar.time, discharge, velocity, optional =
   c("all")), data_daily = mm_data(date, K600, K600.lower, K600.upper,
   discharge.daily, velocity.daily, optional = c("K600.lower", "K600.upper",
-  "discharge.daily", "velocity.daily")), method = c("mean", "lm", "loess"),
-  weights = c("CI", "CI/K600"), predictors = c("date", "velocity.daily",
-  "discharge.daily"), filters = c(CI.max = NA, discharge.daily.max = NA,
-  velocity.daily.max = NA), transforms = c(K600 = "log", date = NA,
-  velocity.daily = "log", discharge.daily = "log"), info = NULL,
-  day_start = 4, day_end = 27.99, tests = c("full_day", "even_timesteps",
-  "complete_data"), ...)
+  "discharge.daily", "velocity.daily")),
+  model_specs = specs(mm_name("Kmodel")), info = NULL, day_start = 4,
+  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"),
+  ...)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -23,24 +20,10 @@ default. See \code{\link{mm_data}} for a full data description.}
 \item{data_daily}{data.frame containing inputs with a daily timestep. See 
 \code{\link{mm_data}} for a full data description.}
 
-\item{method}{the name of an interpolation or regression method relating K to
-the predictor[s] of choice.}
-
-\item{weights}{character vector indicating the type of weighting to use. 
-Leave blank or set to c() for no weights.}
-
-\item{predictors}{character vector of variables (column names in data or 
-data_daily) to use in predicting K. Leave blank or set to c() for no 
-predictors.}
-
-\item{filters}{named numeric vector of limits to use in filtering data_daily.
-If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.max") is 
-given, the corresponding filter is applied: K600.upper-K600.lower >= 
-CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
-
-\item{transforms}{a named character vector of names of functions (probably
-'log' or NA) to apply to K600 and/or the predictors. K600 should probably
-be logged.}
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier to \code{specs} to 
+generate the list. The help file for that functions lists the necessary 
+parameters, describes them in detail, and gives default values.}
 
 \item{info}{any information, in any format, that you would like to store 
 within the metab_model object}
@@ -68,7 +51,8 @@ times.}
 \item{tests}{list of tests to conduct}
 
 \item{...}{Other arguments passed to the fitting function given by 
-\code{method}. \code{na.rm=TRUE} is already passed to \code{mean}}
+\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to
+\code{mean}}
 }
 \value{
 A metab_Kmodel object containing the fitted model.
@@ -117,9 +101,11 @@ frk2 <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
   
 # 1-day tests
 frk <- data.frame(date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
-metab_Kmodel(data=fr, data_daily=frk, method='mean')
-#metab_Kmodel(data=fr, data_daily=frk, method='lm') # NaN warning
-#metab_Kmodel(data=fr, data_daily=frk, method='loess', predictors='date') # span error
+metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(mm_name("Kmodel", engine='mean')))
+#metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
+#  mm_name("Kmodel", engine='lm'))) # NaN warning
+#metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
+#  mm_name("Kmodel", engine='loess')), predictors='date') # span error
 
 # mean
 mm <- metab_Kmodel(data_daily=frk2, method='mean')

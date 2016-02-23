@@ -18,8 +18,12 @@ specs(model_name = mm_name(), GPP_init = 10, ER_init = -10,
   NA), burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan =
   500, jags = 250, NA),
   saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan = 500,
-  jags = 1000, NA), thin_steps = 1, verbose = FALSE, err.obs.sigma = 0.1,
-  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
+  jags = 1000, NA), thin_steps = 1, verbose = FALSE, engine = "lm",
+  weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
+  velocity.daily.max = NA), predictors = c("discharge.daily"),
+  transforms = c(K600 = "log", date = NA, velocity.daily = "log",
+  discharge.daily = "log"), err.obs.sigma = 0.1, err.obs.phi = 0,
+  err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -132,6 +136,37 @@ means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
+\item{engine}{The software or function to use in fitting the model. For 
+type='bayes', one of \code{c('jags','stan')} indicating the software 
+package to use for the MCMC process. For type='Kmodel', the name of an
+interpolation or regression method relating K to the predictor[s] of
+choice. One of \code{c("mean", "lm", "loess")}. For types in
+\code{c('mle','night','sim')} there's only one option so it's not included
+in \code{specs()} (but is nonetheless noted in the suffix of the model
+name, e.g., \code{"m_np_oi_pm_km.nlm"} uses \code{nlm()} for model fitting)}
+
+\item{weights}{For Kmodel, character vector indicating the type of weighting 
+to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
+
+\item{filters}{For Kmodel, named numeric vector of limits to use in filtering
+data_daily. Elements may include
+c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
+given, the corresponding filter is applied: K600.upper-K600.lower <=
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
+velocity.daily.max}
+
+\item{predictors}{For Kmodel, character vector of variables (column names in 
+data or data_daily) to use in predicting K. Leave blank or set to c() for 
+no predictors. Otherwise, one or more of these may be included: c("date", 
+"velocity.daily", "discharge.daily"). Other column names are also possible.}
+
+\item{transforms}{For Kmodel, a named character vector of names of functions 
+(probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
+probably be logged. The vector names must match the values of 
+\code{predictors}, although not all elements of \code{predictors} must be 
+included in \code{transforms}. Recommended transforms include
+\code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
+
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 
 full time series of modeled values.}
@@ -168,7 +203,8 @@ make a mistake). Relevant arguments for the given \code{model_name} either
 have default values or do not (see Usage). Relevant arguments without a 
 default should rarely be overridden, because their values will be determined 
 based on other arguments. Relevant arguments that do have a default can, and 
-often should, be overridden to tailor the model to your needs.
+often should, be overridden to tailor the model to your needs. Relevant 
+arguments whose default is a vector, e.g.,
 }
 \section{Relevant arguments}{
 
@@ -190,6 +226,9 @@ often should, be overridden to tailor the model to your needs.
   K600_init}
   
   * metab_night: \code{model_name}
+  
+  * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
+  transforms}
   
   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
   err.proc.phi, ODE_method, sim.seed}

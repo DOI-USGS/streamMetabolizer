@@ -11,7 +11,8 @@
 #' have default values or do not (see Usage). Relevant arguments without a 
 #' default should rarely be overridden, because their values will be determined 
 #' based on other arguments. Relevant arguments that do have a default can, and 
-#' often should, be overridden to tailor the model to your needs.
+#' often should, be overridden to tailor the model to your needs. Relevant 
+#' arguments whose default is a vector, e.g.,
 #' 
 #' @section Relevant arguments:
 #'   
@@ -33,6 +34,9 @@
 #'   
 #'   * metab_night: \code{model_name}
 #'   
+#'   * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
+#'   transforms}
+#'   
 #'   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
 #'   err.proc.phi, ODE_method, sim.seed}
 #'   
@@ -47,6 +51,17 @@
 #'   second assumption, if the first assumption turns up no files of the given 
 #'   name).
 #'   
+#' @param engine The software or function to use in fitting the model. For 
+#'   type='bayes', one of \code{c('jags','stan')} indicating the software 
+#'   package to use for the MCMC process. For type='Kmodel', the name of an
+#'   interpolation or regression method relating K to the predictor[s] of
+#'   choice. One of \code{c("mean", "lm", "loess")}. For types in
+#'   \code{c('mle','night','sim')} there's only one option so it's not included
+#'   in \code{specs()} (but is nonetheless noted in the suffix of the model
+#'   name, e.g., \code{"m_np_oi_pm_km.nlm"} uses \code{nlm()} for model fitting)
+#' @param bayes_software character in \code{c('jags','stan')} indicating the 
+#'   software package to use for the MCMC process
+#'   
 #' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
 #'   process
 #' @param ER_init the inital value of daily ER to use in the NLM fitting process
@@ -60,8 +75,6 @@
 #' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
 #'   whether the data should be split into daily chunks first ('bayes_1ply') or 
 #'   passed to the model fitting function in one big chunk ('bayes_all')
-#' @param bayes_software character in \code{c('jags','stan')} indicating the 
-#'   software package to use for the MCMC process
 #' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
 #'   (coerced with as.Date if character, etc.) indicating whether to keep all of
 #'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
@@ -96,6 +109,9 @@
 #'   uncorrelated (IID) component of process [& sometimes observation] error
 #' @param err_proc_iid_sigma_max upper bound on the standard deviation of the 
 #'   uncorrelated (IID) component of process [& sometimes observation] error
+#'   
+#' @inheritParams prepdata_Kmodel
+#' @inheritParams Kmodel_allply
 #'   
 #' @inheritParams prepdata_bayes
 #' @inheritParams mcmc_bayes
@@ -171,6 +187,20 @@ specs <- function(
   verbose = FALSE,
   
   
+  ## Kmodel
+  
+  # model setup
+  engine = "lm",
+  
+  #inheritParams prepdata_Kmodel
+  weights = c("K600/CI"),
+  filters = c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA),
+  
+  #inheritParams Kmodel_allply
+  predictors = c("discharge.daily"), 
+  transforms = c(K600='log', date=NA, velocity.daily="log", discharge.daily="log"),
+  
+  
   ## Sim
   
   # inheritParams calc_DO_mod_w_sim_error
@@ -206,7 +236,7 @@ specs <- function(
   features <- mm_parse_name(model_name)
   
   # logic checks
-  if(features$pooling != 'none') stop("models with pooling are not implemented yet")
+  if(!(features$pooling %in% c('none'))) stop("models with pooling are not implemented yet")
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
@@ -273,6 +303,10 @@ specs <- function(
   } else if(features$type == 'night') {
     # list all needed arguments
     included <- c('model_name')
+    
+  } else if(features$type == 'Kmodel') {
+    # list all needed arguments
+    included <- c('model_name', 'engine', 'weights', 'filters', 'predictors', 'transforms')
     
   } else if(features$type == 'sim') {
     # list all needed arguments

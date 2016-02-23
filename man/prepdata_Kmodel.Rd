@@ -12,13 +12,15 @@ prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end, tests)
 
 \item{data_daily}{daily data to prepare for K modeling}
 
-\item{weights}{character vector indicating the type of weighting to use. 
-Leave blank or set to c() for no weights.}
+\item{weights}{For Kmodel, character vector indicating the type of weighting 
+to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 
-\item{filters}{named numeric vector of limits to use in filtering data_daily.
-If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.max") is 
-given, the corresponding filter is applied: K600.upper-K600.lower >= 
-CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
+\item{filters}{For Kmodel, named numeric vector of limits to use in filtering
+data_daily. Elements may include
+c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
+given, the corresponding filter is applied: K600.upper-K600.lower <=
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
+velocity.daily.max}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours 
 from the midnight that begins the date. For example, day_start=-1.5 

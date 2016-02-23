@@ -1,11 +1,12 @@
 context('mm_name')
 
-test_that("mm_name can generate names and mm_parse_name can parse them", {
+test_that("mm_name can generate names", {
   # missing args OK
   expect_equal(mm_name(), "b_np_oipi_pm_km.stan")
   expect_equal(mm_name('bayes'), "b_np_oipi_pm_km.stan")
   expect_equal(mm_name('m'), "m_np_oi_pm_km.nlm") # even abbreviations work! lazy, though
   expect_equal(mm_name('sim'), "s_np_oipcpi_eu_.rnorm")
+  expect_equal(mm_name('Kmodel'), "K_np___.lm")
   expect_equal(mm_name(pooling='none'), "b_np_oipi_pm_km.stan")
   expect_equal(mm_name('b', pooling='none', err_proc_acor=TRUE), "b_np_oipcpi_pm_km.stan")
   
@@ -14,6 +15,19 @@ test_that("mm_name can generate names and mm_parse_name can parse them", {
   expect_error(mm_name('m', err_proc_iid=TRUE), 'not among valid')
   expect_error(mm_name('s', err_proc_iid=FALSE), 'not among valid')
   expect_error(mm_name('n', ode_method='pairmeans'), 'not among valid')
+})
+
+test_that("mm_parse_name can parse names", {
+  # parse a name
+  expect_is(mm_parse_name("m_np_oi_pm_km.nlm"), "data.frame")
+  expect_equal(dim(mm_parse_name("m_np_oi_pm_km.nlm")), c(1,8))
+  expect_equal(mm_parse_name("n_np_pi_eu_.lm")$ode_method, "Euler")
+  expect_equal(mm_parse_name("s_np_oipcpi_eu_.rnorm")$pooling, "none")
+  expect_equal(mm_parse_name(mm_valid_names("Kmodel"))$bayes_software, c('lm','mean','loess'))
+  
+  # parse and then rebuild a name
+  expect_equal(do.call(mm_name, mm_parse_name("b_np_oipi_pm_km.stan")), "b_np_oipi_pm_km.stan")
+  expect_equal(do.call(mm_name, mm_parse_name("K_np___.lm")[c('type','bayes_software')]), "K_np___.lm")
 })
 
 test_that("mm_valid_names and mm_validate_names check model names", {

@@ -7,7 +7,7 @@
 #' 
 #' @inheritParams mm_name
 #' @export
-mm_valid_names <- function(type=c('bayes','mle','night','sim')) {
+mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
 
   type <- match.arg(type, several.ok=TRUE)
   
@@ -49,9 +49,17 @@ mm_valid_names <- function(type=c('bayes','mle','night','sim')) {
       c(favorites, mnames[-which(mnames %in% favorites)])
     },
     night=c(
+      # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
       mm_name(type='night', pooling='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='lm', check_validity=FALSE)
     ),
+    Kmodel=c(
+      # this causes finite recursion because all [Kmodel] args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
+      mm_name(type='Kmodel', bayes_software='lm', check_validity=FALSE),
+      mm_name(type='Kmodel', bayes_software='mean', check_validity=FALSE),
+      mm_name(type='Kmodel', bayes_software='loess', check_validity=FALSE)
+    ),
     sim=c(
+      # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
       mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', bayes_software='rnorm', check_validity=FALSE),
       mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', bayes_software='rnorm', check_validity=FALSE)
     )

@@ -4,11 +4,12 @@
 \alias{mm_name}
 \title{Find the name of a model by its features}
 \usage{
-mm_name(type = c("bayes", "mle", "night", "sim"), pooling = "none",
-  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
-  err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler", "NA"),
-  deficit_src = c("DO_mod", "DO_obs", "NA"), bayes_software = c("stan",
-  "jags", "nlm", "lm", "rnorm"), check_validity = TRUE)
+mm_name(type = c("bayes", "mle", "night", "Kmodel", "sim"),
+  pooling = c("none", "partial"), err_obs_iid = c(TRUE, FALSE),
+  err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
+  ode_method = c("pairmeans", "Euler", "NA"), deficit_src = c("DO_mod",
+  "DO_obs", "NA"), bayes_software = c("stan", "jags", "nlm", "lm", "mean",
+  "loess", "rnorm"), check_validity = TRUE)
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 

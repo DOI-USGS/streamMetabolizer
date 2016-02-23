@@ -13,7 +13,7 @@ mm_parse_name <- function(model_name) {
 
   parsed <- strsplit(basename(model_name), "_|\\.")
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
-  type <- unname(c(b='bayes', m='mle', n='night', s='sim')[sapply(parsed, `[`, 1)])
+  type <- unname(c(b='bayes', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
   pooling <- unname(c(np='none')[sapply(parsed, `[`, 2)])
   err_obs_iid <- grepl('oi', sapply(parsed, `[`, 3))
   err_proc_acor <- grepl('pc', sapply(parsed, `[`, 3))
