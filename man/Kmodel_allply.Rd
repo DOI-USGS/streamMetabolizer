@@ -4,20 +4,21 @@
 \alias{Kmodel_allply}
 \title{Fit a K model}
 \usage{
-Kmodel_allply(data_daily_all, engine, weights, predictors, transforms, ...)
+Kmodel_allply(data_daily_all, engine, weights, predictors, transforms,
+  other_args)
 }
 \arguments{
 \item{data_daily_all}{data to use as input, with columns including K600.obs, 
 weight, and any predictors}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For type='bayes', one of
+specified via \code{mm_name} rather than here. For type='bayes', one of 
 \code{c('jags','stan')} indicating the software package to use for the MCMC
-process. For type='Kmodel', the name of an interpolation or regression
-method relating K to the predictor[s] of choice. One of \code{c("mean",
-"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only
+process. For type='Kmodel', the name of an interpolation or regression 
+method relating K to the predictor[s] of choice. One of \code{c("mean", 
+"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
 one option so it's not included in \code{specs()} (but is nonetheless noted
-in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses
+in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
 \code{nlm()} for model fitting)}
 
 \item{predictors}{For Kmodel, character vector of variables (column names in 
@@ -32,9 +33,9 @@ probably be logged. The vector names must match the values of
 included in \code{transforms}. Recommended transforms include 
 \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
-\item{...}{Other arguments passed to the fitting function given by 
-\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to
-\code{mean}}
+\item{other_args}{Other arguments passed to the fitting function given by 
+\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to 
+\code{mean} (which is actually implemented as \code{sum}, anyway).}
 }
 \description{
 The model will predict daily K estimates from preliminary daily K estimates. 

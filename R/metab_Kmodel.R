@@ -36,46 +36,26 @@ NULL
 #' @author Alison Appling
 #' @inheritParams metab_model_prototype
 #' @inheritParams mm_is_valid_day
-#' @param ... Other arguments passed to the fitting function given by 
-#'   \code{model_specs$engine}. \code{na.rm=TRUE} is already passed to
-#'   \code{mean}
 #' @return A metab_Kmodel object containing the fitted model.
 #' @examples
 #' \dontrun{
 #' library(dplyr)
-#' fr <- streamMetabolizer:::load_french_creek() %>% unitted::v() %>% 
-#'   filter(format(solar.time, "%Y-%m-%d") == "2012-08-24") %>% 
-#'   select(solar.time)
-#' fr <- fr %>% mutate(discharge.daily=exp(rnorm(nrow(fr))))
-#' frk2 <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
-#'   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
+#' set.seed(24842)
+#' example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
+#'   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) %>%
+#'   mutate(K600.lower=K600-5, K600.upper=K600+6)
 #'   
-#' # 1-day tests
-#' frk <- data.frame(date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
-#' metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(mm_name("Kmodel", engine='mean')))
-#' #metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
-#' #  mm_name("Kmodel", engine='lm'))) # NaN warning
-#' #metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
-#' #  mm_name("Kmodel", engine='loess')), predictors='date') # span error
+#' mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+#'   mm_name('Kmodel', engine='mean'))) # two warnings expected
+#' plot_metab_preds(predict_metab(mm))
 #' 
-#' # mean
-#' mm <- metab_Kmodel(data_daily=frk2, method='mean')
+#' mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+#'   mm_name('Kmodel', engine='lm'), predictors='discharge.daily'))
+#' plot_metab_preds(predict_metab(mm))
 #' 
-#' # lm
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily'))
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('date'))
-#' mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','date'))
-#' 
-#' # loess
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date')
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date', span=0.4)
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','date'))
-#' mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge.daily', span=2)
-#' 
-#' library(ggplot2)
-#' ggplot(get_data_daily(mm), aes(x=date)) + geom_line(aes(y=K600)) + 
-#'   geom_point(aes(y=K600.obs)) + geom_ribbon(aes(ymin=K600.lower, ymax=K600.upper), alpha=0.4)
+#' mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+#'   mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)))
+#' plot_metab_preds(predict_metab(mm))
 #' }
 #' @export
 #' @import dplyr
@@ -86,14 +66,13 @@ metab_Kmodel <- function(
   data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")), # inheritParams metab_model_prototype
   model_specs=specs(mm_name('Kmodel')),
   info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype. day_start and day_end only relevant if !is.null(data)
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # args for mm_is_valid_day. only relevant if !is.null(data)
-  ...
+  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day. only relevant if !is.null(data)
 ) {
   
   # Check and reformat arguments
   model_specs$engine <- match.arg(model_specs$engine, choices=c("mean", "lm", "loess"))
-  model_specs$weights <- if(length(model_specs$weights)==0) model_specs$weights else match.arg(model_specs$weights, choices=c("1/CI","K600/CI"))
-  model_specs$predictors <- if(length(model_specs$predictors)==0) model_specs$predictors else match.arg(model_specs$predictors, choices=c("date", "velocity.daily", "discharge.daily"), several.ok=TRUE)
+  if(length(model_specs$weights) > 0) model_specs$weights <-  match.arg(model_specs$weights, choices=c("1/CI","K600/CI"))
+  if(length(model_specs$predictors) > 0) model_specs$predictors <- match.arg(model_specs$predictors, choices=c("date", "velocity.daily", "discharge.daily"), several.ok=TRUE)
   if('date' %in% model_specs$predictors) 
     model_specs$predictors[model_specs$predictors=='date'] <- 'as.numeric(date)'
   if(!(!('K600' %in% names(model_specs$transforms)) || 
@@ -114,8 +93,9 @@ metab_Kmodel <- function(
                                  day_start=day_start, day_end=day_end, tests=tests)
     
     # Fit the model
-    Kmodel_all <- Kmodel_allply(data_daily_all=data_list$filtered, engine=model_specs$engine, weights=model_specs$weights, 
-                                predictors=model_specs$predictors, transforms=model_specs$transforms, ...)
+    Kmodel_all <- do.call(Kmodel_allply, c(
+      list(data_daily_all=data_list$filtered), 
+      model_specs[c('engine','weights','predictors','transforms','other_args')]))
     
   })
   
@@ -196,11 +176,11 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
   out <- list(unfiltered = data_daily)
   
   # Filter out undesired days. Indicate filtering by weights
-  if(!isTRUE(is.na(filters[['CI.max']])))
+  if(('CI.max' %in% names(filters)) && !isTRUE(is.na(filters[['CI.max']])))
     data_daily %<>% mutate(weight=weight * if(K600.upper.obs-K600.lower.obs <= filters[['CI.max']]) 1 else 0)
-  if(!isTRUE(is.na(filters[['discharge.daily.max']])))
+  if(('discharge.daily.max' %in% names(filters)) && !isTRUE(is.na(filters[['discharge.daily.max']])))
     data_daily %<>% mutate(weight=weight * if(discharge.daily <= filters[['discharge.daily.max']]) 1 else 0)
-  if(!isTRUE(is.na(filters[['velocity.daily.max']])))
+  if(('velocity.daily.max' %in% names(filters)) && !isTRUE(is.na(filters[['velocity.daily.max']])))
     data_daily %<>% mutate(weight=weight * if(velocity.daily <= filters[['velocity.daily.max']]) 1 else 0)
   
   out <- c(out, list(filtered = data_daily))
@@ -255,10 +235,13 @@ Kmodel_aggregate_day <- function(
 #'   \code{predictors}, although not all elements of \code{predictors} must be 
 #'   included in \code{transforms}. Recommended transforms include 
 #'   \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}
+#' @param other_args Other arguments passed to the fitting function given by 
+#'   \code{model_specs$engine}. \code{na.rm=TRUE} is already passed to 
+#'   \code{mean} (which is actually implemented as \code{sum}, anyway).
 #' @inheritParams metab_Kmodel
 #' @inheritParams specs
 #' @keywords internal
-Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transforms, ...) {
+Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transforms, other_args) {
   # remove rows whose weights signal they should be filtered out
   weight <- '.dplyr.var'
   data_daily_all <- dplyr::filter(data_daily_all, weight > 0)
@@ -272,13 +255,14 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
     }
   })
   # fit & return the model
+  other_args[['possible_args']] <- NULL # might be left over from specs(), but don't want it now
   switch(
     engine,
     'mean' = {
       if(length(predictors) > 0) warning("predictors ignored for engine='mean'")
       Kobs <- eval(parse(text=trans_preds[['K600.obs']]), envir=data_daily_all)
       list(
-        mean=sum(Kobs * data_daily_all$weight, na.rm=TRUE, ...),
+        mean=sum(Kobs * data_daily_all$weight, na.rm=TRUE),
         se=(if(length(weights) > 0) {
           warning("omitting sd for weighted mean")
           NA 
@@ -287,18 +271,18 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
         }))
     }, 
     'lm' = {
-      if(length(predictors) == 0) predictors <- "1"
+      if(length(predictors) == 0) trans_preds[2] <- "1"
       formul <- formula(paste0(trans_preds["K600.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
-      wts <- (if(length(weights) > 0) data_daily_all$weight else NULL)
-      lm(formul, data=data_daily_all, weights=wts, ...)
+      wts <- if(length(weights) > 0) data_daily_all$weight else NULL
+      do.call(lm, c(list(formula=formul, data=data_daily_all, weights=wts), other_args))
     }, 
     'loess' = {
       if(length(predictors) < 1) stop("need at least one predictor for engine='loess'")
       formul <- formula(paste0(trans_preds["K600.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
       if(length(weights) > 0) {
-        loess(formul, data=data_daily_all, weights=data_daily_all$weight, ...)
+        do.call(loess, c(list(formula=formul, data=data_daily_all, weights=data_daily_all$weight), other_args))
       } else {
-        loess(formul, data=data_daily_all, ...)
+        do.call(loess, c(list(formula=formul, data=data_daily_all), other_args))
       }
     })
 }

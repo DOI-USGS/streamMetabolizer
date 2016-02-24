@@ -20,8 +20,8 @@ specs(model_name = mm_name(), engine, GPP_init = 10, ER_init = -10,
   weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
   velocity.daily.max = NA), predictors = c("discharge.daily"),
   transforms = c(K600 = "log", date = NA, velocity.daily = "log",
-  discharge.daily = "log"), err.obs.sigma = 0.1, err.obs.phi = 0,
-  err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
+  discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
+  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -36,13 +36,13 @@ second assumption, if the first assumption turns up no files of the given
 name).}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For type='bayes', one of
+specified via \code{mm_name} rather than here. For type='bayes', one of 
 \code{c('jags','stan')} indicating the software package to use for the MCMC
-process. For type='Kmodel', the name of an interpolation or regression
-method relating K to the predictor[s] of choice. One of \code{c("mean",
-"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only
+process. For type='Kmodel', the name of an interpolation or regression 
+method relating K to the predictor[s] of choice. One of \code{c("mean", 
+"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
 one option so it's not included in \code{specs()} (but is nonetheless noted
-in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses
+in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
 \code{nlm()} for model fitting)}
 
 \item{GPP_init}{the inital value of daily GPP to use in the NLM fitting 
@@ -163,6 +163,10 @@ probably be logged. The vector names must match the values of
 included in \code{transforms}. Recommended transforms include 
 \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
+\item{other_args}{Other arguments passed to the fitting function given by 
+\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to 
+\code{mean} (which is actually implemented as \code{sum}, anyway).}
+
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 
 full time series of modeled values.}
@@ -199,15 +203,14 @@ make a mistake). Relevant arguments for the given \code{model_name} either
 have default values or do not (see Usage). Relevant arguments without a 
 default should rarely be overridden, because their values will be determined 
 based on other arguments. Relevant arguments that do have a default can, and 
-often should, be overridden to tailor the model to your needs. Relevant 
-arguments whose default is a vector, e.g.,
+often should, be overridden to tailor the model to your needs.
 }
 \section{Relevant arguments}{
 
   
-  * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine,
-  keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma,
-  K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores,
+  * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine, 
+  keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
+  K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
   burnin_steps, saved_steps, thin_steps, verbose}. If 
   \code{mm_parse_name(model_name)$err_obs_iid} then also 
   \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
@@ -224,7 +227,9 @@ arguments whose default is a vector, e.g.,
   * metab_night: \code{model_name}
   
   * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
-  transforms}
+  transforms, other_args}. Note that the defaults for \code{weights},
+  \code{predictors}, \code{filters}, and \code{transforms} are adjusted
+  according to the \code{engine} implied by  \code{model_name}.
   
   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
   err.proc.phi, ODE_method, sim.seed}

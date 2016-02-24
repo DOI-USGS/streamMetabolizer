@@ -11,14 +11,13 @@
 #' have default values or do not (see Usage). Relevant arguments without a 
 #' default should rarely be overridden, because their values will be determined 
 #' based on other arguments. Relevant arguments that do have a default can, and 
-#' often should, be overridden to tailor the model to your needs. Relevant 
-#' arguments whose default is a vector, e.g.,
+#' often should, be overridden to tailor the model to your needs.
 #' 
 #' @section Relevant arguments:
 #'   
-#'   * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine,
-#'   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma,
-#'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores,
+#'   * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine, 
+#'   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
+#'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
 #'   burnin_steps, saved_steps, thin_steps, verbose}. If 
 #'   \code{mm_parse_name(model_name)$err_obs_iid} then also 
 #'   \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
@@ -35,7 +34,9 @@
 #'   * metab_night: \code{model_name}
 #'   
 #'   * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
-#'   transforms}
+#'   transforms, other_args}. Note that the defaults for \code{weights},
+#'   \code{predictors}, \code{filters}, and \code{transforms} are adjusted
+#'   according to the \code{engine} implied by  \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
 #'   err.proc.phi, ODE_method, sim.seed}
@@ -52,13 +53,13 @@
 #'   name).
 #'   
 #' @param engine The software or function to use in fitting the model. Should be
-#'   specified via \code{mm_name} rather than here. For type='bayes', one of
+#'   specified via \code{mm_name} rather than here. For type='bayes', one of 
 #'   \code{c('jags','stan')} indicating the software package to use for the MCMC
-#'   process. For type='Kmodel', the name of an interpolation or regression
-#'   method relating K to the predictor[s] of choice. One of \code{c("mean",
-#'   "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only
+#'   process. For type='Kmodel', the name of an interpolation or regression 
+#'   method relating K to the predictor[s] of choice. One of \code{c("mean", 
+#'   "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
 #'   one option so it's not included in \code{specs()} (but is nonetheless noted
-#'   in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses
+#'   in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
 #'   \code{nlm()} for model fitting)
 #'   
 #' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
@@ -195,6 +196,7 @@ specs <- function(
   #inheritParams Kmodel_allply
   predictors = c("discharge.daily"), 
   transforms = c(K600='log', date=NA, velocity.daily="log", discharge.daily="log"),
+  other_args = c(),
   
   
   ## Sim
@@ -302,11 +304,36 @@ specs <- function(
     
   } else if(features$type == 'Kmodel') {
     # list all needed arguments
-    included <- c('model_name', 'engine', 'weights', 'filters', 'predictors', 'transforms')
+    included <- c('model_name', 'engine', 'weights', 'filters', 'predictors', 'transforms', 'other_args')
     
     if('engine' %in% yes_missing) {
       all_specs$engine <- features$engine
     }
+    
+    # some different defaults for each engine, because no one set of defaults
+    # makes sense for all engines
+    #if('weights' %in% yes_missing) all_specs$weights <- c("K600/CI") # same for all, so use default as in Usage
+    switch(
+      all_specs$engine,
+      mean={
+        if('filters' %in% yes_missing) all_specs['filters'] <- list(c()) # need special syntax to assign c(). see http://stackoverflow.com/a/7945259/3203184
+        if('predictors' %in% yes_missing) all_specs['predictors'] <- list(c())
+        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log')
+        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=NULL)
+      },
+      lm={
+        if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA)
+        if('predictors' %in% yes_missing) all_specs$predictors <- c("discharge.daily")
+        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', discharge.daily="log")
+        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(lm))[-which(names(formals(lm)) %in% c('formula','data','weights'))])
+      },
+      loess={
+        if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA)
+        if('predictors' %in% yes_missing) all_specs$predictors <- c("date", "discharge.daily")
+        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")
+        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(loess))[-which(names(formals(loess)) %in% c('formula','data','weights'))])
+      }
+    )
 
   } else if(features$type == 'sim') {
     # list all needed arguments

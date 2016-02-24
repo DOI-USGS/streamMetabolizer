@@ -9,8 +9,7 @@ metab_Kmodel(data = mm_data(solar.time, discharge, velocity, optional =
   discharge.daily, velocity.daily, optional = c("K600.lower", "K600.upper",
   "discharge.daily", "velocity.daily")),
   model_specs = specs(mm_name("Kmodel")), info = NULL, day_start = 4,
-  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"),
-  ...)
+  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -49,10 +48,6 @@ exactly on an observation time. See day_start for recommended start and end
 times.}
 
 \item{tests}{list of tests to conduct}
-
-\item{...}{Other arguments passed to the fitting function given by 
-\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to
-\code{mean}}
 }
 \value{
 A metab_Kmodel object containing the fitted model.
@@ -92,39 +87,22 @@ time and discharge.daily}
 \examples{
 \dontrun{
 library(dplyr)
-fr <- streamMetabolizer:::load_french_creek() \%>\% unitted::v() \%>\% 
-  filter(format(solar.time, "\%Y-\%m-\%d") == "2012-08-24") \%>\% 
-  select(solar.time)
-fr <- fr \%>\% mutate(discharge.daily=exp(rnorm(nrow(fr))))
-frk2 <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
-  as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4))
+set.seed(24842)
+example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
+  as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) \%>\%
+  mutate(K600.lower=K600-5, K600.upper=K600+6)
   
-# 1-day tests
-frk <- data.frame(date=as.Date("2012-08-24"), K600=20, stringsAsFactors=FALSE)
-metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(mm_name("Kmodel", engine='mean')))
-#metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
-#  mm_name("Kmodel", engine='lm'))) # NaN warning
-#metab_Kmodel(data=fr, data_daily=frk, model_specs=specs(
-#  mm_name("Kmodel", engine='loess')), predictors='date') # span error
+mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+  mm_name('Kmodel', engine='mean'))) # two warnings expected
+plot_metab_preds(predict_metab(mm))
 
-# mean
-mm <- metab_Kmodel(data_daily=frk2, method='mean')
+mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+  mm_name('Kmodel', engine='lm'), predictors='discharge.daily'))
+plot_metab_preds(predict_metab(mm))
 
-# lm
-mm <- metab_Kmodel(data_daily=frk2, method='lm') # very similar to mean
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily'))
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('date'))
-mm <- metab_Kmodel(data_daily=frk2, method='lm', predictors=c('discharge.daily','date'))
-
-# loess
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date')
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='date', span=0.4)
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors=c('discharge.daily','date'))
-mm <- metab_Kmodel(data_daily=frk2, method='loess', predictors='discharge.daily', span=2)
-
-library(ggplot2)
-ggplot(get_data_daily(mm), aes(x=date)) + geom_line(aes(y=K600)) + 
-  geom_point(aes(y=K600.obs)) + geom_ribbon(aes(ymin=K600.lower, ymax=K600.upper), alpha=0.4)
+mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+  mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)))
+plot_metab_preds(predict_metab(mm))
 }
 }
 \author{
