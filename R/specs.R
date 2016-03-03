@@ -291,8 +291,9 @@ specs <- function(
       # model setup
       'model_name', 'bayes_fun', 'engine', 'keep_mcmcs',
       
-      # hyperparameters
-      'GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma', 
+      # hyperparameters - this section should be identical to the
+      # hyperparameters section of prepdata_bayes
+      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
       switch(
         features$pool_K600,
         none=c('K600_daily_mu', 'K600_daily_sigma'),

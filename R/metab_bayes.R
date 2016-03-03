@@ -295,11 +295,18 @@ prepdata_bayes <- function(
     ),
     
     model_specs[c(
-      # Hyperparameters
-      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_mu','K600_daily_sigma'), # metabolism
-      if(features$err_obs_iid) c('err_obs_iid_sigma_min','err_obs_iid_sigma_max') else c(), # uncorrelated observation error
-      if(features$err_proc_acor) c('err_proc_acor_phi_min','err_proc_acor_phi_max','err_proc_acor_sigma_min','err_proc_acor_sigma_max') else c(), # autocorrelated process error
-      if(features$err_proc_iid) c('err_proc_iid_sigma_min','err_proc_iid_sigma_max') else c() # uncorrelated component of process error
+      # Hyperparameters - this section should be identical to the
+      # hyperparameters section of specs|bayes
+      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
+      switch(
+        features$pool_K600,
+        none=c('K600_daily_mu', 'K600_daily_sigma'),
+        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+        linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+        binned=stop('need to think about this one')),
+      if(features$err_obs_iid) c('err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'),
+      if(features$err_proc_acor) c('err_proc_acor_phi_min', 'err_proc_acor_phi_max', 'err_proc_acor_sigma_min', 'err_proc_acor_sigma_max'),
+      if(features$err_proc_iid) c('err_proc_iid_sigma_min', 'err_proc_iid_sigma_max')
     )]
   )
   if(priors) {
