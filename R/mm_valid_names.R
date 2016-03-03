@@ -33,7 +33,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
     mle={
       opts <- expand.grid(
         type='mle',
-        pooling='none',
+        pool_K600=c('none'),
         err_obs_iid=c(TRUE, FALSE),
         err_proc_acor=FALSE,
         err_proc_iid=c(FALSE, TRUE),
@@ -50,7 +50,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
     },
     night=c(
       # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
-      mm_name(type='night', pooling='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='lm', check_validity=FALSE)
+      mm_name(type='night', pool_K600='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='lm', check_validity=FALSE)
     ),
     Kmodel=c(
       # this causes finite recursion because all [Kmodel] args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
@@ -60,8 +60,8 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
     ),
     sim=c(
       # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', engine='rnorm', check_validity=FALSE),
-      mm_name(type='sim', pooling='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='rnorm', check_validity=FALSE)
+      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', engine='rnorm', check_validity=FALSE),
+      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='rnorm', check_validity=FALSE)
     )
   )
 }

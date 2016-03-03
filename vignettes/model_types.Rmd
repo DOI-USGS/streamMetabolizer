@@ -58,7 +58,7 @@ fit <- metab_mle(data=mydat, model_specs=specs('m_np_oi_pm_km.nlm', GPP_init=7, 
 Model names define aspects of the modeling approach such as the degree of hierarchy in the model, additional software or packages to employ, and the types of error to model. To find the model name you want, you can generate the model name from the traits you want. See `?mm_name` for model traits you can search. The return value is a data.frame with all rows matching the traits you selected, where the `specs_fun` column contains specification function names.
 ```{r, eval=2}
 ?mm_name
-mm_name(type="bayes", engine="jags", pooling='none', err_obs_iid=TRUE)
+mm_name(type="bayes", engine="jags", pool_K600='none', err_obs_iid=TRUE)
 ```
 
 

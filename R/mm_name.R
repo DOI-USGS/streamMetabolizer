@@ -2,15 +2,17 @@
 #' 
 #' While the \code{Usage} shows the valid values for each argument, defaults 
 #' depend on the value of \code{type}: any argument that is not explicitly 
-#' supplied (besides \code{type} and \code{check_validity}) will default to the
+#' supplied (besides \code{type} and \code{check_validity}) will default to the 
 #' values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 #' 
 #' @seealso The converse of this function is \code{\link{mm_parse_name}}.
 #'   
 #' @param type the model type, corresponding to the model fitting function 
 #'   (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)
-#' @param pooling Should the model pool information among days to get more 
-#'   consistent daily estimates?
+#' @param pool_K600 Should the model pool information among days to get more 
+#'   consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
+#'   'normal'=K600 ~ 1; 'linear'=K600 ~ 1 + log(Q); 'binned'=K600 ~ cut(Q,
+#'   breaks=quantile(Q))
 #' @param err_obs_iid logical. Should IID observation error be included? If not,
 #'   the model will be fit to the differences in successive DO measurements, 
 #'   rather than to the DO measurements themselves.
@@ -35,7 +37,8 @@
 #' mm_name('bayes')
 mm_name <- function(
   type=c('bayes','mle','night','Kmodel','sim'), 
-  pooling=c('none','partial'),
+  #pool_GPP='none', pool_ER='none',
+  pool_K600=c('none','normal','linear','binned'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
@@ -55,7 +58,8 @@ mm_name <- function(
     # only one argument allowed for Kmodel
     relevant_args <- 'engine' 
     # directly specify all the rest
-    pooling='none'
+    pool_K600='none'
+    pool_all='none'
     err_obs_iid=FALSE
     err_proc_acor=FALSE
     err_proc_iid=FALSE
@@ -73,7 +77,8 @@ mm_name <- function(
   
   # check arguments and throw errors as needed
   if(type != 'Kmodel') {
-    pooling <- match.arg(pooling)
+    pool_K600 <- match.arg(pool_K600)
+    pool_all <- if(pool_K600 == 'none') 'none' else 'partial'
     if(!is.logical(err_obs_iid) || length(err_obs_iid) != 1) stop("need err_obs_iid to be a logical of length 1")
     if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
     if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
@@ -91,7 +96,8 @@ mm_name <- function(
   # make the name
   mmname <- paste0(
     c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
-    c(none='np', partial='pp')[[pooling]], '_',
+    c(none='', normal='Kn', linear='Kl', binned='Kb')[[pool_K600]],
+    c(none='np', partial='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
     c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
