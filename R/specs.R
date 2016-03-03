@@ -34,8 +34,8 @@
 #'   * metab_night: \code{model_name}
 #'   
 #'   * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
-#'   transforms, other_args}. Note that the defaults for \code{weights},
-#'   \code{predictors}, \code{filters}, and \code{transforms} are adjusted
+#'   transforms, other_args}. Note that the defaults for \code{weights}, 
+#'   \code{predictors}, \code{filters}, and \code{transforms} are adjusted 
 #'   according to the \code{engine} implied by  \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
@@ -92,6 +92,34 @@
 #'   daily rate of reaeration
 #' @param K600_daily_sigma The standard deviation of a dnorm distribution for 
 #'   K600_daily, the daily rate of reaeration
+#'   
+#' @param K600_daily_mu_mu hyperparameter for pool_K600='normal'. The mean 
+#'   parameter (mu_mu) of a normal distribution of mu in K ~ N(mu, sigma), mu ~ 
+#'   N(mu_mu, mu_sigma)
+#' @param K600_daily_mu_sigma hyperparameter for pool_K600='normal'. The 
+#'   standard deviation parameter (mu_sigma) of a normal distribution of mu in K
+#'   ~ N(mu, sigma), mu ~ N(mu_mu, mu_sigma)
+#' @param K600_daily_sigma_shape hyperparameter for pool_K600='normal'. The 
+#'   shape (= alpha = k) parameter of a gamma distribution of sigma in K ~ N(mu,
+#'   sigma), sigma ~ gamma(shape, rate)
+#' @param K600_daily_sigma_rate hyperparameter for pool_K600='normal'. The rate 
+#'   (= beta = 1/theta = inverse scale) parameter of a gamma distribution of 
+#'   sigma in K ~ N(mu, sigma), sigma ~ gamma(shape, rate)
+#'   
+#' @param K600_daily_beta0_mu hyperparameter for pool_K600='linear'. The mean 
+#'   parameter of a normally distributed intercept term (beta0) in the linear 
+#'   model K ~ N(beta0 + beta1*log(Q)), beta0 ~ N(beta0_mu, beta0_sigma)
+#' @param K600_daily_beta0_sigma hyperparameter for pool_K600='linear'. The 
+#'   standard deviation parameter of a normally distributed intercept term 
+#'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~
+#'   N(beta0_mu, beta0_sigma)
+#' @param K600_daily_beta1_mu hyperparameter for pool_K600='linear'. The mean 
+#'   parameter of a normally distributed slope term (beta1) in the linear model 
+#'   K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, beta1_sigma)
+#' @param K600_daily_beta1_sigma hyperparameter for pool_K600='linear'. The 
+#'   standard deviation parameter of a normally distributed slope term (beta1) 
+#'   in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu,
+#'   beta1_sigma)
 #'   
 #' @param err_obs_iid_sigma_min The lower bound on a dunif distribution for 
 #'   err_obs_iid_sigma, the standard deviation of the observation error
@@ -164,6 +192,24 @@ specs <- function(
   K600_daily_mu = 10,
   K600_daily_sigma = 10,
   
+  # hyperparameters for hierarchical K - normal
+  K600_daily_mu_mu = 10,
+  K600_daily_mu_sigma = 10,
+  K600_daily_sigma_shape = 1,
+  K600_daily_sigma_rate = 2,
+  
+  # hyperparameters for hierarchical K - linear. defaults should be reasonably
+  # constrained, not too wide
+  K600_daily_beta0_mu = 10,
+  K600_daily_beta0_sigma = 10,
+  K600_daily_beta1_mu = 10,
+  K600_daily_beta1_sigma = 10,
+  
+  # hyperparameters for hierarchical K - binned. need to figure this out. K ~
+  # beta[Qbin] (constant for each binned log(Q), i.e., rectangular interpolation
+  # among bins) betas all drawn from same normal
+  
+  # hyperparameters for error terms
   err_obs_iid_sigma_min = 0,
   err_obs_iid_sigma_max = 5,
   err_proc_acor_phi_min = 0,
@@ -233,9 +279,6 @@ specs <- function(
   # parse the model_name
   features <- mm_parse_name(model_name)
   
-  # logic checks
-  if(!(features$pooling %in% c('none'))) stop("models with pooling are not implemented yet")
-  
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
   
@@ -249,7 +292,13 @@ specs <- function(
       'model_name', 'bayes_fun', 'engine', 'keep_mcmcs',
       
       # hyperparameters
-      'GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma', 'K600_daily_mu', 'K600_daily_sigma',
+      'GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma', 
+      switch(
+        features$pool_K600,
+        none=c('K600_daily_mu', 'K600_daily_sigma'),
+        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+        linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+        binned=stop('need to think about this one')),
       if(features$err_obs_iid) c('err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'),
       if(features$err_proc_acor) c('err_proc_acor_phi_min', 'err_proc_acor_phi_max', 'err_proc_acor_sigma_min', 'err_proc_acor_sigma_max'),
       if(features$err_proc_iid) c('err_proc_iid_sigma_min', 'err_proc_iid_sigma_max'),
@@ -265,7 +314,9 @@ specs <- function(
 
     # compute some arguments
     if('bayes_fun' %in% yes_missing) {
-      all_specs$bayes_fun <- switch(features$pooling, none='bayes_1ply', NA)
+      all_specs$bayes_fun <- ifelse(
+        features$pool_K600 %in% 'none', 'bayes_1ply',
+        ifelse(features$pool_K600 %in% c('normal','linear','binned'), 'bayes_allply', NA))
     }
     if('engine' %in% yes_missing) {
       all_specs$engine <- features$engine
@@ -275,7 +326,13 @@ specs <- function(
         c('GPP_daily','ER_daily','K600_daily'), 
         if(features$err_obs_iid) 'err_obs_iid_sigma',
         if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
-        if(features$err_proc_iid) 'err_proc_iid_sigma')
+        if(features$err_proc_iid) 'err_proc_iid_sigma',
+        switch(
+          features$pool_K600,
+          none=c(),
+          normal=c('K600_daily_mu', 'K600_daily_sigma'),
+          linear=c('K600_daily_beta0', 'K600_daily_beta1', 'K600_daily_sigma'),
+          binned=stop('need to think about this one', 'K600_daily_beta', 'K600_daily_sigma')))
     }
     
     # check for errors/inconsistencies
