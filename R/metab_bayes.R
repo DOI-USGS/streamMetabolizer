@@ -228,18 +228,43 @@ bayes_allply <- function(
 #' @param priors logical. Should the data list be modified such that JAGS will 
 #'   return priors rather than posteriors?
 #' @return list of data for input to runjags_bayes or runstan_bayes
+#' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
-  data, data_daily, ply_date, # inheritParams metab_model_prototype
+  data, data_daily, ply_date=NA, # inheritParams metab_model_prototype
   model_specs, # inheritParams metab_bayes
   priors=FALSE
 ) {
   
-  # Useful info for setting the MCMC data
-  timestep_days <- suppressWarnings(mean(as.numeric(diff(v(data$solar.time)), units="days"), na.rm=TRUE))
-  has_oierr <- grepl('_oi(pc)*(pi)*[[:punct:]]', basename(model_specs$model_path))
-  has_pierr <- grepl('_(oi)*(pc)*pi[[:punct:]]', basename(model_specs$model_path))
-  has_pcerr <- grepl('_(oi)*pc(pi)*[[:punct:]]', basename(model_specs$model_path))
+  # remove units if present
+  data <- v(data)
+  data_daily <- v(data_daily)
+  if(length(ply_date) != 1) stop("ply_date must have length 1")
+  if(!is.na(ply_date)) data$date <- ply_date
+  
+  # define a function to package 1+ days of obs of a variable into a time x date matrix
+  date_table <- table(data$date)
+  num_dates <- length(date_table)
+  num_daily_obs <- unique(unname(date_table))
+  if(length(num_daily_obs) > 1) stop("dates have differing numbers of rows; observations cannot be combined in matrix")
+  time_by_date_matrix <- function(vec) {
+    matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
+  }
+  
+  # double-check that our dates are going to line up with the input dates. this 
+  # should be redundant w/ above date_table checks, so just being extra careful
+  obs_dates <- time_by_date_matrix(as.character(data$date, "%Y-%m-%d"))
+  unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(col) unique(col))
+  if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
+  
+  # confirm that every day has the same modal timestep and put a value on that timestep
+  obs_times <- time_by_date_matrix(as.numeric(data$solar.time - data$solar.time[1], units='days'))
+  unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(col) unique(round(diff(col), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
+  if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
+  timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(col) mean(diff(col))))
+  
+  # parse model name into features for deciding what data to include
+  features <- mm_parse_name(basename(model_specs$model_path))
   
   # Format the data for JAGS/Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -247,26 +272,34 @@ prepdata_bayes <- function(
   data_list = c(
     list(
       
+      # Overall
+      d = num_dates,
+      
       # Daily
-      n = nrow(data),
-      DO_obs_1 = data$DO.obs[1],
+      n = num_daily_obs, # one value applicable to every day
+      DO_obs_1 = array(time_by_date_matrix(data$DO.obs)[1,], dim=num_dates), # duplication of effort below should be small compared to MCMC time
       
       # Every timestep
-      frac_GPP = data$light/sum(data$light[as.character(data$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
-      frac_ER = rep(timestep_days, nrow(data)),
-      frac_D = rep(timestep_days, nrow(data)), # the yackulic shortcut models rely on this being even over time
-      KO2_conv = convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"),
-      depth = data$depth,
-      DO_sat = data$DO.sat,
-      DO_obs = data$DO.obs
+      frac_GPP = {
+        # normalize light by the sum of light in the first 24 hours of the time window
+        in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(col) {col - col[1] <= 1} )
+        mat_light <- time_by_date_matrix(data$light)
+        sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
+      },
+      frac_ER  = time_by_date_matrix(timestep_days),
+      frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
+      KO2_conv = time_by_date_matrix(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2")),
+      depth    = time_by_date_matrix(data$depth),
+      DO_sat   = time_by_date_matrix(data$DO.sat),
+      DO_obs   = time_by_date_matrix(data$DO.obs)
     ),
     
     model_specs[c(
       # Hyperparameters
       c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_mu','K600_daily_sigma'), # metabolism
-      if(has_oierr) c('err_obs_iid_sigma_min','err_obs_iid_sigma_max') else c(), # uncorrelated observation error
-      if(has_pcerr) c('err_proc_acor_phi_min','err_proc_acor_phi_max','err_proc_acor_sigma_min','err_proc_acor_sigma_max') else c(), # autocorrelated process error
-      if(has_pierr) c('err_proc_iid_sigma_min','err_proc_iid_sigma_max') else c() # uncorrelated component of process error
+      if(features$err_obs_iid) c('err_obs_iid_sigma_min','err_obs_iid_sigma_max') else c(), # uncorrelated observation error
+      if(features$err_proc_acor) c('err_proc_acor_phi_min','err_proc_acor_phi_max','err_proc_acor_sigma_min','err_proc_acor_sigma_max') else c(), # autocorrelated process error
+      if(features$err_proc_iid) c('err_proc_iid_sigma_min','err_proc_iid_sigma_max') else c() # uncorrelated component of process error
     )]
   )
   if(priors) {

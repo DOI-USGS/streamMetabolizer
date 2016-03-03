@@ -4,7 +4,7 @@
 \alias{prepdata_bayes}
 \title{Prepare data for passing to JAGS or Stan}
 \usage{
-prepdata_bayes(data, data_daily, ply_date, model_specs, priors = FALSE)
+prepdata_bayes(data, data_daily, ply_date = NA, model_specs, priors = FALSE)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
