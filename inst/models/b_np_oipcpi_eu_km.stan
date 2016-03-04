@@ -19,49 +19,53 @@ data {
   real err_proc_iid_sigma_min;
   real err_proc_iid_sigma_max;
   
+  // Overall data
+  int <lower=0> d; # number of dates
+  
   // Daily data
-  int <lower=0> n;
-  real DO_obs_1;
+  int <lower=0> n; # number of observations per date
+  vector[d] DO_obs_1;
   
   // Data
-  vector [n] DO_obs;
-  vector [n] DO_sat;
-  vector [n] frac_GPP;
-  vector [n] frac_ER;
-  vector [n] frac_D;
-  vector [n] depth;
-  vector [n] KO2_conv;
+  vector[d] DO_obs[n];
+  vector[d] DO_sat[n];
+  vector[d] frac_GPP[n];
+  vector[d] frac_ER[n];
+  vector[d] frac_D[n];
+  vector[d] depth[n];
+  vector[d] KO2_conv[n];
 }
 
 transformed data {
-  vector [n-1] coef_GPP;
-  vector [n-1] coef_ER;
-  vector [n-1] coef_K600_part;
+  vector[d] coef_GPP[n-1];
+  vector[d] coef_ER[n-1];
+  vector[d] coef_K600_part[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  <- frac_GPP[i] / depth[i];
-    coef_ER[i]   <- frac_ER[ i] / depth[i];
-    coef_K600_part[i] <- KO2_conv[i] * frac_D[i];
+    coef_GPP[i]  <- frac_GPP[i] ./ depth[i];
+    coef_ER[i]   <- frac_ER[ i] ./ depth[i];
+    coef_K600_part[i] <- KO2_conv[i] .* frac_D[i];
   }
 }
 
 parameters {
-  real GPP_daily;
-  real ER_daily;
-  real K600_daily;
+  vector[d] GPP_daily;
+  vector[d] ER_daily;
+  vector[d] K600_daily;
   
-  vector [n-1] err_proc_acor_inc;
+  vector[d] err_proc_iid[n-1];
+  vector[d] err_proc_acor_inc[n-1];
   
-  real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
-  real <lower=err_proc_acor_phi_min,   upper=err_proc_acor_phi_max>   err_proc_acor_phi;
-  real <lower=err_proc_acor_sigma_min, upper=err_proc_acor_sigma_max> err_proc_acor_sigma;
-  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
+  real err_obs_iid_sigma;
+  real err_proc_acor_phi;
+  real err_proc_acor_sigma;
+  real err_proc_iid_sigma;
 }
 
 transformed parameters {
-  vector [n] DO_mod;
-  vector [n-1] err_proc_acor;
+  vector[d] DO_mod[n];
+  vector[d] err_proc_acor[n-1];
   
   // Model DO time series
   // * Euler version
@@ -79,17 +83,19 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +
-      GPP_daily * coef_GPP[i] +
-      ER_daily * coef_ER[i] +
-      K600_daily * coef_K600_part[i] * (DO_sat[i] - DO_mod[i])
+      err_proc_iid[i] +
+      err_proc_acor[i] +
+      GPP_daily .* coef_GPP[i] +
+      ER_daily .* coef_ER[i] +
+      K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])
     );
   }
 }
 
 model {
   // Independent, identically distributed process error
-  for (i in 1:(n-1)) {
-    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
+  for(i in 1:(n-1)) {
+    err_proc_iid[i] ~ normal(0, err_proc_iid_sigma);
   }
   err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
   

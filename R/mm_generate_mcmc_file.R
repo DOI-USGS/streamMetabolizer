@@ -4,7 +4,7 @@
 #' @keywords internal
 mm_generate_mcmc_file <- function(
   type='bayes', 
-  pooling='none',
+  pool_K600=c('none','normal','linear','binned'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
@@ -16,8 +16,12 @@ mm_generate_mcmc_file <- function(
   # check_validity=FALSE (which is needed to avoid circularity)
   model_name <- mm_name(
     type='bayes', engine=engine, ode_method=ode_method, deficit_src=deficit_src, 
-    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pooling=pooling,
+    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pool_K600=pool_K600,
     check_validity=FALSE)
+  
+  # define rules for when to model as process, obs, or both
+  dDO_model <- (deficit_src == 'DO_obs')
+  DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
   
   # helper functions
   comment <- function(...) { # prefix with the appropriate comment character[s]
@@ -78,8 +82,18 @@ mm_generate_mcmc_file <- function(
         'real GPP_daily_sigma;',
         'real ER_daily_mu;',
         'real ER_daily_sigma;',
-        'real K600_daily_mu;',
-        'real K600_daily_sigma;'),
+        switch(
+          pool_K600,
+          none=c(
+            'real K600_daily_mu;',
+            'real K600_daily_sigma;'),
+          normal=c(
+            'K600_daily_mu_mu;',
+            'K600_daily_mu_sigma;',
+            'K600_daily_sigma_shape;',
+            'K600_daily_sigma_rate;'),
+          warning("haven't finished with other options for pool_K600")
+        )),
       
       chunk(
         comment('Error distributions'),
@@ -96,19 +110,25 @@ mm_generate_mcmc_file <- function(
           'real err_proc_iid_sigma_max;')),
       
       chunk(
-        comment('Daily data'),
-        'int <lower=0> n;',
-        'real DO_obs_1;'),
+        comment('Overall data'),
+        'int <lower=0> d; # number of dates'),
       
+      chunk(
+        comment('Daily data'),
+        'int <lower=0> n; # number of observations per date',
+        'vector[d] DO_obs_1;'),
+      
+      # prepare to iterate over n obs for all d at a time:
+      # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
       indent(
         comment('Data'),
-        'vector [n] DO_obs;',
-        'vector [n] DO_sat;',
-        'vector [n] frac_GPP;',
-        'vector [n] frac_ER;',
-        'vector [n] frac_D;',
-        'vector [n] depth;',
-        'vector [n] KO2_conv;'),
+        'vector[d] DO_obs[n];',
+        'vector[d] DO_sat[n];',
+        'vector[d] frac_GPP[n];',
+        'vector[d] frac_ER[n];',
+        'vector[d] frac_D[n];',
+        'vector[d] depth[n];',
+        'vector[d] KO2_conv[n];'),
       
       '}',''
     ),
@@ -123,15 +143,15 @@ mm_generate_mcmc_file <- function(
     
     if(engine == 'stan') c(
       chunk(
-        'vector [n-1] coef_GPP;',
-        'vector [n-1] coef_ER;',
+        'vector[d] coef_GPP[n-1];',
+        'vector[d] coef_ER[n-1];',
         switch(
           deficit_src,
-          DO_mod = 'vector [n-1] coef_K600_part;',
-          DO_obs = 'vector [n-1] coef_K600_full;'
+          DO_mod = 'vector[d] coef_K600_part[n-1];',
+          DO_obs = 'vector[d] coef_K600_full[n-1];'
         ),
-        if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector [n-1] DO_sat_pairmean;',
-        if(!err_obs_iid) 'vector [n-1] dDO_obs;')
+        if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
+        if(!DO_model) 'vector[d] dDO_obs[n-1];')
     ),
     
     indent(
@@ -140,37 +160,37 @@ mm_generate_mcmc_file <- function(
         # Coefficient pre-calculations
         if(ode_method == 'Euler') c(
           comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-          s('coef_GPP[i]  <- frac_GPP[i] / depth[i]'),
-          s('coef_ER[i]   <- frac_ER[ i] / depth[i]'),
+          s('coef_GPP[i]  <- frac_GPP[i] ./ depth[i]'),
+          s('coef_ER[i]   <- frac_ER[ i] ./ depth[i]'),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part[i] <- KO2_conv[i] * frac_D[i]')
+              s('coef_K600_part[i] <- KO2_conv[i] .* frac_D[i]')
             ),
             DO_obs = c(
-              p('coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * '),
+              p('coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .* '),
               s('  (DO_sat[i] - DO_obs[i])')
             )
           )
         ) else if(ode_method == 'pairmeans') c(
           comment('Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-          s('coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2)'),
-          s('coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2)'),
+          s('coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+          s('coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2'),
-              s('DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2')
+              s('coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
+              s('DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2.0')
             ),
             DO_obs = c(
-              p('coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 *'),
-              s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2')
+              p('coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
+              s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
             )
           )
         ),
         
         # dDO pre-calculations
-        if(!err_obs_iid) c(
+        if(!DO_model) c(
           comment('dDO observations'),
           s('dDO_obs[i] <- DO_obs[i+1] - DO_obs[i]')
         )
@@ -188,23 +208,26 @@ mm_generate_mcmc_file <- function(
       'parameters {',
       
       indent(
-        'real GPP_daily;',
-        'real ER_daily;',
-        'real K600_daily;'),
+        'vector[d] GPP_daily;',
+        'vector[d] ER_daily;',
+        'vector[d] K600_daily;'),
       
+      if((err_proc_iid && !dDO_model) || err_proc_acor) indent(
+        ''),
+      if(err_proc_iid && !dDO_model) indent(
+        'vector[d] err_proc_iid[n-1];'),
       if(err_proc_acor) indent(
-        '',
-        'vector [n-1] err_proc_acor_inc;'),
+        'vector[d] err_proc_acor_inc[n-1];'),
       
       if(err_obs_iid || err_proc_acor || err_proc_iid) indent(
         '',
         if(err_obs_iid) c(
-          'real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;'),
+          'real err_obs_iid_sigma;'),
         if(err_proc_acor) c(
-          'real <lower=err_proc_acor_phi_min,   upper=err_proc_acor_phi_max>   err_proc_acor_phi;',
-          'real <lower=err_proc_acor_sigma_min, upper=err_proc_acor_sigma_max> err_proc_acor_sigma;'),
+          'real err_proc_acor_phi;',
+          'real err_proc_acor_sigma;'),
         if(err_proc_iid) c(
-          'real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;')),
+          'real err_proc_iid_sigma;')),
       
       '}',''
     ),
@@ -218,12 +241,12 @@ mm_generate_mcmc_file <- function(
     ),
     
     if(engine == 'stan') chunk(
-      if(err_obs_iid)
-        'vector [n] DO_mod;',
-      if(deficit_src == 'DO_obs')
-        'vector [n-1] dDO_mod;',
+      if(DO_model)
+        'vector[d] DO_mod[n];',
+      if(dDO_model)
+        'vector[d] dDO_mod[n-1];',
       if(err_proc_acor) 
-        'vector [n-1] err_proc_acor;'),
+        'vector[d] err_proc_acor[n-1];'),
 
     indent(
       comment('Model DO time series'),
@@ -232,7 +255,7 @@ mm_generate_mcmc_file <- function(
       comment('* ', paste0(c(if(err_proc_iid) 'IID', if(err_proc_acor) 'autocorrelated', if(!err_proc_iid && !err_proc_acor) 'no'), collapse=' and '), ' process error'),
       comment('* ', 'reaeration depends on ',deficit_src),
       
-      # process error (always looped)
+      # process error (always looped, vectorized across days)
       if(err_proc_acor) c(
         p(''),
         s('err_proc_acor[1] <- err_proc_acor_inc[1]'),
@@ -241,22 +264,25 @@ mm_generate_mcmc_file <- function(
         p('}')
       ),
       
-      # dDO model - applies to any model with deficit_src == 'DO_obs' (includes
-      # all process-only models because we've banned 'DO_mod' for them)
-      if(deficit_src == 'DO_obs') c(
+      # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
+      # all process-only models because we've banned 'DO_mod' for them). this
+      # can be done with a single set of matrix multiplications rather than a
+      # loop
+      if(dDO_model) c(
         p(''),
         comment("dDO model"),
         p('dDO_mod <- '),
         indent(
           if(err_proc_acor) p('err_proc_acor +'),
-          p('GPP_daily * coef_GPP +'),
-          p('ER_daily * coef_ER +'),
-          s('K600_daily * coef_K600_full')
+          p('rep_matrix(GPP_daily\', n-1)  .* coef_GPP +'),
+          p('rep_matrix(ER_daily\', n-1)   .* coef_ER +'),
+          s('rep_matrix(K600_daily\', n-1) .* coef_K600_full')
         )
       ),
       
-      # DO model - any model that includes observation error
-      if(err_obs_iid) c(
+      # DO model - any model that includes observation error or is a function of
+      # the previous moment's DO_mod
+      if(DO_model) c(
         p(''),
         comment("DO model"),
         s('DO_mod[1] <- DO_obs_1'),
@@ -264,27 +290,37 @@ mm_generate_mcmc_file <- function(
         indent(
           p('DO_mod[i+1] <- ('),
           p('  DO_mod[i] +'),
-          switch(
-            deficit_src,
-            'DO_obs' = c(
-              s('  dDO_mod[i])')),
-            'DO_mod' = c(
-              p('  GPP_daily * coef_GPP[i] +'),
-              p('  ER_daily * coef_ER[i] +'),
-              switch(
+          if(dDO_model) c(
+            s('  dDO_mod[i])')
+          ) else c(
+            if(err_proc_iid) p('  err_proc_iid[i] +'),
+            if(err_proc_acor) p('  err_proc_acor[i] +'),
+            p('  GPP_daily .* coef_GPP[i] +'),
+            p('  ER_daily .* coef_ER[i] +'),
+            switch(
               ode_method,
               'Euler' = c(
-                p('  K600_daily * coef_K600_part[i] * (DO_sat[i] - DO_mod[i])'),
+                p('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])'),
                 s(')')),
               'pairmeans' = c(
-                p('  K600_daily * coef_K600_part[i] * (DO_sat_pairmean[i] - DO_mod[i]/2)'),
-                s(') / (1 + K600_daily * coef_K600_part[i] / 2)'))
-              )
+                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
+                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
             )
           )
         ),
         p('}')
+      ),
+      
+      # K600_daily model
+      if(pool_K600 %in% c('linear','binned')) c(
+        p(''),
+        comment("K600_daily model"),
+        switch(
+          pool_K600,
+          linear=s('K600_daily_mu <- K600_daily_beta0 + K600_daily_beta0 .* Q_daily + K600_daily_sigma'),
+          binned=stop('not sure'))
       )
+      
     ),
       
     if(engine == 'stan') c(
@@ -300,8 +336,12 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid) chunk(
       comment('Independent, identically distributed process error'),
-      p('for (i in 1:(n-1)) {'),
-      s('  dDO_obs[i] ~ ', f('normal', 'dDO_mod[i]', 'err_proc_iid_sigma')),
+      p('for(i in 1:(n-1)) {'),
+      if(dDO_model) s(
+        '  dDO_obs[i] ~ ', f('normal', 'dDO_mod[i]', 'err_proc_iid_sigma')
+      ) else s(
+        '  err_proc_iid[i] ~ ', f('normal', '0', 'err_proc_iid_sigma')
+      ),
       p('}'),
       s('err_proc_iid_sigma ~ ', f('uniform', 'err_proc_iid_sigma_min', 'err_proc_iid_sigma_max'))),
     
@@ -326,7 +366,12 @@ mm_generate_mcmc_file <- function(
       comment('Daily metabolism values'),
       s('GPP_daily ~ ', f('normal', 'GPP_daily_mu', 'GPP_daily_sigma')),
       s('ER_daily ~ ', f('normal', 'ER_daily_mu', 'ER_daily_sigma')),
-      s('K600_daily ~ ', f('normal', 'K600_daily_mu', 'K600_daily_sigma'))),
+      s('K600_daily ~ ', f('normal', 'K600_daily_mu', 'K600_daily_sigma')),
+      if(pool_K600 == 'normal') 
+        s('K600_daily_mu ~ ', f('normal', 'K600_daily_mu_mu', 'K600_daily_mu_sigma')),
+      if(pool_K600 %in% c('normal','linear','binned'))
+        s('K600_daily_sigma ~ ', f('normal', 'K600_daily_sigma_rate', 'K600_daily_sigma_shape'))
+    ),
     
     '}'
   )
@@ -349,7 +394,7 @@ mm_generate_mcmc_file <- function(
 #' @keywords internal
 mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
-    pooling='none',
+    pool_K600='none',
     err_obs_iid=c(TRUE, FALSE),
     err_proc_acor=c(FALSE, TRUE),
     err_proc_iid=c(FALSE, TRUE),

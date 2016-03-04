@@ -3,9 +3,9 @@
 data {
   for(i in 1:(n-1)) {
     # Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  <- frac_GPP[i] / depth[i]
-    coef_ER[i]   <- frac_ER[ i] / depth[i]
-    coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * 
+    coef_GPP[i]  <- frac_GPP[i] ./ depth[i]
+    coef_ER[i]   <- frac_ER[ i] ./ depth[i]
+    coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .* 
       (DO_sat[i] - DO_obs[i])
     # dDO observations
     dDO_obs[i] <- DO_obs[i+1] - DO_obs[i]
@@ -21,12 +21,12 @@ model {
   
   # dDO model
   dDO_mod <- 
-    GPP_daily * coef_GPP +
-    ER_daily * coef_ER +
-    K600_daily * coef_K600_full
+    rep_matrix(GPP_daily', n-1)  .* coef_GPP +
+    rep_matrix(ER_daily', n-1)   .* coef_ER +
+    rep_matrix(K600_daily', n-1) .* coef_K600_full
 
   # Independent, identically distributed process error
-  for (i in 1:(n-1)) {
+  for(i in 1:(n-1)) {
     dDO_obs[i] ~ dnorm(dDO_mod[i], pow(err_proc_iid_sigma, -2))
   }
   err_proc_iid_sigma ~ dunif(err_proc_iid_sigma_min, err_proc_iid_sigma_max)

@@ -15,46 +15,49 @@ data {
   real err_proc_iid_sigma_min;
   real err_proc_iid_sigma_max;
   
+  // Overall data
+  int <lower=0> d; # number of dates
+  
   // Daily data
-  int <lower=0> n;
-  real DO_obs_1;
+  int <lower=0> n; # number of observations per date
+  vector[d] DO_obs_1;
   
   // Data
-  vector [n] DO_obs;
-  vector [n] DO_sat;
-  vector [n] frac_GPP;
-  vector [n] frac_ER;
-  vector [n] frac_D;
-  vector [n] depth;
-  vector [n] KO2_conv;
+  vector[d] DO_obs[n];
+  vector[d] DO_sat[n];
+  vector[d] frac_GPP[n];
+  vector[d] frac_ER[n];
+  vector[d] frac_D[n];
+  vector[d] depth[n];
+  vector[d] KO2_conv[n];
 }
 
 transformed data {
-  vector [n-1] coef_GPP;
-  vector [n-1] coef_ER;
-  vector [n-1] coef_K600_full;
+  vector[d] coef_GPP[n-1];
+  vector[d] coef_ER[n-1];
+  vector[d] coef_K600_full[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  <- frac_GPP[i] / depth[i];
-    coef_ER[i]   <- frac_ER[ i] / depth[i];
-    coef_K600_full[i] <- KO2_conv[i] * frac_D[i] * 
+    coef_GPP[i]  <- frac_GPP[i] ./ depth[i];
+    coef_ER[i]   <- frac_ER[ i] ./ depth[i];
+    coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .* 
       (DO_sat[i] - DO_obs[i]);
   }
 }
 
 parameters {
-  real GPP_daily;
-  real ER_daily;
-  real K600_daily;
+  vector[d] GPP_daily;
+  vector[d] ER_daily;
+  vector[d] K600_daily;
   
-  real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
-  real <lower=err_proc_iid_sigma_min,  upper=err_proc_iid_sigma_max>  err_proc_iid_sigma;
+  real err_obs_iid_sigma;
+  real err_proc_iid_sigma;
 }
 
 transformed parameters {
-  vector [n] DO_mod;
-  vector [n-1] dDO_mod;
+  vector[d] DO_mod[n];
+  vector[d] dDO_mod[n-1];
   
   // Model DO time series
   // * Euler version
@@ -64,9 +67,9 @@ transformed parameters {
   
   // dDO model
   dDO_mod <- 
-    GPP_daily * coef_GPP +
-    ER_daily * coef_ER +
-    K600_daily * coef_K600_full;
+    rep_matrix(GPP_daily', n-1)  .* coef_GPP +
+    rep_matrix(ER_daily', n-1)   .* coef_ER +
+    rep_matrix(K600_daily', n-1) .* coef_K600_full;
   
   // DO model
   DO_mod[1] <- DO_obs_1;
@@ -79,7 +82,7 @@ transformed parameters {
 
 model {
   // Independent, identically distributed process error
-  for (i in 1:(n-1)) {
+  for(i in 1:(n-1)) {
     dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
   }
   err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
