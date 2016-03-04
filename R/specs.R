@@ -236,7 +236,7 @@ specs <- function(
   ## Kmodel
   
   #inheritParams prepdata_Kmodel
-  weights = c("K600/CI"),
+  weights = c("K600/CI"), # 'K600/CI' is argued for in stream_metab_usa issue #64
   filters = c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA),
   
   #inheritParams Kmodel_allply
