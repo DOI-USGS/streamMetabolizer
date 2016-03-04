@@ -114,14 +114,14 @@
 #'   model K ~ N(beta0 + beta1*log(Q)), beta0 ~ N(beta0_mu, beta0_sigma)
 #' @param K600_daily_beta0_sigma hyperparameter for pool_K600='linear'. The 
 #'   standard deviation parameter of a normally distributed intercept term 
-#'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~
+#'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 #'   N(beta0_mu, beta0_sigma)
 #' @param K600_daily_beta1_mu hyperparameter for pool_K600='linear'. The mean 
 #'   parameter of a normally distributed slope term (beta1) in the linear model 
 #'   K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, beta1_sigma)
 #' @param K600_daily_beta1_sigma hyperparameter for pool_K600='linear'. The 
 #'   standard deviation parameter of a normally distributed slope term (beta1) 
-#'   in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu,
+#'   in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, 
 #'   beta1_sigma)
 #'   
 #' @param err_obs_iid_sigma_min The lower bound on a dunif distribution for 

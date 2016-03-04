@@ -72,12 +72,6 @@ metab_bayes <- function(
       stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
     }
     
-        # all days at a time, after first filtering out bad days
-        if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
-        filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
-        bayes_all <- bayes_allply(
-          data_all=filtered$data, data_daily_all=filtered$data_daily,
-          model_specs=model_specs)
     # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from JAGS or Stan)
     if(model_specs$split_dates == TRUE) {
       if(!is.logical(model_specs$keep_mcmcs)) {
@@ -100,6 +94,16 @@ metab_bayes <- function(
       bayes_all <- list(daily=bayes_daily)
       
     } else if(model_specs$split_dates == FALSE) {
+      # all days at a time, after first filtering out bad days
+      if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
+      filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
+      bayes_all_list <- bayes_allply(
+        data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
+        model_specs=model_specs)
+      # if we saved the modeling object, pull it out now
+      bayes_mcmc <- bayes_all_list$mcmcfit
+      bayes_all_list$mcmcfit <- NULL
+      bayes_all <- bayes_all_list # list of dfs
     }
   
   })
@@ -204,15 +208,60 @@ bayes_1ply <- function(
 #'   24-hour period)
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
+#' @param removed data.frame of dates that were removed and why
 #' @inheritParams metab_model_prototype
-#' @return data.frame of estimates and MCMC model 
-#'   diagnostics
+#' @return data.frame of estimates and MCMC model diagnostics
 #' @keywords internal
 bayes_allply <- function(
-  data_all, data_daily_all, 
+  data_all, data_daily_all, removed,
   model_specs # inheritParams metab_model_prototype
 ) {
-  stop("this function is not yet implemented")
+  # Provide ability to skip a poorly-formatted dataset for calculating 
+  # metabolism. Collect problems/errors as a list of strings and proceed. Also
+  # collect warnings.
+  stop_strs <- warn_strs <- character(0)
+  
+  # Calculate metabolism by Bayesian MCMC
+  bayes_allday <- withCallingHandlers(
+    tryCatch({
+      # first: try to run the bayes fitting function
+      data_list <- prepdata_bayes(
+        data=data_all, data_daily=data_daily_all, ply_date=NA,
+        model_specs=model_specs, priors=model_specs$priors)
+      all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+      do.call(mcmc_bayes, c(
+        list(data_list=data_list),
+        model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
+    }, error=function(err) {
+      # on error: give up, remembering error. dummy values provided below
+      stop_strs <<- c(stop_strs, err$message)
+      NA
+    }), warning=function(war) {
+      # on warning: record the warning and run again
+      warn_strs <<- c(warn_strs, war$message)
+      invokeRestart("muffleWarning")
+    })
+
+  # match dates back to daily estimates
+  date_vec <- unique(data_all$date)
+  
+  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # calls. If failed, use dummy data to fill in the model output with NAs.
+  if(length(stop_strs) > 0) {
+    bayes_allday <- list(daily=data.frame(date=date_vec, GPP_daily_mean=NA))
+  } else {
+    # check this now so 
+    if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
+      stop_strs <- c(stop_strs, "couldn't match dates to date indices")
+    bayes_allday$daily <- bayes_allday$daily %>%
+      rename(date=index) %>% 
+      mutate(date=date_vec)
+  }
+  
+  # Return, reporting any results, warnings, and errors
+  c(bayes_allday,
+    list(warnings=warn_strs,
+         errors=stop_strs))
 }
 
 
@@ -312,7 +361,10 @@ prepdata_bayes <- function(
     )]
   )
   if(priors) {
-    data_list <- data_list[-which(names(data_list)=="DO_obs")]
+    switch(
+      model_specs$engine,
+      jags={ data_list <- data_list[-which(names(data_list)=="DO_obs")] },
+      stan={ stop("sorry, Stan doesn't allow NAs in data, so priors can't be TRUE") })
   }
   
   data_list
@@ -394,19 +446,25 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     plots=FALSE,
     silent.jags=!verbose)
   
-  # format output into a 1-row data.frame
-  jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
-                    runjags_out$summaries,
-                    runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
-  names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
-  names_stats <- rep(tolower(gsub(" |-", "_", gsub("%", "pct", colnames(jags_mat)))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
-  jags_out <- jags_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
-    t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-    setNames(paste0(names_params, "_", names_stats))
-  
-  # add the model object if requested
-  if(keep_mcmc == TRUE) {
-    jags_out <- mutate(jags_out, mcmcfit=list(runjags_out))
+  # format output
+  if(split_dates) {
+    # for one-day models, use a 1-row data.frame. see ls('package:rstan')
+    jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
+                      runjags_out$summaries,
+                      runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
+    names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
+    names_stats <- rep(tolower(gsub(" |-", "_", gsub("%", "pct", colnames(jags_mat)))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
+    jags_out <- jags_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
+      t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+      setNames(paste0(names_params, "_", names_stats))
+    
+    # add the model object if requested
+    if(keep_mcmc == TRUE) {
+      jags_out <- mutate(jags_out, mcmcfit=list(runjags_out))
+    }
+  } else {
+    # for multi-day or unsplit models, format output into a list
+    jags_out <- list(mcmcfit=runjags_out)
   }
 
   return(jags_out)
@@ -418,6 +476,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import parallel
 #' @import dplyr
+#' @importFrom tidyr gather spread
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
@@ -451,18 +510,53 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   #   pairs(runstan_out)
   #   traceplot(runstan_out)
   
-  # format output into a 1-row data.frame. see ls('package:rstan')
-  stan_mat <- rstan::summary(runstan_out)$summary
-  names_params <- rep(rownames(stan_mat), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
-  names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
-  stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
-    t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-    setNames(paste0(names_params, "_", names_stats)) 
+  # format output
+  if(split_dates) {
+    # for one-day models, use a 1-row data.frame. see ls('package:rstan')
+    stan_mat <- rstan::summary(runstan_out)$summary
+    names_params <- rep(gsub("\\[1\\]", "", rownames(stan_mat)), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
+    names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
+    stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
+      t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+      setNames(paste0(names_params, "_", names_stats)) 
   
-  # add the model object if requested
-  if(keep_mcmc == TRUE) {
-    stan_out <- mutate(stan_out, mcmcfit=list(runstan_out))
-  }
+    # add the model object if requested
+    if(keep_mcmc == TRUE) {
+      stan_out <- mutate(stan_out, mcmcfit=list(runstan_out))
+    }
+  } else {
+    # for multi-day or unsplit models, format output into a list of data.frames,
+    # one per unique number of nodes sharing a variable name
+    stan_mat <- rstan::summary(runstan_out)$summary
+    colnames(stan_mat) <- gsub("%", "pct", colnames(stan_mat))
+    
+    # determine how many unique nrows, & therefore data.frames, there should be
+    var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(stan_mat)))
+    all_dims <- unique(var_table) %>% setNames(., .)
+    names(all_dims)[all_dims == data_list$d] <- "daily"
+    names(all_dims)[all_dims == 1] <- "overall"
+
+    # for each unique nrows, create the data.frame with vars in columns and indices in rows
+    stan_out <- lapply(all_dims, function(odim) {
+      dim_params <- names(var_table[which(var_table == odim)])
+      dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(stan_mat)))))
+      row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(stan_mat))[1])))
+      varstat_order <- paste0(rep(row_order, each=ncol(stan_mat)), '_', rep(colnames(stan_mat), times=length(row_order)))
+      
+      sout <- as.data.frame(stan_mat[dim_rows,]) %>%
+        add_rownames() %>%
+        gather(stat, value=val, 2:ncol(.)) %>%
+        mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
+               index=if(odim == 1) NA else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+               varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
+        select(index, varstat, val) %>%
+        spread(varstat, val)
+      if(odim == 1) sout$index <- NULL
+      sout
+    })
+
+    stan_out <- c(stan_out, list(mcmcfit=runstan_out))
+  } 
   
   return(stan_out)
 }
@@ -504,4 +598,18 @@ get_mcmc <- function(metab_model) {
 #' @family get_mcmc
 get_mcmc.metab_bayes <- function(metab_model) {
   metab_model@mcmc
+}
+
+#' Make metabolism predictions from a fitted metab_model.
+#' 
+#' Makes daily predictions of GPP, ER, and K600.
+#' 
+#' @inheritParams predict_metab
+#' @return A data.frame of predictions, as for the generic 
+#'   \code{\link{predict_metab}}.
+#' @export
+#' @family predict_metab
+predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ...) {
+  metab_model <- metab_model(fit=metab_model@fit$daily)
+  NextMethod()
 }

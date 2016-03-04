@@ -49,6 +49,7 @@ Other metab_model_interface: \code{\link{get_args}},
   \code{\link{predict_DO}}
 
 Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
+  \code{\link{predict_metab.metab_bayes}},
   \code{\link{predict_metab.metab_model}},
   \code{\link{predict_metab.metab_sim}}
 }
