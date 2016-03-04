@@ -5,9 +5,9 @@
 \title{Run an MCMC simulation on a formatted data ply}
 \usage{
 mcmc_bayes(data_list, engine = c("stan", "jags"), model_path, params_out,
-  keep_mcmc = FALSE, n_chains = 4, n_cores = 4, adapt_steps = 1000,
-  burnin_steps = 4000, saved_steps = 40000, thin_steps = 1,
-  verbose = FALSE)
+  split_dates, keep_mcmc = FALSE, n_chains = 4, n_cores = 4,
+  adapt_steps = 1000, burnin_steps = 4000, saved_steps = 40000,
+  thin_steps = 1, verbose = FALSE)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}

@@ -15,7 +15,7 @@
 #' 
 #' @section Relevant arguments:
 #'   
-#'   * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine, 
+#'   * metab_bayes: Always relevant: \code{model_name, split_dates, engine, 
 #'   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
 #'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
 #'   burnin_steps, saved_steps, thin_steps, verbose}. If 
@@ -72,9 +72,12 @@
 #'   dates.
 #' @inheritParams negloglik_1ply
 #'   
-#' @param bayes_fun character in \code{c('bayes_1ply', 'bayes_all')} indicating 
-#'   whether the data should be split into daily chunks first ('bayes_1ply') or 
-#'   passed to the model fitting function in one big chunk ('bayes_all')
+#' @param split_dates logical indicating whether the data should be split into 
+#'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
+#'   valid days differ in their timestep length, split_dates will need to be 
+#'   TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only
+#'   appropriate solution for a hierarchical model that pools information on
+#'   error, K600, etc. across days.
 #' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
 #'   (coerced with as.Date if character, etc.) indicating whether to keep all of
 #'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
@@ -181,7 +184,7 @@ specs <- function(
   ## Bayes
   
   # model setup
-  bayes_fun,
+  split_dates,
   keep_mcmcs = TRUE,
   
   # hyperparameters
@@ -289,7 +292,7 @@ specs <- function(
     # list all needed arguments
     included <- c(
       # model setup
-      'model_name', 'bayes_fun', 'engine', 'keep_mcmcs',
+      'model_name', 'split_dates', 'engine', 'keep_mcmcs',
       
       # hyperparameters - this section should be identical to the
       # hyperparameters section of prepdata_bayes
@@ -314,10 +317,11 @@ specs <- function(
     )
 
     # compute some arguments
-    if('bayes_fun' %in% yes_missing) {
-      all_specs$bayes_fun <- ifelse(
-        features$pool_K600 %in% 'none', 'bayes_1ply',
-        ifelse(features$pool_K600 %in% c('normal','linear','binned'), 'bayes_allply', NA))
+    if('split_dates' %in% yes_missing) {
+      all_specs$split_dates <- ifelse(
+        features$pool_K600 %in% 'none', TRUE,
+        ifelse(features$pool_K600 %in% c('normal','linear','binned'), FALSE, 
+               stop("unknown pool_K600; unsure how to set split_dates")))
     }
     if('engine' %in% yes_missing) {
       all_specs$engine <- features$engine

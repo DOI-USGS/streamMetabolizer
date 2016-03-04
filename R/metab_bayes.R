@@ -63,43 +63,45 @@ metab_bayes <- function(
     if(!file.exists(model_specs$model_path)) 
       stop("could not locate the model file at ", model_specs$model_path)
     
-    # check the format of keep_mcmcs (more checks, below, are bayes_fun-specific)
-    if(is.logical(model_specs$keep_mcmcs) && length(model_specs$keep_mcmcs) != 1) {
-      stop("if keep_mcmcs is logical, it must have length 1")
+    # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
+    if(is.logical(model_specs$keep_mcmcs)) {
+      if(length(model_specs$keep_mcmcs) != 1) {
+        stop("if keep_mcmcs is logical, it must have length 1")
+      }
+    } else if(model_specs$split_dates == FALSE) {
+      stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
     }
     
-    # model the data
-    switch(
-      model_specs$bayes_fun,
-      'bayes_1ply' = {
-        if(!is.logical(model_specs$keep_mcmcs)) {
-          model_specs$keep_mcmcs <- as.Date(model_specs$keep_mcmcs)
-        }
-        # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
-        bayes_all <- mm_model_by_ply(
-          bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-          day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-          tests=tests, # for mm_is_valid_day
-          model_specs=model_specs) # for bayes_1ply
-        if('mcmcfit' %in% names(bayes_all)) {
-          bayes_mcmc <- bayes_all$mcmcfit
-          names(bayes_mcmc) <- bayes_all$date
-          bayes_all$mcmcfit <- NULL
-        } else {
-          bayes_mcmc <- NULL
-        }
-      },
-      'bayes_all' = {
         # all days at a time, after first filtering out bad days
         if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
         filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
         bayes_all <- bayes_allply(
           data_all=filtered$data, data_daily_all=filtered$data_daily,
           model_specs=model_specs)
-      }, {
-        stop("unrecognized bayes_fun")
+    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from JAGS or Stan)
+    if(model_specs$split_dates == TRUE) {
+      if(!is.logical(model_specs$keep_mcmcs)) {
+        model_specs$keep_mcmcs <- as.Date(model_specs$keep_mcmcs)
       }
-    )
+      # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
+      bayes_daily <- mm_model_by_ply(
+        bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
+        day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
+        tests=tests, # for mm_is_valid_day
+        model_specs=model_specs) # for bayes_1ply
+      # if we saved the modeling object[s] in the df, pull them out now
+      if('mcmcfit' %in% names(bayes_daily)) {
+        bayes_mcmc <- bayes_daily$mcmcfit
+        names(bayes_mcmc) <- bayes_daily$date
+        bayes_daily$mcmcfit <- NULL
+      } else {
+        bayes_mcmc <- NULL
+      }
+      bayes_all <- list(daily=bayes_daily)
+      
+    } else if(model_specs$split_dates == FALSE) {
+    }
+  
   })
   
   # Package and return results
@@ -162,7 +164,7 @@ bayes_1ply <- function(
         } else {
           isTRUE(ply_date %in% model_specs$keep_mcmcs)
         }
-        all_mcmc_args <- c('engine','model_path','params_out','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+        all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
           model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
@@ -177,8 +179,8 @@ bayes_1ply <- function(
       })
   } 
 
-  # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
-  # to fill in the model output with NAs.
+  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
     bayes_1day <- data.frame(GPP_daily_mean=NA)
   }
@@ -191,7 +193,7 @@ bayes_1ply <- function(
 }
 
 
-#' Make daily metabolism estimates from input parameters using a hierarchical
+#' Make daily metabolism estimates from input parameters using a hierarchical 
 #' approach.
 #' 
 #' Called from metab_bayes().
@@ -338,7 +340,7 @@ prepdata_bayes <- function(
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
   engine <- match.arg(engine)
   bayes_function <- switch(engine, jags = runjags_bayes, stan = runstan_bayes)
   
@@ -348,7 +350,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
   message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
   
   bayes_function(
-    data_list=data_list, model_path=model_path, params_out=params_out, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
+    data_list=data_list, model_path=model_path, params_out=params_out, split_dates=split_dates, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
     adapt_steps=adapt_steps, burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
 }
 
@@ -362,7 +364,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import dplyr
 #' @keywords internal
-runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
+runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
   if(!requireNamespace("runjags", quietly = TRUE)) {
     stop("the runjags package is required for JAGS MCMC models")
@@ -417,7 +419,7 @@ runjags_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_
 #' @import parallel
 #' @import dplyr
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
   
   # stan() can't find its own function cpp_object_initializer() unless the 
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts

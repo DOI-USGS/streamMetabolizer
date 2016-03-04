@@ -4,9 +4,10 @@
 \alias{runjags_bayes}
 \title{Run JAGS on a formatted data ply}
 \usage{
-runjags_bayes(data_list, model_path, params_out, keep_mcmc = FALSE,
-  n_chains = 4, adapt_steps = 1000, burnin_steps = 4000,
-  saved_steps = 40000, thin_steps = 1, verbose = FALSE, ...)
+runjags_bayes(data_list, model_path, params_out, split_dates,
+  keep_mcmc = FALSE, n_chains = 4, adapt_steps = 1000,
+  burnin_steps = 4000, saved_steps = 40000, thin_steps = 1,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}

@@ -5,7 +5,7 @@
 \title{Generate a coherent list of model specs}
 \usage{
 specs(model_name = mm_name(), engine, GPP_init = 10, ER_init = -10,
-  K600_init = 10, calc_DO_fun, ODE_method, bayes_fun, keep_mcmcs = TRUE,
+  K600_init = 10, calc_DO_fun, ODE_method, split_dates, keep_mcmcs = TRUE,
   GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
   ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
   K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
@@ -72,9 +72,12 @@ depending entirely on DO.sat, GPP, etc. at time t. Both methods are
 imprecise and fast, relative to Runge-Kutta or other numerical integration
 methods}
 
-\item{bayes_fun}{character in \code{c('bayes_1ply', 'bayes_all')} indicating 
-whether the data should be split into daily chunks first ('bayes_1ply') or 
-passed to the model fitting function in one big chunk ('bayes_all')}
+\item{split_dates}{logical indicating whether the data should be split into 
+daily chunks first (TRUE) or processed within one big model (FALSE). If 
+valid days differ in their timestep length, split_dates will need to be 
+TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only
+appropriate solution for a hierarchical model that pools information on
+error, K600, etc. across days.}
 
 \item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates 
 (coerced with as.Date if character, etc.) indicating whether to keep all of
@@ -246,7 +249,7 @@ often should, be overridden to tailor the model to your needs.
 \section{Relevant arguments}{
 
   
-  * metab_bayes: Always relevant: \code{model_name, bayes_fun, engine, 
+  * metab_bayes: Always relevant: \code{model_name, split_dates, engine, 
   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
   burnin_steps, saved_steps, thin_steps, verbose}. If 
