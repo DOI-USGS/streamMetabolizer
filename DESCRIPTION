@@ -22,7 +22,8 @@ Imports:
     lazyeval,
     lubridate,
     magrittr,
-    methods
+    methods,
+    tidyr
 Suggests:
     chron,
     dataRetrieval,
@@ -34,7 +35,6 @@ Suggests:
     runjags,
     rstan,
     testthat,
-    tidyr,
     XML,
     xts
 Collate:

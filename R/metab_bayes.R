@@ -253,6 +253,7 @@ bayes_allply <- function(
     # check this now so 
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
       stop_strs <- c(stop_strs, "couldn't match dates to date indices")
+    index <- '.dplyr.var'
     bayes_allday$daily <- bayes_allday$daily %>%
       rename(date=index) %>% 
       mutate(date=date_vec)
@@ -529,6 +530,8 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # one per unique number of nodes sharing a variable name
     stan_mat <- rstan::summary(runstan_out)$summary
     colnames(stan_mat) <- gsub("%", "pct", colnames(stan_mat))
+    
+    stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
     
     # determine how many unique nrows, & therefore data.frames, there should be
     var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(stan_mat)))

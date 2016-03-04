@@ -21,8 +21,8 @@ mm_filter_valid_days <- function(
   # make absolutely sure the data are sorted (so we can give this guarantee to
   # models that use the plys). do before mm_model_by_ply because plys can
   # overlap
-  if(!is.null(data)) data <- data %>% arrange(solar.time)
-  if(!is.null(data_daily)) data_daily <- data_daily %>% arrange(date)
+  if(!is.null(data)) data <- data %>% v %>% arrange(solar.time) %>% u(get_units(data))
+  if(!is.null(data_daily)) data_daily <- data_daily %>% v %>% arrange(date) %>% u(get_units(data_daily))
   
   #' Filter the instantaneous data using mm_is_valid_day
   #' 
