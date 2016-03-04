@@ -18,6 +18,12 @@ mm_filter_valid_days <- function(
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   
+  # make absolutely sure the data are sorted (so we can give this guarantee to
+  # models that use the plys). do before mm_model_by_ply because plys can
+  # overlap
+  if(!is.null(data)) data <- data %>% arrange(solar.time)
+  if(!is.null(data_daily)) data_daily <- data_daily %>% arrange(date)
+  
   #' Filter the instantaneous data using mm_is_valid_day
   #' 
   #' Record dates that are removed and the reasons for removal in a parent
@@ -32,7 +38,7 @@ mm_filter_valid_days <- function(
     tests # inheritParams mm_is_valid_day
   ) {
     stop_strs <- mm_is_valid_day(day=data_ply, day_start=day_start, day_end=day_end, tests=tests)
-    if(isTRUE(stop_strs)) {
+    if(isTRUE(stop_strs)) { # day is valid
       data_ply
     } else {
       removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(stop_strs, collapse="; "))))

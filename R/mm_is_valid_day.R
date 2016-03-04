@@ -14,7 +14,7 @@
 #' @param timestep_days the expected timestep length in fraction of a day; for 
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA.
-#' @return character vector of errors, or empty list
+#' @return character vector of errors if day is invalid, or TRUE if it's valid
 #' @importFrom lubridate tz
 #' @export
 mm_is_valid_day <- function(day, day_start=4, day_end=27.99, 
