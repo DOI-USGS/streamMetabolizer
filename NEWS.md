@@ -3,16 +3,17 @@
 ## Changes
 
 # New function: metab() serves as a gateway to all model types. You can now pass
-specs to metab() and expect the appropriate model to be chosen and called based
+specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
-# Major interface change: metab functions now accept specs (renamed from 
-model_specs) first, then data, data_daily, and info. Other arguments (day_start,
-day_end, and tests) have been moved into the specs. This permits chaining from 
-mm_name to specs to metab.
+# Interface change: metab functions now accept specs first, then data, 
+data_daily, and info. (specs was renamed from model_specs; see above.) Other 
+arguments (day_start, day_end, and tests) have been moved into the specs. This 
+permits chaining from mm_name to specs to metab.
 
 * Hierarchical bayesian models are now possible and include hierarchical 
-paramters for distributions on error and K600 (normal, linear, and binned)
+parameters for distributions on error and K600 (normal, linear, and binned). 
+Some models are known to work; complete testing for all models is forthcoming.
 
 # streamMetabolizer 0.8.0
 

@@ -211,7 +211,7 @@ included in \code{transforms}. Recommended transforms include
 \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{other_args}{Other arguments passed to the fitting function given by 
-\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to 
+\code{specs$engine}. \code{na.rm=TRUE} is already passed to 
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
@@ -235,14 +235,13 @@ of predict_DO}
 }
 \value{
 an internally consistent list of arguments that may be passed to 
-  \code{metab_bayes}, \code{metab_mle}, etc. as the \code{model_specs} 
-  argument
+  \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 }
 \description{
 Generates an internally consistent list of model specifications that may be 
-passed to \code{metab_bayes}, \code{metab_mle}, etc. via the 
-\code{model_specs} argument. This help file gives the definitive list of all 
-possible model specs, but only a subset of these are relevant to any given 
+passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs}
+argument. This help file gives the definitive list of all possible model
+specs, but only a subset of these are relevant to any given 
 \code{model_name}. See the 'Relevant arguments' section below. Irrelevant 
 arguments for the given \code{model_name} should not be explicitly passed 
 into this function (but don't worry - we'll just stop and tell you if you 

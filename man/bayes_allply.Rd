@@ -5,7 +5,7 @@
 \title{Make daily metabolism estimates from input parameters using a hierarchical 
 approach.}
 \usage{
-bayes_allply(data_all, data_daily_all, removed, model_specs)
+bayes_allply(data_all, data_daily_all, removed, specs)
 }
 \arguments{
 \item{data_all}{data.frame of the form \code{mm_data(solar.time, DO.obs, 
@@ -18,7 +18,7 @@ model_path}
 
 \item{removed}{data.frame of dates that were removed and why}
 
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default

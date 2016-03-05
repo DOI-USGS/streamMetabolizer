@@ -4,14 +4,14 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(model_specs = specs(mm_name("sim")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, optional = "DO.obs"),
+metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time, DO.obs,
+  DO.sat, depth, temp.water, light, optional = "DO.obs"),
   data_daily = mm_data(date, DO.mod.1, GPP, ER, K600, optional = "DO.mod.1"),
   info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
   "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -61,7 +61,7 @@ vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=
 # sim
 mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
   day_start=start.numeric, day_end=end.numeric, 
-  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
+  specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
 get_fit(mm)
 get_data_daily(mm)
 get_fitting_time(mm)

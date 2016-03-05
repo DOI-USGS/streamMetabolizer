@@ -4,13 +4,13 @@
 \alias{metab_night}
 \title{Nighttime regression for K estimation}
 \usage{
-metab_night(model_specs = specs(mm_name("night")),
-  data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(NULL), info = NULL, day_start = 12, day_end = 36,
-  tests = c("full_day", "even_timesteps", "complete_data"))
+metab_night(specs = specs(mm_name("night")), data = mm_data(solar.time,
+  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(NULL),
+  info = NULL, day_start = 12, day_end = 36, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -58,7 +58,7 @@ night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)],
 
 # fit
 mm <- metab_night(data=vfrenchnight, 
-  model_specs=specs('n_np_pi_eu_.lm'), 
+  specs=specs('n_np_pi_eu_.lm'), 
   day_start=night.start, day_end=night.end)
   
 # give estimates

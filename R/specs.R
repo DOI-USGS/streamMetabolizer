@@ -1,9 +1,9 @@
 #' Generate a coherent list of model specs
 #' 
 #' Generates an internally consistent list of model specifications that may be 
-#' passed to \code{metab_bayes}, \code{metab_mle}, etc. via the 
-#' \code{model_specs} argument. This help file gives the definitive list of all 
-#' possible model specs, but only a subset of these are relevant to any given 
+#' passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs}
+#' argument. This help file gives the definitive list of all possible model
+#' specs, but only a subset of these are relevant to any given 
 #' \code{model_name}. See the 'Relevant arguments' section below. Irrelevant 
 #' arguments for the given \code{model_name} should not be explicitly passed 
 #' into this function (but don't worry - we'll just stop and tell you if you 
@@ -161,8 +161,7 @@
 #'   of predict_DO
 #'   
 #' @return an internally consistent list of arguments that may be passed to 
-#'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{model_specs} 
-#'   argument
+#'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 #'   
 #' @examples 
 #' specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))

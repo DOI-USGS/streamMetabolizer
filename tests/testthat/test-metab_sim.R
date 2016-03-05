@@ -28,7 +28,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_true(!isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   mm <- metab_sim(data=vfrenchshort, data_daily=dd[-which(names(dd)=="DO.mod.1")], 
-                  model_specs=specs('s_np_oipcpi_eu_.rnorm', sim.seed=626), day_start=-1, day_end=23)
+                  specs=specs('s_np_oipcpi_eu_.rnorm', sim.seed=626), day_start=-1, day_end=23)
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   
@@ -41,7 +41,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
   # predict_DO - autocorrelation should be bigger when there's process error
   mm <- metab_sim(data=vfrenchshort[-which(names(vfrenchshort)=="DO.obs")], 
-                  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05), 
+                  specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05), 
                   data_daily=dd, day_start=-1, day_end=23)
   DO_preds <- predict_DO(mm)[-(1:3),]
   acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
@@ -51,10 +51,10 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   # should be able to switch ODE methods in fitting
   vfrenchthin <- vfrenchshort[seq(1,nrow(vfrenchshort),by=3),]
   mmE <- metab_sim(data=vfrenchthin[-which(names(vfrenchthin)=="DO.obs")], 
-                  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), 
+                  specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), 
                   data_daily=dd, day_start=-1, day_end=23)
   mmP <- metab_sim(data=vfrenchthin[-which(names(vfrenchthin)=="DO.obs")], 
-                  model_specs=specs('s_np_oipcpi_pm_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), 
+                  specs=specs('s_np_oipcpi_pm_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), 
                   data_daily=dd, day_start=-1, day_end=23)
   library(dplyr)
   DO_preds <- bind_rows(

@@ -5,7 +5,7 @@
 \title{Make daily metabolism estimates from input parameters}
 \usage{
 bayes_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  tests = c("full_day", "even_timesteps", "complete_data"), model_specs)
+  tests = c("full_day", "even_timesteps", "complete_data"), specs)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -31,7 +31,7 @@ date by which this ply should be referred to}
 \item{tests}{list of tests to conduct to determine whether each date worth of
 data is valid for modeling}
 
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default

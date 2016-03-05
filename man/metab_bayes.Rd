@@ -4,13 +4,13 @@
 \alias{metab_bayes}
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
-metab_bayes(model_specs = specs(mm_name("bayes")),
-  data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(NULL), info = NULL, day_start = 4,
-  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
+metab_bayes(specs = specs(mm_name("bayes")), data = mm_data(solar.time,
+  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(NULL),
+  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -34,7 +34,7 @@ A metab_bayes object containing the fitted model. This object can be
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-and \code{\link{specs}} for relevant options for the \code{model_specs} 
+and \code{\link{specs}} for relevant options for the \code{specs} 
 argument.
 }
 \examples{

@@ -34,7 +34,7 @@ included in \code{transforms}. Recommended transforms include
 \code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{other_args}{Other arguments passed to the fitting function given by 
-\code{model_specs$engine}. \code{na.rm=TRUE} is already passed to 
+\code{specs$engine}. \code{na.rm=TRUE} is already passed to 
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 }
 \description{

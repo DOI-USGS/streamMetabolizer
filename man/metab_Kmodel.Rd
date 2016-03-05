@@ -4,15 +4,15 @@
 \alias{metab_Kmodel}
 \title{Combine a time series of K estimates to predict consistent values}
 \usage{
-metab_Kmodel(model_specs = specs(mm_name("Kmodel")),
-  data = mm_data(solar.time, discharge, velocity, optional = c("all")),
-  data_daily = mm_data(date, K600, K600.lower, K600.upper, discharge.daily,
-  velocity.daily, optional = c("K600.lower", "K600.upper", "discharge.daily",
-  "velocity.daily")), info = NULL, day_start = 4, day_end = 27.99,
-  tests = c("full_day", "even_timesteps", "complete_data"))
+metab_Kmodel(specs = specs(mm_name("Kmodel")), data = mm_data(solar.time,
+  discharge, velocity, optional = c("all")), data_daily = mm_data(date, K600,
+  K600.lower, K600.upper, discharge.daily, velocity.daily, optional =
+  c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
+  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
+  "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -72,15 +72,15 @@ example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) \%>\%
   mutate(K600.lower=K600-5, K600.upper=K600+6)
   
-mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
   mm_name('Kmodel', engine='mean'))) # two warnings expected
 plot_metab_preds(predict_metab(mm))
 
-mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
   mm_name('Kmodel', engine='lm'), predictors='discharge.daily'))
 plot_metab_preds(predict_metab(mm))
 
-mm <- metab_Kmodel(data_daily=example_Ks, model_specs=specs(
+mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
   mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)))
 plot_metab_preds(predict_metab(mm))
 }

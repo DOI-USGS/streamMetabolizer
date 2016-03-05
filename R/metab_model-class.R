@@ -283,7 +283,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
 predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {
   
   # pull args from the model
-  if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
+  if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$specs$calc_DO_args # OK to be NULL
   day_start <- get_args(metab_model)$day_start
   day_end <- get_args(metab_model)$day_end
   

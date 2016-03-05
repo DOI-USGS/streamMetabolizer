@@ -5,7 +5,7 @@ NULL
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 #' temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-#' and \code{\link{specs}} for relevant options for the \code{model_specs} 
+#' and \code{\link{specs}} for relevant options for the \code{specs} 
 #' argument.
 #' 
 #' @author Alison Appling, Bob Hall
@@ -43,7 +43,7 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes <- function(
-  model_specs=specs(mm_name('bayes')), 
+  specs=specs(mm_name('bayes')), 
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
   data_daily=mm_data(NULL),
   info=NULL, 
@@ -58,35 +58,35 @@ metab_bayes <- function(
     
     # Check and parse model file path. First try the streamMetabolizer models
     # dir, then try a regular path, then complain / continue depending on
-    # whether we found a file. Add the complete path to model_specs. This is
+    # whether we found a file. Add the complete path to specs. This is
     # best done here, in the metab_bayes call, so that models can be defined,
     # passed to another computer, and still run successfully.
-    model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer")
-    if(!file.exists(model_specs$model_path)) 
-      model_specs$model_path <- model_specs$model_name
-    if(!file.exists(model_specs$model_path)) 
-      stop("could not locate the model file at ", model_specs$model_path)
+    specs$model_path <- system.file(paste0("models/", specs$model_name), package="streamMetabolizer")
+    if(!file.exists(specs$model_path)) 
+      specs$model_path <- specs$model_name
+    if(!file.exists(specs$model_path)) 
+      stop("could not locate the model file at ", specs$model_path)
     
     # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
-    if(is.logical(model_specs$keep_mcmcs)) {
-      if(length(model_specs$keep_mcmcs) != 1) {
+    if(is.logical(specs$keep_mcmcs)) {
+      if(length(specs$keep_mcmcs) != 1) {
         stop("if keep_mcmcs is logical, it must have length 1")
       }
-    } else if(model_specs$split_dates == FALSE) {
+    } else if(specs$split_dates == FALSE) {
       stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
     }
     
     # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from JAGS or Stan)
-    if(model_specs$split_dates == TRUE) {
-      if(!is.logical(model_specs$keep_mcmcs)) {
-        model_specs$keep_mcmcs <- as.Date(model_specs$keep_mcmcs)
+    if(specs$split_dates == TRUE) {
+      if(!is.logical(specs$keep_mcmcs)) {
+        specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
       }
       # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
         day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
         tests=tests, # for mm_is_valid_day
-        model_specs=model_specs) # for bayes_1ply
+        specs=specs) # for bayes_1ply
       # if we saved the modeling object[s] in the df, pull them out now
       if('mcmcfit' %in% names(bayes_daily)) {
         bayes_mcmc <- bayes_daily$mcmcfit
@@ -97,13 +97,13 @@ metab_bayes <- function(
       }
       bayes_all <- list(daily=bayes_daily)
       
-    } else if(model_specs$split_dates == FALSE) {
+    } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
       if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
       filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
       bayes_all_list <- bayes_allply(
         data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
-        model_specs=model_specs)
+        specs=specs)
       # if we saved the modeling object, pull it out now
       bayes_mcmc <- bayes_all_list$mcmcfit
       bayes_all_list$mcmcfit <- NULL
@@ -120,7 +120,7 @@ metab_bayes <- function(
     mcmc=bayes_mcmc,
     fitting_time=fitting_time,
     args=list(
-      model_specs=model_specs,
+      specs=specs,
       day_start=day_start, day_end=day_end, tests=tests
     ),
     data=data,
@@ -149,7 +149,7 @@ metab_bayes <- function(
 bayes_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs
+  specs
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
@@ -166,16 +166,16 @@ bayes_1ply <- function(
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
-          model_specs=model_specs, priors=model_specs$priors)
-        model_specs$keep_mcmc <- if(is.logical(model_specs$keep_mcmcs)) {
-          isTRUE(model_specs$keep_mcmcs)
+          specs=specs, priors=specs$priors)
+        specs$keep_mcmc <- if(is.logical(specs$keep_mcmcs)) {
+          isTRUE(specs$keep_mcmcs)
         } else {
-          isTRUE(ply_date %in% model_specs$keep_mcmcs)
+          isTRUE(ply_date %in% specs$keep_mcmcs)
         }
         all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
-          model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
+          specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -218,7 +218,7 @@ bayes_1ply <- function(
 #' @keywords internal
 bayes_allply <- function(
   data_all, data_daily_all, removed,
-  model_specs
+  specs
 ) {
   # Provide ability to skip a poorly-formatted dataset for calculating 
   # metabolism. Collect problems/errors as a list of strings and proceed. Also
@@ -231,11 +231,11 @@ bayes_allply <- function(
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
-        model_specs=model_specs, priors=model_specs$priors)
+        specs=specs, priors=specs$priors)
       all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
       do.call(mcmc_bayes, c(
         list(data_list=data_list),
-        model_specs[all_mcmc_args[all_mcmc_args %in% names(model_specs)]]))
+        specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
     }, error=function(err) {
       # on error: give up, remembering error. dummy values provided below
       stop_strs <<- c(stop_strs, err$message)
@@ -288,7 +288,7 @@ bayes_allply <- function(
 prepdata_bayes <- function(
   data, data_daily, # inheritParams metab
   ply_date=NA, # inheritParams mm_model_by_ply_prototype
-  model_specs, # inheritParams metab
+  specs, # inheritParams metab
   priors=FALSE # inherited by specs
 ) {
   
@@ -305,12 +305,12 @@ prepdata_bayes <- function(
   if(length(num_daily_obs) > 1) stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   time_by_date_matrix <- function(vec) {
     switch(
-      model_specs$engine,
+      specs$engine,
       jags=matrix(data=vec, ncol=num_daily_obs, nrow=num_dates, byrow=TRUE),
       stan=matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
     )
   }
-  date_margin <- switch(model_specs$engine, jags=1, stan=2)
+  date_margin <- switch(specs$engine, jags=1, stan=2)
   
   # double-check that our dates are going to line up with the input dates. this 
   # should be redundant w/ above date_table checks, so just being extra careful
@@ -325,11 +325,11 @@ prepdata_bayes <- function(
   timestep_days <- mean(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) mean(diff(timevec))))
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(basename(model_specs$model_path))
+  features <- mm_parse_name(basename(specs$model_path))
   
   # Format the data for JAGS/Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
-  # model_specs are already underscore-separated for this reason
+  # specs are already underscore-separated for this reason
   data_list = c(
     list(
       
@@ -344,9 +344,9 @@ prepdata_bayes <- function(
       frac_GPP = {
         # normalize light by the sum of light in the first 24 hours of the time window
         in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-        if(model_specs$engine == 'jags') in_solar_day <- t(in_solar_day)
+        if(specs$engine == 'jags') in_solar_day <- t(in_solar_day)
         mat_light <- time_by_date_matrix(data$light)
-        sum_by_date <- switch(model_specs$engine, jags=rowSums, stan=colSums)
+        sum_by_date <- switch(specs$engine, jags=rowSums, stan=colSums)
         sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
       },
       frac_ER  = time_by_date_matrix(timestep_days),
@@ -357,7 +357,7 @@ prepdata_bayes <- function(
       DO_obs   = time_by_date_matrix(data$DO.obs)
     ),
     
-    model_specs[c(
+    specs[c(
       # Hyperparameters - this section should be identical to the
       # hyperparameters section of specs|bayes
       c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
@@ -374,7 +374,7 @@ prepdata_bayes <- function(
   )
   if(priors) {
     switch(
-      model_specs$engine,
+      specs$engine,
       jags={ data_list <- data_list[-which(names(data_list)=="DO_obs")] },
       stan={ stop("sorry, Stan doesn't allow NAs in data, so priors can't be TRUE") })
   }

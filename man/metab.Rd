@@ -4,11 +4,11 @@
 \alias{metab}
 \title{Fit a metabolism model to data}
 \usage{
-metab(model_specs = specs(mm_name()), data = mm_data(NULL),
+metab(specs = specs(mm_name()), data = mm_data(NULL),
   data_daily = mm_data(NULL), info = NULL)
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -30,7 +30,7 @@ An object inheriting from metab_model and containing the fitted
   \code{\link{metab_model_interface}}.
 }
 \description{
-Runs the metabolism model specified by the \code{model_specs} argument. 
+Runs the metabolism model specified by the \code{specs} argument. 
 Returns a fitted model.
 }
 \examples{

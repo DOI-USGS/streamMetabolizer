@@ -4,7 +4,7 @@
 \alias{prepdata_bayes}
 \title{Prepare data for passing to JAGS or Stan}
 \usage{
-prepdata_bayes(data, data_daily, ply_date = NA, model_specs, priors = FALSE)
+prepdata_bayes(data, data_daily, ply_date = NA, specs, priors = FALSE)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -17,7 +17,7 @@ default. See \code{\link{mm_data}} for a full data description.}
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred to}
 
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default

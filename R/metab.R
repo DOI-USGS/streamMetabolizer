@@ -1,11 +1,11 @@
 #' Fit a metabolism model to data
 #' 
-#' Runs the metabolism model specified by the \code{model_specs} argument. 
+#' Runs the metabolism model specified by the \code{specs} argument. 
 #' Returns a fitted model.
 #' 
 #' @author Alison Appling
 #'   
-#' @param model_specs a list of model specifications and parameters for a model.
+#' @param specs a list of model specifications and parameters for a model.
 #'   Although this may be specified manually, it is easier and safer to use
 #'   \code{specs} to generate the list. The help file for that functions lists
 #'   the necessary parameters, describes them in detail, and gives default
@@ -24,10 +24,10 @@
 #' @examples
 #' 
 #' @export
-metab <- function(model_specs=specs(mm_name()), data=mm_data(NULL), data_daily=mm_data(NULL), info=NULL) {
+metab <- function(specs=specs(mm_name()), data=mm_data(NULL), data_daily=mm_data(NULL), info=NULL) {
 
   # determine which model function to call
-  model_type <- mm_parse_name(model_specs$model_name)$type
+  model_type <- mm_parse_name(specs$model_name)$type
   metab_fun <- switch(
     model_type,
     bayes  = metab_bayes,
@@ -37,5 +37,5 @@ metab <- function(model_specs=specs(mm_name()), data=mm_data(NULL), data_daily=m
     sim    = metab_sim)
 
   # run the model
-  metab_fun(model_specs=model_specs, data=data, data_daily=data_daily, info=info)
+  metab_fun(specs=specs, data=data, data_daily=data_daily, info=info)
 }

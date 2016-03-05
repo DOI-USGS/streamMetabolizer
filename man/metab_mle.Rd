@@ -4,13 +4,13 @@
 \alias{metab_mle}
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
-metab_mle(model_specs = specs(mm_name("mle")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600,
-  optional = "all"), info = NULL, day_start = 4, day_end = 27.99,
+metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
+  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600, optional
+  = "all"), info = NULL, day_start = 4, day_end = 27.99,
   tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
-\item{model_specs}{a list of model specifications and parameters for a model.
+\item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
@@ -68,11 +68,11 @@ streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
  
   # PRK and PR with process error
   get_fit(mm <- metab_mle(data=vfrenchshort, 
-    model_specs=specs('m_np_pi_pm_km.nlm'), 
+    specs=specs('m_np_pi_pm_km.nlm'), 
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))
   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-    model_specs=specs('m_np_pi_pm_km.nlm'), 
+    specs=specs('m_np_pi_pm_km.nlm'), 
     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
   plot_DO_preds(predict_DO(mm))
 }
