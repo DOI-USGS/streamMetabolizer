@@ -82,7 +82,7 @@ metab_mle <- function(
     info=info,
     fit=mle_all,
     fitting_time=fitting_time,
-    args=list(specs=specs, day_start=day_start, day_end=day_end, tests=tests), # keep in order passed to function
+    specs=specs,
     data=dat_list[['data']],
     data_daily=dat_list[['data_daily']])
   

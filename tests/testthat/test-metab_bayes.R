@@ -219,7 +219,7 @@ devel_tests <- function() {
 test_that("simple metab_bayes predictions (predict_metab, predict_DO) match expectations", {
   
   expect_accurate <- function(mm) {
-    mfile <- mm@args$specs$model_name
+    mfile <- mm@specs$model_name
     expect_silent(metab <- predict_metab(mm))
     expect_silent(DO_preds <- predict_DO(mm))
     expect_silent(DO_preds_Aug24 <- dplyr::filter(DO_preds, date == "2012-08-24"))
@@ -250,7 +250,7 @@ test_that("simple metab_bayes predictions (predict_metab, predict_DO) match expe
 manual_tests <- function() {
   
   expect_accurate <- function(mm) {
-    mfile <- mm@args$specs$model_name
+    mfile <- mm@specs$model_name
     expect_silent(metab <- predict_metab(mm))
     expect_silent(DO_preds <- predict_DO(mm))
     expect_silent(DO_preds_Aug24<- dplyr::filter(DO_preds, date == "2012-08-24"))
@@ -458,7 +458,7 @@ manual_tests <- function() {
         predict_metab(mm)[2,], 
         as.data.frame(as.list(get_fitting_time(mm))[1:3]),
         get_fit(mm)[2, grepl("Rhat|psrf", names(get_fit(mm)))] %>% setNames(gsub("Rhat|psrf", "rhat", names(.))), #potential scale reduction factor
-        data_frame(file=get_args(mm)$specs$model_name))
+        data_frame(file=get_specs(mm)$model_name))
   )) %>% mutate(model=LETTERS[1:nrow(.)])
   grid.arrange(
     ggplot(preds, aes(x=model, y=GPP, color=file)) + geom_point() + geom_errorbar(aes(ymin=GPP.lower, ymax=GPP.upper)) + theme_bw() + ylim(min(preds$GPP.lower), NA) + theme(legend.position="none"),

@@ -38,7 +38,7 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   # loess
   mm <- metab_Kmodel(data_daily=frk2, specs=specs(mm_name('Kmodel', engine='loess'), predictors='date'))
   mm <- metab_Kmodel(data_daily=frk2, specs=specs(mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=1.4)))
-  mm <- metab_Kmodel(data_daily=frk2,specs=specs(mm_name('Kmodel', engine='loess'), predictors=c('discharge.daily','date')))
+  mm <- metab_Kmodel(data_daily=frk2, specs=specs(mm_name('Kmodel', engine='loess'), predictors=c('discharge.daily','date')))
   mm <- metab_Kmodel(data_daily=frk2, specs=specs(mm_name('Kmodel', engine='loess'), predictors='discharge.daily', other_args=list(span=2)))
   
   # use graphical check to inspect above mm results

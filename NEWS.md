@@ -6,6 +6,10 @@
 specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
+# Interface change: model_specs is now specs. get_args is now get_specs, and the
+result is a list of specs as named in specs() rather than a list with an element
+called model_specs that is itself a list.
+
 # Interface change: metab functions now accept specs first, then data, 
 data_daily, and info. (specs was renamed from model_specs; see above.) Other 
 arguments (day_start, day_end, and tests) have been moved into the specs. This 

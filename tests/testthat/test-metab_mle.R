@@ -11,7 +11,7 @@ test_that("metab_mle models can be created", {
   # check basic structure
   expect_is(mm, "metab_mle")
   expect_is(slot(mm, "fit"), "data.frame")
-  expect_is(slot(mm, "args"), "list")
+  expect_is(slot(mm, "specs"), "list")
   expect_is(slot(mm, "data"), "data.frame")
   expect_is(slot(mm, "pkg_version"), "character")
   

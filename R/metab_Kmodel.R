@@ -107,10 +107,7 @@ metab_Kmodel <- function(
     info=info,
     fit=Kmodel_all,
     fitting_time=fitting_time,
-    args=list(
-      specs=specs,
-      day_start=day_start, day_end=day_end, tests=tests
-    ),
+    specs=specs,
     data=data,
     data_daily=data_list$unfiltered)
   
@@ -325,8 +322,8 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   data_daily <- get_data_daily(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
   if(!isTRUE(use_saved) || is.null(data_daily) || !("K600" %in% names(data_daily))) {
-    engine <- get_args(metab_model)$specs$engine
-    ktrans <- get_args(metab_model)$specs$transforms['K600']
+    engine <- get_specs(metab_model)$engine
+    ktrans <- get_specs(metab_model)$transforms['K600']
     fit <- get_fit(metab_model)
     . <- '.dplyr.var'
     switch(

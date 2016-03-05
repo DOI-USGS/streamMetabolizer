@@ -23,7 +23,9 @@ the \code{metab_model_interface} defined here.
   
   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
   
-  \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
+  \item \code{\link{get_info}(metab_model) \{ return(info) \}}
+  
+  \item \code{\link{get_specs}(metab_model) \{ return(specs.list) \}}
   
   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
   

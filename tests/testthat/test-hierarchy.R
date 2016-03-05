@@ -20,7 +20,7 @@ manual_tests <- function() {
   #### super simple model by split_dates=c(T,F) ####
   mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="pairmeans", deficit_src="DO_mod", engine="stan")
   ms <- specs(mn, burnin_steps=300, saved_steps=200, split_dates=FALSE)
-  fitone <- metab_bayes(vfrenchmedium, specs=replace(ms, 'split_dates', TRUE)) # one day at a time
+  fitone <- metab_bayes(specs=replace(ms, 'split_dates', TRUE), vfrenchmedium) # one day at a time
   get_fitting_time(fitone) # 126 sec
   fitall <- metab_bayes(vfrenchmedium, specs=replace(ms, 'split_dates', FALSE)) # all three days at once
   get_fitting_time(fitall) # 87 sec

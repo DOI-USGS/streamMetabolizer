@@ -15,7 +15,9 @@
 #'   
 #'   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
 #'   
-#'   \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
+#'   \item \code{\link{get_info}(metab_model) \{ return(info) \}}
+#'   
+#'   \item \code{\link{get_specs}(metab_model) \{ return(specs.list) \}}
 #'   
 #'   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
 #'   
@@ -88,19 +90,19 @@ get_fitting_time <- function(metab_model) {
   UseMethod("get_fitting_time")
 }
 
-#' Extract the fitting arguments from a metabolism model.
+#' Extract the fitting specifications from a metabolism model.
 #' 
-#' A function in the metab_model_interface. Returns the arguments that were 
-#' passed to a metabolism model.
+#' A function in the metab_model_interface. Returns the specifications that were
+#' passed in when fitting the metabolism model.
 #' 
-#' @param metab_model A metabolism model, implementing the
-#'   metab_model_interface, for which to return the arguments
-#' @return A list of arguments
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the specifications
+#' @return The list of specifications that was passed to \code{\link{metab}()}
 #' @export
 #' @family metab_model_interface
 #' @family get_args
-get_args <- function(metab_model) {
-  UseMethod("get_args")
+get_specs <- function(metab_model) {
+  UseMethod("get_specs")
 }
 
 

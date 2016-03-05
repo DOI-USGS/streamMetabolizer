@@ -119,10 +119,7 @@ metab_bayes <- function(
     fit=bayes_all,
     mcmc=bayes_mcmc,
     fitting_time=fitting_time,
-    args=list(
-      specs=specs,
-      day_start=day_start, day_end=day_end, tests=tests
-    ),
+    specs=specs,
     data=data,
     data_daily=data_daily)
   

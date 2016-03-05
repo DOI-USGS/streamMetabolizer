@@ -76,7 +76,7 @@ metab_night <- function(
     info=info,
     fit=night_all,
     fitting_time=fitting_time,
-    args=list(specs=specs, day_start=day_start, day_end=day_end, tests=tests),
+    specs=specs,
     data=data,
     data_daily=data_daily)
   
@@ -260,8 +260,8 @@ setClass(
 predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # pull args from the model
-  day_start <- get_args(metab_model)$day_start
-  day_end <- get_args(metab_model)$day_end
+  day_start <- get_specs(metab_model)$day_start
+  day_end <- get_specs(metab_model)$day_end
   
   # get the DO, temperature, etc. data; filter if requested
   data <- get_data(metab_model) %>%

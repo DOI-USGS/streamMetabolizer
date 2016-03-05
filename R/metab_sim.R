@@ -73,7 +73,7 @@ metab_sim <- function(
     info=info,
     fit=dat_list[['data_daily']], # GPP, ER, etc. were given as data but will become our predictors
     fitting_time=fitting_time,
-    args=list(specs=specs, day_start=day_start, day_end=day_end, tests=tests),
+    specs=specs,
     data=dat_list[['data']],
     data_daily=dat_list[['data_daily']])
 }
@@ -134,7 +134,7 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
   # call the generic, which generally does what we want
-  sim.seed <- get_args(metab_model)$specs$sim.seed
+  sim.seed <- get_specs(metab_model)$sim.seed
   if(!is.na(sim.seed)) set.seed(sim.seed)
   preds_w_err <- NextMethod(calc_DO_fun=calc_DO_mod_w_sim_error)
   preds_wo_err <- NextMethod(calc_DO_fun=calc_DO_mod)

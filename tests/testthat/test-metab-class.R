@@ -6,7 +6,7 @@ test_that("metab_model objects can be created and accessed", {
   # basic structure of metab_model parent class
   mm <- metab_model()
   expect_output(slot(mm, "fit"), "generic")
-  expect_is(slot(mm, "args"), "list")
+  expect_is(slot(mm, "specs"), "list")
   expect_is(slot(mm, "data"), "data.frame")
   expect_is(slot(mm, "pkg_version"), "character")
 
@@ -15,7 +15,7 @@ test_that("metab_model objects can be created and accessed", {
   
   # accessors
   expect_equal(slot(mm, "fit"), get_fit(mm))
-  expect_equal(slot(mm, "args"), get_args(mm))
+  expect_equal(slot(mm, "specs"), get_specs(mm))
   expect_equal(slot(mm, "data"), get_data(mm))
   expect_equal(slot(mm, "pkg_version"), get_version(mm))
   expect_equal(slot(mm, "info"), get_info(mm))
