@@ -10,7 +10,8 @@
 #' 
 #' @param day data for one day
 #' @inheritParams mm_model_by_ply_prototype
-#' @param tests list of tests to conduct
+#' @param tests list of tests to conduct to determine whether each date worth of
+#'   data is valid for modeling
 #' @param timestep_days the expected timestep length in fraction of a day; for 
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA.

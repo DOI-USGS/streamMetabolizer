@@ -5,13 +5,16 @@ NULL
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 #' temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-#' and \code{\link{specs}} for relevant options for the \code{model_specs}
+#' and \code{\link{specs}} for relevant options for the \code{model_specs} 
 #' argument.
 #' 
 #' @author Alison Appling, Bob Hall
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_bayes object containing the fitted model.
+#'   
+#' @inheritParams metab
+#' @return A metab_bayes object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}} and
+#'   also \code{\link{get_mcmc}}.
+#'   
 #' @examples
 #' \dontrun{
 #' # set the date in several formats
@@ -40,10 +43,11 @@ NULL
 #' @export
 #' @family metab_model
 metab_bayes <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs(mm_name('bayes')), # inheritParams metab_model_prototype
-  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
+  model_specs=specs(mm_name('bayes')), 
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data_daily=mm_data(NULL),
+  info=NULL, 
+  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
 ) {
   
   fitting_time <- system.time({
@@ -138,14 +142,14 @@ metab_bayes <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @return data.frame of estimates and MCMC model diagnostics
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs # inheritParams metab_model_prototype
+  model_specs
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
@@ -209,12 +213,12 @@ bayes_1ply <- function(
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
 #' @param removed data.frame of dates that were removed and why
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @return data.frame of estimates and MCMC model diagnostics
 #' @keywords internal
 bayes_allply <- function(
   data_all, data_daily_all, removed,
-  model_specs # inheritParams metab_model_prototype
+  model_specs
 ) {
   # Provide ability to skip a poorly-formatted dataset for calculating 
   # metabolism. Collect problems/errors as a list of strings and proceed. Also
@@ -274,18 +278,18 @@ bayes_allply <- function(
 #' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
 #' data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
 #' 
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams metab_bayes
 #' @param priors logical. Should the data list be modified such that JAGS will 
 #'   return priors rather than posteriors?
 #' @return list of data for input to runjags_bayes or runstan_bayes
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
-  data, data_daily, ply_date=NA, # inheritParams metab_model_prototype
-  model_specs, # inheritParams metab_bayes
-  priors=FALSE
+  data, data_daily, # inheritParams metab
+  ply_date=NA, # inheritParams mm_model_by_ply_prototype
+  model_specs, # inheritParams metab
+  priors=FALSE # inherited by specs
 ) {
   
   # remove units if present

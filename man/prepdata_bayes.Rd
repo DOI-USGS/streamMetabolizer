@@ -18,9 +18,10 @@ default. See \code{\link{mm_data}} for a full data description.}
 date by which this ply should be referred to}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+Although this may be specified manually, it is easier and safer to use
+\code{specs} to generate the list. The help file for that functions lists
+the necessary parameters, describes them in detail, and gives default
+values.}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will 
 return priors rather than posteriors?}

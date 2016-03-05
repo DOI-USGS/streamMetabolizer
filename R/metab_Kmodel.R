@@ -1,11 +1,11 @@
 #' @include metab_model-class.R
 NULL
 
-#' Combine a time series of K estimates to predict unified values
+#' Combine a time series of K estimates to predict consistent values
 #' 
 #' Takes daily estimates of K, usually from nighttime regression, and regresses 
-#' against predictors such as discharge.daily. Returns a metab_model that only 
-#' predicts daily K, nothing else.
+#' against predictors such as discharge.daily. Returns a metab_Kmodel object
+#' that only predicts daily K, nothing else.
 #' 
 #' Possible approaches:
 #' 
@@ -34,9 +34,13 @@ NULL
 #' }
 #' 
 #' @author Alison Appling
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_Kmodel object containing the fitted model.
+#' 
+#' @inheritParams metab
+#' @return A metab_Kmodel object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#' @import dplyr
+#' @importFrom magrittr %<>%
+#' 
 #' @examples
 #' \dontrun{
 #' library(dplyr)
@@ -58,15 +62,13 @@ NULL
 #' plot_metab_preds(predict_metab(mm))
 #' }
 #' @export
-#' @import dplyr
-#' @importFrom magrittr %<>%
 #' @family metab_model
 metab_Kmodel <- function(
-  data=mm_data(solar.time, discharge, velocity, optional=c("all")), 
-  data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")), # inheritParams metab_model_prototype
   model_specs=specs(mm_name('Kmodel')),
-  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype. day_start and day_end only relevant if !is.null(data)
-  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day. only relevant if !is.null(data)
+  data=mm_data(solar.time, discharge, velocity, optional=c("all")), 
+  data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
+  info=NULL, 
+  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data') # only relevant if !is.null(data)
 ) {
   
   # Check and reformat arguments
@@ -136,7 +138,7 @@ metab_Kmodel <- function(
 #'   given, the corresponding filter is applied: K600.upper-K600.lower <=
 #'   CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
 #'   velocity.daily.max
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @inheritParams mm_is_valid_day
 prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, tests) {
   # Aggregate unit data to daily timesteps if needed

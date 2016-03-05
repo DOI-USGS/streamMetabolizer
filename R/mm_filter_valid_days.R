@@ -7,14 +7,14 @@
 #'   those points on days that pass the specified tests in mm_is_valid_day
 #' @param data_daily data.frame of daily estimates/statistics, to be filtered in
 #'   accordance with the filtering of data
-#' @inheritParams metab_model_prototype
+#' @inheritParams mm_model_by_ply
 #' @inheritParams mm_is_valid_day
 #' @export
 #' @return list of data and data_daily with same structure as inputs but with 
 #'   invalid days removed, plus a third data.frame of dates that were removed
 mm_filter_valid_days <- function(
-  data, data_daily=NULL, # redefine from metab_model_prototype
-  day_start=4, day_end=27.99, # inheritParams metab_model_prototype
+  data, data_daily=NULL, # redefine from metab
+  day_start=4, day_end=27.99, # inheritParams mm_model_by_ply
   tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
 ) {
   

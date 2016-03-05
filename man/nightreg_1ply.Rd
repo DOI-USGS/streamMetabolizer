@@ -24,19 +24,19 @@ exactly on an observation time.}
 
 \item{day_end}{end time of a day's data in number of hours from the midnight 
 that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation 
-time that occurs before that time if day_end doesn't fall exactly on an 
-observation time.}
+describing 2006-06-26 end at the last observation before 2006-06-27 06:00.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred to}
 
-\item{tests}{list of tests to conduct}
+\item{tests}{list of tests to conduct to determine whether each date worth of
+data is valid for modeling}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+Although this may be specified manually, it is easier and safer to use
+\code{specs} to generate the list. The help file for that functions lists
+the necessary parameters, describes them in detail, and gives default
+values.}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{nlm}} model 

@@ -2,16 +2,22 @@
 % Please edit documentation in R/metab_Kmodel.R
 \name{metab_Kmodel}
 \alias{metab_Kmodel}
-\title{Combine a time series of K estimates to predict unified values}
+\title{Combine a time series of K estimates to predict consistent values}
 \usage{
-metab_Kmodel(data = mm_data(solar.time, discharge, velocity, optional =
-  c("all")), data_daily = mm_data(date, K600, K600.lower, K600.upper,
-  discharge.daily, velocity.daily, optional = c("K600.lower", "K600.upper",
-  "discharge.daily", "velocity.daily")),
-  model_specs = specs(mm_name("Kmodel")), info = NULL, day_start = 4,
-  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
+metab_Kmodel(model_specs = specs(mm_name("Kmodel")),
+  data = mm_data(solar.time, discharge, velocity, optional = c("all")),
+  data_daily = mm_data(date, K600, K600.lower, K600.upper, discharge.daily,
+  velocity.daily, optional = c("K600.lower", "K600.upper", "discharge.daily",
+  "velocity.daily")), info = NULL, day_start = 4, day_end = 27.99,
+  tests = c("full_day", "even_timesteps", "complete_data"))
 }
 \arguments{
+\item{model_specs}{a list of model specifications and parameters for a model.
+Although this may be specified manually, it is easier and safer to use
+\code{specs} to generate the list. The help file for that functions lists
+the necessary parameters, describes them in detail, and gives default
+values.}
+
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations. Columns must have the same names, units, and format as the 
 default. See \code{\link{mm_data}} for a full data description.}
@@ -19,43 +25,17 @@ default. See \code{\link{mm_data}} for a full data description.}
 \item{data_daily}{data.frame containing inputs with a daily timestep. See 
 \code{\link{mm_data}} for a full data description.}
 
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
-
 \item{info}{any information, in any format, that you would like to store 
 within the metab_model object}
-
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For single days of input data, it is 
-conventional/useful to begin the day the evening before, e.g., -1.5, and to
-end just before the next sunrise, e.g., 30. For multiple consecutive days, 
-it may make the most sense to start just before sunrise (e.g., 4) and to 
-end 24 hours later. For nighttime regression to be compatible with this 
-setup, the date assigned to a section of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
-metab_night, of which the times of darkness will be used.}
-
-\item{day_end}{end time (inclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
-observation time that occurs before that time if day_end doesn't fall 
-exactly on an observation time. See day_start for recommended start and end
-times.}
-
-\item{tests}{list of tests to conduct}
 }
 \value{
-A metab_Kmodel object containing the fitted model.
+A metab_Kmodel object containing the fitted model. This object can be 
+  inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
 Takes daily estimates of K, usually from nighttime regression, and regresses 
-against predictors such as discharge.daily. Returns a metab_model that only 
-predicts daily K, nothing else.
+against predictors such as discharge.daily. Returns a metab_Kmodel object
+that only predicts daily K, nothing else.
 }
 \details{
 Possible approaches:

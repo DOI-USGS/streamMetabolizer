@@ -8,9 +8,10 @@ mm_model_by_ply(model_fun, data, data_daily, day_start, day_end, ...)
 }
 \arguments{
 \item{model_fun}{the function to apply to each data ply. This function should
-accept the arguments \code{c(data, data_daily, ..., day_start, day_end, ply_date)}
-where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
-to \code{mm_model_by_ply} is missing or \code{NULL}}
+accept the arguments \code{c(data, data_daily, ..., day_start, day_end, 
+ply_date)} where \code{data_daily} is \code{NULL} when the 
+\code{data_daily} argument to \code{mm_model_by_ply} is missing or 
+\code{NULL}}
 
 \item{data}{required. the data.frame containing all relevant, validated 
 modeling data. The solar.time column must be present.}
@@ -18,17 +19,23 @@ modeling data. The solar.time column must be present.}
 \item{data_daily}{optional. a data.frame containing inputs with a daily 
 timestep. The date column must be present.}
 
-\item{day_start}{start time of a day's data in number of hours from the 
-midnight that begins the modal date. For example, day_start=-1.5 indicates 
-that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first 
-observation time that occurs after that time if day_start doesn't fall 
-exactly on an observation time.}
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time. For metabolism models working with 
+single days of input data, it is conventional/useful to begin the day the 
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+30. For multiple consecutive days, it may make the most sense to start just
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
+metab_night, of which the times of darkness will be used.}
 
-\item{day_end}{end time of a day's data in number of hours from the midnight 
-that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation 
-time that occurs before that time if day_end doesn't fall exactly on an 
-observation time.}
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
 \item{...}{other args to be passed through mm_model_by_ply to model_fun}
 }

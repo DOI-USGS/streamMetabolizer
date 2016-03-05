@@ -12,10 +12,12 @@ NULL
 #' other values are ignored), or if in \code{data_daily}, this takes the form of
 #' a DO.mod.1 column with one starting DO value per day.
 #' 
-#' @author Alison Appling, Maite Arroita
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_sim object containing the fitted model.
+#' @author Alison Appling, Bob Hall
+#'   
+#' @inheritParams metab
+#' @return A metab_sim object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#'   
 #' @examples
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
@@ -48,12 +50,11 @@ NULL
 #' @export
 #' @family metab_model
 metab_sim <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'), # inheritParams metab_model_prototype
-  data_daily=mm_data(date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'), # inheritParams metab_model_prototype
-  model_specs=specs(mm_name('sim')), # inheritParams metab_model_prototype
-  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
-  
+  model_specs=specs(mm_name('sim')),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'),
+  data_daily=mm_data(date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'),
+  info=NULL, 
+  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
 ) {
   
   fitting_time <- system.time({

@@ -19,9 +19,10 @@ model_path}
 \item{removed}{data.frame of dates that were removed and why}
 
 \item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+Although this may be specified manually, it is easier and safer to use
+\code{specs} to generate the list. The help file for that functions lists
+the necessary parameters, describes them in detail, and gives default
+values.}
 }
 \value{
 data.frame of estimates and MCMC model diagnostics

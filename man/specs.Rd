@@ -139,15 +139,15 @@ beta1_sigma)}
 \item{err_obs_iid_sigma_shape}{The shape parameter on a gamma distribution 
 for err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_obs_iid_sigma_rate}{The rate parameter on a gamma distribution for
+\item{err_obs_iid_sigma_rate}{The rate parameter on a gamma distribution for 
 err_obs_iid_sigma, the standard deviation of the observation error}
 
 \item{err_proc_acor_phi_shape}{The shape parameter on a gamma distribution 
-for err_proc_acor_phi, the autocorrelation coefficient for the
+for err_proc_acor_phi, the autocorrelation coefficient for the 
 autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_acor_phi_rate}{The rate parameter on a gamma distribution for
-err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated
+\item{err_proc_acor_phi_rate}{The rate parameter on a gamma distribution for 
+err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated 
 component of process [& sometimes observation] error}
 
 \item{err_proc_acor_sigma_shape}{The shape parameter on a gamma distribution 

@@ -18,11 +18,10 @@ exactly on an observation time.}
 
 \item{day_end}{end time of a day's data in number of hours from the midnight 
 that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation 
-time that occurs before that time if day_end doesn't fall exactly on an 
-observation time.}
+describing 2006-06-26 end at the last observation before 2006-06-27 06:00.}
 
-\item{tests}{list of tests to conduct}
+\item{tests}{list of tests to conduct to determine whether each date worth of
+data is valid for modeling}
 
 \item{timestep_days}{the expected timestep length in fraction of a day; for 
 example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 

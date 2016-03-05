@@ -22,27 +22,8 @@ given, the corresponding filter is applied: K600.upper-K600.lower <=
 CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
 velocity.daily.max}
 
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For single days of input data, it is 
-conventional/useful to begin the day the evening before, e.g., -1.5, and to
-end just before the next sunrise, e.g., 30. For multiple consecutive days, 
-it may make the most sense to start just before sunrise (e.g., 4) and to 
-end 24 hours later. For nighttime regression to be compatible with this 
-setup, the date assigned to a section of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
-metab_night, of which the times of darkness will be used.}
-
-\item{day_end}{end time (inclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
-observation time that occurs before that time if day_end doesn't fall 
-exactly on an observation time. See day_start for recommended start and end
-times.}
-
-\item{tests}{list of tests to conduct}
+\item{tests}{list of tests to conduct to determine whether each date worth of
+data is valid for modeling}
 }
 \description{
 Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 

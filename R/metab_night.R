@@ -4,14 +4,16 @@ NULL
 #' Nighttime regression for K estimation
 #' 
 #' Fits a model to estimate K from nighttime input data on DO, temperature, 
-#' light, etc. The default day start & end are 12 noon on the preceding to
-#' present day; the algorithm then filters the data to just those time points
+#' light, etc. The default day start & end are 12 noon on the preceding to 
+#' present day; the algorithm then filters the data to just those time points 
 #' for which light is very low.
 #' 
-#' @author Alison Appling, Maite Arroita
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_night object containing the fitted model.
+#' @author Alison Appling, Maite Arroita, Bob Hall
+#'   
+#' @inheritParams metab
+#' @return A metab_night object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#'   
 #' @examples
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
@@ -47,10 +49,11 @@ NULL
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs(mm_name('night')), # inheritParams metab_model_prototype
-  info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
+  model_specs=specs(mm_name('night')),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data_daily=mm_data(NULL),
+  info=NULL, 
+  day_start=12, day_end=36, tests=c('full_day', 'even_timesteps', 'complete_data')
 ) {
   
   fitting_time <- system.time({
@@ -93,7 +96,7 @@ metab_night <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @keywords internal
@@ -111,7 +114,7 @@ metab_night <- function(
 nightreg_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab_model_prototype
+  model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab
 ) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and

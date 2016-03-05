@@ -3,15 +3,15 @@ NULL
 
 #' Maximum likelihood metabolism model fitting function
 #' 
-#' Fits a model to estimate GPP and ER from input data on DO, temperature, 
-#' light, etc.
+#' Uses maximum likelihood to fit a model to estimate GPP and ER from input data
+#' on DO, temperature, light, etc.
 #' 
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_mle object containing the fitted model.
+#' @author Alison Appling, Jordan Read, Luke Winslow
 #'   
-#' @import dplyr
-#' @author Alison Appling, Jordan Read; modeled on LakeMetabolizer
+#' @inheritParams metab
+#' @return A metab_mle object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#'   
 #' @examples
 #' # set the date in several formats
 #' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
@@ -57,10 +57,11 @@ NULL
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(date, K600, optional='all'), 
-  model_specs=specs(mm_name('mle')), # inheritParams metab_model_prototype
-  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
+  model_specs=specs(mm_name('mle')),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data_daily=mm_data(date, K600, optional='all'), 
+  info=NULL,
+  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
 ) {
   
   fitting_time <- system.time({
@@ -101,7 +102,7 @@ metab_mle <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_is_valid_day
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @importFrom stats nlm
@@ -109,7 +110,7 @@ metab_mle <- function(
 mle_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
   tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab_model_prototype
+  model_specs=specs('m_np_oi_pm_km.nlm')
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 

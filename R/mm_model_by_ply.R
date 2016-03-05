@@ -6,13 +6,30 @@
 #' row-bound together into a single data.frame containing results from all days.
 #' 
 #' @param model_fun the function to apply to each data ply. This function should
-#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, ply_date)}
-#'   where \code{data_daily} is \code{NULL} when the \code{data_daily} argument
-#'   to \code{mm_model_by_ply} is missing or \code{NULL}
+#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, 
+#'   ply_date)} where \code{data_daily} is \code{NULL} when the 
+#'   \code{data_daily} argument to \code{mm_model_by_ply} is missing or 
+#'   \code{NULL}
 #' @param data required. the data.frame containing all relevant, validated 
 #'   modeling data. The solar.time column must be present.
 #' @param data_daily optional. a data.frame containing inputs with a daily 
 #'   timestep. The date column must be present.
+#' @param day_start start time (inclusive) of a day's data in number of hours 
+#'   from the midnight that begins the date. For example, day_start=-1.5 
+#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+#'   the first observation time that occurs after that time if day_start doesn't
+#'   fall exactly on an observation time. For metabolism models working with 
+#'   single days of input data, it is conventional/useful to begin the day the 
+#'   evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+#'   30. For multiple consecutive days, it may make the most sense to start just
+#'   before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
+#'   regression, the date assigned to a chunk of data should be the date whose
+#'   evening contains the data. The default is therefore 12 to 36 for
+#'   metab_night, of which the times of darkness will be used.
+#' @param day_end end time (exclusive) of a day's data in number of hours from 
+#'   the midnight that begins the date. For example, day_end=30 indicates that 
+#'   data describing 2006-06-26 end at the last observation time that occurs 
+#'   before 2006-06-27 06:00. See day_start for recommended start and end times.
 #' @inheritParams mm_model_by_ply_prototype
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
@@ -31,18 +48,21 @@ mm_model_by_ply <- function(model_fun, data, data_daily, day_start, day_end, ...
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
   
-  # add a tiny fudge factor to the start and end bounds so we don't exclude
-  # times that are essentially equal to day_start or day_end
-  day_start <- day_start - 1e-10
-  day_end <- day_end + 1e-10
+  # subtract a tiny fudge factor (one second) to the start and end bounds so we
+  # don't exclude times that are essentially equal to day_start, and so we do
+  # exclude times that are essentially equal to day_end
+  day_start <- day_start - 1/(60*60*24)
+  day_end <- day_end - 1/(60*60*24)
   
+  # Assign each data row to one or two date plys. Because date plys can overlap,
+  # there are two columns so that one row can belong to two dates if needed.
   dt.NA <- as.character(NA)
   for(dt in seq_along(unique.dates)) {
     dt.today <- unique.dates[dt]
     dt.yesterday <- if(dt>1) unique.dates[dt-1] else dt.NA
     dt.tomorrow <- if(dt<length(unique.dates)) unique.dates[dt+1] else dt.NA
     hr <- data.plys[data.plys$date == dt.today, 'hour']
-    primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start & hr <= day_end, 1, 2)]
+    primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start & hr < day_end, 1, 2)]
     secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end - 24), 1, ifelse(hr < (24 + day_start), 2, 3))]
     data.plys[data.plys$date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
     data.plys[data.plys$date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date

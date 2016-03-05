@@ -51,7 +51,6 @@
 #'   absolute path or a path relative to the current working directory (the 
 #'   second assumption, if the first assumption turns up no files of the given 
 #'   name).
-#'   
 #' @param engine The software or function to use in fitting the model. Should be
 #'   specified via \code{mm_name} rather than here. For type='bayes', one of 
 #'   \code{c('jags','stan')} indicating the software package to use for the MCMC
@@ -61,6 +60,8 @@
 #'   one option so it's not included in \code{specs()} (but is nonetheless noted
 #'   in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
 #'   \code{nlm()} for model fitting)
+#' @inheritParams mm_model_by_ply
+#' @inheritParams mm_is_valid_day
 #'   
 #' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
 #'   process
@@ -126,13 +127,13 @@
 #'   
 #' @param err_obs_iid_sigma_shape The shape parameter on a gamma distribution 
 #'   for err_obs_iid_sigma, the standard deviation of the observation error
-#' @param err_obs_iid_sigma_rate The rate parameter on a gamma distribution for
+#' @param err_obs_iid_sigma_rate The rate parameter on a gamma distribution for 
 #'   err_obs_iid_sigma, the standard deviation of the observation error
 #' @param err_proc_acor_phi_shape The shape parameter on a gamma distribution 
-#'   for err_proc_acor_phi, the autocorrelation coefficient for the
+#'   for err_proc_acor_phi, the autocorrelation coefficient for the 
 #'   autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_acor_phi_rate The rate parameter on a gamma distribution for
-#'   err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated
+#' @param err_proc_acor_phi_rate The rate parameter on a gamma distribution for 
+#'   err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated 
 #'   component of process [& sometimes observation] error
 #' @param err_proc_acor_sigma_shape The shape parameter on a gamma distribution 
 #'   for err_proc_acor_sigma, the standard deviation of the autocorrelated 
@@ -173,7 +174,9 @@ specs <- function(
   
   model_name = mm_name(),
   engine,
-  
+  # day_start = 4, # inheritParams mm_model_by_ply
+  # day_end = 28, # inheritParams mm_model_by_ply
+  # tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
   
   ## MLE
   

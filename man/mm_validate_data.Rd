@@ -4,8 +4,8 @@
 \alias{mm_validate_data}
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
-mm_validate_data(data, data_daily, metab_class, tests = c("missing_cols",
-  "extra_cols", "na_times", "units"))
+mm_validate_data(data = mm_data(NULL), data_daily = mm_data(NULL),
+  metab_class, tests = c("missing_cols", "extra_cols", "na_times", "units"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -17,8 +17,8 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{metab_class}{character the class name of the metab_model constructor}
 
-\item{tests}{to apply to the input data.frames (before any subsetting with
-mm_model_by_ply, etc. has occurred)}
+\item{tests}{list of tests to conduct to determine whether the input
+data.frames are properly formatted to allow modeling to begin}
 }
 \description{
 Will most often be called from within a metab_model constructor.

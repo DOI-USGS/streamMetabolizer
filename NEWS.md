@@ -1,3 +1,19 @@
+# streamMetabolizer 0.9.0
+
+## Changes
+
+# New function: metab() serves as a gateway to all model types. You can now pass
+specs to metab() and expect the appropriate model to be chosen and called based
+on model_name in the specs list.
+
+# Major interface change: metab functions now accept specs (renamed from 
+model_specs) first, then data, data_daily, and info. Other arguments (day_start,
+day_end, and tests) have been moved into the specs. This permits chaining from 
+mm_name to specs to metab.
+
+* Hierarchical bayesian models are now possible and include hierarchical 
+paramters for distributions on error and K600 (normal, linear, and binned)
+
 # streamMetabolizer 0.8.0
 
 ## Changes
@@ -5,7 +21,7 @@
 * Major interface change (renamed variable) to clarify types of time: solar.time
 (mean solar time), app.solar.time (apparent solar time), local.time (time in 
 local time zone). Metabolism models now accept solar.time rather than 
-local.time, though it's still possible to pass in local time but just call it
+local.time, though it's still possible to pass in local time but just call it 
 solar.time (as long as you don't have daylight savings time).
 
 # streamMetabolizer 0.7.3
