@@ -10,10 +10,10 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_proc_acor_phi_min;
-  real err_proc_acor_phi_max;
-  real err_proc_acor_sigma_min;
-  real err_proc_acor_sigma_max;
+  real err_proc_acor_phi_shape;
+  real err_proc_acor_phi_rate;
+  real err_proc_acor_sigma_shape;
+  real err_proc_acor_sigma_rate;
   
   // Overall data
   int <lower=0> d; # number of dates
@@ -91,8 +91,8 @@ model {
     err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ uniform(err_proc_acor_phi_min, err_proc_acor_phi_max);
-  err_proc_acor_sigma ~ uniform(err_proc_acor_sigma_min, err_proc_acor_sigma_max);
+  err_proc_acor_phi ~ gamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate);
+  err_proc_acor_sigma ~ gamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate);
   
   // Daily metabolism values
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

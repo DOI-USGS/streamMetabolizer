@@ -363,9 +363,9 @@ prepdata_bayes <- function(
         normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
         linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
         binned=stop('need to think about this one')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_min', 'err_proc_acor_phi_max', 'err_proc_acor_sigma_min', 'err_proc_acor_sigma_max'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_min', 'err_proc_iid_sigma_max')
+      if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
+      if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
+      if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate')
     )]
   )
   if(priors) {

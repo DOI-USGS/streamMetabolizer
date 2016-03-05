@@ -32,20 +32,20 @@ manual_tests <- function() {
   
   #### medium-hard model ####
   mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src="DO_mod", engine="stan")
-  ms <- specs(mn, burnin_steps=1000, saved_steps=100, err_proc_iid_sigma_max=0.00001, n_chains=1)
-  # takes a really really long time!
+  ms <- specs(mn, burnin_steps=1000, saved_steps=300, n_chains=3, n_cores=4)
+  # takes a really really long time! but maybe less now that all the sigmas have
+  # gamma distributions? was 2.76 hours for 3 days worth of data (burning=3000,
+  # saved=1000)! also didn't converge (1.9 < Rhat < 18.3 for all params)
   fitall <- metab_bayes(vfrenchmedium, model_specs=replace(ms, 'split_dates', FALSE))
-  # user  system elapsed 
-  # 10.19    2.81 9955.42
-  get_fitting_time(fitall) # 2.76 hours for 3 days worth of data!
-  # user  system elapsed 
-  # 9.78    2.81 9955.01 
-  # also doesn't converge (1.9 < Rhat < 18.3 for all params)
+  get_fitting_time(fitall)
+  # after switching to gammas for the sigmas, 2149 secs (0.6 hr) for 1000 
+  # burnin, 300 saved, 3 days. Rhats 2.1 to 39. dunno if this is better. GPP,
+  # ER, and K are still generally too close to 0, though more varied (after 1300
+  # iters)
   
   #### really hard model ####
   ms <- mm_name("bayes", pool_K600="none", err_proc_acor=TRUE, ode_method='Euler', engine="stan")
-  ms <- specs(ms, err_proc_acor_phi_max=0.9, # err_proc_acor_sigma_max=1, err_proc_iid_sigma_max=0.1,
-              n_chains=1, n_cores=1, burnin_steps=3000, saved_steps=1000, verbose=TRUE)
+  ms <- specs(ms, n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100, verbose=TRUE)
   system.time(fitall <- metab_bayes(vfrenchmedium, model_specs=replace(ms, 'split_dates', FALSE)))
   get_fitting_time(fitall) # 
   

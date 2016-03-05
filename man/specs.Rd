@@ -12,11 +12,11 @@ specs(model_name = mm_name(), engine, GPP_init = 10, ER_init = -10,
   K600_daily_sigma_shape = 1, K600_daily_sigma_rate = 2,
   K600_daily_beta0_mu = 10, K600_daily_beta0_sigma = 10,
   K600_daily_beta1_mu = 10, K600_daily_beta1_sigma = 10,
-  err_obs_iid_sigma_min = 0, err_obs_iid_sigma_max = 5,
-  err_proc_acor_phi_min = 0, err_proc_acor_phi_max = 1,
-  err_proc_acor_sigma_min = 0, err_proc_acor_sigma_max = 5,
-  err_proc_iid_sigma_min = 0, err_proc_iid_sigma_max = 5, priors = FALSE,
-  params_out, n_chains = 4, n_cores = 4,
+  err_obs_iid_sigma_shape = 1, err_obs_iid_sigma_rate = 10,
+  err_proc_acor_phi_shape = 1, err_proc_acor_phi_rate = 1000,
+  err_proc_acor_sigma_shape = 1, err_proc_acor_sigma_rate = 1000,
+  err_proc_iid_sigma_shape = 1, err_proc_iid_sigma_rate = 100,
+  priors = FALSE, params_out, n_chains = 4, n_cores = 4,
   adapt_steps = switch(mm_parse_name(model_name)$engine, jags = 250, NA),
   burnin_steps = switch(mm_parse_name(model_name)$engine, stan = 500, jags =
   250, NA), saved_steps = switch(mm_parse_name(model_name)$engine, stan = 500,
@@ -75,8 +75,8 @@ methods}
 \item{split_dates}{logical indicating whether the data should be split into 
 daily chunks first (TRUE) or processed within one big model (FALSE). If 
 valid days differ in their timestep length, split_dates will need to be 
-TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only
-appropriate solution for a hierarchical model that pools information on
+TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only 
+appropriate solution for a hierarchical model that pools information on 
 error, K600, etc. across days.}
 
 \item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates 
@@ -136,29 +136,35 @@ standard deviation parameter of a normally distributed slope term (beta1)
 in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, 
 beta1_sigma)}
 
-\item{err_obs_iid_sigma_min}{The lower bound on a dunif distribution for 
+\item{err_obs_iid_sigma_shape}{The shape parameter on a gamma distribution 
+for err_obs_iid_sigma, the standard deviation of the observation error}
+
+\item{err_obs_iid_sigma_rate}{The rate parameter on a gamma distribution for
 err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_obs_iid_sigma_max}{The upper bound on a dunif distribution for 
-err_obs_iid_sigma, the standard deviation of the observation error}
-
-\item{err_proc_acor_phi_min}{lower bound on the autocorrelation coefficient 
-for the autocorrelated component of process [& sometimes observation] error}
-
-\item{err_proc_acor_phi_max}{upper bound on the autocorrelation coefficient 
-for the autocorrelated component of process [& sometimes observation] error}
-
-\item{err_proc_acor_sigma_min}{lower bound on the standard deviation of the 
+\item{err_proc_acor_phi_shape}{The shape parameter on a gamma distribution 
+for err_proc_acor_phi, the autocorrelation coefficient for the
 autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_acor_sigma_max}{upper bound on the standard deviation of the 
-autocorrelated component of process [& sometimes observation] error}
+\item{err_proc_acor_phi_rate}{The rate parameter on a gamma distribution for
+err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated
+component of process [& sometimes observation] error}
 
-\item{err_proc_iid_sigma_min}{lower bound on the standard deviation of the 
-uncorrelated (IID) component of process [& sometimes observation] error}
+\item{err_proc_acor_sigma_shape}{The shape parameter on a gamma distribution 
+for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+component of process [& sometimes observation] error}
 
-\item{err_proc_iid_sigma_max}{upper bound on the standard deviation of the 
-uncorrelated (IID) component of process [& sometimes observation] error}
+\item{err_proc_acor_sigma_rate}{The rate parameter on a gamma distribution 
+for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+component of process [& sometimes observation] error}
+
+\item{err_proc_iid_sigma_shape}{The shape parameter on a gamma distribution 
+for err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+component of process [& sometimes observation] error}
+
+\item{err_proc_iid_sigma_rate}{The rate parameter on a gamma distribution for
+err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+component of process [& sometimes observation] error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will 
 return priors rather than posteriors?}
@@ -254,12 +260,12 @@ often should, be overridden to tailor the model to your needs.
   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
   burnin_steps, saved_steps, thin_steps, verbose}. If 
   \code{mm_parse_name(model_name)$err_obs_iid} then also 
-  \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
+  \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
   \code{mm_parse_name(model_name)$err_proc_acor} then also 
-  \code{err_proc_acor_phi_min, err_proc_acor_phi_max, 
-  err_proc_acor_sigma_min, err_proc_acor_sigma_max}. If 
+  \code{err_proc_acor_phi_shape, err_proc_acor_phi_rate, 
+  err_proc_acor_sigma_shape, err_proc_acor_sigma_rate}. If 
   \code{mm_parse_name(model_name)$err_proc_iid} then also 
-  \code{err_proc_iid_sigma_min, err_proc_iid_sigma_max}. If 
+  \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
   \code{features$engine == 'jags'} then also \code{adapt_steps},
   
   * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 

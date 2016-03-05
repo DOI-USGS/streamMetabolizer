@@ -53,6 +53,9 @@ mm_generate_mcmc_file <- function(
         }, 
         uniform = {
           distrib <- 'dunif'
+        },
+        gamma = {
+          distrib <- 'dgamma'
         }
       )
     }
@@ -109,16 +112,16 @@ mm_generate_mcmc_file <- function(
       chunk(
         comment('Error distributions'),
         if(err_obs_iid) c(
-          'real err_obs_iid_sigma_min;',
-          'real err_obs_iid_sigma_max;'),
+          'real err_obs_iid_sigma_shape;',
+          'real err_obs_iid_sigma_rate;'),
         if(err_proc_acor) c(
-          'real err_proc_acor_phi_min;',
-          'real err_proc_acor_phi_max;',
-          'real err_proc_acor_sigma_min;',
-          'real err_proc_acor_sigma_max;'),
+          'real err_proc_acor_phi_shape;',
+          'real err_proc_acor_phi_rate;',
+          'real err_proc_acor_sigma_shape;',
+          'real err_proc_acor_sigma_rate;'),
         if(err_proc_iid) c(
-          'real err_proc_iid_sigma_min;',
-          'real err_proc_iid_sigma_max;')),
+          'real err_proc_iid_sigma_shape;',
+          'real err_proc_iid_sigma_rate;')),
       
       chunk(
         comment('Overall data'),
@@ -369,7 +372,7 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the IID process errors'),
-      s('err_proc_iid_sigma ~ ', f('uniform', 'err_proc_iid_sigma_min', 'err_proc_iid_sigma_max'))),
+      s('err_proc_iid_sigma ~ ', f('gamma', 'err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'))),
     
     if(err_proc_acor) chunk(
       comment('Autocorrelated process error'),
@@ -377,8 +380,8 @@ mm_generate_mcmc_file <- function(
       s('  err_proc_acor_inc', N('i'), ' ~ ', f('normal', '0', 'err_proc_acor_sigma')),
       p('}'),
       comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-      s('err_proc_acor_phi ~ ', f('uniform', 'err_proc_acor_phi_min', 'err_proc_acor_phi_max')),
-      s('err_proc_acor_sigma ~ ', f('uniform', 'err_proc_acor_sigma_min', 'err_proc_acor_sigma_max'))),
+      s('err_proc_acor_phi ~ ', f('gamma', 'err_proc_acor_phi_shape', 'err_proc_acor_phi_rate')),
+      s('err_proc_acor_sigma ~ ', f('gamma', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'))),
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
@@ -386,7 +389,7 @@ mm_generate_mcmc_file <- function(
       s('  DO_obs', N('i'), ' ~ ', f('normal', p('DO_mod', N('i')), 'err_obs_iid_sigma')),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma ~ ', f('uniform', 'err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'))),
+      s('err_obs_iid_sigma ~ ', f('gamma', 'err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'))),
     
     indent(
       comment('Daily metabolism values'),

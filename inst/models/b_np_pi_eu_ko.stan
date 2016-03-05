@@ -10,8 +10,8 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_proc_iid_sigma_min;
-  real err_proc_iid_sigma_max;
+  real err_proc_iid_sigma_shape;
+  real err_proc_iid_sigma_rate;
   
   // Overall data
   int <lower=0> d; # number of dates
@@ -79,7 +79,7 @@ model {
     dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
   }
   // SD (sigma) of the IID process errors
-  err_proc_iid_sigma ~ uniform(err_proc_iid_sigma_min, err_proc_iid_sigma_max);
+  err_proc_iid_sigma ~ gamma(err_proc_iid_sigma_shape, err_proc_iid_sigma_rate);
   
   // Daily metabolism values
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

@@ -20,12 +20,12 @@
 #'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
 #'   burnin_steps, saved_steps, thin_steps, verbose}. If 
 #'   \code{mm_parse_name(model_name)$err_obs_iid} then also 
-#'   \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
+#'   \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
 #'   \code{mm_parse_name(model_name)$err_proc_acor} then also 
-#'   \code{err_proc_acor_phi_min, err_proc_acor_phi_max, 
-#'   err_proc_acor_sigma_min, err_proc_acor_sigma_max}. If 
+#'   \code{err_proc_acor_phi_shape, err_proc_acor_phi_rate, 
+#'   err_proc_acor_sigma_shape, err_proc_acor_sigma_rate}. If 
 #'   \code{mm_parse_name(model_name)$err_proc_iid} then also 
-#'   \code{err_proc_iid_sigma_min, err_proc_iid_sigma_max}. If 
+#'   \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
 #'   \code{features$engine == 'jags'} then also \code{adapt_steps},
 #'   
 #'   * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
@@ -75,8 +75,8 @@
 #' @param split_dates logical indicating whether the data should be split into 
 #'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
 #'   valid days differ in their timestep length, split_dates will need to be 
-#'   TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only
-#'   appropriate solution for a hierarchical model that pools information on
+#'   TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only 
+#'   appropriate solution for a hierarchical model that pools information on 
 #'   error, K600, etc. across days.
 #' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
 #'   (coerced with as.Date if character, etc.) indicating whether to keep all of
@@ -124,22 +124,28 @@
 #'   in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, 
 #'   beta1_sigma)
 #'   
-#' @param err_obs_iid_sigma_min The lower bound on a dunif distribution for 
+#' @param err_obs_iid_sigma_shape The shape parameter on a gamma distribution 
+#'   for err_obs_iid_sigma, the standard deviation of the observation error
+#' @param err_obs_iid_sigma_rate The rate parameter on a gamma distribution for
 #'   err_obs_iid_sigma, the standard deviation of the observation error
-#' @param err_obs_iid_sigma_max The upper bound on a dunif distribution for 
-#'   err_obs_iid_sigma, the standard deviation of the observation error
-#' @param err_proc_acor_phi_min lower bound on the autocorrelation coefficient 
-#'   for the autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_acor_phi_max upper bound on the autocorrelation coefficient 
-#'   for the autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_acor_sigma_min lower bound on the standard deviation of the 
+#' @param err_proc_acor_phi_shape The shape parameter on a gamma distribution 
+#'   for err_proc_acor_phi, the autocorrelation coefficient for the
 #'   autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_acor_sigma_max upper bound on the standard deviation of the 
-#'   autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_iid_sigma_min lower bound on the standard deviation of the 
-#'   uncorrelated (IID) component of process [& sometimes observation] error
-#' @param err_proc_iid_sigma_max upper bound on the standard deviation of the 
-#'   uncorrelated (IID) component of process [& sometimes observation] error
+#' @param err_proc_acor_phi_rate The rate parameter on a gamma distribution for
+#'   err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated
+#'   component of process [& sometimes observation] error
+#' @param err_proc_acor_sigma_shape The shape parameter on a gamma distribution 
+#'   for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+#'   component of process [& sometimes observation] error
+#' @param err_proc_acor_sigma_rate The rate parameter on a gamma distribution 
+#'   for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+#'   component of process [& sometimes observation] error
+#' @param err_proc_iid_sigma_shape The shape parameter on a gamma distribution 
+#'   for err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+#'   component of process [& sometimes observation] error
+#' @param err_proc_iid_sigma_rate The rate parameter on a gamma distribution for
+#'   err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+#'   component of process [& sometimes observation] error
 #'   
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
@@ -213,14 +219,14 @@ specs <- function(
   # among bins) betas all drawn from same normal
   
   # hyperparameters for error terms
-  err_obs_iid_sigma_min = 0,
-  err_obs_iid_sigma_max = 5,
-  err_proc_acor_phi_min = 0,
-  err_proc_acor_phi_max = 1,
-  err_proc_acor_sigma_min = 0,
-  err_proc_acor_sigma_max = 5,
-  err_proc_iid_sigma_min = 0,
-  err_proc_iid_sigma_max = 5,
+  err_obs_iid_sigma_shape = 1,
+  err_obs_iid_sigma_rate = 10,
+  err_proc_acor_phi_shape = 1,
+  err_proc_acor_phi_rate = 1000,
+  err_proc_acor_sigma_shape = 1,
+  err_proc_acor_sigma_rate = 1000,
+  err_proc_iid_sigma_shape = 1,
+  err_proc_iid_sigma_rate = 100,
   
   # inheritParams prepdata_bayes
   priors = FALSE,
@@ -303,9 +309,9 @@ specs <- function(
         normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
         linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
         binned=stop('need to think about this one')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_min', 'err_proc_acor_phi_max', 'err_proc_acor_sigma_min', 'err_proc_acor_sigma_max'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_min', 'err_proc_iid_sigma_max'),
+      if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
+      if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
+      if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'),
       
       # inheritParams prepdata_bayes
       'priors',
