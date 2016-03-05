@@ -16,13 +16,14 @@ vspring1day <- vspring[vspring$solar.time >= as.POSIXct("2014-10-27 22:00:00", t
 
 devel_tests <- function() {
   
-  jags_args <- c('engine','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+  jags_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
   stan_args <- jags_args[-which(jags_args=='adapt_steps')]
   
   #### b_np_oi_pm_km.jags ####
   test_that("b_np_oi_pm_km.jags prepdata_bayes, mcmc_bayes, bayes_1ply", {
-    model_specs <- specs('b_np_oi_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    model_specs <- specs('b_np_oi_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3, keep_mcmcs=FALSE)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+    model_specs$keep_mcmc <- FALSE
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
@@ -45,12 +46,16 @@ devel_tests <- function() {
     expect_is(ply_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
     
+    # all at once
+    ms <- specs('b_np_oi_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    fit <- metab_bayes(vfrench1day, model_specs=ms)
   })
   
   #### b_np_oipc_pm_km.jags ####
   test_that("b_np_oipc_pm_km.jags prepdata_bayes, mcmc_bayes, bayes_1ply", {
     model_specs <- specs('b_np_oipc_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+    model_specs$keep_mcmc <- FALSE
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
@@ -73,12 +78,16 @@ devel_tests <- function() {
     expect_is(ply_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct","warnings") %in% names(ply_out)))
     
+    # all at once
+    ms <- specs('b_np_oipc_pm_km.jags', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    fit <- metab_bayes(vfrench1day, model_specs=ms)
   })
   
   #### b_np_oi_pm_km.stan ####
   test_that("b_np_oi_pm_km.stan prepdata_bayes, mcmc_bayes, bayes_1ply", {
     model_specs <- specs('b_np_oi_pm_km.stan', burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3, verbose=FALSE)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+    model_specs$keep_mcmc <- FALSE
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
@@ -88,7 +97,7 @@ devel_tests <- function() {
     
     # mcmc_bayes
     system.time({
-      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list), model_specs[stan_args]))
     })
     expect_is(mcmc_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
@@ -104,20 +113,36 @@ devel_tests <- function() {
     # mcmc - nopool_oi_Euler.stan
     model_specs$model_name <- "b_np_oi_eu_km.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+    model_specs$keep_mcmc <- TRUE
     system.time({
-      suppressWarnings(
-        {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list), model_specs[stan_args]))
     })
     expect_is(mcmc_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
     expect_output(show(mcmc_out$mcmcfit[[1]]), "Inference for Stan model")
     
+    # all at once
+    expect_warning(ms <- specs('b_np_oi_pm_km.stan', adapt_steps=100, burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3), 'irrelevant argument')
+    ms <- specs('b_np_oi_pm_km.stan', burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    fit <- metab_bayes(vfrench1day, model_specs=ms)
+  
+    ms <- specs('b_np_oi_eu_km.stan', burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    fit <- metab_bayes(vfrench1day, model_specs=ms)
+    
+    # these two look quite different, w/ stan preds lagging behind DO_obs at peak but jags preds matching/topping it. ??
+    # ms <- specs('b_np_oi_pm_ko.stan', burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    # fit <- metab_bayes(vfrench1day, model_specs=ms)
+    # plot_DO_preds(predict_DO(fit))
+    # ms <- specs('b_np_oi_pm_ko.jags', burnin_steps=100, saved_steps=100, n_chains=3, n_cores=3)
+    # fit <- metab_bayes(vfrench1day, model_specs=ms)
+    # plot_DO_preds(predict_DO(fit))
   })
   
   #### b_np_oipc_pm_km.stan ####
   test_that("b_np_oipc_pm_km.stan prepdata_bayes, mcmc_bayes, bayes_1ply", {
     model_specs <- specs('b_np_oipc_pm_km.stan', burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
+    model_specs$keep_mcmc <- TRUE
     
     # prepdata
     data_list <- streamMetabolizer:::prepdata_bayes(
@@ -127,8 +152,7 @@ devel_tests <- function() {
     
     # pairmeans
     system.time({
-      suppressWarnings(
-        {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list), model_specs[stan_args]))
     })
     expect_is(mcmc_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))
@@ -138,8 +162,7 @@ devel_tests <- function() {
     model_specs$model_name <- "b_np_oipc_eu_km.stan"
     model_specs$model_path <- system.file(paste0("models/", model_specs$model_name), package="streamMetabolizer") # usually added in metab_bayes
     system.time({
-      suppressWarnings(
-        {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), model_specs[stan_args]))})
+      mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list), model_specs[stan_args]))
     })
     expect_is(mcmc_out, 'data.frame')
     expect_true(all(c("GPP_daily_mean","GPP_daily_sd", "GPP_daily_2.5pct") %in% names(mcmc_out)))

@@ -3,10 +3,10 @@
 data {
   for(i in 1:(n-1)) {
     # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)
-    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)
-    coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0
-    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2.0
+    coef_GPP[1:d,i]  <- (frac_GPP[1:d,i] + frac_GPP[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_ER[1:d,i]   <- (frac_ER[1:d,i] + frac_ER[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_K600_part[1:d,i] <- (KO2_conv[1:d,i] + KO2_conv[1:d,i+1])/2.0 * (frac_D[1:d,i] + frac_D[1:d,i+1])/2.0
+    DO_sat_pairmean[1:d,i] <- (DO_sat[1:d,i] + DO_sat[1:d,i+1])/2.0
   }
 }
 
@@ -18,19 +18,19 @@ model {
   # * reaeration depends on DO_mod
   
   # DO model
-  DO_mod[1] <- DO_obs_1
+  DO_mod[1:d,1] <- DO_obs_1
   for(i in 1:(n-1)) {
-    DO_mod[i+1] <- (
-      DO_mod[i] +
-      GPP_daily .* coef_GPP[i] +
-      ER_daily .* coef_ER[i] +
-      K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)
-    ) ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)
+    DO_mod[1:d,i+1] <- (
+      DO_mod[1:d,i] +
+      GPP_daily * coef_GPP[1:d,i] +
+      ER_daily * coef_ER[1:d,i] +
+      K600_daily * coef_K600_part[1:d,i] * (DO_sat_pairmean[1:d,i] - DO_mod[1:d,i]/2.0)
+    ) / (1.0 + K600_daily * coef_K600_part[1:d,i] / 2.0)
   }
 
   # Independent, identically distributed observation error
   for(i in 1:n) {
-    DO_obs[i] ~ dnorm(DO_mod[i], pow(err_obs_iid_sigma, -2))
+    DO_obs[1:d,i] ~ dnorm(DO_mod[1:d,i], pow(err_obs_iid_sigma, -2))
   }
   # SD (sigma) of the observation errors
   err_obs_iid_sigma ~ dunif(err_obs_iid_sigma_min, err_obs_iid_sigma_max)

@@ -292,7 +292,7 @@ prepdata_bayes <- function(
   data <- v(data)
   data_daily <- v(data_daily)
   if(length(ply_date) != 1) stop("ply_date must have length 1")
-  if(!is.na(ply_date)) data$date <- ply_date
+  if(!is.na(ply_date)) data$date <- as.Date(ply_date)
   
   # define a function to package 1+ days of obs of a variable into a time x date matrix
   date_table <- table(data$date)
@@ -300,20 +300,25 @@ prepdata_bayes <- function(
   num_daily_obs <- unique(unname(date_table))
   if(length(num_daily_obs) > 1) stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   time_by_date_matrix <- function(vec) {
-    matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
+    switch(
+      model_specs$engine,
+      jags=matrix(data=vec, ncol=num_daily_obs, nrow=num_dates, byrow=TRUE),
+      stan=matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
+    )
   }
+  date_margin <- switch(model_specs$engine, jags=1, stan=2)
   
   # double-check that our dates are going to line up with the input dates. this 
   # should be redundant w/ above date_table checks, so just being extra careful
   obs_dates <- time_by_date_matrix(as.character(data$date, "%Y-%m-%d"))
-  unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(col) unique(col))
+  unique_dates <- apply(obs_dates, MARGIN=date_margin, FUN=function(timevec) unique(timevec))
   if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
   
   # confirm that every day has the same modal timestep and put a value on that timestep
   obs_times <- time_by_date_matrix(as.numeric(data$solar.time - data$solar.time[1], units='days'))
-  unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(col) unique(round(diff(col), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
+  unique_timesteps <- unique(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
   if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
-  timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(col) mean(diff(col))))
+  timestep_days <- mean(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) mean(diff(timevec))))
   
   # parse model name into features for deciding what data to include
   features <- mm_parse_name(basename(model_specs$model_path))
@@ -334,9 +339,11 @@ prepdata_bayes <- function(
       # Every timestep
       frac_GPP = {
         # normalize light by the sum of light in the first 24 hours of the time window
-        in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(col) {col - col[1] <= 1} )
+        in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
+        if(model_specs$engine == 'jags') in_solar_day <- t(in_solar_day)
         mat_light <- time_by_date_matrix(data$light)
-        sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
+        sum_by_date <- switch(model_specs$engine, jags=rowSums, stan=colSums)
+        sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
       },
       frac_ER  = time_by_date_matrix(timestep_days),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time

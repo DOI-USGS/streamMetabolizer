@@ -38,7 +38,7 @@ transformed data {
   for(i in 1:(n-1)) {
     // Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
     coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
-    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
+    coef_ER[i]   <- (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
     coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*
       (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0;
   }
@@ -63,10 +63,12 @@ transformed parameters {
   // * reaeration depends on DO_obs
   
   // dDO model
-  dDO_mod <- 
-    rep_matrix(GPP_daily', n-1)  .* coef_GPP +
-    rep_matrix(ER_daily', n-1)   .* coef_ER +
-    rep_matrix(K600_daily', n-1) .* coef_K600_full;
+  for(i in 1:(n-1)) {
+    dDO_mod[i] <- 
+      GPP_daily  .* coef_GPP[i] +
+      ER_daily   .* coef_ER[i] +
+      K600_daily .* coef_K600_full[i];
+  }
   
   // DO model
   DO_mod[1] <- DO_obs_1;

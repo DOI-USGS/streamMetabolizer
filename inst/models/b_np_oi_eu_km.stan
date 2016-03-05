@@ -38,7 +38,7 @@ transformed data {
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
     coef_GPP[i]  <- frac_GPP[i] ./ depth[i];
-    coef_ER[i]   <- frac_ER[ i] ./ depth[i];
+    coef_ER[i]   <- frac_ER[i] ./ depth[i];
     coef_K600_part[i] <- KO2_conv[i] .* frac_D[i];
   }
 }

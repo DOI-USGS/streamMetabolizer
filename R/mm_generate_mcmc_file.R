@@ -61,9 +61,20 @@ mm_generate_mcmc_file <- function(
       paste0(args, collapse=', '),
       ')')
   }
+  e <- function(operator) { # element-wise multiplication or division is .* or ./ in Stan but just * or . in JAGS
+    paste0(
+      switch(engine, jags='', stan='.'),
+      operator)
+  }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) { # line with stop/semicolon: combine strings into string & add semicolon if needed
     p(p(...), switch(engine, jags='', stan=';'))
+  }
+  N <- function(n) { # index into a matrix according to the index of the time of day (the col for Stan or the row for JAGS)
+    switch(
+      engine,
+      jags=paste0('[1:d,',n,']'),
+      stan=paste0('[',n,']'))
   }
   
   # define the model
@@ -160,31 +171,31 @@ mm_generate_mcmc_file <- function(
         # Coefficient pre-calculations
         if(ode_method == 'Euler') c(
           comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-          s('coef_GPP[i]  <- frac_GPP[i] ./ depth[i]'),
-          s('coef_ER[i]   <- frac_ER[ i] ./ depth[i]'),
+          s('coef_GPP', N('i'), '  <- frac_GPP', N('i'), ' ', e('/'), ' depth', N('i'), ''),
+          s('coef_ER', N('i'), '   <- frac_ER',  N('i'), ' ', e('/'), ' depth', N('i'), ''),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part[i] <- KO2_conv[i] .* frac_D[i]')
+              s('coef_K600_part', N('i'), ' <- KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), '')
             ),
             DO_obs = c(
-              p('coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .* '),
-              s('  (DO_sat[i] - DO_obs[i])')
+              p('coef_K600_full', N('i'), ' <- KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), ' ', e('*')),
+              s('  (DO_sat', N('i'), ' - DO_obs', N('i'), ')')
             )
           )
         ) else if(ode_method == 'pairmeans') c(
           comment('Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-          s('coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
-          s('coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+          s('coef_GPP', N('i'), '  <- (frac_GPP', N('i'), ' + frac_GPP', N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
+          s('coef_ER', N('i'), '   <- (frac_ER',  N('i'), ' + frac_ER',  N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
-              s('DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2.0')
+              s('coef_K600_part', N('i'), ' <- (KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0'),
+              s('DO_sat_pairmean', N('i'), ' <- (DO_sat', N('i'), ' + DO_sat', N('i+1'), ')/2.0')
             ),
             DO_obs = c(
-              p('coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
-              s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
+              p('coef_K600_full', N('i'), ' <- (KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0 ', e('*')),
+              s('  (DO_sat', N('i'), ' + DO_sat', N('i+1'), ' - DO_obs', N('i'), ' - DO_obs', N('i+1'), ')/2.0')
             )
           )
         ),
@@ -192,8 +203,16 @@ mm_generate_mcmc_file <- function(
         # dDO pre-calculations
         if(!DO_model) c(
           comment('dDO observations'),
-          s('dDO_obs[i] <- DO_obs[i+1] - DO_obs[i]')
+          s('dDO_obs', N('i'), ' <- DO_obs', N('i+1'), ' - DO_obs', N('i'), '')
         )
+        
+        # # vector of ones pre-calculations
+        # if(dDO_model && engine == 'jags') c(
+        #   comment('ones vector for expanding daily vectors into matrices'),
+        #   p('for (i in 1:(n-1)) {'),
+        #   indent(s('ones[i] <- 1')),
+        #   p('}')
+        # )
       ),
       p('}')
     ),
@@ -258,26 +277,32 @@ mm_generate_mcmc_file <- function(
       # process error (always looped, vectorized across days)
       if(err_proc_acor) c(
         p(''),
-        s('err_proc_acor[1] <- err_proc_acor_inc[1]'),
+        s('err_proc_acor', N('1'), ' <- err_proc_acor_inc', N('1'), ''),
         p('for(i in 1:(n-2)) {'),
-        s('  err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
+        s('  err_proc_acor', N('i+1'), ' <- err_proc_acor_phi * err_proc_acor', N('i'), ' + err_proc_acor_inc', N('i+1'), ''),
         p('}')
       ),
       
       # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
-      # all process-only models because we've banned 'DO_mod' for them). this
-      # can be done with a single set of matrix multiplications rather than a
-      # loop
+      # all process-only models because we've banned 'DO_mod' for them). this 
+      # should be doable with a single set of elementwise matrix multiplications
+      # rather than a loop, but there's no vector[] .* vector[] and no 
+      # to_matrix(vector[]), which is slowing me down in Stan. haven't even
+      # tried in JAGS.
       if(dDO_model) c(
         p(''),
         comment("dDO model"),
-        p('dDO_mod <- '),
+        p('for(i in 1:(n-1)) {'),
         indent(
-          if(err_proc_acor) p('err_proc_acor +'),
-          p('rep_matrix(GPP_daily\', n-1)  .* coef_GPP +'),
-          p('rep_matrix(ER_daily\', n-1)   .* coef_ER +'),
-          s('rep_matrix(K600_daily\', n-1) .* coef_K600_full')
-        )
+          p('dDO_mod', N('i'), ' <- '),
+          indent(
+            if(err_proc_acor) p('err_proc_acor +'),
+            p('GPP_daily  ', e('*'), ' coef_GPP', N('i'), ' +'),
+            p('ER_daily   ', e('*'), ' coef_ER', N('i'), ' +'),
+            s('K600_daily ', e('*'), ' coef_K600_full', N('i'), '')
+          )
+        ),
+        p('}')
       ),
       
       # DO model - any model that includes observation error or is a function of
@@ -285,26 +310,26 @@ mm_generate_mcmc_file <- function(
       if(DO_model) c(
         p(''),
         comment("DO model"),
-        s('DO_mod[1] <- DO_obs_1'),
+        s('DO_mod', N('1'), ' <- DO_obs_1'),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod[i+1] <- ('),
-          p('  DO_mod[i] +'),
+          p('DO_mod', N('i+1'), ' <- ('),
+          p('  DO_mod', N('i'), ' +'),
           if(dDO_model) c(
-            s('  dDO_mod[i])')
+            s('  dDO_mod', N('i'), ')')
           ) else c(
-            if(err_proc_iid) p('  err_proc_iid[i] +'),
-            if(err_proc_acor) p('  err_proc_acor[i] +'),
-            p('  GPP_daily .* coef_GPP[i] +'),
-            p('  ER_daily .* coef_ER[i] +'),
+            if(err_proc_iid) p('  err_proc_iid', N('i'), ' +'),
+            if(err_proc_acor) p('  err_proc_acor', N('i'), ' +'),
+            p('  GPP_daily ', e('*'), ' coef_GPP', N('i'), ' +'),
+            p('  ER_daily ', e('*'), ' coef_ER', N('i'), ' +'),
             switch(
               ode_method,
               'Euler' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])'),
+                p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat', N('i'), ' - DO_mod', N('i'), ')'),
                 s(')')),
               'pairmeans' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
-                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
+                p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat_pairmean', N('i'), ' - DO_mod', N('i'), '/2.0)'),
+                s(') ', e('/'), ' (1.0 + K600_daily ', e('*'), ' coef_K600_part', N('i'), ' / 2.0)'))
             )
           )
         ),
@@ -317,7 +342,7 @@ mm_generate_mcmc_file <- function(
         comment("K600_daily model"),
         switch(
           pool_K600,
-          linear=s('K600_daily_mu <- K600_daily_beta0 + K600_daily_beta0 .* Q_daily + K600_daily_sigma'),
+          linear=s('K600_daily_mu <- K600_daily_beta0 + K600_daily_beta0 ', e('*'), ' Q_daily + K600_daily_sigma'),
           binned=stop('not sure'))
       )
       
@@ -338,17 +363,18 @@ mm_generate_mcmc_file <- function(
       comment('Independent, identically distributed process error'),
       p('for(i in 1:(n-1)) {'),
       if(dDO_model) s(
-        '  dDO_obs[i] ~ ', f('normal', 'dDO_mod[i]', 'err_proc_iid_sigma')
+        '  dDO_obs', N('i'), ' ~ ', f('normal', p('dDO_mod', N('i')), 'err_proc_iid_sigma')
       ) else s(
-        '  err_proc_iid[i] ~ ', f('normal', '0', 'err_proc_iid_sigma')
+        '  err_proc_iid', N('i'), ' ~ ', f('normal', '0', 'err_proc_iid_sigma')
       ),
       p('}'),
+      comment('SD (sigma) of the IID process errors'),
       s('err_proc_iid_sigma ~ ', f('uniform', 'err_proc_iid_sigma_min', 'err_proc_iid_sigma_max'))),
     
     if(err_proc_acor) chunk(
       comment('Autocorrelated process error'),
       p('for(i in 1:(n-1)) {'),
-      s('  err_proc_acor_inc[i] ~ ', f('normal', '0', 'err_proc_acor_sigma')),
+      s('  err_proc_acor_inc', N('i'), ' ~ ', f('normal', '0', 'err_proc_acor_sigma')),
       p('}'),
       comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
       s('err_proc_acor_phi ~ ', f('uniform', 'err_proc_acor_phi_min', 'err_proc_acor_phi_max')),
@@ -357,7 +383,7 @@ mm_generate_mcmc_file <- function(
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
       p('for(i in 1:n) {'),
-      s('  DO_obs[i] ~ ', f('normal', 'DO_mod[i]', 'err_obs_iid_sigma')),
+      s('  DO_obs', N('i'), ' ~ ', f('normal', p('DO_mod', N('i')), 'err_obs_iid_sigma')),
       p('}'),
       comment('SD (sigma) of the observation errors'),
       s('err_obs_iid_sigma ~ ', f('uniform', 'err_obs_iid_sigma_min', 'err_obs_iid_sigma_max'))),
