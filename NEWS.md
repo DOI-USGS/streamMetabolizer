@@ -11,21 +11,32 @@ changed somewhat: tests has been renamed to day_tests, and validity tests are
 conducted within mm_model_by_ply if day_tests is not empty, and validity and 
 timestep information are now passed to model_fun.
 
-# New function: mm_get_timestep() computes the mean and/or unique timestep[s]
-and optionally requires that there be just one unique timestep within a vector
+* Changed functionality: mm_model_by_ply_prototype() now produces a 1-row 
+data.frame as well as a message, which helps this function demonstrate the 
+workings of mm_model_by_ply(). mm_model_by_ply_prototype() is a lightweight 
+example of a function that can be passed to mm_model_by_ply(), and its help file
+describes the parameters such a function should expect.
+
+# New function: mm_get_timestep() computes the mean and/or unique timestep[s] 
+and optionally requires that there be just one unique timestep within a vector 
 of times or dates.
+
+* Interface change: the argument tests is now called day_tests in the metab(), 
+metab_night(), etc., mm_model_by_ply(), and mm_is_valid_day().
 
 # Interface change: day_start, day_end, and tests are now containined within 
 specs rather than defined separately in the call to metab, metab_bayes, etc.
 
-# Interface change: model_specs is now specs. get_args is now get_specs, and the
-result is a list of specs as named in specs() rather than a list with an element
-called model_specs that is itself a list.
+# Interface change: in metab(), metab_mle(), etc., the model_specs argument is 
+now called specs.
 
 # Interface change: metab functions now accept specs first, then data, 
-data_daily, and info. (specs was renamed from model_specs; see above.) Other 
-arguments (day_start, day_end, and tests) have been moved into the specs. This 
+data_daily, and info. (specs was renamed from model_specs; see above.) This 
 permits chaining from mm_name to specs to metab.
+
+* Interface change: get_args is now get_specs, and the result is a list of specs
+as named in specs() rather than a list with an element called model_specs that 
+is itself a list.
 
 * Hierarchical bayesian models are now possible and include hierarchical 
 parameters for distributions on error and K600 (normal, linear, and binned). 

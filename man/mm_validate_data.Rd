@@ -10,11 +10,13 @@ mm_validate_data(data = mm_data(NULL), data_daily = mm_data(NULL),
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
-observations. Columns must have the same names, units, and format as the 
-default. See \code{\link{mm_data}} for a full data description.}
+observations (unit-value). Columns must have the same names, units, and 
+format as the default. See the \strong{'Formatting \code{data}'} section 
+below for a full description.}
 
-\item{data_daily}{data.frame containing inputs with a daily timestep. See 
-\code{\link{mm_data}} for a full data description.}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See the
+\strong{'Formatting \code{data_daily}'} section below for a full 
+description.}
 
 \item{metab_class}{character the class name of the metab_model constructor}
 

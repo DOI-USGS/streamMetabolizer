@@ -65,7 +65,7 @@ Collate:
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'
-    'metab_funs.R'
+    'metab_inputs.R'
     'metab_mle.R'
     'metab_model_interface.R'
     'metab_night.R'
@@ -88,4 +88,5 @@ Collate:
     'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'
+    'zz_build_docs.R'
 RoxygenNote: 5.0.1

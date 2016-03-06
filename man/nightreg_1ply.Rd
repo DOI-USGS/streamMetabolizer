@@ -35,11 +35,13 @@ mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 \item{night_tests}{character vector of validity tests to conduct on the data 
 after subsetting to just nighttime}
 
-\item{specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier and safer to use
-\code{specs} to generate the list. The help file for that functions lists
-the necessary parameters, describes them in detail, and gives default
-values.}
+\item{specs}{a list of model specifications and parameters for a model. 
+Although this may be specified manually (it's just a list), it is easier
+and safer to use \code{\link{specs}} to generate the list, because the set
+of required parameters and their defaults depends on the model given in the
+\code{model_name} argument to \code{specs}. The help file for 
+\code{\link{specs}} lists the necessary parameters, describes them in 
+detail, and gives default values.}
 }
 \value{
 data.frame of estimates and \code{\link[stats]{lm}} model diagnostics

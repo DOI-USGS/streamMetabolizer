@@ -9,20 +9,24 @@ prepdata_bayes(data, data_daily, ply_date = NA, specs, engine, model_name,
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
-observations. Columns must have the same names, units, and format as the 
-default. See \code{\link{mm_data}} for a full data description.}
+observations (unit-value). Columns must have the same names, units, and 
+format as the default. See the \strong{'Formatting \code{data}'} section 
+below for a full description.}
 
-\item{data_daily}{data.frame containing inputs with a daily timestep. See 
-\code{\link{mm_data}} for a full data description.}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See the
+\strong{'Formatting \code{data_daily}'} section below for a full 
+description.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred topresent.}
 
-\item{specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier and safer to use
-\code{specs} to generate the list. The help file for that functions lists
-the necessary parameters, describes them in detail, and gives default
-values.}
+\item{specs}{a list of model specifications and parameters for a model. 
+Although this may be specified manually (it's just a list), it is easier
+and safer to use \code{\link{specs}} to generate the list, because the set
+of required parameters and their defaults depends on the model given in the
+\code{model_name} argument to \code{specs}. The help file for 
+\code{\link{specs}} lists the necessary parameters, describes them in 
+detail, and gives default values.}
 
 \item{engine}{The software or function to use in fitting the model. Should be
 specified via \code{mm_name} rather than here. For type='bayes', one of 
