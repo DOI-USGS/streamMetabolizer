@@ -56,6 +56,7 @@ Collate:
     'convert_UTC_to_solartime.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
+    'data_metab.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
     'load_spring_creek.R'

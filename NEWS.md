@@ -6,6 +6,9 @@
 specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
+# New function: data_metab() produces a dataset for testing/demonstration, with
+options for the resolution & flaws to introduce.
+
 # Newly public function: mm_model_by_ply is now public. Its interface has also 
 changed somewhat: tests has been renamed to day_tests, and validity tests are 
 conducted within mm_model_by_ply if day_tests is not empty, and validity and 
