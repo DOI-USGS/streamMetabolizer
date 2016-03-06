@@ -11,6 +11,10 @@ changed somewhat: tests has been renamed to day_tests, and validity tests are
 conducted within mm_model_by_ply if day_tests is not empty, and validity and 
 timestep information are now passed to model_fun.
 
+# New function: mm_get_timestep() computes the mean and/or unique timestep[s]
+and optionally requires that there be just one unique timestep within a vector
+of times or dates.
+
 # Interface change: day_start, day_end, and tests are now containined within 
 specs rather than defined separately in the call to metab, metab_bayes, etc.
 

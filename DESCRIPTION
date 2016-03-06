@@ -78,6 +78,7 @@ Collate:
     'mm_parse_name.R'
     'mm_name.R'
     'mm_generate_mcmc_file.R'
+    'mm_get_timestep.R'
     'mm_is_valid_day.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
