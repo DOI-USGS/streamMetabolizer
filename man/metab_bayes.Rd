@@ -6,8 +6,7 @@
 \usage{
 metab_bayes(specs = specs(mm_name("bayes")), data = mm_data(solar.time,
   DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(NULL),
-  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
-  "even_timesteps", "complete_data"))
+  info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model.

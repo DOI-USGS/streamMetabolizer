@@ -8,8 +8,7 @@ metab_Kmodel(specs = specs(mm_name("Kmodel")), data = mm_data(solar.time,
   discharge, velocity, optional = c("all")), data_daily = mm_data(date, K600,
   K600.lower, K600.upper, discharge.daily, velocity.daily, optional =
   c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
-  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
-  "even_timesteps", "complete_data"))
+  info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model.

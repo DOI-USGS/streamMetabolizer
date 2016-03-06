@@ -28,31 +28,36 @@ NULL
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 #' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 #' 
+#' library(dplyr)
+#' 
 #' # PRK
-#' get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric, 
-#'   day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' get_fit(mm <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=start.numeric, 
+#'   day_end=end.numeric), data=vfrenchshort))[2,c("GPP","ER","K600","minimum")]
 #' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
 #' 
 #' # PR
-#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
+#' mm <- mm_name('mle', ode_method='Euler') %>% 
+#'   specs(day_start=start.numeric, day_end=end.numeric) %>%
+#'   metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35))
+#' get_fit(mm)[2,c("GPP","ER","K600","minimum")]
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
 #' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
 #' 
 #' \dontrun{
-#'   metab_mle(data=data.frame(empty="shouldbreak"))
-#'  
-#'   # PRK and PR with process error
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, 
-#'     specs=specs('m_np_pi_pm_km.nlm'), 
-#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#'   plot_DO_preds(predict_DO(mm))
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-#'     specs=specs('m_np_pi_pm_km.nlm'), 
-#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#'   plot_DO_preds(predict_DO(mm))
+#' metab_mle(data=data.frame(empty="shouldbreak"))
+#' 
+#' # PRK and PR with process error
+#' mm <- specs('m_np_pi_pm_km.nlm', day_start=start.numeric, day_end=end.numeric) %>%
+#'   metab_mle(data=vfrenchshort)
+#' get_fit(mm)[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
+#' 
+#' mm <- metab_mle(specs('m_np_pi_pm_km.nlm', day_start=start.numeric, day_end=end.numeric),
+#'   data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35))
+#' get_fit(mm)[2,c("GPP","ER","K600","minimum")]
+#' plot_DO_preds(predict_DO(mm))
 #' }
 #' @export
 #' @family metab_model
@@ -60,8 +65,7 @@ metab_mle <- function(
   specs=specs(mm_name('mle')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
   data_daily=mm_data(date, K600, optional='all'), 
-  info=NULL,
-  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
+  info=NULL
 ) {
   
   fitting_time <- system.time({
@@ -71,8 +75,7 @@ metab_mle <- function(
     # model the data, splitting into overlapping 31.5-hr 'plys' for each date
     mle_all <- mm_model_by_ply(
       mle_1ply, data=dat_list[['data']], data_daily=dat_list[['data_daily']], # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-      tests=tests, # for mm_is_valid_day
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
       specs=specs) # for mle_1ply and negloglik_1ply
   })
   
@@ -101,27 +104,20 @@ metab_mle <- function(
 #' Called from metab_mle().
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
 #' @inheritParams metab
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @importFrom stats nlm
 #' @keywords internal
 mle_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  specs=specs('m_np_oi_pm_km.nlm')
+  data_ply, data_daily_ply, ply_date, ply_validity, timestep_days, ..., # inheritParams mm_model_by_ply_prototype
+  specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$solar.time)), units="days"), na.rm=TRUE))
-  validity <- mm_is_valid_day(
-    data_ply, # data split by mm_model_by_ply
-    tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
-    timestep_days=timestep.days) # arg supplied here to avoid calculating twice
-  stop_strs <- if(isTRUE(validity)) character(0) else validity
+  stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
 
   # Collect K600 if it's available
@@ -156,8 +152,8 @@ mle_1ply <- function(
       ),
       list(
         frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
-        frac.ER = timestep.days,
-        frac.D = timestep.days,
+        frac.ER = timestep_days,
+        frac.D = timestep_days,
         calc_DO_fun = specs$calc_DO_fun,
         ODE_method = specs$ODE_method
       ))

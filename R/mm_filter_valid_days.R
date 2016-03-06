@@ -8,40 +8,27 @@
 #' @param data_daily data.frame of daily estimates/statistics, to be filtered in
 #'   accordance with the filtering of data
 #' @inheritParams mm_model_by_ply
-#' @inheritParams mm_is_valid_day
-#' @export
 #' @return list of data and data_daily with same structure as inputs but with 
 #'   invalid days removed, plus a third data.frame of dates that were removed
+#' @examples
+#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' mm_filter_valid_days(vfrench[order(vfrench$solar.time),])
+#' \dontrun{
+#' mm_filter_valid_days(vfrench) # fails because data aren't sorted
+#' }
+#' @export
 mm_filter_valid_days <- function(
   data, data_daily=NULL, # redefine from metab
-  day_start=4, day_end=27.99, # inheritParams mm_model_by_ply
-  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
+  day_start=4, day_end=27.99, day_tests=c('full_day', 'even_timesteps', 'complete_data'), timestep_days=TRUE # inheritParams mm_model_by_ply
 ) {
   
-  # make absolutely sure the data are sorted (so we can give this guarantee to
-  # models that use the plys). do before mm_model_by_ply because plys can
-  # overlap
-  if(!is.null(data)) data <- data %>% v %>% arrange(solar.time) %>% u(get_units(data))
-  if(!is.null(data_daily)) data_daily <- data_daily %>% v %>% arrange(date) %>% u(get_units(data_daily))
-  
-  #' Filter the instantaneous data using mm_is_valid_day
-  #' 
-  #' Record dates that are removed and the reasons for removal in a parent
-  #' variable named removed
-  #' 
-  #' @inheritParams mm_model_by_ply_prototype
-  #' @inheritParams mm_is_valid_day
-  #' @return data
-  #' @keywords internal
-  mm_filter_valid_days_filter_fun <- function(
-    data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-    tests # inheritParams mm_is_valid_day
-  ) {
-    stop_strs <- mm_is_valid_day(day=data_ply, day_start=day_start, day_end=day_end, tests=tests)
-    if(isTRUE(stop_strs)) { # day is valid
+  # function to filter the instantaneous data using validity, record dates that
+  # are removed and the reasons for removal in a parent variable named removed
+  filter_fun <- function(data_ply, ply_date, ply_validity, ...) {
+    if(isTRUE(ply_validity)) { # day is valid
       data_ply
     } else {
-      removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(stop_strs, collapse="; "))))
+      removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(ply_validity, collapse="; "))))
       NULL
     }
   }
@@ -49,9 +36,8 @@ mm_filter_valid_days <- function(
   # run the filtering function over all days, recording days that were removed
   removed <- list()
   data_filtered <- mm_model_by_ply(
-    model_fun=mm_filter_valid_days_filter_fun, data=data, data_daily=data_daily, 
-    day_start=day_start, day_end=day_end, 
-    tests=tests)
+    model_fun=filter_fun, data=data, data_daily=data_daily, 
+    day_start=day_start, day_end=day_end, day_tests=day_tests)
   removed <- do.call(rbind, removed) # removed was populated by <<- calls within filter_fun
   
   # filter the daily data to match & return

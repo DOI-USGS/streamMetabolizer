@@ -36,9 +36,8 @@ NULL
 #' vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 #' 
 #' # sim
-#' mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
-#'   day_start=start.numeric, day_end=end.numeric, 
-#'   specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
+#' mm <- metab_sim(specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07, 
+#'   day_start=start.numeric, day_end=end.numeric), data=vfrenchshort, data_daily=vdaily)
 #' get_fit(mm)
 #' get_data_daily(mm)
 #' get_fitting_time(mm)
@@ -53,8 +52,7 @@ metab_sim <- function(
   specs=specs(mm_name('sim')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'),
   data_daily=mm_data(date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'),
-  info=NULL, 
-  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
+  info=NULL
 ) {
   
   fitting_time <- system.time({
@@ -62,7 +60,7 @@ metab_sim <- function(
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
     
     # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
-    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi','ODE_method')
+    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi','ODE_method','day_start','day_end','tests')
     specs$calc_DO_args = specs[calc_DO_arg_names]
     specs <- specs[-which(names(specs) %in% calc_DO_arg_names)]
   })

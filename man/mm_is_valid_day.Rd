@@ -4,28 +4,33 @@
 \alias{mm_is_valid_day}
 \title{Validate one day of data, returning a vector of error strings if needed}
 \usage{
-mm_is_valid_day(day, day_start = 4, day_end = 27.99, tests = c("full_day",
-  "even_timesteps", "complete_data"), timestep_days = NA)
+mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
+  day_tests = c("full_day", "even_timesteps", "complete_data"),
+  timestep_days = NA)
 }
 \arguments{
-\item{day}{data for one day}
+\item{data_ply}{a data.frame containing all relevant, validated modeling data
+for a single ply of data. (1 ply ~= 1 date, although the day length has 
+been specified by day_start and day_end and may not be exactly 24 hours)}
 
-\item{day_start}{start time of a day's data in number of hours from the 
-midnight that begins the modal date. For example, day_start=-1.5 indicates 
-that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first 
-observation time that occurs after that time if day_start doesn't fall 
-exactly on an observation time.}
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time.}
 
-\item{day_end}{end time of a day's data in number of hours from the midnight 
-that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at the last observation before 2006-06-27 06:00.}
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00.}
 
-\item{tests}{list of tests to conduct to determine whether each date worth of
+\item{day_tests}{list of tests to conduct to determine whether each date worth of
 data is valid for modeling}
 
 \item{timestep_days}{the expected timestep length in fraction of a day; for 
 example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
-the function if timestep_days is NA.}
+the function if timestep_days is NA. May be supplied as an argument to (1)
+pre-calculate the value for efficiency, or (2) require a specific timestep.}
 }
 \value{
 character vector of errors if day is invalid, or TRUE if it's valid
@@ -39,5 +44,11 @@ handle.
 \details{
 Assumes that the data have already been validated as in 
 \code{\link{mm_validate_data}}
+}
+\examples{
+vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+mm_is_valid_day(vfrench[1:500,]) # not valid
+mm_is_valid_day(vfrench[500,]) # not valid
+mm_is_valid_day(vfrench[144:431,]) # valid
 }
 

@@ -52,8 +52,7 @@ metab_night <- function(
   specs=specs(mm_name('night')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
   data_daily=mm_data(NULL),
-  info=NULL, 
-  day_start=12, day_end=36, tests=c('full_day', 'even_timesteps', 'complete_data')
+  info=NULL
 ) {
   
   fitting_time <- system.time({
@@ -64,10 +63,10 @@ metab_night <- function(
     
     # model the data, splitting into potentially overlapping 'plys' for each date
     night_all <- mm_model_by_ply(
-      nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-      tests=tests, # for mm_is_valid_day
-      specs=specs) # for nightreg_1ply
+      nightreg_1ply, 
+      data=data, data_daily=data_daily, day_start=specs$day_start, day_end=specs$day_end, # for mm_model_by_ply
+      day_tests=c(), timestep_days=FALSE, # for mm_model_by_ply - bypass the regular timestep calc & validity check on the full day ply
+      night_tests=specs$day_tests, specs=specs) # for nightreg_1ply
   })
   
   # Package and return results
@@ -95,25 +94,25 @@ metab_night <- function(
 #' Called from metab_night().
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
+#' @param night_tests character vector of validity tests to conduct on the data 
+#'   after subsetting to just nighttime
 #' @inheritParams metab
-#' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
-#'   diagnostics
+#' @return data.frame of estimates and \code{\link[stats]{lm}} model diagnostics
 #' @keywords internal
-#' @references Hornberger, George M., and Mahlon G. Kelly. Atmospheric
+#' @references Hornberger, George M., and Mahlon G. Kelly. Atmospheric 
 #'   Reaeration in a River Using Productivity Analysis. Journal of the 
 #'   Environmental Engineering Division 101, no. 5 (October 1975): 729-39.
 #'   
 #'   Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. Bott, Jody
-#'   Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and
-#'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
+#'   Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and 
+#'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in 
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  data_ply, data_daily_ply, day_start, day_end, ply_date, ..., # inheritParams mm_model_by_ply_prototype
+  night_tests=TRUE, # new arg here
   specs=specs('n_np_pi_eu_.lm') # inheritParams metab
 ) {
   
@@ -129,28 +128,26 @@ nightreg_1ply <- function(
       if(any(diff(which_night) > 1)) 
         stop_strs <<- c(stop_strs, "need exactly one night per data_ply")
       night_dat <- data_ply[which_night,]
-      # do the full_day test here, rather than in mm_is_valid_day, because
-      # it's not about specific times but about whether night begins and ends
+      
+      # check for data validity here, after subsetting to the time window we 
+      # really care about. also do the full_day test differently, because here 
+      # it's not about specific times but about whether night begins and ends 
       # within the ply bounds
-      if(!is.na(full_day_test <- match('full_day',tests))) {
+      if('full_day' %in% night_tests) {
         which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
         if(which_twilight[1] < 1)
           stop_strs <<- c(stop_strs, "data don't start before day-night transition")
         if(which_twilight[2] > nrow(data_ply))
           stop_strs <<- c(stop_strs, "data don't end after night-day transition")
-        tests <- tests[-full_day_test]
+        night_tests <- night_tests[night_tests != 'full_day']
       }
-      
-      # check for data validity here, after subsetting to the time window we
-      # really care about
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$solar.time)), units="days"), na.rm=TRUE))
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
-        tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_night (after modifying tests)
-        timestep_days=timestep.days) # arg supplied here to avoid calculating twice
+        day_start=day_start, day_end=day_end, day_tests=night_tests) # args passed from metab_night (after modifying the tests)
       if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
       
-      # actually stop if anything has broken so far
+      # actually stop if anything has broken so far; the tryCatch will catch it,
+      # and our stop_strs will be retained for later reporting
       if(length(stop_strs) > 0) stop("invalid data ply")
       
       # smooth DO data
@@ -285,7 +282,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end) %>% # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c()) %>% # for mm_model_by_ply
     mm_filter_dates(date_start=date_start, date_end=date_end)
 }
 
@@ -297,7 +294,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, ... # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply

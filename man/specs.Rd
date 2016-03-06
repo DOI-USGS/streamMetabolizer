@@ -4,11 +4,12 @@
 \alias{specs}
 \title{Generate a coherent list of model specs}
 \usage{
-specs(model_name = mm_name(), engine, GPP_init = 10, ER_init = -10,
-  K600_init = 10, calc_DO_fun, ODE_method, split_dates, keep_mcmcs = TRUE,
-  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
-  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
-  K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
+specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
+  day_tests = c("full_day", "even_timesteps", "complete_data"),
+  GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, ODE_method,
+  split_dates, keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
+  ER_daily_mu = -10, ER_daily_sigma = 10, K600_daily_mu = 10,
+  K600_daily_sigma = 10, K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
   K600_daily_sigma_shape = 1, K600_daily_sigma_rate = 2,
   K600_daily_beta0_mu = 10, K600_daily_beta0_sigma = 10,
   K600_daily_beta1_mu = 10, K600_daily_beta1_sigma = 10,
@@ -48,6 +49,29 @@ method relating K to the predictor[s] of choice. One of \code{c("mean",
 one option so it's not included in \code{specs()} (but is nonetheless noted
 in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
 \code{nlm()} for model fitting)}
+
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time. For metabolism models working with 
+single days of input data, it is conventional/useful to begin the day the 
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+30. For multiple consecutive days, it may make the most sense to start just
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
+regression, the date assigned to a chunk of data should be the date whose 
+evening contains the data. The default is therefore 12 to 36 for 
+metab_night, of which the times of darkness will be used.}
+
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. See day_start for recommended start and end times.}
+
+\item{day_tests}{list of tests to conduct to determine whether each date 
+worth of data is valid for modeling. the results of these tests will be 
+passed to \code{model_fun} as the \code{ply_validity} argument to that 
+function.}
 
 \item{GPP_init}{the inital value of daily GPP to use in the NLM fitting 
 process}
@@ -239,8 +263,8 @@ an internally consistent list of arguments that may be passed to
 }
 \description{
 Generates an internally consistent list of model specifications that may be 
-passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs}
-argument. This help file gives the definitive list of all possible model
+passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs} 
+argument. This help file gives the definitive list of all possible model 
 specs, but only a subset of these are relevant to any given 
 \code{model_name}. See the 'Relevant arguments' section below. Irrelevant 
 arguments for the given \code{model_name} should not be explicitly passed 
@@ -254,10 +278,20 @@ often should, be overridden to tailor the model to your needs.
 \section{Relevant arguments}{
 
   
-  * metab_bayes: Always relevant: \code{model_name, split_dates, engine, 
-  keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
-  K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
-  burnin_steps, saved_steps, thin_steps, verbose}. If 
+  * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
+  keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
+  ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
+  burnin_steps, saved_steps, thin_steps, verbose}. If
+  \code{mm_parse_name(model_name)$pool_K600=='none'} then also 
+  \code{K600_daily_mu, K600_daily_sigma}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='normal'} then also 
+  \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
+  K600_daily_sigma_rate}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='linear'} then also 
+  \code{K600_daily_beta0_mu, K600_daily_beta0_sigma, K600_daily_beta1_mu, 
+  K600_daily_beta1_sigma}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='binned'} then also 
+  \code{K600_daily_num_bins, K600_daily_beta_mu, K600_daily_beta_sigma}. If 
   \code{mm_parse_name(model_name)$err_obs_iid} then also 
   \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
   \code{mm_parse_name(model_name)$err_proc_acor} then also 
@@ -267,18 +301,19 @@ often should, be overridden to tailor the model to your needs.
   \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
   \code{features$engine == 'jags'} then also \code{adapt_steps},
   
-  * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
-  K600_init}
+  * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
+  ODE_method, GPP_init, ER_init, K600_init}
   
-  * metab_night: \code{model_name}
+  * metab_night: \code{model_name, day_start, day_end, day_tests}
   
-  * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
-  transforms, other_args}. Note that the defaults for \code{weights}, 
-  \code{predictors}, \code{filters}, and \code{transforms} are adjusted 
-  according to the \code{engine} implied by  \code{model_name}.
+  * metab_Kmodel: \code{model_name, engine, day_start, day_end, day_tests, 
+  weights, filters, predictors, transforms, other_args}. Note that the 
+  defaults for \code{weights}, \code{predictors}, \code{filters}, and 
+  \code{transforms} are adjusted according to the \code{engine} implied by 
+  \code{model_name}.
   
-  * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
-  err.proc.phi, ODE_method, sim.seed}
+  * metab_sim: \code{model_name, day_start, day_end, day_tests, err.obs.sigma, 
+  err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, sim.seed}
 }
 \examples{
 specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))

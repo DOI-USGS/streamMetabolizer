@@ -27,7 +27,8 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -59,7 +60,8 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -91,7 +93,8 @@ devel_tests <- function() {
     
     # prepdata_bayes
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -146,7 +149,8 @@ devel_tests <- function() {
     
     # prepdata
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     expect_equal(length(data_list$DO_obs), nrow(vfrench1day))
     expect_equal(length(data_list$frac_ER), nrow(vfrench1day))
     
@@ -180,7 +184,8 @@ devel_tests <- function() {
     specs <- specs(system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer"), burnin_steps=200, saved_steps=100, n_chains=3, n_cores=3)
     specs$model_path <- system.file('extdata/b_np_pcpi_eu_ko_v2.stan', package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     
     # mcmc - nopool_pcpi_Euler_b2.stan
     system.time({
@@ -269,7 +274,8 @@ manual_tests <- function() {
     mcmc_args <- if(specs$engine == 'jags') jags_args else jags_args[-which(jags_args=='adapt_steps')]
     specs$model_path <- system.file(paste0("models/", specs$model_name), package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
-      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", specs=specs, priors=FALSE) 
+      data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
+      specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors) 
     system.time({
       suppressWarnings(
         {mcmc_out <- do.call(streamMetabolizer:::mcmc_bayes, c(list(data_list=data_list, keep_mcmc=TRUE), specs[mcmc_args]))})

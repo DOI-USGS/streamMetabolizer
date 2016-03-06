@@ -5,7 +5,8 @@
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
 mm_validate_data(data = mm_data(NULL), data_daily = mm_data(NULL),
-  metab_class, tests = c("missing_cols", "extra_cols", "na_times", "units"))
+  metab_class, data_tests = c("missing_cols", "extra_cols", "na_times",
+  "units"))
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -17,7 +18,7 @@ default. See \code{\link{mm_data}} for a full data description.}
 
 \item{metab_class}{character the class name of the metab_model constructor}
 
-\item{tests}{list of tests to conduct to determine whether the input
+\item{data_tests}{list of tests to conduct to determine whether the input
 data.frames are properly formatted to allow modeling to begin}
 }
 \description{
@@ -25,7 +26,7 @@ Will most often be called from within a metab_model constructor.
 }
 \examples{
 \dontrun{
-mm_validate_data(dplyr::select(mm_data(),-temp.water), "metab_mle")
+mm_validate_data(dplyr::select(mm_data(),-temp.water), metab_class="metab_mle")
 }
 }
 

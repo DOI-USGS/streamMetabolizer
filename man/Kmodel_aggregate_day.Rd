@@ -4,37 +4,27 @@
 \alias{Kmodel_aggregate_day}
 \title{Aggregate unit values to daily values}
 \usage{
-Kmodel_aggregate_day(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  tests = c("full_day", "even_timesteps", "complete_data"),
-  columns = c("discharge", "velocity"))
+Kmodel_aggregate_day(data_ply, ply_validity, ..., columns = c("discharge",
+  "velocity"))
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
 for a single ply of data. (1 ply ~= 1 date, although the day length has 
 been specified by day_start and day_end and may not be exactly 24 hours)}
 
-\item{data_daily_ply}{NULL or a data.frame containing inputs with a daily 
-timestep. The date column must be present.}
+\item{ply_validity}{the output of \code{mm_is_valid_day} as applied to this 
+data_ply for those tests specified in \code{day_tests}. Those tests will 
+have been run before this function is called. The result is TRUE if the ply
+is entirely valid, or a character vector containing one or more error
+messages if any tests failed.}
 
-\item{day_start}{start time of a day's data in number of hours from the 
-midnight that begins the modal date. For example, day_start=-1.5 indicates 
-that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first 
-observation time that occurs after that time if day_start doesn't fall 
-exactly on an observation time.}
-
-\item{day_end}{end time of a day's data in number of hours from the midnight 
-that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at the last observation before 2006-06-27 06:00.}
-
-\item{ply_date}{the modal date of this ply of data and data_daily, and the 
-date by which this ply should be referred to}
-
-\item{tests}{list of tests to conduct to determine whether each date worth of
-data is valid for modeling}
+\item{...}{other args that were passed untouched from the function calling 
+mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 
 \item{columns}{character vector of names of columns to aggregate}
 }
 \description{
 For use in predicting K
 }
+\keyword{internal}
 

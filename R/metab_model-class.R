@@ -309,7 +309,7 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc
   # re-process the input data with the metabolism estimates to predict DO
   mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
     calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
   

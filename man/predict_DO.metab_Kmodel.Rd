@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_Kmodel.R
 \name{predict_DO.metab_Kmodel}
 \alias{predict_DO.metab_Kmodel}
-\title{Override generic predict_DO for metab_Kmodel, which can't}
+\title{Override generic predict_DO for metab_Kmodel, which can't predict DO}
 \usage{
 \method{predict_DO}{metab_Kmodel}(metab_model, date_start = NA,
   date_end = NA, ..., use_saved = TRUE)
@@ -34,16 +34,19 @@ the ouptut to metab_mle and THEN predicting DO.
 \dontrun{
 vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 
+# set the specifications for the MLE models
+mle_specs <- specs(mm_name('mle'), day_start=-1, day_end=23)
+
 # fit a first-round MLE and extract the K estimates
-mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
+mm1 <- metab_mle(mle_specs, data=vfrench)
 K600_mm1 <- predict_metab(mm1) \%>\% select(date, K600, K600.lower, K600.upper)
 
 # smooth the K600s
-mm2 <- metab_Kmodel(data_daily=K600_mm1, engine='mean', day_start=-1, day_end=23)
+mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), day_start=-1, day_end=23), data_daily=K600_mm1)
 K600_mm2 <- predict_metab(mm2) \%>\% select(date, K600)
 
 # refit the MLE with fixed K
-mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)
+mm3 <- metab_mle(mle_specs, data=vfrench, data_daily=K600_mm2)
 predict_metab(mm3)
 }
 }

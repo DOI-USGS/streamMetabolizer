@@ -6,8 +6,7 @@
 \usage{
 metab_night(specs = specs(mm_name("night")), data = mm_data(solar.time,
   DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(NULL),
-  info = NULL, day_start = 12, day_end = 36, tests = c("full_day",
-  "even_timesteps", "complete_data"))
+  info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model.

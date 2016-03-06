@@ -67,23 +67,22 @@ metab_Kmodel <- function(
   specs=specs(mm_name('Kmodel')),
   data=mm_data(solar.time, discharge, velocity, optional=c("all")), 
   data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
-  info=NULL, 
-  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data') # only relevant if !is.null(data)
+  info=NULL
 ) {
-  
-  # Check and reformat arguments
-  specs$engine <- match.arg(specs$engine, choices=c("mean", "lm", "loess"))
-  if(length(specs$weights) > 0) specs$weights <-  match.arg(specs$weights, choices=c("1/CI","K600/CI"))
-  if(length(specs$predictors) > 0) specs$predictors <- match.arg(specs$predictors, choices=c("date", "velocity.daily", "discharge.daily"), several.ok=TRUE)
-  if('date' %in% specs$predictors) 
-    specs$predictors[specs$predictors=='date'] <- 'as.numeric(date)'
-  if(!(!('K600' %in% names(specs$transforms)) || 
-       is.na(specs$transforms[['K600']]) || 
-       isTRUE(specs$transforms[['K600']]=='log'))) 
-    stop("specs$transforms['K600'] should be NA or 'log'")
   
   # Fit the model
   fitting_time <- system.time({
+    # Check and reformat arguments
+    specs$engine <- match.arg(specs$engine, choices=c("mean", "lm", "loess"))
+    if(length(specs$weights) > 0) specs$weights <-  match.arg(specs$weights, choices=c("1/CI","K600/CI"))
+    if(length(specs$predictors) > 0) specs$predictors <- match.arg(specs$predictors, choices=c("date", "velocity.daily", "discharge.daily"), several.ok=TRUE)
+    if('date' %in% specs$predictors) 
+      specs$predictors[specs$predictors=='date'] <- 'as.numeric(date)'
+    if(!(!('K600' %in% names(specs$transforms)) || 
+         is.na(specs$transforms[['K600']]) || 
+         isTRUE(specs$transforms[['K600']]=='log'))) 
+      stop("specs$transforms['K600'] should be NA or 'log'")
+    
     # Check data for correct column names & units
     dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kmodel")
     data <- dat_list[['data']]
@@ -91,8 +90,9 @@ metab_Kmodel <- function(
     
     # Prepare data_daily by aggregating any daily data, renaming K600 to 
     # K600.obs, & setting data_daily$weight to reflect user weights & filters
-    data_list <- prepdata_Kmodel(data=data, data_daily=data_daily, weights=specs$weights, filters=specs$filters, 
-                                 day_start=day_start, day_end=day_end, tests=tests)
+    data_list <- prepdata_Kmodel(
+      data=data, data_daily=data_daily, weights=specs$weights, filters=specs$filters, 
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
     
     # Fit the model
     Kmodel_all <- do.call(Kmodel_allply, c(
@@ -136,13 +136,16 @@ metab_Kmodel <- function(
 #'   CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
 #'   velocity.daily.max
 #' @inheritParams metab
-#' @inheritParams mm_is_valid_day
-prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, tests) {
+#' @inheritParams mm_model_by_ply
+prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, day_tests) {
   # Aggregate unit data to daily timesteps if needed
   if(!is.null(data) && nrow(data) > 0) {
     columns <- c('discharge', 'velocity')[c('discharge', 'velocity') %in% names(data)]
     if(length(columns) == 0) stop("data arg is pointless without at least one of c('discharge', 'velocity')")
-    aggs_daily <- mm_model_by_ply(Kmodel_aggregate_day, data=data, data_daily=NULL, day_start=day_start, day_end=day_end, tests=tests, columns=columns)
+    aggs_daily <- mm_model_by_ply(
+      Kmodel_aggregate_day, 
+      data=data, data_daily=NULL, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+      columns=columns)
     names(aggs_daily)[match(columns, names(aggs_daily))] <- paste0(columns, '.daily')
     data_daily <- left_join(data_daily, aggs_daily, by="date")
   }
@@ -191,18 +194,14 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
 #' For use in predicting K
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
 #' @param columns character vector of names of columns to aggregate
+#' @keywords internal
 Kmodel_aggregate_day <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  columns=c('discharge', 'velocity')
+  data_ply, ply_validity, ..., # inheritParams mm_model_by_ply_prototype
+  columns=c('discharge', 'velocity') # new arg for this function
 ) {
-  # Provide ability to skip a poorly-formatted day for calculating 
-  # metabolism, without breaking the whole loop. Just collect 
-  # problems/errors as a list of strings and proceed. Also collect warnings.
-  validity <- mm_is_valid_day(data_ply, day_start=day_start, day_end=day_end, tests=tests)
-  stop_strs <- if(isTRUE(validity)) character(0) else validity
+  # Collect errors & warnings as character vectors
+  stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   
   # Calculate means of requested columns
   if(length(stop_strs) == 0) {
@@ -379,7 +378,7 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   NextMethod()
 }
 
-#' Override generic predict_DO for metab_Kmodel, which can't
+#' Override generic predict_DO for metab_Kmodel, which can't predict DO
 #' 
 #' metab_Kmodel predicts K at daily timesteps and usually knows nothing about 
 #' GPP or ER. So it's not possible to predict DO from this model. Try passing 
@@ -389,16 +388,19 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
 #' \dontrun{
 #' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
 #' 
+#' # set the specifications for the MLE models
+#' mle_specs <- specs(mm_name('mle'), day_start=-1, day_end=23)
+#' 
 #' # fit a first-round MLE and extract the K estimates
-#' mm1 <- metab_mle(data=vfrench, day_start=-1, day_end=23)
+#' mm1 <- metab_mle(mle_specs, data=vfrench)
 #' K600_mm1 <- predict_metab(mm1) %>% select(date, K600, K600.lower, K600.upper)
 #' 
 #' # smooth the K600s
-#' mm2 <- metab_Kmodel(data_daily=K600_mm1, engine='mean', day_start=-1, day_end=23)
+#' mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), day_start=-1, day_end=23), data_daily=K600_mm1)
 #' K600_mm2 <- predict_metab(mm2) %>% select(date, K600)
 #' 
 #' # refit the MLE with fixed K
-#' mm3 <- metab_mle(data=vfrench, data_daily=K600_mm2, day_start=-1, day_end=23)
+#' mm3 <- metab_mle(mle_specs, data=vfrench, data_daily=K600_mm2)
 #' predict_metab(mm3)
 #' }
 #' @export

@@ -1,8 +1,8 @@
 #' Generate a coherent list of model specs
 #' 
 #' Generates an internally consistent list of model specifications that may be 
-#' passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs}
-#' argument. This help file gives the definitive list of all possible model
+#' passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs} 
+#' argument. This help file gives the definitive list of all possible model 
 #' specs, but only a subset of these are relevant to any given 
 #' \code{model_name}. See the 'Relevant arguments' section below. Irrelevant 
 #' arguments for the given \code{model_name} should not be explicitly passed 
@@ -15,10 +15,20 @@
 #' 
 #' @section Relevant arguments:
 #'   
-#'   * metab_bayes: Always relevant: \code{model_name, split_dates, engine, 
-#'   keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, 
-#'   K600_daily_mu, K600_daily_sigma, priors, params_out, n_chains, n_cores, 
-#'   burnin_steps, saved_steps, thin_steps, verbose}. If 
+#'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
+#'   keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
+#'   ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
+#'   burnin_steps, saved_steps, thin_steps, verbose}. If
+#'   \code{mm_parse_name(model_name)$pool_K600=='none'} then also 
+#'   \code{K600_daily_mu, K600_daily_sigma}. If 
+#'   \code{mm_parse_name(model_name)$pool_K600=='normal'} then also 
+#'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
+#'   K600_daily_sigma_rate}. If 
+#'   \code{mm_parse_name(model_name)$pool_K600=='linear'} then also 
+#'   \code{K600_daily_beta0_mu, K600_daily_beta0_sigma, K600_daily_beta1_mu, 
+#'   K600_daily_beta1_sigma}. If 
+#'   \code{mm_parse_name(model_name)$pool_K600=='binned'} then also 
+#'   \code{K600_daily_num_bins, K600_daily_beta_mu, K600_daily_beta_sigma}. If 
 #'   \code{mm_parse_name(model_name)$err_obs_iid} then also 
 #'   \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
 #'   \code{mm_parse_name(model_name)$err_proc_acor} then also 
@@ -28,18 +38,19 @@
 #'   \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
 #'   \code{features$engine == 'jags'} then also \code{adapt_steps},
 #'   
-#'   * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
-#'   K600_init}
+#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
+#'   ODE_method, GPP_init, ER_init, K600_init}
 #'   
-#'   * metab_night: \code{model_name}
+#'   * metab_night: \code{model_name, day_start, day_end, day_tests}
 #'   
-#'   * metab_Kmodel: \code{model_name, engine, weights, predictors, filters, 
-#'   transforms, other_args}. Note that the defaults for \code{weights}, 
-#'   \code{predictors}, \code{filters}, and \code{transforms} are adjusted 
-#'   according to the \code{engine} implied by  \code{model_name}.
+#'   * metab_Kmodel: \code{model_name, engine, day_start, day_end, day_tests, 
+#'   weights, filters, predictors, transforms, other_args}. Note that the 
+#'   defaults for \code{weights}, \code{predictors}, \code{filters}, and 
+#'   \code{transforms} are adjusted according to the \code{engine} implied by 
+#'   \code{model_name}.
 #'   
-#'   * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
-#'   err.proc.phi, ODE_method, sim.seed}
+#'   * metab_sim: \code{model_name, day_start, day_end, day_tests, err.obs.sigma, 
+#'   err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, sim.seed}
 #'   
 #' @param model_name character string identifying the model features. Use 
 #'   \code{\link{mm_name}} for valid names. This may be a full model file path 
@@ -163,7 +174,7 @@
 #' @return an internally consistent list of arguments that may be passed to 
 #'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 #'   
-#' @examples 
+#' @examples
 #' specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))
 #'   
 #' @export
@@ -173,9 +184,14 @@ specs <- function(
   
   model_name = mm_name(),
   engine,
-  # day_start = 4, # inheritParams mm_model_by_ply
-  # day_end = 28, # inheritParams mm_model_by_ply
-  # tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
+  
+  # inheritParams mm_model_by_ply
+  day_start = 4,
+  day_end = 28,
+  
+  # inheritParams mm_is_valid_day
+  day_tests=c('full_day', 'even_timesteps', 'complete_data'),
+  
   
   ## MLE
   
@@ -219,6 +235,9 @@ specs <- function(
   # hyperparameters for hierarchical K - binned. need to figure this out. K ~
   # beta[Qbin] (constant for each binned log(Q), i.e., rectangular interpolation
   # among bins) betas all drawn from same normal
+  # K600_daily_num_bins = 5,
+  # K600_daily_beta_mu = rep(10, K600_daily_num_bins),
+  # K600_daily_beta_sigma = rep(10, K600_daily_num_bins),
   
   # hyperparameters for error terms
   err_obs_iid_sigma_shape = 1,
@@ -281,8 +300,15 @@ specs <- function(
   # argument checks
   if(any(required %in% yes_missing))
     stop("missing and required argument: ", paste(required[required %in% yes_missing], collapse=", "))
-  if(length(redundant <- not_missing[not_missing %in% prefer_missing]) > 0) 
-    warning("argument[s] that should usually not be specified: ", paste(redundant, collapse=", "))
+  redundant <- not_missing[not_missing %in% prefer_missing]
+  if('engine' %in% redundant) {
+    warning("'engine' should be specified in mm_name() rather than specs()")
+    redundant <- redundant[redundant != 'engine']
+  }
+  if(length(redundant) > 0) {
+    warning("argument[s] that should usually not be specified in specs(): ", paste(redundant, collapse=", "))
+  }
+  
   
   # check the validity of the model_name against the list of officially accepted model names
   mm_validate_name(model_name)
@@ -295,125 +321,142 @@ specs <- function(
   
   # copy/calculate arguments as appropriate to the model
   specs <- list()
-  if(features$type == 'bayes') {
-    
-    # list all needed arguments
-    included <- c(
-      # model setup
-      'model_name', 'split_dates', 'engine', 'keep_mcmcs',
+  switch(
+    features$type,
+    'bayes' = {
       
-      # hyperparameters - this section should be identical to the
-      # hyperparameters section of prepdata_bayes
-      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
-      switch(
-        features$pool_K600,
-        none=c('K600_daily_mu', 'K600_daily_sigma'),
-        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        binned=stop('need to think about this one')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'),
-      
-      # inheritParams prepdata_bayes
-      'priors',
-      
-      # inheritParams mcmc_bayes
-      'params_out', 'n_chains', 'n_cores', 
-      if(features$engine == 'jags') 'adapt_steps', 
-      'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
-    )
-
-    # compute some arguments
-    if('split_dates' %in% yes_missing) {
-      all_specs$split_dates <- ifelse(
-        features$pool_K600 %in% 'none', TRUE,
-        ifelse(features$pool_K600 %in% c('normal','linear','binned'), FALSE, 
-               stop("unknown pool_K600; unsure how to set split_dates")))
-    }
-    if('engine' %in% yes_missing) {
-      all_specs$engine <- features$engine
-    }
-    if('params_out' %in% yes_missing) {
-      all_specs$params_out <- c(
-        c('GPP_daily','ER_daily','K600_daily'), 
-        if(features$err_obs_iid) 'err_obs_iid_sigma',
-        if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
-        if(features$err_proc_iid) 'err_proc_iid_sigma',
+      # list all needed arguments
+      included <- c(
+        # model setup
+        'model_name', 'engine', 'split_dates', 'keep_mcmcs',
+        
+        # date ply day_tests
+        'day_start', 'day_end', 'day_tests',
+        
+        # hyperparameters - this section should be identical to the
+        # hyperparameters section of prepdata_bayes
+        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
         switch(
           features$pool_K600,
-          none=c(),
-          normal=c('K600_daily_mu', 'K600_daily_sigma'),
-          linear=c('K600_daily_beta0', 'K600_daily_beta1', 'K600_daily_sigma'),
-          binned=stop('need to think about this one', 'K600_daily_beta', 'K600_daily_sigma')))
-    }
-    
-    # check for errors/inconsistencies
-    model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
-    if(!file.exists(model_path)) 
-      model_path <- model_name
-    if(!file.exists(model_path)) 
-      warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
-    if(features$engine == "NA") 
-      stop('engine must be specified for Bayesian models')
-    
-  } else if(features$type == 'mle') {
-    # list all needed arguments
-    included <- c('model_name', 'calc_DO_fun', 'ODE_method', 'GPP_init', 'ER_init', 'K600_init')
-    
-    if('calc_DO_fun' %in% yes_missing) {
-      all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
-    }
-    if('ODE_method' %in% yes_missing) {
-      all_specs$ODE_method <- features$ode_method
-    }
-    
-  } else if(features$type == 'night') {
-    # list all needed arguments
-    included <- c('model_name')
-    
-  } else if(features$type == 'Kmodel') {
-    # list all needed arguments
-    included <- c('model_name', 'engine', 'weights', 'filters', 'predictors', 'transforms', 'other_args')
-    
-    if('engine' %in% yes_missing) {
-      all_specs$engine <- features$engine
-    }
-    
-    # some different defaults for each engine, because no one set of defaults
-    # makes sense for all engines
-    #if('weights' %in% yes_missing) all_specs$weights <- c("K600/CI") # same for all, so use default as in Usage
-    switch(
-      all_specs$engine,
-      mean={
-        if('filters' %in% yes_missing) all_specs['filters'] <- list(c()) # need special syntax to assign c(). see http://stackoverflow.com/a/7945259/3203184
-        if('predictors' %in% yes_missing) all_specs['predictors'] <- list(c())
-        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log')
-        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=NULL)
-      },
-      lm={
-        if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA)
-        if('predictors' %in% yes_missing) all_specs$predictors <- c("discharge.daily")
-        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', discharge.daily="log")
-        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(lm))[-which(names(formals(lm)) %in% c('formula','data','weights'))])
-      },
-      loess={
-        if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA)
-        if('predictors' %in% yes_missing) all_specs$predictors <- c("date", "discharge.daily")
-        if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")
-        if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(loess))[-which(names(formals(loess)) %in% c('formula','data','weights'))])
+          none=c('K600_daily_mu', 'K600_daily_sigma'),
+          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+          linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+          binned=stop('need to think about this one')),
+        if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
+        if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
+        if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'),
+        
+        # inheritParams prepdata_bayes
+        'priors',
+        
+        # inheritParams mcmc_bayes
+        'params_out', 'n_chains', 'n_cores', 
+        if(features$engine == 'jags') 'adapt_steps', 
+        'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
+      )
+      
+      # compute some arguments
+      if('engine' %in% yes_missing) {
+        all_specs$engine <- features$engine
       }
-    )
-
-  } else if(features$type == 'sim') {
-    # list all needed arguments
-    included <- c('model_name', 'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi', 'ODE_method', 'sim.seed')
-    
-    if('ODE_method' %in% yes_missing) {
-      all_specs$ODE_method <- features$ode_method
+      if('split_dates' %in% yes_missing) {
+        all_specs$split_dates <- ifelse(
+          features$pool_K600 %in% 'none', TRUE,
+          ifelse(features$pool_K600 %in% c('normal','linear','binned'), FALSE, 
+                 stop("unknown pool_K600; unsure how to set split_dates")))
+      }
+      if('params_out' %in% yes_missing) {
+        all_specs$params_out <- c(
+          c('GPP_daily','ER_daily','K600_daily'), 
+          if(features$err_obs_iid) 'err_obs_iid_sigma',
+          if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
+          if(features$err_proc_iid) 'err_proc_iid_sigma',
+          switch(
+            features$pool_K600,
+            none=c(),
+            normal=c('K600_daily_mu', 'K600_daily_sigma'),
+            linear=c('K600_daily_beta0', 'K600_daily_beta1', 'K600_daily_sigma'),
+            binned=stop('need to think about this one', 'K600_daily_beta', 'K600_daily_sigma')))
+      }
+      
+      # check for errors/inconsistencies
+      model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
+      if(!file.exists(model_path)) 
+        model_path <- model_name
+      if(!file.exists(model_path)) 
+        warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
+      if(features$engine == "NA") 
+        stop('engine must be specified for Bayesian models')
+      
+    },
+    'mle' = {
+      # list all needed arguments
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'ODE_method', 'GPP_init', 'ER_init', 'K600_init')
+      
+      if('calc_DO_fun' %in% yes_missing) {
+        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
+      }
+      if('ODE_method' %in% yes_missing) {
+        all_specs$ODE_method <- features$ode_method
+      }
+      
+    }, 
+    'night' = {
+      # list all needed arguments
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests')
+      
+      # some different defaults for night relative to other models
+      if('day_start' %in% yes_missing) {
+        all_specs$day_start <- 12
+      }
+      if('day_end' %in% yes_missing) {
+        all_specs$day_end <- 36
+      }
+      
+    }, 
+    'Kmodel' = {
+      # list all needed arguments
+      included <- c('model_name', 'engine', 'day_start', 'day_end', 'day_tests', 'weights', 'filters', 'predictors', 'transforms', 'other_args')
+      
+      if('engine' %in% yes_missing) {
+        all_specs$engine <- features$engine
+      }
+      
+      # some different defaults for each engine, because no one set of defaults
+      # makes sense for all engines
+      #if('weights' %in% yes_missing) all_specs$weights <- c("K600/CI") # same for all, so use default as in Usage
+      switch(
+        all_specs$engine,
+        mean={
+          if('filters' %in% yes_missing) all_specs['filters'] <- list(c()) # need special syntax to assign c(). see http://stackoverflow.com/a/7945259/3203184
+          if('predictors' %in% yes_missing) all_specs['predictors'] <- list(c())
+          if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log')
+          if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=NULL)
+        },
+        lm={
+          if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA)
+          if('predictors' %in% yes_missing) all_specs$predictors <- c("discharge.daily")
+          if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', discharge.daily="log")
+          if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(lm))[-which(names(formals(lm)) %in% c('formula','data','weights'))])
+        },
+        loess={
+          if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA)
+          if('predictors' %in% yes_missing) all_specs$predictors <- c("date", "discharge.daily")
+          if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")
+          if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(loess))[-which(names(formals(loess)) %in% c('formula','data','weights'))])
+        }
+      )
+      
+    },
+    'sim' = {
+      # list all needed arguments
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi', 'ODE_method', 'sim.seed')
+      
+      if('ODE_method' %in% yes_missing) {
+        all_specs$ODE_method <- features$ode_method
+      }
     }
-
-  }
+  )
   
   # stop if truly irrelevant arguments were given
   if(length(irrelevant <- not_missing[!(not_missing %in% included)]) > 0) 

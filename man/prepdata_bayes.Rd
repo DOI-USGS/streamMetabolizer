@@ -4,7 +4,8 @@
 \alias{prepdata_bayes}
 \title{Prepare data for passing to JAGS or Stan}
 \usage{
-prepdata_bayes(data, data_daily, ply_date = NA, specs, priors = FALSE)
+prepdata_bayes(data, data_daily, ply_date = NA, specs, engine, model_name,
+  priors = FALSE)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -15,13 +16,34 @@ default. See \code{\link{mm_data}} for a full data description.}
 \code{\link{mm_data}} for a full data description.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
-date by which this ply should be referred to}
+date by which this ply should be referred topresent.}
 
 \item{specs}{a list of model specifications and parameters for a model.
 Although this may be specified manually, it is easier and safer to use
 \code{specs} to generate the list. The help file for that functions lists
 the necessary parameters, describes them in detail, and gives default
 values.}
+
+\item{engine}{The software or function to use in fitting the model. Should be
+specified via \code{mm_name} rather than here. For type='bayes', one of 
+\code{c('jags','stan')} indicating the software package to use for the MCMC
+process. For type='Kmodel', the name of an interpolation or regression 
+method relating K to the predictor[s] of choice. One of \code{c("mean", 
+"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
+one option so it's not included in \code{specs()} (but is nonetheless noted
+in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
+\code{nlm()} for model fitting)}
+
+\item{model_name}{character string identifying the model features. Use 
+\code{\link{mm_name}} for valid names. This may be a full model file path 
+for custom Bayesian models, as long as basename(model_name) can still be 
+parsed correctly with \code{mm_parse_name()}. In that case the file may be 
+specified either as a file path relative to the streamMetabolizer models 
+directory (the first assumption; this directory can be found with 
+\code{system.file("models", package="streamMetabolizer")}) or as an 
+absolute path or a path relative to the current working directory (the 
+second assumption, if the first assumption turns up no files of the given 
+name).}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will 
 return priors rather than posteriors?}

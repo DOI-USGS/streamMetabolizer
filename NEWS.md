@@ -6,6 +6,14 @@
 specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
+# Newly public function: mm_model_by_ply is now public. Its interface has also 
+changed somewhat: tests has been renamed to day_tests, and validity tests are 
+conducted within mm_model_by_ply if day_tests is not empty, and validity and 
+timestep information are now passed to model_fun.
+
+# Interface change: day_start, day_end, and tests are now containined within 
+specs rather than defined separately in the call to metab, metab_bayes, etc.
+
 # Interface change: model_specs is now specs. get_args is now get_specs, and the
 result is a list of specs as named in specs() rather than a list with an element
 called model_specs that is itself a list.

@@ -10,14 +10,14 @@ test_that("mm_model_by_ply", {
     favorite # inheritParams dummy_inner_fun
   ) {
     streamMetabolizer:::mm_model_by_ply(
-      dummy_middle_fun, data=data, data_daily=data_daily, # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, # for mm_model_by_ply
+      dummy_middle_fun, 
+      data=data, data_daily=data_daily, day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
       favorite=favorite) # for dummy_inner_fun
   }
   
   #' Get called by mm_model_by_ply; call dummy_inner_fun to get answers
   dummy_middle_fun <- function(
-    data_ply, data_daily_ply, day_start, day_end, ply_date, # supplied by mm_model_by_ply; inheritParams mm_model_by_ply_prototype
+    data_ply, data_daily_ply, day_start, day_end, ply_date, ..., # supplied by mm_model_by_ply; inheritParams mm_model_by_ply_prototype
     favorite # inheritParams dummy_inner_fun
   ) {
     # inst & daily data should both have been subsetted to just one date (or none if there isn't a match)
@@ -57,7 +57,7 @@ test_that("mm_model_by_ply", {
   fav <- data.frame(color=c("red","blue"), scale="b minor", digit=0:9)
   
   # run & checks: short day
-  out <- dummy_outer_fun(data=dat, data_daily=datd, day_start=5, day_end=21, favorite=fav)
+  out <- dummy_outer_fun(data=dat, data_daily=datd, day_start=5, day_end=21.01, favorite=fav)
   expect_equal(nrow(out), 120)
   expect_equal(as.Date(out$inst.solar.time), out$daily.date) # daily & inst data should be matched up right by date
   expect_equal(out$date, out$daily.date) # mm_model_by_ply date & daily date should be equal
@@ -65,10 +65,10 @@ test_that("mm_model_by_ply", {
   expect_false(any(extra_dailies %in% unique(out$date))) # daily data w/o inst obs should be removed
   out_hours <- as.numeric(format(out$inst.solar.time, "%H"))
   expect_equal(min(out_hours[!is.na(out$inst.inst_row)]), 5) # excepting NA inst days, minimum hour of day should be day_start=5
-  expect_equal(max(out_hours), 21) # maximum hour of day should be day_end=21
+  expect_equal(max(out_hours), 21) # maximum hour of day should be day_end=20
   
   # run & checks: long day
-  out <- dummy_outer_fun(data=dat, data_daily=datd, day_start=5, day_end=35, favorite=fav)
+  out <- dummy_outer_fun(data=dat, data_daily=datd, day_start=5, day_end=35.1, favorite=fav)
   expect_equal(nrow(out), 207)
   expect_true(all(as.Date(out$inst.solar.time) >= out$date - as.difftime(1, units="days") & 
                     as.Date(out$inst.solar.time) <= out$date + as.difftime(1, units="days"))) # were daily & inst data matched up right?

@@ -46,8 +46,7 @@ metab_bayes <- function(
   specs=specs(mm_name('bayes')), 
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
   data_daily=mm_data(NULL),
-  info=NULL, 
-  day_start=4, day_end=27.99, tests=c('full_day', 'even_timesteps', 'complete_data')
+  info=NULL
 ) {
   
   fitting_time <- system.time({
@@ -84,8 +83,7 @@ metab_bayes <- function(
       # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-        day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-        tests=tests, # for mm_is_valid_day
+        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
         specs=specs) # for bayes_1ply
       # if we saved the modeling object[s] in the df, pull them out now
       if('mcmcfit' %in% names(bayes_daily)) {
@@ -99,8 +97,9 @@ metab_bayes <- function(
       
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
-      if((day_end - day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
-      filtered <- mm_filter_valid_days(data, data_daily, day_start=day_start, day_end=day_end, tests=tests)
+      if((specs$day_end - specs$day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
+      filtered <- mm_filter_valid_days(
+        data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
       bayes_all_list <- bayes_allply(
         data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
         specs=specs)
@@ -138,22 +137,19 @@ metab_bayes <- function(
 #' Called from metab_bayes().
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
 #' @inheritParams metab
 #' @return data.frame of estimates and MCMC model diagnostics
 #' @importFrom stats setNames
 #' @keywords internal
 bayes_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  specs
+  data_ply, data_daily_ply, ply_date, ply_validity, ..., # inheritParams mm_model_by_ply_prototype
+  specs # inheritParams metab
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  validity <- mm_is_valid_day(data_ply, day_start=day_start, day_end=day_end, tests=tests)
-  stop_strs <- if(isTRUE(validity)) character(0) else validity
+  stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
   # Calculate metabolism by Bayesian MCMC
@@ -163,7 +159,7 @@ bayes_1ply <- function(
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
-          specs=specs, priors=specs$priors)
+          specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
         specs$keep_mcmc <- if(is.logical(specs$keep_mcmcs)) {
           isTRUE(specs$keep_mcmcs)
         } else {
@@ -228,7 +224,7 @@ bayes_allply <- function(
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
-        specs=specs, priors=specs$priors)
+        specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
       all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
       do.call(mcmc_bayes, c(
         list(data_list=data_list),
@@ -275,17 +271,18 @@ bayes_allply <- function(
 #' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
 #' data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
 #' 
-#' @inheritParams metab
 #' @inheritParams mm_model_by_ply_prototype
+#' @inheritParams metab
+#' @inheritParams specs
 #' @param priors logical. Should the data list be modified such that JAGS will 
 #'   return priors rather than posteriors?
 #' @return list of data for input to runjags_bayes or runstan_bayes
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
-  data, data_daily, # inheritParams metab
-  ply_date=NA, # inheritParams mm_model_by_ply_prototype
-  specs, # inheritParams metab
+  data, data_daily, ply_date=NA, # inheritParams mm_model_by_ply_prototype
+  specs, # inheritParams metab (for hierarchical priors)
+  engine, model_name, #inheritParams specs
   priors=FALSE # inherited by specs
 ) {
   
@@ -302,12 +299,12 @@ prepdata_bayes <- function(
   if(length(num_daily_obs) > 1) stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   time_by_date_matrix <- function(vec) {
     switch(
-      specs$engine,
+      engine,
       jags=matrix(data=vec, ncol=num_daily_obs, nrow=num_dates, byrow=TRUE),
       stan=matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
     )
   }
-  date_margin <- switch(specs$engine, jags=1, stan=2)
+  date_margin <- switch(engine, jags=1, stan=2)
   
   # double-check that our dates are going to line up with the input dates. this 
   # should be redundant w/ above date_table checks, so just being extra careful
@@ -322,7 +319,7 @@ prepdata_bayes <- function(
   timestep_days <- mean(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) mean(diff(timevec))))
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(basename(specs$model_path))
+  features <- mm_parse_name(model_name)
   
   # Format the data for JAGS/Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -341,9 +338,9 @@ prepdata_bayes <- function(
       frac_GPP = {
         # normalize light by the sum of light in the first 24 hours of the time window
         in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-        if(specs$engine == 'jags') in_solar_day <- t(in_solar_day)
+        if(engine == 'jags') in_solar_day <- t(in_solar_day)
         mat_light <- time_by_date_matrix(data$light)
-        sum_by_date <- switch(specs$engine, jags=rowSums, stan=colSums)
+        sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
         sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
       },
       frac_ER  = time_by_date_matrix(timestep_days),
@@ -371,7 +368,7 @@ prepdata_bayes <- function(
   )
   if(priors) {
     switch(
-      specs$engine,
+      engine,
       jags={ data_list <- data_list[-which(names(data_list)=="DO_obs")] },
       stan={ stop("sorry, Stan doesn't allow NAs in data, so priors can't be TRUE") })
   }
