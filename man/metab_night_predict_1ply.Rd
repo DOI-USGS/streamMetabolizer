@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 metab_night_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  ...)
+  timestep_days, ...)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -28,6 +28,10 @@ before 2006-06-27 06:00.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred topresent.}
+
+\item{timestep_days}{numeric length of the mean timestep for this day, if 
+requested by setting \code{timestep_days} to \code{TRUE} or a numeric value
+in the call to \code{\link{mm_model_by_ply}}}
 
 \item{...}{other args that were passed untouched from the function calling 
 mm_model_by_ply, through mm_model_by_ply, and finally to this function.}

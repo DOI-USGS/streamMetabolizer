@@ -15,37 +15,12 @@ NULL
 #'   inspected with the functions in the \code{\link{metab_model_interface}}.
 #'   
 #' @examples
-#' # set the date in several formats
-#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-#' 
-#' # get, format, & subset data
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-#' 
-#' # dates & subsetting specific to nighttime regression
-#' first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
-#' stop.dark <- 100 + which(
-#'   format(vfrenchshort$solar.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
-#' vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
-#' night.start <- eval(parse(text=format(vfrenchnight$solar.time[1], "%H + %M/60")))
-#' night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
-#' 
-#' # fit
-#' mm <- metab_night(data=vfrenchnight, 
-#'   specs=specs('n_np_pi_eu_.lm'), 
-#'   day_start=night.start, day_end=night.end)
-#'   
-#' # give estimates
+#' dat <- data_metab('3', day_start=12, day_end=35)
+#' mm <- metab_night(data=dat)
 #' predict_metab(mm)
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
-#' 
-#' # predict DO
+#' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
-#' 
+#' }
 #' @export
 #' @family metab_model
 metab_night <- function(
@@ -55,6 +30,11 @@ metab_night <- function(
   info=NULL
 ) {
   
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name('night'))
+  }
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_night")
@@ -294,7 +274,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, ... # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, timestep_days, ... # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -311,7 +291,9 @@ metab_night_predict_1ply <- function(
   }
   
   # apply the regular prediction function
-  mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
-                  day_start, day_end, ply_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
+  mm_predict_1ply(
+    data_ply=night_dat, data_daily_ply=data_daily_ply, 
+    day_start, day_end, ply_date, timestep_days=timestep_days, 
+    calc_DO_fun=calc_DO_mod) # use default ODE_method
   
 }

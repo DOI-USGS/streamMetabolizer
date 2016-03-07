@@ -29,7 +29,7 @@ evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
 before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
 regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+evening contains the data. The default is therefore 12 to 35 for 
 metab_night, of which the times of darkness will be used.}
 
 \item{day_end}{end time (exclusive) of a day's data in number of hours from 

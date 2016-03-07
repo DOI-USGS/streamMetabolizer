@@ -42,26 +42,13 @@ argument.
 }
 \examples{
 \dontrun{
-# set the date in several formats
-start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="UTC"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="UTC"), units='hours')
-
-# get, format, & subset data
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-
-# fit
-mm <- metab_bayes(data=vfrenchshort, day_start=start.numeric, 
-  day_end=end.numeric)
-get_fit(mm)[2,c('GPP_daily_median','ER_daily_median','K600_daily_median')]
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+dat <- data_metab() # 1 day of example data
+# fast-ish model version, but still too slow to auto-run in examples
+mm <- metab_bayes(
+  specs(mm_name('bayes', err_proc_iid=FALSE, engine='stan'), 
+        n_chains=1, burnin_steps=300, saved_steps=100, split_dates=FALSE),
+  data=dat)
+predict_metab(mm)
 get_fitting_time(mm)
 plot_DO_preds(predict_DO(mm))
 }

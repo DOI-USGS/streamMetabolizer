@@ -68,25 +68,29 @@ time and discharge.daily}
 }
 }
 \examples{
-\dontrun{
-library(dplyr)
+# create example data
 set.seed(24842)
 example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
   as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) \%>\%
   mutate(K600.lower=K600-5, K600.upper=K600+6)
-  
-mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
-  mm_name('Kmodel', engine='mean'))) # two warnings expected
-plot_metab_preds(predict_metab(mm))
 
-mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
-  mm_name('Kmodel', engine='lm'), predictors='discharge.daily'))
-plot_metab_preds(predict_metab(mm))
+# mean
+mm <- metab_Kmodel(
+  specs(mm_name('Kmodel', engine='mean')), 
+  data_daily=example_Ks) # two warnings expected for engine='mean'
+\dontrun{ plot_metab_preds(predict_metab(mm)) # flat b/c it's a mean }
 
-mm <- metab_Kmodel(data_daily=example_Ks, specs=specs(
-  mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)))
-plot_metab_preds(predict_metab(mm))
-}
+# linear model
+mm <- metab_Kmodel(
+  specs(mm_name('Kmodel', engine='lm'), predictors='discharge.daily'),
+  data_daily=example_Ks)
+\dontrun{ plot_metab_preds(predict_metab(mm)) }
+
+# loess
+mm <- metab_Kmodel(
+  specs(mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)),
+  data_daily=example_Ks)
+\dontrun{ plot_metab_preds(predict_metab(mm)) }
 }
 \author{
 Alison Appling

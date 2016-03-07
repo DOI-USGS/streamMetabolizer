@@ -36,7 +36,7 @@
 #' mm_name('sim')
 #' mm_name('bayes')
 mm_name <- function(
-  type=c('bayes','mle','night','Kmodel','sim'), 
+  type=c('mle','bayes','night','Kmodel','sim'), 
   #pool_GPP='none', pool_ER='none',
   pool_K600=c('none','normal','linear','binned'),
   err_obs_iid=c(TRUE, FALSE),

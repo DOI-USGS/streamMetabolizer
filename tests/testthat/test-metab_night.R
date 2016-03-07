@@ -46,5 +46,34 @@ test_that("metab_night predictions can be passed back into metab_mle", {
   
 })
 
+test_that("metab_night predictions match Bob's", {
+  # # set the date in several formats
+  # start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
+  # end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
+  # start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
+  # end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
+  # mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
+  # 
+  # # get, format, & subset data
+  # vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+  # vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
+  # 
+  # # dates & subsetting specific to nighttime regression
+  # first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
+  # stop.dark <- 100 + which(
+  #   format(vfrenchshort$solar.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
+  # vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
+  # night.start <- eval(parse(text=format(vfrenchnight$solar.time[1], "%H + %M/60")))
+  # night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
+  # 
+  # # fit
+  # mm <- metab_night(data=vfrenchnight,
+  #   specs=specs('n_np_pi_eu_.lm'),
+  #   day_start=night.start, day_end=night.end)
+  # 
+  # # give estimates
+  # predict_metab(mm)
+  # streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
+})
 
 

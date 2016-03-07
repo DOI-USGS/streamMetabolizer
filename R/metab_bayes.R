@@ -17,26 +17,13 @@ NULL
 #'   
 #' @examples
 #' \dontrun{
-#' # set the date in several formats
-#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2)
-#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'    tz="UTC"), units='hours')
-#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'   tz="UTC"), units='hours')
-#' 
-#' # get, format, & subset data
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-#' 
-#' # fit
-#' mm <- metab_bayes(data=vfrenchshort, day_start=start.numeric, 
-#'   day_end=end.numeric)
-#' get_fit(mm)[2,c('GPP_daily_median','ER_daily_median','K600_daily_median')]
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+#' dat <- data_metab() # 1 day of example data
+#' # fast-ish model version, but still too slow to auto-run in examples
+#' mm <- metab_bayes(
+#'   specs(mm_name('bayes', err_proc_iid=FALSE, engine='stan'), 
+#'         n_chains=1, burnin_steps=300, saved_steps=100, split_dates=FALSE),
+#'   data=dat)
+#' predict_metab(mm)
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
 #' }
@@ -49,6 +36,11 @@ metab_bayes <- function(
   info=NULL
 ) {
   
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name('bayes'))
+  }
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
@@ -524,7 +516,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
     stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
       t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-      setNames(paste0(names_params, "_", names_stats)) 
+      setNames(paste0(names_params, "_", names_stats))
   
     # add the model object if requested
     if(keep_mcmc == TRUE) {
@@ -541,8 +533,8 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # determine how many unique nrows, & therefore data.frames, there should be
     var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(stan_mat)))
     all_dims <- unique(var_table) %>% setNames(., .)
-    names(all_dims)[all_dims == data_list$d] <- "daily"
     names(all_dims)[all_dims == 1] <- "overall"
+    names(all_dims)[all_dims == data_list$d] <- "daily" # overrides 'overall' if d==1. that's OK
 
     # for each unique nrows, create the data.frame with vars in columns and indices in rows
     stan_out <- lapply(all_dims, function(odim) {
@@ -551,16 +543,14 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(stan_mat))[1])))
       varstat_order <- paste0(rep(row_order, each=ncol(stan_mat)), '_', rep(colnames(stan_mat), times=length(row_order)))
       
-      sout <- as.data.frame(stan_mat[dim_rows,]) %>%
+      as.data.frame(stan_mat[dim_rows,]) %>%
         add_rownames() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
-               index=if(odim == 1) NA else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+               index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
                varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
         select(index, varstat, val) %>%
         spread(varstat, val)
-      if(odim == 1) sout$index <- NULL
-      sout
     })
 
     stan_out <- c(stan_out, list(mcmcfit=runstan_out))

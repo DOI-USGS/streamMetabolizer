@@ -53,3 +53,32 @@ test_that("metab_mle models can be fit with K specified", {
   # plot_DO_preds(DO_preds, y_var="pctsat")
   
 })
+
+test_that("metab_mle outputs look like Bob's", {
+  
+  dat <- data_metab('1', day_start=-2, day_end=30)
+  
+  # PRK
+  mms <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=-2, day_end=30), data=dat)
+  mmb <- streamMetabolizer:::load_french_creek_std_mle(
+    dat, estimate='PRK', 
+    start=c(dates="09/17/12", times="22:00:00"),
+    end=c(dates="09/19/12", times="06:00:00"))
+  expect_equal(get_fit(mms)[1,"GPP"], mmb[1,"GPP"], tol=0.001) # we handle light slightly differently. i prefer the sM way
+  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"minimum"], mmb[1,"lik"], tol=0.00001)
+  
+  # PR
+  mms <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=-2, day_end=30), 
+                   data=dat, data_daily=data.frame(date="2012-09-18", K600=35))
+  mmb <- streamMetabolizer:::load_french_creek_std_mle(
+    dat, estimate='PR', K=35, 
+    start=c(dates="09/17/12", times="22:00:00"),
+    end=c(dates="09/19/12", times="06:00:00"))
+  expect_equal(get_fit(mms)[1,"GPP"], mmb[1,"GPP"], tol=0.001) # we handle light slightly differently. i prefer the sM way
+  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"minimum"], mmb[1,"lik"], tol=0.00001)
+  
+})

@@ -28,7 +28,7 @@
 #'   30. For multiple consecutive days, it may make the most sense to start just
 #'   before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
 #'   regression, the date assigned to a chunk of data should be the date whose 
-#'   evening contains the data. The default is therefore 12 to 36 for 
+#'   evening contains the data. The default is therefore 12 to 35 for 
 #'   metab_night, of which the times of darkness will be used.
 #' @param day_end end time (exclusive) of a day's data in number of hours from 
 #'   the midnight that begins the date. For example, day_end=30 indicates that 
@@ -59,6 +59,15 @@ mm_model_by_ply <- function(
   model_fun, data, data_daily=NULL, day_start, day_end, 
   day_tests=c('full_day', 'even_timesteps', 'complete_data'), timestep_days=TRUE, ...
 ) {
+  
+  # avoid some ugly edge cases
+  if(day_end - day_start > 48) stop("day_end - day_start must not be > 48") # would break our odd/even algorithm
+  time_before_date <- 0 - min(0, day_start)
+  time_on_date <- min(24, day_end) - max(0, day_start)
+  time_after_date <- max(24, day_end) - 24
+  if(max(time_before_date, time_after_date) >= time_on_date) {
+    stop("more of [day_start,day_end) must be in [0,24) than in [-24,0) or [24,48)")
+  }
   
   # Identify the data plys that will let us use a user-specified-hr window for 
   # each date (day_start to day_end, which may be != 24). store this labeling in
@@ -98,6 +107,16 @@ mm_model_by_ply <- function(
     data.plys[data.plys$date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
     data.plys[data.plys$date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date
   } 
+  # filter out dates that don't ever appear on their own - this especially weeds
+  # out first and last dates that were probably meant just to be part of the
+  # second or penultimate dates when the date range is >24
+  date.pairings <- setNames(unique(data.plys[, c('odd.date.group','even.date.group')]), c('a','b'))
+  date.pairings <- rbind(date.pairings, setNames(date.pairings, c('b','a')))
+  date.pairings <- date.pairings[!is.na(date.pairings$a),]
+  solo.dates <- date.pairings[is.na(date.pairings$b),'a']
+  tbl.dates <- table(date.pairings$a)
+  double.dates <- names(tbl.dates)[tbl.dates > 1]
+  unique.dates <- unique(c(solo.dates, double.dates))
   
   # Apply model_fun to each ply of the data, using if-else in the lapply loop to
   # cover both the odd and even groupings in date order

@@ -27,13 +27,19 @@ data_metab <- function(
   flaws <- if(missing(flaws)) c() else match.arg(flaws, several.ok=TRUE)
   
   # start with the same data every time
-  french <- streamMetabolizer:::load_french_creek(attach.units=attach.units)
-  orig_times <- french$solar.time # save now for res changes later
+  french <- load_french_creek(attach.units=attach.units)
+  french <- french[order(french$solar.time),]
+  # fill in holes in the part of the data we'll be using
+  french <- french[c(1:6352, rep(6353, 3), 6354:7772, rep(7773, 2), 7774:nrow(french)),] 
+  french[6354:6355,'solar.time'] <- french[6353,'solar.time'] + as.difftime(c(5,10), units='mins')
+  french[7776,'solar.time'] <- french[7775,'solar.time'] + as.difftime(5, units='mins')
+  # save dates vec now to help with res changes later
+  orig_times <- french$solar.time 
   
   # subset by num_days
   date_start <- "2012-09-18"
   date_end <- format(as.Date(date_start) + as.numeric(num_days)-1, "%Y-%m-%d")
-  french <- streamMetabolizer:::mm_filter_dates(french, date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
+  french <- mm_filter_dates(french, date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # add flaws
   day_length <- 24 * 12 # 12 obs/hr (every 5 mins) in raw data

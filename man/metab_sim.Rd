@@ -45,32 +45,29 @@ other values are ignored), or if in \code{data_daily}, this takes the form of
 a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
-# set the date in several formats
-start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="UTC"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="UTC"), units='hours')
+# start with non-DO data (DO used only to pick first DO of each day)
+dat <- data_metab('3', res='15')
+dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
+  GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 
-# get, format, & subset data
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+# define simulation parameters
+mm <- metab_sim(
+  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1),
+  data=dat, data_daily=dat_daily)
+# actual simulation happens during prediction - different each time
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 
-# sim
-mm <- metab_sim(specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07, 
-  day_start=start.numeric, day_end=end.numeric), data=vfrenchshort, data_daily=vdaily)
-get_fit(mm)
-get_data_daily(mm)
-get_fitting_time(mm)
-plot_DO_preds(predict_DO(mm))
-plot_DO_preds(predict_DO(mm))
+# or same each time if seed is set
+mm <- metab_sim(
+  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1, sim.seed=248),
+  data=dat, data_daily=dat_daily)
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+
 \dontrun{
- metab_sim(data=data.frame(empty="shouldbreak"))
+plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm))
 }
 }
 \author{

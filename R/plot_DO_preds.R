@@ -108,9 +108,8 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         preds_xts %>% 
           filter(as==y_var) %>% 
           select(mod,obs,solar.time) %>%
-          #setNames(c(paste0(y_var,' mod'), paste0(y_var,' obs'), 'solar.time')) %>%
-          mutate(solar.time=lubridate::force_tz(solar.time, 'UTC')) %>%
-          xts::xts(x=select(., -solar.time), order.by=.$solar.time) 
+          mutate(solar.time=lubridate::force_tz(solar.time, Sys.getenv("TZ"))) %>% # dygraphs makes some funky tz assumptions. this seems to help.
+          xts::xts(x=select(., -solar.time), order.by=.$solar.time, unique=FALSE, tzone=Sys.getenv("TZ"))
       }
       if(length(y_var) > 1) warning("can only plot one dygraph y_var at a time for now; plotting y_vars in succession")
       sapply(y_var, function(yvar) {

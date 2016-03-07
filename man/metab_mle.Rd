@@ -38,50 +38,16 @@ Uses maximum likelihood to fit a model to estimate GPP and ER from input data
 on DO, temperature, light, etc.
 }
 \examples{
-# set the date in several formats
-start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="UTC"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="UTC"), units='hours')
-
-# get, format, & subset data
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-
-library(dplyr)
-
+dat <- data_metab('3')
 # PRK
-get_fit(mm <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=start.numeric, 
-  day_end=end.numeric), data=vfrenchshort))[2,c("GPP","ER","K600","minimum")]
-plot_DO_preds(predict_DO(mm))
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+mm <- metab_mle(data=dat)
+predict_metab(mm)
 
-# PR
-mm <- mm_name('mle', ode_method='Euler') \%>\% 
-  specs(day_start=start.numeric, day_end=end.numeric) \%>\%
-  metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35))
-get_fit(mm)[2,c("GPP","ER","K600","minimum")]
-get_fitting_time(mm)
-plot_DO_preds(predict_DO(mm))
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
-
+# PR with fixed K on two days
+dat_daily <- data.frame(date=c("2012-09-18","2012-09-20"), K600=35)
+mm <- metab_mle(data=dat, data_daily=dat_daily)
+predict_metab(mm)
 \dontrun{
-metab_mle(data=data.frame(empty="shouldbreak"))
-
-# PRK and PR with process error
-mm <- specs('m_np_pi_pm_km.nlm', day_start=start.numeric, day_end=end.numeric) \%>\%
-  metab_mle(data=vfrenchshort)
-get_fit(mm)[2,c("GPP","ER","K600","minimum")]
-plot_DO_preds(predict_DO(mm))
-
-mm <- metab_mle(specs('m_np_pi_pm_km.nlm', day_start=start.numeric, day_end=end.numeric),
-  data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35))
-get_fit(mm)[2,c("GPP","ER","K600","minimum")]
 plot_DO_preds(predict_DO(mm))
 }
 }

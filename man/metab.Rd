@@ -156,13 +156,23 @@ depend on the model \code{type}, as follows.
 }
 }
 \examples{
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[order(vfrench$solar.time),][1:1000,]
-mm <- metab(specs(mm_name('mle'), day_start=0, day_end=26), data=vfrenchshort, info='french creek')
+dat <- data_metab(num_days='3')
+
+# fit a basic MLE model
+mm <- metab(specs(mm_name('mle')), data=dat, info='my info')
+predict_metab(mm)
+get_info(mm)
+get_fitting_time(mm)
+
+# with chaining & customization
+library(dplyr)
+mm <- mm_name('mle', ode_method='Euler') \%>\%
+  specs(GPP_init=40) \%>\%
+  metab(data=dat)
 predict_metab(mm)
 \dontrun{
-plot_DO_preds(predict_DO(mm, date_end="2012-08-27"))
-plot_DO_preds(predict_DO(mm), y_var='conc', style='dygraphs')
+plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm), y_var='pctsat', style='dygraphs')
 }
 }
 \author{

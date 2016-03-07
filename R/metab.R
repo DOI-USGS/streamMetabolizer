@@ -28,17 +28,32 @@
 #' @template metab_data
 #'   
 #' @examples
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[order(vfrench$solar.time),][1:1000,]
-#' mm <- metab(specs(mm_name('mle'), day_start=0, day_end=26), data=vfrenchshort, info='french creek')
+#' dat <- data_metab(num_days='3')
+#' 
+#' # fit a basic MLE model
+#' mm <- metab(specs(mm_name('mle')), data=dat, info='my info')
+#' predict_metab(mm)
+#' get_info(mm)
+#' get_fitting_time(mm)
+#' 
+#' # with chaining & customization
+#' library(dplyr)
+#' mm <- mm_name('mle', ode_method='Euler') %>%
+#'   specs(GPP_init=40) %>%
+#'   metab(data=dat)
 #' predict_metab(mm)
 #' \dontrun{
-#' plot_DO_preds(predict_DO(mm, date_end="2012-08-27"))
-#' plot_DO_preds(predict_DO(mm), y_var='conc', style='dygraphs')
+#' plot_DO_preds(predict_DO(mm))
+#' plot_DO_preds(predict_DO(mm), y_var='pctsat', style='dygraphs')
 #' }
 #' @export
 metab <- function(specs=specs(mm_name()), data=v(mm_data(NULL)), data_daily=v(mm_data(NULL)), info=NULL) {
   
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name())
+  }
   # determine which model function to call
   model_type <- mm_parse_name(specs$model_name)$type
   metab_fun <- switch(
