@@ -180,8 +180,8 @@ bayes_1ply <- function(
   
   # Return, reporting any results, warnings, and errors
   data.frame(bayes_1day,
-             warnings=paste0(warn_strs, collapse="; "), 
-             errors=paste0(stop_strs, collapse="; "),
+             warnings=paste0(unique(warn_strs), collapse="; "), 
+             errors=paste0(unique(stop_strs), collapse="; "),
              stringsAsFactors=FALSE)
 }
 
@@ -250,8 +250,8 @@ bayes_allply <- function(
   
   # Return, reporting any results, warnings, and errors
   c(bayes_allday,
-    list(warnings=warn_strs,
-         errors=stop_strs))
+    list(warnings=unique(warn_strs),
+         errors=unique(stop_strs)))
 }
 
 

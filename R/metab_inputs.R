@@ -48,7 +48,8 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
       # bind_rows %>%
       # u(c(type=NA, get_units(mm_data(everything())))[names(.)])
   } else if(input == 'info') {
-    "info may be NULL, a list, or any other data you want to attach to the output of metab()"
+    eg <- "info may be NULL, a list, or any other data you want to attach to the output of metab()"
   }
 
+  eg
 }

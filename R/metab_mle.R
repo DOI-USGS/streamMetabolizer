@@ -164,8 +164,8 @@ mle_1ply <- function(
       GPP.sd=NA, ER.sd=NA, K600.sd=NA,
       GPP.grad=NA, ER.grad=NA, K600.grad=NA,
       minimum=NA, code=NA, iterations=NA, 
-      warnings=paste0(warn_strs, collapse="; "), 
-      errors=paste0(stop_strs, collapse="; "),
+      warnings=paste0(unique(warn_strs), collapse="; "), 
+      errors=paste0(unique(stop_strs), collapse="; "),
       stringsAsFactors=FALSE)
   } else {
     data.frame(
@@ -173,8 +173,8 @@ mle_1ply <- function(
       GPP.sd=mle.1d$sd[1], ER.sd=mle.1d$sd[2], K600.sd=if(is.null(K600)) mle.1d$sd[3] else NA,
       GPP.grad=mle.1d$gradient[1], ER.grad=mle.1d$gradient[2], K600.grad=if(is.null(K600)) mle.1d$gradient[3] else NA,
       minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
-      warnings=paste0(warn_strs, collapse="; "), 
-      errors=paste0(stop_strs, collapse="; "),
+      warnings=paste0(unique(warn_strs), collapse="; "), 
+      errors=paste0(unique(stop_strs), collapse="; "),
       stringsAsFactors=FALSE)
   }
 }

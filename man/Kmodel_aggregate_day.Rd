@@ -15,7 +15,7 @@ been specified by day_start and day_end and may not be exactly 24 hours)}
 \item{ply_validity}{the output of \code{mm_is_valid_day} as applied to this 
 data_ply for those tests specified in \code{day_tests}. Those tests will 
 have been run before this function is called. The result is TRUE if the ply
-is entirely valid, or a character vector containing one or more error
+is entirely valid, or a character vector containing one or more error 
 messages if any tests failed.}
 
 \item{...}{other args that were passed untouched from the function calling 

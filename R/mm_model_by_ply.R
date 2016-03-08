@@ -28,7 +28,7 @@
 #'   30. For multiple consecutive days, it may make the most sense to start just
 #'   before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
 #'   regression, the date assigned to a chunk of data should be the date whose 
-#'   evening contains the data. The default is therefore 12 to 35 for 
+#'   evening contains the data. The default is therefore 12 to 36 for 
 #'   metab_night, of which the times of darkness will be used.
 #' @param day_end end time (exclusive) of a day's data in number of hours from 
 #'   the midnight that begins the date. For example, day_end=30 indicates that 
@@ -47,13 +47,10 @@
 #' @return a data.frame of model results
 #' @import dplyr
 #' @examples
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+#' dat <- data_metab('10')
 #' \dontrun{
-#' outs <- mm_model_by_ply(mm_model_by_ply_prototype, data=vfrench, 
-#'   day_start=2, day_end=28) # breaks bc french data are out of order
+#' mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
 #' }
-#' outs <- suppressMessages(mm_model_by_ply(mm_model_by_ply_prototype, 
-#'   data=vfrench[order(vfrench$solar.time),], day_start=2, day_end=28))
 #' @export
 mm_model_by_ply <- function(
   model_fun, data, data_daily=NULL, day_start, day_end, 
@@ -61,13 +58,11 @@ mm_model_by_ply <- function(
 ) {
   
   # avoid some ugly edge cases
+  if(missing(day_start) || is.null(day_start)) stop('day_start must be specified')
+  if(missing(day_end) || is.null(day_end)) stop('day_end must be specified')
   if(day_end - day_start > 48) stop("day_end - day_start must not be > 48") # would break our odd/even algorithm
-  time_before_date <- 0 - min(0, day_start)
-  time_on_date <- min(24, day_end) - max(0, day_start)
-  time_after_date <- max(24, day_end) - 24
-  if(max(time_before_date, time_after_date) >= time_on_date) {
-    stop("more of [day_start,day_end) must be in [0,24) than in [-24,0) or [24,48)")
-  }
+  if(-24 >= day_start || day_start >= 24) stop("day_start must be in (-24,24)")
+  if(0 >= day_end || day_end >= 48) stop("day_end must be in (0,48)")
   
   # Identify the data plys that will let us use a user-specified-hr window for 
   # each date (day_start to day_end, which may be != 24). store this labeling in
@@ -84,7 +79,7 @@ mm_model_by_ply <- function(
   data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
   
-  unique.dates <- unique(as.character(data.plys$date))
+  unique.dates <- unique(data.plys$date) #all_possible_dates(data.plys$solar.time, day_start, day_end)
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
   
@@ -129,6 +124,7 @@ mm_model_by_ply <- function(
     }
     data_ply <- data.plys[ply,!(names(data.plys) %in% c('date','hour','odd.date.group','even.date.group'))]
     data_daily_ply <- if(!is.null(data_daily)) data_daily[data_daily$date == dt,] else NULL
+    ply_date <- as.Date(dt, tz=tz(dt))
     
     # compute timestep and run validity checks if requested. if timestep_days is
     # FALSE or NA, it will be passed as NA to the model_fun and only computed
@@ -140,17 +136,19 @@ mm_model_by_ply <- function(
       NA
     } else timestep_days
     ply_validity <- if(length(day_tests) > 0) {
-      mm_is_valid_day(data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, timestep_days=timestep_days)
+      mm_is_valid_day(
+        data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+        ply_date=ply_date, timestep_days=timestep_days)
     } else NA
     
     # run the user's model_fun
     out <- model_fun(
       data_ply=data_ply, data_daily_ply=data_daily_ply,
-      day_start=day_start, day_end=day_end, ply_date=as.Date(dt, tz=tz(dt)),
+      day_start=day_start, day_end=day_end, ply_date=ply_date,
       ply_validity=ply_validity, timestep_days=timestep_days, 
       ...)
     # attach a date column if anything was returned
-    if(is.null(out) || nrow(out)==0) NULL else data.frame(date=as.Date(dt, tz=tz(dt)), out)
+    if(is.null(out) || nrow(out)==0) NULL else data.frame(date=ply_date, out)
   })
   # combine the 1-row dfs, making sure to start with a 0-row df that represents 
   # the dfs with the most columns to keep the column ordering consistent across 
@@ -164,4 +162,44 @@ mm_model_by_ply <- function(
     out_example <- out_list[[example_choice]][FALSE,]
     bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
   }
+}
+
+all_possible_dates <- function(solar.times, day_start, day_end) {
+  # get all dates that possibly apply to these data.plys
+  years <- as.numeric(format(solar.times, "%Y"))
+  doyhrs <- convert_date_to_doyhr(solar.times)
+  
+  # join then split doyhrs and years in order to find the unique values
+  year.doys <- unique(do.call(c, mapply(function(y,d) {
+    y + ( # years in 1000s to 1s place
+      seq( # seq to catch any intermediate days if earliest & latest days are more than 1 day apart
+        floor(d - day_start/24), # latest day this moment could refer to
+        ceiling(d - day_end/24)) # earliest day this moment could refer to
+      + 500)/1000 # doys in 10ths to 1000ths place, packaged so they're always between 0.0 and 0.999
+  }, y=years, d=doyhrs, SIMPLIFY=FALSE)))
+  years <- floor(year.doys)
+  doys <- round((year.doys %% 1) * 1000) - 500
+  
+  # modify yearDays from Hmisc
+  yearDays <- function(year) {
+    time <- as.POSIXlt(paste0(round(year), "-07-01"), format="%Y-%m-%d")
+    time$mon[] <- time$mday[] <- time$sec[] <- time$min <- time$hour <- 0
+    time$year <- time$year + 1
+    return(as.POSIXlt(as.POSIXct(time))$yday + 1)
+  }
+  
+  # adjust if we've crossed a threshold between years
+  if(any(doys <= 0)) {
+    prevyear <- which(doys <= 0)
+    years[prevyear] <- years[prevyear] - 1
+    doys[prevyear] <- yearDays(years[prevyear]) + doys[prevyear] # do after adjusting years
+  }
+  if(any(doys > yearDays(years))) {
+    nextyear <- which(doys > yearDays(years))
+    doys[nextyear] <- doys[nextyear] - yearDays(years[nextyear])
+    years[nextyear] <- years[nextyear] + 1 # do after adjusting doys
+  }
+  
+  # return the formatted (character) dates
+  format(sort(convert_doyhr_to_date(doys, years)), "%Y-%m-%d")
 }

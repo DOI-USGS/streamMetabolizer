@@ -6,7 +6,8 @@
 \usage{
 mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
   day_tests = c("full_day", "even_timesteps", "complete_data"),
-  timestep_days = NA)
+  ply_date = as.Date(format(data_ply[nrow(data_ply)/2, "solar.time"],
+  "\%Y-\%m-\%d")), timestep_days = NA)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -24,12 +25,14 @@ the midnight that begins the date. For example, day_end=30 indicates that
 data describing 2006-06-26 end at the last observation time that occurs 
 before 2006-06-27 06:00.}
 
-\item{day_tests}{list of tests to conduct to determine whether each date worth of
-data is valid for modeling}
+\item{day_tests}{list of tests to conduct to determine whether each date
+worth of data is valid for modeling}
+
+\item{ply_date}{the Date this data_ply is intended to match. May be NA}
 
 \item{timestep_days}{the expected timestep length in fraction of a day; for 
 example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
-the function if timestep_days is NA. May be supplied as an argument to (1)
+the function if timestep_days is NA. May be supplied as an argument to (1) 
 pre-calculate the value for efficiency, or (2) require a specific timestep.}
 }
 \value{

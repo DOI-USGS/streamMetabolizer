@@ -1,17 +1,17 @@
 context("metab_model class and inheriting classes")
 
-
 test_that("metab_model objects can be created and accessed", {
   
   # basic structure of metab_model parent class
   mm <- metab_model()
-  expect_output(slot(mm, "fit"), "generic")
-  expect_is(slot(mm, "specs"), "list")
-  expect_is(slot(mm, "data"), "data.frame")
-  expect_is(slot(mm, "pkg_version"), "character")
+  expect_output(slot(mm, "fit"), "generic metab_model class; no actual fit")
+  expect_true(all(names(formals(metab)) %in% names(getSlots('metab_model'))), info="slots should match args to metab()")
+  expect_is(slot(mm, "fitting_time"), "proc_time", info="time should be recorded")
+  expect_is(slot(mm, "data"), "data.frame", info="default should populate with example data")
+  expect_is(slot(mm, "pkg_version"), "character", info="pkg version should be autopopulated")
 
   # display
-  expect_output(mm, "metab_model")
+  expect_output(mm, "metab_model", info="model type should be shown")
   
   # accessors
   expect_equal(slot(mm, "fit"), get_fit(mm))
@@ -19,22 +19,6 @@ test_that("metab_model objects can be created and accessed", {
   expect_equal(slot(mm, "data"), get_data(mm))
   expect_equal(slot(mm, "pkg_version"), get_version(mm))
   expect_equal(slot(mm, "info"), get_info(mm))
-})
-
-
-test_that("metab_models can be saved", {
-  
-  # save and reload
-  mm <- metab_model()
-  mm@fit
-  save(mm, file="test_temp.RData")
-  mm_orig <- mm
-  load("test_temp.RData")
-  file.remove("test_temp.RData")
-  expect_equal(mm_orig, mm)
-  expect_equal(get_fit(mm_orig), get_fit(mm))
-  expect_equal(get_data(mm_orig), get_data(mm))
-  
 })
 
 test_that("metab_models have default predict_metab and predict_DO methods", {
@@ -45,8 +29,22 @@ test_that("metab_models have default predict_metab and predict_DO methods", {
   expect_warning(metab <- predict_metab(mm), "model is missing columns")
   expect_equal(names(metab), c("date","GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper"))
   
-  # predict_DO
-  expect_warning(DO_preds <- predict_DO(mm), "model is missing columns")
-  expect_equal(names(DO_preds), c("date", names(get_data(mm)), "DO.mod"))
+  # can't predict_DO
+  expect_warning(expect_error(DO_preds <- predict_DO(mm), "day_start must be specified"), "missing columns for estimates")
 
+})
+
+test_that("metab_models can be saved & reloaded (see helper-save_load.R)", {
+  
+  # save and reload
+  mm <- metab_model()
+  
+  # see if saveRDS with gzfile, compression=9 works well
+  rdstimes <- save_load_timing(mm, reps=1) # autoloaded b/c script begins with 'helper' and is in this directory
+  expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
+  # plot_save_load_timing(rdstimes)
+  
+  # save and load the mm, make sure it stays the same
+  test_save_load_recovery(mm)
+  
 })

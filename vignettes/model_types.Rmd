@@ -15,11 +15,11 @@ vignette: >
 suppressPackageStartupMessages(library(streamMetabolizer))
 ```
 
-## Model Types
+## Model Arguments
 
-streamMetabolizer provides many options for customizing your metabolism model. At a very high level, these are grouped by their fitting method. Each fitting method has its own fitting function; see the `metab_fun` column of `metab_funs()` for a complete list.
-```{r}
-metab_funs()
+streamMetabolizer provides many options for customizing your metabolism model. At a very high level, these are grouped by their fitting method. You can choose from 'bayes', 'mle', or 'night'. All of these are fit with the same high-level function, `metab`.
+```{r, eval=FALSE}
+?streamMetabolizer::metab
 ```
 It is most common to use `metab_bayes` or `metab_mle`.
 

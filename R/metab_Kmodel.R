@@ -221,7 +221,7 @@ Kmodel_aggregate_day <- function(
   
   # Return, reporting any results, warnings, and errors
   data.frame(cmeans_1day,
-             errors.agg=paste0(stop_strs, collapse="; "),
+             errors.agg=paste0(unique(stop_strs), collapse="; "),
              stringsAsFactors=FALSE)
 }
 
@@ -383,7 +383,7 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
         ER_daily_2.5pct = NA,
         ER_daily_97.5pct = NA)
   }
-  metab_model@fit <- data_daily # temporary for converting lower/upper/sd to standard colnames
+  metab_model@fit <- mutate(data_daily, warnings='', errors='') # temporary for converting lower/upper/sd to standard colnames
   NextMethod()
 }
 

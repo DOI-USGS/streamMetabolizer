@@ -105,6 +105,7 @@ setClass(
 #' @inheritParams predict_metab
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
+#' @import dplyr
 #' @export
 #' @family predict_metab
 predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
@@ -114,8 +115,8 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
   fit <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
   vars <- c("date","DO.mod.1","GPP","ER","K600")
-  fit[vars[vars %in% names(fit)]]
-  
+  fit[vars[vars %in% names(fit)]] %>%
+    mutate(warnings=as.character(NA), errors=as.character(NA))
 }
 
 
@@ -123,7 +124,7 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
 #' 
 #' Generate simulated values for DO.obs (including any error specified in the 
 #' call to \code{metab_sim()}) and DO.mod (with no error, just the predictions 
-#' from the specified GPP, ER, and K600). The errors are randomly generated on
+#' from the specified GPP, ER, and K600). The errors are randomly generated on 
 #' every new call to predict_DO.
 #' 
 #' @inheritParams predict_DO

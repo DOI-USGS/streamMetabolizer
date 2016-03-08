@@ -33,7 +33,7 @@ evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
 before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
 regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 35 for 
+evening contains the data. The default is therefore 12 to 36 for 
 metab_night, of which the times of darkness will be used.}
 
 \item{day_end}{end time (exclusive) of a day's data in number of hours from 
@@ -66,12 +66,9 @@ modified to include the data as a first column, then row-bound together into
 a single data.frame containing results from all days.
 }
 \examples{
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
+dat <- data_metab('10')
 \dontrun{
-outs <- mm_model_by_ply(mm_model_by_ply_prototype, data=vfrench, 
-  day_start=2, day_end=28) # breaks bc french data are out of order
+mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
 }
-outs <- suppressMessages(mm_model_by_ply(mm_model_by_ply_prototype, 
-  data=vfrench[order(vfrench$solar.time),], day_start=2, day_end=28))
 }
 

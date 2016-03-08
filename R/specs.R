@@ -410,7 +410,10 @@ specs <- function(
         all_specs$day_start <- 12
       }
       if('day_end' %in% yes_missing) {
-        all_specs$day_end <- 35
+        all_specs$day_end <- 36
+      }
+      if('day_tests' %in% yes_missing) {
+        all_specs$day_tests <- c(day_tests, 'include_sunset')
       }
       
     }, 

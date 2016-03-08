@@ -106,29 +106,36 @@ nightreg_1ply <- function(
       which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
       if(length(which_night) == 0) stop("no nighttime rows in data_ply")
       if(any(diff(which_night) > 1)) 
-        stop_strs <<- c(stop_strs, "need exactly one night per data_ply")
+        stop_strs <- c(stop_strs, "need exactly one night per data_ply")
       night_dat <- data_ply[which_night,]
       
       # check for data validity here, after subsetting to the time window we 
-      # really care about. also do the full_day test differently, because here 
-      # it's not about specific times but about whether night begins and ends 
-      # within the ply bounds
-      if('full_day' %in% night_tests) {
-        which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
-        if(which_twilight[1] < 1)
-          stop_strs <<- c(stop_strs, "data don't start before day-night transition")
-        if(which_twilight[2] > nrow(data_ply))
-          stop_strs <<- c(stop_strs, "data don't end after night-day transition")
-        night_tests <- night_tests[night_tests != 'full_day']
+      # really care about
+      which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
+      has_sunset <- which_twilight[1] >= 1
+      has_sunrise <- which_twilight[2] <= nrow(data_ply)
+      if('include_sunset' %in% night_tests) {
+        if(!has_sunset)
+          stop_strs <- c(stop_strs, "data don't include day-night transition")
+        night_tests <- night_tests[night_tests != 'include_sunset']
       }
+      # for the full_day test, let the twilight hours define a narrower required
+      # window than day_start, day_end did (if the twilight hours can be
+      # determined from the data_ply)
+      date_start <- as.POSIXct(paste0(as.character(ply_date), " 00:00:00"), tz=lubridate::tz(v(data_ply$solar.time)))
+      night_hours <- as.numeric(data_ply[which_twilight+c(1,-1),'solar.time'] - date_start, units='hours')
+      night_start <- if(has_sunset) max(day_start, night_hours[1]) else day_start
+      night_end <- if(has_sunrise) min(day_end, night_hours[2]) else day_end
+      # run the validity tests (except include_sunset, handled above)
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
-        day_start=day_start, day_end=day_end, day_tests=night_tests) # args passed from metab_night (after modifying the tests)
-      if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
+        day_start=night_start, day_end=night_end, day_tests=night_tests,
+        ply_date=ply_date) # args passed from metab_night (after modifying the tests)
+      if(!isTRUE(validity)) stop_strs <- c(stop_strs, validity)
       
       # actually stop if anything has broken so far; the tryCatch will catch it,
       # and our stop_strs will be retained for later reporting
-      if(length(stop_strs) > 0) stop("invalid data ply")
+      if(length(stop_strs) > 0) stop("")
       
       # smooth DO data
       night_dat$DO.obs.smooth <- u(c(stats::filter(night_dat$DO.obs, rep(1/3, 3), sides=2)), get_units(night_dat$DO.obs))
@@ -181,7 +188,7 @@ nightreg_1ply <- function(
       
     }, error=function(err) {
       # on error: give up, remembering error
-      stop_strs <<- c(stop_strs, err$message)
+      if(nchar(err$message) > 0) stop_strs <<- c(stop_strs, err$message)
       NA
     }), warning=function(war) {
       # on warning: record the warning and run again
@@ -201,8 +208,8 @@ nightreg_1ply <- function(
              K600=night.1d$K600, K600.sd=night.1d$K600.sd,
              r.squared=night.1d$rsq, p.value=night.1d$p,
              row.first=night.1d$row.first, row.last=night.1d$row.last,
-             warnings=paste0(warn_strs, collapse="; "), 
-             errors=paste0(stop_strs, collapse="; "),
+             warnings=paste0(unique(warn_strs), collapse="; "), 
+             errors=paste0(unique(stop_strs), collapse="; "),
              stringsAsFactors=FALSE)
 }
 

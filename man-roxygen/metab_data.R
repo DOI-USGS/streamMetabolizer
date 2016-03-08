@@ -6,14 +6,9 @@
 #' 
 #' \describe{
 #'   \item{\code{mle}, \code{bayes}, or \code{night}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       solar.time        \tab POSIXct,POSIXt  \tab NA              \tab required      \cr
-#'       DO.obs            \tab numeric         \tab mgO2 L^-1       \tab required      \cr
-#'       DO.sat            \tab numeric         \tab mgO2 L^-1       \tab required      \cr
-#'       depth             \tab numeric         \tab m               \tab required      \cr
-#'       temp.water        \tab numeric         \tab degC            \tab required      \cr
-#'       light             \tab numeric         \tab umol m^-2 s^-1  \tab required      
+#'     \tabular{lrrrrr}{
+#'       \strong{solar.time} \tab \strong{DO.obs} \tab \strong{DO.sat} \tab \strong{depth} \tab \strong{temp.water} \tab \strong{light}\cr
+#'       2050-03-14 15:10:00  \tab 10.1             \tab 14.2             \tab 0.5             \tab 21.8                 \tab 300.9          
 #'     }
 #'     
 #'     \strong{Example}:
@@ -23,11 +18,9 @@
 #'     }
 #'   }
 #'   \item{\code{Kmodel}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       solar.time        \tab POSIXct,POSIXt  \tab NA              \tab optional      \cr
-#'       discharge         \tab numeric         \tab m^3 s^-1        \tab optional      \cr
-#'       velocity          \tab numeric         \tab m s^-1          \tab optional      
+#'     \tabular{lrr}{
+#'       \strong{solar.time} \tab \strong{discharge} \tab \strong{velocity}\cr
+#'       2050-03-14 15:10:00  \tab 9                   \tab 2                 
 #'     }
 #'     
 #'     \strong{Example}:
@@ -37,14 +30,9 @@
 #'     }
 #'   }
 #'   \item{\code{sim}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       solar.time        \tab POSIXct,POSIXt  \tab NA              \tab required      \cr
-#'       DO.obs            \tab numeric         \tab mgO2 L^-1       \tab optional      \cr
-#'       DO.sat            \tab numeric         \tab mgO2 L^-1       \tab required      \cr
-#'       depth             \tab numeric         \tab m               \tab required      \cr
-#'       temp.water        \tab numeric         \tab degC            \tab required      \cr
-#'       light             \tab numeric         \tab umol m^-2 s^-1  \tab required      
+#'     \tabular{lrrrrr}{
+#'       \strong{solar.time} \tab \strong{DO.obs} \tab \strong{DO.sat} \tab \strong{depth} \tab \strong{temp.water} \tab \strong{light}\cr
+#'       2050-03-14 15:10:00  \tab 10.1             \tab 14.2             \tab 0.5             \tab 21.8                 \tab 300.9          
 #'     }
 #'     
 #'     \strong{Example}:
@@ -62,13 +50,12 @@
 #' 
 #' \describe{
 #'   \item{\code{bayes} or \code{night}}{
-#'     \code{NULL}
+#'     \code{NULL}
 #'   }
 #'   \item{\code{mle}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       date              \tab Date            \tab NA              \tab optional      \cr
-#'       K600              \tab numeric         \tab d^-1            \tab optional      
+#'     \tabular{lr}{
+#'       \strong{date} \tab \strong{K600}\cr
+#'       2050-03-14     \tab 5             
 #'     }
 #'     
 #'     \strong{Example}:
@@ -78,14 +65,9 @@
 #'     }
 #'   }
 #'   \item{\code{Kmodel}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       date              \tab Date            \tab NA              \tab required      \cr
-#'       K600              \tab numeric         \tab d^-1            \tab required      \cr
-#'       K600.lower        \tab numeric         \tab d^-1            \tab optional      \cr
-#'       K600.upper        \tab numeric         \tab d^-1            \tab optional      \cr
-#'       discharge.daily   \tab numeric         \tab m^3 s^-1        \tab optional      \cr
-#'       velocity.daily    \tab numeric         \tab m s^-1          \tab optional      
+#'     \tabular{lrrrrr}{
+#'       \strong{date} \tab \strong{K600} \tab \strong{K600.lower} \tab \strong{K600.upper} \tab \strong{discharge.daily} \tab \strong{velocity.daily}\cr
+#'       2050-03-14     \tab 5              \tab 4.5                  \tab 5.6                  \tab 9                         \tab 2                       
 #'     }
 #'     
 #'     \strong{Example}:
@@ -95,13 +77,9 @@
 #'     }
 #'   }
 #'   \item{\code{sim}}{
-#'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       date              \tab Date            \tab NA              \tab required      \cr
-#'       DO.mod.1          \tab numeric         \tab mgO2 L^-1       \tab optional      \cr
-#'       GPP               \tab numeric         \tab gO2 d^-1 m^-2   \tab required      \cr
-#'       ER                \tab numeric         \tab gO2 d^-1 m^-2   \tab required      \cr
-#'       K600              \tab numeric         \tab d^-1            \tab required      
+#'     \tabular{lrrrr}{
+#'       \strong{date} \tab \strong{DO.mod.1} \tab \strong{GPP} \tab \strong{ER} \tab \strong{K600}\cr
+#'       2050-03-14     \tab 7.5                \tab 5             \tab 5            \tab 5             
 #'     }
 #'     
 #'     \strong{Example}:

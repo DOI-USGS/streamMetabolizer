@@ -222,6 +222,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
   
   fit <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
+  
   var_vec <- c('GPP','ER','K600')
   precalc_cis <- grep("^(GPP|ER|K600)_daily_(50pct|2\\.5pct|97\\.5pct)$", names(fit), value=TRUE)
   calcnow_cis <- grep("^(GPP|ER|K600)(\\.sd)*$", names(fit), value=TRUE)
@@ -233,8 +234,8 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       vars=var_vec) %>%
       with(paste0("^(",vars,")_daily_(",medlohi,")$"))
     precalc_cis <- sapply(grepstrs, grep, names(fit), value=TRUE, USE.NAMES=FALSE)
-    fit[c('date', precalc_cis)] %>% 
-      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3))))
+    fit[c('date', precalc_cis, 'warnings', 'errors')] %>% 
+      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3)), 'warnings', 'errors'))
 
   } else if(length(calcnow_cis) == 6) {
     # the fit includes columns for GPP, GPP.sd, ER, ER.sd, K600, and K600.sd; calculate CIs
@@ -250,7 +251,8 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
           lower = est - crit * sd,
           upper = est + crit * sd) %>% 
           setNames(c(var, paste0(var, ".", c("lower","upper"))))
-      })) %>%
+      }),
+      list(fit[c('warnings','errors')])) %>%
       bind_cols() %>%
       as.data.frame()
     
