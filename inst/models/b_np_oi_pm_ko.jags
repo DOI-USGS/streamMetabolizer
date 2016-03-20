@@ -7,6 +7,8 @@ data {
     coef_ER[1:d,i]   <- (frac_ER[1:d,i] + frac_ER[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
     coef_K600_full[1:d,i] <- (KO2_conv[1:d,i] + KO2_conv[1:d,i+1])/2.0 * (frac_D[1:d,i] + frac_D[1:d,i+1])/2.0 *
       (DO_sat[1:d,i] + DO_sat[1:d,i+1] - DO_obs[1:d,i] - DO_obs[1:d,i+1])/2.0
+    # dDO observations
+    dDO_obs[1:d,i] <- DO_obs[1:d,i+1] - DO_obs[1:d,i]
   }
 }
 

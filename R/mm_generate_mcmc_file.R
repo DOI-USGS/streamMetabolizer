@@ -165,7 +165,7 @@ mm_generate_mcmc_file <- function(
           DO_obs = 'vector[d] coef_K600_full[n-1];'
         ),
         if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
-        if(!DO_model) 'vector[d] dDO_obs[n-1];')
+        if(dDO_model) 'vector[d] dDO_obs[n-1];')
     ),
     
     indent(
@@ -204,7 +204,7 @@ mm_generate_mcmc_file <- function(
         ),
         
         # dDO pre-calculations
-        if(!DO_model) c(
+        if(dDO_model) c(
           comment('dDO observations'),
           s('dDO_obs', N('i'), ' <- DO_obs', N('i+1'), ' - DO_obs', N('i'), '')
         )
@@ -299,7 +299,7 @@ mm_generate_mcmc_file <- function(
         indent(
           p('dDO_mod', N('i'), ' <- '),
           indent(
-            if(err_proc_acor) p('err_proc_acor +'),
+            if(err_proc_acor) p('err_proc_acor', N('i'), ' +'),
             p('GPP_daily  ', e('*'), ' coef_GPP', N('i'), ' +'),
             p('ER_daily   ', e('*'), ' coef_ER', N('i'), ' +'),
             s('K600_daily ', e('*'), ' coef_K600_full', N('i'), '')

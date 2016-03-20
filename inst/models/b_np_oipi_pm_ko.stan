@@ -36,6 +36,7 @@ transformed data {
   vector[d] coef_GPP[n-1];
   vector[d] coef_ER[n-1];
   vector[d] coef_K600_full[n-1];
+  vector[d] dDO_obs[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
@@ -43,6 +44,8 @@ transformed data {
     coef_ER[i]   <- (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
     coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*
       (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0;
+    // dDO observations
+    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
   }
 }
 

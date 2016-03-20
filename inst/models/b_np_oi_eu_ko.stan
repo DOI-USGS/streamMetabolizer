@@ -34,6 +34,7 @@ transformed data {
   vector[d] coef_GPP[n-1];
   vector[d] coef_ER[n-1];
   vector[d] coef_K600_full[n-1];
+  vector[d] dDO_obs[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
@@ -41,6 +42,8 @@ transformed data {
     coef_ER[i]   <- frac_ER[i] ./ depth[i];
     coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .*
       (DO_sat[i] - DO_obs[i]);
+    // dDO observations
+    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
   }
 }
 

@@ -81,7 +81,7 @@ transformed parameters {
   // dDO model
   for(i in 1:(n-1)) {
     dDO_mod[i] <- 
-      err_proc_acor +
+      err_proc_acor[i] +
       GPP_daily  .* coef_GPP[i] +
       ER_daily   .* coef_ER[i] +
       K600_daily .* coef_K600_full[i];

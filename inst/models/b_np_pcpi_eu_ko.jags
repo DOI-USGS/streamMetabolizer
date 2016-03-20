@@ -27,7 +27,7 @@ model {
   # dDO model
   for(i in 1:(n-1)) {
     dDO_mod[1:d,i] <- 
-      err_proc_acor +
+      err_proc_acor[1:d,i] +
       GPP_daily  * coef_GPP[1:d,i] +
       ER_daily   * coef_ER[1:d,i] +
       K600_daily * coef_K600_full[1:d,i]
