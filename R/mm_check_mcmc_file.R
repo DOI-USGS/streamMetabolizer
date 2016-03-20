@@ -14,7 +14,7 @@ mm_check_mcmc_file <- function(model_file) {
       }
       tryCatch({
         warning("this may be an insufficient syntax check for JAGS")
-        read.jagsfile(model_file)
+        runjags::read.jagsfile(model_file)
         return("correct")
       }, error=function(e) {
         e$message
