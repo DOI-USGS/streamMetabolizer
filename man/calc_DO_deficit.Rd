@@ -7,7 +7,7 @@
 calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0, ...)
 }
 \arguments{
-\item{DO.obs}{a numeric vector of dissolved oxygen concentration observations, mg L^-1, 
+\item{DO.obs}{a numeric vector of dissolved oxygen concentration observations, mgO2 L^-1, 
 or a \linkS4class{unitted} object of dissolved oxygen concentrations.}
 
 \item{temp.water}{a numeric vector of water temperature in degrees Celsius, 
@@ -36,7 +36,7 @@ salinity.water = 2.43
 DO.deficit <- calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water)
 
 library(unitted)
-DO.obs = u(c(7,7.5,7),'mg L^-1')
+DO.obs = u(c(7,7.5,7),'mgO2 L^-1')
 temp.water = u(c(25,24.5,18.9), 'degC')
 pressure.air = u(c(900,903,910), 'mb')
 salinity.water = u(2.43, 'PSU')

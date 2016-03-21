@@ -42,10 +42,12 @@ metab_mle <- function(
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
+    data <- v(dat_list[['data']])
+    data_daily <- v(dat_list[['data_daily']])
     
     # model the data, splitting into overlapping 31.5-hr 'plys' for each date
     mle_all <- mm_model_by_ply(
-      mle_1ply, data=dat_list[['data']], data_daily=dat_list[['data_daily']], # for mm_model_by_ply
+      mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
       day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
       specs=specs) # for mle_1ply and negloglik_1ply
   })
@@ -57,7 +59,7 @@ metab_mle <- function(
     fit=mle_all,
     fitting_time=fitting_time,
     specs=specs,
-    data=dat_list[['data']],
+    data=dat_list[['data']], # keep the units if given
     data_daily=dat_list[['data_daily']])
   
   # Update data with DO predictions

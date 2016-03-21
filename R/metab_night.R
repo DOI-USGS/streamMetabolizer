@@ -38,8 +38,8 @@ metab_night <- function(
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_night")
-    data <- dat_list[['data']]
-    data_daily <- dat_list[['data_daily']]
+    data <- v(dat_list[['data']])
+    data_daily <- v(dat_list[['data_daily']])
     
     # model the data, splitting into potentially overlapping 'plys' for each date
     night_all <- mm_model_by_ply(
@@ -56,8 +56,8 @@ metab_night <- function(
     fit=night_all,
     fitting_time=fitting_time,
     specs=specs,
-    data=data,
-    data_daily=data_daily)
+    data=dat_list[['data']], # keep the units if given
+    data_daily=dat_list[['data_daily']])
   
   # Update data with DO predictions
   mm@data <- predict_DO(mm)

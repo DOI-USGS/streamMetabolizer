@@ -41,7 +41,7 @@ calc_DO_at_sat <- function(temp.water, pressure.air, salinity.water = u(0,'PSU')
   o2.at.sat <- LakeMetabolizer::o2.at.sat.base(temp = temp.water, baro = pressure.air, salinity = salinity.water, model = model, ...)
   
   if (with.units) {
-    return(u(o2.at.sat, 'mg L^-1'))
+    return(u(o2.at.sat, 'mgO2 L^-1'))
   } else {
     return(o2.at.sat)
   }

@@ -12,6 +12,7 @@
 #'   empty (\code{c()}) for no flaws. default is no flaws.
 #' @inheritParams mm_model_by_ply
 #' @inheritParams load_french_creek
+#' @importFrom unitted u v get_units
 #' @examples 
 #' data_metab()
 #' @export
@@ -28,6 +29,11 @@ data_metab <- function(
   
   # start with the same data every time
   french <- load_french_creek(attach.units=attach.units)
+  # take off units temporarily to make it easier to manipulate datetimes
+  if(attach.units) {
+    french_units <- get_units(french)
+    french <- v(french)
+  }
   french <- french[order(french$solar.time),]
   # fill in holes in the part of the data we'll be using
   french <- french[c(1:6352, rep(6353, 3), 6354:7772, rep(7773, 2), 7774:nrow(french)),] 
@@ -100,6 +106,11 @@ data_metab <- function(
   # subset by resolution (yes, before flaws=duplicated)
   sub_times <- orig_times[seq(1, length(orig_times), by=res/5)]
   french <- french[french$solar.time %in% sub_times, ]
+
+  # add back units if requested
+  if(attach.units) {
+    french <- u(french, french_units)
+  }
   
   # return
   french

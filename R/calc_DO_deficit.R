@@ -1,6 +1,6 @@
 #'@title calculate a vector of dissolved oxygen deficit
 #'@description Creates a DO.deficit vector for input into various metabolism models (see...)
-#'@param DO.obs a numeric vector of dissolved oxygen concentration observations, mg L^-1, 
+#'@param DO.obs a numeric vector of dissolved oxygen concentration observations, mgO2 L^-1, 
 #'or a \linkS4class{unitted} object of dissolved oxygen concentrations.
 #'@param temp.water a numeric vector of water temperature in degrees Celsius, 
 #'or a \linkS4class{unitted} object of water temperatures.
@@ -19,7 +19,7 @@
 #'DO.deficit <- calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water)
 #'
 #'library(unitted)
-#'DO.obs = u(c(7,7.5,7),'mg L^-1')
+#'DO.obs = u(c(7,7.5,7),'mgO2 L^-1')
 #'temp.water = u(c(25,24.5,18.9), 'degC')
 #'pressure.air = u(c(900,903,910), 'mb')
 #'salinity.water = u(2.43, 'PSU')
@@ -29,7 +29,7 @@ calc_DO_deficit <- function(DO.obs, temp.water, pressure.air, salinity.water = 0
   
   DO.equil <- calc_DO_at_sat(temp.water, pressure.air, salinity.water, ...)
   
-  # to do: verify incoming units (convert if needed?) and set DO.equil units to mg L^-1
+  # to do: verify incoming units (convert if needed?) and set DO.equil units to mgO2 L^-1
   DO.deficit <- DO.equil-DO.obs
   
   return(DO.deficit)
