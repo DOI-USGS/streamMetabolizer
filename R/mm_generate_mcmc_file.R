@@ -11,12 +11,14 @@ mm_generate_mcmc_file <- function(
   ode_method=c('pairmeans','Euler'),
   deficit_src=c('DO_mod','DO_obs'),
   engine=c('stan','jags')) {
-
+  
   # name the model. much argument checking happens here, even with
   # check_validity=FALSE (which is needed to avoid circularity)
   model_name <- mm_name(
-    type='bayes', engine=engine, ode_method=ode_method, deficit_src=deficit_src, 
-    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, pool_K600=pool_K600,
+    type='bayes',
+    pool_K600=pool_K600,
+    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid,
+    ode_method=ode_method, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   
   # define rules for when to model as process, obs, or both
@@ -41,6 +43,9 @@ mm_generate_mcmc_file <- function(
   }
   indent <- function(..., indent=2) {
     chunk(..., indent=indent, newline=FALSE)
+  }
+  condindent <- function(engines=c('jags'), ..., indent=2) { # conditional indent; only indent if engine is in engines
+    chunk(..., indent=if(engine %in% engines) indent else 0, newline=FALSE)
   }
   f <- function(distrib, ...) { # switch things to JAGS format if needed
     args <- c(list(...))
@@ -78,6 +83,18 @@ mm_generate_mcmc_file <- function(
       engine,
       jags=paste0('[1:d,',n,']'),
       stan=paste0('[',n,']'))
+  }
+  MN <- function(m, n) { # matrix indexing for distributions, which are vectorizable in Stan (go by col) but not in JAGS (go by cell)
+    switch(
+      engine,
+      jags=paste0('[',m,',',n,']'),
+      stan=paste0('[',n,']'))
+  }
+  M <- function(m) { # day-by-day indexing for distributions of daily values, which are vectorizable in Stan but not JAGS
+    switch(
+      engine,
+      jags=paste0('[',m,']'),
+      stan='')
   }
   
   # define the model
@@ -269,7 +286,7 @@ mm_generate_mcmc_file <- function(
         'vector[d] dDO_mod[n-1];',
       if(err_proc_acor) 
         'vector[d] err_proc_acor[n-1];'),
-
+    
     indent(
       comment('Model DO time series'),
       comment('* ', ode_method,' version'),
@@ -350,7 +367,7 @@ mm_generate_mcmc_file <- function(
       )
       
     ),
-      
+    
     if(engine == 'stan') c(
       '}',''
     ) else if(engine == 'jags') c(
@@ -365,10 +382,15 @@ mm_generate_mcmc_file <- function(
     if(err_proc_iid) chunk(
       comment('Independent, identically distributed process error'),
       p('for(i in 1:(n-1)) {'),
-      if(dDO_model) s(
-        '  dDO_obs', N('i'), ' ~ ', f('normal', p('dDO_mod', N('i')), 'err_proc_iid_sigma')
-      ) else s(
-        '  err_proc_iid', N('i'), ' ~ ', f('normal', '0', 'err_proc_iid_sigma')
+      condindent(
+        c('jags'),
+        if(engine == 'jags') p('for(j in 1:d) {'),
+        if(dDO_model) s(
+          '  dDO_obs', MN('j','i'), ' ~ ', f('normal', p('dDO_mod', MN('j','i')), 'err_proc_iid_sigma')
+        ) else s(
+          '  err_proc_iid', MN('j','i'), ' ~ ', f('normal', '0', 'err_proc_iid_sigma')
+        ),
+        if(engine == 'jags') p('}')
       ),
       p('}'),
       comment('SD (sigma) of the IID process errors'),
@@ -377,7 +399,12 @@ mm_generate_mcmc_file <- function(
     if(err_proc_acor) chunk(
       comment('Autocorrelated process error'),
       p('for(i in 1:(n-1)) {'),
-      s('  err_proc_acor_inc', N('i'), ' ~ ', f('normal', '0', 'err_proc_acor_sigma')),
+      condindent(
+        c('jags'),
+        if(engine == 'jags') p('for(j in 1:d) {'),
+        s('  err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', '0', 'err_proc_acor_sigma')),
+        if(engine == 'jags') p('}')
+      ),
       p('}'),
       comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
       s('err_proc_acor_phi ~ ', f('gamma', 'err_proc_acor_phi_shape', 'err_proc_acor_phi_rate')),
@@ -386,20 +413,30 @@ mm_generate_mcmc_file <- function(
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
       p('for(i in 1:n) {'),
-      s('  DO_obs', N('i'), ' ~ ', f('normal', p('DO_mod', N('i')), 'err_obs_iid_sigma')),
+      condindent(
+        c('jags'),
+        if(engine == 'jags') p('for(j in 1:d) {'),
+        s('  DO_obs', MN('j','i'), ' ~ ', f('normal', p('DO_mod', MN('j','i')), 'err_obs_iid_sigma')),
+        if(engine == 'jags') p('}')
+      ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
       s('err_obs_iid_sigma ~ ', f('gamma', 'err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'))),
     
     indent(
       comment('Daily metabolism values'),
-      s('GPP_daily ~ ', f('normal', 'GPP_daily_mu', 'GPP_daily_sigma')),
-      s('ER_daily ~ ', f('normal', 'ER_daily_mu', 'ER_daily_sigma')),
-      s('K600_daily ~ ', f('normal', 'K600_daily_mu', 'K600_daily_sigma')),
-      if(pool_K600 == 'normal') 
-        s('K600_daily_mu ~ ', f('normal', 'K600_daily_mu_mu', 'K600_daily_mu_sigma')),
-      if(pool_K600 %in% c('normal','linear','binned'))
-        s('K600_daily_sigma ~ ', f('normal', 'K600_daily_sigma_rate', 'K600_daily_sigma_shape'))
+      if(engine == 'jags') p('for(j in 1:d) {'),
+      condindent(
+        c('jags'),
+        s('GPP_daily', M('j'), ' ~ ', f('normal', 'GPP_daily_mu', 'GPP_daily_sigma')),
+        s('ER_daily', M('j'), ' ~ ', f('normal', 'ER_daily_mu', 'ER_daily_sigma')),
+        s('K600_daily', M('j'), ' ~ ', f('normal', 'K600_daily_mu', 'K600_daily_sigma')),
+        if(pool_K600 == 'normal') 
+          s('K600_daily_mu', M('j'), ' ~ ', f('normal', 'K600_daily_mu_mu', 'K600_daily_mu_sigma')),
+        if(pool_K600 %in% c('normal','linear','binned'))
+          s('K600_daily_sigma', M('j'), ' ~ ', f('normal', 'K600_daily_sigma_rate', 'K600_daily_sigma_shape'))
+      ),
+      if(engine == 'jags') p('}')
     ),
     
     '}'

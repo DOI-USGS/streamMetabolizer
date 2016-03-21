@@ -35,21 +35,27 @@ model {
 
   # Independent, identically distributed process error
   for(i in 1:(n-1)) {
-    dDO_obs[1:d,i] ~ dnorm(dDO_mod[1:d,i], pow(err_proc_iid_sigma, -2))
+    for(j in 1:d) {
+      dDO_obs[j,i] ~ dnorm(dDO_mod[j,i], pow(err_proc_iid_sigma, -2))
+    }
   }
   # SD (sigma) of the IID process errors
   err_proc_iid_sigma ~ dgamma(err_proc_iid_sigma_shape, err_proc_iid_sigma_rate)
   
   # Autocorrelated process error
   for(i in 1:(n-1)) {
-    err_proc_acor_inc[1:d,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
+    for(j in 1:d) {
+      err_proc_acor_inc[j,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
+    }
   }
   # Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ dgamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate)
   err_proc_acor_sigma ~ dgamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate)
   
   # Daily metabolism values
-  GPP_daily ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
-  ER_daily ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))
-  K600_daily ~ dnorm(K600_daily_mu, pow(K600_daily_sigma, -2))
+  for(j in 1:d) {
+    GPP_daily[j] ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
+    ER_daily[j] ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))
+    K600_daily[j] ~ dnorm(K600_daily_mu, pow(K600_daily_sigma, -2))
+  }
 }

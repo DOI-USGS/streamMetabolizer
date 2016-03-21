@@ -31,6 +31,7 @@ zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
     "paste", 
     c(cols, list(sep = " \\tab ", collapse = "\\cr\n  ")))
   
+  . <- 'dplyr.var'
   paste(
     "\\tabular{", 
     paste(col_align, collapse = ""), 
@@ -49,6 +50,7 @@ zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
 #' @keywords internal
 zz_build_docs <- function() {
   
+  . <- 'dplyr.var'
   c("@section Formatting \\code{data}:",
     "Unit-value model inputs passed via the \\code{data} argument should",
     "be formatted as a data.frame with column names and values that",

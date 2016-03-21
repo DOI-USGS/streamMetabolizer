@@ -25,7 +25,7 @@ mm_check_mcmc_file <- function(model_file) {
         stop("the rstan package is required to check Stan MCMC models")
       }
       tryCatch({
-        stan_model(file=model_file)
+        rstan::stan_model(file=model_file)
         return("correct")
       }, error=function(e) {
         e$message
@@ -37,7 +37,7 @@ mm_check_mcmc_file <- function(model_file) {
       }
       warning("this may be an insufficient syntax check for OpenBUGS")
       tryCatch({
-        modelCheck(normalizePath(model_file))
+        BRugs::modelCheck(normalizePath(model_file))
         return("correct")
       }, message=function(m) {
         if(m$message == "model is syntactically correct\n") 

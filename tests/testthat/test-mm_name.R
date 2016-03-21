@@ -2,12 +2,12 @@ context('mm_name')
 
 test_that("mm_name can generate names", {
   # missing args OK
-  expect_equal(mm_name(), "b_np_oipi_pm_km.stan")
+  expect_equal(mm_name(), "m_np_oi_pm_km.nlm")
   expect_equal(mm_name('bayes'), "b_np_oipi_pm_km.stan")
   expect_equal(mm_name('m'), "m_np_oi_pm_km.nlm") # even abbreviations work! lazy, though
   expect_equal(mm_name('sim'), "s_np_oipcpi_pm_.rnorm")
   expect_equal(mm_name('Kmodel'), "K_np___.lm")
-  expect_equal(mm_name(pool_K600='none'), "b_np_oipi_pm_km.stan")
+  expect_equal(mm_name('b', pool_K600='none'), "b_np_oipi_pm_km.stan")
   expect_equal(mm_name('b', pool_K600='none', err_proc_acor=TRUE), "b_np_oipcpi_pm_km.stan")
   
   # catches bad arg combos
@@ -33,7 +33,7 @@ test_that("mm_parse_name can parse names", {
 
 test_that("mm_valid_names and mm_validate_names check model names", {
   # all the model names we know about are returned
-  expect_equal(length(mm_valid_names()), 54)
+  expect_less_than(54, length(mm_valid_names()))
   
   # the models given by mm_valid_names() are all valid by mm_validate_name()
   validations <- sapply(mm_valid_names(), mm_validate_name)
@@ -43,6 +43,6 @@ test_that("mm_valid_names and mm_validate_names check model names", {
 test_that("specs uses any valid mm_name", {
   specs_list <- lapply(mm_valid_names(), specs)
   # specs list lengths differ by model type. the exact range could change
-  expect_equal(range(sapply(specs_list, length)), c(1,27))
+  expect_equal(range(sapply(specs_list, length)), c(4,30))
 })
 

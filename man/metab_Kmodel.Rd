@@ -68,6 +68,7 @@ time and discharge.daily}
 }
 }
 \examples{
+library(dplyr)
 # create example data
 set.seed(24842)
 example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),

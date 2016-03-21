@@ -25,11 +25,13 @@ Imports:
     methods,
     tidyr
 Suggests:
+    BRugs,
     chron,
     dataRetrieval,
     dygraphs,
     ggplot2,
     knitr,
+    microbenchmark,
     plyr,
     RCurl,
     runjags,
@@ -63,6 +65,7 @@ Collate:
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
     'metab.R'
+    'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'

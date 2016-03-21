@@ -73,13 +73,12 @@ test_that("mm_is_valid_day works", {
     DO.sat=replace(DO.sat, 51, u(NA, get_units(DO.sat))),
     temp.water=replace(temp.water, 20:42, u(NA, get_units(temp.water))))
   
-  
   # test and pass
   expect_true(mm_is_valid_day(good_day, day_start=-1.5, day_end=30))
   
   # test faulty timestep
   dateless_day <- good_day; dateless_day$solar.time <- replace(dateless_day$solar.time, 2:(nrow(dateless_day)-1), NA)
-  expect_equal(mm_is_valid_day(dateless_day), c("can't measure timesteps", "NAs in solar.time"))
+  expect_equal(mm_is_valid_day(dateless_day), c("NAs in solar.time"))
   
   # test full_day
   expect_equal(mm_is_valid_day(good_day, day_start=-10, day_end=30), "data don't start when expected")
@@ -93,17 +92,29 @@ test_that("mm_is_valid_day works", {
   
   # test column completeness
   expect_equal(mm_is_valid_day(bad_day, day_start=-1.5, day_end=30), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
+
 })
 
 test_that("mm_filter_valid_days works", {
   
   library(dplyr); library(unitted)
-  french <- streamMetabolizer:::load_french_creek()
   
-  french_daily <- data.frame(date=as.Date(sprintf("2012-08-%2d",15:30)), K600=7)
+  # catch missorted data
+  french <- data_metab('10', res='30', flaws='missorted', day_start=6, day_end=14)
+  expect_error(mm_filter_valid_days(french, day_start=10, day_end=12), "min timestep is <= 0")
   
-  expect_equal(length(mm_filter_valid_days(french, day_start=10, day_end=12)), 3)
-  expect_equal(nrow(mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)$data), 672)
+  # filter to specified hours
+  french <- data_metab('10', res='30', day_start=6, day_end=14)
+  french_filt1 <- mm_filter_valid_days(french, day_start=10, day_end=12)
+  expect_equal(names(french_filt1), c('data','data_daily','removed'))
+  expect_equal(nrow(french_filt1$data), 4*10)
+  
+  # filter to specified days
+  french_daily <- data.frame(date=as.Date(sprintf("2012-09-%2d",15:30)), K600=7)
+  french_filt2 <- mm_filter_valid_days(french, data_daily=french_daily, day_start=10, day_end=12)
+  expect_equal(nrow(french_filt2$data), 10*4)
+  expect_equal(nrow(french_filt2$removed), 6)
+  expect_equal(sort(as.Date(unique(c(french_filt2$removed$date, french_filt2$data_daily$date)))), french_daily$date)
 })
 
 test_that("mm_filter_dates works", {

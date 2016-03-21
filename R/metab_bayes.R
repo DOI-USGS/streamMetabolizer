@@ -461,8 +461,39 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       jags_out <- mutate(jags_out, mcmcfit=list(runjags_out))
     }
   } else {
-    # for multi-day or unsplit models, format output into a list
-    jags_out <- list(mcmcfit=runjags_out)
+    # for multi-day or unsplit models, format output into a list of data.frames,
+    # one per unique number of nodes sharing a variable name
+    jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
+                      runjags_out$summaries,
+                      runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
+    colnames(jags_mat) <- gsub("%", "pct", colnames(jags_mat))
+    
+    stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
+    
+    # determine how many unique nrows, & therefore data.frames, there should be
+    var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(jags_mat)))
+    all_dims <- unique(var_table) %>% setNames(., .)
+    names(all_dims)[all_dims == 1] <- "overall"
+    names(all_dims)[all_dims == data_list$d] <- "daily" # overrides 'overall' if d==1. that's OK
+    
+    # for each unique nrows, create the data.frame with vars in columns and indices in rows
+    jags_out <- lapply(all_dims, function(odim) {
+      dim_params <- names(var_table[which(var_table == odim)])
+      dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(jags_mat)))))
+      row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(jags_mat))[1])))
+      varstat_order <- paste0(rep(row_order, each=ncol(jags_mat)), '_', rep(colnames(jags_mat), times=length(row_order)))
+      
+      as.data.frame(jags_mat[dim_rows,]) %>%
+        add_rownames() %>%
+        gather(stat, value=val, 2:ncol(.)) %>%
+        mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
+               index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+               varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
+        select(index, varstat, val) %>%
+        spread(varstat, val)
+    })
+    
+    jags_out <- c(jags_out, list(mcmcfit=runjags_out))
   }
 
   return(jags_out)
@@ -605,9 +636,18 @@ get_mcmc.metab_bayes <- function(metab_model) {
 #' @inheritParams predict_metab
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
+#' @import dplyr
 #' @export
 #' @family predict_metab
 predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ...) {
-  metab_model <- metab_model(fit=metab_model@fit$daily)
-  NextMethod()
+  warn_strs <- metab_model@fit$warnings
+  stop_strs <- metab_model@fit$errors
+  metab_model <- metab_model(fit=mutate(
+    metab_model@fit$daily, 
+    warnings=if(length(warn_strs) == 0) NA else "see 'warnings' attribute", 
+    errors=if(length(stop_strs) == 0) NA else "see 'errors' attribute"))
+  preds <- NextMethod()
+  attr(preds, 'warnings') <- warn_strs
+  attr(preds, 'errors') <- stop_strs
+  preds
 }

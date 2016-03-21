@@ -21,6 +21,7 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
     if(is.null(v(eg))) {
       'NULL'
     } else {
+      . <- 'dplyr.var'
       data.frame(
         colname = {
           names(eg)

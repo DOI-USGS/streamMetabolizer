@@ -1,5 +1,9 @@
 #' Parse a model name into its features
 #' 
+#' Returns a data.frame with one column per model structure detail and one row 
+#' per `model_name` supplied to this function. See \code{?\link{mm_name}} for a 
+#' description of each of the data.frame columns that is returned.
+#' 
 #' Custom model files (for MCMC) may have additional characters after an 
 #' underscore at the end of the name and before the prefix. For example, 
 #' 'b_np_pcpi_eu_ko.stan' and 'b_np_pcpi_eu_ko_v2.stan' are parsed the same; the

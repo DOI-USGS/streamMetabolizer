@@ -466,6 +466,6 @@ specs <- function(
     stop("irrelevant argument: ", paste(irrelevant, collapse=", "))
   
   # return just the arguments we actually need
-  all_specs[included]
+  add_specs_class(all_specs[included])
   
 }

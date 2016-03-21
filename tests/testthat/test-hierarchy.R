@@ -8,16 +8,20 @@ manual_tests <- function() {
   
   # devtools::install_github("stan-dev/shinystan")
   # library(shinystan)
+  library(dplyr)
   
   #### data prep ####
-  vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-  vfrenchmedium <- vfrench[vfrench$solar.time >= as.POSIXct("2012-09-17 21:00:00", tz="UTC") & 
-                             vfrench$solar.time <= as.POSIXct("2012-09-22 06:00:00", tz="UTC"), ]
-  # vfrenchshort <- vfrench[vfrench$solar.time >= as.POSIXct("2012-08-23 00:00:00", tz="UTC") & 
-  #                           vfrench$solar.time <= as.POSIXct("2012-08-26 00:00:00", tz="UTC"), ]
-  # vspring <- streamMetabolizer:::load_spring_creek(attach.units=FALSE)
+  dat <- data_metab('1', res='30')
   
   #### super simple model by split_dates=c(T,F) ####
+  sp <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
+    specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100)
+  mms <- replace(sp, 'split_dates', TRUE) %>% metab(data=dat)
+  mma <- replace(sp, 'split_dates', FALSE) %>% metab(data=dat)
+  get_fitting_time(mms) # 73 sec
+  get_fitting_time(mma) # 126 sec
+  
+  
   mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="pairmeans", deficit_src="DO_mod", engine="stan")
   ms <- specs(mn, burnin_steps=300, saved_steps=200, split_dates=FALSE)
   fitone <- metab_bayes(specs=replace(ms, 'split_dates', TRUE), vfrenchmedium) # one day at a time

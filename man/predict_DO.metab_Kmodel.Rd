@@ -42,7 +42,8 @@ mm1 <- metab_mle(mle_specs, data=vfrench)
 K600_mm1 <- predict_metab(mm1) \%>\% select(date, K600, K600.lower, K600.upper)
 
 # smooth the K600s
-mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), day_start=-1, day_end=23), data_daily=K600_mm1)
+mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), 
+  day_start=-1, day_end=23), data_daily=K600_mm1)
 K600_mm2 <- predict_metab(mm2) \%>\% select(date, K600)
 
 # refit the MLE with fixed K

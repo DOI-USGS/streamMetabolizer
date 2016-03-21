@@ -1,3 +1,6 @@
+#' @include specs-class.R
+NULL
+
 #### class definition ####
 
 #' A metabolism model class.
@@ -20,7 +23,7 @@ setClass(
     info="ANY",
     fit="ANY",
     fitting_time="ANY",
-    specs="list",
+    specs="specs",
     data="ANY",
     data_daily="ANY",
     pkg_version="character"),
@@ -87,8 +90,10 @@ metab_model <- function(
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
-  # Create a dummy metab_model object
-  new(model_class, info=info, fit=fit, fitting_time=fitting_time, specs=specs, data=data, data_daily=data_daily, pkg_version=pkg_version, ...)
+  # Create a metab_model object
+  new(model_class, info=info, fit=fit, fitting_time=fitting_time, 
+      specs=if(class(specs)[1] == 'specs') specs else add_specs_class(specs), 
+      data=data, data_daily=data_daily, pkg_version=pkg_version, ...)
 }
 
 #### loadModelInterface ####
@@ -108,19 +113,7 @@ setMethod(
     print(get_info(object))
     cat("  Fitted model (access with get_fit()):\n")
     cat("    class: ", paste0(class(get_fit(object)), collapse=" & "),"\n")
-    cat("  Fitting specifications (access with get_specs()):\n")
-    specs <- get_specs(object)
-    for(spec in names(specs)) {
-      spec_char <- tryCatch(
-        if(is.null(specs[[spec]])) {
-          'NULL' 
-        } else {
-          paste0(as.character(specs[[spec]]), collapse=", ")
-        }, 
-        error=function(e) paste0(paste0(class(specs[[spec]]), collapse=","),". see get_specs(...)[['",spec,"']]"))
-      if(nchar(spec_char) > 100) spec_char <- paste0(substr(spec_char, 1, 100), "...")
-      cat(paste0("    ", spec, ": ", spec_char, "\n"))
-    }
+    print(get_specs(object), header="  Fitting specifications (access with get_specs()):\n", prefix="    ")
     cat("  Fitting time (access with get_fitting_time()):\n")
     print(get_fitting_time(object))
     cat("  Fitting data (truncated; access with get_data()):\n")
@@ -294,8 +287,9 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc
   day_start <- get_specs(metab_model)$day_start
   day_end <- get_specs(metab_model)$day_end
   
-  # Get the input data; filter if requested
-  data <- get_data(metab_model) %>%
+  # get the input data; filter if requested
+  data <- get_data(metab_model) %>% 
+    v() %>% # units are lost here. someday we'll get them worked through the whole system.
     mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
@@ -314,5 +308,4 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc
     day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
     calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
-  
 }
