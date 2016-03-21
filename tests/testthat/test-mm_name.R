@@ -33,7 +33,7 @@ test_that("mm_parse_name can parse names", {
 
 test_that("mm_valid_names and mm_validate_names check model names", {
   # all the model names we know about are returned
-  expect_less_than(54, length(mm_valid_names()))
+  expect_less_than(53, length(mm_valid_names()))
   
   # the models given by mm_valid_names() are all valid by mm_validate_name()
   validations <- sapply(mm_valid_names(), mm_validate_name)
