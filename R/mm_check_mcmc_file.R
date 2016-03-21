@@ -32,21 +32,21 @@ mm_check_mcmc_file <- function(model_file) {
       })
     },
     openbugs={
-      if(!requireNamespace("BRugs", quietly = TRUE)) {
-        stop("the BRugs package is required to check OpenBUGS MCMC models")
-      }
-      warning("this may be an insufficient syntax check for OpenBUGS")
-      tryCatch({
-        BRugs::modelCheck(normalizePath(model_file))
-        return("correct")
-      }, message=function(m) {
-        if(m$message == "model is syntactically correct\n") 
-          return("correct")
-        else
-          return(m$message)
-      }, error=function(e) {
-        e$message
-      })
+      # if(!requireNamespace("BRugs", quietly = TRUE)) {
+      #   stop("the BRugs package is required to check OpenBUGS MCMC models")
+      # }
+      # warning("this may be an insufficient syntax check for OpenBUGS")
+      # tryCatch({
+      #   BRugs::modelCheck(normalizePath(model_file))
+      #   return("correct")
+      # }, message=function(m) {
+      #   if(m$message == "model is syntactically correct\n") 
+      #     return("correct")
+      #   else
+      #     return(m$message)
+      # }, error=function(e) {
+      #   e$message
+      # })
     }
   )
   model_status

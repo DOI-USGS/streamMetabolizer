@@ -25,7 +25,6 @@ Imports:
     methods,
     tidyr
 Suggests:
-    BRugs,
     chron,
     dataRetrieval,
     dygraphs,
