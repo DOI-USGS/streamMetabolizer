@@ -175,8 +175,7 @@
 #'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 #'   
 #' @examples
-#' specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))
-#'   
+#' specs(mm_name(type='bayes', err_proc_acor=TRUE))
 #' @export
 specs <- function(
   

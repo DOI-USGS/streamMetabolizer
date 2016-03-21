@@ -2,7 +2,7 @@ context("metab_mle")
 
 test_that("metab_mle models can be created", {
   
-  expect_warning(mm <- metab_mle(data=data_metab('1', res='30')), 'temperature out of range')
+  mm <- metab_mle(data=data_metab('1', res='30'))
   
   # check basic structure
   expect_is(mm, "metab_mle")

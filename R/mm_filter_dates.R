@@ -6,13 +6,19 @@
 #' @importFrom lubridate tz floor_date
 #' @keywords internal
 #' @examples 
-#' tm <- Sys.time()
-#' dt <- Sys.Date()
+#' tm <- as.POSIXct("2017-10-02 00:00:00 UTC")
+#' dt <- as.Date("2017-10-02")
 #' udat <- data.frame(solar.time=tm + as.difftime(1:100, units='hours'), value=1:100)
+#' udat1 <- streamMetabolizer:::mm_filter_dates(udat)
+#' udat2 <- streamMetabolizer:::mm_filter_dates(udat, date_start=dt, date_end=dt)
+#' udat3 <- streamMetabolizer:::mm_filter_dates(udat, date_start=dt, date_end=dt, 
+#'   day_start=12, day_end=14)
+#' c(nrow(udat), nrow(udat1), nrow(udat2), nrow(udat3))
 #' ddat <- data.frame(date=dt + as.difftime(1:100, units='days'), value=1:100)
-#' streamMetabolizer:::mm_filter_dates(udat, tm)
-#' streamMetabolizer:::mm_filter_dates(udat, date_start=dt+as.difftime(1, units="days"))
-mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_end=27.99, date_format="%Y-%m-%d") {
+#' ddat1 <- streamMetabolizer:::mm_filter_dates(ddat)
+#' ddat2 <- streamMetabolizer:::mm_filter_dates(ddat, date_start=dt+10, date_end=dt+20)
+#' c(nrow(ddat), nrow(ddat1), nrow(ddat2))
+mm_filter_dates <- function(data, date_start=NA, date_end=NA, day_start=4, day_end=28, date_format="%Y-%m-%d") {
   
   if(is.null(data) || nrow(data) == 0 || (is.character(data) && data == "generic metab_model class; no actual fit")) return(data)
   date_col <- unlist(sapply(c('solar.time','date'), grep, names(data), fixed=TRUE, value=TRUE, USE.NAMES = FALSE))[1]

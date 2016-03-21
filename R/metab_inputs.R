@@ -4,6 +4,11 @@
 #' @param input the name of an argument to pass into metab()
 #' @import dplyr
 #' @importFrom unitted v u get_units
+#' @examples 
+#' metab_inputs('night','specs')
+#' metab_inputs('bayes','data')
+#' metab_inputs('Kmodel','data_daily')
+#' metab_inputs('mle','info')
 #' @export
 metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('specs','data','data_daily','info')) {
 

@@ -29,8 +29,9 @@ Plots modeled values as lines, observed values as points
 }
 \examples{
 \dontrun{
-mm <- metab_night(v(french))
-plot_DO_preds(predict_DO(mm)[1:360,])
+mm <- metab_night(specs(mm_name('night')), data=data_metab('3', day_start=12, day_end=36))
+plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm), style='dygraphs', y_var='pctsat')
 }
 }
 

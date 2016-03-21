@@ -316,7 +316,6 @@ often should, be overridden to tailor the model to your needs.
   err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, sim.seed}
 }
 \examples{
-specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))
-  
+specs(mm_name(type='bayes', err_proc_acor=TRUE))
 }
 

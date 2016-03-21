@@ -48,9 +48,9 @@
 #' @import dplyr
 #' @examples
 #' dat <- data_metab('10')
-#' \dontrun{
 #' mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
-#' }
+#' mm_model_by_ply(function(...) { data.frame(text='hi')}, 
+#'   data=dat, day_start=2, day_end=28)
 #' @export
 mm_model_by_ply <- function(
   model_fun, data, data_daily=NULL, day_start, day_end, 

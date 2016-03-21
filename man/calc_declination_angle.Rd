@@ -25,8 +25,8 @@ Calculate declination angle as in Yard et al. (2005)
 decdf <- data.frame(jday=1:366, 
   dec=streamMetabolizer:::calc_declination_angle(1:366))
 \dontrun{
-  library(ggplot2)
-  ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
+library(ggplot2)
+ggplot(unitted::v(decdf), aes(x=jday, y=dec)) + geom_line()
 }
 }
 \references{

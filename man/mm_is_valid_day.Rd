@@ -49,9 +49,11 @@ Assumes that the data have already been validated as in
 \code{\link{mm_validate_data}}
 }
 \examples{
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-mm_is_valid_day(vfrench[1:500,]) # not valid
-mm_is_valid_day(vfrench[500,]) # not valid
-mm_is_valid_day(vfrench[144:431,]) # valid
+mm_is_valid_day(data_metab('1'))
+mm_is_valid_day(data_metab('1', flaws='missing middle'))
+mm_is_valid_day(data_metab('1', flaws='missorted'))
+mm_is_valid_day(data_metab('1', flaws='duplicated'))
+mm_is_valid_day(data_metab('1', flaws=c('duplicated','missing end')))
+mm_is_valid_day(data_metab('3'))
 }
 

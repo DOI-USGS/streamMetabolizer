@@ -23,6 +23,5 @@ Convert shortwave radiation (SW) to photosynthetically active radiation
 convert_SW_to_PAR(sw=800)
 convert_SW_to_PAR(sw=800, coef=2.1)
 convert_SW_to_PAR(unitted::u(473, "W m^-2"))
-
 }
 

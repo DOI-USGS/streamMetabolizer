@@ -13,7 +13,6 @@ mm_check_mcmc_file <- function(model_file) {
         stop("the runjags package is required to check JAGS MCMC models")
       }
       tryCatch({
-        warning("this may be an insufficient syntax check for JAGS")
         runjags::read.jagsfile(model_file)
         return("correct")
       }, error=function(e) {
@@ -63,7 +62,7 @@ mm_check_mcmc_file <- function(model_file) {
 #' checks <- streamMetabolizer:::mm_check_mcmc_files("\\.jags")
 #' checks <- streamMetabolizer:::mm_check_mcmc_files("*ko\\.stan")
 #' checks <- streamMetabolizer:::mm_check_mcmc_files("b_np_.*_ko\\.stan")
- #' cat(checks[[7]])
+#' cat(checks[[7]])
 #' }
 #' @keywords internal
 mm_check_mcmc_files <- function(grep_pattern) {

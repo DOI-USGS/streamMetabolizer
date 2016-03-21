@@ -50,7 +50,7 @@
 #' 
 #' \describe{
 #'   \item{\code{bayes} or \code{night}}{
-#'     \code{NULL}
+#'     \code{NULL}
 #'   }
 #'   \item{\code{mle}}{
 #'     \tabular{lr}{

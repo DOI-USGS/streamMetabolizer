@@ -12,8 +12,8 @@
 #'   
 #' @importFrom unitted u v get_units verify_units is.unitted
 #' @examples
-#' library(unitted)
-#' calc_air_pressure() # no units checking if no units provided
+#' calc_air_pressure(15, 762)
+#' calc_air_pressure(15, 100)
 #' @export
 calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), attach.units=FALSE) {
   

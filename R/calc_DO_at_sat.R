@@ -18,9 +18,9 @@
 #' @importFrom LakeMetabolizer o2.at.sat.base
 #' @importFrom unitted u v get_units verify_units is.unitted
 #' @examples
+#' calc_DO_at_sat(temp=21, press=1000.1, sal=0) # no units checking if no units provided
 #' library(unitted)
 #' calc_DO_at_sat(temp=u(21,"degC"), press=u(1000.1,"mb"), sal=u(0,"PSU")) # units are checked
-#' calc_DO_at_sat(temp=21, press=1000.1, sal=0) # no units checking if no units provided
 #' @export
 calc_DO_at_sat <- function(temp.water, pressure.air, salinity.water = u(0,'PSU'), model='garcia-benson', ...){
 

@@ -1,42 +1,44 @@
 context("metab_bayes")
 
-# The automated tests below cannot touch on all possible Bayesian models; that's
+# The tests below cannot touch on all possible Bayesian models; that's
 # work for a computing cluster. Instead we'll just inspect key features and a
 # couple of simple models.
 
-test_that("simple bayesian models run correctly", {
-  
-  # lots of bayesian models available
-  expect_less_than(42, length(mm_valid_names('bayes')))
-  
-  # get simplest possible data
-  dat <- data_metab('1', res='30')
-  
-  # 1-day model in stan
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
-    specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
-    metab(data=dat)
-  #expect_less_than(get_fitting_time(mmb)['elapsed'], 120)
-  expect_less_than(rmse_DO(predict_DO(mmb)), 0.2, info='stan')
-  # plot_DO_preds(predict_DO(mmb))
-  
-  # 1-day model in jags
-  mmj <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags') %>%
-    specs(n_chains=1, n_cores=1, adapt_steps=250, burnin_steps=250, saved_steps=1000) %>%
-    metab(data=dat)
-  #expect_less_than(get_fitting_time(mmj)['elapsed'], 30)
-  expect_less_than(rmse_DO(predict_DO(mmj)), 0.2, info='jags')
-  # plot_DO_preds(predict_DO(mmj))
-  
-  # jags & stan models w/ same options should reach very similar results
-  expect_less_than(sqrt(mean((predict_DO(mmb)$DO.mod - predict_DO(mmj)$DO.mod)^2)), 0.1, info='stan vs jags')
-  
-})
-
+# even these simple tests take too long to do all the time.
+manual_test1 <- function() {
+  test_that("simple bayesian models run correctly", {
+    
+    # lots of bayesian models available
+    expect_less_than(42, length(mm_valid_names('bayes')))
+    
+    # get simplest possible data
+    dat <- data_metab('1', res='30')
+    
+    # 1-day model in stan
+    mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
+      specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
+      metab(data=dat)
+    expect_less_than(get_fitting_time(mmb)['elapsed'], 120)
+    expect_less_than(rmse_DO(predict_DO(mmb)), 0.2, info='stan')
+    # plot_DO_preds(predict_DO(mmb))
+    
+    # 1-day model in jags
+    mmj <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags') %>%
+      specs(n_chains=1, n_cores=1, adapt_steps=250, burnin_steps=250, saved_steps=1000) %>%
+      metab(data=dat)
+    expect_less_than(get_fitting_time(mmj)['elapsed'], 30)
+    expect_less_than(rmse_DO(predict_DO(mmj)), 0.2, info='jags')
+    # plot_DO_preds(predict_DO(mmj))
+    
+    # jags & stan models w/ same options should reach very similar results
+    expect_less_than(sqrt(mean((predict_DO(mmb)$DO.mod - predict_DO(mmj)$DO.mod)^2)), 0.1, info='stan vs jags')
+    
+  })
+}
 
 # takes too long to do all the time. also, saving and reloading a stan model
 # doesn't work! (it does seem to work for jags)
-manual_test <- function() {
+manual_test2 <- function() {
   testthat("test that metab_models can be saved & reloaded (see helper-save_load.R)", {
     
     # fit model

@@ -15,4 +15,10 @@ metab_inputs(type = c("bayes", "mle", "night", "Kmodel", "sim"),
 \description{
 Describe the requirements for an argument to metab()
 }
+\examples{
+metab_inputs('night','specs')
+metab_inputs('bayes','data')
+metab_inputs('Kmodel','data_daily')
+metab_inputs('mle','info')
+}
 

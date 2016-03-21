@@ -28,8 +28,8 @@ Plots modeled values as lines, observed values as points
 }
 \examples{
 \dontrun{
-mm <- metab_night(v(french))
-plot_metab_preds(predict_DO(mm)[1:360,])
+mm <- metab_night(specs(mm_name('night')), data=data_metab('10', day_start=12, day_end=36))
+plot_metab_preds(predict_metab(mm))
 }
 }
 

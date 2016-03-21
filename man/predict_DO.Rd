@@ -21,7 +21,7 @@ done.}
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with
+\item{use_saved}{logical. Is it OK to use predictions that were saved with 
 the model?}
 }
 \value{
@@ -31,6 +31,12 @@ A data.frame of dissolved oxygen predictions at the temporal
 \description{
 A function in the metab_model_interface. Returns predictions of dissolved 
 oxygen.
+}
+\examples{
+dat <- data_metab('3', day_start=12, day_end=36)
+mm <- metab_night(specs(mm_name('night')), data=dat)
+preds <- predict_DO(mm, date_start=get_fit(mm)$date[3])
+head(preds)
 }
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},

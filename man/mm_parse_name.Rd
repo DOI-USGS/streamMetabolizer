@@ -4,10 +4,13 @@
 \alias{mm_parse_name}
 \title{Parse a model name into its features}
 \usage{
-mm_parse_name(model_name)
+mm_parse_name(model_name, keep_name = FALSE)
 }
 \arguments{
 \item{model_name}{character: the model name}
+
+\item{keep_name}{logical; should the model_name be included as a first column
+in the output data.frame?}
 }
 \description{
 Returns a data.frame with one column per model structure detail and one row 
@@ -19,6 +22,10 @@ Custom model files (for MCMC) may have additional characters after an
 underscore at the end of the name and before the prefix. For example, 
 'b_np_pcpi_eu_ko.stan' and 'b_np_pcpi_eu_ko_v2.stan' are parsed the same; the
 _v2 is ignored by this function.
+}
+\examples{
+mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')))
+mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), keep_name=TRUE)
 }
 \seealso{
 The converse of this function is \code{\link{mm_name}}.

@@ -4,6 +4,11 @@
 #' name if it's valid, otherwise gives an error
 #' 
 #' @inheritParams specs
+#' @examples 
+#' mm_validate_name("b_np_oipi_pm_km.stan")
+#' \dontrun{
+#' mm_validate_name("b_np_oipn") # throws error
+#' }
 #' @export
 mm_validate_name <- function(model_name) {
   

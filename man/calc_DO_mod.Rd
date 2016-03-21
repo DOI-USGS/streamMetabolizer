@@ -105,8 +105,15 @@ Accepts GPP, ER, etc. and returns DO.mod. Used in many functions, including
 metab_mle() and predict_DO.metab_mle()
 }
 \examples{
-calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100), 
-  rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100, ODE_method="Euler")
+n = 24
+DO <- calc_DO_mod(GPP.daily=3, ER.daily=-9, K600.daily=2.5, 
+  DO.sat=11, depth=1, temp.water=rep(12,n), 
+  frac.GPP=with(data.frame(sinpow=sin(seq(0,pi,length.out=n))^4), sinpow/sum(sinpow)), 
+  frac.ER=rep(1/n,n), frac.D=rep(1/n,n), 
+  DO.mod.1=8, n=n, ODE_method="Euler")
+\dontrun{
+plot(DO)
+}
 fr <- rep(1/48,48) # shorthand for readability of next lines
 gfr <- sin((1:48)/(4*pi))^8; gfr <- gfr/sum(gfr)
 do <- 2*sin((1:48 - 10)/(4*pi))^4 + 10

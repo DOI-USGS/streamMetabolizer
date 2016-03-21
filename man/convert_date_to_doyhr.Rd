@@ -17,4 +17,7 @@ Numeric value expressing the date as the number of days, with decimal
 \description{
 Inspired by / copied from LakeMetabolizer date2doy
 }
+\examples{
+convert_date_to_doyhr(as.POSIXct("2015-02-03 12:01:00 UTC"))
+}
 

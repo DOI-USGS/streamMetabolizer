@@ -11,11 +11,10 @@
 #' @return list of data and data_daily with same structure as inputs but with 
 #'   invalid days removed, plus a third data.frame of dates that were removed
 #' @examples
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' mm_filter_valid_days(vfrench[order(vfrench$solar.time),])
-#' \dontrun{
-#' mm_filter_valid_days(vfrench) # fails because data aren't sorted
-#' }
+#' dat <- data_metab(res='30', num_days='10', flaws='missing middle')
+#' datfilt <- mm_filter_valid_days(dat)
+#' datfilt$removed
+#' c(nrow(dat), nrow(datfilt$data))
 #' @export
 mm_filter_valid_days <- function(
   data, data_daily=NULL, # redefine from metab

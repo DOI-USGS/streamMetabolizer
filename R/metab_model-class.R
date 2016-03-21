@@ -75,7 +75,6 @@ setClass(
 #'   
 #' @examples
 #' metab_model() 
-#' metab_model(fit=1:5, specs=list(length=5))
 #' metab_model("metab_mle", fit=1:5, specs=list(length=5))
 #' @importFrom utils packageVersion
 #' @export

@@ -43,7 +43,6 @@ Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 }
 \examples{
 metab_model() 
-metab_model(fit=1:5, specs=list(length=5))
 metab_model("metab_mle", fit=1:5, specs=list(length=5))
 }
 

@@ -20,10 +20,12 @@
 #' @return character vector of errors if day is invalid, or TRUE if it's valid
 #' @importFrom lubridate tz
 #' @examples
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' mm_is_valid_day(vfrench[1:500,]) # not valid
-#' mm_is_valid_day(vfrench[500,]) # not valid
-#' mm_is_valid_day(vfrench[144:431,]) # valid
+#' mm_is_valid_day(data_metab('1'))
+#' mm_is_valid_day(data_metab('1', flaws='missing middle'))
+#' mm_is_valid_day(data_metab('1', flaws='missorted'))
+#' mm_is_valid_day(data_metab('1', flaws='duplicated'))
+#' mm_is_valid_day(data_metab('1', flaws=c('duplicated','missing end')))
+#' mm_is_valid_day(data_metab('3'))
 #' @export
 mm_is_valid_day <- function(
   data_ply, # inheritParams mm_model_by_ply_prototype

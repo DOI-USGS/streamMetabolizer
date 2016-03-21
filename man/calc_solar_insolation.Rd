@@ -38,9 +38,10 @@ insdf <- data.frame(
 insdf <- transform(insdf, datetime=convert_doyhr_to_date(jday + hour/24, year=2004))
 insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 \dontrun{
-  library(ggplot2)
-  ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
-    geom_line() + facet_wrap(~lat)
+library(ggplot2)
+ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
+  geom_line() + facet_wrap(~lat) + 
+  ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 }
 }
 

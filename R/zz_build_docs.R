@@ -86,7 +86,9 @@ zz_build_docs <- function() {
     "",
     "\\describe{",
     c(paste0("  \\item{\\code{bayes} or \\code{night}}{"),
-      paste0("    ", "\\code{", metab_inputs('bayes', 'data_daily'), "}"),
+      paste0("    ", "\\code{", 
+             if(is.null(v(metab_inputs('bayes', 'data_daily')))) "NULL" else stop('oops-this used to be NULL'),
+             "}"),
       "  }"),
     do.call(c, lapply(c('mle','Kmodel','sim'), function(type) {
       c(paste0("  \\item{\\code{",type,"}}{"),

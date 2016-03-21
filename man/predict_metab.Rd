@@ -41,6 +41,12 @@ A data.frame of daily metabolism estimates. Columns include:
 A function in the metab_model_interface. Returns predictions (estimates) of 
 GPP, ER, and NEP.
 }
+\examples{
+dat <- data_metab('3', day_start=12, day_end=36)
+mm <- metab_night(specs(mm_name('night')), data=dat)
+predict_metab(mm)
+predict_metab(mm, date_start=get_fit(mm)$date[2])
+}
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_data}}, \code{\link{get_fitting_time}},

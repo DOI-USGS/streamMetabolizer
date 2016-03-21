@@ -14,7 +14,8 @@
 #' @inheritParams load_french_creek
 #' @importFrom unitted u v get_units
 #' @examples 
-#' data_metab()
+#' head(data_metab())
+#' head(data_metab(res='30'))
 #' @export
 data_metab <- function(
   num_days=c('1','3','10'), 

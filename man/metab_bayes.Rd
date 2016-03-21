@@ -45,8 +45,8 @@ argument.
 dat <- data_metab() # 1 day of example data
 # fast-ish model version, but still too slow to auto-run in examples
 mm <- metab_bayes(
-  specs(mm_name('bayes', err_proc_iid=FALSE, engine='stan'), 
-        n_chains=1, burnin_steps=300, saved_steps=100, split_dates=FALSE),
+  specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+        n_chains=1, burnin_steps=300, saved_steps=100),
   data=dat)
 predict_metab(mm)
 get_fitting_time(mm)

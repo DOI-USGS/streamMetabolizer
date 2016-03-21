@@ -40,8 +40,8 @@ to_degrees <- function(radians) {
 #' decdf <- data.frame(jday=1:366, 
 #'   dec=streamMetabolizer:::calc_declination_angle(1:366))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
+#' library(ggplot2)
+#' ggplot(unitted::v(decdf), aes(x=jday, y=dec)) + geom_line()
 #' }
 #' @references Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G. 
 #'   Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn. 
@@ -75,9 +75,9 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #' hourdf <- data.frame(hour=c(0:12,12.5:23.5), 
 #'   hragl=streamMetabolizer:::calc_hour_angle(c(0:12,12.5:23.5)))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(hourdf, aes(x=hour, y=hragl)) + 
-#'     geom_hline(yintercept=0, color="gold") + geom_line()
+#' library(ggplot2)
+#' ggplot(hourdf, aes(x=hour, y=hragl)) + 
+#'   geom_hline(yintercept=0, color="gold") + geom_line()
 #' }
 calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
@@ -111,9 +111,10 @@ calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #' zendf <- transform(zendf,
 #'   zen=streamMetabolizer:::calc_zenith_angle(lat, dec, hragl))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(zendf, aes(x=jday, y=zen, color=factor(lat))) + 
-#'     geom_line()
+#' library(ggplot2)
+#' ggplot(unitted::v(zendf), aes(x=hour, y=zen, color=jday, group=jday)) + 
+#'   geom_line() + facet_wrap(~lat) + 
+#'   ggtitle('zenith angles by latitude (panels) and day of year (colors)')
 #' }
 calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
   format <- match.arg(format)
@@ -162,9 +163,10 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' insdf <- transform(insdf, datetime=convert_doyhr_to_date(jday + hour/24, year=2004))
 #' insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
-#'     geom_line() + facet_wrap(~lat)
+#' library(ggplot2)
+#' ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
+#'   geom_line() + facet_wrap(~lat) + 
+#'   ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 #' }
 #' @export
 calc_solar_insolation <- function(

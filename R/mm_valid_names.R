@@ -6,6 +6,8 @@
 #' slightly more readable with \code{\link{mm_parse_name}} if desired.
 #' 
 #' @inheritParams mm_name
+#' @examples
+#' mm_valid_names('mle')
 #' @export
 mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
 

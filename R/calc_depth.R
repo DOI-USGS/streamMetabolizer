@@ -9,12 +9,12 @@
 #' @param f exponent in depth-discharge relation (unitless)
 #' @return d, stream depth, in the same units as c
 #' @examples
-#' calc_depth(Q=1:10)
-#' calc_depth(Q=1:10, f=0.4)
+#' Qs <- seq(1,9,2)
+#' calc_depth(Q=Qs)
+#' calc_depth(Q=Qs, f=0.4)
 #' library(unitted)
-#' calc_depth(Q=u(1:10, "m^3 s^-1"), c=u(40,"cm"))
-#' calc_depth(Q=u(1:10, "m^3 s^-1"), f=u(0.36))
-#' 
+#' calc_depth(Q=u(Qs, "m^3 s^-1"), c=u(40,"cm"))
+#' calc_depth(Q=u(Qs, "m^3 s^-1"), f=u(0.36))
 #' @references Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. 
 #'   Bott, Jody Potter, Patrick Mulholland, Andrew E. Laursen, William H. 
 #'   McDowell, and Denis Newbold. \emph{Scaling the gas transfer velocity and 

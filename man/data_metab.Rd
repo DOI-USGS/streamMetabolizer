@@ -44,6 +44,7 @@ Get a formatted data.frame of inputs from which metabolism can be modeled.
 These test data were provided by Bob Hall.
 }
 \examples{
-data_metab()
+head(data_metab())
+head(data_metab(res='30'))
 }
 

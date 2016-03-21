@@ -24,7 +24,7 @@ a numeric vector of barometric pressures in mb, with units attached
 Corrects air pressure for air temperature and elevation
 }
 \examples{
-library(unitted)
-calc_air_pressure() # no units checking if no units provided
+calc_air_pressure(15, 762)
+calc_air_pressure(15, 100)
 }
 

@@ -53,10 +53,9 @@ Filter out any data rows that don't pass the specified tests for completeness
 and regularity
 }
 \examples{
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-mm_filter_valid_days(vfrench[order(vfrench$solar.time),])
-\dontrun{
-mm_filter_valid_days(vfrench) # fails because data aren't sorted
-}
+dat <- data_metab(res='30', num_days='10', flaws='missing middle')
+datfilt <- mm_filter_valid_days(dat)
+datfilt$removed
+c(nrow(dat), nrow(datfilt$data))
 }
 

@@ -2,14 +2,14 @@
 
 ## Changes
 
-# New function: metab() serves as a gateway to all model types. You can now pass
+* New function: metab() serves as a gateway to all model types. You can now pass
 specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
-# New function: data_metab() produces a dataset for testing/demonstration, with
+* New function: data_metab() produces a dataset for testing/demonstration, with
 options for the resolution & flaws to introduce.
 
-# Newly public function: mm_model_by_ply is now public. Its interface has also 
+* Newly public function: mm_model_by_ply is now public. Its interface has also 
 changed somewhat: tests has been renamed to day_tests, and validity tests are 
 conducted within mm_model_by_ply if day_tests is not empty, and validity and 
 timestep information are now passed to model_fun.
@@ -20,20 +20,20 @@ workings of mm_model_by_ply(). mm_model_by_ply_prototype() is a lightweight
 example of a function that can be passed to mm_model_by_ply(), and its help file
 describes the parameters such a function should expect.
 
-# New function: mm_get_timestep() computes the mean and/or unique timestep[s] 
+* New function: mm_get_timestep() computes the mean and/or unique timestep[s] 
 and optionally requires that there be just one unique timestep within a vector 
 of times or dates.
 
 * Interface change: the argument tests is now called day_tests in the metab(), 
 metab_night(), etc., mm_model_by_ply(), and mm_is_valid_day().
 
-# Interface change: day_start, day_end, and tests are now containined within 
+* Interface change: day_start, day_end, and tests are now containined within 
 specs rather than defined separately in the call to metab, metab_bayes, etc.
 
-# Interface change: in metab(), metab_mle(), etc., the model_specs argument is 
+* Interface change: in metab(), metab_mle(), etc., the model_specs argument is 
 now called specs.
 
-# Interface change: metab functions now accept specs first, then data, 
+* Interface change: metab functions now accept specs first, then data, 
 data_daily, and info. (specs was renamed from model_specs; see above.) This 
 permits chaining from mm_name to specs to metab.
 
