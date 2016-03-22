@@ -2,10 +2,10 @@
 % Please edit documentation in R/metab_bayes.R
 \name{bayes_allply}
 \alias{bayes_allply}
-\title{Make daily metabolism estimates from input parameters using a hierarchical
+\title{Make daily metabolism estimates from input parameters using a hierarchical 
 approach.}
 \usage{
-bayes_allply(data_all, data_daily_all, model_specs)
+bayes_allply(data_all, data_daily_all, removed, specs)
 }
 \arguments{
 \item{data_all}{data.frame of the form \code{mm_data(solar.time, DO.obs, 
@@ -16,14 +16,18 @@ estimation-day (this may be >24 hours but only yields estimates for one
 \item{data_daily_all}{data.frame of daily priors, if appropriate to the given
 model_path}
 
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+\item{removed}{data.frame of dates that were removed and why}
+
+\item{specs}{a list of model specifications and parameters for a model. 
+Although this may be specified manually (it's just a list), it is easier
+and safer to use \code{\link{specs}} to generate the list, because the set
+of required parameters and their defaults depends on the model given in the
+\code{model_name} argument to \code{specs}. The help file for 
+\code{\link{specs}} lists the necessary parameters, describes them in 
+detail, and gives default values.}
 }
 \value{
-data.frame of estimates and MCMC model 
-  diagnostics
+data.frame of estimates and MCMC model diagnostics
 }
 \description{
 Called from metab_bayes().

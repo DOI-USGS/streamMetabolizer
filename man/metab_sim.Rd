@@ -4,52 +4,35 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light,
-  optional = "DO.obs"), data_daily = mm_data(date, DO.mod.1, GPP, ER, K600,
-  optional = "DO.mod.1"), model_specs = specs("s_np_oipcpi_eu_.rnorm"),
-  info = NULL, day_start = 4, day_end = 27.99, tests = c("full_day",
-  "even_timesteps", "complete_data"))
+metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time, DO.obs,
+  DO.sat, depth, temp.water, light, optional = "DO.obs"),
+  data_daily = mm_data(date, DO.mod.1, GPP, ER, K600, optional = "DO.mod.1"),
+  info = NULL)
 }
 \arguments{
+\item{specs}{a list of model specifications and parameters for a model. 
+Although this may be specified manually (it's just a list), it is easier
+and safer to use \code{\link{specs}} to generate the list, because the set
+of required parameters and their defaults depends on the model given in the
+\code{model_name} argument to \code{specs}. The help file for 
+\code{\link{specs}} lists the necessary parameters, describes them in 
+detail, and gives default values.}
+
 \item{data}{data.frame of input data at the temporal resolution of raw 
-observations. Columns must have the same names, units, and format as the 
-default. See \code{\link{mm_data}} for a full data description.}
+observations (unit-value). Columns must have the same names, units, and 
+format as the default. See the \strong{'Formatting \code{data}'} section 
+below for a full description.}
 
-\item{data_daily}{data.frame containing inputs with a daily timestep. See 
-\code{\link{mm_data}} for a full data description.}
-
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See the
+\strong{'Formatting \code{data_daily}'} section below for a full 
+description.}
 
 \item{info}{any information, in any format, that you would like to store 
 within the metab_model object}
-
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For single days of input data, it is 
-conventional/useful to begin the day the evening before, e.g., -1.5, and to
-end just before the next sunrise, e.g., 30. For multiple consecutive days, 
-it may make the most sense to start just before sunrise (e.g., 4) and to 
-end 24 hours later. For nighttime regression to be compatible with this 
-setup, the date assigned to a section of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
-metab_night, of which the times of darkness will be used.}
-
-\item{day_end}{end time (inclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
-observation time that occurs before that time if day_end doesn't fall 
-exactly on an observation time. See day_start for recommended start and end
-times.}
-
-\item{tests}{list of tests to conduct}
 }
 \value{
-A metab_sim object containing the fitted model.
+A metab_sim object containing the fitted model. This object can be 
+  inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
 Takes input data in the form of a sub-daily time series (\code{data}) of 
@@ -62,37 +45,33 @@ other values are ignored), or if in \code{data_daily}, this takes the form of
 a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
-# set the date in several formats
-start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="UTC"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="UTC"), units='hours')
+# start with non-DO data (DO used only to pick first DO of each day)
+dat <- data_metab('3', res='15')
+dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
+  GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
 
-# get, format, & subset data
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-vdaily <- data.frame(date="2012-08-24", GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+# define simulation parameters
+mm <- metab_sim(
+  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1),
+  data=dat, data_daily=dat_daily)
+# actual simulation happens during prediction - different each time
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 
-# sim
-mm <- metab_sim(data=vfrenchshort, data_daily=vdaily,
-  day_start=start.numeric, day_end=end.numeric, 
-  model_specs=specs('s_np_oipcpi_eu_.rnorm', err.proc.sigma=0.07))
-get_fit(mm)
-get_data_daily(mm)
-get_fitting_time(mm)
-plot_DO_preds(predict_DO(mm))
-plot_DO_preds(predict_DO(mm))
+# or same each time if seed is set
+mm <- metab_sim(
+  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1, sim.seed=248),
+  data=dat, data_daily=dat_daily)
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+
 \dontrun{
- metab_sim(data=data.frame(empty="shouldbreak"))
+plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm))
 }
 }
 \author{
-Alison Appling, Maite Arroita
+Alison Appling, Bob Hall
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},

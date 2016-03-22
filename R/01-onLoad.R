@@ -9,6 +9,7 @@ library(methods)
 #' R session
 #' 
 #' @return the package environment
+#' @keywords internal
 define_pkg_env <- function() {
   pkg.env <- new.env()
   pkg.env$tz_lookups <- list(

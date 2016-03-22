@@ -5,7 +5,7 @@
 \title{Filter unit or daily data by inclusive start & end dates}
 \usage{
 mm_filter_dates(data, date_start = NA, date_end = NA, day_start = 4,
-  day_end = 27.99, date_format = "\%Y-\%m-\%d")
+  day_end = 28, date_format = "\%Y-\%m-\%d")
 }
 \arguments{
 \item{data}{either instantaneous/unit or daily data, having columns for
@@ -23,12 +23,18 @@ done.}
 Filter unit or daily data by inclusive start & end dates
 }
 \examples{
-tm <- Sys.time()
-dt <- Sys.Date()
+tm <- as.POSIXct("2017-10-02 00:00:00 UTC")
+dt <- as.Date("2017-10-02")
 udat <- data.frame(solar.time=tm + as.difftime(1:100, units='hours'), value=1:100)
+udat1 <- streamMetabolizer:::mm_filter_dates(udat)
+udat2 <- streamMetabolizer:::mm_filter_dates(udat, date_start=dt, date_end=dt)
+udat3 <- streamMetabolizer:::mm_filter_dates(udat, date_start=dt, date_end=dt, 
+  day_start=12, day_end=14)
+c(nrow(udat), nrow(udat1), nrow(udat2), nrow(udat3))
 ddat <- data.frame(date=dt + as.difftime(1:100, units='days'), value=1:100)
-streamMetabolizer:::mm_filter_dates(udat, tm)
-streamMetabolizer:::mm_filter_dates(udat, date_start=dt+as.difftime(1, units="days"))
+ddat1 <- streamMetabolizer:::mm_filter_dates(ddat)
+ddat2 <- streamMetabolizer:::mm_filter_dates(ddat, date_start=dt+10, date_end=dt+20)
+c(nrow(ddat), nrow(ddat1), nrow(ddat2))
 }
 \keyword{internal}
 

@@ -4,17 +4,20 @@
 \alias{mm_generate_mcmc_file}
 \title{Generate the models in inst/models/bayes}
 \usage{
-mm_generate_mcmc_file(type = "bayes", pooling = "none",
-  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
-  err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler"),
-  deficit_src = c("DO_mod", "DO_obs"), bayes_software = c("stan", "jags"))
+mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
+  "linear", "binned"), err_obs_iid = c(TRUE, FALSE),
+  err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
+  ode_method = c("pairmeans", "Euler"), deficit_src = c("DO_mod", "DO_obs"),
+  engine = c("stan", "jags"))
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 
 (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)}
 
-\item{pooling}{Should the model pool information among days to get more 
-consistent daily estimates?}
+\item{pool_K600}{Should the model pool information among days to get more 
+consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
+'normal'=K600 ~ 1; 'linear'=K600 ~ 1 + log(Q); 'binned'=K600 ~ cut(Q,
+breaks=quantile(Q))}
 
 \item{err_obs_iid}{logical. Should IID observation error be included? If not,
 the model will be fit to the differences in successive DO measurements, 
@@ -33,7 +36,7 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
 
-\item{bayes_software}{Which software are we generating code for?}
+\item{engine}{Which software are we generating code for?}
 }
 \description{
 Generate the models in inst/models/bayes

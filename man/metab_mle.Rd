@@ -4,101 +4,55 @@
 \alias{metab_mle}
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
-metab_mle(data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water,
-  light), data_daily = mm_data(date, K600, optional = "all"),
-  model_specs = specs("m_np_oi_pm_km.nlm"), info = NULL, day_start = 4,
-  day_end = 27.99, tests = c("full_day", "even_timesteps", "complete_data"))
+metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
+  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600, optional
+  = "all"), info = NULL)
 }
 \arguments{
+\item{specs}{a list of model specifications and parameters for a model. 
+Although this may be specified manually (it's just a list), it is easier
+and safer to use \code{\link{specs}} to generate the list, because the set
+of required parameters and their defaults depends on the model given in the
+\code{model_name} argument to \code{specs}. The help file for 
+\code{\link{specs}} lists the necessary parameters, describes them in 
+detail, and gives default values.}
+
 \item{data}{data.frame of input data at the temporal resolution of raw 
-observations. Columns must have the same names, units, and format as the 
-default. See \code{\link{mm_data}} for a full data description.}
+observations (unit-value). Columns must have the same names, units, and 
+format as the default. See the \strong{'Formatting \code{data}'} section 
+below for a full description.}
 
-\item{data_daily}{data.frame containing inputs with a daily timestep. See 
-\code{\link{mm_data}} for a full data description.}
-
-\item{model_specs}{a list of model specifications and parameters for a model.
-Although this may be specified manually, it is easier to \code{specs} to 
-generate the list. The help file for that functions lists the necessary 
-parameters, describes them in detail, and gives default values.}
+\item{data_daily}{data.frame containing inputs with a daily timestep. See the
+\strong{'Formatting \code{data_daily}'} section below for a full 
+description.}
 
 \item{info}{any information, in any format, that you would like to store 
 within the metab_model object}
-
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For single days of input data, it is 
-conventional/useful to begin the day the evening before, e.g., -1.5, and to
-end just before the next sunrise, e.g., 30. For multiple consecutive days, 
-it may make the most sense to start just before sunrise (e.g., 4) and to 
-end 24 hours later. For nighttime regression to be compatible with this 
-setup, the date assigned to a section of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
-metab_night, of which the times of darkness will be used.}
-
-\item{day_end}{end time (inclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
-observation time that occurs before that time if day_end doesn't fall 
-exactly on an observation time. See day_start for recommended start and end
-times.}
-
-\item{tests}{list of tests to conduct}
 }
 \value{
-A metab_mle object containing the fitted model.
+A metab_mle object containing the fitted model. This object can be 
+  inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
-Fits a model to estimate GPP and ER from input data on DO, temperature, 
-light, etc.
+Uses maximum likelihood to fit a model to estimate GPP and ER from input data
+on DO, temperature, light, etc.
 }
 \examples{
-# set the date in several formats
-start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-start.posix <- as.POSIXct(format(start.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-end.posix <- as.POSIXct(format(end.chron, "\%Y-\%m-\%d \%H:\%M:\%S"), tz="UTC")
-mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-   tz="UTC"), units='hours')
-end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "\%Y-\%m-\%d 00:00:00"),
-  tz="UTC"), units='hours')
-
-# get, format, & subset data
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-
+dat <- data_metab('3')
 # PRK
-get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric, 
-  day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-plot_DO_preds(predict_DO(mm))
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+mm <- metab_mle(data=dat)
+predict_metab(mm)
 
-# PR
-get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-  day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-get_fitting_time(mm)
-plot_DO_preds(predict_DO(mm))
-streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
-
+# PR with fixed K on two days
+dat_daily <- data.frame(date=c("2012-09-18","2012-09-20"), K600=35)
+mm <- metab_mle(data=dat, data_daily=dat_daily)
+predict_metab(mm)
 \dontrun{
-  metab_mle(data=data.frame(empty="shouldbreak"))
- 
-  # PRK and PR with process error
-  get_fit(mm <- metab_mle(data=vfrenchshort, 
-    model_specs=specs('m_np_pi_pm_km.nlm'), 
-    day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-  plot_DO_preds(predict_DO(mm))
-  get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-    model_specs=specs('m_np_pi_pm_km.nlm'), 
-    day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-  plot_DO_preds(predict_DO(mm))
+plot_DO_preds(predict_DO(mm))
 }
 }
 \author{
-Alison Appling, Jordan Read; modeled on LakeMetabolizer
+Alison Appling, Jordan Read, Luke Winslow
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},

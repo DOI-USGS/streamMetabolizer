@@ -4,18 +4,21 @@
 \alias{mm_name}
 \title{Find the name of a model by its features}
 \usage{
-mm_name(type = c("bayes", "mle", "night", "sim"), pooling = "none",
-  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
-  err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler", "NA"),
-  deficit_src = c("DO_mod", "DO_obs", "NA"), bayes_software = c("stan",
-  "jags", "nlm", "lm", "rnorm"))
+mm_name(type = c("mle", "bayes", "night", "Kmodel", "sim"),
+  pool_K600 = c("none", "normal", "linear", "binned"), err_obs_iid = c(TRUE,
+  FALSE), err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
+  ode_method = c("pairmeans", "Euler", "NA"), deficit_src = c("DO_mod",
+  "DO_obs", "NA"), engine = c("stan", "jags", "nlm", "lm", "mean", "loess",
+  "rnorm"), check_validity = TRUE)
 }
 \arguments{
 \item{type}{the model type, corresponding to the model fitting function 
 (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)}
 
-\item{pooling}{Should the model pool information among days to get more 
-consistent daily estimates?}
+\item{pool_K600}{Should the model pool information among days to get more 
+consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
+'normal'=K600 ~ 1; 'linear'=K600 ~ 1 + log(Q); 'binned'=K600 ~ cut(Q,
+breaks=quantile(Q))}
 
 \item{err_obs_iid}{logical. Should IID observation error be included? If not,
 the model will be fit to the differences in successive DO measurements, 
@@ -34,10 +37,16 @@ mean values of GPP, ER, etc. across t=1 and t=2.}
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
 
-\item{bayes_software}{Which software are we generating code for?}
+\item{engine}{Which software are we generating code for?}
+
+\item{check_validity}{if TRUE, checks the resulting name against 
+mm_valid_names(type).}
 }
 \description{
-Find the name of a model by its features
+While the \code{Usage} shows the valid values for each argument, defaults 
+depend on the value of \code{type}: any argument that is not explicitly 
+supplied (besides \code{type} and \code{check_validity}) will default to the 
+values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 }
 \examples{
 mm_name('mle')

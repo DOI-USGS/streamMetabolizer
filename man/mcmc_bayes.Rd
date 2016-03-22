@@ -4,15 +4,15 @@
 \alias{mcmc_bayes}
 \title{Run an MCMC simulation on a formatted data ply}
 \usage{
-mcmc_bayes(data_list, bayes_software = c("stan", "jags"), model_path,
-  params_out, keep_mcmc = FALSE, n_chains = 4, n_cores = 4,
+mcmc_bayes(data_list, engine = c("stan", "jags"), model_path, params_out,
+  split_dates, keep_mcmc = FALSE, n_chains = 4, n_cores = 4,
   adapt_steps = 1000, burnin_steps = 4000, saved_steps = 40000,
   thin_steps = 1, verbose = FALSE)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the JAGS model}
 
-\item{bayes_software}{character string indicating which software to use}
+\item{engine}{character string indicating which software to use}
 
 \item{model_path}{the JAGS model file to use, as a full file path}
 

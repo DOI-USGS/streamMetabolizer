@@ -14,7 +14,7 @@ load_spring_creek <- function(attach.units=TRUE) {
     transmute(
       utc.time = as.POSIXct(time, origin="1970-01-01", tz="UTC"),
       local.time = with_tz(utc.time, "America/Denver"),
-      DO.obs = u(oxy, 'mg L^-1'),
+      DO.obs = u(oxy, 'mgO2 L^-1'),
       temp.water = u(temp, 'degC')) %>% 
     u() %>%
     mutate(

@@ -14,11 +14,14 @@ A metabolism model class.
 
 \item{\code{fit}}{An internal representation of a fitted model.}
 
-\item{\code{fitting_time}}{Usually stored as a proc_time; the time required to fit the model.}
+\item{\code{fitting_time}}{Usually stored as a proc_time; the time required to fit
+the model.}
 
-\item{\code{pkg_version}}{A string indicating the package version used to create this metab_model object.}
+\item{\code{pkg_version}}{A string indicating the package version used to create this
+metab_model object.}
 
-\item{\code{args}}{A list of arguments, excluding data, that were supplied to the fitting function.}
+\item{\code{specs}}{A list of model specifications that were supplied to the fitting
+function.}
 
 \item{\code{data}}{The data that were used to fit the model.}
 

@@ -15,7 +15,9 @@
 #'   
 #'   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
 #'   
-#'   \item \code{\link{get_args}(metab_model) \{ return(args.list) \}}
+#'   \item \code{\link{get_info}(metab_model) \{ return(info) \}}
+#'   
+#'   \item \code{\link{get_specs}(metab_model) \{ return(specs.list) \}}
 #'   
 #'   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
 #'   
@@ -88,19 +90,19 @@ get_fitting_time <- function(metab_model) {
   UseMethod("get_fitting_time")
 }
 
-#' Extract the fitting arguments from a metabolism model.
+#' Extract the fitting specifications from a metabolism model.
 #' 
-#' A function in the metab_model_interface. Returns the arguments that were 
-#' passed to a metabolism model.
+#' A function in the metab_model_interface. Returns the specifications that were
+#' passed in when fitting the metabolism model.
 #' 
-#' @param metab_model A metabolism model, implementing the
-#'   metab_model_interface, for which to return the arguments
-#' @return A list of arguments
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the specifications
+#' @return The list of specifications that was passed to \code{\link{metab}()}
 #' @export
 #' @family metab_model_interface
 #' @family get_args
-get_args <- function(metab_model) {
-  UseMethod("get_args")
+get_specs <- function(metab_model) {
+  UseMethod("get_specs")
 }
 
 
@@ -180,6 +182,11 @@ get_version <- function(metab_model) {
 #'   
 #'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
 #'   }
+#' @examples 
+#' dat <- data_metab('3', day_start=12, day_end=36)
+#' mm <- metab_night(specs(mm_name('night')), data=dat)
+#' predict_metab(mm)
+#' predict_metab(mm, date_start=get_fit(mm)$date[2])
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
@@ -203,10 +210,15 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_save
 #'   done.
 #' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_DO}
-#' @param use_saved logical. Is it OK to use predictions that were saved with
+#' @param use_saved logical. Is it OK to use predictions that were saved with 
 #'   the model?
 #' @return A data.frame of dissolved oxygen predictions at the temporal 
 #'   resolution of the input data
+#' @examples 
+#' dat <- data_metab('3', day_start=12, day_end=36)
+#' mm <- metab_night(specs(mm_name('night')), data=dat)
+#' preds <- predict_DO(mm, date_start=get_fit(mm)$date[3])
+#' head(preds)
 #' @export
 #' @family metab_model_interface
 #' @family predict_DO

@@ -3,76 +3,53 @@ NULL
 
 #' Maximum likelihood metabolism model fitting function
 #' 
-#' Fits a model to estimate GPP and ER from input data on DO, temperature, 
-#' light, etc.
+#' Uses maximum likelihood to fit a model to estimate GPP and ER from input data
+#' on DO, temperature, light, etc.
 #' 
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_mle object containing the fitted model.
+#' @author Alison Appling, Jordan Read, Luke Winslow
 #'   
-#' @import dplyr
-#' @author Alison Appling, Jordan Read; modeled on LakeMetabolizer
+#' @inheritParams metab
+#' @return A metab_mle object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#'   
 #' @examples
-#' # set the date in several formats
-#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-#' start.numeric <- as.numeric(start.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'    tz="UTC"), units='hours')
-#' end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"),
-#'   tz="UTC"), units='hours')
-#' 
-#' # get, format, & subset data
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-#' 
+#' dat <- data_metab('3')
 #' # PRK
-#' get_fit(mm <- metab_mle(data=vfrenchshort, day_start=start.numeric, 
-#'   day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#' plot_DO_preds(predict_DO(mm))
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
+#' mm <- metab_mle(data=dat)
+#' predict_metab(mm)
 #' 
-#' # PR
-#' get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-#'   day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#' get_fitting_time(mm)
-#' plot_DO_preds(predict_DO(mm))
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
-#' 
+#' # PR with fixed K on two days
+#' dat_daily <- data.frame(date=c("2012-09-18","2012-09-20"), K600=35)
+#' mm <- metab_mle(data=dat, data_daily=dat_daily)
+#' predict_metab(mm)
 #' \dontrun{
-#'   metab_mle(data=data.frame(empty="shouldbreak"))
-#'  
-#'   # PRK and PR with process error
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, 
-#'     model_specs=specs('m_np_pi_pm_km.nlm'), 
-#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#'   plot_DO_preds(predict_DO(mm))
-#'   get_fit(mm <- metab_mle(data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35), 
-#'     model_specs=specs('m_np_pi_pm_km.nlm'), 
-#'     day_start=start.numeric, day_end=end.numeric))[2,c("GPP","ER","K600","minimum")]
-#'   plot_DO_preds(predict_DO(mm))
+#' plot_DO_preds(predict_DO(mm))
 #' }
 #' @export
 #' @family metab_model
 metab_mle <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(date, K600, optional='all'), 
-  model_specs=specs('m_np_oi_pm_km.nlm'), # inheritParams metab_model_prototype
-  info=NULL, day_start=4, day_end=27.99, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # inheritParams mm_is_valid_day
+  specs=specs(mm_name('mle')),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data_daily=mm_data(date, K600, optional='all'), 
+  info=NULL
 ) {
   
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name('mle'))
+  }
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
+    data <- v(dat_list[['data']])
+    data_daily <- v(dat_list[['data_daily']])
     
     # model the data, splitting into overlapping 31.5-hr 'plys' for each date
     mle_all <- mm_model_by_ply(
-      mle_1ply, data=dat_list[['data']], data_daily=dat_list[['data_daily']], # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-      tests=tests, # for mm_is_valid_day
-      model_specs=model_specs) # for mle_1ply and negloglik_1ply
+      mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
+      specs=specs) # for mle_1ply and negloglik_1ply
   })
   
   # Package results
@@ -81,8 +58,8 @@ metab_mle <- function(
     info=info,
     fit=mle_all,
     fitting_time=fitting_time,
-    args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests), # keep in order passed to function
-    data=dat_list[['data']],
+    specs=specs,
+    data=dat_list[['data']], # keep the units if given
     data_daily=dat_list[['data_daily']])
   
   # Update data with DO predictions
@@ -100,27 +77,20 @@ metab_mle <- function(
 #' Called from metab_mle().
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
 #'   diagnostics
 #' @importFrom stats nlm
 #' @keywords internal
 mle_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab_model_prototype
+  data_ply, data_daily_ply, ply_date, ply_validity, timestep_days, ..., # inheritParams mm_model_by_ply_prototype
+  specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating 
   # metabolism, without breaking the whole loop. Just collect 
   # problems/errors as a list of strings and proceed. Also collect warnings.
-  timestep.days <- suppressWarnings(mean(as.numeric(diff(v(data_ply$solar.time)), units="days"), na.rm=TRUE))
-  validity <- mm_is_valid_day(
-    data_ply, # data split by mm_model_by_ply
-    tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_mle
-    timestep_days=timestep.days) # arg supplied here to avoid calculating twice
-  stop_strs <- if(isTRUE(validity)) character(0) else validity
+  stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
 
   # Collect K600 if it's available
@@ -146,7 +116,7 @@ mle_1ply <- function(
     nlm.args <- c(
       list(
         f = negloglik_1ply,
-        p = c(GPP=model_specs$GPP_init, ER=model_specs$ER_init, K600=model_specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
+        p = c(GPP=specs$GPP_init, ER=specs$ER_init, K600=specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
         hessian = TRUE,
         K600.daily=K600
       ),
@@ -155,10 +125,10 @@ mle_1ply <- function(
       ),
       list(
         frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
-        frac.ER = timestep.days,
-        frac.D = timestep.days,
-        calc_DO_fun = model_specs$calc_DO_fun,
-        ODE_method = model_specs$ODE_method
+        frac.ER = timestep_days,
+        frac.D = timestep_days,
+        calc_DO_fun = specs$calc_DO_fun,
+        ODE_method = specs$ODE_method
       ))
     
     mle.1d <- withCallingHandlers(
@@ -196,8 +166,8 @@ mle_1ply <- function(
       GPP.sd=NA, ER.sd=NA, K600.sd=NA,
       GPP.grad=NA, ER.grad=NA, K600.grad=NA,
       minimum=NA, code=NA, iterations=NA, 
-      warnings=paste0(warn_strs, collapse="; "), 
-      errors=paste0(stop_strs, collapse="; "),
+      warnings=paste0(unique(warn_strs), collapse="; "), 
+      errors=paste0(unique(stop_strs), collapse="; "),
       stringsAsFactors=FALSE)
   } else {
     data.frame(
@@ -205,8 +175,8 @@ mle_1ply <- function(
       GPP.sd=mle.1d$sd[1], ER.sd=mle.1d$sd[2], K600.sd=if(is.null(K600)) mle.1d$sd[3] else NA,
       GPP.grad=mle.1d$gradient[1], ER.grad=mle.1d$gradient[2], K600.grad=if(is.null(K600)) mle.1d$gradient[3] else NA,
       minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations, 
-      warnings=paste0(warn_strs, collapse="; "), 
-      errors=paste0(stop_strs, collapse="; "),
+      warnings=paste0(unique(warn_strs), collapse="; "), 
+      errors=paste0(unique(stop_strs), collapse="; "),
       stringsAsFactors=FALSE)
   }
 }

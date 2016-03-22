@@ -114,8 +114,14 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
   }
   
   # define defaults for start and end here since they rely on the optional chron package
-  if(missing(start)) start <- chron::chron(dates="08/23/12", times="22:00:00")
-  if(missing(end)) end <- chron::chron(dates="08/25/12", times="06:00:00")
+  if(missing(start)) 
+    start <- chron::chron(dates="08/23/12", times="22:00:00") 
+  else
+    start <- do.call(chron::chron, as.list(start))
+  if(missing(end)) 
+    end <- chron::chron(dates="08/25/12", times="06:00:00") 
+  else
+    end <- do.call(chron::chron, as.list(end))
   
   # reformat, subset the data to just the requested day
   french <- v(french)

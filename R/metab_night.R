@@ -4,67 +4,49 @@ NULL
 #' Nighttime regression for K estimation
 #' 
 #' Fits a model to estimate K from nighttime input data on DO, temperature, 
-#' light, etc. The default day start & end are 12 noon on the preceding to
-#' present day; the algorithm then filters the data to just those time points
+#' light, etc. The default day start & end are 12 noon on the preceding to 
+#' present day; the algorithm then filters the data to just those time points 
 #' for which light is very low.
 #' 
-#' @author Alison Appling, Maite Arroita
-#' @inheritParams metab_model_prototype
-#' @inheritParams mm_is_valid_day
-#' @return A metab_night object containing the fitted model.
-#' @examples
-#' # set the date in several formats
-#' start.chron <- chron::chron(dates="08/23/12", times="22:00:00")
-#' end.chron <- chron::chron(dates="08/25/12", times="06:00:00")
-#' start.posix <- as.POSIXct(format(start.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' end.posix <- as.POSIXct(format(end.chron, "%Y-%m-%d %H:%M:%S"), tz="UTC")
-#' mid.date <- as.Date(start.posix + (end.posix - start.posix)/2, tz=lubridate::tz(start.posix))
-#' 
-#' # get, format, & subset data
-#' vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-#' vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
-#' 
-#' # dates & subsetting specific to nighttime regression
-#' first.dark <- 100 + which(vfrenchshort$light[101:nrow(vfrenchshort)] < 0.1)[1]
-#' stop.dark <- 100 + which(
-#'   format(vfrenchshort$solar.time[101:nrow(vfrenchshort)], "%H:%M") == "23:00")[1]
-#' vfrenchnight <- vfrenchshort[first.dark:stop.dark,]
-#' night.start <- eval(parse(text=format(vfrenchnight$solar.time[1], "%H + %M/60")))
-#' night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
-#' 
-#' # fit
-#' mm <- metab_night(data=vfrenchnight, 
-#'   model_specs=specs('n_np_pi_eu_.lm'), 
-#'   day_start=night.start, day_end=night.end)
+#' @author Alison Appling, Maite Arroita, Bob Hall
 #'   
-#' # give estimates
+#' @inheritParams metab
+#' @return A metab_night object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}.
+#'   
+#' @examples
+#' dat <- data_metab('3', day_start=12, day_end=35)
+#' mm <- metab_night(data=dat)
 #' predict_metab(mm)
-#' streamMetabolizer:::load_french_creek_std_mle(vfrenchnight, estimate='K')
-#' 
-#' # predict DO
+#' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
-#' 
+#' }
 #' @export
 #' @family metab_model
 metab_night <- function(
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), data_daily=mm_data(NULL), # inheritParams metab_model_prototype
-  model_specs=specs('n_np_pi_eu_.lm'), # inheritParams metab_model_prototype
-  info=NULL, day_start=12, day_end=36, # inheritParams metab_model_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data') # args for mm_is_valid_day
+  specs=specs(mm_name('night')),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data_daily=mm_data(NULL),
+  info=NULL
 ) {
   
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name('night'))
+  }
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_night")
-    data <- dat_list[['data']]
-    data_daily <- dat_list[['data_daily']]
+    data <- v(dat_list[['data']])
+    data_daily <- v(dat_list[['data_daily']])
     
     # model the data, splitting into potentially overlapping 'plys' for each date
     night_all <- mm_model_by_ply(
-      nightreg_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, # for mm_model_by_ply and mm_is_valid_day
-      tests=tests, # for mm_is_valid_day
-      model_specs=model_specs) # for nightreg_1ply
+      nightreg_1ply, 
+      data=data, data_daily=data_daily, day_start=specs$day_start, day_end=specs$day_end, # for mm_model_by_ply
+      day_tests=c(), timestep_days=FALSE, # for mm_model_by_ply - bypass the regular timestep calc & validity check on the full day ply
+      night_tests=specs$day_tests, specs=specs) # for nightreg_1ply
   })
   
   # Package and return results
@@ -73,9 +55,9 @@ metab_night <- function(
     info=info,
     fit=night_all,
     fitting_time=fitting_time,
-    args=list(model_specs=model_specs, day_start=day_start, day_end=day_end, tests=tests),
-    data=data,
-    data_daily=data_daily)
+    specs=specs,
+    data=dat_list[['data']], # keep the units if given
+    data_daily=dat_list[['data_daily']])
   
   # Update data with DO predictions
   mm@data <- predict_DO(mm)
@@ -92,26 +74,26 @@ metab_night <- function(
 #' Called from metab_night().
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_is_valid_day
-#' @inheritParams metab_model_prototype
-#' @return data.frame of estimates and \code{\link[stats]{nlm}} model 
-#'   diagnostics
+#' @param night_tests character vector of validity tests to conduct on the data 
+#'   after subsetting to just nighttime
+#' @inheritParams metab
+#' @return data.frame of estimates and \code{\link[stats]{lm}} model diagnostics
 #' @keywords internal
-#' @references Hornberger, George M., and Mahlon G. Kelly. Atmospheric
+#' @references Hornberger, George M., and Mahlon G. Kelly. Atmospheric 
 #'   Reaeration in a River Using Productivity Analysis. Journal of the 
 #'   Environmental Engineering Division 101, no. 5 (October 1975): 729-39.
 #'   
 #'   Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. Bott, Jody
-#'   Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and
-#'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
+#'   Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and 
+#'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in 
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, # inheritParams mm_model_by_ply_prototype
-  tests=c('full_day', 'even_timesteps', 'complete_data'), # inheritParams mm_is_valid_day
-  model_specs=specs('n_np_pi_eu_.lm') # inheritParams metab_model_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, ..., # inheritParams mm_model_by_ply_prototype
+  night_tests=TRUE, # new arg here
+  specs=specs('n_np_pi_eu_.lm') # inheritParams metab
 ) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and
@@ -124,31 +106,36 @@ nightreg_1ply <- function(
       which_night <- which(v(data_ply$light) < v(u(0.1, "umol m^-2 s^-1")))
       if(length(which_night) == 0) stop("no nighttime rows in data_ply")
       if(any(diff(which_night) > 1)) 
-        stop_strs <<- c(stop_strs, "need exactly one night per data_ply")
+        stop_strs <- c(stop_strs, "need exactly one night per data_ply")
       night_dat <- data_ply[which_night,]
-      # do the full_day test here, rather than in mm_is_valid_day, because
-      # it's not about specific times but about whether night begins and ends
-      # within the ply bounds
-      if(!is.na(full_day_test <- match('full_day',tests))) {
-        which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
-        if(which_twilight[1] < 1)
-          stop_strs <<- c(stop_strs, "data don't start before day-night transition")
-        if(which_twilight[2] > nrow(data_ply))
-          stop_strs <<- c(stop_strs, "data don't end after night-day transition")
-        tests <- tests[-full_day_test]
-      }
       
-      # check for data validity here, after subsetting to the time window we
+      # check for data validity here, after subsetting to the time window we 
       # really care about
-      timestep.days <- suppressWarnings(mean(as.numeric(diff(v(night_dat$solar.time)), units="days"), na.rm=TRUE))
+      which_twilight <- c(head(which_night,1) - 1, tail(which_night,1) + 1)
+      has_sunset <- which_twilight[1] >= 1
+      has_sunrise <- which_twilight[2] <= nrow(data_ply)
+      if('include_sunset' %in% night_tests) {
+        if(!has_sunset)
+          stop_strs <- c(stop_strs, "data don't include day-night transition")
+        night_tests <- night_tests[night_tests != 'include_sunset']
+      }
+      # for the full_day test, let the twilight hours define a narrower required
+      # window than day_start, day_end did (if the twilight hours can be
+      # determined from the data_ply)
+      date_start <- as.POSIXct(paste0(as.character(ply_date), " 00:00:00"), tz=lubridate::tz(v(data_ply$solar.time)))
+      night_hours <- as.numeric(data_ply[which_twilight+c(1,-1),'solar.time'] - date_start, units='hours')
+      night_start <- if(has_sunset) max(day_start, night_hours[1]) else day_start
+      night_end <- if(has_sunrise) min(day_end, night_hours[2]) else day_end
+      # run the validity tests (except include_sunset, handled above)
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
-        tests=tests, day_start=day_start, day_end=day_end, # args passed from metab_night (after modifying tests)
-        timestep_days=timestep.days) # arg supplied here to avoid calculating twice
-      if(!isTRUE(validity)) stop_strs <<- c(stop_strs, validity)
+        day_start=night_start, day_end=night_end, day_tests=night_tests,
+        ply_date=ply_date) # args passed from metab_night (after modifying the tests)
+      if(!isTRUE(validity)) stop_strs <- c(stop_strs, validity)
       
-      # actually stop if anything has broken so far
-      if(length(stop_strs) > 0) stop("invalid data ply")
+      # actually stop if anything has broken so far; the tryCatch will catch it,
+      # and our stop_strs will be retained for later reporting
+      if(length(stop_strs) > 0) stop("")
       
       # smooth DO data
       night_dat$DO.obs.smooth <- u(c(stats::filter(night_dat$DO.obs, rep(1/3, 3), sides=2)), get_units(night_dat$DO.obs))
@@ -201,7 +188,7 @@ nightreg_1ply <- function(
       
     }, error=function(err) {
       # on error: give up, remembering error
-      stop_strs <<- c(stop_strs, err$message)
+      if(nchar(err$message) > 0) stop_strs <<- c(stop_strs, err$message)
       NA
     }), warning=function(war) {
       # on warning: record the warning and run again
@@ -221,8 +208,8 @@ nightreg_1ply <- function(
              K600=night.1d$K600, K600.sd=night.1d$K600.sd,
              r.squared=night.1d$rsq, p.value=night.1d$p,
              row.first=night.1d$row.first, row.last=night.1d$row.last,
-             warnings=paste0(warn_strs, collapse="; "), 
-             errors=paste0(stop_strs, collapse="; "),
+             warnings=paste0(unique(warn_strs), collapse="; "), 
+             errors=paste0(unique(stop_strs), collapse="; "),
              stringsAsFactors=FALSE)
 }
 
@@ -257,8 +244,8 @@ setClass(
 predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # pull args from the model
-  day_start <- get_args(metab_model)$day_start
-  day_end <- get_args(metab_model)$day_end
+  day_start <- get_specs(metab_model)$day_start
+  day_end <- get_specs(metab_model)$day_end
   
   # get the DO, temperature, etc. data; filter if requested
   data <- get_data(metab_model) %>%
@@ -282,7 +269,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end) %>% # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c()) %>% # for mm_model_by_ply
     mm_filter_dates(date_start=date_start, date_end=date_end)
 }
 
@@ -294,7 +281,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, timestep_days, ... # inheritParams mm_model_by_ply_prototype
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -311,7 +298,9 @@ metab_night_predict_1ply <- function(
   }
   
   # apply the regular prediction function
-  mm_predict_1ply(data_ply=night_dat, data_daily_ply=data_daily_ply, 
-                  day_start, day_end, ply_date, calc_DO_fun=calc_DO_mod) # use default ODE_method
+  mm_predict_1ply(
+    data_ply=night_dat, data_daily_ply=data_daily_ply, 
+    day_start, day_end, ply_date, timestep_days=timestep_days, 
+    calc_DO_fun=calc_DO_mod) # use default ODE_method
   
 }

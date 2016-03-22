@@ -26,9 +26,9 @@ in solar time
 hourdf <- data.frame(hour=c(0:12,12.5:23.5), 
   hragl=streamMetabolizer:::calc_hour_angle(c(0:12,12.5:23.5)))
 \dontrun{
-  library(ggplot2)
-  ggplot(hourdf, aes(x=hour, y=hragl)) + 
-    geom_hline(yintercept=0, color="gold") + geom_line()
+library(ggplot2)
+ggplot(hourdf, aes(x=hour, y=hragl)) + 
+  geom_hline(yintercept=0, color="gold") + geom_line()
 }
 }
 

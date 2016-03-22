@@ -5,42 +5,46 @@
 \title{Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 
 & setting data_daily$weight to reflect user weights & filters}
 \usage{
-prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end, tests)
+prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end,
+  day_tests)
 }
 \arguments{
 \item{data}{unit data to aggregate to daily_data. may be NULL.}
 
 \item{data_daily}{daily data to prepare for K modeling}
 
-\item{weights}{character vector indicating the type of weighting to use. 
-Leave blank or set to c() for no weights.}
+\item{weights}{For Kmodel, character vector indicating the type of weighting 
+to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 
-\item{filters}{named numeric vector of limits to use in filtering data_daily.
-If an element with a name in c("CI.max","discharge.daily.max","velocity.daily.max") is 
-given, the corresponding filter is applied: K600.upper-K600.lower >= 
-CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= velocity.daily.max}
+\item{filters}{For Kmodel, named numeric vector of limits to use in filtering
+data_daily. Elements may include
+c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
+given, the corresponding filter is applied: K600.upper-K600.lower <=
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
+velocity.daily.max}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours 
 from the midnight that begins the date. For example, day_start=-1.5 
 indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For single days of input data, it is 
-conventional/useful to begin the day the evening before, e.g., -1.5, and to
-end just before the next sunrise, e.g., 30. For multiple consecutive days, 
-it may make the most sense to start just before sunrise (e.g., 4) and to 
-end 24 hours later. For nighttime regression to be compatible with this 
-setup, the date assigned to a section of data should be the date whose 
+fall exactly on an observation time. For metabolism models working with 
+single days of input data, it is conventional/useful to begin the day the 
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+30. For multiple consecutive days, it may make the most sense to start just
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
+regression, the date assigned to a chunk of data should be the date whose 
 evening contains the data. The default is therefore 12 to 36 for 
 metab_night, of which the times of darkness will be used.}
 
-\item{day_end}{end time (inclusive) of a day's data in number of hours from 
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
 the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at 2006-06-27 06:00, or at the last 
-observation time that occurs before that time if day_end doesn't fall 
-exactly on an observation time. See day_start for recommended start and end
-times.}
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
-\item{tests}{list of tests to conduct}
+\item{day_tests}{list of tests to conduct to determine whether each date 
+worth of data is valid for modeling. the results of these tests will be 
+passed to \code{model_fun} as the \code{ply_validity} argument to that 
+function.}
 }
 \description{
 Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 

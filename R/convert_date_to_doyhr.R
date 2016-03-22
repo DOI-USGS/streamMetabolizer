@@ -6,6 +6,8 @@
 #' @return Numeric value expressing the date as the number of days, with decimal
 #'   hours, since 00:00 of December 31 of the preceding year (i.e., January 1st
 #'   at 00:01 is ~1.01)
+#' @examples 
+#' convert_date_to_doyhr(as.POSIXct("2015-02-03 12:01:00 UTC"))
 #' @export
 convert_date_to_doyhr <- function(date) {
   year <- as.POSIXct(format(v(date), "%Y-01-01 00:00:00"), tz=lubridate::tz(v(date)))
@@ -23,7 +25,8 @@ convert_date_to_doyhr <- function(date) {
 #' @param origin The origin to pass to as.POSIXct()
 #' @param ... Other arguments to pass to as.POSIXct()
 #' @return A datetime object as POSIXct
-#'   
+#' @examples 
+#' convert_doyhr_to_date(34.500695, 2015)
 #' @export
 convert_doyhr_to_date <- function(doyhr, year, tz="UTC", origin=as.POSIXct("1970-01-01 00:00:00",tz="UTC"), ...) {
   secs_since_jan1 <- (v(doyhr)-1)*24*60*60

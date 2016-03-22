@@ -11,7 +11,7 @@ load_french_creek <- function(attach.units=TRUE) {
   file.name <- system.file("extdata", "french.csv", package="streamMetabolizer") # data from French Creek, Hotchkiss and Hall, In press, Ecology
   french <- read.csv(file.name, stringsAsFactors=FALSE, header=TRUE) 
   french <- french[french$station=="low",] # subset to data from only one station (also, low has the cleanest data) (already subset in extdata)
-  french_creek_units <- c(station=NA, siteno=NA, sonde=NA, date=NA, time=NA, temp='degC', oxy='mg L^-1')
+  french_creek_units <- c(station=NA, siteno=NA, sonde=NA, date=NA, time=NA, temp='degC', oxy='mgO2 L^-1')
   french <- unitted::u(french, french_creek_units)
   
   # remove NA oxys (1658) and remaining duplicates (n=1)

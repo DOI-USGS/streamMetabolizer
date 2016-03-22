@@ -9,8 +9,15 @@
 #' @inheritParams calc_DO_mod_w_fixed_error
 #' @export
 #' @examples
-#' calc_DO_mod(10, -13, 2.5, 14, 1, rep(12,100), 
-#'   rep(1/100,100), rep(1/100,100), rep(1/100,100), 11, 100, ODE_method="Euler")
+#' n = 24
+#' DO <- calc_DO_mod(GPP.daily=3, ER.daily=-9, K600.daily=2.5, 
+#'   DO.sat=11, depth=1, temp.water=rep(12,n), 
+#'   frac.GPP=with(data.frame(sinpow=sin(seq(0,pi,length.out=n))^4), sinpow/sum(sinpow)), 
+#'   frac.ER=rep(1/n,n), frac.D=rep(1/n,n), 
+#'   DO.mod.1=8, n=n, ODE_method="Euler")
+#' \dontrun{
+#' plot(DO)
+#' }
 calc_DO_mod <- function(
   GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, ODE_method="pairmeans", ...) {
   

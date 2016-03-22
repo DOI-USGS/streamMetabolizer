@@ -29,7 +29,7 @@ A data.frame of predictions, as for the generic
 \description{
 Generate simulated values for DO.obs (including any error specified in the 
 call to \code{metab_sim()}) and DO.mod (with no error, just the predictions 
-from the specified GPP, ER, and K600). The errors are randomly generated on
+from the specified GPP, ER, and K600). The errors are randomly generated on 
 every new call to predict_DO.
 }
 \seealso{

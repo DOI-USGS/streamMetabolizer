@@ -1,12 +1,18 @@
+#' @include specs-class.R
+NULL
+
 #### class definition ####
 
 #' A metabolism model class.
 #' 
 #' @slot info Any metadata the user chooses to package with metabolism model.
 #' @slot fit An internal representation of a fitted model.
-#' @slot fitting_time Usually stored as a proc_time; the time required to fit the model.
-#' @slot pkg_version A string indicating the package version used to create this metab_model object.
-#' @slot args A list of arguments, excluding data, that were supplied to the fitting function.
+#' @slot fitting_time Usually stored as a proc_time; the time required to fit
+#'   the model.
+#' @slot pkg_version A string indicating the package version used to create this
+#'   metab_model object.
+#' @slot specs A list of model specifications that were supplied to the fitting
+#'   function.
 #' @slot data The data that were used to fit the model.
 #' @slot data_daily The daily data, if any, that were used to fit the model.
 #' @exportClass metab_model
@@ -17,7 +23,7 @@ setClass(
     info="ANY",
     fit="ANY",
     fitting_time="ANY",
-    args="list",
+    specs="specs",
     data="ANY",
     data_daily="ANY",
     pkg_version="character"),
@@ -26,7 +32,7 @@ setClass(
     info=NULL,
     fit=NULL,
     fitting_time=NULL,
-    args=NULL,
+    specs=NULL,
     data=NULL,
     data_daily=NULL,
     pkg_version=""),
@@ -51,15 +57,17 @@ setClass(
 #' 
 #' Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 #' 
-#' @param model_class character name of a class inheriting from metab_model - the
-#'   type of object to create
+#' @param model_class character name of a class inheriting from metab_model -
+#'   the type of object to create
 #' @param info User-supplied metadata of any form.
 #' @param fit An internal representation of a fitted model.
-#' @param fitting_time A proc_time object giving the time taken to fit the model.
-#' @param args A list of arguments, excluding data, that were supplied to the 
-#'   fitting function.
+#' @param fitting_time A proc_time object giving the time taken to fit the
+#'   model.
+#' @param specs A list of model specifications that were supplied to the fitting
+#'   function.
 #' @param data The data that were used to fit the model.
-#' @param data_daily The data_daily that were used to fit the model. May be NULL.
+#' @param data_daily The data_daily that were used to fit the model. May be
+#'   NULL.
 #' @param pkg_version A string indicating the package version used to create 
 #'   this metab_model object. The default should almost always be appropriate.
 #' @param ... other arguments passed to new() for this particular model_class
@@ -67,8 +75,7 @@ setClass(
 #'   
 #' @examples
 #' metab_model() 
-#' metab_model(fit=1:5, args=list(length=5))
-#' metab_model("metab_mle", fit=1:5, args=list(length=5))
+#' metab_model("metab_mle", fit=1:5, specs=list(length=5))
 #' @importFrom utils packageVersion
 #' @export
 metab_model <- function(
@@ -76,14 +83,16 @@ metab_model <- function(
   info="user metadata goes here",
   fit="generic metab_model class; no actual fit",
   fitting_time=system.time({}),
-  args=list(day_start=4, day_end=27.99),
+  specs=list(),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
   data_daily=mm_data(date, K600, discharge, velocity, optional="all"),
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
-  # Create a dummy metab_model object
-  new(model_class, info=info, fit=fit, fitting_time=fitting_time, args=args, data=data, data_daily=data_daily, pkg_version=pkg_version, ...)
+  # Create a metab_model object
+  new(model_class, info=info, fit=fit, fitting_time=fitting_time, 
+      specs=if(class(specs)[1] == 'specs') specs else add_specs_class(specs), 
+      data=data, data_daily=data_daily, pkg_version=pkg_version, ...)
 }
 
 #### loadModelInterface ####
@@ -103,19 +112,7 @@ setMethod(
     print(get_info(object))
     cat("  Fitted model (access with get_fit()):\n")
     cat("    class: ", paste0(class(get_fit(object)), collapse=" & "),"\n")
-    cat("  Fitting arguments (access with get_args()):\n")
-    args <- get_args(object)
-    for(arg in names(args)) {
-      arg_char <- tryCatch(
-        if(is.null(args[[arg]])) {
-          'NULL' 
-        } else {
-          paste0(as.character(args[[arg]]), collapse=", ")
-        }, 
-        error=function(e) paste0(paste0(class(args[[arg]]), collapse=","),". see get_args(...)[['",arg,"']]"))
-      if(nchar(arg_char) > 100) arg_char <- paste0(substr(arg_char, 1, 100), "...")
-      cat(paste0("    ", arg, ": ", arg_char, "\n"))
-    }
+    print(get_specs(object), header="  Fitting specifications (access with get_specs()):\n", prefix="    ")
     cat("  Fitting time (access with get_fitting_time()):\n")
     print(get_fitting_time(object))
     cat("  Fitting data (truncated; access with get_data()):\n")
@@ -157,13 +154,13 @@ get_fitting_time.metab_model <- function(metab_model) {
 }
 
 
-#' Retrieve the arguments that were used to fit the metab_model
+#' Retrieve the specifications that were used to fit the metab_model
 #' 
-#' @inheritParams get_args
+#' @inheritParams get_specs
 #' @export 
-#' @family get_args
-get_args.metab_model <- function(metab_model) {
-  metab_model@args
+#' @family get_specs
+get_specs.metab_model <- function(metab_model) {
+  metab_model@specs
 }
 
 
@@ -217,6 +214,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
   
   fit <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
+  
   var_vec <- c('GPP','ER','K600')
   precalc_cis <- grep("^(GPP|ER|K600)_daily_(50pct|2\\.5pct|97\\.5pct)$", names(fit), value=TRUE)
   calcnow_cis <- grep("^(GPP|ER|K600)(\\.sd)*$", names(fit), value=TRUE)
@@ -228,8 +226,8 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       vars=var_vec) %>%
       with(paste0("^(",vars,")_daily_(",medlohi,")$"))
     precalc_cis <- sapply(grepstrs, grep, names(fit), value=TRUE, USE.NAMES=FALSE)
-    fit[c('date', precalc_cis)] %>% 
-      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3))))
+    fit[c('date', precalc_cis, 'warnings', 'errors')] %>% 
+      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3)), 'warnings', 'errors'))
 
   } else if(length(calcnow_cis) == 6) {
     # the fit includes columns for GPP, GPP.sd, ER, ER.sd, K600, and K600.sd; calculate CIs
@@ -245,7 +243,8 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
           lower = est - crit * sd,
           upper = est + crit * sd) %>% 
           setNames(c(var, paste0(var, ".", c("lower","upper"))))
-      })) %>%
+      }),
+      list(fit[c('warnings','errors')])) %>%
       bind_cols() %>%
       as.data.frame()
     
@@ -283,12 +282,13 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
 predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {
   
   # pull args from the model
-  if(missing(calc_DO_args)) calc_DO_args <- get_args(metab_model)$model_specs$calc_DO_args # OK to be NULL
-  day_start <- get_args(metab_model)$day_start
-  day_end <- get_args(metab_model)$day_end
+  if(missing(calc_DO_args)) calc_DO_args <- get_specs(metab_model)$calc_DO_args # OK to be NULL
+  day_start <- get_specs(metab_model)$day_start
+  day_end <- get_specs(metab_model)$day_end
   
-  # Get the input data; filter if requested
-  data <- get_data(metab_model) %>%
+  # get the input data; filter if requested
+  data <- get_data(metab_model) %>% 
+    v() %>% # units are lost here. someday we'll get them worked through the whole system.
     mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
@@ -304,8 +304,7 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc
   # re-process the input data with the metabolism estimates to predict DO
   mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
     calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
-  
 }

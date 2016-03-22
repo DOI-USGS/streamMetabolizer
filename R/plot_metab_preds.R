@@ -14,8 +14,8 @@
 #'   narrower range
 #' @examples 
 #' \dontrun{
-#' mm <- metab_night(v(french))
-#' plot_metab_preds(predict_DO(mm)[1:360,])
+#' mm <- metab_night(specs(mm_name('night')), data=data_metab('10', day_start=12, day_end=36))
+#' plot_metab_preds(predict_metab(mm))
 #' }
 #' @import dplyr
 #' @importFrom unitted v
@@ -44,7 +44,7 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
   metab_preds_all <- bind_rows(metab_preds_GPP, metab_preds_ER, metab_preds_K600) %>%
     mutate(var=ordered(var, c(GPP='GPP (g m^-2 d^-1)', ER='ER (g m^-2 d^-1)', K600='K600 (d^-1)')[y_var]))
   
-  switch(
+  plot_out <- switch(
     style,
     'ggplot2' = {
       if(!requireNamespace("ggplot2", quietly=TRUE))
@@ -91,4 +91,6 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
       stop("no dygraphs option yet")
     }
   )
+  
+  invisible(plot_out)
 }

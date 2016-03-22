@@ -4,21 +4,28 @@
 \alias{specs}
 \title{Generate a coherent list of model specs}
 \usage{
-specs(model_name = mm_name(), GPP_init = 10, ER_init = -10,
-  K600_init = 10, calc_DO_fun, ODE_method, bayes_fun, bayes_software,
-  keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
+specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
+  day_tests = c("full_day", "even_timesteps", "complete_data"),
+  GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, ODE_method,
+  split_dates, keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
   ER_daily_mu = -10, ER_daily_sigma = 10, K600_daily_mu = 10,
-  K600_daily_sigma = 10, err_obs_iid_sigma_min = 0,
-  err_obs_iid_sigma_max = 5, err_proc_acor_phi_min = 0,
-  err_proc_acor_phi_max = 1, err_proc_acor_sigma_min = 0,
-  err_proc_acor_sigma_max = 5, err_proc_iid_sigma_min = 0,
-  err_proc_iid_sigma_max = 5, priors = FALSE, params_out, n_chains = 4,
-  n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$bayes_software, jags = 250,
-  NA), burnin_steps = switch(mm_parse_name(model_name)$bayes_software, stan =
-  500, jags = 250, NA),
-  saved_steps = switch(mm_parse_name(model_name)$bayes_software, stan = 500,
-  jags = 1000, NA), thin_steps = 1, verbose = FALSE, err.obs.sigma = 0.1,
+  K600_daily_sigma = 10, K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
+  K600_daily_sigma_shape = 1, K600_daily_sigma_rate = 2,
+  K600_daily_beta0_mu = 10, K600_daily_beta0_sigma = 10,
+  K600_daily_beta1_mu = 10, K600_daily_beta1_sigma = 10,
+  err_obs_iid_sigma_shape = 1, err_obs_iid_sigma_rate = 10,
+  err_proc_acor_phi_shape = 1, err_proc_acor_phi_rate = 1000,
+  err_proc_acor_sigma_shape = 1, err_proc_acor_sigma_rate = 1000,
+  err_proc_iid_sigma_shape = 1, err_proc_iid_sigma_rate = 100,
+  priors = FALSE, params_out, n_chains = 4, n_cores = 4,
+  adapt_steps = switch(mm_parse_name(model_name)$engine, jags = 250, NA),
+  burnin_steps = switch(mm_parse_name(model_name)$engine, stan = 500, jags =
+  250, NA), saved_steps = switch(mm_parse_name(model_name)$engine, stan = 500,
+  jags = 1000, NA), thin_steps = 1, verbose = FALSE,
+  weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
+  velocity.daily.max = NA), predictors = c("discharge.daily"),
+  transforms = c(K600 = "log", date = NA, velocity.daily = "log",
+  discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
   err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
@@ -32,6 +39,39 @@ directory (the first assumption; this directory can be found with
 absolute path or a path relative to the current working directory (the 
 second assumption, if the first assumption turns up no files of the given 
 name).}
+
+\item{engine}{The software or function to use in fitting the model. Should be
+specified via \code{mm_name} rather than here. For type='bayes', one of 
+\code{c('jags','stan')} indicating the software package to use for the MCMC
+process. For type='Kmodel', the name of an interpolation or regression 
+method relating K to the predictor[s] of choice. One of \code{c("mean", 
+"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
+one option so it's not included in \code{specs()} (but is nonetheless noted
+in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
+\code{nlm()} for model fitting)}
+
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time. For metabolism models working with 
+single days of input data, it is conventional/useful to begin the day the 
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+30. For multiple consecutive days, it may make the most sense to start just
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
+regression, the date assigned to a chunk of data should be the date whose 
+evening contains the data. The default is therefore 12 to 36 for 
+metab_night, of which the times of darkness will be used.}
+
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. See day_start for recommended start and end times.}
+
+\item{day_tests}{list of tests to conduct to determine whether each date 
+worth of data is valid for modeling. the results of these tests will be 
+passed to \code{model_fun} as the \code{ply_validity} argument to that 
+function.}
 
 \item{GPP_init}{the inital value of daily GPP to use in the NLM fitting 
 process}
@@ -56,12 +96,12 @@ depending entirely on DO.sat, GPP, etc. at time t. Both methods are
 imprecise and fast, relative to Runge-Kutta or other numerical integration
 methods}
 
-\item{bayes_fun}{character in \code{c('bayes_1ply', 'bayes_all')} indicating 
-whether the data should be split into daily chunks first ('bayes_1ply') or 
-passed to the model fitting function in one big chunk ('bayes_all')}
-
-\item{bayes_software}{character in \code{c('jags','stan')} indicating the 
-software package to use for the MCMC process}
+\item{split_dates}{logical indicating whether the data should be split into 
+daily chunks first (TRUE) or processed within one big model (FALSE). If 
+valid days differ in their timestep length, split_dates will need to be 
+TRUE; otherwise, FALSE is generally more efficient. FALSE is also the only 
+appropriate solution for a hierarchical model that pools information on 
+error, K600, etc. across days.}
 
 \item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates 
 (coerced with as.Date if character, etc.) indicating whether to keep all of
@@ -86,29 +126,69 @@ daily rate of reaeration}
 \item{K600_daily_sigma}{The standard deviation of a dnorm distribution for 
 K600_daily, the daily rate of reaeration}
 
-\item{err_obs_iid_sigma_min}{The lower bound on a dunif distribution for 
+\item{K600_daily_mu_mu}{hyperparameter for pool_K600='normal'. The mean 
+parameter (mu_mu) of a normal distribution of mu in K ~ N(mu, sigma), mu ~ 
+N(mu_mu, mu_sigma)}
+
+\item{K600_daily_mu_sigma}{hyperparameter for pool_K600='normal'. The 
+standard deviation parameter (mu_sigma) of a normal distribution of mu in K
+~ N(mu, sigma), mu ~ N(mu_mu, mu_sigma)}
+
+\item{K600_daily_sigma_shape}{hyperparameter for pool_K600='normal'. The 
+shape (= alpha = k) parameter of a gamma distribution of sigma in K ~ N(mu,
+sigma), sigma ~ gamma(shape, rate)}
+
+\item{K600_daily_sigma_rate}{hyperparameter for pool_K600='normal'. The rate 
+(= beta = 1/theta = inverse scale) parameter of a gamma distribution of 
+sigma in K ~ N(mu, sigma), sigma ~ gamma(shape, rate)}
+
+\item{K600_daily_beta0_mu}{hyperparameter for pool_K600='linear'. The mean 
+parameter of a normally distributed intercept term (beta0) in the linear 
+model K ~ N(beta0 + beta1*log(Q)), beta0 ~ N(beta0_mu, beta0_sigma)}
+
+\item{K600_daily_beta0_sigma}{hyperparameter for pool_K600='linear'. The 
+standard deviation parameter of a normally distributed intercept term 
+(beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
+N(beta0_mu, beta0_sigma)}
+
+\item{K600_daily_beta1_mu}{hyperparameter for pool_K600='linear'. The mean 
+parameter of a normally distributed slope term (beta1) in the linear model 
+K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, beta1_sigma)}
+
+\item{K600_daily_beta1_sigma}{hyperparameter for pool_K600='linear'. The 
+standard deviation parameter of a normally distributed slope term (beta1) 
+in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, 
+beta1_sigma)}
+
+\item{err_obs_iid_sigma_shape}{The shape parameter on a gamma distribution 
+for err_obs_iid_sigma, the standard deviation of the observation error}
+
+\item{err_obs_iid_sigma_rate}{The rate parameter on a gamma distribution for 
 err_obs_iid_sigma, the standard deviation of the observation error}
 
-\item{err_obs_iid_sigma_max}{The upper bound on a dunif distribution for 
-err_obs_iid_sigma, the standard deviation of the observation error}
-
-\item{err_proc_acor_phi_min}{lower bound on the autocorrelation coefficient 
-for the autocorrelated component of process [& sometimes observation] error}
-
-\item{err_proc_acor_phi_max}{upper bound on the autocorrelation coefficient 
-for the autocorrelated component of process [& sometimes observation] error}
-
-\item{err_proc_acor_sigma_min}{lower bound on the standard deviation of the 
+\item{err_proc_acor_phi_shape}{The shape parameter on a gamma distribution 
+for err_proc_acor_phi, the autocorrelation coefficient for the 
 autocorrelated component of process [& sometimes observation] error}
 
-\item{err_proc_acor_sigma_max}{upper bound on the standard deviation of the 
-autocorrelated component of process [& sometimes observation] error}
+\item{err_proc_acor_phi_rate}{The rate parameter on a gamma distribution for 
+err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated 
+component of process [& sometimes observation] error}
 
-\item{err_proc_iid_sigma_min}{lower bound on the standard deviation of the 
-uncorrelated (IID) component of process [& sometimes observation] error}
+\item{err_proc_acor_sigma_shape}{The shape parameter on a gamma distribution 
+for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+component of process [& sometimes observation] error}
 
-\item{err_proc_iid_sigma_max}{upper bound on the standard deviation of the 
-uncorrelated (IID) component of process [& sometimes observation] error}
+\item{err_proc_acor_sigma_rate}{The rate parameter on a gamma distribution 
+for err_proc_acor_sigma, the standard deviation of the autocorrelated 
+component of process [& sometimes observation] error}
+
+\item{err_proc_iid_sigma_shape}{The shape parameter on a gamma distribution 
+for err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+component of process [& sometimes observation] error}
+
+\item{err_proc_iid_sigma_rate}{The rate parameter on a gamma distribution for
+err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
+component of process [& sometimes observation] error}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will 
 return priors rather than posteriors?}
@@ -132,6 +212,32 @@ means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
+\item{weights}{For Kmodel, character vector indicating the type of weighting 
+to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
+
+\item{filters}{For Kmodel, named numeric vector of limits to use in filtering
+data_daily. Elements may include
+c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
+given, the corresponding filter is applied: K600.upper-K600.lower <=
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
+velocity.daily.max}
+
+\item{predictors}{For Kmodel, character vector of variables (column names in 
+data or data_daily) to use in predicting K. Leave blank or set to c() for 
+no predictors. Otherwise, one or more of these may be included: c("date", 
+"velocity.daily", "discharge.daily").}
+
+\item{transforms}{For Kmodel, a named character vector of names of functions 
+(probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
+probably be logged. The vector names must match the values of 
+\code{predictors}, although not all elements of \code{predictors} must be 
+included in \code{transforms}. Recommended transforms include 
+\code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
+
+\item{other_args}{Other arguments passed to the fitting function given by 
+\code{specs$engine}. \code{na.rm=TRUE} is already passed to 
+\code{mean} (which is actually implemented as \code{sum}, anyway).}
+
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 
 full time series of modeled values.}
@@ -153,14 +259,13 @@ of predict_DO}
 }
 \value{
 an internally consistent list of arguments that may be passed to 
-  \code{metab_bayes}, \code{metab_mle}, etc. as the \code{model_specs} 
-  argument
+  \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 }
 \description{
 Generates an internally consistent list of model specifications that may be 
-passed to \code{metab_bayes}, \code{metab_mle}, etc. via the 
-\code{model_specs} argument. This help file gives the definitive list of all 
-possible model specs, but only a subset of these are relevant to any given 
+passed to \code{metab_bayes}, \code{metab_mle}, etc. via the \code{specs} 
+argument. This help file gives the definitive list of all possible model 
+specs, but only a subset of these are relevant to any given 
 \code{model_name}. See the 'Relevant arguments' section below. Irrelevant 
 arguments for the given \code{model_name} should not be explicitly passed 
 into this function (but don't worry - we'll just stop and tell you if you 
@@ -173,29 +278,44 @@ often should, be overridden to tailor the model to your needs.
 \section{Relevant arguments}{
 
   
-  * metab_bayes: Always relevant: \code{model_name, bayes_fun, 
-  bayes_software, keep_mcmcs, GPP_daily_mu, GPP_daily_sigma, ER_daily_mu, 
-  ER_daily_sigma, K600_daily_mu, K600_daily_sigma, priors, params_out, 
-  n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. If 
+  * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
+  keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
+  ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
+  burnin_steps, saved_steps, thin_steps, verbose}. If
+  \code{mm_parse_name(model_name)$pool_K600=='none'} then also 
+  \code{K600_daily_mu, K600_daily_sigma}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='normal'} then also 
+  \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
+  K600_daily_sigma_rate}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='linear'} then also 
+  \code{K600_daily_beta0_mu, K600_daily_beta0_sigma, K600_daily_beta1_mu, 
+  K600_daily_beta1_sigma}. If 
+  \code{mm_parse_name(model_name)$pool_K600=='binned'} then also 
+  \code{K600_daily_num_bins, K600_daily_beta_mu, K600_daily_beta_sigma}. If 
   \code{mm_parse_name(model_name)$err_obs_iid} then also 
-  \code{err_obs_iid_sigma_min, err_obs_iid_sigma_max}. If 
+  \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
   \code{mm_parse_name(model_name)$err_proc_acor} then also 
-  \code{err_proc_acor_phi_min, err_proc_acor_phi_max, 
-  err_proc_acor_sigma_min, err_proc_acor_sigma_max}. If 
+  \code{err_proc_acor_phi_shape, err_proc_acor_phi_rate, 
+  err_proc_acor_sigma_shape, err_proc_acor_sigma_rate}. If 
   \code{mm_parse_name(model_name)$err_proc_iid} then also 
-  \code{err_proc_iid_sigma_min, err_proc_iid_sigma_max}. If 
-  \code{features$bayes_software == 'jags'} then also \code{adapt_steps},
+  \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
+  \code{features$engine == 'jags'} then also \code{adapt_steps},
   
-  * metab_mle: \code{model_name, calc_DO_fun, ODE_method, GPP_init, ER_init, 
-  K600_init}
+  * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
+  ODE_method, GPP_init, ER_init, K600_init}
   
-  * metab_night: \code{model_name}
+  * metab_night: \code{model_name, day_start, day_end, day_tests}
   
-  * metab_sim: \code{model_name, err.obs.sigma, err.obs.phi, err.proc.sigma, 
-  err.proc.phi, ODE_method, sim.seed}
+  * metab_Kmodel: \code{model_name, engine, day_start, day_end, day_tests, 
+  weights, filters, predictors, transforms, other_args}. Note that the 
+  defaults for \code{weights}, \code{predictors}, \code{filters}, and 
+  \code{transforms} are adjusted according to the \code{engine} implied by 
+  \code{model_name}.
+  
+  * metab_sim: \code{model_name, day_start, day_end, day_tests, err.obs.sigma, 
+  err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, sim.seed}
 }
 \examples{
-specs(mm_name(type='bayes', err_obs_iid=TRUE, err_proc_acor=TRUE))
-  
+specs(mm_name(type='bayes', err_proc_acor=TRUE))
 }
 

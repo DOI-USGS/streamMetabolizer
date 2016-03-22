@@ -14,7 +14,7 @@ mm_data(..., optional = "none")
 that may be excluded. If 'all', the entire data.frame may be omitted. If 
 'none', the entire data.frame must be included as prototyped. If specific 
 column names are given, those columns may be omitted entirely or passed to 
-the metab_model() call as all NAs.}
+\code{\link{metab}()} as all NAs.}
 }
 \value{
 data data.frame with columns as in the description
@@ -32,7 +32,7 @@ Produces a unitted data.frame with the column names, units, and
   time (still with nominal UTC timezone but with clock noons close to solar 
   noon), but mean solar time is better for matching model time windows to the
   diel cycle of light availability. Throughout this package, variables named 
-  "solar.time" are mean solar time, "app.solar.time" means apparent solar
+  "solar.time" are mean solar time, "app.solar.time" means apparent solar 
   time, and "any.solar.time" means either.}
   
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
@@ -54,15 +54,15 @@ Produces a unitted data.frame with the column names, units, and
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
   O[2] L^{-1}}{mg O2 / L}}
   
-  \item{ \code{GPP} daily estimates of GPP}
+  \item{ \code{GPP} daily estimates of GPP, \eqn{g m^-2 d^-1}}
   
-  \item{ \code{ER} daily estimates of ER}
+  \item{ \code{ER} daily estimates of ER, \eqn{g m^-2 d^-1}}
   
-  \item{ \code{K600} daily estimates of K600}
+  \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
   
-  \item{ \code{discharge.daily} daily mean river discharge}
+  \item{ \code{discharge.daily} daily mean river discharge, \eqn{ft^3 s^-1}}
   
-  \item{ \code{velocity.daily} daily mean river flow velocity}
+  \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}
   
   }
 }

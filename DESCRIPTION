@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.8.0
-Date: 2016-02-18
+Version: 0.9.1
+Date: 2016-03-20
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -22,19 +22,20 @@ Imports:
     lazyeval,
     lubridate,
     magrittr,
-    methods
+    methods,
+    tidyr
 Suggests:
     chron,
     dataRetrieval,
     dygraphs,
     ggplot2,
     knitr,
+    microbenchmark,
     plyr,
     RCurl,
     runjags,
     rstan,
     testthat,
-    tidyr,
     XML,
     xts
 Collate:
@@ -56,33 +57,40 @@ Collate:
     'convert_UTC_to_solartime.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
+    'data_metab.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
     'load_spring_creek.R'
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
+    'metab.R'
+    'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'
-    'metab_funs.R'
+    'metab_inputs.R'
     'metab_mle.R'
     'metab_model_interface.R'
-    'metab_model_prototype.R'
     'metab_night.R'
     'metab_sim.R'
+    'mm_check_mcmc_file.R'
     'mm_data.R'
     'mm_filter_dates.R'
     'mm_filter_valid_days.R'
+    'mm_validate_name.R'
+    'mm_valid_names.R'
+    'mm_parse_name.R'
     'mm_name.R'
     'mm_generate_mcmc_file.R'
+    'mm_get_timestep.R'
     'mm_is_valid_day.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
-    'mm_parse_name.R'
     'mm_predict_1ply.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
     'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'
+    'zz_build_docs.R'
 RoxygenNote: 5.0.1

@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 mm_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  calc_DO_fun, calc_DO_args = list())
+  timestep_days, ..., calc_DO_fun, calc_DO_args = list())
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -13,22 +13,28 @@ for a single ply of data. (1 ply ~= 1 date, although the day length has
 been specified by day_start and day_end and may not be exactly 24 hours)}
 
 \item{data_daily_ply}{NULL or a data.frame containing inputs with a daily 
-timestep. The date column must be present.}
+timestep.}
 
-\item{day_start}{start time of a day's data in number of hours from the 
-midnight that begins the modal date. For example, day_start=-1.5 indicates 
-that data describing 2006-06-26 begin at 2006-06-25 22:30, or at the first 
-observation time that occurs after that time if day_start doesn't fall 
-exactly on an observation time.}
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time.}
 
-\item{day_end}{end time of a day's data in number of hours from the midnight 
-that begins the modal date. For example, day_end=30 indicates that data 
-describing 2006-06-26 end at 2006-06-27 06:00, or at the last observation 
-time that occurs before that time if day_end doesn't fall exactly on an 
-observation time.}
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
-date by which this ply should be referred to}
+date by which this ply should be referred topresent.}
+
+\item{timestep_days}{numeric length of the mean timestep for this day, if 
+requested by setting \code{timestep_days} to \code{TRUE} or a numeric value
+in the call to \code{\link{mm_model_by_ply}}}
+
+\item{...}{other args that were passed untouched from the function calling 
+mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 
 \item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER, 
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}

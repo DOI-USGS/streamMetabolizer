@@ -22,7 +22,7 @@ done.}
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with
+\item{use_saved}{logical. Is it OK to use predictions that were saved with 
 the model?}
 }
 \value{

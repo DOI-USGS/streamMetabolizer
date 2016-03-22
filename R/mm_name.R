@@ -1,11 +1,18 @@
 #' Find the name of a model by its features
 #' 
+#' While the \code{Usage} shows the valid values for each argument, defaults 
+#' depend on the value of \code{type}: any argument that is not explicitly 
+#' supplied (besides \code{type} and \code{check_validity}) will default to the 
+#' values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
+#' 
 #' @seealso The converse of this function is \code{\link{mm_parse_name}}.
 #'   
 #' @param type the model type, corresponding to the model fitting function 
 #'   (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)
-#' @param pooling Should the model pool information among days to get more 
-#'   consistent daily estimates?
+#' @param pool_K600 Should the model pool information among days to get more 
+#'   consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
+#'   'normal'=K600 ~ 1; 'linear'=K600 ~ 1 + log(Q); 'binned'=K600 ~ cut(Q,
+#'   breaks=quantile(Q))
 #' @param err_obs_iid logical. Should IID observation error be included? If not,
 #'   the model will be fit to the differences in successive DO measurements, 
 #'   rather than to the DO measurements themselves.
@@ -18,7 +25,10 @@
 #'   mean values of GPP, ER, etc. across t=1 and t=2.
 #' @param deficit_src From what DO estimate (observed or modeled) should the DO 
 #'   deficit be computed?
-#' @param bayes_software Which software are we generating code for?
+#' @param engine Which software are we generating code for?
+#' @param check_validity if TRUE, checks the resulting name against 
+#'   mm_valid_names(type).
+#' @import dplyr
 #' @export
 #' @examples 
 #' mm_name('mle')
@@ -26,38 +36,77 @@
 #' mm_name('sim')
 #' mm_name('bayes')
 mm_name <- function(
-  type=c('bayes','mle','night','sim'), 
-  pooling='none',
+  type=c('mle','bayes','night','Kmodel','sim'), 
+  #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
+  pool_K600=c('none','normal','linear','binned'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler','NA'),
   deficit_src=c('DO_mod','DO_obs','NA'),
-  bayes_software=c('stan','jags','nlm','lm','rnorm')) {
+  engine=c('stan','jags','nlm','lm','mean','loess','rnorm'),
+  check_validity=TRUE) {
   
-  # choose/check arguments
+  # determine type
   type <- match.arg(type)
-  pooling <- match.arg(pooling)
-  err_obs_iid <- if(!is.logical(err_obs_iid)) stop("need err_obs_iid to be a logical of length 1") else err_obs_iid[1]
-  err_proc_acor <- if(!is.logical(err_proc_acor)) stop("need err_proc_acor to be a logical of length 1") else err_proc_acor[1]
-  err_proc_iid <- if(!is.logical(err_proc_iid)) stop("need err_proc_iid to be a logical of length 1") else err_proc_iid[1]
-  ode_method <- match.arg(ode_method)
-  deficit_src <- match.arg(deficit_src)
-  bayes_software <- if(missing(bayes_software)) {
-    c(bayes='stan', mle='nlm', night='lm', sim='rnorm')[type] 
-  } else { 
-    software <- match.arg(bayes_software)
-    if(!(software %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', sim='rnorm')[[type]]))
-      stop("mismatch between type (",type,") and software (",software,")")
-    software
+  
+  # set type-specific defaults where values weren't specified
+  . <- '.dplyr.var'
+  if(type != 'Kmodel') {
+    relevant_args <- names(formals(mm_name)) %>% .[!(. %in% c('type','check_validity'))]
+  } else {
+    # only one argument allowed for Kmodel
+    relevant_args <- 'engine' 
+    # directly specify all the rest
+    pool_K600='none'
+    pool_all='none'
+    err_obs_iid=FALSE
+    err_proc_acor=FALSE
+    err_proc_iid=FALSE
+    ode_method='NA'
+    deficit_src='NA'
+  }
+  given_args <- names(match.call()[-1])
+  missing_args <- relevant_args[!(relevant_args %in% given_args)]
+  if(length(missing_args) > 0) {
+    default_args <- mm_parse_name(mm_valid_names(type)[1])
+    for(ms in missing_args) {
+      assign(ms, default_args[[ms]])
+    }
   }
   
+  # check arguments and throw errors as needed
+  if(type != 'Kmodel') {
+    pool_K600 <- match.arg(pool_K600)
+    pool_all <- if(pool_K600 == 'none') 'none' else 'partial'
+    if(!is.logical(err_obs_iid) || length(err_obs_iid) != 1) stop("need err_obs_iid to be a logical of length 1")
+    if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
+    if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
+    ode_method <- match.arg(ode_method)
+    deficit_src <- match.arg(deficit_src)
+    if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
+  } else {
+    if(any(!(given_args %in% c('type','engine','check_validity'))))
+       stop("for Kmodel, only type, engine, and check_validity may be specified")
+  }
+  engine <- match.arg(engine)
+  if(!(engine %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
+    stop("mismatch between type (",type,") and engine (",engine,")")
+  
   # make the name
-  paste0(
-    c(bayes='b', mle='m', night='n', sim='s')[[type]], '_',
-    c(none='np', partial='pp')[[pooling]], '_',
+  mmname <- paste0(
+    c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
+    c(none='', normal='Kn', linear='Kl', binned='Kb')[[pool_K600]],
+    c(none='np', partial='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
     c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
-    bayes_software)
+    engine)
+  
+  # check validity if requested
+  check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
+  if(isTRUE(check_validity)) mm_validate_name(mmname)
+  
+  # return
+  mmname
 }

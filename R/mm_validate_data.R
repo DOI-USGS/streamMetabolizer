@@ -2,19 +2,21 @@
 #' 
 #' Will most often be called from within a metab_model constructor.
 #' 
-#' @inheritParams metab_model_prototype
+#' @inheritParams metab
 #' @param metab_class character the class name of the metab_model constructor
-#' @param tests to apply to the input data.frames (before any subsetting with
-#'   mm_model_by_ply, etc. has occurred)
+#' @param data_tests list of tests to conduct to determine whether the input
+#'   data.frames are properly formatted to allow modeling to begin
 #' @import dplyr
 #' @importFrom stats setNames
 #' @examples
 #' \dontrun{
-#' mm_validate_data(dplyr::select(mm_data(),-temp.water), "metab_mle")
+#' mm_validate_data(dplyr::select(mm_data(),-temp.water), metab_class="metab_mle")
 #' }
 #' @export
-mm_validate_data <- function(data, data_daily, #inheritParams metab_model_prototype
-                             metab_class, tests=c('missing_cols','extra_cols','na_times','units')) {
+mm_validate_data <- function(
+  data=mm_data(NULL), data_daily=mm_data(NULL), #inheritParams metab
+  metab_class, data_tests=c('missing_cols','extra_cols','na_times','units')
+) {
   
   data_types <- setNames(c("data","data_daily"),c("data","data_daily"))
   dat_all <- lapply(data_types, function(data_type) {
@@ -37,14 +39,14 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     }
     
     # check for missing or extra columns
-    if('missing_cols' %in% tests) {
+    if('missing_cols' %in% data_tests) {
       missing.columns <- setdiff(names(expected.data), names(dat))
       missing.columns <- setdiff(missing.columns, optional.data) # optional cols don't count
       if(length(missing.columns) > 0) {
         stop(paste0(data_type, " is missing these columns: ", paste0(missing.columns, collapse=", ")))
       }
     }
-    if('extra_cols' %in% tests) {
+    if('extra_cols' %in% data_tests) {
       extra.columns <- setdiff(names(dat), names(expected.data))
       if(length(extra.columns) > 0) {
         stop(paste0(data_type, " should omit these extra columns: ", paste0(extra.columns, collapse=", ")))
@@ -53,9 +55,9 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     
     # check for NA timestamps, better to run after missing_cols so the best 
     # error can be thrown if timecol is missing. check here, too, in case 
-    # missing_cols was not among the tests or the metab_model data were 
+    # missing_cols was not among the data_tests or the metab_model data were 
     # specified without a timestamp column
-    if('na_times' %in% tests) {
+    if('na_times' %in% data_tests) {
       timecol <- grep('date|time', names(dat), value=TRUE)
       if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns")
       na.times <- which(is.na(dat[,timecol]))
@@ -72,7 +74,7 @@ mm_validate_data <- function(data, data_daily, #inheritParams metab_model_protot
     expected.data <- expected.data[keeper.columns]
     
     # check for units mismatches. column names will already match exactly.
-    if('units' %in% tests) {
+    if('units' %in% data_tests) {
       mismatched.units <- which(get_units(expected.data) != get_units(dat))
       if(length(mismatched.units) > 0) {
         data.units <- get_units(dat)[mismatched.units]

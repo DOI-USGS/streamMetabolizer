@@ -9,7 +9,8 @@
 #' @export
 convert_k600_to_kGAS = function(k600, temperature, gas="O2") {
   # units checks would be good here
-  LakeMetabolizer::k600.2.kGAS.base(k600, temperature, gas)
+  # suppressing "In getSchmidt(temperature, gas) : temperature out of range" b/c it's way too common
+  suppressWarnings(LakeMetabolizer::k600.2.kGAS.base(k600, temperature, gas))
 }
 
 #' Returns the gas exchange velocity as k600 for gas of interest w/ no unit conversions
@@ -23,6 +24,7 @@ convert_k600_to_kGAS = function(k600, temperature, gas="O2") {
 #' @export
 convert_kGAS_to_k600 = function(kGAS, temperature, gas="O2") {
   # units checks would be good here
-  conversion <- 1/LakeMetabolizer::k600.2.kGAS.base(1, temperature, gas)
+  # suppressing "In getSchmidt(temperature, gas) : temperature out of range" b/c it's way too common
+  conversion <- 1/suppressWarnings(LakeMetabolizer::k600.2.kGAS.base(1, temperature, gas))
   kGAS * conversion
 }
