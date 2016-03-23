@@ -193,8 +193,8 @@ mm_generate_mcmc_file <- function(
         'vector[d] DO_obs_1;',
         switch(
           pool_K600,
-          linear='vector[d] Q_daily;',
-          binned='int<lower=1,upper=b> Q_bin_daily[d];')),
+          linear='vector[d] ln_discharge_daily;',
+          binned='int<lower=1,upper=b> discharge_bin_daily[d];')),
       
       # prepare to iterate over n obs for all d at a time:
       # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
@@ -297,6 +297,15 @@ mm_generate_mcmc_file <- function(
           'vector[d] ER_daily;',
           'vector[d] K600_daily;'),
         
+        if(pool_K600 != 'none') c(
+          '',
+          switch(
+            pool_K600,
+            normal='real K600_daily_mu;',
+            linear='vector[2] K600_daily_beta;',
+            binned='vector[b] K600_daily_beta;'),
+          'real K600_daily_sigma;'),
+        
         if((err_proc_iid && !dDO_model) || err_proc_acor) c(
           ''),
         if(err_proc_iid && !dDO_model) c(
@@ -312,15 +321,7 @@ mm_generate_mcmc_file <- function(
             'real err_proc_acor_phi;',
             'real err_proc_acor_sigma;'),
           if(err_proc_iid) c(
-            'real err_proc_iid_sigma;')),
-        
-        if(pool_K600 != 'none') c(
-          'real K600_daily_sigma;',
-          if(pool_K600 == 'normal') 
-            'real K600_daily_mu;',
-          if(pool_K600 %in% c('linear','binned')) 
-            'vector[d] K600_daily_beta;'
-        )
+            'real err_proc_iid_sigma;'))
       ),
       '}',''
     ),
@@ -418,11 +419,11 @@ mm_generate_mcmc_file <- function(
         comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
         switch(
           pool_K600,
-          linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * Q_daily'),
+          linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
           binned=c(
             # JAGS might not require a loop here
             condloop(
-              s('K600_daily_pred', M('j'), ' <- K600_daily_beta[Q_bin_daily', M('j'), ']')
+              s('K600_daily_pred', M('j'), ' <- K600_daily_beta[discharge_bin_daily', M('j'), ']')
             )
           )
         )

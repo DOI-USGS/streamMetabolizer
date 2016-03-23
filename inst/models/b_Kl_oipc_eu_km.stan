@@ -27,7 +27,7 @@ data {
   
   // Daily data
   vector[d] DO_obs_1;
-  vector[d] Q_daily;
+  vector[d] ln_discharge_daily;
   
   // Data
   vector[d] DO_obs[n];
@@ -57,13 +57,14 @@ parameters {
   vector[d] ER_daily;
   vector[d] K600_daily;
   
+  vector[2] K600_daily_beta;
+  real K600_daily_sigma;
+  
   vector[d] err_proc_acor_inc[n-1];
   
   real err_obs_iid_sigma;
   real err_proc_acor_phi;
   real err_proc_acor_sigma;
-  real K600_daily_sigma;
-  vector[d] K600_daily_beta;
 }
 
 transformed parameters {
@@ -95,7 +96,7 @@ transformed parameters {
   }
   
   // Hierarchical, linear model of K600_daily
-  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * Q_daily;
+  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily;
 }
 
 model {

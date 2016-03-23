@@ -16,8 +16,8 @@ mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
 
 \item{pool_K600}{Should the model pool information among days to get more 
 consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
-'normal'=K600 ~ 1; 'linear'=K600 ~ 1 + log(Q); 'binned'=K600 ~ cut(Q,
-breaks=quantile(Q))}
+'normal'=K600 ~ 1; 'linear'=K600 ~ 1; 'binned'=K600 ~ beta[Q_bin]. See 
+Details for more.}
 
 \item{err_obs_iid}{logical. Should IID observation error be included? If not,
 the model will be fit to the differences in successive DO measurements, 

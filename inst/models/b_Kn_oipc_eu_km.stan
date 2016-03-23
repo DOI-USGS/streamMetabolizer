@@ -56,13 +56,14 @@ parameters {
   vector[d] ER_daily;
   vector[d] K600_daily;
   
+  real K600_daily_mu;
+  real K600_daily_sigma;
+  
   vector[d] err_proc_acor_inc[n-1];
   
   real err_obs_iid_sigma;
   real err_proc_acor_phi;
   real err_proc_acor_sigma;
-  real K600_daily_sigma;
-  real K600_daily_mu;
 }
 
 transformed parameters {

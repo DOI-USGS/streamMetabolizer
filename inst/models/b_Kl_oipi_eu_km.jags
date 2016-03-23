@@ -29,7 +29,7 @@ model {
   }
   
   # Hierarchical, linear model of K600_daily
-  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * Q_daily
+  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily
 
   # Independent, identically distributed process error
   for(i in 1:(n-1)) {

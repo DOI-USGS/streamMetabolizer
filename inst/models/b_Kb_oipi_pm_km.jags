@@ -31,7 +31,7 @@ model {
   
   # Hierarchical, binned model of K600_daily
   for(j in 1:d) {
-    K600_daily_pred[j] <- K600_daily_beta[Q_bin_daily[j]]
+    K600_daily_pred[j] <- K600_daily_beta[discharge_bin_daily[j]]
   }
 
   # Independent, identically distributed process error
