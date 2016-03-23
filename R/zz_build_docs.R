@@ -58,7 +58,7 @@ zz_build_docs <- function() {
     "(If all columns are optional, \\code{data} may equal \\code{NULL}.)",
     "",
     "\\describe{",
-    c(paste0("  \\item{\\code{mle}, \\code{bayes}, or \\code{night}}{"),
+    c(paste0("  \\item{\\code{mle} or \\code{night}}{"),
       paste0("    ", c(
         zz_tabular(metab_inputs('mle', 'data')),
         "",
@@ -66,7 +66,7 @@ zz_build_docs <- function() {
         zz_tabular(v(eval(formals(metab_mle)$data)), bold_headers=FALSE, code=TRUE)
       )),
       "  }"),
-    do.call(c, lapply(c('Kmodel','sim'), function(type) {
+    do.call(c, lapply(c('bayes','Kmodel','sim'), function(type) {
       c(paste0("  \\item{\\code{",type,"}}{"),
         paste0("    ", c(
           zz_tabular(metab_inputs(type, 'data')),
@@ -85,12 +85,12 @@ zz_build_docs <- function() {
     "(If all columns are optional, \\code{data_daily} may equal \\code{NULL}.)",
     "",
     "\\describe{",
-    c(paste0("  \\item{\\code{bayes} or \\code{night}}{"),
+    c(paste0("  \\item{\\code{night}}{"),
       paste0("    ", "\\code{", 
-             if(is.null(v(metab_inputs('bayes', 'data_daily')))) "NULL" else stop('oops-this used to be NULL'),
+             metab_inputs('night', 'data_daily'),
              "}"),
       "  }"),
-    do.call(c, lapply(c('mle','Kmodel','sim'), function(type) {
+    do.call(c, lapply(c('mle','bayes','Kmodel','sim'), function(type) {
       c(paste0("  \\item{\\code{",type,"}}{"),
         paste0("    ", c(
           zz_tabular(metab_inputs(type, 'data_daily')),
