@@ -58,7 +58,7 @@ parameters {
   vector[d] ER_daily;
   vector[d] K600_daily;
   
-    vector[d] err_proc_acor_inc[n-1];
+  vector[d] err_proc_acor_inc[n-1];
   
   real err_proc_acor_phi;
   real err_proc_acor_sigma;

@@ -301,7 +301,7 @@ mm_generate_mcmc_file <- function(
           ''),
         if(err_proc_iid && !dDO_model) c(
           'vector[d] err_proc_iid[n-1];'),
-        if(err_proc_acor) indent(
+        if(err_proc_acor) c(
           'vector[d] err_proc_acor_inc[n-1];'),
         
         if(err_obs_iid || err_proc_acor || err_proc_iid) c(
