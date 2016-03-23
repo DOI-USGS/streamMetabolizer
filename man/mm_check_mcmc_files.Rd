@@ -17,6 +17,7 @@ Check the syntax of all Bayesian model files in the package
 \dontrun{
 # takes a long time, so run only when needed
 checks <- streamMetabolizer:::mm_check_mcmc_files()
+saveRDS(checks, file='temp/bayes_model_checks.Rds')
 checks <- streamMetabolizer:::mm_check_mcmc_files("\\\\.jags")
 checks <- streamMetabolizer:::mm_check_mcmc_files("*ko\\\\.stan")
 checks <- streamMetabolizer:::mm_check_mcmc_files("b_np_.*_ko\\\\.stan")
