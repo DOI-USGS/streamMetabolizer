@@ -60,37 +60,37 @@ metab_bayes <- function(
         data.frame(discharge.daily = if(ply_validity) mean(data_ply$discharge) else NA)
       }
       dischdaily <- mm_model_by_ply(
-        model_fun=dailymean, data=v(dat_list[['data']]), day_start=specs$day_start, day_end=specs$day_end)
+        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end)
       
       # add units if either of the input dfs were unitted
-      if(is.unitted(dat_list[['data']]) || is.unitted(dat_list[['data_daily']])) {
+      if(is.unitted(dat_list$data) || is.unitted(dat_list$data_daily)) {
         dischdaily_units <- get_units(mm_data(date, discharge.daily))
-        if(is.unitted(dat_list[['data']])) {
-          if(dischdaily_units['discharge.daily'] != get_units(dat_list[['data']]$discharge))
-            stop('mismatch between discharge units in data (',get_units(dat_list[['data']]$discharge),
+        if(is.unitted(dat_list$data)) {
+          if(dischdaily_units['discharge.daily'] != get_units(dat_list$data$discharge))
+            stop('mismatch between discharge units in data (',get_units(dat_list$data$discharge),
                  ') and requirement for data_daily (', dischdaily_units['discharge.daily'] ,')')
         }
         dischdaily <- u(dischdaily, dischdaily_units)
       }
 
       # merge with any existing dat_list$data_daily      
-      if(is.null(v(dat_list[['data_daily']]))) {
-        dat_list[['data_daily']] <- dischdaily
+      if(is.null(v(dat_list$data_daily))) {
+        dat_list$data_daily <- dischdaily
       } else {
         # need both or neither dfs to be unitted for the full_join. if 
         # data_daily was unitted then dischdaily will already also be unitted 
         # (see add units chunk above), so just check/fix the case where
         # data_daily lacks units but data & therefore dischdaily has them
-        if(is.unitted(dischdaily) && !is.unitted(dat_list[['data_daily']])) {
-          dat_list[['data_daily']] <- u(dat_list[['data_daily']], get_units(mm_data()[names(dat_list[['data_daily']])]))
+        if(is.unitted(dischdaily) && !is.unitted(dat_list$data_daily)) {
+          dat_list$data_daily <- u(dat_list$data_daily, get_units(mm_data()[names(dat_list$data_daily)]))
         }
-        dat_list[['data_daily']] <- full_join(dat_list[['data_daily']], dischdaily, by='date')
+        dat_list$data_daily <- full_join(dat_list$data_daily, dischdaily, by='date')
       }
     }
     # If we have discharge.daily, then we need logged discharge.daily. compute
     # and store it now
     if('discharge.daily' %in% names(dat_list$data_daily)) {
-      dat_list[['data_daily']]$ln.discharge.daily <- log(v(dat_list[['data_daily']]$discharge.daily))
+      dat_list$data_daily$ln.discharge.daily <- log(v(dat_list$data_daily$discharge.daily))
     }
     # If we need discharge bins, compute & store those now, as well
     if(pool_K600 %in% c('binned')) {
@@ -104,20 +104,20 @@ metab_bayes <- function(
           interval = ggplot2::cut_interval,
           number = ggplot2::cut_number)
         # run once with high dig.lab to parse the breaks from levels(cuts) as numeric
-        cuts <- cut_fun(v(dat_list[['data_daily']]$ln.discharge.daily), n=specs$K600_daily_beta_num, dig.lab=20)
+        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num, dig.lab=20)
         specs$K600_daily_beta_breaks <- levels(cuts) %>%
           strsplit('\\[|\\(|\\]|,') %>%
           lapply(function(lev) as.numeric(lev[2:3])) %>%
           unlist() %>%
           unique()
         # run again with default dig.lab for prettier bin labels
-        cuts <- cut_fun(v(dat_list[['data_daily']]$ln.discharge.daily), n=specs$K600_daily_beta_num)
+        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num)
       } else {
         # we already know breaks precisely because we're supplying them
         specs$K600_daily_beta_breaks <- specs$K600_daily_beta_cuts
-        cuts <- cut(dat_list[['data_daily']]$ln.discharge.daily, breaks=specs$K600_daily_beta_cuts, ordered_result=TRUE)
+        cuts <- cut(dat_list$data_daily$ln.discharge.daily, breaks=specs$K600_daily_beta_cuts, ordered_result=TRUE)
       }
-      dat_list[['data_daily']]$discharge.bin.daily <- as.numeric(cuts)
+      dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
       specs$K600_daily_beta_bins <- levels(cuts)
       # you should be able to retrieve the bin names with
       # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily] or, later,
@@ -125,8 +125,8 @@ metab_bayes <- function(
     }
     
     # Use de-unitted version until we pack up the model to return
-    data <- v(dat_list[['data']])
-    data_daily <- v(dat_list[['data_daily']])
+    data <- v(dat_list$data)
+    data_daily <- v(dat_list$data_daily)
         
     # Check and parse model file path. First try the streamMetabolizer models
     # dir, then try a regular path, then complain / continue depending on
@@ -170,9 +170,10 @@ metab_bayes <- function(
       
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
-      if((specs$day_end - specs$day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
       filtered <- mm_filter_valid_days(
         data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+      if(length(unique(filtered$data$date)) > 1 && (specs$day_end - specs$day_start) > 24) 
+        warning("multi-day models should probably have day_end - day_start <= 24 hours")
       bayes_all_list <- bayes_allply(
         data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
         specs=specs)
@@ -192,8 +193,8 @@ metab_bayes <- function(
     mcmc=bayes_mcmc,
     fitting_time=fitting_time,
     specs=specs,
-    data=dat_list[['data']], # keep the units if given
-    data_daily=dat_list[['data_daily']])
+    data=dat_list$data, # keep the units if given
+    data_daily=dat_list$data_daily)
   
   # Update data with DO predictions
   mm@data <- predict_DO(mm)
