@@ -41,20 +41,35 @@ print.specs <- function(x, ...) {
 #' 
 #' @param object specs list to be displayed.
 #' @param header line to be catted at start of printout
-#' @param prefix text to prepend to the start of each line that follows the
+#' @param prefix text to prepend to the start of each line that follows the 
 #'   header
+#' @import dplyr
 #' @keywords internal
 print_specs <- function(object, header="Model specifications:\n", prefix="  ") {
-  cat(header)
-  for(spec in names(object)) {
+  # create a data.frame with a concise 1-line description of each specs element
+  max_value_width <- max(10, getOption('width') - nchar(prefix) - max(nchar(names(object))) - 1)
+  specs_df <- data.frame(value=sapply(names(object), function(spec) {
     spec_char <- tryCatch(
       if(is.null(object[[spec]])) {
         'NULL' 
       } else {
         paste0(as.character(object[[spec]]), collapse=", ")
       }, 
-      error=function(e) paste0(paste0(class(object[[spec]]), collapse=","),"; see element [['",spec,"']] for details"))
-    if(nchar(spec_char) > 100) spec_char <- paste0(substr(spec_char, 1, 100), "...")
-    cat(paste0(prefix, spec, "\t", spec_char, "\n"))
-  }
+      error=function(e) {
+        paste0(paste0(class(object[[spec]]), collapse=","),"; see element [['",spec,"']] for details")
+      })
+    if(nchar(spec_char) > max_value_width) {
+      spec_char <- paste0(substr(spec_char, 1, max_value_width-3), "...")
+    }
+    spec_char
+  }))
+  
+  # format into a character vector, one string per row; omit the df header
+  specs_printed <- capture.output(print(specs_df, right=FALSE))[-1]
+
+  # print the specs header and df rows
+  cat(header)
+  cat(paste0(prefix, specs_printed, "\n"), sep='')
+  
+  invisible(object)
 }

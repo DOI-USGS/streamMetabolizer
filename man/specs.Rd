@@ -10,9 +10,10 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   split_dates, keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
   ER_daily_mu = -10, ER_daily_sigma = 10, K600_daily_mu = 10,
   K600_daily_sigma = 10, K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
+  K600_daily_beta_mu = c(intercept = 10, slope = 3),
+  K600_daily_beta_sigma = c(intercept = 8, slope = 2),
+  K600_daily_beta_num = 5, K600_daily_beta_cuts = "interval",
   K600_daily_sigma_shape = 1, K600_daily_sigma_rate = 2,
-  K600_daily_beta0_mu = 10, K600_daily_beta0_sigma = 10,
-  K600_daily_beta1_mu = 10, K600_daily_beta1_sigma = 10,
   err_obs_iid_sigma_shape = 1, err_obs_iid_sigma_rate = 10,
   err_proc_acor_phi_shape = 1, err_proc_acor_phi_rate = 1000,
   err_proc_acor_sigma_shape = 1, err_proc_acor_sigma_rate = 1000,
@@ -120,11 +121,12 @@ rate of ecosystem respiration}
 \item{ER_daily_sigma}{The standard deviation of a dnorm distribution for 
 ER_daily, the daily rate of ecosystem respiration}
 
-\item{K600_daily_mu}{The mean of a dnorm distribution for K600_daily, the 
-daily rate of reaeration}
+\item{K600_daily_mu}{Applies when pool_K600 is 'none'. The mean of a dnorm 
+distribution for K600_daily, the daily rate of reaeration}
 
-\item{K600_daily_sigma}{The standard deviation of a dnorm distribution for 
-K600_daily, the daily rate of reaeration}
+\item{K600_daily_sigma}{Applies when pool_K600 is 'none'. The standard 
+deviation of a dnorm distribution for K600_daily, the daily rate of 
+reaeration}
 
 \item{K600_daily_mu_mu}{hyperparameter for pool_K600='normal'. The mean 
 parameter (mu_mu) of a normal distribution of mu in K ~ N(mu, sigma), mu ~ 
@@ -134,31 +136,46 @@ N(mu_mu, mu_sigma)}
 standard deviation parameter (mu_sigma) of a normal distribution of mu in K
 ~ N(mu, sigma), mu ~ N(mu_mu, mu_sigma)}
 
-\item{K600_daily_sigma_shape}{hyperparameter for pool_K600='normal'. The 
-shape (= alpha = k) parameter of a gamma distribution of sigma in K ~ N(mu,
-sigma), sigma ~ gamma(shape, rate)}
+\item{K600_daily_beta_mu}{hyperparameter for pool_K600 in 
+c('linear','binned'). The means of prior distributions for the 
+K600_daily_beta paramters. For pool_K600='linear', there are 2 betas 
+corresponding to the intercept and slope, respectively, of the linear model
+\code{log(K600) ~ K600_daily_beta[1] + K600_daily_beta[2]*log(Q)}. For 
+pool_K600='binned', there are K600_daily_beta_num betas each giving the 
+predicted K600 when Q_daily is in the corresponding bin (see 
+\code{K600_daily_beta_cuts}).}
 
-\item{K600_daily_sigma_rate}{hyperparameter for pool_K600='normal'. The rate 
-(= beta = 1/theta = inverse scale) parameter of a gamma distribution of 
-sigma in K ~ N(mu, sigma), sigma ~ gamma(shape, rate)}
-
-\item{K600_daily_beta0_mu}{hyperparameter for pool_K600='linear'. The mean 
-parameter of a normally distributed intercept term (beta0) in the linear 
-model K ~ N(beta0 + beta1*log(Q)), beta0 ~ N(beta0_mu, beta0_sigma)}
-
-\item{K600_daily_beta0_sigma}{hyperparameter for pool_K600='linear'. The 
+\item{K600_daily_beta_sigma}{hyperparameter for pool_K600='linear'. The 
 standard deviation parameter of a normally distributed intercept term 
 (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 N(beta0_mu, beta0_sigma)}
 
-\item{K600_daily_beta1_mu}{hyperparameter for pool_K600='linear'. The mean 
-parameter of a normally distributed slope term (beta1) in the linear model 
-K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, beta1_sigma)}
+\item{K600_daily_beta_num}{hyperparameter for pool_K600='binned'. The number 
+of bins into which daily discharge values should be grouped. Each bin 
+predicts a single value of K600_daily_pred, such that any day on which 
+\code{Q_bin_daily} equals that bin will have \code{K600_daily ~ 
+N(K600_daily_beta[Q_bin_daily], K600_daily_sigma)}}
 
-\item{K600_daily_beta1_sigma}{hyperparameter for pool_K600='linear'. The 
-standard deviation parameter of a normally distributed slope term (beta1) 
-in the linear model K ~ N(beta0 + beta1*log(Q)), beta1 ~ N(beta1_mu, 
-beta1_sigma)}
+\item{K600_daily_beta_cuts}{hyperparameter for pool_K600='binned'. Either (1)
+character of length 1 in c('interval','number') indicating how the bin cuts
+should be determined, or (2) numeric (as in \code{breaks} in 
+\code{\link[base]{cut}}) of length K600_daily_beta_num+1 giving the 
+breakpoints defining the bins. For option 1, the implementation uses or is 
+equivalent to the corresponding functions 
+\code{\link[ggplot2]{cut_interval}} (to cut into bins having equal numeric 
+ranges) and \code{\link[ggplot2]{cut_number}} (to cut into bins having 
+~equal numbers of Q_daily observations). For option 2, make sure to include
+the full range of Q_daily, with the first value smaller than all Q_daily 
+values and the last value greater than or equal to all Q_daily values.}
+
+\item{K600_daily_sigma_shape}{hyperparameter for pool_K600 in 
+c('normal','linear','binned'). The shape (= alpha = k) parameter of a gamma
+distribution of sigma in K ~ N(mu, sigma), sigma ~ gamma(shape, rate)}
+
+\item{K600_daily_sigma_rate}{hyperparameter for pool_K600 in 
+c('normal','linear','binned'). The rate (= beta = 1/theta = inverse scale) 
+parameter of a gamma distribution of sigma in K ~ N(mu, sigma), sigma ~ 
+gamma(shape, rate)}
 
 \item{err_obs_iid_sigma_shape}{The shape parameter on a gamma distribution 
 for err_obs_iid_sigma, the standard deviation of the observation error}
@@ -281,25 +298,23 @@ often should, be overridden to tailor the model to your needs.
   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
   keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
   ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
-  burnin_steps, saved_steps, thin_steps, verbose}. If
-  \code{mm_parse_name(model_name)$pool_K600=='none'} then also 
-  \code{K600_daily_mu, K600_daily_sigma}. If 
-  \code{mm_parse_name(model_name)$pool_K600=='normal'} then also 
+  burnin_steps, saved_steps, thin_steps, verbose}. The need for other 
+  arguments depends on features of the model structure, as from 
+  \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
+  \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
-  K600_daily_sigma_rate}. If 
-  \code{mm_parse_name(model_name)$pool_K600=='linear'} then also 
-  \code{K600_daily_beta0_mu, K600_daily_beta0_sigma, K600_daily_beta1_mu, 
-  K600_daily_beta1_sigma}. If 
-  \code{mm_parse_name(model_name)$pool_K600=='binned'} then also 
-  \code{K600_daily_num_bins, K600_daily_beta_mu, K600_daily_beta_sigma}. If 
-  \code{mm_parse_name(model_name)$err_obs_iid} then also 
-  \code{err_obs_iid_sigma_shape, err_obs_iid_sigma_rate}. If 
-  \code{mm_parse_name(model_name)$err_proc_acor} then also 
+  K600_daily_sigma_rate}. If \code{pool_K600=='linear'} then 
+  \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_shape, 
+  K600_daily_sigma_rate}. If \code{pool_K600=='binned'} then 
+  \code{K600_daily_beta_num, K600_daily_beta_cuts, K600_daily_beta_mu, 
+  K600_daily_beta_sigma, K600_daily_sigma_shape, K600_daily_sigma_rate}. If 
+  \code{err_obs_iid} then \code{err_obs_iid_sigma_shape, 
+  err_obs_iid_sigma_rate}. If \code{err_proc_acor} then 
   \code{err_proc_acor_phi_shape, err_proc_acor_phi_rate, 
   err_proc_acor_sigma_shape, err_proc_acor_sigma_rate}. If 
-  \code{mm_parse_name(model_name)$err_proc_iid} then also 
-  \code{err_proc_iid_sigma_shape, err_proc_iid_sigma_rate}. If 
-  \code{features$engine == 'jags'} then also \code{adapt_steps},
+  \code{err_proc_iid} then \code{err_proc_iid_sigma_shape, 
+  err_proc_iid_sigma_rate}. If \code{engine == 'jags'} then 
+  \code{adapt_steps}.
   
   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
   ODE_method, GPP_init, ER_init, K600_init}
@@ -312,10 +327,15 @@ often should, be overridden to tailor the model to your needs.
   \code{transforms} are adjusted according to the \code{engine} implied by 
   \code{model_name}.
   
-  * metab_sim: \code{model_name, day_start, day_end, day_tests, err.obs.sigma, 
-  err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, sim.seed}
+  * metab_sim: \code{model_name, day_start, day_end, day_tests, 
+  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, 
+  sim.seed}
 }
 \examples{
 specs(mm_name(type='bayes', err_proc_acor=TRUE))
+specs(mm_name(type='bayes', pool_K600='none'))
+specs(mm_name(type='bayes', pool_K600='normal'))
+specs(mm_name(type='bayes', pool_K600='linear'))
+specs(mm_name(type='bayes', pool_K600='binned'))
 }
 

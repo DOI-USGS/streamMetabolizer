@@ -11,7 +11,7 @@ print_specs(object, header = "Model specifications:\\n", prefix = "  ")
 
 \item{header}{line to be catted at start of printout}
 
-\item{prefix}{text to prepend to the start of each line that follows the
+\item{prefix}{text to prepend to the start of each line that follows the 
 header}
 }
 \description{
