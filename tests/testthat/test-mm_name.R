@@ -43,6 +43,6 @@ test_that("mm_valid_names and mm_validate_names check model names", {
 test_that("specs uses any valid mm_name", {
   specs_list <- lapply(mm_valid_names(), specs)
   # specs list lengths differ by model type. the exact range could change
-  expect_equal(range(sapply(specs_list, length)), c(4,30))
+  expect_equal(range(sapply(specs_list, length)), c(4,34))
 })
 

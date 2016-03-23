@@ -12,7 +12,7 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   K600_daily_sigma = 10, K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
   K600_daily_beta_mu = c(intercept = 10, slope = 3),
   K600_daily_beta_sigma = c(intercept = 8, slope = 2),
-  K600_daily_beta_num = 5, K600_daily_beta_cuts = "interval",
+  K600_daily_beta_num = 5, K600_daily_beta_cuts = "number",
   K600_daily_sigma_shape = 1, K600_daily_sigma_rate = 2,
   err_obs_iid_sigma_shape = 1, err_obs_iid_sigma_rate = 10,
   err_proc_acor_phi_shape = 1, err_proc_acor_phi_rate = 1000,
@@ -153,20 +153,21 @@ N(beta0_mu, beta0_sigma)}
 \item{K600_daily_beta_num}{hyperparameter for pool_K600='binned'. The number 
 of bins into which daily discharge values should be grouped. Each bin 
 predicts a single value of K600_daily_pred, such that any day on which 
-\code{Q_bin_daily} equals that bin will have \code{K600_daily ~ 
-N(K600_daily_beta[Q_bin_daily], K600_daily_sigma)}}
+\code{discharge_bin_daily} equals that bin will have \code{K600_daily ~ 
+N(K600_daily_beta[discharge_bin_daily], K600_daily_sigma)}}
 
 \item{K600_daily_beta_cuts}{hyperparameter for pool_K600='binned'. Either (1)
-character of length 1 in c('interval','number') indicating how the bin cuts
+character of length 1 in c('number','interval') indicating how the bin cuts
 should be determined, or (2) numeric (as in \code{breaks} in 
 \code{\link[base]{cut}}) of length K600_daily_beta_num+1 giving the 
-breakpoints defining the bins. For option 1, the implementation uses or is 
-equivalent to the corresponding functions 
+natural-log-space breakpoints defining the bins. For option 1, the 
+implementation uses or is equivalent to the corresponding functions 
 \code{\link[ggplot2]{cut_interval}} (to cut into bins having equal numeric 
-ranges) and \code{\link[ggplot2]{cut_number}} (to cut into bins having 
-~equal numbers of Q_daily observations). For option 2, make sure to include
-the full range of Q_daily, with the first value smaller than all Q_daily 
-values and the last value greater than or equal to all Q_daily values.}
+ranges in natural log space) and \code{\link[ggplot2]{cut_number}} (to cut 
+into bins having ~equal numbers of ln_discharge_daily observations). For 
+option 2, make sure to include the full range of ln_discharge_daily, with 
+the first value smaller than all ln_discharge_daily values and the last 
+value greater than or equal to all ln_discharge_daily values.}
 
 \item{K600_daily_sigma_shape}{hyperparameter for pool_K600 in 
 c('normal','linear','binned'). The shape (= alpha = k) parameter of a gamma
@@ -332,10 +333,7 @@ often should, be overridden to tailor the model to your needs.
   sim.seed}
 }
 \examples{
-specs(mm_name(type='bayes', err_proc_acor=TRUE))
-specs(mm_name(type='bayes', pool_K600='none'))
+specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
 specs(mm_name(type='bayes', pool_K600='normal'))
-specs(mm_name(type='bayes', pool_K600='linear'))
-specs(mm_name(type='bayes', pool_K600='binned'))
 }
 

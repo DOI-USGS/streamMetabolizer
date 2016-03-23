@@ -131,19 +131,20 @@
 #' @param K600_daily_beta_num hyperparameter for pool_K600='binned'. The number 
 #'   of bins into which daily discharge values should be grouped. Each bin 
 #'   predicts a single value of K600_daily_pred, such that any day on which 
-#'   \code{Q_bin_daily} equals that bin will have \code{K600_daily ~ 
-#'   N(K600_daily_beta[Q_bin_daily], K600_daily_sigma)}
+#'   \code{discharge_bin_daily} equals that bin will have \code{K600_daily ~ 
+#'   N(K600_daily_beta[discharge_bin_daily], K600_daily_sigma)}
 #' @param K600_daily_beta_cuts hyperparameter for pool_K600='binned'. Either (1)
-#'   character of length 1 in c('interval','number') indicating how the bin cuts
+#'   character of length 1 in c('number','interval') indicating how the bin cuts
 #'   should be determined, or (2) numeric (as in \code{breaks} in 
 #'   \code{\link[base]{cut}}) of length K600_daily_beta_num+1 giving the 
-#'   breakpoints defining the bins. For option 1, the implementation uses or is 
-#'   equivalent to the corresponding functions 
+#'   natural-log-space breakpoints defining the bins. For option 1, the 
+#'   implementation uses or is equivalent to the corresponding functions 
 #'   \code{\link[ggplot2]{cut_interval}} (to cut into bins having equal numeric 
-#'   ranges) and \code{\link[ggplot2]{cut_number}} (to cut into bins having 
-#'   ~equal numbers of Q_daily observations). For option 2, make sure to include
-#'   the full range of Q_daily, with the first value smaller than all Q_daily 
-#'   values and the last value greater than or equal to all Q_daily values.
+#'   ranges in natural log space) and \code{\link[ggplot2]{cut_number}} (to cut 
+#'   into bins having ~equal numbers of ln_discharge_daily observations). For 
+#'   option 2, make sure to include the full range of ln_discharge_daily, with 
+#'   the first value smaller than all ln_discharge_daily values and the last 
+#'   value greater than or equal to all ln_discharge_daily values.
 #'   
 #' @param K600_daily_sigma_shape hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The shape (= alpha = k) parameter of a gamma
@@ -192,11 +193,8 @@
 #'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
 #'   
 #' @examples
-#' specs(mm_name(type='bayes', err_proc_acor=TRUE))
-#' specs(mm_name(type='bayes', pool_K600='none'))
+#' specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
 #' specs(mm_name(type='bayes', pool_K600='normal'))
-#' specs(mm_name(type='bayes', pool_K600='linear'))
-#' specs(mm_name(type='bayes', pool_K600='binned'))
 #' @export
 specs <- function(
   
@@ -255,7 +253,7 @@ specs <- function(
   # bins). beta_mu and beta_sigma may be length K600_daily_beta_num or length 1
   # (to be replicated to length K600_daily_beta_num)
   K600_daily_beta_num = 5,
-  K600_daily_beta_cuts = 'interval',
+  K600_daily_beta_cuts = 'number',
   # K600_daily_beta_mu = rep(10, K600_daily_beta_num), # already declared for linear hierarchy above
   # K600_daily_beta_sigma = rep(10, K600_daily_beta_num), # already declared for linear hierarchy above
   
@@ -385,7 +383,7 @@ specs <- function(
       }
       if('split_dates' %in% yes_missing) {
         all_specs$split_dates <- ifelse(
-          features$pool_K600 %in% 'none', TRUE,
+          features$pool_K600 %in% 'none', FALSE, # pretty sure FALSE is faster. also allows hierarchical error terms
           ifelse(features$pool_K600 %in% c('normal','linear','binned'), FALSE, 
                  stop("unknown pool_K600; unsure how to set split_dates")))
       }
@@ -396,16 +394,16 @@ specs <- function(
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
-          c('GPP_daily','ER_daily','K600_daily'), 
-          if(features$err_obs_iid) 'err_obs_iid_sigma',
-          if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) 'err_proc_iid_sigma',
+          c('GPP_daily','ER_daily','K600_daily'),
           switch(
             features$pool_K600,
             none=c(),
             normal=c('K600_daily_mu', 'K600_daily_sigma'),
             linear=c('K600_daily_beta', 'K600_daily_sigma'),
-            binned=c('K600_daily_beta', 'K600_daily_sigma')))
+            binned=c('K600_daily_beta', 'K600_daily_sigma')), 
+          if(features$err_obs_iid) 'err_obs_iid_sigma',
+          if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
+          if(features$err_proc_iid) 'err_proc_iid_sigma')
       }
       
       # check for errors/inconsistencies
