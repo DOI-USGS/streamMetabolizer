@@ -43,8 +43,8 @@ metab_bayes <- function(
   }
   fitting_time <- system.time({
     # Check data for correct column names & units
-    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
-    num_discharge_cols <- length(grep('discharge', c(names(data), names(data_daily))))
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
+    num_discharge_cols <- length(grep('discharge', c(names(dat_list$data), names(dat_list$data_daily))))
     pool_K600 <- mm_parse_name(specs$model_name)$pool_K600
     if(xor(num_discharge_cols > 0, pool_K600 %in% c('linear','binned'))) 
       stop('discharge data should be included if & only if pool_K600 indicates hierarchy')

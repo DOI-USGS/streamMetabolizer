@@ -94,7 +94,7 @@ metab_Kmodel <- function(
       stop("specs$transforms['K600'] should be NA or 'log'")
     
     # Check data for correct column names & units
-    dat_list <- mm_validate_data(if(missing(data)) NULL else data, data_daily, "metab_Kmodel")
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_Kmodel")
     data <- dat_list[['data']]
     data_daily <- dat_list[['data_daily']]
     
