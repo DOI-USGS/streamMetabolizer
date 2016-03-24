@@ -15,11 +15,11 @@ data {
   real err_proc_iid_sigma_shape;
   real err_proc_iid_sigma_rate;
   
-  // Overall data
-  int <lower=0> d; # number of dates
+  // Data dimensions
+  int<lower=1> d; # number of dates
+  int<lower=1> n; # number of observations per date
   
   // Daily data
-  int <lower=0> n; # number of observations per date
   vector[d] DO_obs_1;
   
   // Data

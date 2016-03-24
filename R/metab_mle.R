@@ -41,7 +41,7 @@ metab_mle <- function(
   }
   fitting_time <- system.time({
     # Check data for correct column names & units
-    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
     data <- v(dat_list[['data']])
     data_daily <- v(dat_list[['data_daily']])
     

@@ -59,7 +59,7 @@ metab_sim <- function(
   }
   fitting_time <- system.time({
     # Check data for correct column names & units
-    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
     
     # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
     calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi','ODE_method')

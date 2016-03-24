@@ -35,13 +35,13 @@
 #'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
 #'   O[2] L^{-1}}{mg O2 / L}}
 #'   
-#'   \item{ \code{GPP} daily estimates of GPP, \eqn{g m^-2 d^-1}}
+#'   \item{ \code{GPP} daily estimates of GPP, \eqn{g O[2] m^-2 d^-1}}
 #'   
-#'   \item{ \code{ER} daily estimates of ER, \eqn{g m^-2 d^-1}}
+#'   \item{ \code{ER} daily estimates of ER, \eqn{g O[2] m^-2 d^-1}}
 #'   
 #'   \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
 #'   
-#'   \item{ \code{discharge.daily} daily mean river discharge, \eqn{ft^3 s^-1}}
+#'   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
 #'   
 #'   \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}
 #'   

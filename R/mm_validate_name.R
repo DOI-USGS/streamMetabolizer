@@ -12,6 +12,11 @@
 #' @export
 mm_validate_name <- function(model_name) {
   
+  # under lazy eval, model_name might not break until here (e.g., 
+  # mm_validate_name(mm_name('mle', badarg=4))). force it here to give mm_name a
+  # chance to throw its own errors.
+  model_name <- force(model_name)
+  
   # require parseable name
   parse_problem <- c()
   parsed <- tryCatch(

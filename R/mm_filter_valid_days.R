@@ -41,9 +41,12 @@ mm_filter_valid_days <- function(
   
   # filter the daily data to match & return
   if(!is.null(data_daily)) {
+    daily_unmatched <- as.Date(setdiff(
+      as.character(data_daily$date), 
+      c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$date))))
     daily_removed <- data.frame(
-      date=as.Date(setdiff(as.character(data_daily$date), c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$date)))), 
-      errors="date in data_daily but not data")
+      date=daily_unmatched, 
+      errors=rep("date in data_daily but not data", length(daily_unmatched)))
     removed <- rbind(removed, daily_removed)
     removed <- removed[order(removed$date),]
     rownames(removed) <- NULL

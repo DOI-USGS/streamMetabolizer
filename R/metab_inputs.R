@@ -17,7 +17,7 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
   input <- match.arg(input)
   
   if(input == 'specs') {
-    eg <- paste0("specs(mm_name('",type,"'))", 
+    paste0("specs(mm_name('",type,"'))", 
                  " # see ?mm_name, ?mm_specs for more options")
   } else if(input %in% c('data','data_daily')) {
     mfun <- paste0('metab_',type)
@@ -36,7 +36,6 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
         },
         units = {
           get_units(eg) %>%
-            replace(.=='', NA) %>%
             unname()
         },
         need = {
@@ -50,12 +49,10 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
           }
         }
       )
-    } 
+    }
       # bind_rows %>%
       # u(c(type=NA, get_units(mm_data(everything())))[names(.)])
   } else if(input == 'info') {
-    eg <- "info may be NULL, a list, or any other data you want to attach to the output of metab()"
+    "info may be NULL, a list, or any other data you want to attach to the output of metab()"
   }
-
-  eg
 }

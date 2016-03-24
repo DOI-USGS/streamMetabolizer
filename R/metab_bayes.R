@@ -31,8 +31,8 @@ NULL
 #' @family metab_model
 metab_bayes <- function(
   specs=specs(mm_name('bayes')), 
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
-  data_daily=mm_data(NULL),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge, optional='discharge'), 
+  data_daily=mm_data(date, discharge.daily, optional='all'),
   info=NULL
 ) {
   
@@ -43,10 +43,91 @@ metab_bayes <- function(
   }
   fitting_time <- system.time({
     # Check data for correct column names & units
-    dat_list <- mm_validate_data(data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
-    data <- v(dat_list[['data']])
-    data_daily <- v(dat_list[['data_daily']])
+    dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
+    num_discharge_cols <- length(grep('discharge', c(names(dat_list$data), names(dat_list$data_daily))))
+    pool_K600 <- mm_parse_name(specs$model_name)$pool_K600
+    if(xor(num_discharge_cols > 0, pool_K600 %in% c('linear','binned'))) 
+      stop('discharge data should be included if & only if pool_K600 indicates hierarchy')
+    if(num_discharge_cols > 1)
+      stop('either discharge or discharge.daily may be specified, but not both')
     
+    # Handle discharge. If K600 is a hierarchical function of discharge and 
+    # data$discharge was given, compute daily discharge and store in data.daily 
+    # where it'll be accessible for the user to inspect it after model fitting
+    if((pool_K600 %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
+      # calculate daily discharge
+      dailymean <- function(data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, timestep_days, ...) {
+        data.frame(discharge.daily = if(ply_validity) mean(data_ply$discharge) else NA)
+      }
+      dischdaily <- mm_model_by_ply(
+        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end)
+      
+      # add units if either of the input dfs were unitted
+      if(is.unitted(dat_list$data) || is.unitted(dat_list$data_daily)) {
+        dischdaily_units <- get_units(mm_data(date, discharge.daily))
+        if(is.unitted(dat_list$data)) {
+          if(dischdaily_units['discharge.daily'] != get_units(dat_list$data$discharge))
+            stop('mismatch between discharge units in data (',get_units(dat_list$data$discharge),
+                 ') and requirement for data_daily (', dischdaily_units['discharge.daily'] ,')')
+        }
+        dischdaily <- u(dischdaily, dischdaily_units)
+      }
+
+      # merge with any existing dat_list$data_daily      
+      if(is.null(v(dat_list$data_daily))) {
+        dat_list$data_daily <- dischdaily
+      } else {
+        # need both or neither dfs to be unitted for the full_join. if 
+        # data_daily was unitted then dischdaily will already also be unitted 
+        # (see add units chunk above), so just check/fix the case where
+        # data_daily lacks units but data & therefore dischdaily has them
+        if(is.unitted(dischdaily) && !is.unitted(dat_list$data_daily)) {
+          dat_list$data_daily <- u(dat_list$data_daily, get_units(mm_data()[names(dat_list$data_daily)]))
+        }
+        dat_list$data_daily <- full_join(dat_list$data_daily, dischdaily, by='date')
+      }
+    }
+    # If we have discharge.daily, then we need logged discharge.daily. compute
+    # and store it now
+    if('discharge.daily' %in% names(dat_list$data_daily)) {
+      dat_list$data_daily$ln.discharge.daily <- log(v(dat_list$data_daily$discharge.daily))
+    }
+    # If we need discharge bins, compute & store those now, as well
+    if(pool_K600 %in% c('binned')) {
+      if(is.character(specs$K600_daily_beta_cuts)) {
+        if(!requireNamespace('ggplot2', quietly=TRUE)) {
+          stop("need ggplot2 for K600_pool='binned' and character value for K600_daily_beta_cuts. ",
+               "either install the ggplot2 package or switch to a numeric vector for K600_daily_beta_cuts")
+        }
+        cut_fun <- switch(
+          specs$K600_daily_beta_cuts,
+          interval = ggplot2::cut_interval,
+          number = ggplot2::cut_number)
+        # run once with high dig.lab to parse the breaks from levels(cuts) as numeric
+        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num, dig.lab=20)
+        specs$K600_daily_beta_breaks <- levels(cuts) %>%
+          strsplit('\\[|\\(|\\]|,') %>%
+          lapply(function(lev) as.numeric(lev[2:3])) %>%
+          unlist() %>%
+          unique()
+        # run again with default dig.lab for prettier bin labels
+        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num)
+      } else {
+        # we already know breaks precisely because we're supplying them
+        specs$K600_daily_beta_breaks <- specs$K600_daily_beta_cuts
+        cuts <- cut(dat_list$data_daily$ln.discharge.daily, breaks=specs$K600_daily_beta_cuts, ordered_result=TRUE)
+      }
+      dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
+      specs$K600_daily_beta_bins <- levels(cuts)
+      # you should be able to retrieve the bin names with
+      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily] or, later,
+      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily]
+    }
+    
+    # Use de-unitted version until we pack up the model to return
+    data <- v(dat_list$data)
+    data_daily <- v(dat_list$data_daily)
+        
     # Check and parse model file path. First try the streamMetabolizer models
     # dir, then try a regular path, then complain / continue depending on
     # whether we found a file. Add the complete path to specs. This is
@@ -89,9 +170,10 @@ metab_bayes <- function(
       
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
-      if((specs$day_end - specs$day_start) > 24) warning("multi-day models should probably have day_end - day_start <= 24 hours")
       filtered <- mm_filter_valid_days(
         data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+      if(length(unique(filtered$data$date)) > 1 && (specs$day_end - specs$day_start) > 24) 
+        warning("multi-day models should probably have day_end - day_start <= 24 hours")
       bayes_all_list <- bayes_allply(
         data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
         specs=specs)
@@ -111,8 +193,8 @@ metab_bayes <- function(
     mcmc=bayes_mcmc,
     fitting_time=fitting_time,
     specs=specs,
-    data=dat_list[['data']], # keep the units if given
-    data_daily=dat_list[['data_daily']])
+    data=dat_list$data, # keep the units if given
+    data_daily=dat_list$data_daily)
   
   # Update data with DO predictions
   mm@data <- predict_DO(mm)
@@ -323,7 +405,18 @@ prepdata_bayes <- function(
       d = num_dates,
       
       # Daily
-      n = num_daily_obs, # one value applicable to every day
+      n = num_daily_obs # one value applicable to every day
+    ),
+      
+    switch(
+      features$pool_K600,
+      linear = list(ln_discharge_daily = data_daily$ln.discharge.daily),
+      binned = list(
+        b = specs$K600_daily_beta_num,
+        discharge_bin_daily = data_daily$discharge.bin.daily)
+    ),
+    
+    list(
       DO_obs_1 = array(time_by_date_matrix(data$DO.obs)[1,], dim=num_dates), # duplication of effort below should be small compared to MCMC time
       
       # Every timestep
@@ -351,8 +444,8 @@ prepdata_bayes <- function(
         features$pool_K600,
         none=c('K600_daily_mu', 'K600_daily_sigma'),
         normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        linear=c('K600_daily_beta0_mu', 'K600_daily_beta0_sigma', 'K600_daily_beta1_mu', 'K600_daily_beta1_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        binned=stop('need to think about this one')),
+        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
+        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate')),
       if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
       if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
       if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate')
@@ -562,7 +655,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
     
     # determine how many unique nrows, & therefore data.frames, there should be
-    var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(stan_mat)))
+    var_table <- table(gsub("\\[[[:digit:]]+\\]", "", rownames(stan_mat)))
     all_dims <- unique(var_table) %>% setNames(., .)
     names(all_dims)[all_dims == 1] <- "overall"
     names(all_dims)[all_dims == data_list$d] <- "daily" # overrides 'overall' if d==1. that's OK
@@ -577,8 +670,8 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       as.data.frame(stan_mat[dim_rows,]) %>%
         add_rownames() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
-        mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
-               index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+        mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
+               index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),
                varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
         select(index, varstat, val) %>%
         spread(varstat, val)

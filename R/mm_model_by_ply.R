@@ -79,7 +79,7 @@ mm_model_by_ply <- function(
   data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
   
-  unique.dates <- unique(data.plys$date) #all_possible_dates(data.plys$solar.time, day_start, day_end)
+  unique.dates <- unique(data.plys$date)
   odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
   even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
   
@@ -162,44 +162,4 @@ mm_model_by_ply <- function(
     out_example <- out_list[[example_choice]][FALSE,]
     bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
   }
-}
-
-all_possible_dates <- function(solar.times, day_start, day_end) {
-  # get all dates that possibly apply to these data.plys
-  years <- as.numeric(format(solar.times, "%Y"))
-  doyhrs <- convert_date_to_doyhr(solar.times)
-  
-  # join then split doyhrs and years in order to find the unique values
-  year.doys <- unique(do.call(c, mapply(function(y,d) {
-    y + ( # years in 1000s to 1s place
-      seq( # seq to catch any intermediate days if earliest & latest days are more than 1 day apart
-        floor(d - day_start/24), # latest day this moment could refer to
-        ceiling(d - day_end/24)) # earliest day this moment could refer to
-      + 500)/1000 # doys in 10ths to 1000ths place, packaged so they're always between 0.0 and 0.999
-  }, y=years, d=doyhrs, SIMPLIFY=FALSE)))
-  years <- floor(year.doys)
-  doys <- round((year.doys %% 1) * 1000) - 500
-  
-  # modify yearDays from Hmisc
-  yearDays <- function(year) {
-    time <- as.POSIXlt(paste0(round(year), "-07-01"), format="%Y-%m-%d")
-    time$mon[] <- time$mday[] <- time$sec[] <- time$min <- time$hour <- 0
-    time$year <- time$year + 1
-    return(as.POSIXlt(as.POSIXct(time))$yday + 1)
-  }
-  
-  # adjust if we've crossed a threshold between years
-  if(any(doys <= 0)) {
-    prevyear <- which(doys <= 0)
-    years[prevyear] <- years[prevyear] - 1
-    doys[prevyear] <- yearDays(years[prevyear]) + doys[prevyear] # do after adjusting years
-  }
-  if(any(doys > yearDays(years))) {
-    nextyear <- which(doys > yearDays(years))
-    doys[nextyear] <- doys[nextyear] - yearDays(years[nextyear])
-    years[nextyear] <- years[nextyear] + 1 # do after adjusting doys
-  }
-  
-  # return the formatted (character) dates
-  format(sort(convert_doyhr_to_date(doys, years)), "%Y-%m-%d")
 }

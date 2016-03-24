@@ -1,3 +1,16 @@
+# streamMetabolizer 0.9.2
+
+## Changes
+
+* Hierarchical constraints on K600 are now available! Options are 'normal', 
+'linear', and 'binned'; see the details section on pool_K600 in ?mm_name and the
+description of parameters starting with K600_daily in ?specs.
+
+* Interface change: specs lists now print more prettily and have class 'specs'
+(though they're still fundamentally just lists)
+
+* Vignette: see vignette('getstarted')
+
 # streamMetabolizer 0.9.0
 
 ## Changes
@@ -6,7 +19,7 @@
 specs to metab() and expect the appropriate model to be chosen and called based 
 on model_name in the specs list.
 
-* New function: data_metab() produces a dataset for testing/demonstration, with
+* New function: data_metab() produces a dataset for testing/demonstration, with 
 options for the resolution & flaws to introduce.
 
 * Newly public function: mm_model_by_ply is now public. Its interface has also 

@@ -5,7 +5,8 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(specs = specs(mm_name("bayes")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light), data_daily = mm_data(NULL),
+  DO.obs, DO.sat, depth, temp.water, light, discharge, optional = "discharge"),
+  data_daily = mm_data(date, discharge.daily, optional = "all"),
   info = NULL)
 }
 \arguments{

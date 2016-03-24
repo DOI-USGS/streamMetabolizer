@@ -26,11 +26,13 @@ mm_generate_mcmc_file <- function(
   DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
   
   # helper functions
-  comment <- function(...) { # prefix with the appropriate comment character[s]
+  comment <- function(...) { 
+    # prefix with the appropriate comment character[s]
     chr <- switch(engine, jags='#', stan='//')
     paste0(chr, ' ', paste0(...))
   }
-  chunk <- function(..., indent=2, newline=TRUE) { # indent a chunk & add a newline
+  chunk <- function(..., indent=2, newline=TRUE) { 
+    # indent a chunk & add a newline
     lines <- c(list(...))
     lines <- lines[!sapply(lines, is.null)]
     lines <- unlist(lines)
@@ -44,22 +46,38 @@ mm_generate_mcmc_file <- function(
   indent <- function(..., indent=2) {
     chunk(..., indent=indent, newline=FALSE)
   }
-  condindent <- function(engines=c('jags'), ..., indent=2) { # conditional indent; only indent if engine is in engines
+  condindent <- function(..., engines=c('jags'), indent=2) {
+    # conditional indent; only indent if engine is in engines
     chunk(..., indent=if(engine %in% engines) indent else 0, newline=FALSE)
   }
-  f <- function(distrib, ...) { # switch things to JAGS format if needed
+  condloop <- function(..., iter='j', over='1:d', engines=c('jags'), indent=2) {
+    # conditional loop
+    do_indent <- engine %in% engines
+    c(
+      if(do_indent) p('for(',iter,' in ',over,') {'),
+      chunk(..., indent=if(do_indent) indent else 0, newline=FALSE),
+      if(do_indent) p('}')
+    )
+  }
+  f <- function(distrib, ...) { 
+    # switch things to JAGS format if needed
     args <- c(list(...))
     if(engine=='jags') {
       switch(
         distrib,
         normal = {
+          if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)")
           distrib <- 'dnorm'
-          args[2] <- sprintf('pow(%s, -2)', args[2])
+          args['sigma'] <- sprintf('pow(%s, -2)', args['sigma'])
         }, 
         uniform = {
+          if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)")
           distrib <- 'dunif'
         },
         gamma = {
+          # shape = alpha = k = first argument to both stan and jags
+          # rate = beta = 1/theta = inverse scale = second argument to both stan and jags
+          if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
           distrib <- 'dgamma'
         }
       )
@@ -69,28 +87,38 @@ mm_generate_mcmc_file <- function(
       paste0(args, collapse=', '),
       ')')
   }
-  e <- function(operator) { # element-wise multiplication or division is .* or ./ in Stan but just * or . in JAGS
+  e <- function(operator) {
+    # element-wise multiplication or division is .* or ./ in Stan but just * or
+    # . in JAGS
     paste0(
       switch(engine, jags='', stan='.'),
       operator)
   }
   p <- paste0 # partial line: just combine strings into string
-  s <- function(...) { # line with stop/semicolon: combine strings into string & add semicolon if needed
+  s <- function(...) {
+    # line with stop/semicolon: combine strings into string & add semicolon if
+    # needed
     p(p(...), switch(engine, jags='', stan=';'))
   }
-  N <- function(n) { # index into a matrix according to the index of the time of day (the col for Stan or the row for JAGS)
+  N <- function(n) {
+    # index into a matrix according to the index of the time of day (the col for
+    # Stan or the row for JAGS)
     switch(
       engine,
       jags=paste0('[1:d,',n,']'),
       stan=paste0('[',n,']'))
   }
-  MN <- function(m, n) { # matrix indexing for distributions, which are vectorizable in Stan (go by col) but not in JAGS (go by cell)
+  MN <- function(m, n) {
+    # matrix indexing for distributions, which are vectorizable in Stan (go by
+    # col) but not in JAGS (go by cell)
     switch(
       engine,
       jags=paste0('[',m,',',n,']'),
       stan=paste0('[',n,']'))
   }
-  M <- function(m) { # day-by-day indexing for distributions of daily values, which are vectorizable in Stan but not JAGS
+  M <- function(m) {
+    # day-by-day or beta-by-beta indexing for distributions of daily values, 
+    # which are vectorizable in Stan but not JAGS
     switch(
       engine,
       jags=paste0('[',m,']'),
@@ -113,17 +141,32 @@ mm_generate_mcmc_file <- function(
         'real GPP_daily_sigma;',
         'real ER_daily_mu;',
         'real ER_daily_sigma;',
-        switch(
-          pool_K600,
-          none=c(
-            'real K600_daily_mu;',
-            'real K600_daily_sigma;'),
-          normal=c(
-            'K600_daily_mu_mu;',
-            'K600_daily_mu_sigma;',
-            'K600_daily_sigma_shape;',
-            'K600_daily_sigma_rate;'),
-          warning("haven't finished with other options for pool_K600")
+        
+        if(pool_K600 %in% c('normal','linear','binned')) c(
+          p(''),
+          comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)')
+        ),
+        if(pool_K600 == 'none') c(
+          'real K600_daily_mu;',
+          'real K600_daily_sigma;'
+        ) else c(
+          # hierarchical models each do K600_daily_mu/K600_daily_pred
+          # differently, but K600_daily_sigma they all do the same
+          switch(
+            pool_K600,
+            normal=c(
+              'real K600_daily_mu_mu;',
+              'real K600_daily_mu_sigma;'),
+            linear=c(
+              'vector[2] K600_daily_beta_mu;',
+              'vector[2] K600_daily_beta_sigma;'),
+            binned=c(
+              'int <lower=1> b; # number of K600_daily_betas',
+              'vector[b] K600_daily_beta_mu;',
+              'vector[b] K600_daily_beta_sigma;')
+          ),
+          'real K600_daily_sigma_shape;',
+          'real K600_daily_sigma_rate;'
         )),
       
       chunk(
@@ -141,13 +184,17 @@ mm_generate_mcmc_file <- function(
           'real err_proc_iid_sigma_rate;')),
       
       chunk(
-        comment('Overall data'),
-        'int <lower=0> d; # number of dates'),
+        comment('Data dimensions'),
+        'int<lower=1> d; # number of dates',
+        'int<lower=1> n; # number of observations per date'),
       
       chunk(
         comment('Daily data'),
-        'int <lower=0> n; # number of observations per date',
-        'vector[d] DO_obs_1;'),
+        'vector[d] DO_obs_1;',
+        switch(
+          pool_K600,
+          linear='vector[d] ln_discharge_daily;',
+          binned='int<lower=1,upper=b> discharge_bin_daily[d];')),
       
       # prepare to iterate over n obs for all d at a time:
       # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
@@ -245,29 +292,37 @@ mm_generate_mcmc_file <- function(
     ## Stan: parameters ##
     if(engine == 'stan') c(
       'parameters {',
-      
       indent(
-        'vector[d] GPP_daily;',
-        'vector[d] ER_daily;',
-        'vector[d] K600_daily;'),
-      
-      if((err_proc_iid && !dDO_model) || err_proc_acor) indent(
-        ''),
-      if(err_proc_iid && !dDO_model) indent(
-        'vector[d] err_proc_iid[n-1];'),
-      if(err_proc_acor) indent(
-        'vector[d] err_proc_acor_inc[n-1];'),
-      
-      if(err_obs_iid || err_proc_acor || err_proc_iid) indent(
-        '',
-        if(err_obs_iid) c(
-          'real err_obs_iid_sigma;'),
+        c('vector[d] GPP_daily;',
+          'vector[d] ER_daily;',
+          'vector[d] K600_daily;'),
+        
+        if(pool_K600 != 'none') c(
+          '',
+          switch(
+            pool_K600,
+            normal='real K600_daily_mu;',
+            linear='vector[2] K600_daily_beta;',
+            binned='vector[b] K600_daily_beta;'),
+          'real K600_daily_sigma;'),
+        
+        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
+          ''),
+        if(err_proc_iid && !dDO_model) c(
+          'vector[d] err_proc_iid[n-1];'),
         if(err_proc_acor) c(
-          'real err_proc_acor_phi;',
-          'real err_proc_acor_sigma;'),
-        if(err_proc_iid) c(
-          'real err_proc_iid_sigma;')),
-      
+          'vector[d] err_proc_acor_inc[n-1];'),
+        
+        if(err_obs_iid || err_proc_acor || err_proc_iid) c(
+          '',
+          if(err_obs_iid) c(
+            'real err_obs_iid_sigma;'),
+          if(err_proc_acor) c(
+            'real err_proc_acor_phi;',
+            'real err_proc_acor_sigma;'),
+          if(err_proc_iid) c(
+            'real err_proc_iid_sigma;'))
+      ),
       '}',''
     ),
     
@@ -285,7 +340,9 @@ mm_generate_mcmc_file <- function(
       if(dDO_model)
         'vector[d] dDO_mod[n-1];',
       if(err_proc_acor) 
-        'vector[d] err_proc_acor[n-1];'),
+        'vector[d] err_proc_acor[n-1];',
+      if(pool_K600 %in% c('linear','binned'))
+        'vector[d] K600_daily_pred;'),
     
     indent(
       comment('Model DO time series'),
@@ -359,11 +416,17 @@ mm_generate_mcmc_file <- function(
       # K600_daily model
       if(pool_K600 %in% c('linear','binned')) c(
         p(''),
-        comment("K600_daily model"),
+        comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
         switch(
           pool_K600,
-          linear=s('K600_daily_mu <- K600_daily_beta0 + K600_daily_beta0 ', e('*'), ' Q_daily + K600_daily_sigma'),
-          binned=stop('not sure'))
+          linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
+          binned=c(
+            # JAGS might not require a loop here
+            condloop(
+              s('K600_daily_pred', M('j'), ' <- K600_daily_beta[discharge_bin_daily', M('j'), ']')
+            )
+          )
+        )
       )
       
     ),
@@ -374,7 +437,7 @@ mm_generate_mcmc_file <- function(
       ''
     ),
     
-    ## model ##
+    ## Stan: model ##
     if(engine == 'stan') c(
       'model {'
     ),
@@ -382,61 +445,72 @@ mm_generate_mcmc_file <- function(
     if(err_proc_iid) chunk(
       comment('Independent, identically distributed process error'),
       p('for(i in 1:(n-1)) {'),
-      condindent(
-        c('jags'),
-        if(engine == 'jags') p('for(j in 1:d) {'),
-        if(dDO_model) s(
-          '  dDO_obs', MN('j','i'), ' ~ ', f('normal', p('dDO_mod', MN('j','i')), 'err_proc_iid_sigma')
-        ) else s(
-          '  err_proc_iid', MN('j','i'), ' ~ ', f('normal', '0', 'err_proc_iid_sigma')
-        ),
-        if(engine == 'jags') p('}')
+      indent(
+        condloop(
+          if(dDO_model) s(
+            'dDO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('dDO_mod', MN('j','i')), sigma='err_proc_iid_sigma')
+          ) else s(
+            'err_proc_iid', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
+          )
+        )
       ),
       p('}'),
       comment('SD (sigma) of the IID process errors'),
-      s('err_proc_iid_sigma ~ ', f('gamma', 'err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'))),
+      s('err_proc_iid_sigma ~ ', f('gamma', shape='err_proc_iid_sigma_shape', rate='err_proc_iid_sigma_rate'))),
     
     if(err_proc_acor) chunk(
       comment('Autocorrelated process error'),
       p('for(i in 1:(n-1)) {'),
-      condindent(
-        c('jags'),
-        if(engine == 'jags') p('for(j in 1:d) {'),
-        s('  err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', '0', 'err_proc_acor_sigma')),
-        if(engine == 'jags') p('}')
+      indent(
+        condloop(
+          s('err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+        )
       ),
       p('}'),
       comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-      s('err_proc_acor_phi ~ ', f('gamma', 'err_proc_acor_phi_shape', 'err_proc_acor_phi_rate')),
-      s('err_proc_acor_sigma ~ ', f('gamma', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'))),
+      s('err_proc_acor_phi ~ ', f('gamma', shape='err_proc_acor_phi_shape', rate='err_proc_acor_phi_rate')),
+      s('err_proc_acor_sigma ~ ', f('gamma', shape='err_proc_acor_sigma_shape', rate='err_proc_acor_sigma_rate'))),
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
       p('for(i in 1:n) {'),
-      condindent(
-        c('jags'),
-        if(engine == 'jags') p('for(j in 1:d) {'),
-        s('  DO_obs', MN('j','i'), ' ~ ', f('normal', p('DO_mod', MN('j','i')), 'err_obs_iid_sigma')),
-        if(engine == 'jags') p('}')
+      indent(
+        condloop(
+          s('DO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('DO_mod', MN('j','i')), sigma='err_obs_iid_sigma'))
+        )
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma ~ ', f('gamma', 'err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'))),
+      s('err_obs_iid_sigma ~ ', f('gamma', shape='err_obs_iid_sigma_shape', rate='err_obs_iid_sigma_rate'))),
     
     indent(
       comment('Daily metabolism values'),
-      if(engine == 'jags') p('for(j in 1:d) {'),
-      condindent(
-        c('jags'),
-        s('GPP_daily', M('j'), ' ~ ', f('normal', 'GPP_daily_mu', 'GPP_daily_sigma')),
-        s('ER_daily', M('j'), ' ~ ', f('normal', 'ER_daily_mu', 'ER_daily_sigma')),
-        s('K600_daily', M('j'), ' ~ ', f('normal', 'K600_daily_mu', 'K600_daily_sigma')),
-        if(pool_K600 == 'normal') 
-          s('K600_daily_mu', M('j'), ' ~ ', f('normal', 'K600_daily_mu_mu', 'K600_daily_mu_sigma')),
-        if(pool_K600 %in% c('normal','linear','binned'))
-          s('K600_daily_sigma', M('j'), ' ~ ', f('normal', 'K600_daily_sigma_rate', 'K600_daily_sigma_shape'))
-      ),
-      if(engine == 'jags') p('}')
+      condloop(
+        s('GPP_daily', M('j'), ' ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
+        s('ER_daily', M('j'), ' ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
+        if(pool_K600 %in% c('none','normal')) s(
+          'K600_daily', M('j'), ' ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
+        ) else if(pool_K600 %in% c('linear','binned')) s(
+          'K600_daily', M('j'), ' ~ ', f('normal', mu=paste0('K600_daily_pred', M('j')), sigma='K600_daily_sigma')
+        )
+      )
+    ),
+    
+    if(pool_K600 != 'none') c(
+      '',
+      indent(
+        comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
+        if(pool_K600 == 'normal') c(
+          s('K600_daily_mu ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
+        ),
+        if(pool_K600 %in% c('linear','binned')) c(
+          condloop(
+            iter='k', over=switch(pool_K600, linear='1:2', binned='1:b'),
+            s('K600_daily_beta', M('k'), ' ~ ', f('normal', mu=paste0('K600_daily_beta_mu', M('k')), sigma=paste0('K600_daily_beta_sigma', M('k'))))
+          )
+        ),
+        s('K600_daily_sigma ~ ', f('gamma', shape='K600_daily_sigma_shape', rate='K600_daily_sigma_rate'))
+      )
     ),
     
     '}'
@@ -460,7 +534,7 @@ mm_generate_mcmc_file <- function(
 #' @keywords internal
 mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
-    pool_K600='none',
+    pool_K600=c('none','normal','linear','binned'),
     err_obs_iid=c(TRUE, FALSE),
     err_proc_acor=c(FALSE, TRUE),
     err_proc_iid=c(FALSE, TRUE),
