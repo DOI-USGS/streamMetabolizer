@@ -4,7 +4,7 @@
 \alias{mm_get_timestep}
 \title{Return the average timestep in days}
 \usage{
-mm_get_timestep(datetimes, format = c("mean", "unique"),
+mm_get_timestep(datetimes, format = c("mean", "unique", "modal"),
   require_unique = FALSE, tol = 60/(24 * 60 * 60))
 }
 \arguments{
@@ -28,20 +28,25 @@ Return the average timestep in days
 }
 \examples{
 {
-datetimes <- Sys.time()+ as.difftime(c(0,304,600,900.2,1200), units='secs')
+datetimes <- Sys.time()+ as.difftime(c(0,304,600,900.2,1200,1500,1800), units='secs')
 mm_get_timestep(datetimes, 'unique', tol=1/(24*60*60))
 mm_get_timestep(datetimes, 'unique', tol=5/(24*60*60))
 mm_get_timestep(datetimes, 'unique', tol=10/(24*60*60))
 mm_get_timestep(datetimes, 'unique', tol=300/(24*60*60))
 mm_get_timestep(datetimes, 'mean')
 mm_get_timestep(datetimes, 'mean', require_unique=TRUE, tol=300/(24*60*60))
+datetimes <- Sys.time()+ as.difftime(c(-1,0,2,4,5,6,8,10), units='days')
+mm_get_timestep(datetimes, 'modal')
 mm_get_timestep(c(), 'mean')
 mm_get_timestep(c(), 'unique')
+mm_get_timestep(c(), 'modal')
 \dontrun{
-mm_get_timestep(datetimes, 'mean', require_unique=TRUE, tol=1/(24*60*60)) # breaks
-mm_get_timestep(datetimes, 'unique', tol=5/(24*60*60), require_unique=TRUE) # breaks
+# all of these should and do give errors:
+mm_get_timestep(datetimes, 'mean', require_unique=TRUE, tol=1/(24*60*60))
+mm_get_timestep(datetimes, 'unique', tol=5/(24*60*60), require_unique=TRUE)
 mm_get_timestep(c(), 'mean', require_unique=TRUE)
 mm_get_timestep(c(), 'unique', require_unique=TRUE)
+mm_get_timestep(c(), 'modal', require_unique=TRUE)
 }
 }
 }
