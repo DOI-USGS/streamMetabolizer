@@ -57,7 +57,7 @@ model {
   # SD (sigma) of the observation errors
   err_obs_iid_sigma ~ dgamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate)
   
-  # Daily metabolism values
+  # Daily metabolism priors
   for(j in 1:d) {
     GPP_daily[j] ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
     ER_daily[j] ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))

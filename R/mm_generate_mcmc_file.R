@@ -136,7 +136,7 @@ mm_generate_mcmc_file <- function(
       'data {',
       
       chunk(
-        comment('Metabolism distributions'),
+        comment('Parameters of priors on metabolism'),
         'real GPP_daily_mu;',
         'real GPP_daily_sigma;',
         'real ER_daily_mu;',
@@ -144,7 +144,7 @@ mm_generate_mcmc_file <- function(
         
         if(pool_K600 %in% c('normal','linear','binned')) c(
           p(''),
-          comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)')
+          comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
         if(pool_K600 == 'none') c(
           'real K600_daily_mu;',
@@ -484,7 +484,7 @@ mm_generate_mcmc_file <- function(
       s('err_obs_iid_sigma ~ ', f('gamma', shape='err_obs_iid_sigma_shape', rate='err_obs_iid_sigma_rate'))),
     
     indent(
-      comment('Daily metabolism values'),
+      comment('Daily metabolism priors'),
       condloop(
         s('GPP_daily', M('j'), ' ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
         s('ER_daily', M('j'), ' ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
