@@ -1,44 +1,45 @@
 #' Find the name of a model by its features
 #' 
-#' While the \code{Usage} shows the valid values for each argument, defaults 
-#' depend on the value of \code{type}: any argument that is not explicitly 
-#' supplied (besides \code{type} and \code{check_validity}) will default to the 
+#' A \code{model_name} concisely specifies the structure of a metabolism model. 
+#' From a \code{model_name}, an appropriate set of model specifications 
+#' (parameters and runtime options) can be generated with \code{\link{specs}}. 
+#' From a complete \code{specs} list, a metabolism model can be run with 
+#' \code{\link{metab}}.
+#' 
+#' While the \code{Usage} shows all valid values for each argument, not all 
+#' argument combinations are valid; the combination will also be checked if 
+#' \code{check_validity==TRUE}. For arguments not explicitly specified, defaults
+#' depend on the value of \code{type}: any argument that is not explicitly
+#' supplied (besides \code{type} and \code{check_validity}) will default to the
 #' values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 #' 
 #' @details
 #' 
 #' \subsection{pool_K600}{
 #' 
-#' Here are the essential model lines (in Stan language) that separate the four
+#' Here are the essential model lines (in Stan language) that separate the four 
 #' K pooling options.
 #' 
-#' \tabular{l}{
-#'   \strong{\code{pool_K600 = 'none'}}\cr
-#'   \code{K600_daily ~ normal(K600_daily_mu, K600_daily_sigma)}
-#' }
+#' \tabular{l}{ \strong{\code{pool_K600 = 'none'}}\cr \code{K600_daily ~ 
+#' normal(K600_daily_mu, K600_daily_sigma)} }
 #' 
-#' \tabular{l}{
-#'   \strong{\code{pool_K600 = 'normal'}}\cr
-#'   \code{K600_daily ~ normal(K600_daily_mu, K600_daily_sigma)}\cr
-#'   \code{K600_daily_mu ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma)}\cr
-#'   \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}
-#' }
+#' \tabular{l}{ \strong{\code{pool_K600 = 'normal'}}\cr \code{K600_daily ~ 
+#' normal(K600_daily_mu, K600_daily_sigma)}\cr \code{K600_daily_mu ~ 
+#' normal(K600_daily_mu_mu, K600_daily_mu_sigma)}\cr \code{K600_daily_sigma ~ 
+#' gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
 #' 
-#' \tabular{l}{
-#'   \strong{\code{pool_K600 = 'linear'}}\cr
-#'   \code{K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * discharge_daily}\cr
-#'   \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr
-#'   \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
-#'   \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}
-#' }
+#' \tabular{l}{ \strong{\code{pool_K600 = 'linear'}}\cr \code{K600_daily_pred <-
+#' K600_daily_beta[1] + K600_daily_beta[2] * discharge_daily}\cr 
+#' \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr 
+#' \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
+#' \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, 
+#' K600_daily_sigma_rate)} }
 #' 
-#' \tabular{l}{
-#'   \strong{\code{pool_K600 = 'binned'}}\cr
-#'   \code{K600_daily_pred <- K600_daily_beta[Q_bin_daily]}\cr
-#'   \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr
-#'   \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
-#'   \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}
-#' }
+#' \tabular{l}{ \strong{\code{pool_K600 = 'binned'}}\cr \code{K600_daily_pred <-
+#' K600_daily_beta[Q_bin_daily]}\cr \code{K600_daily ~ normal(K600_daily_pred, 
+#' K600_daily_sigma)}\cr \code{K600_daily_beta ~ normal(K600_daily_beta_mu, 
+#' K600_daily_beta_sigma)}\cr \code{K600_daily_sigma ~ 
+#' gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
 #' 
 #' }
 #' 
@@ -47,9 +48,11 @@
 #' @param type the model type, corresponding to the model fitting function 
 #'   (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)
 #' @param pool_K600 Should the model pool information among days to get more 
-#'   consistent daily estimates for K600? Options: 'none'=no pooling of K600; 
-#'   'normal'=K600 ~ 1; 'linear'=K600 ~ 1; 'binned'=K600 ~ beta[Q_bin]. See 
-#'   Details for more.
+#'   consistent daily estimates for K600? Options: \code{'none'}=no pooling of 
+#'   K600; \code{'normal'}=\eqn{K600 ~ N(mu, sigma)}; \code{'linear'}=\eqn{K600 
+#'   ~ N(B[0] + B[1]*Q, sigma)}; \code{'binned'}=\eqn{K600 ~ N(B[Q_bin], sigma)}
+#'   where \eqn{mu ~ N(mu_mu, mu_sigma)} and \eqn{sigma ~ N(sigma_mu, 
+#'   sigma_sigma)}. See Details for more.
 #' @param err_obs_iid logical. Should IID observation error be included? If not,
 #'   the model will be fit to the differences in successive DO measurements, 
 #'   rather than to the DO measurements themselves.

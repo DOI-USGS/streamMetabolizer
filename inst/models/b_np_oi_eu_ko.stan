@@ -1,7 +1,7 @@
 // b_np_oi_eu_ko.stan
 
 data {
-  // Metabolism distributions
+  // Parameters of priors on metabolism
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;
@@ -90,7 +90,7 @@ model {
   // SD (sigma) of the observation errors
   err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
   
-  // Daily metabolism values
+  // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);

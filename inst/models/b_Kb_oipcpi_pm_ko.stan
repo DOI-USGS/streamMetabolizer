@@ -1,13 +1,13 @@
 // b_Kb_oipcpi_pm_ko.stan
 
 data {
-  // Metabolism distributions
+  // Parameters of priors on metabolism
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;
   real ER_daily_sigma;
   
-  // Hierarchical constraints on K600_daily (binned model)
+  // Parameters of hierarchical priors on K600_daily (binned model)
   int <lower=1> b; # number of K600_daily_betas
   vector[b] K600_daily_beta_mu;
   vector[b] K600_daily_beta_sigma;
@@ -136,7 +136,7 @@ model {
   // SD (sigma) of the observation errors
   err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
   
-  // Daily metabolism values
+  // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);

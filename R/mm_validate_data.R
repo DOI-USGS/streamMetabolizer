@@ -7,6 +7,7 @@
 #' @param data_tests list of tests to conduct to determine whether the input
 #'   data.frames are properly formatted to allow modeling to begin
 #' @import dplyr
+#' @importFrom lubridate is.POSIXct is.Date
 #' @importFrom stats setNames
 #' @examples
 #' \dontrun{
@@ -64,6 +65,8 @@ mm_validate_data <- function(
       if(length(na.times) > 0) {
         stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")))
       }
+      if(timecol=='solar.time' && !lubridate::is.POSIXct(dat[,timecol])) stop("expecting 'solar.time' to be of class 'POSIXct'")
+      if(timecol=='date' && !lubridate::is.Date(dat[,timecol])) stop("expecting 'date' to be of class 'Date'")
     }
     
     # put the data columns in the same order as expected.data and eliminate any 

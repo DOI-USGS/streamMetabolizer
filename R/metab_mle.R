@@ -19,7 +19,7 @@ NULL
 #' predict_metab(mm)
 #' 
 #' # PR with fixed K on two days
-#' dat_daily <- data.frame(date=c("2012-09-18","2012-09-20"), K600=35)
+#' dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
 #' mm <- metab_mle(data=dat, data_daily=dat_daily)
 #' predict_metab(mm)
 #' \dontrun{

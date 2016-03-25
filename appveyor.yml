@@ -4,6 +4,8 @@
 # and to call a customized version of travis-tool.sh which uses GRAN+CRAN by default.
 
 environment:
+  R_VERSION: 'patched'
+  USE_RTOOLS: true
   R_CHECK_ARGS: --no-build-vignettes --no-manual --no-multiarch
   R_BUILD_ARGS: --no-build-vignettes --no-manual
   R_INSTALL_ARGS: --no-multiarch
