@@ -62,7 +62,7 @@ test_that("metab_mle outputs look like Bob's", {
   
   # PR
   mms <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=-2, day_end=30), 
-                   data=dat, data_daily=data.frame(date="2012-09-18", K600=35))
+                   data=dat, data_daily=data.frame(date=as.Date("2012-09-18"), K600=35))
   mmb <- streamMetabolizer:::load_french_creek_std_mle(
     dat, estimate='PR', K=35, 
     start=c(dates="09/17/12", times="22:00:00"),

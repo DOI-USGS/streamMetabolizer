@@ -88,6 +88,7 @@ mm_model_by_ply <- function(
   # This function speeds things up in both of the next two loops. 'runs' refers
   # to sequential runs of values in date.group that have the same value.
   get_runs <- function(date.group) {
+    values <- '.dplyr.var'
     replace(date.group, is.na(date.group), '') %>%
       rle() %>%
       unclass %>% 
@@ -145,6 +146,7 @@ mm_model_by_ply <- function(
     filter(date %in% unique.dates) %>%
     arrange(date) %>%
     mutate(date=as.Date(date, tz=tz(data$solar.time)))
+  hour <- odd.date.group <- even.date.group <- '.dplyr.var'
   data_plys <- data.plys %>%
     select(-date, -hour, -odd.date.group, -even.date.group)
   out_list <- lapply(seq_along(runs$date), function(dt) {

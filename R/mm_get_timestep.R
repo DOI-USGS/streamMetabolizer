@@ -63,6 +63,7 @@ mm_get_timestep <- function(datetimes, format=c('mean','unique','modal'), requir
       tbl_unique <- sapply(all_unique, function(tstep) sum(timesteps == tstep), USE.NAMES=FALSE)
       sufficiently_unique <- mm_get_timestep(
         datetimes=cumsum(c(0,all_unique)), format='unique', require_unique=require_unique, tol=tol)
+      if(length(sufficiently_unique) == 0) return(c())
       round_unique <- approx(sufficiently_unique, sufficiently_unique, xout=all_unique, method='constant', rule=2)$y
       tbl_suff_unique <- sapply(sufficiently_unique, function(ru) sum(tbl_unique[which(round_unique == ru)]))
       all_suff_unique <- sapply(sufficiently_unique, function(ru) {
