@@ -79,52 +79,85 @@ mm_model_by_ply <- function(
   data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
   data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
   
-  unique.dates <- unique(data.plys$date)
-  odd.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 1)]
-  even.dates <- unique.dates[which(seq_along(unique.dates) %% 2 == 0)]
-  
   # subtract a tiny fudge factor (one second) to the start and end bounds so we
   # don't exclude times that are essentially equal to day_start, and so we do
   # exclude times that are essentially equal to day_end
-  day_start <- day_start - 1/(60*60*24)
-  day_end <- day_end - 1/(60*60*24)
+  day_start_fudge <- day_start - 1/(60*60*24)
+  day_end_fudge <- day_end - 1/(60*60*24)
+  
+  # This function speeds things up in both of the next two loops. 'runs' refers
+  # to sequential runs of values in date.group that have the same value.
+  get_runs <- function(date.group) {
+    replace(date.group, is.na(date.group), '') %>%
+      rle() %>%
+      unclass %>% 
+      as_data_frame %>% 
+      mutate(end=cumsum(lengths), start=c(1, 1+end[-n()])) %>%
+      filter(values != '') %>%
+      select(date=values, start, end)
+  }
+  # Determine which rows go with which date, and label dates as either odd or
+  # even (no relation to the actual value of the date)
+  date_rows <- get_runs(data.plys$date)
+  odd.dates <- date_rows[which(seq_len(nrow(date_rows)) %% 2 == 1),]$date
+  even.dates <- date_rows[which(seq_len(nrow(date_rows)) %% 2 == 0),]$date
   
   # Assign each data row to one or two date plys. Because date plys can overlap,
   # there are two columns so that one row can belong to two dates if needed.
   dt.NA <- as.character(NA)
-  for(dt in seq_along(unique.dates)) {
-    dt.today <- unique.dates[dt]
-    dt.yesterday <- if(dt>1) unique.dates[dt-1] else dt.NA
-    dt.tomorrow <- if(dt<length(unique.dates)) unique.dates[dt+1] else dt.NA
-    hr <- data.plys[data.plys$date == dt.today, 'hour']
-    primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start & hr < day_end, 1, 2)]
-    secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end - 24), 1, ifelse(hr < (24 + day_start), 2, 3))]
-    data.plys[data.plys$date == dt.today, 'odd.date.group'] <- if(dt.today %in% odd.dates) primary.date else secondary.date
-    data.plys[data.plys$date == dt.today, 'even.date.group'] <- if(dt.today %in% even.dates) primary.date else secondary.date
-  } 
+  data.plys <- bind_cols(
+    data.plys,
+    bind_rows(lapply(seq_len(nrow(date_rows)), function(dt) {
+      run <- date_rows[dt,]
+      dt.today <- run$date
+      dt.yesterday <- if(dt>1) date_rows[[dt-1,'date']] else dt.NA
+      dt.tomorrow <- if(dt<nrow(date_rows)) date_rows[[dt+1,'date']] else dt.NA
+      data.plys.rows <- run$start:run$end
+      hr <- data.plys[data.plys.rows, 'hour']
+      primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start_fudge & hr < day_end_fudge, 1, 2)]
+      secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end_fudge - 24), 1, ifelse(hr < (24 + day_start_fudge), 2, 3))]
+      if(dt.today %in% odd.dates) {
+        data_frame(odd.date.group=primary.date, even.date.group=secondary.date)
+        #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(primary.date, secondary.date)
+      } else { # dt.today %in% even.dates
+        data_frame(odd.date.group=secondary.date, even.date.group=primary.date)
+        #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(secondary.date, primary.date)
+      }
+    }))) %>%
+    as.data.frame(stringsAsFactors=FALSE)
+  
   # filter out dates that don't ever appear on their own - this especially weeds
   # out first and last dates that were probably meant just to be part of the
   # second or penultimate dates when the date range is >24
   date.pairings <- setNames(unique(data.plys[, c('odd.date.group','even.date.group')]), c('a','b'))
   date.pairings <- rbind(date.pairings, setNames(date.pairings, c('b','a')))
   date.pairings <- date.pairings[!is.na(date.pairings$a),]
-  solo.dates <- date.pairings[is.na(date.pairings$b),'a']
+  solo.dates <- date.pairings[is.na(date.pairings$b),]$a
   tbl.dates <- table(date.pairings$a)
   double.dates <- names(tbl.dates)[tbl.dates > 1]
-  unique.dates <- unique(c(solo.dates, double.dates))
+  unique.dates <- sort(unique(c(solo.dates, double.dates)))
   
   # Apply model_fun to each ply of the data, using if-else in the lapply loop to
   # cover both the odd and even groupings in date order
-  out_list <- lapply(sort(unique.dates), function(dt) {
+  runs <- bind_rows(
+    get_runs(data.plys$odd.date.group),
+    get_runs(data.plys$even.date.group)) %>%
+    filter(date %in% unique.dates) %>%
+    arrange(date) %>%
+    mutate(date=as.Date(date, tz=tz(data$solar.time)))
+  data_plys <- data.plys %>%
+    select(-date, -hour, -odd.date.group, -even.date.group)
+  out_list <- lapply(seq_along(runs$date), function(dt) {
     # pick out the inst & daily plys for this date
-    ply <- if(dt %in% odd.dates) {
-      which(data.plys$odd.date.group == dt)
-    } else {
-      which(data.plys$even.date.group == dt)
-    }
-    data_ply <- data.plys[ply,!(names(data.plys) %in% c('date','hour','odd.date.group','even.date.group'))]
-    data_daily_ply <- if(!is.null(data_daily)) data_daily[data_daily$date == dt,] else NULL
-    ply_date <- as.Date(dt, tz=tz(dt))
+    run <- runs[dt,]
+    data_ply <- data_plys[run$start:run$end,]
+    data_daily_ply <- 
+      if(!is.null(data_daily)) {
+        data_daily[match(run$date, data_daily$date),]
+      } else {
+        NULL
+      }
+    ply_date <- run$date
     
     # compute timestep and run validity checks if requested. if timestep_days is
     # FALSE or NA, it will be passed as NA to the model_fun and only computed
