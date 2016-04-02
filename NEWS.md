@@ -1,6 +1,10 @@
-# streamMetabolizer 0.9.2
+# streamMetabolizer 0.9.4
 
-## Changes
+* Now automatically checks for available updates when you attach the package
+
+* Improved units handling in convert_k600/kGAS
+
+# streamMetabolizer 0.9.2
 
 * Hierarchical constraints on K600 are now available! Options are 'normal', 
 'linear', and 'binned'; see the details section on pool_K600 in ?mm_name and the
@@ -12,8 +16,6 @@ description of parameters starting with K600_daily in ?specs.
 * Vignette: see vignette('getstarted')
 
 # streamMetabolizer 0.9.0
-
-## Changes
 
 * New function: metab() serves as a gateway to all model types. You can now pass
 specs to metab() and expect the appropriate model to be chosen and called based 
@@ -60,8 +62,6 @@ Some models are known to work; complete testing for all models is forthcoming.
 
 # streamMetabolizer 0.8.0
 
-## Changes
-
 * Major interface change (renamed variable) to clarify types of time: solar.time
 (mean solar time), app.solar.time (apparent solar time), local.time (time in 
 local time zone). Metabolism models now accept solar.time rather than 
@@ -70,13 +70,9 @@ solar.time (as long as you don't have daylight savings time).
 
 # streamMetabolizer 0.7.3
 
-## Changes
-
 * Remove calc\_schmidt because it is never used
 
 # streamMetabolizer 0.7.2
-
-## Status
 
 This package is not ready for use by many, but it does currently have:
 

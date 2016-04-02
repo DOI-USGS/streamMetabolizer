@@ -11,19 +11,19 @@ manual_tests <- function() {
   library(dplyr)
   
   #### data prep ####
-  dat <- data_metab('10', res='30')
+  dat <- data_metab('10', res='10')
   
-  #### normal hierarchical model by split_dates=c(T,F) ####
-  sp <- mm_name('bayes', pool_K600='normal') %>%
-    specs(n_chains=4, n_cores=4, burnin_steps=2000, saved_steps=1000)
-  x <- seq(0,10,by=0.1)
-  plot(density(dgamma(x, shape=1, rate=0.1)))
+  #### normal hierarchical model ####
+  x <- seq(0,1,by=0.01)
+  plot(x=x, y=dgamma(x, shape=1, rate=10), type='l', ylim=c(0,4))
+  qgamma(p=c(0.001,0.9), shape=1, rate=100)
   sp <- mm_name('bayes', pool_K600='normal') %>%
     specs(K600_daily_mu_mu=30, K600_daily_mu_sigma=30,
           K600_daily_sigma_shape=1, K600_daily_sigma_rate=0.5,
-          n_chains=4, n_cores=4, burnin_steps=2000, saved_steps=1000)
-  
-  mma <- replace(sp, 'split_dates', FALSE) %>% metab(data=dat)
+          err_obs_iid_sigma_shape=1, err_obs_iid_sigma_rate=1,
+          err_proc_iid_sigma_shape=1, err_proc_iid_sigma_rate=1,
+          n_chains=1, n_cores=4, burnin_steps=1500, saved_steps=1500)
+  mma <- metab(sp, data=dat)
   get_fitting_time(mma) # 877 sec
   #mms <- replace(sp, 'split_dates', TRUE) %>% metab(data=dat)
   #get_fitting_time(mms) # 73 sec
