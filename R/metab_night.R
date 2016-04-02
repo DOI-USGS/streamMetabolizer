@@ -178,8 +178,8 @@ nightreg_1ply <- function(
       # 2012, which is probably the newer source. the sd conversion works
       # because the conversion is linear in KO2.
       out <- c(out, list(
-        K600 = convert_kGAS_to_k600(kGAS=out$KO2, temperature=mean(v(night_dat$temp.water)), gas="O2"),
-        K600.sd = convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=mean(v(night_dat$temp.water)), gas="O2")
+        K600 = convert_kGAS_to_k600(kGAS=out$KO2, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2"),
+        K600.sd = convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2")
       ))
       
       # return everything. remove units since we can't fully support them

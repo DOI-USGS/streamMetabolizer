@@ -4,7 +4,7 @@
 
 language: r
 sudo: required
-warnings_ar_errors: false
+warnings_ar_errors: true
 
 repos:
   CRAN: https://cloud.r-project.org
