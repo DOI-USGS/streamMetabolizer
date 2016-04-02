@@ -27,6 +27,7 @@ Imports:
 Suggests:
     chron,
     dataRetrieval,
+    devtools,
     dygraphs,
     ggplot2,
     knitr,

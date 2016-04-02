@@ -14,14 +14,18 @@
   github_update_code <- paste0(
     '  devtools::install_github("',github_pkg_ref,'")')
   
-  GRAN_pkg <- available.packages(contrib.url("http://owi.usgs.gov/R"))
-  GRAN_version <- package_version(GRAN_pkg[[pkgname, 'Version']])
-  local_version <- packageVersion(pkgname)
-  if(local_version < GRAN_version) {
-    packageStartupMessage(
-      'Time to update to ', pkgname, ' version ', GRAN_version, '! You have ', local_version, '. Get stable updates with\n',
-      GRAN_update_code)
-  }
+  tryCatch({
+    GRAN_pkg <- available.packages(contrib.url("http://owi.usgs.gov/R"))
+    GRAN_version <- package_version(GRAN_pkg[[pkgname, 'Version']])
+    local_version <- packageVersion(pkgname)
+    if(local_version < GRAN_version) {
+      packageStartupMessage(
+        'Time to update to ', pkgname, ' version ', GRAN_version, '! You have ', local_version, '. Get stable updates with\n',
+        GRAN_update_code)
+    }
+  }, error=function(e) {
+    packageStartupMessage("Can't check GRAN for new package versions just now. We'll try again next time.")
+  })
   
   if(requireNamespace('devtools', quietly=TRUE)) {
     tryCatch({
