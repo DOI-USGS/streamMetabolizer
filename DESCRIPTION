@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.7.1.3
-Date: 2015-12-03
+Version: 0.9.4
+Date: 2016-04-02
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -16,25 +16,27 @@ VignetteBuilder: knitr
 Depends:
     R (>= 3.0)
 Imports:
-    LakeMetabolizer,
-    unitted,
+    LakeMetabolizer (>= 1.4.1),
+    unitted (>= 0.2.5),
     dplyr,
     lazyeval,
     lubridate,
     magrittr,
-    methods
+    methods,
+    tidyr
 Suggests:
     chron,
     dataRetrieval,
+    devtools,
     dygraphs,
     ggplot2,
     knitr,
+    microbenchmark,
     plyr,
     RCurl,
     runjags,
     rstan,
     testthat,
-    tidyr,
     XML,
     xts
 Collate:
@@ -48,41 +50,48 @@ Collate:
     'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
-    'calc_schmidt.R'
     'calc_solar_insolation.R'
     'calc_sun_rise_set.R'
     'calc_velocity.R'
-    'convert_GMT_to_localtime.R'
-    'convert_GMT_to_solartime.R'
     'convert_PAR_to_SW.R'
+    'convert_UTC_to_localtime.R'
+    'convert_UTC_to_solartime.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
+    'data_metab.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
     'load_spring_creek.R'
     'lookup_google_timezone.R'
     'lookup_usgs_elevation.R'
+    'metab.R'
+    'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'
-    'metab_funs.R'
+    'metab_inputs.R'
     'metab_mle.R'
     'metab_model_interface.R'
-    'metab_model_prototype.R'
     'metab_night.R'
     'metab_sim.R'
+    'mm_check_mcmc_file.R'
     'mm_data.R'
     'mm_filter_dates.R'
     'mm_filter_valid_days.R'
+    'mm_validate_name.R'
+    'mm_valid_names.R'
+    'mm_parse_name.R'
     'mm_name.R'
     'mm_generate_mcmc_file.R'
+    'mm_get_timestep.R'
     'mm_is_valid_day.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
-    'mm_parse_name.R'
     'mm_predict_1ply.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
     'plot_metab_preds.R'
     'specs.R'
     'streamMetabolizer.R'
+    'zz_build_docs.R'
+RoxygenNote: 5.0.1

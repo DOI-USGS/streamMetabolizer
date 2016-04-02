@@ -9,12 +9,12 @@
 #' @param m exponent in velocity-discharge relation (unitless; f in Raymond et al.)
 #' @return v (= V = U), stream flow velcoity, in the same units as k
 #' @examples
-#' calc_velocity(Q=1:10)
-#' calc_velocity(Q=1:10, k=0.4)
+#' Qs <- seq(1,9,2)
+#' calc_velocity(Q=Qs)
+#' calc_velocity(Q=Qs, k=0.4)
 #' library(unitted)
-#' calc_velocity(Q=u(1:10, "m^3 s^-1"), m=u(40))
-#' calc_velocity(Q=u(1:10, "m^3 s^-1"), k=u(0.36, "m s^-1"))
-#' 
+#' calc_velocity(Q=u(Qs, "m^3 s^-1"), m=u(40))
+#' calc_velocity(Q=u(Qs, "m^3 s^-1"), k=u(0.36, "m s^-1"))
 #' @references Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. 
 #'   Bott, Jody Potter, Patrick Mulholland, Andrew E. Laursen, William H. 
 #'   McDowell, and Denis Newbold. \emph{Scaling the gas transfer velocity and 

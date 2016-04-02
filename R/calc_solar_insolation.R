@@ -40,8 +40,8 @@ to_degrees <- function(radians) {
 #' decdf <- data.frame(jday=1:366, 
 #'   dec=streamMetabolizer:::calc_declination_angle(1:366))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(decdf, aes(x=jday, y=dec)) + geom_line()
+#' library(ggplot2)
+#' ggplot(unitted::v(decdf), aes(x=jday, y=dec)) + geom_line()
 #' }
 #' @references Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G. 
 #'   Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn. 
@@ -75,9 +75,9 @@ calc_declination_angle <- function(jday, format=c("degrees", "radians")) {
 #' hourdf <- data.frame(hour=c(0:12,12.5:23.5), 
 #'   hragl=streamMetabolizer:::calc_hour_angle(c(0:12,12.5:23.5)))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(hourdf, aes(x=hour, y=hragl)) + 
-#'     geom_hline(yintercept=0, color="gold") + geom_line()
+#' library(ggplot2)
+#' ggplot(hourdf, aes(x=hour, y=hragl)) + 
+#'   geom_hline(yintercept=0, color="gold") + geom_line()
 #' }
 calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
   format <- match.arg(format)
@@ -111,9 +111,10 @@ calc_hour_angle <- function(hour, format=c("degrees", "radians")) {
 #' zendf <- transform(zendf,
 #'   zen=streamMetabolizer:::calc_zenith_angle(lat, dec, hragl))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(zendf, aes(x=jday, y=zen, color=factor(lat))) + 
-#'     geom_line()
+#' library(ggplot2)
+#' ggplot(unitted::v(zendf), aes(x=hour, y=zen, color=jday, group=jday)) + 
+#'   geom_line() + facet_wrap(~lat) + 
+#'   ggtitle('zenith angles by latitude (panels) and day of year (colors)')
 #' }
 calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c("degrees", "radians")) {
   format <- match.arg(format)
@@ -145,8 +146,8 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
 #' 
 #' @importFrom unitted u
-#' @param solar.time POSIXct vector of date-time values in apparent solar time,
-#'   e.g., as returned by \code{convert_GMT_to_solartime(...,
+#' @param app.solar.time POSIXct vector of date-time values in apparent solar time,
+#'   e.g., as returned by \code{convert_UTC_to_solartime(...,
 #'   time.type="apparent solar")}
 #' @inheritParams calc_declination_angle
 #' @inheritParams calc_hour_angle
@@ -162,15 +163,19 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' insdf <- transform(insdf, datetime=convert_doyhr_to_date(jday + hour/24, year=2004))
 #' insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 #' \dontrun{
-#'   library(ggplot2)
-#'   ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
-#'     geom_line() + facet_wrap(~lat)
+#' library(ggplot2)
+#' ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
+#'   geom_line() + facet_wrap(~lat) + 
+#'   ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 #' }
 #' @export
-calc_solar_insolation <- function(solar.time, latitude, max.insolation=convert_PAR_to_SW(2326), format=c("degrees", "radians"), attach.units=is.unitted(solar.time)) {
+calc_solar_insolation <- function(
+  app.solar.time, latitude, max.insolation=convert_PAR_to_SW(2326), 
+  format=c("degrees", "radians"), attach.units=is.unitted(app.solar.time)) {
+  
   format <- match.arg(format)
-  jday <- floor(convert_date_to_doyhr(solar.time)) - 1
-  hour <- (convert_date_to_doyhr(solar.time) %% 1) * 24
+  jday <- floor(convert_date_to_doyhr(app.solar.time)) - 1
+  hour <- (convert_date_to_doyhr(app.solar.time) %% 1) * 24
   declination.angle <- calc_declination_angle(jday, format=format)
   hour.angle <- calc_hour_angle(hour, format=format)
   zenith.angle <- calc_zenith_angle(latitude, declination.angle, hour.angle, format=format)

@@ -1,0 +1,274 @@
+---
+title: "Getting Started with streamMetabolizer"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{getstarted}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=100)
+```
+
+## Introduction
+
+This file demonstrates how to estimate stream metabolism using example data supplied by Bob Hall for French Creek in Laramie, WY.
+
+## Setup
+
+### Load
+
+Load the R libraries that will be used.
+```{r libs, warning=FALSE}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(streamMetabolizer)
+})
+```
+
+Load a moderately-sized example dataset from the package. Explicitly attached units are optional
+but useful for confirming that the data are in the expected format. We'll use the `streamMetabolizer`
+standard in defining our day to run from 4 am (`day_start=4`) to 4 am (`day_end=28`). 
+```{r data}
+dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28, attach.units=TRUE)
+```
+
+### Explore the input data
+
+First graphically inspect the input data.
+```{r viz_inputs_DO, fig.width=7, fig.height=3}
+dat %>% unitted::v() %>%
+  mutate(DO.pctsat = 100 * (DO.obs / DO.sat)) %>%
+  select(solar.time, starts_with('DO')) %>%
+  gather(type, DO.value, starts_with('DO')) %>%
+  mutate(units=ifelse(type == 'DO.pctsat', 'DO\n(% sat)', 'DO\n(mg/L)')) %>%
+  ggplot(aes(x=solar.time, y=DO.value, color=type)) + geom_line() + 
+  facet_grid(units ~ ., scale='free_y') + theme_bw() +
+  scale_color_discrete('variable')
+```
+
+```{r viz_inputs_other, fig.width=7, fig.height=4}
+labels <- c(depth='depth\n(m)', temp.water='water temp\n(deg C)', light='PAR\n(umol m^-2 s^-1)')
+dat %>% unitted::v() %>%
+  select(solar.time, depth, temp.water, light) %>%
+  gather(type, value, depth, temp.water, light) %>%
+  mutate(
+    type=ordered(type, levels=c('depth','temp.water','light')),
+    units=ordered(labels[type], unname(labels))) %>%
+  ggplot(aes(x=solar.time, y=value, color=type)) + geom_line() + 
+  facet_grid(units ~ ., scale='free_y') + theme_bw() +
+  scale_color_discrete('variable')
+```
+
+### Check the input data format
+
+Now inspect the dimensions, column names, and units of the data. Note that `unitted` data, 
+such as that returned by `data_metab(..., attach.units=TRUE)`, prints out with a second row
+called 'U' giving the units for each column.
+```{r data_check}
+dim(dat)
+dat[c(1,48,96,240,288),] # some example rows
+```
+
+Our data need to have specific column names and units to fit an MLE, Bayesian, or nighttime-regression model.
+To see what is required, use the `metab_inputs` function to get a 1-row example for the desired model type.
+The output of metab_inputs is a 1-row unitted data.frame showing the required column names and units, 
+plus one row of example data. The required inputs are identical for the model types 'mle', 'bayes', and 'night',
+so here we'll just print the requriements for 'mle'.
+```{r data_needs}
+metab_inputs('mle', 'data')
+```
+
+Our data format matches that of the requirements from `metab_inputs`, so we're ready to go.
+
+## Modeling Overview
+
+There are three steps to fitting a metabolism model in `streamMetabolizer`.
+
+1. Identify the name of the model structure you want using `mm_name()`.
+2. Set the specifications for the model using defaults from`specs()` as a starting point.
+3. Fit the model with `metab()`.
+
+## A Maximum Likelihood Model
+
+### 1. Choose a model structure
+
+A model is fully specified by a concise if cryptic model name. 
+Examples are "b_np_oipi_pm_km.stan" and "m_np_oi_pm_km.nlm". You never need
+to remember these concise names; instead, you can construct and interpret 
+such names using the `mm_name` and `mm_parse_name` functions, respectively. 
+
+`streamMetabolizer` offers three core modeling `type`s: maximum likelihood estimation ('mle'), 
+hierarchical or non-hierarchical Bayesian models ('bayes'), or nighttime regression ('night'). 
+It is always helpful in `mm_name` to specify the model `type` you want.
+Further structural details can be specified in `mm_name` or left to the defaults.
+
+Here are some example calls to create and parse model names:
+```{r names}
+three_names <- c(
+  mm_name(type='mle'), # the default MLE model
+  mm_name(type='mle', ode_method='Euler'), # override the default ode_method
+  mm_name(type='bayes')) # the default Bayesian model
+three_names
+
+# parse the above model names
+mm_parse_name(three_names)
+```
+
+See the help file at `?mm_name` for a description of the arguments to `mm_name` and
+results from `mm_parse_name`.
+
+Here we will fit the default MLE model. Many others are available (see Other Models below), 
+but this one is common and fast. Call `mm_name` again to set the default MLE model name/structure.
+```{r mle_name}
+mle_name <- mm_name(type='mle')
+mle_name
+```
+
+### 2. Set the specifications
+
+Having chosen a model, we next need to define a list of specifications for that model. 
+The `specs` function creates a list appropriate to the model we chose.
+```{r mle_specs}
+mle_specs <- specs(mle_name)
+mle_specs
+```
+
+See `?specs` for definitions of all specifications. Note that most of the 
+specifications in that help file are omitted from the output of `specs(mle_name)` 
+above - this is because MLE models are simple and don't have many parameters to set. 
+Any of those parameters that are included in `model_specs` can be modified, either
+by calling `specs()` again or by replacing that value in the `model_specs` list. 
+Here is a command that sets the the inital values of GPP, ER, and K600 
+for the likelihood maximization. (I've done this just for illustration; the model
+results aren't affected by these particular changes for this particular dataset.)
+```{r specs_details}
+mle_specs <- specs(mle_name, GPP_init=2, ER_init=-1, K600_init=3)
+```
+
+### 3. Fit the model
+
+Now actually fit the model using the `metab` function.
+```{r mle_fit, warning=FALSE}
+mle_fit <- metab(mle_specs, data=dat, info=c(site='French Creek, WY', source='Bob Hall'))
+```
+
+It's optional, but sometimes helpful, to include some sort of metadata in 
+the `info`, as I've done above. I've chosen to put the metadata in a 
+character vector, but metadata can take any format you like. 
+
+## Inspect the output
+
+The `info` and `data` are saved in the fitted
+model object so we can reference them later.
+```{r info}
+get_info(mle_fit)
+head(get_data(mle_fit))
+```
+
+We can also get information about the model fitting process.
+```{r info2}
+get_fitting_time(mle_fit) # the time it took to fit the model
+get_version(mle_fit) # the streamMetabolizer version used to fit the model
+get_specs(mle_fit) # the specifications we passed in
+```
+
+There is a function to plot the daily metabolism estimates.
+```{r plot_metab1, fig.width=7, fig.height=6}
+plot_metab_preds(predict_metab(mle_fit))
+```
+
+There is also a function to plot the dissolved oxygen 
+predictions (lines) along with the original observations (points).
+```{r plot_metab2, fig.width=7, fig.height=6}
+plot_DO_preds(predict_DO(mle_fit))
+```
+
+## Other Models
+
+Many model structures are available. We have only demonstrated one above (the default MLE model). 
+Here is the full list of model options:
+
+```{r, results='asis'}
+all_models <- mm_valid_names(type=c('bayes','mle','night'))
+opts <- 
+  bind_cols(
+    dplyr::data_frame(model_name=all_models), 
+    mm_parse_name(all_models)) %>%
+  arrange(model_name)
+knitr::kable(opts)
+```
+
+Remember that any of these structures can be specified by using the model name directly or passing
+the corresponding arguments to `mm_name` to create the name. 
+
+## A Bayesian Model
+
+### 1. Choose a model structure
+
+For our second modeling example, we will specify everything about the model structure in our call to `mm_name`.
+(Some of these arguments are equal to the defaults and don't technically need to be specified, but I want to
+show you that the available arguments are the same as those returned in the columns of the above table.)
+```{r bayes_name}
+bayes_name <- mm_name(
+  type='bayes', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE,
+  ode_method='pairmeans', deficit_src='DO_mod', engine='jags')
+bayes_name
+```
+
+### 2. Set the specifications
+
+Just as for the previous model, we now pass the model name to `specs()` to get
+a list of default specifications for this model. Note that the length and contents of this new
+specifications list differs substantially from the list we had for the MLE model.
+```{r bayes_specs}
+bayes_specs <- specs(bayes_name)
+bayes_specs
+```
+
+At this point we can alter some of the specifications if desired.
+```{r bayes_specs2}
+# one way to alter specifications: call specs() again
+bayes_specs <- specs(bayes_name, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
+# another way: use replace()
+bayes_specs <- replace(bayes_specs, 'split_dates', FALSE)
+```
+
+### 3. Fit the model
+
+We now fit the model with the new specifications. Bayesian models take longer to run, so be patient.
+```{r bayes_fit, warning=FALSE}
+bayes_fit <- metab(bayes_specs, data=dat)
+```
+
+### 4. Explore as before
+
+All of the same inspection functions are available as before, including `get_fitting_time`, `get_info`, `predict_metab`, and so on.
+```{r bayes_pred}
+get_fitting_time(bayes_fit)
+preds <- predict_metab(bayes_fit)
+```
+
+One slight difference is that hierarchical Bayesian models store their warnings and errors in attributes to the result of `predict_metab`.
+```{r bayes_warning}
+attr(preds, 'warnings')
+attr(preds, 'errors')
+```
+
+Here are the predictions from this last model:
+```{r bayes_pred_tbl, results='asis'}
+preds %>% 
+  lapply(function(col) if(is.numeric(col)) round(col, 2) else col ) %>%
+  as.data.frame() %>%
+  knitr::kable()
+```
+
+You're on your way!

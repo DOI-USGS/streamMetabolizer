@@ -15,8 +15,6 @@
 #'   
 #'   \item \code{\link{calc_is_daytime}}
 #'   
-#'   \item \code{\link{calc_schmidt}}
-#'   
 #'   \item \code{\link{calc_solar_insolation}}
 #'   
 #'   \item \code{\link{calc_sun_rise_set}}
@@ -29,7 +27,9 @@
 #'   
 #'   \item \code{\link{convert_date_to_doyhr}}
 #'   
-#'   \item \code{\link{convert_GMT_to_solartime}}
+#'   \item \code{\link{convert_localtime_to_UTC}}
+#'   
+#'   \item \code{\link{convert_UTC_to_solartime}}
 #'   
 #'   \item \code{\link{convert_k600_to_kGAS}}
 #'   
@@ -41,21 +41,41 @@
 #'   
 #'   \itemize{
 #'   
-#'   \item \code{\link{metab_mle}}
+#'   \item \code{\link{mm_name}} 1. Choose a model structure
+#'   
+#'   \item \code{\link{specs}} 2. Set the specifications
+#'   
+#'   \item \code{\link{metab}} 3. Fit the model
 #'   
 #'   }
 #'   
-#' @section Internal functions:
+#' @section Inspect model results:
 #'   
 #'   \itemize{
 #'   
-#'   \item \code{\link{metab_model-class}}
+#'   \item \code{\link{predict_metab}}
 #'   
-#'   \item \code{\link{metab_model_interface}}
+#'   \item \code{\link{predict_DO}}
 #'   
-#'   \item \code{\link{mm_data}}
+#'   \item \code{\link{plot_metab_preds}}
 #'   
-#'   \item \code{\link{mm_validate_data}}
+#'   \item \code{\link{plot_DO_preds}}
+#'   
+#'   \item \code{\link{get_fit}}
+#'   
+#'   \item \code{\link{get_specs}}
+#'   
+#'   \item \code{\link{get_data}}
+#'   
+#'   \item \code{\link{get_data_daily}}
+#'   
+#'   \item \code{\link{get_info}}
+#'   
+#'   \item \code{\link{get_mcmc}} (Bayesian models only)
+#'   
+#'   \item \code{\link{get_fitting_time}}
+#'   
+#'   \item \code{\link{get_version}}
 #'   
 #'   }
 #'   

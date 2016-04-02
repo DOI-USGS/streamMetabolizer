@@ -12,7 +12,6 @@
 #' @examples
 #' convert_PAR_to_SW(par=400, coef=0.47)
 #' convert_PAR_to_SW(unitted::u(1000, "umol m^-2 s^-1"))
-#' 
 #' @importFrom LakeMetabolizer par.to.sw.base
 #' @importFrom unitted is.unitted verify_units
 #' @export
@@ -38,7 +37,6 @@ convert_PAR_to_SW <- function(par, coeff=0.473) {
 #' convert_SW_to_PAR(sw=800)
 #' convert_SW_to_PAR(sw=800, coef=2.1)
 #' convert_SW_to_PAR(unitted::u(473, "W m^-2"))
-#' 
 #' @importFrom LakeMetabolizer sw.to.par.base
 #' @export
 convert_SW_to_PAR <- function(sw, coeff=2.114) {

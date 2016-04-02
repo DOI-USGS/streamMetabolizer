@@ -45,7 +45,7 @@ test_that("can generate light predictions from basic light model", {
     lat=rep(c(0,20,40,60,80), each=24*4),
     jday=rep(rep(c(1,101,201,301), each=24), times=5), 
     hour=rep(c(0:12,13.5:23.5), times=4*5))
-  insdf <- transform(insdf, datetime=convert_GMT_to_solartime(convert_doyhr_to_date(jday+(hour/24), year=2011, tz="GMT"), long=0, time.type="apparent"))
+  insdf <- transform(insdf, datetime=convert_UTC_to_solartime(convert_doyhr_to_date(jday+(hour/24), year=2011, tz="UTC"), long=0, time.type="apparent"))
   insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
   #ggplot(mutate(insdf,date=format(convert_doyhr_to_date(jday, 2015), "%Y-%m-%d")), aes(x=hour, y=ins, color=factor(lat), group=factor(lat))) + geom_line() + facet_wrap(~date) + scale_color_discrete("Latitude") + ylab("Solar Insolation") + xlab("Hour of Day")
   expect_true(all(insdf$ins >= 0), "non-negative insolation, always")
@@ -63,32 +63,29 @@ test_that("can generate light predictions from basic light model", {
 test_that("calc_solar_insolation has consistent output with that of calc_sun_rise_set and calc_is_daytime", {
   library(dplyr); library(unitted)
   insdf <- data.frame(
-    #   lat=rep(c(0,20,40,60,80), each=366),
-    #   jday=rep(1:366, times=5)) %>%
     lat=rep(c(0,20,40,60,80), each=18),
     jday=rep(seq(1, 360, by=20), times=5)) %>%
-    transform(
-      solar.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="GMT")) %>% 
-    transform(
-      local.time=solar.time,
-      lm_sunrise=calc_sun_rise_set(solar.time, lat)[,1],
-      lm_sunset=calc_sun_rise_set(solar.time, lat)[,2]) %>%
+    mutate(
+      date=as.Date(sprintf("2000-%d",jday), format="%Y-%j"),
+      app.solar.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="UTC"),
+      lm_sunrise=calc_sun_rise_set(date, lat)[,1],
+      lm_sunset=calc_sun_rise_set(date, lat)[,2]) %>%
     group_by(jday, lat) %>%
     do(with(., {
       # compare to streamMetabolizer method, which determines light at any given time
       hours <- seq(0,23.95,by=0.05)
-      insol <- calc_solar_insolation(solar.time+as.difftime(hours, units="hours"), lat=lat)
+      insol <- calc_solar_insolation(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(insol > 0.00001)
       if(any(!is.na(whichdaytime)))
-        sm_daytime <- solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        sm_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         sm_daytime <- c(NA,NA)
       
       # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- calc_is_daytime(solar.time+as.difftime(hours, units="hours"), lat=lat)
+      isday <- calc_is_daytime(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(isday)
       if(any(!is.na(whichdaytime)))
-        id_daytime <- solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        id_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
       else 
         id_daytime <- c(NA,NA)
       
@@ -102,10 +99,10 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
   #   gather(pkg, sunrise, lm_sunrise, sm_sunrise) %>%
   #   gather(pkg, sunset, lm_sunset, sm_sunset)) %>%
   #   transform(
-  #     sunrise=as.numeric(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunrise, origin="1970-01-01", tz="GMT"), "day"), units="hours"), 
-  #     sunset=as.numeric(as.POSIXct(sunset, origin="1970-01-01", tz="GMT") - trunc(as.POSIXct(sunset, origin="1970-01-01", tz="GMT"), "day"), units="hours"))
+  #     sunrise=as.numeric(as.POSIXct(sunrise, origin="1970-01-01", tz="UTC") - trunc(as.POSIXct(sunrise, origin="1970-01-01", tz="UTC"), "day"), units="hours"), 
+  #     sunset=as.numeric(as.POSIXct(sunset, origin="1970-01-01", tz="UTC") - trunc(as.POSIXct(sunset, origin="1970-01-01", tz="UTC"), "day"), units="hours"))
   # library(ggplot2)
-  # ggplot(instidy, aes(x=solar.time, y=sunrise, color=pkg, linetype=factor(lat))) + geom_line() + geom_point() + theme_bw()
+  # ggplot(instidy, aes(x=app.solar.time, y=sunrise, color=pkg, linetype=factor(lat))) + geom_line() + geom_point() + theme_bw()
   
   # expect_that inspection
   diffs <- insdf %>%

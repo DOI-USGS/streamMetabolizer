@@ -1,0 +1,71 @@
+# b_Kl_oipc_pm_km.jags
+
+data {
+  for(i in 1:(n-1)) {
+    # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
+    coef_GPP[1:d,i]  <- (frac_GPP[1:d,i] + frac_GPP[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_ER[1:d,i]   <- (frac_ER[1:d,i] + frac_ER[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_K600_part[1:d,i] <- (KO2_conv[1:d,i] + KO2_conv[1:d,i+1])/2.0 * (frac_D[1:d,i] + frac_D[1:d,i+1])/2.0
+    DO_sat_pairmean[1:d,i] <- (DO_sat[1:d,i] + DO_sat[1:d,i+1])/2.0
+  }
+}
+
+model {
+  # Model DO time series
+  # * pairmeans version
+  # * observation error
+  # * autocorrelated process error
+  # * reaeration depends on DO_mod
+  
+  err_proc_acor[1:d,1] <- err_proc_acor_inc[1:d,1]
+  for(i in 1:(n-2)) {
+    err_proc_acor[1:d,i+1] <- err_proc_acor_phi * err_proc_acor[1:d,i] + err_proc_acor_inc[1:d,i+1]
+  }
+  
+  # DO model
+  DO_mod[1:d,1] <- DO_obs_1
+  for(i in 1:(n-1)) {
+    DO_mod[1:d,i+1] <- (
+      DO_mod[1:d,i] +
+      err_proc_acor[1:d,i] +
+      GPP_daily * coef_GPP[1:d,i] +
+      ER_daily * coef_ER[1:d,i] +
+      K600_daily * coef_K600_part[1:d,i] * (DO_sat_pairmean[1:d,i] - DO_mod[1:d,i]/2.0)
+    ) / (1.0 + K600_daily * coef_K600_part[1:d,i] / 2.0)
+  }
+  
+  # Hierarchical, linear model of K600_daily
+  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily
+
+  # Autocorrelated process error
+  for(i in 1:(n-1)) {
+    for(j in 1:d) {
+      err_proc_acor_inc[j,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
+    }
+  }
+  # Autocorrelation (phi) & SD (sigma) of the process errors
+  err_proc_acor_phi ~ dgamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate)
+  err_proc_acor_sigma ~ dgamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate)
+  
+  # Independent, identically distributed observation error
+  for(i in 1:n) {
+    for(j in 1:d) {
+      DO_obs[j,i] ~ dnorm(DO_mod[j,i], pow(err_obs_iid_sigma, -2))
+    }
+  }
+  # SD (sigma) of the observation errors
+  err_obs_iid_sigma ~ dgamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate)
+  
+  # Daily metabolism priors
+  for(j in 1:d) {
+    GPP_daily[j] ~ dnorm(GPP_daily_mu, pow(GPP_daily_sigma, -2))
+    ER_daily[j] ~ dnorm(ER_daily_mu, pow(ER_daily_sigma, -2))
+    K600_daily[j] ~ dnorm(K600_daily_pred[j], pow(K600_daily_sigma, -2))
+  }
+
+  # Hierarchical constraints on K600_daily (linear model)
+  for(k in 1:2) {
+    K600_daily_beta[k] ~ dnorm(K600_daily_beta_mu[k], pow(K600_daily_beta_sigma[k], -2))
+  }
+  K600_daily_sigma ~ dgamma(K600_daily_sigma_shape, K600_daily_sigma_rate)
+}

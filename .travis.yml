@@ -6,6 +6,10 @@ language: r
 sudo: required
 warnings_ar_errors: true
 
+repos:
+  CRAN: https://cloud.r-project.org
+  GRAN: http://owi.usgs.gov/R
+
 before_install:
   - wget http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.tar.gz
   - tar xfvs JAGS-3.4.0.tar.gz
@@ -17,12 +21,15 @@ before_install:
   - sudo rm -f JAGS-3.4.0.tar.gz
   - sudo rm -rf JAGS-3.4.0
 
+before_script:
+  - Rscript -e "install.packages('knitr', repos='http://cran.cnr.Berkeley.edu/')"
+  - Rscript -e "install.packages('rmarkdown', repos='http://cran.cnr.Berkeley.edu/')"
+
 r_packages:
  - modeest
 
 r_github_packages:
  - jimhester/covr
- - appling/unitted
  - GLEON/LakeMetabolizer
 
 after_success:

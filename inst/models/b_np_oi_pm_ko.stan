@@ -1,7 +1,7 @@
 // b_np_oi_pm_ko.stan
 
 data {
-  // Metabolism distributions
+  // Parameters of priors on metabolism
   real GPP_daily_mu;
   real GPP_daily_sigma;
   real ER_daily_mu;
@@ -10,48 +10,54 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_obs_iid_sigma_min;
-  real err_obs_iid_sigma_max;
+  real err_obs_iid_sigma_shape;
+  real err_obs_iid_sigma_rate;
+  
+  // Data dimensions
+  int<lower=1> d; # number of dates
+  int<lower=1> n; # number of observations per date
   
   // Daily data
-  int <lower=0> n;
-  real DO_obs_1;
+  vector[d] DO_obs_1;
   
   // Data
-  vector [n] DO_obs;
-  vector [n] DO_sat;
-  vector [n] frac_GPP;
-  vector [n] frac_ER;
-  vector [n] frac_D;
-  vector [n] depth;
-  vector [n] KO2_conv;
+  vector[d] DO_obs[n];
+  vector[d] DO_sat[n];
+  vector[d] frac_GPP[n];
+  vector[d] frac_ER[n];
+  vector[d] frac_D[n];
+  vector[d] depth[n];
+  vector[d] KO2_conv[n];
 }
 
 transformed data {
-  vector [n-1] coef_GPP;
-  vector [n-1] coef_ER;
-  vector [n-1] coef_K600_full;
+  vector[d] coef_GPP[n-1];
+  vector[d] coef_ER[n-1];
+  vector[d] coef_K600_full[n-1];
+  vector[d] dDO_obs[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2 / ((depth[i] + depth[i+1])/2);
-    coef_ER[i]   <- (frac_ER[ i] + frac_ER[ i+1])/2 / ((depth[i] + depth[i+1])/2);
-    coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2 * (frac_D[i] + frac_D[i+1])/2 *
-      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2;
+    coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
+    coef_ER[i]   <- (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
+    coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*
+      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0;
+    // dDO observations
+    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
   }
 }
 
 parameters {
-  real GPP_daily;
-  real ER_daily;
-  real K600_daily;
+  vector[d] GPP_daily;
+  vector[d] ER_daily;
+  vector[d] K600_daily;
   
-  real <lower=err_obs_iid_sigma_min,   upper=err_obs_iid_sigma_max>  err_obs_iid_sigma;
+  real err_obs_iid_sigma;
 }
 
 transformed parameters {
-  vector [n] DO_mod;
-  vector [n-1] dDO_mod;
+  vector[d] DO_mod[n];
+  vector[d] dDO_mod[n-1];
   
   // Model DO time series
   // * pairmeans version
@@ -60,10 +66,12 @@ transformed parameters {
   // * reaeration depends on DO_obs
   
   // dDO model
-  dDO_mod <- 
-    GPP_daily * coef_GPP +
-    ER_daily * coef_ER +
-    K600_daily * coef_K600_full;
+  for(i in 1:(n-1)) {
+    dDO_mod[i] <- 
+      GPP_daily  .* coef_GPP[i] +
+      ER_daily   .* coef_ER[i] +
+      K600_daily .* coef_K600_full[i];
+  }
   
   // DO model
   DO_mod[1] <- DO_obs_1;
@@ -80,9 +88,9 @@ model {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ uniform(err_obs_iid_sigma_min, err_obs_iid_sigma_max);
+  err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
   
-  // Daily metabolism values
+  // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);

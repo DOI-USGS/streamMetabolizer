@@ -29,8 +29,10 @@ load_french_creek_std <- function(attach.units=TRUE) {
     stop("chron package is needed for this function. Try install.packages('chron')")
   }
   french$dtime <- chron::chron(dates=as.character(french$date), times=as.character(french$time)) # L22. TZ is MST (L108, 142)
-  tz_french <- lubridate::tz(convert_GMT_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="GMT"), latitude=41.33, longitude=-106.3, time.type="standard"))
+  tz_french <- lubridate::tz(convert_UTC_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="UTC"), latitude=41.33, longitude=-106.3, time.type="standard"))
   french$local.time <- with_tz(as.POSIXct(paste(french$date, french$time), format="%m/%d/%Y %H:%M:%S", tz="America/Denver"), tz_french) # need POSIXct for streamMetabolizer
+  french$utc.time <- convert_localtime_to_UTC(french$local.time)
+  french$solar.time <- convert_UTC_to_solartime(french$utc.time, longitude=-106.3, time.type='mean solar')
   
   # DO at sat
   osat <- function(temp, bp){ # L26-32
@@ -61,7 +63,7 @@ load_french_creek_std <- function(attach.units=TRUE) {
     jday<-as.numeric(trunc(time)-as.numeric(as.Date(year))) # bob does jday before longitude or DST adjustments. sM does after. should mostly affect midnight values, when it's dark anyway.
     E<- 9.87*sin(radi((720*(jday-81))/365)) - 7.53*cos(radi((360*(jday-81))/365)) - 1.5*sin(radi((360*(jday-81))/365))
     LST<-as.numeric (time-trunc(time))
-    ST<-LST+(3.989/1440)*(longstd-longobs)+E/1440 # bob adjusts from local clock time. sM adjusts from GMT. since the earth rotates in 1436 mins rather than 1440, this causes a slight discrepancy (1-2 mins).
+    ST<-LST+(3.989/1440)*(longstd-longobs)+E/1440 # bob adjusts from local clock time. sM adjusts from UTC. since the earth rotates in 1436 mins rather than 1440, this causes a slight discrepancy (1-2 mins).
     solardel<- 23.439*sin(radi(360*((283+jday)/365)))
     hourangle<-(0.5-ST)*360
     theta<- acos(  sin(radi(solardel)) * sin(radi(lat)) +  cos(radi(solardel)) * cos(radi(lat)) *  cos(radi(hourangle)) )
@@ -73,33 +75,38 @@ load_french_creek_std <- function(attach.units=TRUE) {
 
   # return w/ columns needed by streamMetabolzier
   oxy <- temp <- light <- ".dplyr.var"
-  french <- dplyr::select(french, local.time, DO.obs=oxy, DO.sat, depth, temp.water=temp, light=light)  
+  french <- dplyr::select(french, solar.time, DO.obs=oxy, DO.sat, depth, temp.water=temp, light=light)  
 }
 
 #' Generate outputs using Bob's code for comparison
 #' 
 #' Bob's code includes MLE and nighttime regression models. This function 
 #' generates the output from those models, keeping the code as much intact as 
-#' possible. The function requires the \code{chron} package, which is only 
-#' suggested rather than requried for the \code{streamMetabolizer} package. If 
-#' you wish to run this function, ensure that \code{chron} is installed or 
-#' install it with \code{install.packages('chron')}.
+#' possible. The exception is that we're using solar.time rather than 
+#' local.time, for consistency with streamMetabolizer's recommendations
+#' 
+#' This function requires the \code{chron} package, which is only suggested 
+#' rather than required for the \code{streamMetabolizer} package. If you wish to
+#' run this function, ensure that \code{chron} is installed or install it with 
+#' \code{install.packages('chron')}.
 #' 
 #' @param french the French Creek dataset
 #' @param K optional. If specified, a number for the K600 to assume (units of 
 #'   1/d)
 #' @param estimate character indicating the type of model to fit
 #' @param start a character vector specifying the time at which the 'day' (the 
-#'   time period to use in producing an estimate for a single date) begins. The
+#'   time period to use in producing an estimate for a single date) begins. The 
 #'   vector should have 2 elements, dates and times, to pass to chron()
 #' @param end a character vector specifying the time at which the 'day' ends. 
 #'   The vector should have 2 elements, dates and times, to pass to chron()
+#' @param plot logical - should plots be produced?
 #' @import dplyr
 #' @importFrom unitted u v
 #' @importFrom graphics abline plot points
 load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'), 
                                       start=c(dates="08/23/12", times="22:00:00"),
-                                      end=c(dates="08/25/12", times="06:00:00")) {
+                                      end=c(dates="08/25/12", times="06:00:00"),
+                                      plot=FALSE) {
   
   # require chron package
   if (!requireNamespace("chron", quietly = TRUE)) {
@@ -107,12 +114,18 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
   }
   
   # define defaults for start and end here since they rely on the optional chron package
-  if(missing(start)) start <- chron::chron(dates="08/23/12", times="22:00:00")
-  if(missing(end)) end <- chron::chron(dates="08/25/12", times="06:00:00")
+  if(missing(start)) 
+    start <- chron::chron(dates="08/23/12", times="22:00:00") 
+  else
+    start <- do.call(chron::chron, as.list(start))
+  if(missing(end)) 
+    end <- chron::chron(dates="08/25/12", times="06:00:00") 
+  else
+    end <- do.call(chron::chron, as.list(end))
   
   # reformat, subset the data to just the requested day
   french <- v(french)
-  french$dtime <- chron::chron(format(french$local.time, "%m/%d/%y"), times=format(french$local.time, "%H:%M:%S"))
+  french$dtime <- chron::chron(format(french$solar.time, "%m/%d/%y"), times=format(french$solar.time, "%H:%M:%S"))
   o2file <- french[french$dtime>=as.numeric(start) & french$dtime<=as.numeric(end), ]
   
   # set constants specific to French Creek data
@@ -182,8 +195,10 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
         nreg<-lm(deltaO2~satdef)
         
         # plot
-        plot(satdef,deltaO2)
-        abline(nreg)
+        if(plot) {
+          plot(satdef,deltaO2)
+          abline(nreg)
+        }
         
         # extract and return coefficients + K600
         K600fromO2<-function (temp, KO2) { # function to estimate K600 from KO2  needed for nightime regression
@@ -220,20 +235,22 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
     })
   
   # plot data if PR or PRK (already plotted for K)
-  if(estimate %in% c('PRK','PR')) {
-    onestationplot<-function(GPP, ER, oxy, z, temp, K, light, bp, ts) {
-      metab<-numeric(length(oxy))
-      metab[1]<-oxy[1]
-      for (i in 2:length(oxy)) { 
-        metab[i] <- metab[i-1]+
-          ((GPP/z)*(light[i]/sum(light)))+ 
-          ER*ts/z+
-          (Kcor(temp[i],K))*ts*(osat(temp[i],bp)-metab[i-1]) 
+  if(plot) {
+    if(estimate %in% c('PRK','PR')) {
+      onestationplot<-function(GPP, ER, oxy, z, temp, K, light, bp, ts) {
+        metab<-numeric(length(oxy))
+        metab[1]<-oxy[1]
+        for (i in 2:length(oxy)) { 
+          metab[i] <- metab[i-1]+
+            ((GPP/z)*(light[i]/sum(light)))+ 
+            ER*ts/z+
+            (Kcor(temp[i],K))*ts*(osat(temp[i],bp)-metab[i-1]) 
+        }
+        plot(seq(1:length(oxy)),metab, type="l",xlab="Time", ylab="Dissolved oxygen  (mg/L)", cex.lab=1.5, cex.axis=1.5, lwd=2 )
+        points(seq(1:length(oxy)),oxy)
       }
-      plot(seq(1:length(oxy)),metab, type="l",xlab="Time", ylab="Dissolved oxygen  (mg/L)", cex.lab=1.5, cex.axis=1.5, lwd=2 )
-      points(seq(1:length(oxy)),oxy)
+      onestationplot(GPP=ests$GPP[1], ER=ests$ER[1], oxy=o2file$DO.obs, z=z, temp=o2file$temp.water, light=o2file$light, K=ests$K[1], bp=bp, ts=ts)
     }
-    onestationplot(GPP=ests$GPP[1], ER=ests$ER[1], oxy=o2file$DO.obs, z=z, temp=o2file$temp.water, light=o2file$light, K=ests$K[1], bp=bp, ts=ts)
   }
   
   # return estimates
