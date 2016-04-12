@@ -68,16 +68,19 @@ mm_model_by_ply <- function(
   # each date (day_start to day_end, which may be != 24). store this labeling in
   # two additional columns (odd.- and even.- date.groups)
   data.plys <- as.data.frame(v(data))
+  if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
   if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) 
     stop("min timestep is <= 0: ", min_timestep, " days")
   if(!is.null(data_daily)) {
+    if(!('date' %in% names(data_daily))) stop("data_daily must contain a 'date' column")
     min_datestep <- mm_get_timestep(data_daily$date, format='unique')
     if(length(min_datestep) > 0 && min_datestep[1] <= 0)
       stop("min datestep is <= 0: ", min_datestep, " days")
   }
-  data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
-  data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
+  doyhr <- convert_date_to_doyhr(data.plys$solar.time)
+  data.plys$date <- as.character(as.Date(lubridate::floor_date(data.plys$solar.time, 'year')) + as.difftime(floor(doyhr)-1, units='days'))
+  data.plys$hour <- 24*(doyhr %% 1)
   
   # subtract a tiny fudge factor (one second) to the start and end bounds so we
   # don't exclude times that are essentially equal to day_start, and so we do
