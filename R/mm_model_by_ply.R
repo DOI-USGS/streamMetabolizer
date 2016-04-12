@@ -78,8 +78,9 @@ mm_model_by_ply <- function(
     if(length(min_datestep) > 0 && min_datestep[1] <= 0)
       stop("min datestep is <= 0: ", min_datestep, " days")
   }
-  data.plys$date <- format(data.plys$solar.time, "%Y-%m-%d")
-  data.plys$hour <- 24*(convert_date_to_doyhr(data.plys$solar.time) %% 1)
+  doyhr <- convert_date_to_doyhr(data.plys$solar.time)
+  data.plys$date <- as.character(as.Date(lubridate::floor_date(data.plys$solar.time, 'year')) + as.difftime(floor(doyhr)-1, units='days'))
+  data.plys$hour <- 24*(doyhr %% 1)
   
   # subtract a tiny fudge factor (one second) to the start and end bounds so we
   # don't exclude times that are essentially equal to day_start, and so we do
