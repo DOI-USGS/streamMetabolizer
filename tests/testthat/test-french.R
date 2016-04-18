@@ -23,9 +23,9 @@ test_that("French Creek data are similar for streamMetabolizer & Bob Hall's code
   expect_equal(fxy$DO.sat.x, fxy$DO.sat.y)
   
   # check values that should be pretty much equal - light
-  expect_more_than(cor(fxy$light.x, fxy$light.y), 0.9999)
-  expect_less_than(abs(coef(lm(fxy$light.y ~ fxy$light.x))['(Intercept)']), 0.4)
-  expect_less_than(abs(coef(lm(fxy$light.y ~ fxy$light.x))['fxy$light.x'] - 1), 0.01)
+  expect_gt(cor(fxy$light.x, fxy$light.y), 0.9999)
+  expect_lt(abs(coef(lm(fxy$light.y ~ fxy$light.x))['(Intercept)']), 0.4)
+  expect_lt(abs(coef(lm(fxy$light.y ~ fxy$light.x))['fxy$light.x'] - 1), 0.01)
   # library(ggplot2); ggplot(fxy, aes(x=light.x, y=light.y)) + geom_abline() + geom_point(alpha=0.5) + theme_bw()
   # library(ggplot2); ggplot(fxy, aes(x=solar.time)) + geom_line(aes(y=light.x), color='red') + geom_line(aes(y=light.y), color='blue') + theme_bw()
   # library(ggplot2); ggplot(fxy[7100:7350,], aes(x=solar.time)) + geom_line(aes(y=light.x), color='red') + geom_line(aes(y=light.y), color='blue') + theme_bw()
@@ -60,10 +60,10 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
     specs=specs('m_np_oi_eu_km.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort))[1,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
-  expect_less_than(abs(smest$GPP - bobest$GPP), 0.01, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
-  expect_less_than(abs(smest$ER - bobest$ER), 0.01, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
-  expect_less_than(abs(smest$K600 - bobest$K), 0.01, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
-  expect_less_than(abs(smest$minimum - bobest$lik), 0.000001)
+  expect_lt(abs(smest$GPP - bobest$GPP), 0.01) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
+  expect_lt(abs(smest$ER - bobest$ER), 0.01) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
+  expect_lt(abs(smest$K600 - bobest$K), 0.01) #, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
+  expect_lt(abs(smest$minimum - bobest$lik), 0.000001)
   
   # K (metab_night)
   smest <- predict_metab(metab(
@@ -71,16 +71,16 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
     data=vfrenchnight))[c("GPP","ER","K600")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(
     vfrenchnight, estimate='K', start=chron::chron(dates="08/24/12", times="18:45:00"), end=chron::chron(dates="08/24/12", times="22:56:00"))
-  expect_less_than(abs(smest$K600 - bobest$K), 0.0001, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
+  expect_lt(abs(smest$K600 - bobest$K), 0.0001) #, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
   
   # PR (metab_mle)
   smest <- get_fit(metab_mle(
     specs=specs('m_np_oi_eu_km.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35)))[,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
-  expect_less_than(abs(smest$GPP - bobest$GPP), 0.02, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
-  expect_less_than(abs(smest$ER - bobest$ER), 0.01, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
-  expect_less_than(abs(smest$minimum - bobest$lik), 0.000001)
+  expect_lt(abs(smest$GPP - bobest$GPP), 0.02) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
+  expect_lt(abs(smest$ER - bobest$ER), 0.01) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
+  expect_lt(abs(smest$minimum - bobest$lik), 0.000001)
   
   # Bayes w/ Bob's MLE-PRK for comparison - really loose criteria for prediction agreement
   prkest <- get_fit(metab_mle(
@@ -91,8 +91,8 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
     specs=specs('b_np_oi_eu_km.jags', saved_steps=4000, day_start=start.numeric, day_end=end.numeric), 
     data=vfrenchshort)
   smest <- predict_metab(mb)[,c("GPP","ER","K600")]
-  expect_less_than(abs(smest$GPP - bobest$GPP), 0.2, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
-  expect_less_than(abs(smest$ER - bobest$ER), 0.2, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
-  expect_less_than(abs(smest$K600 - bobest$K), 3, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
+  expect_lt(abs(smest$GPP - bobest$GPP), 0.2) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
+  expect_lt(abs(smest$ER - bobest$ER), 0.2) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
+  expect_lt(abs(smest$K600 - bobest$K), 3) #, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
   
 })

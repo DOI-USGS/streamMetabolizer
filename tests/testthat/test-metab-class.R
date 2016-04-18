@@ -4,14 +4,14 @@ test_that("metab_model objects can be created and accessed", {
   
   # basic structure of metab_model parent class
   mm <- metab_model()
-  expect_output(slot(mm, "fit"), "generic metab_model class; no actual fit")
+  expect_output(print(slot(mm, "fit")), "generic metab_model class; no actual fit")
   expect_true(all(names(formals(metab)) %in% names(getSlots('metab_model'))), info="slots should match args to metab()")
   expect_is(slot(mm, "fitting_time"), "proc_time", info="time should be recorded")
   expect_is(slot(mm, "data"), "data.frame", info="default should populate with example data")
   expect_is(slot(mm, "pkg_version"), "character", info="pkg version should be autopopulated")
 
   # display
-  expect_output(mm, "metab_model", info="model type should be shown")
+  expect_output(print(mm), "metab_model", info="model type should be shown")
   
   # accessors
   expect_equal(slot(mm, "fit"), get_fit(mm))
