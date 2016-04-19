@@ -32,7 +32,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd)
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
   acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
-  expect_less_than(acf_out$acf[acf_out$lag==1], 0.1)
+  expect_lt(acf_out$acf[acf_out$lag==1], 0.1)
   # plot_DO_preds(predict_DO(mm))
   
   # predict_DO - autocorrelation should be bigger when there's process error
@@ -40,7 +40,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
                   specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05))
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
   acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
-  expect_more_than(acf_out$acf[acf_out$lag==1], 0.6)
+  expect_gt(acf_out$acf[acf_out$lag==1], 0.6)
   # plot_DO_preds(predict_DO(mm))
   
   # should be able to switch ODE methods in fitting

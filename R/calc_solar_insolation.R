@@ -186,6 +186,6 @@ calc_solar_insolation <- function(
   if(attach.units) {
     u(insolation,"W m^-2")
   } else {
-    insolation
+    v(insolation)
   }
 }

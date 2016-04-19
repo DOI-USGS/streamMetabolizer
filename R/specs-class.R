@@ -47,7 +47,11 @@ print.specs <- function(x, ...) {
 #' @keywords internal
 print_specs <- function(object, header="Model specifications:\n", prefix="  ") {
   # create a data.frame with a concise 1-line description of each specs element
-  max_value_width <- max(10, getOption('width') - nchar(prefix) - max(nchar(names(object))) - 1)
+  max_value_width <- if(length(object) > 0) {
+    max(10, getOption('width') - nchar(prefix) - max(nchar(names(object))) - 1)
+  } else { 
+    10
+  }
   specs_df <- data.frame(value=sapply(names(object), function(spec) {
     spec_char <- tryCatch(
       if(is.null(object[[spec]])) {
