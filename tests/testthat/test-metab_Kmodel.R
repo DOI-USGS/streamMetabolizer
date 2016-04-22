@@ -21,8 +21,8 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   expect_warning(mm <- metab_Kmodel(data=NULL, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='mean'))), "no SE available")
   expect_equal(predict_metab(mm)$K600, ddat1$K600)
   # show that Kmodel(lm) and Kmodel(loess) do break, on model-specific errors
-  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "Error in lm.wfit", fixed=TRUE)
-  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "Error in simpleLoess", fixed=TRUE)
+  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE)
+  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE)
   
   # mean
   expect_warning(mm_mean <- metab_Kmodel(data_daily=ddat, specs=specs(mm_name('Kmodel', engine='mean'))), "no SE available")
@@ -66,7 +66,7 @@ test_that("try a complete PRK-K-PR workflow", {
   expect_equal(length(unique(predict_metab(mm3)$K600)), 1)
   
   # that should have reduced variance in the GPP & ER predictions
-  expect_less_than(sd(predict_metab(mm3)$GPP), sd(predict_metab(mm1)$GPP))
-  expect_less_than(sd(predict_metab(mm3)$ER), sd(predict_metab(mm1)$ER))
+  expect_lt(sd(predict_metab(mm3)$GPP), sd(predict_metab(mm1)$GPP))
+  expect_lt(sd(predict_metab(mm3)$ER), sd(predict_metab(mm1)$ER))
   
 })

@@ -51,9 +51,9 @@ test_that("converting between UTC and solar time works", {
   # UTC to solar
   expect_equal(convert_UTC_to_solartime(adate, longitude=u(0, "degW"), time.type="mean solar"), adate)
   expect_equal(convert_UTC_to_solartime(adate, longitude=u(0, "degW"), time.type="apparent solar"), adate+as.difftime(-4.661701, units="mins"), tol=0.0001)
-  expect_error(convert_UTC_to_solartime(adate, longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
-  expect_less_than(convert_UTC_to_solartime(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), 10, info="go east, be later")
-  expect_less_than(convert_UTC_to_solartime(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), 10, info="go west, be earlier")
+  expect_error(convert_UTC_to_solartime(adate, longitude=u(0, "degW"), time.type="not a type"), "should be one of", info="only accept valid time.types")
+  expect_lt(as.numeric(convert_UTC_to_solartime(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), units='secs'), 10) #go east, be later
+  expect_lt(as.numeric(convert_UTC_to_solartime(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), units='secs'), 10) #go west, be earlier
   expect_equal(convert_UTC_to_solartime(adate, longitude=u(89, "degW"), time.type="apparent solar"), 
                convert_UTC_to_solartime(adate, longitude=-89, time.type="apparent solar"), info="negative degrees are degW")
   expect_equal(convert_UTC_to_solartime(u(adate), longitude=71, time.type="apparent solar"), 
@@ -62,9 +62,9 @@ test_that("converting between UTC and solar time works", {
   # solar to UTC
   expect_equal(convert_solartime_to_UTC(adate, longitude=u(0, "degW"), time.type="mean solar"), adate)
   expect_equal(convert_solartime_to_UTC(adate, longitude=u(0, "degW"), time.type="apparent solar"), adate+as.difftime(+4.661701, units="mins"), tol=0.0001)
-  expect_error(convert_solartime_to_UTC(adate, longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
-  expect_less_than(convert_solartime_to_UTC(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), 10, info="go east, be later")
-  expect_less_than(convert_solartime_to_UTC(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), 10, info="go west, be earlier")
+  expect_error(convert_solartime_to_UTC(adate, longitude=u(0, "degW"), time.type="not a type"), "should be one of", info="only accept valid time.types")
+  expect_lt(as.numeric(convert_solartime_to_UTC(adate, longitude=u(105.3, "degE"), time.type="mean solar") - (adate - as.difftime(7, units="hours")), units='secs'), 10) #, info="go east, be later")
+  expect_lt(as.numeric(convert_solartime_to_UTC(adate, longitude=u(105.3, "degW"), time.type="mean solar") - (adate + as.difftime(7, units="hours")), units='secs'), 10) #, info="go west, be earlier")
   expect_equal(convert_solartime_to_UTC(somedates, longitude=u(0, "degW"), time.type="mean solar"), somedates, info="handle multiple dates")
   expect_equal(as.numeric(convert_solartime_to_UTC(somedates, longitude=u(0, "degW"), time.type="apparent solar")), as.numeric(somedates), tol=1000, info="handle multiple dates")
   # there and back
@@ -91,7 +91,7 @@ test_that("converting between UTC and local time works", {
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="daylight local")), "Europe/London", info="different tz name")
   #   error checking
   expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=0, time.type="standard"), "unitted")
-  expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), "match.arg", info="only accept valid time.types")
+  expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), 'should be one of "standard local", "daylight local"', info="only accept valid time.types")
   #   real time changes
   # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(40, "degN"), longitude=u(105.3, "degE"), time.type="standard")), "Etc/GMT-8", info="go east, be POSIX-negative")
