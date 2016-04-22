@@ -1,3 +1,7 @@
+# streamMetabolizer 0.9.5
+
+* Bug fixes and error prevention
+
 # streamMetabolizer 0.9.4
 
 * Now automatically checks for available updates when you attach the package
