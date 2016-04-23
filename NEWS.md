@@ -1,3 +1,7 @@
+# streamMetabolizer 0.9.5.1
+
+* in metab_Kmodel, now avoiding negative weights
+
 # streamMetabolizer 0.9.5
 
 * Bug fixes and error prevention
@@ -14,7 +18,7 @@
 'linear', and 'binned'; see the details section on pool_K600 in ?mm_name and the
 description of parameters starting with K600_daily in ?specs.
 
-* Interface change: specs lists now print more prettily and have class 'specs'
+* Interface change: specs lists now print more prettily and have class 'specs' 
 (though they're still fundamentally just lists)
 
 * Vignette: see vignette('getstarted')
