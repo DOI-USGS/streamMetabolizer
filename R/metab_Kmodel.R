@@ -179,7 +179,7 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
       mutate(weight=switch(
         weights, 
         "1/CI"=1/(K600.upper.obs - K600.lower.obs), 
-        "K600/CI"=K600.obs/(K600.upper.obs - K600.lower.obs))) %>%
+        "K600/CI"=pmax(K600.obs, 0)/(K600.upper.obs - K600.lower.obs))) %>%
       mutate(weight = weight/sum(weight, na.rm=TRUE))
   } else {
     data_daily %<>% mutate(weight=1/length(which(!is.na(K600.obs))))
