@@ -109,3 +109,45 @@ useful_code <- function() {
   get_fit(mm)[grep("Rhat", names(get_fit(mm)))]
   
 }
+
+manual_test3 <- function() {
+  # light stan 1-day
+  dat <- data_metab('1', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
+  sp <- specs(mmb, n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100)
+  sp$model_name <- 'inst/models/b_np_oi_pm_km_light.stan'
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+  traceplot(get_mcmc(mm))
+  
+  # light stan 3-day
+  dat <- data_metab('3', res='30')
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+  traceplot(get_mcmc(mm))
+  
+  # light jags 1-day
+  dat <- data_metab('1', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
+  sp$model_name <- 'inst/models/b_np_oi_pm_km_light.jags'
+  mm <- metab(specs=sp, data=dat)
+
+  # light jags 3-day
+  dat <- data_metab('3', res='30')
+  mm <- metab(specs=sp, data=dat)
+  
+  # OI jags 3-day
+  dat <- data_metab('3', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, err_obs_iid=TRUE, engine='jags', deficit_src = 'DO_obs')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+  
+  # PI jags 3-day
+  dat <- data_metab('3', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=TRUE, err_obs_iid=FALSE, engine='jags', deficit_src = 'DO_obs')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+}

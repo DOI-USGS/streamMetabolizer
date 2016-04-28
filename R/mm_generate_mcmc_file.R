@@ -79,6 +79,10 @@ mm_generate_mcmc_file <- function(
           # rate = beta = 1/theta = inverse scale = second argument to both stan and jags
           if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
           distrib <- 'dgamma'
+        },
+        lognormal = {
+          if(!all(names(args) == c('mu','tau'))) stop("expecting lognormal(mu,tau)")
+          distrib <- 'dlnorm'
         }
       )
     }
