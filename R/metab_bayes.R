@@ -576,7 +576,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(jags_mat))[1])))
       varstat_order <- paste0(rep(row_order, each=ncol(jags_mat)), '_', rep(colnames(jags_mat), times=length(row_order)))
       
-      as.data.frame(jags_mat[dim_rows,]) %>%
+      as.data.frame(jags_mat[dim_rows,,drop=FALSE]) %>%
         add_rownames() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
