@@ -78,7 +78,7 @@
 mm_name <- function(
   type=c('mle','bayes','night','Kmodel','sim'), 
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
-  pool_K600=c('none','normal','linear','binned'),
+  pool_K600=c('none','normal','linear','binned','complete'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
@@ -100,8 +100,8 @@ mm_name <- function(
     # only one argument allowed for Kmodel
     relevant_args <- 'engine' 
     # directly specify all the rest
-    pool_K600='none'
-    pool_all='none'
+    pool_K600='complete'
+    pool_all='complete'
     err_obs_iid=FALSE
     err_proc_acor=FALSE
     err_proc_iid=FALSE
@@ -142,8 +142,8 @@ mm_name <- function(
   # make the name
   mmname <- paste0(
     c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
-    c(none='', normal='Kn', linear='Kl', binned='Kb')[[pool_K600]],
-    c(none='np', partial='')[[pool_all]], '_',
+    c(none='', normal='Kn', linear='Kl', binned='Kb', complete='Kc')[[pool_K600]],
+    c(none='np', partial='', complete='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
     c(linlight='pl', satlight='ps', 'NA'='')[[GPP_fun]],

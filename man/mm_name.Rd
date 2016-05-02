@@ -5,12 +5,12 @@
 \title{Find the name of a model by its features}
 \usage{
 mm_name(type = c("mle", "bayes", "night", "Kmodel", "sim"),
-  pool_K600 = c("none", "normal", "linear", "binned"), err_obs_iid = c(TRUE,
-  FALSE), err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
-  ode_method = c("pairmeans", "Euler", "NA"), GPP_fun = c("linlight",
-  "satlight", "NA"), ER_fun = c("constant", "q10temp", "NA"),
-  deficit_src = c("DO_mod", "DO_obs", "DO_obs_filter", "NA"),
-  engine = c("stan", "jags", "nlm", "lm", "mean", "loess", "rnorm"),
+  pool_K600 = c("none", "normal", "linear", "binned", "complete"),
+  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
+  err_proc_iid = c(FALSE, TRUE), ode_method = c("pairmeans", "Euler", "NA"),
+  GPP_fun = c("linlight", "satlight", "NA"), ER_fun = c("constant",
+  "q10temp", "NA"), deficit_src = c("DO_mod", "DO_obs", "DO_obs_filter",
+  "NA"), engine = c("stan", "jags", "nlm", "lm", "mean", "loess", "rnorm"),
   check_validity = TRUE)
 }
 \arguments{
