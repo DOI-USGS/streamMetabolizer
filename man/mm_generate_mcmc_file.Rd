@@ -7,7 +7,8 @@
 mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
   "linear", "binned"), err_obs_iid = c(TRUE, FALSE),
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
-  ode_method = c("pairmeans", "Euler"), deficit_src = c("DO_mod", "DO_obs"),
+  ode_method = c("pairmeans", "Euler"), GPP_fun = c("linlight"),
+  ER_fun = c("constant"), deficit_src = c("DO_mod", "DO_obs"),
   engine = c("stan", "jags"))
 }
 \arguments{

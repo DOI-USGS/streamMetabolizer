@@ -83,7 +83,9 @@ mm_name <- function(
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler','NA'),
-  deficit_src=c('DO_mod','DO_obs','NA'),
+  GPP_fun=c('linlight', 'satlight','NA'),
+  ER_fun=c('constant', 'q10temp','NA'),
+  deficit_src=c('DO_mod','DO_obs','DO_obs_filter','NA'),
   engine=c('stan','jags','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
   
@@ -104,6 +106,8 @@ mm_name <- function(
     err_proc_acor=FALSE
     err_proc_iid=FALSE
     ode_method='NA'
+    GPP_fun='NA'
+    ER_fun='NA'
     deficit_src='NA'
   }
   given_args <- names(match.call()[-1])
@@ -123,6 +127,8 @@ mm_name <- function(
     if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
     if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
     ode_method <- match.arg(ode_method)
+    GPP_fun <- match.arg(GPP_fun)
+    ER_fun <- match.arg(ER_fun)
     deficit_src <- match.arg(deficit_src)
     if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
   } else {
@@ -140,8 +146,10 @@ mm_name <- function(
     c(none='np', partial='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
-    c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
-    engine)
+    c(linlight='pl', satlight='ps', 'NA'='')[[GPP_fun]],
+    c(constant='rc', q10temp='rq', 'NA'='')[[ER_fun]], 
+    c(DO_mod='km', DO_obs='ko', DO_obs_filter='kf', 'NA'='')[[deficit_src]], 
+    '.', engine)
   
   # check validity if requested
   check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
