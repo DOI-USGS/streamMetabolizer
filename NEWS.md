@@ -1,3 +1,11 @@
+# streamMetabolizer 0.9.6
+
+* model names (from mm_name()) and bayesian model file names (in models folder)
+now include info on the GPP and ER functions - default is still pl = GPP is a
+linear function of light, and rc = ER is constant over every 24-hour period
+
+* more informative error messages for timesteps <= 0 in mm_model_by_ply
+
 # streamMetabolizer 0.9.5.1
 
 * in metab_Kmodel, now avoiding negative weights

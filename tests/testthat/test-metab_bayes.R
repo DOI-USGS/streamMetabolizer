@@ -115,7 +115,7 @@ manual_test3 <- function() {
   dat <- data_metab('1', res='30')
   mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
   sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100)
-  sp$model_name <- 'inst/models/b_np_oi_pm_km_light.stan'
+  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.stan'
   mm <- metab(specs=sp, data=dat)
   plot_DO_preds(predict_DO(mm))
   traceplot(get_mcmc(mm))
@@ -130,7 +130,7 @@ manual_test3 <- function() {
   dat <- data_metab('1', res='30')
   mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags')
   sp <- specs(mmb, n_chains=3, n_cores=3, adapt_steps=1000, burnin_steps=3000, saved_steps=1000)
-  sp$model_name <- 'inst/models/b_np_oi_pm_km_light.jags'
+  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.jags'
   mm <- metab(specs=sp, data=dat)
   plot(get_mcmc(mm), 'trace')
 
