@@ -38,6 +38,14 @@ equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP,
 ER, DO, etc. at t=1. pairmeans: dDOdt from t=1 to t=2 is a function of the 
 mean values of GPP, ER, etc. across t=1 and t=2.}
 
+\item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
+a linear function of light with an intercept at 0. \code{satlight} GPP is a
+saturating function of light.}
+
+\item{ER_fun}{How to partition daily ER over time. \code{constant}: ER is
+constant over every timestep of the day. \code{q10temp} (not yet
+implemented): ER at each timestep is a function of the water temperature.}
+
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
 
@@ -57,16 +65,16 @@ From a complete \code{specs} list, a metabolism model can be run with
 While the \code{Usage} shows all valid values for each argument, not all 
 argument combinations are valid; the combination will also be checked if 
 \code{check_validity==TRUE}. For arguments not explicitly specified, defaults
-depend on the value of \code{type}: any argument that is not explicitly
-supplied (besides \code{type} and \code{check_validity}) will default to the
+depend on the value of \code{type}: any argument that is not explicitly 
+supplied (besides \code{type} and \code{check_validity}) will default to the 
 values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 
 
 
 \subsection{pool_K600}{
 
-Here are the essential model lines (in Stan language) that separate the four 
-K pooling options.
+Here are the essential model lines (in Stan language) that distinguish the K 
+pooling options.
 
 \tabular{l}{ \strong{\code{pool_K600 = 'none'}}\cr \code{K600_daily ~ 
 normal(K600_daily_mu, K600_daily_sigma)} }
@@ -88,6 +96,12 @@ K600_daily_beta[Q_bin_daily]}\cr \code{K600_daily ~ normal(K600_daily_pred,
 K600_daily_sigma)}\cr \code{K600_daily_beta ~ normal(K600_daily_beta_mu, 
 K600_daily_beta_sigma)}\cr \code{K600_daily_sigma ~ 
 gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
+
+\tabular{l}{ \strong{\code{pool_K600 = 'complete'}}\cr [This option refers to
+complete pooling via \code{metab_Kmodel} in conjunction with preceding 
+estimates of K (e.g., by \code{metab_mle} or \code{metab_night}) and 
+subsequent estimates of GPP and ER (e.g., by \code{metab_mle} with daily K600
+values specified)] }
 
 }
 }
