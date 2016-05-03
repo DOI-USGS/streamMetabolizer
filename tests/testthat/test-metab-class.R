@@ -34,17 +34,19 @@ test_that("metab_models have default predict_metab and predict_DO methods", {
 
 })
 
-test_that("metab_models can be saved & reloaded (see helper-save_load.R)", {
-  
-  # save and reload
-  mm <- metab_model()
-  
-  # see if saveRDS with gzfile, compression=9 works well
-  rdstimes <- save_load_timing(mm, reps=1) # autoloaded b/c script begins with 'helper' and is in this directory
-  expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
-  # plot_save_load_timing(rdstimes)
-  
-  # save and load the mm, make sure it stays the same
-  test_save_load_recovery(mm)
-  
-})
+manual_test <- function() {
+  test_that("metab_models can be saved & reloaded (see helper-save_load.R)", {
+    
+    # save and reload
+    mm <- metab_model()
+    
+    # see if saveRDS with gzfile, compression=9 works well
+    rdstimes <- save_load_timing(mm, reps=1) # autoloaded b/c script begins with 'helper' and is in this directory
+    expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
+    # plot_save_load_timing(rdstimes)
+    
+    # save and load the mm, make sure it stays the same
+    test_save_load_recovery(mm)
+    
+  })
+}
