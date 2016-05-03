@@ -5,7 +5,7 @@
 #' 
 #' @inheritParams specs
 #' @examples 
-#' mm_validate_name("b_np_oipi_pm_km.stan")
+#' mm_validate_name("b_np_oipi_pm_plrckm.stan")
 #' \dontrun{
 #' mm_validate_name("b_np_oipn") # throws error
 #' }

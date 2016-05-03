@@ -9,6 +9,8 @@ mm_generate_mcmc_file <- function(
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler'),
+  GPP_fun=c('linlight'), #'satlight'
+  ER_fun=c('constant'), #'q10temp'
   deficit_src=c('DO_mod','DO_obs'),
   engine=c('stan','jags')) {
   
@@ -18,7 +20,7 @@ mm_generate_mcmc_file <- function(
     type='bayes',
     pool_K600=pool_K600,
     err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid,
-    ode_method=ode_method, deficit_src=deficit_src, engine=engine,
+    ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   
   # define rules for when to model as process, obs, or both
@@ -543,6 +545,8 @@ mm_generate_mcmc_files <- function() {
     err_proc_acor=c(FALSE, TRUE),
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('pairmeans','Euler'),
+    GPP_fun='linlight',
+    ER_fun='constant',
     deficit_src=c('DO_mod','DO_obs'),
     engine=c('stan','jags'),
     stringsAsFactors=FALSE)

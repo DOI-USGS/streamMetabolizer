@@ -29,7 +29,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
       # mm_names(check_validity=TRUE))
       mnames <- grep('^b_', dir(system.file("models", package="streamMetabolizer")), value=TRUE)
       # rename so our favorite is first
-      favorites <- c("b_np_oipi_pm_km.stan","b_np_oipi_pm_km.jags")
+      favorites <- c("b_np_oipi_pm_plrckm.stan","b_np_oipi_pm_plrckm.jags")
       c(favorites, mnames[-which(mnames %in% favorites)])
     },
     mle={
@@ -40,6 +40,8 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         err_proc_acor=FALSE,
         err_proc_iid=c(FALSE, TRUE),
         ode_method=c('pairmeans','Euler'),
+        ER_fun=c('constant'), # 'q10temp'
+        GPP_fun=c('linlight', 'satlight'),
         deficit_src='DO_mod',
         engine=c('nlm'),
         stringsAsFactors=FALSE)
@@ -47,12 +49,12 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
       opts <- opts[!incompatible, ]
       mnames <- sapply(seq_len(nrow(opts)), function(i) do.call(mm_name, c(opts[i,], list(check_validity=FALSE))))
       # rename so our favorite is first
-      favorites <- c("m_np_oi_pm_km.nlm")
+      favorites <- c("m_np_oi_pm_plrckm.nlm")
       c(favorites, mnames[-which(mnames %in% favorites)])
     },
     night=c(
       # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
-      mm_name(type='night', pool_K600='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='lm', check_validity=FALSE)
+      mm_name(type='night', pool_K600='none', err_obs_iid=FALSE, err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="Euler", GPP_fun='NA', ER_fun='constant', deficit_src='DO_obs_filter', engine='lm', check_validity=FALSE)
     ),
     Kmodel=c(
       # this causes finite recursion because all [Kmodel] args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
@@ -62,8 +64,8 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
     ),
     sim=c(
       # this causes finite recursion because all args are specified and check_validity=FALSE, so mm_name doesn't call mm_valid_names
-      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src='NA', engine='rnorm', check_validity=FALSE),
-      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", deficit_src='NA', engine='rnorm', check_validity=FALSE)
+      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="pairmeans", GPP_fun='linlight', ER_fun='constant', deficit_src='DO_mod', engine='rnorm', check_validity=FALSE),
+      mm_name(type='sim', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=TRUE, err_proc_iid=TRUE, ode_method="Euler", GPP_fun='linlight', ER_fun='constant', deficit_src='DO_mod', engine='rnorm', check_validity=FALSE)
     )
   )
 }

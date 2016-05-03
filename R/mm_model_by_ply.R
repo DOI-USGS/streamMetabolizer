@@ -70,13 +70,23 @@ mm_model_by_ply <- function(
   data.plys <- as.data.frame(v(data))
   if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
-  if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) 
-    stop("min timestep is <= 0: ", min_timestep, " days")
+  if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) {
+    timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
+    timegoof <- which.min(timesteps) + c(0,1)
+    stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
+         v(data$solar.time)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+         v(data$solar.time)[timegoof[2]], " (row ", timegoof[2], ")")
+  }
   if(!is.null(data_daily)) {
     if(!('date' %in% names(data_daily))) stop("data_daily must contain a 'date' column")
     min_datestep <- mm_get_timestep(data_daily$date, format='unique')
-    if(length(min_datestep) > 0 && min_datestep[1] <= 0)
-      stop("min datestep is <= 0: ", min_datestep, " days")
+    if(length(min_datestep) > 0 && min_datestep[1] <= 0) {
+      timesteps <- as.numeric(diff(v(data_daily$date)), units="days")
+      timegoof <- which.min(timesteps) + c(0,1)
+      stop("min datestep is <= 0: ", min_datestep, " days from ",
+           v(data_daily$date)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+           v(data_daily$date)[timegoof[2]], " (row ", timegoof[2], ")")
+    }
   }
   doyhr <- convert_date_to_doyhr(data.plys$solar.time)
   data.plys$date <- as.character(as.Date(lubridate::floor_date(data.plys$solar.time, 'year')) + as.difftime(floor(doyhr)-1, units='days'))
