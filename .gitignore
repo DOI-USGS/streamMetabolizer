@@ -17,3 +17,5 @@ tests/testthat/Rplots.pdf
 # Temporary files
 temp
 inst/doc
+# Machine-specific files
+inst/models/compiled

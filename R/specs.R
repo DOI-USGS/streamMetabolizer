@@ -475,7 +475,7 @@ specs <- function(
           if('filters' %in% yes_missing) all_specs$filters <- c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA)
           if('predictors' %in% yes_missing) all_specs$predictors <- c("date", "discharge.daily")
           if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")
-          if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals(loess))[-which(names(formals(loess)) %in% c('formula','data','weights'))])
+          if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals('loess'))[-which(names(formals('loess')) %in% c('formula','data','weights'))])
         }
       )
       

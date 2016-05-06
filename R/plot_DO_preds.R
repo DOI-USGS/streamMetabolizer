@@ -53,6 +53,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       mod = ifelse(diff(DO_preds$date)==0, mod, NA),
       obs = ifelse(diff(DO_preds$date)==0, obs, NA))
   
+  var <- '.dplyr.var'
   DO_preds_all <- bind_rows(DO_preds_conc, DO_preds_pctsat, DO_preds_ddodt) %>%
     mutate(var=ordered(var, c(conc='DO (mg/L)', pctsat='DO (% sat)', ddodt='dDO/dt (mg/L/d)')[y_var]))
   

@@ -101,7 +101,7 @@ mm_model_by_ply <- function(
   # This function speeds things up in both of the next two loops. 'runs' refers
   # to sequential runs of values in date.group that have the same value.
   get_runs <- function(date.group) {
-    values <- '.dplyr.var'
+    values <- start <- end <- '.dplyr.var'
     replace(date.group, is.na(date.group), '') %>%
       rle() %>%
       unclass %>% 

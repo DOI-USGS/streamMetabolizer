@@ -15,6 +15,7 @@
 #' @param keep_name logical; should the model_name be included as a first column
 #'   in the output data.frame?
 #' @import dplyr
+#' @importFrom stats na.omit
 #' @examples
 #' mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')))
 #' mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), keep_name=TRUE)

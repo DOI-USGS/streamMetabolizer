@@ -9,7 +9,7 @@
 load_spring_creek <- function(attach.units=TRUE) {
   # load the file
   file.name <- system.file("extdata", "spring14.csv", package="streamMetabolizer") # data from Spring Creek, Laramie, WY
-  utc.time <- oxy <- temp <- solar.time <- app.solar.time <- ".dplyr.var"
+  time <- utc.time <- oxy <- temp <- solar.time <- app.solar.time <- ".dplyr.var"
   spring <- read.csv(file.name, stringsAsFactors=FALSE, header=TRUE) %>% 
     transmute(
       utc.time = as.POSIXct(time, origin="1970-01-01", tz="UTC"),

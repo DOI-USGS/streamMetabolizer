@@ -44,6 +44,7 @@ print.specs <- function(x, ...) {
 #' @param prefix text to prepend to the start of each line that follows the 
 #'   header
 #' @import dplyr
+#' @importFrom utils capture.output
 #' @keywords internal
 print_specs <- function(object, header="Model specifications:\n", prefix="  ") {
   # create a data.frame with a concise 1-line description of each specs element
