@@ -111,18 +111,24 @@ useful_code <- function() {
 }
 
 manual_test3 <- function() {
+  library(streamMetabolizer)
   # light stan 1-day
   dat <- data_metab('1', res='30')
   mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100)
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
   sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.stan'
   mm <- metab(specs=sp, data=dat)
+  mm2 <- metab(specs=sp, data=dat)
+  # elapsed time with no compilation: 59.58;  after pre-compilation: 24.21
+  get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   traceplot(get_mcmc(mm))
   
   # light stan 3-day
   dat <- data_metab('3', res='30')
   mm <- metab(specs=sp, data=dat)
+  # elapsed time with no compilation: 85.39;  after pre-compilation: 61.42
+  get_fitting_time(mm)
   plot_DO_preds(predict_DO(mm))
   traceplot(get_mcmc(mm))
   

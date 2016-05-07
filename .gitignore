@@ -18,4 +18,4 @@ tests/testthat/Rplots.pdf
 temp
 inst/doc
 # Machine-specific files
-inst/models/compiled
+inst/models/*.stanrda
