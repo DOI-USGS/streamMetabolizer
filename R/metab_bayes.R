@@ -199,6 +199,9 @@ metab_bayes <- function(
   # Update data with DO predictions
   mm@data <- predict_DO(mm)
   
+  # Maybe garbage collection here might reduce number of crashes?
+  # gc()
+  
   # Return
   mm
 }
@@ -299,6 +302,7 @@ bayes_allply <- function(
       data_list <- prepdata_bayes(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
         specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
+      specs$keep_mcmc <- specs$keep_mcmcs
       all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
       do.call(mcmc_bayes, c(
         list(data_list=data_list),
@@ -490,7 +494,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
   tot_cores <- detectCores()
   if (!is.finite(tot_cores)) { tot_cores <- 1 } 
   n_cores <- min(tot_cores, n_cores)
-  message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores\n"))
+  if(verbose) message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, split_dates=split_dates, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
@@ -610,8 +614,33 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     stop("the rstan package is required for Stan MCMC models")
   }
   
-  runstan_out <- rstan::stan(
-    file=model_path,
+  # use auto_write=TRUE to recompile if needed, or load from existing .rda file
+  # without recompiling if possible
+  mobj_path <- gsub('.stan$', '.stanrda', model_path)
+  if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
+    if(verbose) message("compiling Stan model")
+    stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
+    rm(stan_mobj)
+    gc() # this humble line saves us from many horrible R crashes
+    autowrite_path <- gsub('.stan$', '.rda', model_path)
+    if(!file.exists(autowrite_path)) autowrite_path <- file.path(tempdir(), basename(autowrite_path))
+    if(!file.exists(autowrite_path)) {
+      warning('could not find saved rda model file')
+    } else {
+      file.copy(autowrite_path, mobj_path, overwrite=TRUE)
+      file.remove(autowrite_path)
+    }
+  } else {
+    if(verbose) message("loading pre-compiled Stan model")
+  }
+  stan_mobj <- readRDS(mobj_path)
+  
+  # notice current dlls
+  #current_dlls <- names(unclass(getLoadedDLLs()))
+  
+  if(verbose) message("sampling Stan model")
+  runstan_out <- rstan::sampling(
+    object=stan_mobj,
     data=data_list,
     pars=params_out,
     include=TRUE,
@@ -620,7 +649,6 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     iter=saved_steps+burnin_steps,
     thin=thin_steps,
     init="random",
-    save_dso=TRUE, # must be true if you're using more than one core
     verbose=verbose,
     open_progress=FALSE,
     cores=n_cores)
@@ -641,11 +669,6 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
       t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
       setNames(paste0(names_params, "_", names_stats))
-  
-    # add the model object if requested
-    if(keep_mcmc == TRUE) {
-      stan_out <- mutate(stan_out, mcmcfit=list(runstan_out))
-    }
   } else {
     # for multi-day or unsplit models, format output into a list of data.frames,
     # one per unique number of nodes sharing a variable name
@@ -676,9 +699,23 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
         select(index, varstat, val) %>%
         spread(varstat, val)
     })
-
-    stan_out <- c(stan_out, list(mcmcfit=runstan_out))
   } 
+  
+  # add the model object if requested
+  if(keep_mcmc == TRUE) {
+    stan_out <- c(stan_out, list(mcmcfit=runstan_out))
+  }
+  
+  # attach the contents of the most recent logfile in tempdir(), which should be for this model
+  progfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
+  progfile <- progfiles[which.max(file.info(progfiles)$mtime)]
+  progress <- readLines(progfile)
+  stan_out <- c(stan_out, list(log=progress))
+  
+  # notice and remove new dll
+  # new_dll <- setdiff(names(unclass(getLoadedDLLs())), current_dlls)
+  # new_dll_path <- unclass(unclass(getLoadedDLLs())[[new_dll]])$path
+  # dyn.unload(new_dll_path)
   
   return(stan_out)
 }

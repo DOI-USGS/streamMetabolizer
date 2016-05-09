@@ -10,8 +10,8 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  //real err_obs_iid_sigma_shape;
-  //real err_obs_iid_sigma_rate;
+  real err_obs_iid_sigma_shape;
+  real err_obs_iid_sigma_rate;
   
   // Data dimensions
   int<lower=1> d; // number of dates
@@ -96,7 +96,7 @@ model {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  //err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
+  err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
   
   // Light multiplier to capture error in the GPP rate
   for(i in 1:(n-1)) {

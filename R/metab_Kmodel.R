@@ -248,6 +248,7 @@ Kmodel_aggregate_day <- function(
 #'   \code{mean} (which is actually implemented as \code{sum}, anyway).
 #' @inheritParams metab_Kmodel
 #' @inheritParams specs
+#' @importFrom stats sd formula loess
 #' @keywords internal
 Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transforms, other_args) {
   # remove rows whose weights signal they should be filtered out
@@ -323,6 +324,7 @@ setClass(
 #'   \code{\link{predict_metab}}.
 #' @export
 #' @importFrom magrittr %<>%
+#' @importFrom stats predict
 #' @family predict_metab
 predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   

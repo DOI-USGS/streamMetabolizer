@@ -41,6 +41,7 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
   metab_preds_K600 <- mutate(
       metab_preds, as='K600', fit=K600, lwr=K600.lower, upr=K600.upper, var='K600 (d^-1)', col1=params$colors[['K600']][1], col2=params$colors[['K600']][2], lab='K600~(d^-1)')
   
+  var <- '.dplyr.var'
   metab_preds_all <- bind_rows(metab_preds_GPP, metab_preds_ER, metab_preds_K600) %>%
     mutate(var=ordered(var, c(GPP='GPP (g m^-2 d^-1)', ER='ER (g m^-2 d^-1)', K600='K600 (d^-1)')[y_var]))
   
