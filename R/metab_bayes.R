@@ -358,7 +358,9 @@ bayes_allply <- function(
   # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
-    bayes_allday <- list(daily=data.frame(date=date_vec, GPP_daily_mean=NA))
+    bayes_allday <- c(
+      list(daily=data.frame(date=date_vec, GPP_daily_mean=NA)),
+      list(log=if(exists('bayes_allday') && is.list(bayes_allday)) bayes_allday$log else NULL))
   } else {
     # check this now so 
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
@@ -807,7 +809,7 @@ get_mcmc.metab_bayes <- function(metab_model) {
   metab_model@mcmc
 }
 
-#' Extract any MCMC model objects that were stored with the model
+#' Extract any MCMC data list[s] that were stored with the model
 #' 
 #' A function specific to metab_bayes models. Returns data as formatted to run
 #' through the MCMC process or, for nopool models, a list of data lists. These
@@ -822,13 +824,42 @@ get_mcmc_data <- function(metab_model) {
   UseMethod("get_mcmc_data")
 }
 
-#' Retrieve any MCMC model object[s] that were saved with a metab_bayes model
+#' Retrieve any MCMC data list[s] that were saved with a metab_bayes model
 #' 
 #' @inheritParams get_mcmc_data
 #' @export 
 #' @family get_mcmc_data
 get_mcmc_data.metab_bayes <- function(metab_model) {
   metab_model@mcmc_data
+}
+
+#' Display the log file from an MCMC run
+#' 
+#' If a log file was created during the MCMC run, metab_bayes() attempted to
+#' capture it. Display what was captured in the console with this function.
+#' 
+#' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
+#'   return the log file, if available
+#' @return The MCMC log file lines, invisibly
+#' @export
+show_log <- function(metab_model) {
+  UseMethod("show_log")
+}
+
+#' Display the log file from an MCMC run
+#' 
+#' @inheritParams show_log
+#' @export 
+#' @family show_log
+show_log.metab_bayes <- function(metab_model) {
+  if('log' %in% names(get_fit(metab_model))) {
+    loglines <- get_fit(metab_model)$log
+    cat(paste(loglines, collapse='\n'))
+    invisible(loglines)
+  } else {
+    message('no log file found')
+    invisible(NULL)
+  }
 }
 
 #' Make metabolism predictions from a fitted metab_model.

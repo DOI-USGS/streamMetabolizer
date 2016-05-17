@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_bayes.R
 \name{get_mcmc_data}
 \alias{get_mcmc_data}
-\title{Extract any MCMC model objects that were stored with the model}
+\title{Extract any MCMC data list[s] that were stored with the model}
 \usage{
 get_mcmc_data(metab_model)
 }
