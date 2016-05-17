@@ -398,6 +398,7 @@ specs <- function(
         all_specs$K600_daily_beta_sigma <- rep(10, all_specs$K600_daily_beta_num)
       }
       if('params_out' %in% yes_missing) {
+        DO_model <- (features$err_obs_iid || features$deficit_src == 'DO_mod')
         all_specs$params_out <- c(
           c('GPP_daily','ER_daily','K600_daily'),
           if(features$pool_K600 != 'none') 'K600_daily_pred',
@@ -409,7 +410,7 @@ specs <- function(
             binned=c('K600_daily_beta', 'K600_daily_sigma')), 
           if(features$err_obs_iid) 'err_obs_iid_sigma',
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c('err_proc_iid', 'err_proc_iid_sigma'))
+          if(features$err_proc_iid) c(if(DO_model) 'err_proc_iid', 'err_proc_iid_sigma'))
       }
       
       # check for errors/inconsistencies
