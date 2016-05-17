@@ -1,5 +1,128 @@
 context("metab_bayes")
 
+manual_test3 <- function() {
+  library(streamMetabolizer)
+  library(dplyr)
+  # faster stan Kl_pcpi_ko model?
+  dat <- mutate(data_metab('10', res='10'), discharge=3)
+  sp <- specs("b_Kl_pcpi_pm_plrcko.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  mm_old <- metab(specs=sp, data=dat) # 12 sec, but hugely wrong
+  plot_metab_preds(mm_old)
+  plot_DO_preds(mm_old)
+  sp <- specs("b_Kl_pcpi_pm_plrcko.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE,
+              err_proc_acor_phi_shape=1, err_proc_acor_phi_rate=50000, err_proc_acor_sigma_rate=0.001, err_proc_iid_sigma_rate=0.02,
+              K600_daily_beta_mu=c(intercept=1, slope=2.3), K600_daily_beta_sigma=c(intercept=0.3, slope=0.3)) %>%
+    replace('model_name', 'inst/models/b_Kl_pcpi_pm_plrcko_sfs2loglog.stan')
+  mm_new <- metab(specs=sp, data=dat) # 1:54, 1:51 with default K600_daily_beta_mu and _sigma. 0:40 with better ones
+  predict_metab(mm_new)
+  plot_metab_preds(mm_new)
+  plot_DO_preds(mm_new)
+  traceplot(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]", "GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  traceplot(get_mcmc(mm_new), pars=c("err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"))
+  traceplot(get_mcmc(mm_new), pars=c("K600_daily_beta","K600_daily_sigma"))
+  pairs(get_mcmc(mm_new), pars=c("GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  pairs(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
+  pairs(get_mcmc(mm_new), pars=c("err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"))
+  
+  # faster stan oi model
+  dat <- data_metab('10', res='10')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE, 
+              GPP_daily_sigma=4, ER_daily_sigma=4, K600_daily_sigma=4)
+              #GPP_daily_sigma=10, ER_daily_sigma=10, K600_daily_sigma=10)
+  mm_slow <- metab(specs=replace(sp, 'err_obs_iid_sigma_rate', 10), data=dat) # 75 sec w/ new compilation, 36-42 sec w/ daily sigmas at 4, 38-40 sec w/ daily sigmas at 10, 48 w/ err_obs_iid_sigma_rate=1 or 1000, 35 w/ err_obs_iid_sigma_rate=100 or 10
+  sp$err_obs_iid_sigma_rate <- 0.2 # need to adjust because we're using the 'rate' as a lognormal scaling parameter now
+  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_faster.stan'
+  mm_fast <- metab(specs=replace(sp, 'err_obs_iid_sigma_rate', 0.02), data=dat) # 51 sec w/ new compilation, 16-17 sec w/ err_obs_sigma_rate at 0.2 or 2 or 0.02
+  
+  mm <- mm_fast
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  plot_metab_preds(predict_metab(mm))
+  select(get_fit(mm)$daily, date, ends_with('Rhat')) # 400 iterations is enough!
+  traceplot(get_mcmc(mm), pars=c('GPP_daily','ER_daily','K600_daily','err_obs_iid_sigma'), inc_warmup=TRUE)
+  
+  # faster stan Kl model?
+  dat <- mutate(data_metab('10', res='10'), discharge=3)
+  sp <- specs("b_Kl_oi_pm_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  mm_old <- metab(
+    specs=replace(sp, 'model_name', 'inst/models/b_Kl_oi_pm_plrckm.stan'), 
+    data=dat) # 48,41,53 sec - baseline
+  mm_new <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfs.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=1, slope=2.3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=0.3, slope=0.3))), 
+    data=dat) # 44,31,40,36 sec - faster than no scaling but by precious little
+  mm_newb <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfs.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=10, slope=3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=8, slope=2))), 
+    data=dat) # 53,49,52,41 sec - slightly slower than above b/c of parameters
+  mm_loglog <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfsloglog.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=1, slope=2.3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=0.3, slope=0.3))), 
+    data=dat) # 1:19, 1:22, 1:32 sec - log-log is definitely slow
+  mm_new2 <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfs2.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=10, slope=3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=8, slope=2))), 
+    data=dat) # 22,21 sec. where have you been all this time?
+  mm_new2loglog <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfs2loglog.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=1, slope=2.3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=0.3, slope=0.3))),
+    data=dat) # 18,20 sec. so log-log isn't slow after all??
+  mm_new2loglogb <- metab(
+    specs=sp %>%
+      replace('model_name', 'inst/models/b_Kl_oi_pm_plrckm_sfs2loglog.stan') %>%
+      replace('K600_daily_beta_mu', list(c(intercept=10, slope=3))) %>%
+      replace('K600_daily_beta_sigma', list(c(intercept=8, slope=2))),
+    data=dat) # 45 sec. so good priors do matter
+  
+  # stan pi model
+  dat <- data_metab('10', res='30')
+  mm <- metab(specs=sp, data=dat)
+  # elapsed time with no compilation: 85.39;  after pre-compilation: 61.42
+  get_fitting_time(mm)
+  plot_DO_preds(predict_DO(mm))
+  plot_metab_preds(predict_metab(mm))
+  traceplot(get_mcmc(mm), pars=c('GPP_daily[7]','ER_daily[7]','K600_daily[7]','err_obs_iid_sigma'), inc_warmup=TRUE)
+  traceplot(get_mcmc(mm), pars=c('GPP_daily[7]','ER_daily[7]','K600_daily[7]','err_obs_iid_sigma'), inc_warmup=FALSE)
+  
+  # light jags 1-day
+  dat <- data_metab('1', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags')
+  sp <- specs(mmb, n_chains=3, n_cores=3, adapt_steps=1000, burnin_steps=3000, saved_steps=1000, keep_mcmc_data=TRUE)
+  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.jags'
+  mm <- metab(specs=sp, data=dat)
+  plot(get_mcmc(mm), 'trace')
+  
+  # light jags 3-day
+  dat <- data_metab('3', res='30')
+  mm <- metab(specs=sp, data=dat)
+  plot(get_mcmc(mm), 'trace')
+  
+  # OI jags 3-day
+  dat <- data_metab('3', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, err_obs_iid=TRUE, engine='jags', deficit_src = 'DO_obs')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+  
+  # PI jags 3-day
+  dat <- data_metab('3', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=TRUE, err_obs_iid=FALSE, engine='jags', deficit_src = 'DO_obs')
+  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
+  mm <- metab(specs=sp, data=dat)
+  plot_DO_preds(predict_DO(mm))
+}
+
 # The tests below cannot touch on all possible Bayesian models; that's
 # work for a computing cluster. Instead we'll just inspect key features and a
 # couple of simple models.
@@ -108,54 +231,4 @@ useful_code <- function() {
   expect_is(get_mcmc(mm)[[2]], "stanfit")
   get_fit(mm)[grep("Rhat", names(get_fit(mm)))]
   
-}
-
-manual_test3 <- function() {
-  library(streamMetabolizer)
-  # light stan 1-day
-  dat <- data_metab('1', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
-  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.stan'
-  mm <- metab(specs=sp, data=dat)
-  mm2 <- metab(specs=sp, data=dat)
-  # elapsed time with no compilation: 59.58;  after pre-compilation: 24.21
-  get_fitting_time(mm)
-  plot_DO_preds(predict_DO(mm))
-  traceplot(get_mcmc(mm))
-  
-  # light stan 3-day
-  dat <- data_metab('3', res='30')
-  mm <- metab(specs=sp, data=dat)
-  # elapsed time with no compilation: 85.39;  after pre-compilation: 61.42
-  get_fitting_time(mm)
-  plot_DO_preds(predict_DO(mm))
-  traceplot(get_mcmc(mm))
-  
-  # light jags 1-day
-  dat <- data_metab('1', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags')
-  sp <- specs(mmb, n_chains=3, n_cores=3, adapt_steps=1000, burnin_steps=3000, saved_steps=1000)
-  sp$model_name <- 'inst/models/b_np_oi_pm_plrckm_light.jags'
-  mm <- metab(specs=sp, data=dat)
-  plot(get_mcmc(mm), 'trace')
-
-  # light jags 3-day
-  dat <- data_metab('3', res='30')
-  mm <- metab(specs=sp, data=dat)
-  plot(get_mcmc(mm), 'trace')
-  
-  # OI jags 3-day
-  dat <- data_metab('3', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, err_obs_iid=TRUE, engine='jags', deficit_src = 'DO_obs')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
-  mm <- metab(specs=sp, data=dat)
-  plot_DO_preds(predict_DO(mm))
-  
-  # PI jags 3-day
-  dat <- data_metab('3', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=TRUE, err_obs_iid=FALSE, engine='jags', deficit_src = 'DO_obs')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
-  mm <- metab(specs=sp, data=dat)
-  plot_DO_preds(predict_DO(mm))
 }
