@@ -57,7 +57,7 @@ metab_bayes <- function(
     if((pool_K600 %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
       # calculate daily discharge
       dailymean <- function(data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, timestep_days, ...) {
-        data.frame(discharge.daily = if(ply_validity) mean(data_ply$discharge) else NA)
+        data.frame(discharge.daily = if(isTRUE(ply_validity[1])) mean(data_ply$discharge) else NA)
       }
       dischdaily <- mm_model_by_ply(
         model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end)
@@ -147,12 +147,18 @@ metab_bayes <- function(
     } else if(specs$split_dates == FALSE) {
       stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
     }
+    if(is.logical(specs$keep_mcmc_data)) {
+      if(length(specs$keep_mcmc_data) != 1) {
+        stop("if keep_mcmc_data is logical, it must have length 1")
+      }
+    } else if(specs$split_dates == FALSE) {
+      stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
+    }
     
     # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from JAGS or Stan)
     if(specs$split_dates == TRUE) {
-      if(!is.logical(specs$keep_mcmcs)) {
-        specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
-      }
+      if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
+      if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
@@ -165,6 +171,13 @@ metab_bayes <- function(
         bayes_daily$mcmcfit <- NULL
       } else {
         bayes_mcmc <- NULL
+      }
+      if('mcmc_data' %in% names(bayes_daily)) {
+        bayes_mcmc_data <- bayes_daily$mcmc_data
+        bayes_daily$mcmc_data <- NULL
+        names(bayes_mcmc_data) <- bayes_daily$date
+      } else {
+        bayes_mcmc_data <- NULL
       }
       bayes_all <- list(daily=bayes_daily)
       
@@ -180,10 +193,18 @@ metab_bayes <- function(
       # if we saved the modeling object, pull it out now
       bayes_mcmc <- bayes_all_list$mcmcfit
       bayes_all_list$mcmcfit <- NULL
+      bayes_mcmc_data <- bayes_all_list$mcmc_data
+      bayes_all_list$mcmc_data <- NULL
       bayes_all <- bayes_all_list # list of dfs
     }
   
   })
+  
+  if(isTRUE(specs$verbose)) {
+    fitting_mins <- floor(fitting_time[['elapsed']] / 60)
+    fitting_secs <- round(fitting_time[['elapsed']] %% 60)
+    message("model fit in ", fitting_mins, " min, ", fitting_secs, " sec")
+  }
   
   # Package and return results
   mm <- metab_model(
@@ -191,6 +212,7 @@ metab_bayes <- function(
     info=info,
     fit=bayes_all,
     mcmc=bayes_mcmc,
+    mcmc_data=bayes_mcmc_data,
     fitting_time=fitting_time,
     specs=specs,
     data=dat_list$data, # keep the units if given
@@ -230,6 +252,7 @@ bayes_1ply <- function(
   warn_strs <- character(0)
   
   # Calculate metabolism by Bayesian MCMC
+  data_list <- NULL # (in case it doesn't get assigned in the tryCatch)
   if(length(stop_strs) == 0) {
     bayes_1day <- withCallingHandlers(
       tryCatch({
@@ -263,11 +286,21 @@ bayes_1ply <- function(
     bayes_1day <- data.frame(GPP_daily_mean=NA)
   }
   
-  # Return, reporting any results, warnings, and errors
-  data.frame(bayes_1day,
-             warnings=paste0(unique(warn_strs), collapse="; "), 
-             errors=paste0(unique(stop_strs), collapse="; "),
-             stringsAsFactors=FALSE)
+  # decide whether we'll bee keeping the data
+  keep_mcmc_dat <- if(is.logical(specs$keep_mcmc_data)) {
+    isTRUE(specs$keep_mcmc_data)
+  } else {
+    isTRUE(ply_date %in% specs$keep_mcmc_data)
+  }
+  
+  # Return, reporting any results, data, warnings, and errors
+  outdf <- data.frame(
+    bayes_1day,
+    warnings=paste0(unique(warn_strs), collapse="; "), 
+    errors=paste0(unique(stop_strs), collapse="; "),
+    stringsAsFactors=FALSE)
+  if(keep_mcmc_dat) outdf <- mutate(outdf, mcmc_data=list(data_list))
+  outdf
 }
 
 
@@ -296,6 +329,7 @@ bayes_allply <- function(
   stop_strs <- warn_strs <- character(0)
   
   # Calculate metabolism by Bayesian MCMC
+  data_list <- NULL # (in case it doesn't get assigned in the tryCatch)
   bayes_allday <- withCallingHandlers(
     tryCatch({
       # first: try to run the bayes fitting function
@@ -303,7 +337,8 @@ bayes_allply <- function(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
         specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
       specs$keep_mcmc <- specs$keep_mcmcs
-      all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+      all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc',
+                         'n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
       do.call(mcmc_bayes, c(
         list(data_list=data_list),
         specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
@@ -322,7 +357,7 @@ bayes_allply <- function(
   
   # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
-  if(length(stop_strs) > 0) {
+  if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
     bayes_allday <- list(daily=data.frame(date=date_vec, GPP_daily_mean=NA))
   } else {
     # check this now so 
@@ -336,7 +371,8 @@ bayes_allply <- function(
   
   # Return, reporting any results, warnings, and errors
   c(bayes_allday,
-    list(warnings=unique(warn_strs),
+    list(mcmc_data=if(specs$keep_mcmc_data) data_list else NULL,
+         warnings=unique(warn_strs),
          errors=unique(stop_strs)))
 }
 
@@ -374,7 +410,17 @@ prepdata_bayes <- function(
   date_table <- table(data$date)
   num_dates <- length(date_table)
   num_daily_obs <- unique(unname(date_table))
-  if(length(num_daily_obs) > 1) stop("dates have differing numbers of rows; observations cannot be combined in matrix")
+  if(length(num_daily_obs) > 1) {
+    warning(paste0(
+      sapply(num_daily_obs, function(ndo) {
+        tslabel <- paste(ndo, 'rows per day')
+        tsdates <- names(date_table)[date_table == ndo]
+        paste0(tslabel, ': ', paste0(tsdates, collapse=', '))
+      }),
+      collapse='\n')
+    )
+    stop("dates have differing numbers of rows; observations cannot be combined in matrix")
+  }
   time_by_date_matrix <- function(vec) {
     switch(
       engine,
@@ -627,16 +673,18 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     if(!file.exists(autowrite_path)) {
       warning('could not find saved rda model file')
     } else {
-      file.copy(autowrite_path, mobj_path, overwrite=TRUE)
-      file.remove(autowrite_path)
+      tryCatch({
+        file.copy(autowrite_path, mobj_path, overwrite=TRUE)
+        file.remove(autowrite_path)
+      }, error=function(e) {
+        warning('could not copy Stan rda to .stanrda file: ', e$message)
+        mobj_path <- autowrite_path
+      })
     }
   } else {
     if(verbose) message("loading pre-compiled Stan model")
   }
   stan_mobj <- readRDS(mobj_path)
-  
-  # notice current dlls
-  #current_dlls <- names(unclass(getLoadedDLLs()))
   
   if(verbose) message("sampling Stan model")
   runstan_out <- rstan::sampling(
@@ -660,8 +708,12 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   #   pairs(runstan_out)
   #   traceplot(runstan_out)
   
-  # format output
-  if(split_dates) {
+  # format output (but first detect and handle a failed model run)
+  if(runstan_out@mode == 2L) {
+    # for failed model runs, we still want to keep the mcmc
+    stan_out <- NULL
+    warning(capture.output(print(runstan_out)))
+  } else if(split_dates) {
     # for one-day models, use a 1-row data.frame. see ls('package:rstan')
     stan_mat <- rstan::summary(runstan_out)$summary
     names_params <- rep(gsub("\\[1\\]", "", rownames(stan_mat)), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
@@ -712,11 +764,6 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   progress <- readLines(progfile)
   stan_out <- c(stan_out, list(log=progress))
   
-  # notice and remove new dll
-  # new_dll <- setdiff(names(unclass(getLoadedDLLs())), current_dlls)
-  # new_dll_path <- unclass(unclass(getLoadedDLLs())[[new_dll]])$path
-  # dyn.unload(new_dll_path)
-  
   return(stan_out)
 }
 
@@ -733,14 +780,15 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
 setClass(
   "metab_bayes", 
   contains="metab_model",
-  slots=c(mcmc="ANY")
+  slots=c(mcmc="ANY", mcmc_data="ANY")
 )
 
 #' Extract any MCMC model objects that were stored with the model
 #' 
 #' A function specific to metab_bayes models. Returns an MCMC object or, for 
-#' nopool models, a list of MCMC objects. These objects are not saved by 
-#' default; see \code{keep_mcmcs} argument to \code{\link{specs}} for options.
+#' nopool models, a list of MCMC objects. These objects are saved by default
+#' because they should usually be inspected manually; see \code{keep_mcmcs}
+#' argument to \code{\link{specs}} for options for saving space.
 #' 
 #' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
 #'   return the MCMC model object[s]
@@ -757,6 +805,30 @@ get_mcmc <- function(metab_model) {
 #' @family get_mcmc
 get_mcmc.metab_bayes <- function(metab_model) {
   metab_model@mcmc
+}
+
+#' Extract any MCMC model objects that were stored with the model
+#' 
+#' A function specific to metab_bayes models. Returns data as formatted to run
+#' through the MCMC process or, for nopool models, a list of data lists. These
+#' lists are not saved by default; see \code{keep_mcmc_data} argument to
+#' \code{\link{specs}} for options.
+#' 
+#' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
+#'   return the data list that was passed to the MCMC
+#' @return The MCMC data list
+#' @export
+get_mcmc_data <- function(metab_model) {
+  UseMethod("get_mcmc_data")
+}
+
+#' Retrieve any MCMC model object[s] that were saved with a metab_bayes model
+#' 
+#' @inheritParams get_mcmc_data
+#' @export 
+#' @family get_mcmc_data
+get_mcmc_data.metab_bayes <- function(metab_model) {
+  metab_model@mcmc_data
 }
 
 #' Make metabolism predictions from a fitted metab_model.
