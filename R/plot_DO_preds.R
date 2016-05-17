@@ -26,6 +26,8 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
                           style=c('ggplot2','dygraphs'),
                           y_lim=list(conc=c(NA,NA), pctsat=c(NA,NA), ddodt=c(NA,NA))) {
   
+  if(is(DO_preds, 'metab_model')) DO_preds <- predict_DO(DO_preds)
+  
   style <- match.arg(style)
   y_var <- match.arg(y_var, several.ok=TRUE)
   
