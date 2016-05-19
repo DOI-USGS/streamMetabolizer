@@ -24,6 +24,57 @@ manual_test3 <- function() {
   pairs(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
   pairs(get_mcmc(mm_new), pars=c("err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"))
   
+  # faster oipi_km model (state space)
+  dat <- mutate(data_metab('10', res='10'), discharge=3)
+  sp <- specs("b_Kl_oipi_pm_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  sp <- sp %>% replace('params_out', list(sp$params_out[-which(sp$params_out == 'err_proc_iid')]))
+  mm_old <- metab(specs=sp, data=dat) # 3:47 with compile, not much convergence; 4:33, 4:02 thereafter. this is a lin-log K model
+  sp <- specs("b_Kl_oipi_pm_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE, keep_mcmc_data=TRUE,
+              K600_daily_sigma_rate=0.2, err_obs_iid_sigma_rate=0.05, err_proc_iid_sigma_rate=0.01,
+              K600_daily_beta_mu=c(intercept=1, slope=2.3), K600_daily_beta_sigma=c(intercept=0.3, slope=0.3)) %>%
+    replace('model_name', 'inst/models/b_Kl_oipi_pm_plrckm_sfs2loglog.stan')
+  sp <- sp %>% replace('params_out', list(sp$params_out[-which(sp$params_out == 'err_proc_iid')]))
+  mm_new <- metab(specs=sp, data=dat) # 5:28 with compile, 4:50 thereafter (14.7 Mb), 4:42 if run without 'err_proc_iid' in params_out (but just 1 Mb)
+  predict_metab(mm_new)
+  plot_metab_preds(mm_new)
+  plot_DO_preds(mm_new)
+  traceplot(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]", "GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  traceplot(get_mcmc(mm_new), pars=c("K600_daily_beta","K600_daily_sigma","err_obs_iid_sigma", "err_proc_iid_sigma"), inc_warmup=TRUE)
+  pairs(get_mcmc(mm_new), pars=c("GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  pairs(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
+  pairs(get_mcmc(mm_new), pars=c("err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"))
+  # now with bob's reworking
+  sp <- specs("b_Kl_oipi_pm_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=500, saved_steps=500, verbose=TRUE, keep_mcmcs=TRUE, keep_mcmc_data=TRUE,
+              K600_daily_sigma_rate=0.2, err_obs_iid_sigma_rate=0.05, err_proc_iid_sigma_rate=0.01,
+              K600_daily_beta_mu=c(intercept=1, slope=2.3), K600_daily_beta_sigma=c(intercept=0.3, slope=0.3)) %>%
+    replace('model_name', 'inst/models/b_Kl_oipi_pm_plrckm_sfs3loglog.stan')
+  sp <- sp %>% replace('params_out', list(sp$params_out[-which(sp$params_out == 'err_proc_iid')]))
+  mm_new2 <- metab(specs=sp, data=dat) # 17, 20, 30 seconds for 300/100 steps, or 1:21 min for 500/500
+  show_log(mm_new2)
+  predict_metab(mm_new2)
+  plot_metab_preds(mm_new2)
+  plot_DO_preds(mm_new2)
+  traceplot(get_mcmc(mm_new2), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]", "GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"), inc_warmup=F)
+  traceplot(get_mcmc(mm_new2), pars=c("K600_daily_beta","K600_daily_sigma"), inc_warmup=F)
+  pairs(get_mcmc(mm_new2), pars=c("GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  pairs(get_mcmc(mm_new2), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
+  pairs(get_mcmc(mm_new2), pars=c("err_obs_iid_sigma", "err_proc_iid_sigma"))
+  
+  # compare to process error model
+  dat <- mutate(data_metab('10', res='10'), discharge=3)
+  sp <- specs("b_Kl_pi_pm_plrcko.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=300, verbose=TRUE, keep_mcmcs=TRUE)
+  mm_old_cim <- metab(specs=sp, data=dat) # 12 sec, but hugely wrong
+  get_fit(mm_old_cim)$daily %>% select(ends_with('Rhat'))
+  predict_metab(mm_old_cim)
+  plot_metab_preds(mm_old_cim)
+  plot_DO_preds(mm_old_cim)
+  traceplot(get_mcmc(mm_old_cim), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]", "GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  traceplot(get_mcmc(mm_old_cim), pars=c("err_proc_iid_sigma"))
+  traceplot(get_mcmc(mm_old_cim), pars=c("K600_daily_beta","K600_daily_sigma"))
+  pairs(get_mcmc(mm_old_cim), pars=c("GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
+  pairs(get_mcmc(mm_old_cim), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
+  
+  
   # faster stan oi model
   dat <- data_metab('10', res='10')
   mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')

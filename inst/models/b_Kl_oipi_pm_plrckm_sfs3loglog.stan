@@ -1,4 +1,4 @@
-// b_Kl_pcpi_pm_plrcko.stan
+// b_Kl_oipi_pm_plrckm.stan
 
 data {
   // Parameters of priors on metabolism
@@ -14,10 +14,8 @@ data {
   real K600_daily_sigma_rate;
   
   // Error distributions
-  real err_proc_acor_phi_shape; # using instead as beta(alpha)
-  real err_proc_acor_phi_rate; # using instead as beta(beta)
-  #real err_proc_acor_sigma_shape;
-  real err_proc_acor_sigma_rate;
+  #real err_obs_iid_sigma_shape;
+  real err_obs_iid_sigma_rate;
   #real err_proc_iid_sigma_shape;
   real err_proc_iid_sigma_rate;
   
@@ -42,17 +40,15 @@ data {
 transformed data {
   vector[d] coef_GPP[n-1];
   vector[d] coef_ER[n-1];
-  vector[d] coef_K600_full[n-1];
-  vector[d] dDO_obs[n-1];
+  vector[d] coef_K600_part[n-1];
+  vector[d] DO_sat_pairmean[n-1];
   
   for(i in 1:(n-1)) {
     // Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
     coef_GPP[i]  <- (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
     coef_ER[i]   <- (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
-    coef_K600_full[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*
-      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0;
-    // dDO observations
-    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
+    coef_K600_part[i] <- (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0;
+    DO_sat_pairmean[i] <- (DO_sat[i] + DO_sat[i+1])/2.0;
   }
 }
 
@@ -64,19 +60,17 @@ parameters {
   vector[2] K600_daily_beta;
   real K600_daily_sigma_scaled;
   
-  real<lower=0, upper=1> err_proc_acor_phi;
-  vector[d] err_proc_acor_inc[n-1];
+  vector[d] DO_mod[n];
   
-  real err_proc_acor_sigma_scaled;
+  real err_obs_iid_sigma_scaled;
   real err_proc_iid_sigma_scaled;
 }
 
 transformed parameters {
   real K600_daily_sigma;
-  real err_proc_acor_sigma;
+  real err_obs_iid_sigma;
   real err_proc_iid_sigma;
-  vector[d] dDO_mod[n-1];
-  vector[d] err_proc_acor[n-1];
+  vector[d] DO_mod_partial[n];
   vector[d] K600_daily_pred;
   
   // Hierarchical, linear model of K600_daily
@@ -84,45 +78,42 @@ transformed parameters {
   
   // Scaled parameters
   K600_daily_sigma <- K600_daily_sigma_rate * exp(K600_daily_sigma_scaled);
-  err_proc_acor_sigma <- err_proc_acor_sigma_rate * exp(err_proc_acor_sigma_scaled);
+  err_obs_iid_sigma <- err_obs_iid_sigma_rate * exp(err_obs_iid_sigma_scaled);
   err_proc_iid_sigma <- err_proc_iid_sigma_rate * exp(err_proc_iid_sigma_scaled);
   
   // Model DO time series
   // * pairmeans version
-  // * no observation error
-  // * IID and autocorrelated process error
-  // * reaeration depends on DO_obs
+  // * observation error
+  // * IID process error
+  // * reaeration depends on DO_mod
   
-  err_proc_acor[1] <- err_proc_acor_sigma * err_proc_acor_inc[1];
-  for(i in 1:(n-2)) {
-    err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_sigma * err_proc_acor_inc[i+1];
-  }
-  
-  // dDO model
+  // DO model
   for(i in 1:(n-1)) {
-    dDO_mod[i] <- 
-      err_proc_acor[i] +
-      GPP_daily  .* coef_GPP[i] +
-      ER_daily   .* coef_ER[i] +
-      K600_daily .* coef_K600_full[i];
+    DO_mod_partial[i+1] <- (
+      DO_mod[i] +
+        GPP_daily .* coef_GPP[i] +
+        ER_daily .* coef_ER[i] +
+        K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)
+    ) ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0);
   }
+  
 }
 
 model {
   // Independent, identically distributed process error
-  for(i in 1:(n-1)) {
-    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
+  DO_mod[1] ~ normal(DO_obs_1, err_obs_iid_sigma);
+  for(i in 2:n) {
+    DO_mod[i] ~ normal(DO_mod_partial[i], err_proc_iid_sigma);
   }
-  // SD (sigma) of the process errors
+  // SD (sigma) of the IID process errors
   err_proc_iid_sigma_scaled ~ normal(0, 1);
   
-  // Autocorrelated process error
-  for(i in 1:(n-1)) {
-    err_proc_acor_inc[i] ~ normal(0, 1);
+  // Independent, identically distributed observation error
+  for(i in 2:n) {
+    DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
-  // Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ beta(err_proc_acor_phi_shape, err_proc_acor_phi_rate);
-  err_proc_acor_sigma_scaled ~ normal(0, 1);
+  // SD (sigma) of the IID process errors
+  err_obs_iid_sigma_scaled ~ normal(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
