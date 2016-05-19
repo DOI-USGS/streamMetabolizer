@@ -62,8 +62,8 @@ manual_test3 <- function() {
   
   # compare to process error model
   dat <- mutate(data_metab('10', res='10'), discharge=3)
-  sp <- specs("b_Kl_pi_pm_plrcko.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=300, verbose=TRUE, keep_mcmcs=TRUE)
-  mm_old_cim <- metab(specs=sp, data=dat) # 12 sec, but hugely wrong
+  sp <- specs("b_Kl_pi_pm_plrcko.stan", n_chains=3, n_cores=3, burnin_steps=200, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  mm_old_cim <- metab(specs=sp, data=dat) # 1:12 with compile for 300/300
   get_fit(mm_old_cim)$daily %>% select(ends_with('Rhat'))
   predict_metab(mm_old_cim)
   plot_metab_preds(mm_old_cim)
@@ -73,7 +73,14 @@ manual_test3 <- function() {
   traceplot(get_mcmc(mm_old_cim), pars=c("K600_daily_beta","K600_daily_sigma"))
   pairs(get_mcmc(mm_old_cim), pars=c("GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
   pairs(get_mcmc(mm_old_cim), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]"))
-  
+  sp <- specs(
+    "b_Kl_pi_pm_plrcko_sfs.stan", n_chains=3, n_cores=3, burnin_steps=200, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE, keep_mcmc_data=FALSE,
+    K600_daily_sigma_rate=1, err_proc_iid_sigma_rate=0.03,
+    K600_daily_beta_mu=c(intercept=1, slope=2.3), K600_daily_beta_sigma=c(intercept=0.3, slope=0.3))
+  mm_new <- metab(specs=sp, data=dat) # 8-12 sec for 200/100
+  plot_metab_preds(mm_new)
+  plot_DO_preds(mm_new)
+  traceplot(get_mcmc(mm_new), pars=c("GPP_daily[2]", "ER_daily[2]", "K600_daily[2]", "GPP_daily[7]", "ER_daily[7]", "K600_daily[7]"))
   
   # faster stan oi model
   dat <- data_metab('10', res='10')
