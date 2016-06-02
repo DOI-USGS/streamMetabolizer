@@ -16,10 +16,10 @@
 #' @section Relevant arguments:
 #'   
 #'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
-#'   keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
-#'   ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
-#'   burnin_steps, saved_steps, thin_steps, verbose}. The need for other 
-#'   arguments depends on features of the model structure, as from 
+#'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu,
+#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
+#'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for
+#'   other arguments depends on features of the model structure, as from 
 #'   \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
 #'   \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
 #'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
@@ -90,6 +90,10 @@
 #'   appropriate solution for a hierarchical model that pools information on 
 #'   error, K600, etc. across days.
 #' @param keep_mcmcs TRUE, FALSE, or (for nopool models) a vector of dates 
+#'   (coerced with as.Date if character, etc.) indicating whether to keep all of
+#'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
+#'   default is TRUE because these objects often need inspecting.
+#' @param keep_mcmc_data FALSE, TRUE, or (for nopool models) a vector of dates 
 #'   (coerced with as.Date if character, etc.) indicating whether to keep all of
 #'   the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
 #'   default is FALSE because these objects can be very large.
@@ -228,6 +232,7 @@ specs <- function(
   # model setup
   split_dates,
   keep_mcmcs = TRUE,
+  keep_mcmc_data = FALSE,
   
   # hyperparameters for non-hierarchical GPP & ER
   GPP_daily_mu = 10,
@@ -350,7 +355,7 @@ specs <- function(
       # list all needed arguments
       included <- c(
         # model setup
-        'model_name', 'engine', 'split_dates', 'keep_mcmcs',
+        'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
         
         # date ply day_tests
         'day_start', 'day_end', 'day_tests',
@@ -393,8 +398,10 @@ specs <- function(
         all_specs$K600_daily_beta_sigma <- rep(10, all_specs$K600_daily_beta_num)
       }
       if('params_out' %in% yes_missing) {
+        DO_model <- (features$err_obs_iid || features$deficit_src == 'DO_mod')
         all_specs$params_out <- c(
           c('GPP_daily','ER_daily','K600_daily'),
+          if(features$pool_K600 != 'none') 'K600_daily_pred',
           switch(
             features$pool_K600,
             none=c(),
@@ -402,8 +409,8 @@ specs <- function(
             linear=c('K600_daily_beta', 'K600_daily_sigma'),
             binned=c('K600_daily_beta', 'K600_daily_sigma')), 
           if(features$err_obs_iid) 'err_obs_iid_sigma',
-          if(features$err_proc_acor) c('err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) 'err_proc_iid_sigma')
+          if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
+          if(features$err_proc_iid) c(if(DO_model) 'err_proc_iid', 'err_proc_iid_sigma'))
       }
       
       # check for errors/inconsistencies

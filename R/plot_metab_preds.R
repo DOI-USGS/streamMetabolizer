@@ -24,13 +24,15 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
                           style=c('ggplot2'),
                           y_lim=list(GPP=c(NA,NA), ER=c(NA,NA), K600=c(NA,NA))) {
  
+  if(is(metab_preds, 'metab_model')) metab_preds <- predict_metab(metab_preds)
+  
   style <- match.arg(style)
   y_var <- match.arg(y_var, several.ok=TRUE)
   
   params <- list(
     xlab='Local date',
     ylab='Predictions',
-    colors=list(GPP=c('#A64B00','#FF7400'), ER=c('#007929','#23BC47'), K600=c('#05326D','#4282D3'))
+    colors=list(GPP=c('#007929','#23BC47'), ER=c('#A64B00','#FF7400'), K600=c('#05326D','#4282D3'))
   )
   
   metab.mod <- GPP <- GPP.lower <- GPP.upper <- ER <- ER.lower <- ER.upper <- K600 <- K600.lower <- K600.upper <- '.dplyr.var'

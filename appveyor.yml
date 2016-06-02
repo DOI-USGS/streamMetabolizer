@@ -20,8 +20,8 @@ init:
 
 install:
   - ps: Bootstrap
-  - ps: (new-object net.webclient).DownloadFile("http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.exe", "C:\projects\JAGS-3.4.0.exe")
-  - cmd: C:\projects\JAGS-3.4.0.exe /S
+  - ps: (new-object net.webclient).DownloadFile("https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.2.0-Rtools33.exe", "C:\projects\JAGS-4.2.0.exe")
+  - cmd: C:\projects\JAGS-4.2.0.exe /S
   - cmd: dir "C:\Program Files\JAGS"
 
 build_script:
