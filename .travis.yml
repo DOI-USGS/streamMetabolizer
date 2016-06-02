@@ -11,7 +11,7 @@ repos:
   GRAN: http://owi.usgs.gov/R
 
 before_install:
-  - wget http://owi.usgs.gov/R/r-buildtools/JAGS-4.2.0.tar.gz
+  - wget https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Source/JAGS-4.2.0.tar.gz
   - tar xfvs JAGS-4.2.0.tar.gz
   - cd JAGS-4.2.0
   - sudo ./configure
