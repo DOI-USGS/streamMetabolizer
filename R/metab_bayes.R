@@ -763,7 +763,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
   progfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
   progfile <- progfiles[which.max(file.info(progfiles)$mtime)]
-  progress <- readLines(progfile)
+  progress <- if(length(progfile) > 0) readLines(progfile) else NA
   stan_out <- c(stan_out, list(log=progress))
   
   return(stan_out)
