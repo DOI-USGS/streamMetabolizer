@@ -11,15 +11,15 @@ repos:
   GRAN: http://owi.usgs.gov/R
 
 before_install:
-  - wget http://owi.usgs.gov/R/r-buildtools/JAGS-3.4.0.tar.gz
-  - tar xfvs JAGS-3.4.0.tar.gz
-  - cd JAGS-3.4.0
+  - wget http://owi.usgs.gov/R/r-buildtools/JAGS-4.2.0.tar.gz
+  - tar xfvs JAGS-4.2.0.tar.gz
+  - cd JAGS-4.2.0
   - sudo ./configure
   - sudo make
   - sudo make install
   - cd ..
-  - sudo rm -f JAGS-3.4.0.tar.gz
-  - sudo rm -rf JAGS-3.4.0
+  - sudo rm -f JAGS-4.2.0.tar.gz
+  - sudo rm -rf JAGS-4.2.0
 
 before_script:
   - Rscript -e "install.packages('knitr', repos='http://cran.cnr.Berkeley.edu/')"
