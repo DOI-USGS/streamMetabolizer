@@ -27,7 +27,7 @@ mm_generate_mcmc_file <- function(
   dDO_model <- (deficit_src == 'DO_obs')
   DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
   
-  # helper functions
+  #### helper functions ####
   comment <- function(...) { 
     # prefix with the appropriate comment character[s]
     chr <- switch(engine, jags='#', stan='//')
@@ -138,12 +138,12 @@ mm_generate_mcmc_file <- function(
       stan='')
   }
   
-  # define the model
+  #### <begin model definition> ####
   model_text <- c(
     
     comment(model_name), '',
     
-    ## data ##
+    #### Stan data; omitted from JAGS ####
     if(engine == 'stan') c(
       
       'data {',
@@ -224,8 +224,8 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    ## Stan: transformed data ## - statements evaluated exactly once
-    ## JAGS: data ##
+    #### Stan transformed data; JAGS data ####
+    ## transformed data = statements evaluated exactly once
     if(engine == 'stan') c(
       'transformed data {'
     ) else if(engine == 'jags') c(
@@ -302,7 +302,7 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    ## Stan: parameters ##
+    #### Stan parameters; JAGS data ####
     if(engine == 'stan') c(
       'parameters {',
       indent(
@@ -339,8 +339,8 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    ## Stan: transformed parameters ## - statements evaluated once per leapfrog step
-    ## JAGS: model ##
+    #### Stan transformed parameters; JAGS model ####
+    # transformed parameters = statements evaluated once per leapfrog step
     if(engine == 'stan') c(
       'transformed parameters {'
     ) else if(engine == 'jags') c(
@@ -450,7 +450,7 @@ mm_generate_mcmc_file <- function(
       ''
     ),
     
-    ## Stan: model ##
+    #### Stan model; JAGS model ####
     if(engine == 'stan') c(
       'model {'
     ),
@@ -530,6 +530,7 @@ mm_generate_mcmc_file <- function(
     
     '}'
   )
+  #### <end model definition> ####
   
   writeLines(model_text, con=paste0('inst/models/', model_name), sep="\n")
   
