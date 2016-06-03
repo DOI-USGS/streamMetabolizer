@@ -54,12 +54,12 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
   vector[b] K600_daily_beta;
-  real K600_daily_sigma;
+  real<lower=0> K600_daily_sigma;
   
-  real err_obs_iid_sigma;
+  real<lower=0> err_obs_iid_sigma;
 }
 
 transformed parameters {

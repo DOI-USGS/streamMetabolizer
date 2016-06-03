@@ -308,7 +308,7 @@ mm_generate_mcmc_file <- function(
       indent(
         c('vector[d] GPP_daily;',
           'vector[d] ER_daily;',
-          'vector[d] K600_daily;'),
+          'vector<lower=0>[d] K600_daily;'),
         
         if(pool_K600 != 'none') c(
           '',
@@ -317,7 +317,7 @@ mm_generate_mcmc_file <- function(
             normal='real K600_daily_mu;',
             linear='vector[2] K600_daily_beta;',
             binned='vector[b] K600_daily_beta;'),
-          'real K600_daily_sigma;'),
+          'real<lower=0> K600_daily_sigma;'),
         
         if((err_proc_iid && !dDO_model) || err_proc_acor) c(
           ''),
@@ -329,12 +329,12 @@ mm_generate_mcmc_file <- function(
         if(err_obs_iid || err_proc_acor || err_proc_iid) c(
           '',
           if(err_obs_iid) c(
-            'real err_obs_iid_sigma;'),
+            'real<lower=0> err_obs_iid_sigma;'),
           if(err_proc_acor) c(
-            'real err_proc_acor_phi;',
-            'real err_proc_acor_sigma;'),
+            'real<lower=0, upper=1> err_proc_acor_phi;',
+            'real<lower=0> err_proc_acor_sigma;'),
           if(err_proc_iid) c(
-            'real err_proc_iid_sigma;'))
+            'real<lower=0> err_proc_iid_sigma;'))
       ),
       '}',''
     ),
