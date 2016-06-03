@@ -39,6 +39,6 @@ mm_validate_name <- function(model_name) {
   valid_names <- mm_valid_names(type)
   if(!(model_name %in% valid_names)) {
     stop("model_name (", model_name, ") is not among valid ", type, 
-         " model_names (", paste0(valid_names, collapse=", "), ")")
+         sprintf(" model_names (see mm_valid_names('%s'))", type))
   }
 }
