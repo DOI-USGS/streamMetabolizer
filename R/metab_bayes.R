@@ -489,18 +489,19 @@ prepdata_bayes <- function(
     ),
     
     specs[c(
-      # Hyperparameters - this section should be identical to the
-      # hyperparameters section of specs|bayes
+      # Hyperparameters - this section should be identical to the 
+      # hyperparameters section of specs|bayes except that binned can omit 
+      # 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
       c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
       switch(
         features$pool_K600,
         none=c('K600_daily_mu', 'K600_daily_sigma'),
-        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate')
+        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
+      if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
+      if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
+      if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
     )]
   )
   if(priors) {

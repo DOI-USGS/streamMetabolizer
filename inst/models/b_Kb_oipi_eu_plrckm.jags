@@ -40,7 +40,7 @@ model {
     }
   }
   # SD (sigma) of the IID process errors
-  err_proc_iid_sigma ~ dgamma(err_proc_iid_sigma_shape, err_proc_iid_sigma_rate)
+  err_proc_iid_sigma ~ dlnorm(err_proc_iid_sigma_location, pow(err_proc_iid_sigma_scale, -2))
   
   # Independent, identically distributed observation error
   for(i in 1:n) {
@@ -49,7 +49,7 @@ model {
     }
   }
   # SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ dgamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate)
+  err_obs_iid_sigma ~ dlnorm(err_obs_iid_sigma_location, pow(err_obs_iid_sigma_scale, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {
@@ -62,5 +62,5 @@ model {
   for(k in 1:b) {
     K600_daily_beta[k] ~ dnorm(K600_daily_beta_mu[k], pow(K600_daily_beta_sigma[k], -2))
   }
-  K600_daily_sigma ~ dgamma(K600_daily_sigma_shape, K600_daily_sigma_rate)
+  K600_daily_sigma ~ dlnorm(K600_daily_sigma_location, pow(K600_daily_sigma_scale, -2))
 }

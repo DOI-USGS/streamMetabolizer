@@ -1,5 +1,17 @@
 context("metab_bayes")
 
+manual_test4 <- function() {
+  library(streamMetabolizer)
+  library(dplyr)
+  # faster stan Kl_pcpi_ko model?
+  dat <- mutate(data_metab('10', res='10'), discharge=3)
+  sp <- specs("b_Kl_oipi_pm_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  mm <- metab(specs=sp, data=dat) # 12 sec, but hugely wrong
+  plot_metab_preds(mm)
+  plot_DO_preds(mm)
+  traceplot(get_mcmc(mm), pars='GPP_daily')
+}
+
 manual_test3 <- function() {
   library(streamMetabolizer)
   library(dplyr)

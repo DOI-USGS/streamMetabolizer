@@ -42,7 +42,7 @@ model {
     }
   }
   # SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ dgamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate)
+  err_obs_iid_sigma ~ dlnorm(err_obs_iid_sigma_location, pow(err_obs_iid_sigma_scale, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {

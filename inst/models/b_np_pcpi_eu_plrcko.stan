@@ -10,12 +10,12 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_proc_acor_phi_shape;
-  real err_proc_acor_phi_rate;
-  real err_proc_acor_sigma_shape;
-  real err_proc_acor_sigma_rate;
-  real err_proc_iid_sigma_shape;
-  real err_proc_iid_sigma_rate;
+  real err_proc_acor_phi_alpha;
+  real err_proc_acor_phi_beta;
+  real err_proc_acor_sigma_location;
+  real err_proc_acor_sigma_scale;
+  real err_proc_iid_sigma_location;
+  real err_proc_iid_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -94,15 +94,15 @@ model {
     dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
   }
   // SD (sigma) of the IID process errors
-  err_proc_iid_sigma ~ gamma(err_proc_iid_sigma_shape, err_proc_iid_sigma_rate);
+  err_proc_iid_sigma ~ lognormal(err_proc_iid_sigma_location, err_proc_iid_sigma_scale);
   
   // Autocorrelated process error
   for(i in 1:(n-1)) {
     err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ gamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate);
-  err_proc_acor_sigma ~ gamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate);
+  err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
+  err_proc_acor_sigma ~ lognormal(err_proc_acor_sigma_location, err_proc_acor_sigma_scale);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

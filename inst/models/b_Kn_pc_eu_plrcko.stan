@@ -10,14 +10,14 @@ data {
   // Parameters of hierarchical priors on K600_daily (normal model)
   real K600_daily_mu_mu;
   real K600_daily_mu_sigma;
-  real K600_daily_sigma_shape;
-  real K600_daily_sigma_rate;
+  real K600_daily_sigma_location;
+  real K600_daily_sigma_scale;
   
   // Error distributions
-  real err_proc_acor_phi_shape;
-  real err_proc_acor_phi_rate;
-  real err_proc_acor_sigma_shape;
-  real err_proc_acor_sigma_rate;
+  real err_proc_acor_phi_alpha;
+  real err_proc_acor_phi_beta;
+  real err_proc_acor_sigma_location;
+  real err_proc_acor_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -98,8 +98,8 @@ model {
     err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ gamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate);
-  err_proc_acor_sigma ~ gamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate);
+  err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
+  err_proc_acor_sigma ~ lognormal(err_proc_acor_sigma_location, err_proc_acor_sigma_scale);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
@@ -108,5 +108,5 @@ model {
 
   // Hierarchical constraints on K600_daily (normal model)
   K600_daily_mu ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma);
-  K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate);
+  K600_daily_sigma ~ lognormal(K600_daily_sigma_location, K600_daily_sigma_scale);
 }

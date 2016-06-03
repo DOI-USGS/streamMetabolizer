@@ -64,30 +64,37 @@ mm_generate_mcmc_file <- function(
   f <- function(distrib, ...) { 
     # switch things to JAGS format if needed
     args <- c(list(...))
-    if(engine=='jags') {
-      switch(
-        distrib,
-        normal = {
-          if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)")
+    switch(
+      distrib,
+      normal = {
+        if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)")
+        if(engine=='jags') {
           distrib <- 'dnorm'
           args['sigma'] <- sprintf('pow(%s, -2)', args['sigma'])
-        }, 
-        uniform = {
-          if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)")
-          distrib <- 'dunif'
-        },
-        gamma = {
-          # shape = alpha = k = first argument to both stan and jags
-          # rate = beta = 1/theta = inverse scale = second argument to both stan and jags
-          if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
-          distrib <- 'dgamma'
-        },
-        lognormal = {
-          if(!all(names(args) == c('mu','tau'))) stop("expecting lognormal(mu,tau)")
-          distrib <- 'dlnorm'
         }
-      )
-    }
+      }, 
+      uniform = {
+        if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)")
+        if(engine=='jags') {
+          distrib <- 'dunif'
+        }
+      },
+      gamma = {
+        # shape = alpha = k = first argument to both stan and jags
+        # rate = beta = 1/theta = inverse scale = second argument to both stan and jags
+        if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
+        if(engine=='jags') {
+          distrib <- 'dgamma'
+        }
+      },
+      lognormal = {
+        if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)")
+        if(engine=='jags') {
+          distrib <- 'dlnorm'
+          args['scale'] <- sprintf('pow(%s, -2)', args['scale'])
+        }
+      }
+    )
     paste0(
       distrib, '(',
       paste0(args, collapse=', '),
@@ -171,23 +178,23 @@ mm_generate_mcmc_file <- function(
               'vector[b] K600_daily_beta_mu;',
               'vector[b] K600_daily_beta_sigma;')
           ),
-          'real K600_daily_sigma_shape;',
-          'real K600_daily_sigma_rate;'
+          'real K600_daily_sigma_location;',
+          'real K600_daily_sigma_scale;'
         )),
       
       chunk(
         comment('Error distributions'),
         if(err_obs_iid) c(
-          'real err_obs_iid_sigma_shape;',
-          'real err_obs_iid_sigma_rate;'),
+          'real err_obs_iid_sigma_location;',
+          'real err_obs_iid_sigma_scale;'),
         if(err_proc_acor) c(
-          'real err_proc_acor_phi_shape;',
-          'real err_proc_acor_phi_rate;',
-          'real err_proc_acor_sigma_shape;',
-          'real err_proc_acor_sigma_rate;'),
+          'real err_proc_acor_phi_alpha;',
+          'real err_proc_acor_phi_beta;',
+          'real err_proc_acor_sigma_location;',
+          'real err_proc_acor_sigma_scale;'),
         if(err_proc_iid) c(
-          'real err_proc_iid_sigma_shape;',
-          'real err_proc_iid_sigma_rate;')),
+          'real err_proc_iid_sigma_location;',
+          'real err_proc_iid_sigma_scale;')),
       
       chunk(
         comment('Data dimensions'),
@@ -462,7 +469,7 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the IID process errors'),
-      s('err_proc_iid_sigma ~ ', f('gamma', shape='err_proc_iid_sigma_shape', rate='err_proc_iid_sigma_rate'))),
+      s('err_proc_iid_sigma ~ ', f('lognormal', location='err_proc_iid_sigma_location', scale='err_proc_iid_sigma_scale'))),
     
     if(err_proc_acor) chunk(
       comment('Autocorrelated process error'),
@@ -474,8 +481,8 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-      s('err_proc_acor_phi ~ ', f('gamma', shape='err_proc_acor_phi_shape', rate='err_proc_acor_phi_rate')),
-      s('err_proc_acor_sigma ~ ', f('gamma', shape='err_proc_acor_sigma_shape', rate='err_proc_acor_sigma_rate'))),
+      s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
+      s('err_proc_acor_sigma ~ ', f('lognormal', location='err_proc_acor_sigma_location', scale='err_proc_acor_sigma_scale'))),
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
@@ -487,7 +494,7 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma ~ ', f('gamma', shape='err_obs_iid_sigma_shape', rate='err_obs_iid_sigma_rate'))),
+      s('err_obs_iid_sigma ~ ', f('lognormal', location='err_obs_iid_sigma_location', scale='err_obs_iid_sigma_scale'))),
     
     indent(
       comment('Daily metabolism priors'),
@@ -515,7 +522,9 @@ mm_generate_mcmc_file <- function(
             s('K600_daily_beta', M('k'), ' ~ ', f('normal', mu=paste0('K600_daily_beta_mu', M('k')), sigma=paste0('K600_daily_beta_sigma', M('k'))))
           )
         ),
-        s('K600_daily_sigma ~ ', f('gamma', shape='K600_daily_sigma_shape', rate='K600_daily_sigma_rate'))
+        s('K600_daily_sigma ~ ', f('lognormal', location='K600_daily_sigma_location', scale='K600_daily_sigma_scale'))
+        #s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', tau='1'))
+        #K600_daily_sigma_scaled ~ normal(0, 1);
       )
     ),
     
