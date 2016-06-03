@@ -473,12 +473,16 @@ prepdata_bayes <- function(
       
       # Every timestep
       frac_GPP = {
-        # normalize light by the sum of light in the first 24 hours of the time window
-        in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-        if(engine == 'jags') in_solar_day <- t(in_solar_day)
         mat_light <- time_by_date_matrix(data$light)
-        sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
-        sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
+        if(isTRUE(mm_parse_name(model_name)$GPP_fun == 'linlight')) {
+          # normalize light by the sum of light in the first 24 hours of the time window
+          in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
+          if(engine == 'jags') in_solar_day <- t(in_solar_day)
+          sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
+          sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
+        } else {
+          mat_light
+        }
       },
       frac_ER  = time_by_date_matrix(timestep_days),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
