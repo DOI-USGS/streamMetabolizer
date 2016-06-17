@@ -13,6 +13,17 @@ data {
 }
 
 model {
+  # Rescale pooling & error distribution parameters
+  # lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)
+  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)
+  err_proc_iid_sigma <- exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)
+  
+  # Hierarchical, binned model of K600_daily
+  for(j in 1:d) {
+    K600_daily_pred[j] <- K600_daily_beta[discharge_bin_daily[j]]
+  }
+  
   # Model DO time series
   # * Euler version
   # * no observation error
@@ -32,30 +43,21 @@ model {
       ER_daily   * coef_ER[1:d,i] +
       K600_daily * coef_K600_full[1:d,i]
   }
-  
-  # Hierarchical, binned model of K600_daily
-  for(j in 1:d) {
-    K600_daily_pred[j] <- K600_daily_beta[discharge_bin_daily[j]]
-  }
 
-  # Independent, identically distributed process error
+  # Process error
   for(i in 1:(n-1)) {
     for(j in 1:d) {
+      # Independent, identically distributed process error
       dDO_obs[j,i] ~ dnorm(dDO_mod[j,i], pow(err_proc_iid_sigma, -2))
-    }
-  }
-  # SD (sigma) of the IID process errors
-  err_proc_iid_sigma ~ dlnorm(err_proc_iid_sigma_location, pow(err_proc_iid_sigma_scale, -2))
-  
-  # Autocorrelated process error
-  for(i in 1:(n-1)) {
-    for(j in 1:d) {
+      # Autocorrelated process error
       err_proc_acor_inc[j,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
     }
   }
+  # SD (sigma) of the IID process errors
+  err_proc_iid_sigma_scaled ~ dnorm(0, pow(1, -2))
   # Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta)
-  err_proc_acor_sigma ~ dlnorm(err_proc_acor_sigma_location, pow(err_proc_acor_sigma_scale, -2))
+  err_proc_acor_sigma_scaled ~ dnorm(0, pow(1, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {
@@ -68,5 +70,5 @@ model {
   for(k in 1:b) {
     K600_daily_beta[k] ~ dnorm(K600_daily_beta_mu[k], pow(K600_daily_beta_sigma[k], -2))
   }
-  K600_daily_sigma ~ dlnorm(K600_daily_sigma_location, pow(K600_daily_sigma_scale, -2))
+  K600_daily_sigma_scaled ~ dnorm(0, pow(1, -2))
 }

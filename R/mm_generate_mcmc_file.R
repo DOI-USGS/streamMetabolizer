@@ -302,14 +302,16 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    #### Stan parameters; JAGS data ####
+    #### Stan parameters; omitted from JAGS ####
     if(engine == 'stan') c(
       'parameters {',
       indent(
+        # daily metabolism rate parameters
         c('vector[d] GPP_daily;',
           'vector[d] ER_daily;',
           'vector<lower=0>[d] K600_daily;'),
         
+        # K600 pooling parameters
         if(pool_K600 != 'none') c(
           '',
           switch(
@@ -317,24 +319,25 @@ mm_generate_mcmc_file <- function(
             normal='real K600_daily_mu;',
             linear='vector[2] K600_daily_beta;',
             binned='vector[b] K600_daily_beta;'),
-          'real<lower=0> K600_daily_sigma;'),
+          'real<lower=0> K600_daily_sigma_scaled;'),
         
-        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
-          ''),
-        if(err_proc_iid && !dDO_model) c(
-          'vector[d] err_proc_iid[n-1];'),
+        # error distributions
+        '',
+        if(err_obs_iid) c(
+          'real<lower=0> err_obs_iid_sigma_scaled;'),
         if(err_proc_acor) c(
-          'vector[d] err_proc_acor_inc[n-1];'),
+          'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+          'real<lower=0> err_proc_acor_sigma_scaled;'),
+        if(err_proc_iid) c(
+          'real<lower=0> err_proc_iid_sigma_scaled;'),
         
-        if(err_obs_iid || err_proc_acor || err_proc_iid) c(
+        # instantaneous process error values
+        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
           '',
-          if(err_obs_iid) c(
-            'real<lower=0> err_obs_iid_sigma;'),
+          if(err_proc_iid && !dDO_model) c(
+            'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
-            'real<lower=0, upper=1> err_proc_acor_phi;',
-            'real<lower=0> err_proc_acor_sigma;'),
-          if(err_proc_iid) c(
-            'real<lower=0> err_proc_iid_sigma;'))
+            'vector[d] err_proc_acor_inc[n-1];'))
       ),
       '}',''
     ),
@@ -347,16 +350,68 @@ mm_generate_mcmc_file <- function(
       'model {'
     ),
     
+    # transformed parameter declarations
     if(engine == 'stan') chunk(
+      # rescaled K600 pooling parameters
+      if(pool_K600 != 'none') c(
+        'real K600_daily_sigma;',
+        if(pool_K600 %in% c('linear','binned'))
+          'vector[d] K600_daily_pred;'
+      ),
+      
+      # rescaled error distribution parameters
+      if(err_obs_iid) c(
+        'real<lower=0> err_obs_iid_sigma;'),
+      if(err_proc_acor) c(
+        # 'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        'real<lower=0> err_proc_acor_sigma;'),
+      if(err_proc_iid) c(
+        'real<lower=0> err_proc_iid_sigma;'),
+
+      # instantaneous DO, dDO, and/or process error values
       if(DO_model)
         'vector[d] DO_mod[n];',
       if(dDO_model)
         'vector[d] dDO_mod[n-1];',
-      if(err_proc_acor) 
-        'vector[d] err_proc_acor[n-1];',
-      if(pool_K600 %in% c('linear','binned'))
-        'vector[d] K600_daily_pred;'),
+      if(err_proc_acor)
+        'vector[d] err_proc_acor[n-1];'
+    ),
     
+    chunk(
+      comment('Rescale pooling & error distribution parameters'),
+      comment('lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)'),
+      
+      # rescaled K600 pooling parameters
+      if(pool_K600 != 'none') c(
+        s('K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
+      ),
+      
+      # rescaled error distribution parameters
+      if(err_obs_iid) c(
+        s('err_obs_iid_sigma <- exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+      if(err_proc_acor) c(
+        # s('err_proc_acor_phi' <- ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        s('err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+      if(err_proc_iid) c(
+        s('err_proc_iid_sigma <- exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+    ),
+    
+    # K600_daily model
+    if(pool_K600 %in% c('linear','binned')) chunk(
+      comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
+      switch(
+        pool_K600,
+        linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
+        binned=c(
+          # JAGS might not require a loop here
+          condloop(
+            s('K600_daily_pred', M('j'), ' <- K600_daily_beta[discharge_bin_daily', M('j'), ']')
+          )
+        )
+      )
+    ),
+    
+    # model instantaneous DO, dDO, and/or process error values
     indent(
       comment('Model DO time series'),
       comment('* ', ode_method,' version'),
@@ -374,11 +429,8 @@ mm_generate_mcmc_file <- function(
       ),
       
       # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
-      # all process-only models because we've banned 'DO_mod' for them). this 
-      # should be doable with a single set of elementwise matrix multiplications
-      # rather than a loop, but there's no vector[] .* vector[] and no 
-      # to_matrix(vector[]), which is slowing me down in Stan. haven't even
-      # tried in JAGS.
+      # all process-only models because we've banned 'DO_mod' for them). looping
+      # over times of day, doing all days at once for each time of day
       if(dDO_model) c(
         p(''),
         comment("dDO model"),
@@ -406,7 +458,7 @@ mm_generate_mcmc_file <- function(
           p('DO_mod', N('i+1'), ' <- ('),
           p('  DO_mod', N('i'), ' +'),
           if(dDO_model) c(
-            s('  dDO_mod', N('i'), ')')
+            s('  dDO_mod', N('i'), ' + err_proc_iid', N('i'), ')')
           ) else c(
             if(err_proc_iid) p('  err_proc_iid', N('i'), ' +'),
             if(err_proc_acor) p('  err_proc_acor', N('i'), ' +'),
@@ -424,24 +476,7 @@ mm_generate_mcmc_file <- function(
           )
         ),
         p('}')
-      ),
-      
-      # K600_daily model
-      if(pool_K600 %in% c('linear','binned')) c(
-        p(''),
-        comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
-        switch(
-          pool_K600,
-          linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
-          binned=c(
-            # JAGS might not require a loop here
-            condloop(
-              s('K600_daily_pred', M('j'), ' <- K600_daily_beta[discharge_bin_daily', M('j'), ']')
-            )
-          )
-        )
       )
-      
     ),
     
     if(engine == 'stan') c(
@@ -455,38 +490,39 @@ mm_generate_mcmc_file <- function(
       'model {'
     ),
     
-    if(err_proc_iid) chunk(
-      comment('Independent, identically distributed process error'),
+    if(err_proc_iid || err_proc_acor) chunk(
+      comment('Process error'),
       p('for(i in 1:(n-1)) {'),
       indent(
         condloop(
-          if(dDO_model) s(
-            'dDO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('dDO_mod', MN('j','i')), sigma='err_proc_iid_sigma')
-          ) else s(
-            'err_proc_iid', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
+          if(err_proc_iid) c(
+            comment('Independent, identically distributed process error'),
+            if(dDO_model) s(
+              'dDO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('dDO_mod', MN('j','i')), sigma='err_proc_iid_sigma')
+            ) else s(
+              'err_proc_iid', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
+            )
+          ),
+          if(err_proc_acor) c(
+            comment('Autocorrelated process error'),
+            s('err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
           )
         )
       ),
       p('}'),
-      comment('SD (sigma) of the IID process errors'),
-      s('err_proc_iid_sigma ~ ', f('lognormal', location='err_proc_iid_sigma_location', scale='err_proc_iid_sigma_scale'))),
-    
-    if(err_proc_acor) chunk(
-      comment('Autocorrelated process error'),
-      p('for(i in 1:(n-1)) {'),
-      indent(
-        condloop(
-          s('err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
-        )
-      ),
-      p('}'),
-      comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-      s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
-      s('err_proc_acor_sigma ~ ', f('lognormal', location='err_proc_acor_sigma_location', scale='err_proc_acor_sigma_scale'))),
+      if(err_proc_iid) c(
+        comment('SD (sigma) of the IID process errors'),
+        s('err_proc_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
+      if(err_proc_acor) c(
+        comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
+        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
+        s('err_proc_acor_sigma_scaled ~ ', f('normal', mu='0', sigma='1')))
+    ),
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
-      p('for(i in 1:n) {'),
+      #s('DO_mod', N('1'), ' ~ normal(DO_obs_1, err_obs_iid_sigma)'),
+      p('for(i in 2:n) {'),
       indent(
         condloop(
           s('DO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('DO_mod', MN('j','i')), sigma='err_obs_iid_sigma'))
@@ -494,7 +530,7 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma ~ ', f('lognormal', location='err_obs_iid_sigma_location', scale='err_obs_iid_sigma_scale'))),
+      s('err_obs_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
     
     indent(
       comment('Daily metabolism priors'),
@@ -522,9 +558,7 @@ mm_generate_mcmc_file <- function(
             s('K600_daily_beta', M('k'), ' ~ ', f('normal', mu=paste0('K600_daily_beta_mu', M('k')), sigma=paste0('K600_daily_beta_sigma', M('k'))))
           )
         ),
-        s('K600_daily_sigma ~ ', f('lognormal', location='K600_daily_sigma_location', scale='K600_daily_sigma_scale'))
-        #s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', tau='1'))
-        #K600_daily_sigma_scaled ~ normal(0, 1);
+        s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))
       )
     ),
     

@@ -13,6 +13,16 @@ data {
 }
 
 model {
+  # Rescale pooling & error distribution parameters
+  # lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)
+  err_obs_iid_sigma <- exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)
+  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)
+  err_proc_iid_sigma <- exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)
+  
+  # Hierarchical, linear model of K600_daily
+  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily
+  
   # Model DO time series
   # * pairmeans version
   # * observation error
@@ -38,39 +48,32 @@ model {
   for(i in 1:(n-1)) {
     DO_mod[1:d,i+1] <- (
       DO_mod[1:d,i] +
-      dDO_mod[1:d,i])
+      dDO_mod[1:d,i] + err_proc_iid[1:d,i])
   }
-  
-  # Hierarchical, linear model of K600_daily
-  K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily
 
-  # Independent, identically distributed process error
+  # Process error
   for(i in 1:(n-1)) {
     for(j in 1:d) {
+      # Independent, identically distributed process error
       dDO_obs[j,i] ~ dnorm(dDO_mod[j,i], pow(err_proc_iid_sigma, -2))
-    }
-  }
-  # SD (sigma) of the IID process errors
-  err_proc_iid_sigma ~ dlnorm(err_proc_iid_sigma_location, pow(err_proc_iid_sigma_scale, -2))
-  
-  # Autocorrelated process error
-  for(i in 1:(n-1)) {
-    for(j in 1:d) {
+      # Autocorrelated process error
       err_proc_acor_inc[j,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
     }
   }
+  # SD (sigma) of the IID process errors
+  err_proc_iid_sigma_scaled ~ dnorm(0, pow(1, -2))
   # Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta)
-  err_proc_acor_sigma ~ dlnorm(err_proc_acor_sigma_location, pow(err_proc_acor_sigma_scale, -2))
+  err_proc_acor_sigma_scaled ~ dnorm(0, pow(1, -2))
   
   # Independent, identically distributed observation error
-  for(i in 1:n) {
+  for(i in 2:n) {
     for(j in 1:d) {
       DO_obs[j,i] ~ dnorm(DO_mod[j,i], pow(err_obs_iid_sigma, -2))
     }
   }
   # SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ dlnorm(err_obs_iid_sigma_location, pow(err_obs_iid_sigma_scale, -2))
+  err_obs_iid_sigma_scaled ~ dnorm(0, pow(1, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {
@@ -83,5 +86,5 @@ model {
   for(k in 1:2) {
     K600_daily_beta[k] ~ dnorm(K600_daily_beta_mu[k], pow(K600_daily_beta_sigma[k], -2))
   }
-  K600_daily_sigma ~ dlnorm(K600_daily_sigma_location, pow(K600_daily_sigma_scale, -2))
+  K600_daily_sigma_scaled ~ dnorm(0, pow(1, -2))
 }

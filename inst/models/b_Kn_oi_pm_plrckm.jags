@@ -11,6 +11,11 @@ data {
 }
 
 model {
+  # Rescale pooling & error distribution parameters
+  # lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)
+  err_obs_iid_sigma <- exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)
+  
   # Model DO time series
   # * pairmeans version
   # * observation error
@@ -29,13 +34,13 @@ model {
   }
 
   # Independent, identically distributed observation error
-  for(i in 1:n) {
+  for(i in 2:n) {
     for(j in 1:d) {
       DO_obs[j,i] ~ dnorm(DO_mod[j,i], pow(err_obs_iid_sigma, -2))
     }
   }
   # SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ dlnorm(err_obs_iid_sigma_location, pow(err_obs_iid_sigma_scale, -2))
+  err_obs_iid_sigma_scaled ~ dnorm(0, pow(1, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {
@@ -46,5 +51,5 @@ model {
 
   # Hierarchical constraints on K600_daily (normal model)
   K600_daily_mu ~ dnorm(K600_daily_mu_mu, pow(K600_daily_mu_sigma, -2))
-  K600_daily_sigma ~ dlnorm(K600_daily_sigma_location, pow(K600_daily_sigma_scale, -2))
+  K600_daily_sigma_scaled ~ dnorm(0, pow(1, -2))
 }

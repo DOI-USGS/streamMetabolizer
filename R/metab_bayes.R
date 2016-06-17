@@ -579,6 +579,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # Let JAGS initialize other parameters automatically
   }
   
+  runjags::runjags.options(force.summary=TRUE)
   runjags_out <- runjags::run.jags(
     method=c("rjags","parallel","snow")[2],
     model=model_path,

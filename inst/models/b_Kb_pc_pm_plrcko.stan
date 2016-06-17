@@ -61,18 +61,28 @@ parameters {
   vector<lower=0>[d] K600_daily;
   
   vector[b] K600_daily_beta;
-  real<lower=0> K600_daily_sigma;
-  
-  vector[d] err_proc_acor_inc[n-1];
+  real<lower=0> K600_daily_sigma_scaled;
   
   real<lower=0, upper=1> err_proc_acor_phi;
-  real<lower=0> err_proc_acor_sigma;
+  real<lower=0> err_proc_acor_sigma_scaled;
+  
+  vector[d] err_proc_acor_inc[n-1];
 }
 
 transformed parameters {
+  real K600_daily_sigma;
+  vector[d] K600_daily_pred;
+  real<lower=0> err_proc_acor_sigma;
   vector[d] dDO_mod[n-1];
   vector[d] err_proc_acor[n-1];
-  vector[d] K600_daily_pred;
+  
+  // Rescale pooling & error distribution parameters
+  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale);
+  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  
+  // Hierarchical, binned model of K600_daily
+  K600_daily_pred <- K600_daily_beta[discharge_bin_daily];
   
   // Model DO time series
   // * pairmeans version
@@ -93,19 +103,17 @@ transformed parameters {
       ER_daily   .* coef_ER[i] +
       K600_daily .* coef_K600_full[i];
   }
-  
-  // Hierarchical, binned model of K600_daily
-  K600_daily_pred <- K600_daily_beta[discharge_bin_daily];
 }
 
 model {
-  // Autocorrelated process error
+  // Process error
   for(i in 1:(n-1)) {
+    // Autocorrelated process error
     err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
-  err_proc_acor_sigma ~ lognormal(err_proc_acor_sigma_location, err_proc_acor_sigma_scale);
+  err_proc_acor_sigma_scaled ~ normal(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
@@ -114,5 +122,5 @@ model {
 
   // Hierarchical constraints on K600_daily (binned model)
   K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma ~ lognormal(K600_daily_sigma_location, K600_daily_sigma_scale);
+  K600_daily_sigma_scaled ~ normal(0, 1);
 }
