@@ -39,8 +39,8 @@ calc_DO_mod_lightsat <- function(
         DO.mod[i] <- 
           DO.mod[i-1] +
           PMAX.daily * tanh(ALPHA.daily*light[i]/PMAX.daily)/depth + 
-          ER.daily * frac.ER / depth +
-          convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D * (DO.sat[i] - DO.mod[i-1]) 
+          ER.daily * frac.ER[i] / depth +
+          convert_k600_to_kGAS(K600.daily, temperature=temp.water[i], gas="O2") * frac.D[i] * (DO.sat - DO.mod[i-1]) 
         }
     },
     "pairmeans"={
@@ -62,8 +62,8 @@ calc_DO_mod_lightsat <- function(
         DO.mod[i] <- (
           DO.mod[i-1] +
             PMAX.daily * tanh(ALPHA.daily*light[i]/PMAX.daily)/depth + 
-            ER.daily * frac.ER / depth +
-            convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D * (DO.sat[i] - DO.mod[i-1]/2) 
+            ER.daily * frac.ER[i] / depth +
+            convert_k600_to_kGAS(K600.daily, temperature=temp.water[i], gas="O2") * frac.D[i] * (DO.sat - DO.mod[i-1]/2) 
         ) / (1 + K[i]/2)
       }
     }
