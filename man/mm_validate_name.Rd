@@ -23,7 +23,7 @@ Check the syntactic & scientific validity of a model name. Returns the model
 name if it's valid, otherwise gives an error
 }
 \examples{
-mm_validate_name("b_np_oipi_pm_km.stan")
+mm_validate_name("b_np_oipi_pm_plrckm.stan")
 \dontrun{
 mm_validate_name("b_np_oipn") # throws error
 }

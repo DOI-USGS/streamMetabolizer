@@ -12,6 +12,7 @@
 #'   another by at least tol, where tol is a time difference in units of days 
 #'   (and thus 1/(24*60*60) is one second).
 #' @importFrom unitted v
+#' @importFrom stats approx
 #' @examples {
 #' datetimes <- Sys.time()+ as.difftime(c(0,304,600,900.2,1200,1500,1800), units='secs')
 #' mm_get_timestep(datetimes, 'unique', tol=1/(24*60*60))

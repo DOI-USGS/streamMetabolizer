@@ -47,8 +47,8 @@ metab_inputs <- function(type=c('bayes','mle','night','Kmodel','sim'), input=c('
           } else {
             ifelse(names(eg) %in% opt, 'optional', 'required') 
           }
-        }
-      )
+        }, 
+        stringsAsFactors=FALSE)
     }
       # bind_rows %>%
       # u(c(type=NA, get_units(mm_data(everything())))[names(.)])

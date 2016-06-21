@@ -7,9 +7,10 @@
 specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   day_tests = c("full_day", "even_timesteps", "complete_data"),
   GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, ODE_method,
-  split_dates, keep_mcmcs = TRUE, GPP_daily_mu = 10, GPP_daily_sigma = 10,
-  ER_daily_mu = -10, ER_daily_sigma = 10, K600_daily_mu = 10,
-  K600_daily_sigma = 10, K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
+  split_dates, keep_mcmcs = TRUE, keep_mcmc_data = FALSE,
+  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
+  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
+  K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
   K600_daily_beta_mu = c(intercept = 10, slope = 3),
   K600_daily_beta_sigma = c(intercept = 8, slope = 2),
   K600_daily_beta_num = 5, K600_daily_beta_cuts = "number",
@@ -105,6 +106,11 @@ appropriate solution for a hierarchical model that pools information on
 error, K600, etc. across days.}
 
 \item{keep_mcmcs}{TRUE, FALSE, or (for nopool models) a vector of dates 
+(coerced with as.Date if character, etc.) indicating whether to keep all of
+the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
+default is TRUE because these objects often need inspecting.}
+
+\item{keep_mcmc_data}{FALSE, TRUE, or (for nopool models) a vector of dates 
 (coerced with as.Date if character, etc.) indicating whether to keep all of
 the mcmc model objects (TRUE), none of them (FALSE), or specific dates. The
 default is FALSE because these objects can be very large.}
@@ -297,10 +303,10 @@ often should, be overridden to tailor the model to your needs.
 
   
   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
-  keep_mcmcs, day_start, day_end, day_tests, GPP_daily_mu, GPP_daily_sigma, 
-  ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains, n_cores, 
-  burnin_steps, saved_steps, thin_steps, verbose}. The need for other 
-  arguments depends on features of the model structure, as from 
+  keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu,
+  GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
+  n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for
+  other arguments depends on features of the model structure, as from 
   \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
   \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 

@@ -31,8 +31,8 @@ test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
 
   # compare ODE methods (3 days, default day_start&end)
   dat3 <- data_metab('3', res='30')
-  mmE <- metab_mle(specs('m_np_oi_eu_km.nlm'), data=dat3)
-  mmP <- metab_mle(specs('m_np_oi_pm_km.nlm'), data=dat3)
+  mmE <- metab_mle(specs('m_np_oi_eu_plrckm.nlm'), data=dat3)
+  mmP <- metab_mle(specs('m_np_oi_pm_plrckm.nlm'), data=dat3)
   expect_lt(rmse_DO(predict_DO(mmP)), rmse_DO(predict_DO(mmE))) #, info="pairmeans should be more accurate than Euler")
   # plot_DO_preds(predict_DO(mmE))
   # plot_DO_preds(predict_DO(mmP))
