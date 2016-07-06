@@ -1,7 +1,7 @@
 #' Load a short dataset from Spring Creek
 #' 
 #' @import dplyr
-#' @importFrom unitted u rename_.unitted_data.frame
+#' @importFrom unitted u
 #' @importFrom utils read.csv
 #' @importFrom lubridate with_tz
 #' @param attach.units logical. Should units be attached to the data.frame?

@@ -27,10 +27,23 @@ update.packages(oldPkgs=c("streamMetabolizer","unitted"),
   dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
 
-The most cutting edge version of the package can be installed if you have the `devtools` package:
+The in-development version of the package can be installed with the `devtools` package. 
+We can make no guarantees about the stability of this version, 
+but it might have new features that you'll like.
+If you go this route, you will need to install the package dependencies separately, like this:
+```r
+install.packages(
+  c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
+    "tidyr","chron","dygraphs","ggplot2","RCurl","runjags","rstan","XML","xts"),
+  repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+```
+You can then install the most cutting edge version of streamMetabolizer with this command:
 ```r
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 ```
+
+Regardless of your installation method, if you plan to use Bayesian models with 
+`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/).
 
 
 ## Disclaimer

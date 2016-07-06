@@ -16,24 +16,24 @@
 #' @section Relevant arguments:
 #'   
 #'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
-#'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu,
+#'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
 #'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
-#'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for
+#'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
 #'   other arguments depends on features of the model structure, as from 
 #'   \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
 #'   \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
-#'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_shape, 
-#'   K600_daily_sigma_rate}. If \code{pool_K600=='linear'} then 
-#'   \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_shape, 
-#'   K600_daily_sigma_rate}. If \code{pool_K600=='binned'} then 
+#'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_location, 
+#'   K600_daily_sigma_scale}. If \code{pool_K600=='linear'} then 
+#'   \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_location,
+#'   K600_daily_sigma_scale}. If \code{pool_K600=='binned'} then 
 #'   \code{K600_daily_beta_num, K600_daily_beta_cuts, K600_daily_beta_mu, 
-#'   K600_daily_beta_sigma, K600_daily_sigma_shape, K600_daily_sigma_rate}. If 
-#'   \code{err_obs_iid} then \code{err_obs_iid_sigma_shape, 
-#'   err_obs_iid_sigma_rate}. If \code{err_proc_acor} then 
-#'   \code{err_proc_acor_phi_shape, err_proc_acor_phi_rate, 
-#'   err_proc_acor_sigma_shape, err_proc_acor_sigma_rate}. If 
-#'   \code{err_proc_iid} then \code{err_proc_iid_sigma_shape, 
-#'   err_proc_iid_sigma_rate}. If \code{engine == 'jags'} then 
+#'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
+#'   If \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
+#'   err_obs_iid_sigma_scale}. If \code{err_proc_acor} then 
+#'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
+#'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. If 
+#'   \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
+#'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
 #'   \code{adapt_steps}.
 #'   
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
@@ -150,36 +150,65 @@
 #'   the first value smaller than all ln_discharge_daily values and the last 
 #'   value greater than or equal to all ln_discharge_daily values.
 #'   
-#' @param K600_daily_sigma_shape hyperparameter for pool_K600 in 
-#'   c('normal','linear','binned'). The shape (= alpha = k) parameter of a gamma
-#'   distribution of sigma in K ~ N(mu, sigma), sigma ~ gamma(shape, rate)
-#' @param K600_daily_sigma_rate hyperparameter for pool_K600 in 
-#'   c('normal','linear','binned'). The rate (= beta = 1/theta = inverse scale) 
-#'   parameter of a gamma distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-#'   gamma(shape, rate)
+#' @param K600_daily_sigma_location hyperparameter for pool_K600 in 
+#'   c('normal','linear','binned'). The location (= meanlog) parameter of a 
+#'   lognormal distribution of sigma in K ~ N(mu, sigma), sigma ~ 
+#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma
+#'   with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x,
+#'   K600_daily_sigma_location, K600_daily_sigma_scale))}
+#' @param K600_daily_sigma_scale hyperparameter for pool_K600 in 
+#'   c('normal','linear','binned'). The scale (= sdlog) parameter of a lognormal
+#'   distribution of sigma in K ~ N(mu, sigma), sigma ~ lnN(meanlog=location, 
+#'   sdlog=scale). Visualize the PDF of K600_daily_sigma with 
+#'   \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, K600_daily_sigma_location, 
+#'   K600_daily_sigma_scale))}
 #'   
-#' @param err_obs_iid_sigma_shape The shape parameter on a gamma distribution 
-#'   for err_obs_iid_sigma, the standard deviation of the observation error
-#' @param err_obs_iid_sigma_rate The rate parameter on a gamma distribution for 
-#'   err_obs_iid_sigma, the standard deviation of the observation error
-#' @param err_proc_acor_phi_shape The shape parameter on a gamma distribution 
-#'   for err_proc_acor_phi, the autocorrelation coefficient for the 
-#'   autocorrelated component of process [& sometimes observation] error
-#' @param err_proc_acor_phi_rate The rate parameter on a gamma distribution for 
-#'   err_proc_acor_phi, the autocorrelation coefficient for the autocorrelated 
-#'   component of process [& sometimes observation] error
-#' @param err_proc_acor_sigma_shape The shape parameter on a gamma distribution 
-#'   for err_proc_acor_sigma, the standard deviation of the autocorrelated 
-#'   component of process [& sometimes observation] error
-#' @param err_proc_acor_sigma_rate The rate parameter on a gamma distribution 
-#'   for err_proc_acor_sigma, the standard deviation of the autocorrelated 
-#'   component of process [& sometimes observation] error
-#' @param err_proc_iid_sigma_shape The shape parameter on a gamma distribution 
-#'   for err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
-#'   component of process [& sometimes observation] error
-#' @param err_proc_iid_sigma_rate The rate parameter on a gamma distribution for
-#'   err_proc_iid_sigma, the standard deviation of the uncorrelated (IID) 
-#'   component of process [& sometimes observation] error
+#' @param err_obs_iid_sigma_location The location (= meanlog) parameter of a 
+#'   lognormal distribution for err_obs_iid_sigma, the standard deviation of the
+#'   observation error. Visualize the PDF of err_obs_iid_sigma with 
+#'   \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, err_obs_iid_sigma_location, 
+#'   err_obs_iid_sigma_scale), type='l')}
+#' @param err_obs_iid_sigma_scale The scale (= sdlog) parameter of a lognormal 
+#'   distribution for err_obs_iid_sigma, the standard deviation of the 
+#'   observation error. Visualize the PDF of err_obs_iid_sigma with 
+#'   \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, err_obs_iid_sigma_location, 
+#'   err_obs_iid_sigma_scale), type='l')}
+#' @param err_proc_acor_phi_alpha The alpha (= shape1) parameter on a beta 
+#'   distribution for err_proc_acor_phi, the autocorrelation coefficient for the
+#'   autocorrelated component of process [& sometimes observation] error. 
+#'   Visualize the PDF of err_proc_acor_phi with \code{x=seq(0,1,0.01); 
+#'   plot(x=x, y=dbeta(x, err_proc_acor_phi_alpha, err_proc_acor_phi_beta), 
+#'   type='l')}
+#' @param err_proc_acor_phi_beta The beta (= shape2) parameter on a beta 
+#'   distribution for err_proc_acor_phi, the autocorrelation coefficient for the
+#'   autocorrelated component of process [& sometimes observation] error. 
+#'   Visualize the PDF of err_proc_acor_phi with \code{x=seq(0,1,0.01); 
+#'   plot(x=x, y=dbeta(x, err_proc_acor_phi_alpha, err_proc_acor_phi_beta), 
+#'   type='l')}
+#' @param err_proc_acor_sigma_location The location (= meanlog) parameter of a 
+#'   lognormal distribution for err_proc_acor_sigma, the standard deviation of 
+#'   the autocorrelated component of process [& sometimes observation] error. 
+#'   Visualize the PDF of err_proc_acor_sigma with \code{x=seq(0,10,0.1); 
+#'   plot(x=x, y=dlnorm(x, err_proc_acor_sigma_location, 
+#'   err_proc_acor_sigma_scale), type='l')}
+#' @param err_proc_acor_sigma_scale The scale (= sdlog) parameter of a lognormal
+#'   distribution for err_proc_acor_sigma, the standard deviation of the 
+#'   autocorrelated component of process [& sometimes observation] error. 
+#'   Visualize the PDF of err_proc_acor_sigma with \code{x=seq(0,10,0.1); 
+#'   plot(x=x, y=dlnorm(x, err_proc_acor_sigma_location, 
+#'   err_proc_acor_sigma_scale), type='l')}
+#' @param err_proc_iid_sigma_location The location (= meanlog) parameter of a 
+#'   lognormal distribution for err_proc_iid_sigma, the standard deviation of 
+#'   the uncorrelated (IID) component of process [& sometimes observation] 
+#'   error. Visualize the PDF of err_proc_iid_sigma with \code{x=seq(0,10,0.1); 
+#'   plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
+#'   err_proc_iid_sigma_scale), type='l')}
+#' @param err_proc_iid_sigma_scale The scale (= sdlog) parameter of a lognormal 
+#'   distribution for err_proc_iid_sigma, the standard deviation of the 
+#'   uncorrelated (IID) component of process [& sometimes observation] error. 
+#'   Visualize the PDF of err_proc_iid_sigma with \code{x=seq(0,10,0.1); 
+#'   plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
+#'   err_proc_iid_sigma_scale), type='l')}
 #'   
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
@@ -263,18 +292,18 @@ specs <- function(
   # K600_daily_beta_sigma = rep(10, K600_daily_beta_num), # already declared for linear hierarchy above
   
   # hyperparameters for any hierarchical K600
-  K600_daily_sigma_shape = 1,
-  K600_daily_sigma_rate = 2,
+  K600_daily_sigma_location = 0,
+  K600_daily_sigma_scale = 1,
   
   # hyperparameters for error terms
-  err_obs_iid_sigma_shape = 1,
-  err_obs_iid_sigma_rate = 10,
-  err_proc_acor_phi_shape = 1,
-  err_proc_acor_phi_rate = 1000,
-  err_proc_acor_sigma_shape = 1,
-  err_proc_acor_sigma_rate = 1000,
-  err_proc_iid_sigma_shape = 1,
-  err_proc_iid_sigma_rate = 100,
+  err_obs_iid_sigma_location = 0,
+  err_obs_iid_sigma_scale = 3,
+  err_proc_acor_phi_alpha = 0.1,
+  err_proc_acor_phi_beta = 1,
+  err_proc_acor_sigma_location = 0,
+  err_proc_acor_sigma_scale = 5,
+  err_proc_iid_sigma_location = 0,
+  err_proc_iid_sigma_scale = 4,
   
   # inheritParams prepdata_bayes
   priors = FALSE,
@@ -360,18 +389,19 @@ specs <- function(
         # date ply day_tests
         'day_start', 'day_end', 'day_tests',
         
-        # hyperparameters - this section should be identical to the
-        # hyperparameters section of prepdata_bayes
+        # hyperparameters - this section should be identical to the 
+        # hyperparameters section of prepdata_bayes except that binned should
+        # include 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
         c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
         switch(
           features$pool_K600,
           none=c('K600_daily_mu', 'K600_daily_sigma'),
-          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-          binned=c('K600_daily_beta_num', 'K600_daily_beta_cuts', 'K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate')),
-        if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
-        if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
-        if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate'),
+          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          binned=c('K600_daily_beta_num', 'K600_daily_beta_cuts', 'K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
+        if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
+        if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
+        if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale'),
         
         # inheritParams prepdata_bayes
         'priors',

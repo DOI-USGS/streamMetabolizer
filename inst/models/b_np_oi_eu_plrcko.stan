@@ -10,8 +10,8 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_obs_iid_sigma_shape;
-  real err_obs_iid_sigma_rate;
+  real err_obs_iid_sigma_location;
+  real err_obs_iid_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -50,14 +50,19 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
-  real err_obs_iid_sigma;
+  real<lower=0> err_obs_iid_sigma_scaled;
 }
 
 transformed parameters {
+  real<lower=0> err_obs_iid_sigma;
   vector[d] DO_mod[n];
   vector[d] dDO_mod[n-1];
+  
+  // Rescale pooling & error distribution parameters
+  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  err_obs_iid_sigma <- exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale);
   
   // Model DO time series
   // * Euler version
@@ -78,17 +83,17 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod[i+1] <- (
       DO_mod[i] +
-      dDO_mod[i]);
+      dDO_mod[i] + err_proc_iid[i]);
   }
 }
 
 model {
   // Independent, identically distributed observation error
-  for(i in 1:n) {
+  for(i in 2:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  err_obs_iid_sigma ~ gamma(err_obs_iid_sigma_shape, err_obs_iid_sigma_rate);
+  err_obs_iid_sigma_scaled ~ normal(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

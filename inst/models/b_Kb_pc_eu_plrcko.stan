@@ -11,14 +11,14 @@ data {
   int <lower=1> b; # number of K600_daily_betas
   vector[b] K600_daily_beta_mu;
   vector[b] K600_daily_beta_sigma;
-  real K600_daily_sigma_shape;
-  real K600_daily_sigma_rate;
+  real K600_daily_sigma_location;
+  real K600_daily_sigma_scale;
   
   // Error distributions
-  real err_proc_acor_phi_shape;
-  real err_proc_acor_phi_rate;
-  real err_proc_acor_sigma_shape;
-  real err_proc_acor_sigma_rate;
+  real err_proc_acor_phi_alpha;
+  real err_proc_acor_phi_beta;
+  real err_proc_acor_sigma_location;
+  real err_proc_acor_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -58,21 +58,31 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
   vector[b] K600_daily_beta;
-  real K600_daily_sigma;
+  real<lower=0> K600_daily_sigma_scaled;
+  
+  real<lower=0, upper=1> err_proc_acor_phi;
+  real<lower=0> err_proc_acor_sigma_scaled;
   
   vector[d] err_proc_acor_inc[n-1];
-  
-  real err_proc_acor_phi;
-  real err_proc_acor_sigma;
 }
 
 transformed parameters {
+  real K600_daily_sigma;
+  vector[d] K600_daily_pred;
+  real<lower=0> err_proc_acor_sigma;
   vector[d] dDO_mod[n-1];
   vector[d] err_proc_acor[n-1];
-  vector[d] K600_daily_pred;
+  
+  // Rescale pooling & error distribution parameters
+  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale);
+  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  
+  // Hierarchical, binned model of K600_daily
+  K600_daily_pred <- K600_daily_beta[discharge_bin_daily];
   
   // Model DO time series
   // * Euler version
@@ -93,19 +103,17 @@ transformed parameters {
       ER_daily   .* coef_ER[i] +
       K600_daily .* coef_K600_full[i];
   }
-  
-  // Hierarchical, binned model of K600_daily
-  K600_daily_pred <- K600_daily_beta[discharge_bin_daily];
 }
 
 model {
-  // Autocorrelated process error
+  // Process error
   for(i in 1:(n-1)) {
+    // Autocorrelated process error
     err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ gamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate);
-  err_proc_acor_sigma ~ gamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate);
+  err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
+  err_proc_acor_sigma_scaled ~ normal(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
@@ -114,5 +122,5 @@ model {
 
   // Hierarchical constraints on K600_daily (binned model)
   K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate);
+  K600_daily_sigma_scaled ~ normal(0, 1);
 }

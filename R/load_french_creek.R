@@ -1,7 +1,7 @@
 #' Load a short dataset from French Creek
 #' 
 #' @import dplyr
-#' @importFrom unitted u rename_.unitted_data.frame
+#' @importFrom unitted u
 #' @importFrom utils read.csv
 #' @importFrom lubridate with_tz
 #' @param attach.units logical. Should units be attached to the data.frame?
@@ -18,7 +18,7 @@ load_french_creek <- function(attach.units=TRUE) {
   french <- unique(french[!is.na(french$oxy),])
   
   # rename DO.obs, temp.water
-  french <- unitted::rename_.unitted_data.frame(french, DO.obs='oxy', temp.water='temp')
+  french <- rename_(french, DO.obs='oxy', temp.water='temp')
   
   # datetime
   tz_french <- lubridate::tz(convert_UTC_to_localtime(as.POSIXct("2012-09-10 00:00:00", tz="UTC"), latitude=41.33, longitude=-106.3, time.type="standard"))

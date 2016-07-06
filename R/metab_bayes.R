@@ -473,12 +473,16 @@ prepdata_bayes <- function(
       
       # Every timestep
       frac_GPP = {
-        # normalize light by the sum of light in the first 24 hours of the time window
-        in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-        if(engine == 'jags') in_solar_day <- t(in_solar_day)
         mat_light <- time_by_date_matrix(data$light)
-        sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
-        sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
+        if(isTRUE(mm_parse_name(model_name)$GPP_fun == 'linlight')) {
+          # normalize light by the sum of light in the first 24 hours of the time window
+          in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
+          if(engine == 'jags') in_solar_day <- t(in_solar_day)
+          sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
+          sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
+        } else {
+          mat_light
+        }
       },
       frac_ER  = time_by_date_matrix(timestep_days),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
@@ -489,18 +493,19 @@ prepdata_bayes <- function(
     ),
     
     specs[c(
-      # Hyperparameters - this section should be identical to the
-      # hyperparameters section of specs|bayes
+      # Hyperparameters - this section should be identical to the 
+      # hyperparameters section of specs|bayes except that binned can omit 
+      # 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
       c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
       switch(
         features$pool_K600,
         none=c('K600_daily_mu', 'K600_daily_sigma'),
-        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate'),
-        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_shape', 'K600_daily_sigma_rate')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_shape', 'err_obs_iid_sigma_rate'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_shape', 'err_proc_acor_phi_rate', 'err_proc_acor_sigma_shape', 'err_proc_acor_sigma_rate'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_shape', 'err_proc_iid_sigma_rate')
+        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
+      if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
+      if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
+      if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
     )]
   )
   if(priors) {
@@ -558,6 +563,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import dplyr
+#' @import tibble
 #' @keywords internal
 runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
@@ -574,6 +580,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # Let JAGS initialize other parameters automatically
   }
   
+  runjags::runjags.options(force.summary=TRUE)
   runjags_out <- runjags::run.jags(
     method=c("rjags","parallel","snow")[2],
     model=model_path,
@@ -629,7 +636,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       varstat_order <- paste0(rep(row_order, each=ncol(jags_mat)), '_', rep(colnames(jags_mat), times=length(row_order)))
       
       as.data.frame(jags_mat[dim_rows,,drop=FALSE]) %>%
-        add_rownames() %>%
+        rownames_to_column() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
                index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
@@ -650,6 +657,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import parallel
 #' @import dplyr
+#' @import tibble
 #' @importFrom tidyr gather spread
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
@@ -745,7 +753,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       varstat_order <- paste0(rep(row_order, each=ncol(stan_mat)), '_', rep(colnames(stan_mat), times=length(row_order)))
       
       as.data.frame(stan_mat[dim_rows,]) %>%
-        add_rownames() %>%
+        rownames_to_column() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
                index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),

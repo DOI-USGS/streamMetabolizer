@@ -13,6 +13,10 @@ data {
 }
 
 model {
+  # Rescale pooling & error distribution parameters
+  # lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
+  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)
+  
   # Model DO time series
   # * Euler version
   # * no observation error
@@ -33,15 +37,16 @@ model {
       K600_daily * coef_K600_full[1:d,i]
   }
 
-  # Autocorrelated process error
+  # Process error
   for(i in 1:(n-1)) {
     for(j in 1:d) {
+      # Autocorrelated process error
       err_proc_acor_inc[j,i] ~ dnorm(0, pow(err_proc_acor_sigma, -2))
     }
   }
   # Autocorrelation (phi) & SD (sigma) of the process errors
-  err_proc_acor_phi ~ dgamma(err_proc_acor_phi_shape, err_proc_acor_phi_rate)
-  err_proc_acor_sigma ~ dgamma(err_proc_acor_sigma_shape, err_proc_acor_sigma_rate)
+  err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta)
+  err_proc_acor_sigma_scaled ~ dnorm(0, pow(1, -2))
   
   # Daily metabolism priors
   for(j in 1:d) {
