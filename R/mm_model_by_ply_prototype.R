@@ -31,6 +31,7 @@
 #' @param ... other args that were passed untouched from the function calling 
 #'   mm_model_by_ply, through mm_model_by_ply, and finally to this function.
 #' @import dplyr
+#' @import tibble
 #' @importFrom unitted v
 #' @examples
 #' mm_model_by_ply_prototype()
@@ -48,5 +49,5 @@ mm_model_by_ply_prototype <- function(
          day_start=day_start, day_end=day_end, ply_date=ply_date, 
          ply_validity=paste0(ply_validity,collapse=';'), timestep_days=timestep_days),
     lapply(list(...), function(arg) if(is.atomic(arg)) arg[1] else paste0('len=',length(arg)))) %>%
-  as_data_frame()
+  as_tibble()
 }

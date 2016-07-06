@@ -5,6 +5,7 @@ NULL
 #' 
 #' Modified from Hadley Wickham's function at http://r-pkgs.had.co.nz/man.html
 #' 
+#' @import tibble
 #' @keywords internal
 zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
   align <- function(x) if (is.numeric(x)) "r" else "l"
@@ -25,7 +26,7 @@ zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
       paste0("\\code{", col, "}"))
   }
   
-  cols <- as_data_frame(cols)
+  cols <- as_tibble(cols)
   
   contents <- do.call(
     "paste", 

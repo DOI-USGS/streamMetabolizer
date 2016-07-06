@@ -46,6 +46,7 @@
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
 #' @import dplyr
+#' @import tibble
 #' @examples
 #' dat <- data_metab('10')
 #' mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
@@ -105,7 +106,7 @@ mm_model_by_ply <- function(
     replace(date.group, is.na(date.group), '') %>%
       rle() %>%
       unclass %>% 
-      as_data_frame %>% 
+      as_tibble %>% 
       mutate(end=cumsum(lengths), start=c(1, 1+end[-n()])) %>%
       filter(values != '') %>%
       select(date=values, start, end)
@@ -131,10 +132,10 @@ mm_model_by_ply <- function(
       primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start_fudge & hr < day_end_fudge, 1, 2)]
       secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end_fudge - 24), 1, ifelse(hr < (24 + day_start_fudge), 2, 3))]
       if(dt.today %in% odd.dates) {
-        data_frame(odd.date.group=primary.date, even.date.group=secondary.date)
+        tibble(odd.date.group=primary.date, even.date.group=secondary.date)
         #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(primary.date, secondary.date)
       } else { # dt.today %in% even.dates
-        data_frame(odd.date.group=secondary.date, even.date.group=primary.date)
+        tibble(odd.date.group=secondary.date, even.date.group=primary.date)
         #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(secondary.date, primary.date)
       }
     }))) %>%

@@ -563,6 +563,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
 #' @inheritParams mcmc_bayes
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import dplyr
+#' @import tibble
 #' @keywords internal
 runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   
@@ -635,7 +636,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       varstat_order <- paste0(rep(row_order, each=ncol(jags_mat)), '_', rep(colnames(jags_mat), times=length(row_order)))
       
       as.data.frame(jags_mat[dim_rows,,drop=FALSE]) %>%
-        add_rownames() %>%
+        rownames_to_column() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
                index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
@@ -656,6 +657,7 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
 #' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import parallel
 #' @import dplyr
+#' @import tibble
 #' @importFrom tidyr gather spread
 #' @keywords internal
 runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
@@ -751,7 +753,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
       varstat_order <- paste0(rep(row_order, each=ncol(stan_mat)), '_', rep(colnames(stan_mat), times=length(row_order)))
       
       as.data.frame(stan_mat[dim_rows,]) %>%
-        add_rownames() %>%
+        rownames_to_column() %>%
         gather(stat, value=val, 2:ncol(.)) %>%
         mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
                index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),
