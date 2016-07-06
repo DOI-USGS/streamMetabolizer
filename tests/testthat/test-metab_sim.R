@@ -24,7 +24,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_true(!isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   mm <- metab_sim(data=dat, data_daily=select(dd, -DO.mod.1), 
-                  specs=specs('s_np_oipcpi_eu_.rnorm', sim.seed=626, day_start=-1, day_end=23))
+                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', sim.seed=626, day_start=-1, day_end=23))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   
@@ -37,7 +37,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
   # predict_DO - autocorrelation should be bigger when there's process error
   mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd,
-                  specs=specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05))
+                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05))
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
   acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
   expect_gt(acf_out$acf[acf_out$lag==1], 0.6)
@@ -45,9 +45,9 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
   # should be able to switch ODE methods in fitting
   dat <- data_metab('3', res='30')
-  mmE <- metab_sim(specs('s_np_oipcpi_eu_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
+  mmE <- metab_sim(specs('s_np_oipcpi_eu_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
                    data=select(dat, -DO.obs), data_daily=dd)
-  mmP <- metab_sim(specs('s_np_oipcpi_pm_.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
+  mmP <- metab_sim(specs('s_np_oipcpi_pm_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
                   data=select(dat, -DO.obs), data_daily=dd)
   # DO_preds <- bind_rows(
   #   data.frame(predict_DO(mmE), method="Euler", stringsAsFactors=FALSE),

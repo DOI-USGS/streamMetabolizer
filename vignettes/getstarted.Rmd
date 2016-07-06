@@ -28,6 +28,7 @@ Load the R libraries that will be used.
 ```{r libs, warning=FALSE}
 suppressPackageStartupMessages({
   library(dplyr)
+  library(tibble)
   library(tidyr)
   library(ggplot2)
   library(streamMetabolizer)
@@ -201,7 +202,7 @@ Here is the full list of model options:
 all_models <- mm_valid_names(type=c('bayes','mle','night'))
 opts <- 
   bind_cols(
-    dplyr::data_frame(model_name=all_models), 
+    tibble::tibble(model_name=all_models), 
     mm_parse_name(all_models)) %>%
   arrange(model_name)
 knitr::kable(opts)

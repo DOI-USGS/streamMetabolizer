@@ -46,6 +46,7 @@
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
 #' @import dplyr
+#' @import tibble
 #' @examples
 #' dat <- data_metab('10')
 #' mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
@@ -70,13 +71,23 @@ mm_model_by_ply <- function(
   data.plys <- as.data.frame(v(data))
   if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
-  if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) 
-    stop("min timestep is <= 0: ", min_timestep, " days")
+  if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) {
+    timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
+    timegoof <- which.min(timesteps) + c(0,1)
+    stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
+         v(data$solar.time)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+         v(data$solar.time)[timegoof[2]], " (row ", timegoof[2], ")")
+  }
   if(!is.null(data_daily)) {
     if(!('date' %in% names(data_daily))) stop("data_daily must contain a 'date' column")
     min_datestep <- mm_get_timestep(data_daily$date, format='unique')
-    if(length(min_datestep) > 0 && min_datestep[1] <= 0)
-      stop("min datestep is <= 0: ", min_datestep, " days")
+    if(length(min_datestep) > 0 && min_datestep[1] <= 0) {
+      timesteps <- as.numeric(diff(v(data_daily$date)), units="days")
+      timegoof <- which.min(timesteps) + c(0,1)
+      stop("min datestep is <= 0: ", min_datestep, " days from ",
+           v(data_daily$date)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+           v(data_daily$date)[timegoof[2]], " (row ", timegoof[2], ")")
+    }
   }
   doyhr <- convert_date_to_doyhr(data.plys$solar.time)
   data.plys$date <- as.character(as.Date(lubridate::floor_date(data.plys$solar.time, 'year')) + as.difftime(floor(doyhr)-1, units='days'))
@@ -91,11 +102,11 @@ mm_model_by_ply <- function(
   # This function speeds things up in both of the next two loops. 'runs' refers
   # to sequential runs of values in date.group that have the same value.
   get_runs <- function(date.group) {
-    values <- '.dplyr.var'
+    values <- start <- end <- '.dplyr.var'
     replace(date.group, is.na(date.group), '') %>%
       rle() %>%
       unclass %>% 
-      as_data_frame %>% 
+      as_tibble %>% 
       mutate(end=cumsum(lengths), start=c(1, 1+end[-n()])) %>%
       filter(values != '') %>%
       select(date=values, start, end)
@@ -121,10 +132,10 @@ mm_model_by_ply <- function(
       primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start_fudge & hr < day_end_fudge, 1, 2)]
       secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end_fudge - 24), 1, ifelse(hr < (24 + day_start_fudge), 2, 3))]
       if(dt.today %in% odd.dates) {
-        data_frame(odd.date.group=primary.date, even.date.group=secondary.date)
+        tibble(odd.date.group=primary.date, even.date.group=secondary.date)
         #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(primary.date, secondary.date)
       } else { # dt.today %in% even.dates
-        data_frame(odd.date.group=secondary.date, even.date.group=primary.date)
+        tibble(odd.date.group=secondary.date, even.date.group=primary.date)
         #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(secondary.date, primary.date)
       }
     }))) %>%

@@ -7,7 +7,8 @@
 mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
   "linear", "binned"), err_obs_iid = c(TRUE, FALSE),
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
-  ode_method = c("pairmeans", "Euler"), deficit_src = c("DO_mod", "DO_obs"),
+  ode_method = c("pairmeans", "Euler"), GPP_fun = c("linlight"),
+  ER_fun = c("constant"), deficit_src = c("DO_mod", "DO_obs"),
   engine = c("stan", "jags"))
 }
 \arguments{
@@ -34,6 +35,14 @@ autocorrelation term phi fitted) be included?}
 equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP, 
 ER, DO, etc. at t=1. pairmeans: dDOdt from t=1 to t=2 is a function of the 
 mean values of GPP, ER, etc. across t=1 and t=2.}
+
+\item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
+a linear function of light with an intercept at 0. \code{satlight} GPP is a
+saturating function of light.}
+
+\item{ER_fun}{How to partition daily ER over time. \code{constant}: ER is
+constant over every timestep of the day. \code{q10temp} (not yet
+implemented): ER at each timestep is a function of the water temperature.}
 
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}

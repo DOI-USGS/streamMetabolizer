@@ -9,16 +9,16 @@
 #' While the \code{Usage} shows all valid values for each argument, not all 
 #' argument combinations are valid; the combination will also be checked if 
 #' \code{check_validity==TRUE}. For arguments not explicitly specified, defaults
-#' depend on the value of \code{type}: any argument that is not explicitly
-#' supplied (besides \code{type} and \code{check_validity}) will default to the
+#' depend on the value of \code{type}: any argument that is not explicitly 
+#' supplied (besides \code{type} and \code{check_validity}) will default to the 
 #' values indicated by \code{mm_parse_name(mm_valid_names(type)[1])}.
 #' 
 #' @details
 #' 
 #' \subsection{pool_K600}{
 #' 
-#' Here are the essential model lines (in Stan language) that separate the four 
-#' K pooling options.
+#' Here are the essential model lines (in Stan language) that distinguish the K 
+#' pooling options.
 #' 
 #' \tabular{l}{ \strong{\code{pool_K600 = 'none'}}\cr \code{K600_daily ~ 
 #' normal(K600_daily_mu, K600_daily_sigma)} }
@@ -40,6 +40,12 @@
 #' K600_daily_sigma)}\cr \code{K600_daily_beta ~ normal(K600_daily_beta_mu, 
 #' K600_daily_beta_sigma)}\cr \code{K600_daily_sigma ~ 
 #' gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
+#' 
+#' \tabular{l}{ \strong{\code{pool_K600 = 'complete'}}\cr [This option refers to
+#' complete pooling via \code{metab_Kmodel} in conjunction with preceding 
+#' estimates of K (e.g., by \code{metab_mle} or \code{metab_night}) and 
+#' subsequent estimates of GPP and ER (e.g., by \code{metab_mle} with daily K600
+#' values specified)] }
 #' 
 #' }
 #' 
@@ -63,6 +69,12 @@
 #'   equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP, 
 #'   ER, DO, etc. at t=1. pairmeans: dDOdt from t=1 to t=2 is a function of the 
 #'   mean values of GPP, ER, etc. across t=1 and t=2.
+#' @param GPP_fun How to partition daily GPP over time. \code{linlight}: GPP is 
+#'   a linear function of light with an intercept at 0. \code{satlight} GPP is a
+#'   saturating function of light.
+#' @param ER_fun How to partition daily ER over time. \code{constant}: ER is
+#'   constant over every timestep of the day. \code{q10temp} (not yet
+#'   implemented): ER at each timestep is a function of the water temperature.
 #' @param deficit_src From what DO estimate (observed or modeled) should the DO 
 #'   deficit be computed?
 #' @param engine Which software are we generating code for?
@@ -78,12 +90,14 @@
 mm_name <- function(
   type=c('mle','bayes','night','Kmodel','sim'), 
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
-  pool_K600=c('none','normal','linear','binned'),
+  pool_K600=c('none','normal','linear','binned','complete'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('pairmeans','Euler','NA'),
-  deficit_src=c('DO_mod','DO_obs','NA'),
+  GPP_fun=c('linlight', 'satlight','NA'),
+  ER_fun=c('constant', 'q10temp','NA'),
+  deficit_src=c('DO_mod','DO_obs','DO_obs_filter','NA'),
   engine=c('stan','jags','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
   
@@ -98,12 +112,14 @@ mm_name <- function(
     # only one argument allowed for Kmodel
     relevant_args <- 'engine' 
     # directly specify all the rest
-    pool_K600='none'
-    pool_all='none'
+    pool_K600='complete'
+    pool_all='complete'
     err_obs_iid=FALSE
     err_proc_acor=FALSE
     err_proc_iid=FALSE
     ode_method='NA'
+    GPP_fun='NA'
+    ER_fun='NA'
     deficit_src='NA'
   }
   given_args <- names(match.call()[-1])
@@ -123,6 +139,8 @@ mm_name <- function(
     if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
     if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
     ode_method <- match.arg(ode_method)
+    GPP_fun <- match.arg(GPP_fun)
+    ER_fun <- match.arg(ER_fun)
     deficit_src <- match.arg(deficit_src)
     if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
   } else {
@@ -136,12 +154,14 @@ mm_name <- function(
   # make the name
   mmname <- paste0(
     c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
-    c(none='', normal='Kn', linear='Kl', binned='Kb')[[pool_K600]],
-    c(none='np', partial='')[[pool_all]], '_',
+    c(none='', normal='Kn', linear='Kl', binned='Kb', complete='Kc')[[pool_K600]],
+    c(none='np', partial='', complete='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
-    c(DO_mod='km', DO_obs='ko', 'NA'='')[[deficit_src]], '.',
-    engine)
+    c(linlight='pl', satlight='ps', 'NA'='')[[GPP_fun]],
+    c(constant='rc', q10temp='rq', 'NA'='')[[ER_fun]], 
+    c(DO_mod='km', DO_obs='ko', DO_obs_filter='kf', 'NA'='')[[deficit_src]], 
+    '.', engine)
   
   # check validity if requested
   check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]

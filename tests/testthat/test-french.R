@@ -57,7 +57,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   
   # PRK (metab_mle)
   smest <- get_fit(metab(
-    specs=specs('m_np_oi_eu_km.nlm', day_start=start.numeric, day_end=end.numeric),
+    specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort))[1,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   expect_lt(abs(smest$GPP - bobest$GPP), 0.01) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
@@ -75,7 +75,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   
   # PR (metab_mle)
   smest <- get_fit(metab_mle(
-    specs=specs('m_np_oi_eu_km.nlm', day_start=start.numeric, day_end=end.numeric),
+    specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort, data_daily=data.frame(date=mid.date, K600=35)))[,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
   expect_lt(abs(smest$GPP - bobest$GPP), 0.02) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
@@ -84,11 +84,11 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   
   # Bayes w/ Bob's MLE-PRK for comparison - really loose criteria for prediction agreement
   prkest <- get_fit(metab_mle(
-    specs=specs('m_np_oi_eu_km.nlm', day_start=start.numeric, day_end=end.numeric),
+    specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort))[,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   mb <- metab_bayes(
-    specs=specs('b_np_oi_eu_km.jags', saved_steps=4000, day_start=start.numeric, day_end=end.numeric), 
+    specs=specs('b_np_oi_eu_plrckm.jags', saved_steps=4000, day_start=start.numeric, day_end=end.numeric), 
     data=vfrenchshort)
   smest <- predict_metab(mb)[,c("GPP","ER","K600")]
   expect_lt(abs(smest$GPP - bobest$GPP), 0.2) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
