@@ -179,7 +179,10 @@ metab_bayes <- function(
       } else {
         bayes_mcmc_data <- NULL
       }
-      bayes_all <- list(daily=bayes_daily)
+      bayes_all <- list(
+        daily=bayes_daily,
+        warnings=sort(unique(unlist(strsplit(bayes_daily$warnings, '; ')))),
+        errors=sort(unique(unlist(strsplit(bayes_daily$errors, '; ')))))
       
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
@@ -197,7 +200,6 @@ metab_bayes <- function(
       bayes_all_list$mcmc_data <- NULL
       bayes_all <- bayes_all_list # list of dfs
     }
-  
   })
   
   if(isTRUE(specs$verbose)) {
@@ -219,7 +221,13 @@ metab_bayes <- function(
     data_daily=dat_list$data_daily)
   
   # Update data with DO predictions
-  mm@data <- predict_DO(mm)
+  success <- any(complete.cases(select(bayes_all$daily, starts_with('GPP'), starts_with('ER'), starts_with('K600')))) && 
+    (length(bayes_all$errors) == 0 || length(grep('JAGS not found', bayes_all$errors)) == 0)
+  if(success) {
+    mm@data <- predict_DO(mm)
+  } else {
+    warning(paste0('Modeling failed:\n', paste0(bayes_all$errors, collapse='\n')))
+  }
   
   # Maybe garbage collection here might reduce number of crashes?
   # gc()
@@ -569,6 +577,10 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   
   if(!requireNamespace("runjags", quietly = TRUE)) {
     stop("the runjags package is required for JAGS MCMC models")
+  }
+  jags_msg <- tryCatch({runjags::findjags(); 'OK'}, warning=function(w) w$message)
+  if(jags_msg != 'OK') {
+    stop("JAGS not found. Install and/or seek help from sourceforge.net/projects/mcmc-jags")
   }
   
   inits_fun <- function(chain) {
