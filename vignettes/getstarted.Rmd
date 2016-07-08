@@ -264,8 +264,9 @@ the available arguments are the same as those returned in the columns of the
 above table.)
 ```{r bayes_name}
 bayes_name <- mm_name(
-  type='bayes', pool_K600='none', err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE,
-  ode_method='pairmeans', deficit_src='DO_mod', engine='jags')
+  type='bayes', pool_K600='none', 
+  err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE, 
+  ode_method='pairmeans', deficit_src='DO_mod', engine='stan')
 bayes_name
 ```
 
