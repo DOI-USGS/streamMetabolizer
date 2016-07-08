@@ -8,7 +8,6 @@
 # Produced vignettes
 vignettes/*.html
 vignettes/*.pdf
-inst/doc/*
 .Rproj.user
 *.Rproj
 *.DS_Store
@@ -16,6 +15,5 @@ inst/doc/*
 tests/testthat/Rplots.pdf
 # Temporary files
 temp
-inst/doc
 # Machine-specific files
 inst/models/*.stanrda
