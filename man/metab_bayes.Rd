@@ -43,15 +43,41 @@ argument.
 }
 \examples{
 \dontrun{
-dat <- data_metab() # 1 day of example data
+dat <- data_metab('3', res='30')
 # fast-ish model version, but still too slow to auto-run in examples
-mm <- metab_bayes(
+mm <- metab_bayes(data=dat,
   specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
-        n_chains=1, burnin_steps=300, saved_steps=100),
-  data=dat)
+    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
+mm
 predict_metab(mm)
 get_fitting_time(mm)
 plot_DO_preds(predict_DO(mm))
+
+# test that error-free models can be run with split or combined dates, jags or stan
+dat <- data_metab('1', res='30')
+sp <- specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100)
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+dat <- data_metab('3', res='30')
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+
+# error and warning messages are printed with the mm object if present
+dat <- data_metab('1', res='30', flaws=c('missing start'))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+dat <- data_metab('3', res='30', flaws=c('missing middle'))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
 }
 }
 \author{

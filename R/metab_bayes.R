@@ -17,15 +17,43 @@ NULL
 #'   
 #' @examples
 #' \dontrun{
-#' dat <- data_metab() # 1 day of example data
+#' dat <- data_metab('3', res='30')
 #' # fast-ish model version, but still too slow to auto-run in examples
-#' mm <- metab_bayes(
+#' mm <- metab_bayes(data=dat,
 #'   specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
-#'         n_chains=1, burnin_steps=300, saved_steps=100),
-#'   data=dat)
+#'     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
+#' mm
 #' predict_metab(mm)
 #' get_fitting_time(mm)
 #' plot_DO_preds(predict_DO(mm))
+#' 
+#' # test that error-free models can be run with split or combined dates, jags or stan
+#' sp <- specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100)
+#' dat <- data_metab('1', res='30')
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+#' dat <- data_metab('3', res='30')
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+#' 
+#' # error and warning messages are printed with the mm object if present
+#' sp <- specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100)
+#' dat <- data_metab('1', res='30', flaws=c('missing start'))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
+#' dat <- data_metab('3', res='30', flaws=c('missing middle'))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'jags')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(FALSE,'stan')))
+#' mm <- metab(data=dat, replace(sp, c('split_dates','engine'), list(TRUE, 'stan')))
 #' }
 #' @export
 #' @family metab_model
@@ -159,30 +187,31 @@ metab_bayes <- function(
     if(specs$split_dates == TRUE) {
       if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
       if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
-      # one day at a time, splitting into overlapping 31.5-hr 'plys' for each date
+      # one day at a time, splitting into overlapping ~24-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
         day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
         specs=specs) # for bayes_1ply
       # if we saved the modeling object[s] in the df, pull them out now
-      if('mcmcfit' %in% names(bayes_daily)) {
-        bayes_mcmc <- bayes_daily$mcmcfit
-        names(bayes_mcmc) <- bayes_daily$date
-        bayes_daily$mcmcfit <- NULL
-      } else {
-        bayes_mcmc <- NULL
+      extract_object_list <- function(col) {
+        # has side effects on bayes_daily!
+        if(col %in% names(bayes_daily)) {
+          val <- bayes_daily[[col]]
+          names(val) <- bayes_daily$date
+          bayes_daily[[col]] <<- NULL
+          val
+        } else NULL
       }
-      if('mcmc_data' %in% names(bayes_daily)) {
-        bayes_mcmc_data <- bayes_daily$mcmc_data
-        bayes_daily$mcmc_data <- NULL
-        names(bayes_mcmc_data) <- bayes_daily$date
-      } else {
-        bayes_mcmc_data <- NULL
-      }
+      bayes_log <- extract_object_list('log')
+      bayes_mcmc <- extract_object_list('mcmcfit')
+      bayes_mcmc_data <- extract_object_list('mcmc_data')
+      # package the daily predictions and pull out the extra-bad error/warning
+      # messages (those that occur on apparently valid days)
       bayes_all <- list(
         daily=bayes_daily,
-        warnings=sort(unique(unlist(strsplit(bayes_daily$warnings, '; ')))),
-        errors=sort(unique(unlist(strsplit(bayes_daily$errors, '; ')))))
+        log=bayes_log,
+        warnings=format_stopwarn_msgs(bayes_daily$warnings[bayes_daily$valid_day]),
+        errors=format_stopwarn_msgs(bayes_daily$errors[bayes_daily$valid_day]))
       
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
@@ -193,12 +222,13 @@ metab_bayes <- function(
       bayes_all_list <- bayes_allply(
         data_all=filtered$data, data_daily_all=filtered$data_daily, removed=filtered$removed,
         specs=specs)
-      # if we saved the modeling object, pull it out now
+      # if we saved the modeling object[s] in the list, pull them out now
       bayes_mcmc <- bayes_all_list$mcmcfit
       bayes_all_list$mcmcfit <- NULL
       bayes_mcmc_data <- bayes_all_list$mcmc_data
       bayes_all_list$mcmc_data <- NULL
-      bayes_all <- bayes_all_list # list of dfs
+      # now a list of dfs, log, warnings, and errors
+      bayes_all <- bayes_all_list
     }
   })
   
@@ -221,8 +251,9 @@ metab_bayes <- function(
     data_daily=dat_list$data_daily)
   
   # Update data with DO predictions
-  success <- any(complete.cases(select(bayes_all$daily, starts_with('GPP'), starts_with('ER'), starts_with('K600')))) && 
-    (length(bayes_all$errors) == 0 || length(grep('JAGS not found', bayes_all$errors)) == 0)
+  core_cols <- grepl("^(date|GPP|ER|K600)", names(bayes_all$daily))
+  success <- any(complete.cases(bayes_all$daily[core_cols])) && 
+    length(bayes_all$errors) == 0
   if(success) {
     mm@data <- predict_DO(mm)
   } else {
@@ -294,20 +325,27 @@ bayes_1ply <- function(
     bayes_1day <- data.frame(GPP_daily_mean=NA)
   }
   
-  # decide whether we'll bee keeping the data
+  # package the results, data, warnings, and errors
+  outdf <- data.frame(
+    bayes_1day[!(names(bayes_1day) %in% c('mcmcfit','log'))],
+    valid_day=isTRUE(ply_validity),
+    warnings=paste0(unique(warn_strs), collapse="; "), 
+    errors=paste0(unique(stop_strs), collapse="; "),
+    stringsAsFactors=FALSE) %>%
+    mutate(log = list(bayes_1day$log))
+  
+  # attach the mcmcfit if requested
+  if(specs$keep_mcmc) outdf$mcmcfit <- bayes_1day$mcmcfit
+  
+  # attach the mcmcdata if requested
   keep_mcmc_dat <- if(is.logical(specs$keep_mcmc_data)) {
     isTRUE(specs$keep_mcmc_data)
   } else {
     isTRUE(ply_date %in% specs$keep_mcmc_data)
   }
+  if(keep_mcmc_dat) outdf$mcmc_data <- list(data_list)
   
-  # Return, reporting any results, data, warnings, and errors
-  outdf <- data.frame(
-    bayes_1day,
-    warnings=paste0(unique(warn_strs), collapse="; "), 
-    errors=paste0(unique(stop_strs), collapse="; "),
-    stringsAsFactors=FALSE)
-  if(keep_mcmc_dat) outdf <- mutate(outdf, mcmc_data=list(data_list))
+  # return
   outdf
 }
 
@@ -370,13 +408,25 @@ bayes_allply <- function(
       list(daily=data.frame(date=date_vec, GPP_daily_mean=NA)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) bayes_allday$log else NULL))
   } else {
-    # check this now so 
+    # check this now in case we're not saving the data_list
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
       stop_strs <- c(stop_strs, "couldn't match dates to date indices")
     index <- '.dplyr.var'
     bayes_allday$daily <- bayes_allday$daily %>%
       rename(date=index) %>% 
       mutate(date=date_vec)
+  }
+
+  # add columns for compatibility with other dfs (e.g., removed) & methods
+  # (e.g., predict_metab)
+  bayes_allday$daily <- bayes_allday$daily %>%
+    mutate(valid_day=TRUE, warnings='', errors='')
+  
+  # add back the dates that were removed during date filtering
+  if(nrow(removed) > 0) {
+    bayes_allday$daily <- bayes_allday$daily %>%
+      full_join(mutate(removed, valid_day=FALSE, warnings=''), by=c('date', 'valid_day', 'warnings', 'errors')) %>%
+      arrange(date)
   }
   
   # Return, reporting any results, warnings, and errors
@@ -610,56 +660,21 @@ runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   
   # format output
   if(split_dates) {
-    # for one-day models, use a 1-row data.frame. see ls('package:rstan')
+    # for one-day models, create a 1-row data.frame. see ls('package:rstan')
     jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
                       runjags_out$summaries,
                       runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
     names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
     names_stats <- rep(tolower(gsub(" |-", "_", gsub("%", "pct", colnames(jags_mat)))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
-    jags_out <- jags_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
-      t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-      setNames(paste0(names_params, "_", names_stats))
-    
-    # add the model object if requested
-    if(keep_mcmc == TRUE) {
-      jags_out <- mutate(jags_out, mcmcfit=list(runjags_out))
-    }
+    jags_out <- format_mcmc_mat_split(jags_mat, names_params, names_stats, keep_mcmc, runjags_out)
   } else {
-    # for multi-day or unsplit models, format output into a list of data.frames,
-    # one per unique number of nodes sharing a variable name
+    # for multi-day or unsplit models, format output into a list of data.frames
     jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
                       runjags_out$summaries,
                       runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
-    colnames(jags_mat) <- gsub("%", "pct", colnames(jags_mat))
-    
-    stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
-    
-    # determine how many unique nrows, & therefore data.frames, there should be
-    var_table <- table(gsub("\\[[[:digit:]]\\]", "", rownames(jags_mat)))
-    all_dims <- unique(var_table) %>% setNames(., .)
-    names(all_dims)[all_dims == 1] <- "overall"
-    names(all_dims)[all_dims == data_list$d] <- "daily" # overrides 'overall' if d==1. that's OK
-    
-    # for each unique nrows, create the data.frame with vars in columns and indices in rows
-    jags_out <- lapply(all_dims, function(odim) {
-      dim_params <- names(var_table[which(var_table == odim)])
-      dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(jags_mat)))))
-      row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(jags_mat))[1])))
-      varstat_order <- paste0(rep(row_order, each=ncol(jags_mat)), '_', rep(colnames(jags_mat), times=length(row_order)))
-      
-      as.data.frame(jags_mat[dim_rows,,drop=FALSE]) %>%
-        rownames_to_column() %>%
-        gather(stat, value=val, 2:ncol(.)) %>%
-        mutate(variable=gsub("\\[[[:digit:]]\\]", "", rowname),
-               index=if(odim == 1) 1 else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
-               varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
-        select(index, varstat, val) %>%
-        spread(varstat, val)
-    })
-    
-    jags_out <- c(jags_out, list(mcmcfit=runjags_out))
+    jags_out <- format_mcmc_mat_nosplit(jags_mat, data_list$d, keep_mcmc, runjags_out)
   }
-
+  
   return(jags_out)
 }
 
@@ -739,46 +754,14 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # for one-day models, use a 1-row data.frame. see ls('package:rstan')
     stan_mat <- rstan::summary(runstan_out)$summary
     names_params <- rep(gsub("\\[1\\]", "", rownames(stan_mat)), each=ncol(stan_mat)) # the GPP, ER, etc. part of the name
-    names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # add the mean, sd, etc. part of the name
-    stan_out <- stan_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
-      t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
-      setNames(paste0(names_params, "_", names_stats))
+    names_stats <- rep(gsub("%", "pct", colnames(stan_mat)), times=nrow(stan_mat)) # the mean, sd, etc. part of the name
+    stan_out <- format_mcmc_mat_split(stan_mat, names_params, names_stats, keep_mcmc, runstan_out)
   } else {
     # for multi-day or unsplit models, format output into a list of data.frames,
     # one per unique number of nodes sharing a variable name
     stan_mat <- rstan::summary(runstan_out)$summary
-    colnames(stan_mat) <- gsub("%", "pct", colnames(stan_mat))
-    
-    stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
-    
-    # determine how many unique nrows, & therefore data.frames, there should be
-    var_table <- table(gsub("\\[[[:digit:]]+\\]", "", rownames(stan_mat)))
-    all_dims <- unique(var_table) %>% setNames(., .)
-    names(all_dims)[all_dims == 1] <- "overall"
-    names(all_dims)[all_dims == data_list$d] <- "daily" # overrides 'overall' if d==1. that's OK
-
-    # for each unique nrows, create the data.frame with vars in columns and indices in rows
-    stan_out <- lapply(all_dims, function(odim) {
-      dim_params <- names(var_table[which(var_table == odim)])
-      dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(stan_mat)))))
-      row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(stan_mat))[1])))
-      varstat_order <- paste0(rep(row_order, each=ncol(stan_mat)), '_', rep(colnames(stan_mat), times=length(row_order)))
-      
-      as.data.frame(stan_mat[dim_rows,]) %>%
-        rownames_to_column() %>%
-        gather(stat, value=val, 2:ncol(.)) %>%
-        mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
-               index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),
-               varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
-        select(index, varstat, val) %>%
-        spread(varstat, val)
-    })
+    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, keep_mcmc, runstan_out)
   } 
-  
-  # add the model object if requested
-  if(keep_mcmc == TRUE) {
-    stan_out <- c(stan_out, list(mcmcfit=runstan_out))
-  }
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
   progfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
@@ -787,6 +770,74 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   stan_out <- c(stan_out, list(log=progress))
   
   return(stan_out)
+}
+
+#' Format MCMC output into a one-row data.frame
+#' 
+#' For split_dates models. Formats output into a one-row data.frame for 
+#' row-binding with other such data.frames
+#' 
+#' @param mcmc_mat matrix as extracted from JAGS or Stan
+#' @param names_params character vector of the names of the parameters
+#' @param names_stats character vector of the names of the statistics
+#' @import dplyr
+#' @keywords internal
+format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc, runmcmc_out) {
+  # format the matrix into a 1-row df
+  mcmc_out <- mcmc_mat %>% t %>% c %>% # get a 1D vector of GPP_daily_mean, GPP_sd, ..., ER_daily_mean, ER_daily_sd, ... etc
+    t %>% as.data.frame() %>% # convert from 1D vector to 1-row data.frame
+    setNames(paste0(names_params, "_", names_stats))
+  
+  # add the model object as a df column if requested
+  if(keep_mcmc == TRUE) {
+    mcmc_out <- mutate(mcmc_out, mcmcfit=list(runmcmc_out))
+  }
+  
+  mcmc_out
+}
+
+#' Format MCMC output into a list of data.frames
+#' 
+#' For multi-day or unsplit models. Formats output into a list of data.frames, 
+#' one per unique number of nodes sharing a variable name
+#' 
+#' @param mcmc_mat matrix as extracted from JAGS or Stan
+#' @import dplyr
+#' @keywords internal
+format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, keep_mcmc, runmcmc_out) {
+  stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
+  
+  colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
+  
+  # determine how many unique nrows, & therefore data.frames, there should be
+  var_table <- table(gsub("\\[[[:digit:]]+\\]", "", rownames(mcmc_mat)))
+  all_dims <- unique(var_table) %>% setNames(., .)
+  names(all_dims)[all_dims == 1] <- "overall"
+  names(all_dims)[all_dims == data_list_d] <- "daily" # overrides 'overall' if d==1. that's OK
+  
+  # for each unique nrows, create the data.frame with vars in columns and indices in rows
+  mcmc_out <- lapply(all_dims, function(odim) {
+    dim_params <- names(var_table[which(var_table == odim)])
+    dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat)))))
+    row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1])))
+    varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
+    
+    as.data.frame(mcmc_mat[dim_rows,,drop=FALSE]) %>% # stan version didn't have drop=FALSE
+      rownames_to_column() %>%
+      gather(stat, value=val, 2:ncol(.)) %>%
+      mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
+             index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),
+             varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
+      select(index, varstat, val) %>%
+      spread(varstat, val)
+  })
+  
+  # add the model object as a list item if requested
+  if(keep_mcmc == TRUE) {
+    mcmc_out <- c(mcmc_out, list(mcmcfit=runmcmc_out))
+  }
+  
+  mcmc_out
 }
 
 
@@ -874,7 +925,14 @@ show_log <- function(metab_model) {
 show_log.metab_bayes <- function(metab_model) {
   if('log' %in% names(get_fit(metab_model))) {
     loglines <- get_fit(metab_model)$log
-    cat(paste(loglines, collapse='\n'))
+    if(is.list(loglines)) {
+      lapply(names(loglines), function(llname) { 
+        cat("###", llname, "###\n\n")
+        cat(paste(loglines[[llname]], collapse='\n')) 
+      }) 
+    } else {
+      cat(paste(loglines, collapse='\n'))
+    }
     invisible(loglines)
   } else {
     message('no log file found')
@@ -893,14 +951,6 @@ show_log.metab_bayes <- function(metab_model) {
 #' @export
 #' @family predict_metab
 predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ...) {
-  warn_strs <- metab_model@fit$warnings
-  stop_strs <- metab_model@fit$errors
-  metab_model <- metab_model(fit=mutate(
-    metab_model@fit$daily, 
-    warnings=if(length(warn_strs) == 0) NA else "see 'warnings' attribute", 
-    errors=if(length(stop_strs) == 0) NA else "see 'errors' attribute"))
-  preds <- NextMethod()
-  attr(preds, 'warnings') <- warn_strs
-  attr(preds, 'errors') <- stop_strs
-  preds
+  metab_model@fit <- metab_model@fit$daily
+  NextMethod()
 }
