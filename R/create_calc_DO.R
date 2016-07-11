@@ -4,11 +4,10 @@
 #' @inheritParams mm_name
 #' @return a function that will return a negative log likelihood of the data
 #'   given a set of metab.pars
-#' @import deSolve
 #' @examples
 #' \dontrun{
 #' # prepare data for examples
-#' data <- data_metab('3','30')[97:144,]
+#' data <- data_metab('3','30')[97:144,][seq(1,48,by=2),]
 #' preds.init <- as.list(dplyr::select(
 #'   predict_metab(metab(specs(mm_name('mle', ode_method='pairmeans')), data=data)),
 #'   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
@@ -85,26 +84,49 @@ create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
                            ode_method=environment(dDOdt)$ode_method) {
   if(!xor(err_obs_iid, err_proc_iid))
     stop("need err_obs_iid or err_proc_iid but not both or neither")
-
+  
   # pull out info from the calc_dDOdt closure
   DO.obs <- environment(calc_dDOdt)$data$DO.obs
   t <- environment(calc_dDOdt)$data$t
-
-  # identify the right ode method argument
-  ode.method <- switch(
-    ode_method,
-    Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
-    rk2=rkMethod('rk2'),
-    ode_method
-  )
-
-  function(metab.pars) {
+  
+  if(requireNamespace('deSolve', quietly=TRUE)) {
+    # identify the right ode method argument
+    ode.method <- switch(
+      ode_method,
+      Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      rk2=rkMethod('rk2'),
+      ode_method
+    )
+    
     # use numerical integration to predict the timeseries of DO.mod
-    DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else data$DO.obs[1]
-    ode(
-      y=c(DO.mod=DO.mod.1),
-      parms=metab.pars,
-      times=t,
-      func=calc_dDOdt, method=ode.method)[,'DO.mod']
+    calc.DO <- function(metab.pars) {
+      DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else data$DO.obs[1]
+      ode(
+        y=c(DO.mod=DO.mod.1),
+        parms=metab.pars,
+        times=t,
+        func=calc_dDOdt, method=ode.method)[,'DO.mod']
+    }
+  } else {
+    # identify the right ode method argument
+    ode.method <- switch(
+      ode_method,
+      Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      stop("package deSolve is required for ode_method '", ode_method, "'.\n",
+           "  Either install deSolve or select ode_method from c('Euler','trapezoid','pairmeans')")
+    )
+    
+    # use numerical integration to predict the timeseries of DO.mod
+    calc.DO <- function(metab.pars) {
+      DO.mod <- rep(NA, length(t))
+      DO.mod[1] <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else DO.obs[1]
+      for(i in t[-1]) {
+        DO.mod[i] <-
+          DO.mod[i-1] +
+          calc_dDOdt(t=i-1, state=c(DO.mod=DO.mod[i-1]), metab.pars=metab.pars)$dDOdt
+      }
+      DO.mod
+    }
   }
+  calc.DO
 }

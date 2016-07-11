@@ -30,7 +30,7 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_mle object containing the fitted model. This object can be 
+A metab_mle object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{

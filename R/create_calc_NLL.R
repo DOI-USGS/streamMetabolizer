@@ -5,10 +5,9 @@
 #' @inheritParams mm_name
 #' @return a function that will return a negative log likelihood of the data
 #'   given a set of metab.pars
-#' @import deSolve
 #' @examples
 #' \dontrun{
-#' data <- data_metab('1','30')
+#' data <- data_metab('1','30')[seq(1,48,by=2),]
 #' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
 #' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)
@@ -25,19 +24,19 @@ create_calc_NLL <- function(
   err_proc_iid=environment(calc_DO)$err_proc_iid) {
   if(!xor(err_obs_iid, err_proc_iid))
     stop("need err_obs_iid or err_proc_iid but not both or neither")
-
+  
   # pull out info from the calc_dDOdt closure
   DO.obs <- environment(calc_DO)$DO.obs
-
+  
   # pre-calculate anything we can
   if(err_proc_iid) {
     dDOdt.obs <- diff(DO.obs)
   }
-
+  
   function(metab.pars) {
     # use numerical integration to predict the timeseries of DO.mod
     DO.mod <- calc_DO(setNames(as.list(metab.pars), par.names))
-
+    
     # calculate & return the negative log likelihood of mod values relative to
     # obs values. equivalent to Bob's original code & formula at
     # http://www.statlect.com/normal_distribution_maximum_likelihood.htm

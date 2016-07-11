@@ -17,7 +17,7 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' data <- data_metab('1','30')
+#' data <- data_metab('1','30')[seq(1,48,by=2),]
 #' dDOdt.obs <- diff(data$DO.obs)
 #' preds.init <- as.list(dplyr::select(
 #'   predict_metab(metab(specs(mm_name('mle', ode_method='Euler')), data=data)),
@@ -38,21 +38,24 @@
 #'   ER_fun='constant', deficit_src='DO_mod')
 #' environment(dDOdt)$metab.needs # get the names to be included in metab
 #' # approximate dDOdt and DO using DO.obs for DO deficits & Eulerian integration
-#' dDOdt.mod.m <- sapply(1:47, function(t) dDOdt(t=t, state=c(DO.mod=data$DO.obs[t]),
+#' dDOdt.mod.m <- sapply(1:23, function(t) dDOdt(t=t, state=c(DO.mod=data$DO.obs[t]),
 #'   metab.pars=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21))$dDOdt)
-#' DO.mod.m <- cumsum(c(data$DO.obs[1], dDOdt.mod))
+#' DO.mod.m <- cumsum(c(data$DO.obs[1], dDOdt.mod.m))
+#' par(mfrow=c(2,1), mar=c(3,3,1,1)+0.1)
 #' plot(x=DOtime, y=data$DO.obs)
 #' lines(x=DOtime, y=DO.mod.m, type='l', col='purple')
 #' plot(x=dDOtime, y=dDOdt.obs)
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
+#' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 #'
 #' # compute & plot a full timeseries with ode() integration
 #' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO.mod.o <- ode(
+#' DO.mod.o <- deSolve::ode(
 #'   y=c(DO.mod=data$DO.obs[1]),
 #'   parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
 #'   times=1:nrow(data), func=dDOdt, method='euler')[,'DO.mod']
+#' par(mfrow=c(2,1), mar=c(3,3,1,1)+0.1)
 #' plot(x=DOtime, y=data$DO.obs)
 #' lines(x=DOtime, y=DO.mod.m, type='l', col='purple')
 #' lines(x=DOtime, y=DO.mod.o, type='l', col='red')
@@ -60,6 +63,7 @@
 #' plot(x=dDOtime, y=dDOdt.obs)
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 #' lines(x=dDOtime, y=dDOdt.mod.o, type='l', col='forestgreen')
+#' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 #'
 #' # see how values of metab.pars affect the dDOdt predictions
 #' library(dplyr); library(ggplot2); library(tidyr)
@@ -79,7 +83,7 @@
 #' dDO.preds %>%
 #'   select(solar.time, starts_with('dDO.preds')) %>%
 #'   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) %>%
-#'   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line()
+#'   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
 #' }
 create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
 

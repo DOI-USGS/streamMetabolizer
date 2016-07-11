@@ -86,7 +86,7 @@ where K600 is NA. If there are any such dates, K600_init must have a
 numeric (non-NA) value, as this will be used to estimate K600 for those 
 dates.}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER, 
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 
 \item{ODE_method}{character specifying the numerical integration method to 

@@ -29,7 +29,7 @@ metabolism parameter values
 }
 \examples{
 \dontrun{
-data <- data_metab('1','30')
+data <- data_metab('1','30')[seq(1,48,by=2),]
 dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)

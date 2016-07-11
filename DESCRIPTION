@@ -27,6 +27,7 @@ Imports:
     tidyr
 Suggests:
     chron,
+    deSolve,
     devtools,
     dygraphs,
     ggplot2,

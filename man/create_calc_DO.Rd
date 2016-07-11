@@ -31,7 +31,7 @@ Create a function to compute the numerical integration of a dDOdt function
 \examples{
 \dontrun{
 # prepare data for examples
-data <- data_metab('3','30')[97:144,]
+data <- data_metab('3','30')[97:144,][seq(1,48,by=2),]
 preds.init <- as.list(dplyr::select(
   predict_metab(metab(specs(mm_name('mle', ode_method='pairmeans')), data=data)),
   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
