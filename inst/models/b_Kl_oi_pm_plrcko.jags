@@ -3,8 +3,8 @@
 data {
   for(i in 1:(n-1)) {
     # Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[1:d,i]  <- (frac_GPP[1:d,i] + frac_GPP[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
-    coef_ER[1:d,i]   <- (frac_ER[1:d,i] + frac_ER[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_GPP[1:d,i] <- (frac_GPP[1:d,i] + frac_GPP[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
+    coef_ER[1:d,i] <- (frac_ER[1:d,i] + frac_ER[1:d,i+1])/2.0 / ((depth[1:d,i] + depth[1:d,i+1])/2.0)
     coef_K600_full[1:d,i] <- (KO2_conv[1:d,i] + KO2_conv[1:d,i+1])/2.0 * (frac_D[1:d,i] + frac_D[1:d,i+1])/2.0 *
       (DO_sat[1:d,i] + DO_sat[1:d,i+1] - DO_obs[1:d,i] - DO_obs[1:d,i+1])/2.0
     # dDO observations
