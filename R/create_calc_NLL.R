@@ -5,6 +5,7 @@
 #' @inheritParams mm_name
 #' @return a function that will return a negative log likelihood of the data
 #'   given a set of metab.pars
+#' @importFrom stats dnorm
 #' @examples
 #' \dontrun{
 #' data <- data_metab('1','30')[seq(1,48,by=2),]

@@ -14,6 +14,7 @@
 #'   function and then call \code{environment(dDOdt)$metab.needs})
 #' @import dplyr
 #' @import unitted
+#' @importFrom stats approxfun
 #' @export
 #' @examples
 #' \dontrun{
