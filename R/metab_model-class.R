@@ -89,6 +89,13 @@ metab_model <- function(
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
+  # print the fitting time if requested
+  if(isTRUE(specs$verbose)) {
+    fitting_mins <- floor(fitting_time[['elapsed']] / 60)
+    fitting_secs <- round(fitting_time[['elapsed']] %% 60)
+    message("model fit in ", if(fitting_mins > 0) paste0(fitting_mins, " min, "), fitting_secs, " sec")
+  }
+  
   # Create a metab_model object
   new(model_class, info=info, fit=fit, fitting_time=fitting_time, 
       specs=if(class(specs)[1] == 'specs') specs else add_specs_class(specs), 
@@ -129,9 +136,9 @@ setMethod(
         invokeRestart("muffleWarning")
       })
     if(length(object@fit$warnings) > 0)
-      cat("Warnings:", paste0('  ', object@fit$warnings, collapse='\n'), sep='\n')
+      cat("General fitting warnings:", paste0('  ', object@fit$warnings, collapse='\n'), sep='\n')
     if(length(object@fit$errors) > 0)
-      cat("Errors:", paste0('  ', object@fit$errors, collapse='\n'), sep='\n')
+      cat("General fitting errors:", paste0('  ', object@fit$errors, collapse='\n'), sep='\n')
   }
 )
 
@@ -272,8 +279,9 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     )
   }
   
-  attr(preds, 'warnings') <- format_stopwarn_msgs(fit$warnings)
-  attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors)
+  if(!exists('valid_day', fit)) fit$valid_day <- TRUE
+  attr(preds, 'warnings') <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
+  attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors[fit$valid_day])
   class(preds) <- c('preds_metab', class(preds))
   preds
 }
@@ -286,13 +294,13 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
 #' @keywords internal
 format_stopwarn_msgs <- function(msgs) {
   split_msgs <- unlist(strsplit(msgs, '; '))
-  tbl_msgs <- table(split_msgs)
+  tbl_msgs <- sort(table(split_msgs))
   if(length(tbl_msgs) == 0) {
     c()
   } else {
     msgs_w_counts <- paste0(
-      names(tbl_msgs), 
-      " (", unname(tbl_msgs), " date", ifelse(unname(tbl_msgs)==1,"","s"), ")")
+      unname(tbl_msgs), " date", ifelse(unname(tbl_msgs)==1,"","s"), ": ",
+      names(tbl_msgs))
     sort(msgs_w_counts)
   }
 }
@@ -300,17 +308,17 @@ format_stopwarn_msgs <- function(msgs) {
 #' Print metab preds, warnings, & errors
 #' 
 #' Print metab predictions with their warnings & errors if applicable
-#' @inheritParams print
-#' @keywords internal
+#' @inheritParams base::print
+#' @export
 print.preds_metab <- function(x, ...) {
   pristine_x <- x
   class(x) <- class(x)[class(x) != 'preds_metab']
   print(x)
   if(!is.null(attr(x, 'warnings')))
-    cat("Fitting warnings:", paste0('  ', attr(x, 'warnings'), collapse='\n'), sep='\n')
+    cat("Summary of date-specific fitting warnings:", paste0('  ', attr(x, 'warnings'), collapse='\n'), sep='\n')
   if(!is.null(attr(x, 'errors')))
-    cat("Fitting errors:", paste0('  ', attr(x, 'errors'), collapse='\n'), sep='\n')
-  pristine_x
+    cat("Summary of date-specific fitting errors:", paste0('  ', attr(x, 'errors'), collapse='\n'), sep='\n')
+  invisible(pristine_x)
 }
 
 

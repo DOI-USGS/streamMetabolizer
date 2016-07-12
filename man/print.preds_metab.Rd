@@ -6,8 +6,12 @@
 \usage{
 \method{print}{preds_metab}(x, ...)
 }
+\arguments{
+\item{x}{an object used to select a method.}
+
+\item{...}{further arguments passed to or from other methods.}
+}
 \description{
 Print metab predictions with their warnings & errors if applicable
 }
-\keyword{internal}
 
