@@ -172,6 +172,7 @@ mle_1ply <- function(
     mle.1d <- withCallingHandlers(
       tryCatch({
         # first: try to run the MLE fitting function
+        iter <<- NA
         mle.1d <- do.call(nlm, nlm.args)
         # if we were successful, also compute the confidence interval as in
         # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which

@@ -53,6 +53,16 @@ create_calc_NLL <- function(
       diffs <- dDOdt.obs - dDOdt.mod
       sd <- if('err_proc_iid_sigma' %in% all.pars) all.pars$err_proc_iid_sigma else sqrt(mean(diffs^2))
     }
-    -sum(dnorm(x=diffs, sd=sd, log=TRUE))
+    nll <- -sum(dnorm(x=diffs, sd=sd, log=TRUE))
+    it <- get('iter', envir=.GlobalEnv)
+    if(is.na(it)) {
+      iter <<- 1
+      plot(DO.mod, type='l', ylim=c(0,20))
+      points(DO.obs, pch=19, col='blue', cex=0.5)
+    } else {
+      iter <<- it + 1
+      lines(DO.mod, col=grey(1-min(1,it/150)))
+    }
+    nll
   }
 }
