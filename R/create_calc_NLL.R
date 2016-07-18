@@ -15,7 +15,10 @@
 #' NLL <- create_calc_NLL(DO)
 #' NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
 #' NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+#' NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'))
+#' NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
 #' nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+#' nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
 #' }
 #' @export
 create_calc_NLL <- function(
@@ -34,20 +37,21 @@ create_calc_NLL <- function(
     dDOdt.obs <- diff(DO.obs)
   }
   
-  function(metab.pars) {
-    # use numerical integration to predict the timeseries of DO.mod
-    DO.mod <- calc_DO(setNames(as.list(metab.pars), par.names))
+  function(metab.pars, ...) {
+    # use numerical integration to predict the timeseries of DO.mod. Assumes 
+    all.pars <- c(setNames(as.list(metab.pars), par.names), list(...))
+    DO.mod <- calc_DO(all.pars)
     
     # calculate & return the negative log likelihood of mod values relative to
     # obs values. equivalent to Bob's original code & formula at
     # http://www.statlect.com/normal_distribution_maximum_likelihood.htm
     if(err_obs_iid) {
       diffs <- DO.obs - DO.mod
-      sd <- if('err_obs_iid_sigma' %in% metab.pars) metab.pars$err_obs_iid_sigma else sqrt(mean(diffs^2))
+      sd <- if('err_obs_iid_sigma' %in% all.pars) all.pars$err_obs_iid_sigma else sqrt(mean(diffs^2))
     } else if(err_proc_iid) {
-      dDOdt.mod <- diff(DO.mod)
+      dDOdt.mod <- diff(DO.mod) # should this be diff(DO.mod) or calc_dDOdt over all times?
       diffs <- dDOdt.obs - dDOdt.mod
-      sd <- if('err_proc_iid_sigma' %in% metab.pars) metab.pars$err_proc_iid_sigma else sqrt(mean(diffs^2))
+      sd <- if('err_proc_iid_sigma' %in% all.pars) all.pars$err_proc_iid_sigma else sqrt(mean(diffs^2))
     }
     -sum(dnorm(x=diffs, sd=sd, log=TRUE))
   }

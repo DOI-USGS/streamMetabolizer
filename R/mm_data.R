@@ -41,6 +41,15 @@
 #'   
 #'   \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
 #'   
+#'   \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2 
+#'   d^-1}}, for use in maximum likelihood estimation
+#'   
+#'   \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}},
+#'   for use in maximum likelihood estimation
+#'   
+#'   \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use
+#'   in maximum likelihood estimation
+#'   
 #'   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
 #'   
 #'   \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}
@@ -88,6 +97,9 @@ mm_data <- function(..., optional='none') {
     K600=      u(5,"d^-1"), 
     K600.lower=u(4.5,"d^-1"), 
     K600.upper=u(5.6,"d^-1"), 
+    GPP.init=  u(5,"gO2 m^-2 d^-1"), 
+    ER.init=   u(5,"gO2 m^-2 d^-1"), 
+    K600.init= u(5,"d^-1"), 
     discharge.daily= u(9,"m^3 s^-1"), 
     velocity.daily=  u(2,"m s^-1")))
   .dots <- lazy_dots(...)

@@ -30,7 +30,7 @@ NULL
 metab_mle <- function(
   specs=specs(mm_name('mle')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(date, K600, optional='all'),
+  data_daily=mm_data(date, K600, GPP.init, ER.init, K600.init, optional='all'),
   info=NULL
 ) {
   
@@ -93,27 +93,42 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
-  # Collect K600 if it's available
-  K600 <- if(is.null(data_daily_ply)) {
-    NULL
-  } else {
-    if(nrow(data_daily_ply)==0 || is.na(data_daily_ply$K600)) {
-      # Daily K600 has generally been supplied but isn't available for this
-      # particular day. What do we do? Do we (A) estimate all three parameters
-      # because we can (K600 <- NULL), or (B) omit this day because the user
-      # will be expecting consistency in methods across days (K600 <- {stop_strs
-      # <- c(stop_strs, "data_daily$K600 is NA"); NA})? Going with (C) give
-      # warning and then estimate all three parameters.
-      warn_strs <- c(warn_strs, "data_daily$K600 is NA so fitting by MLE")
-      NULL #(C)
-    } else {
-      data_daily_ply$K600
+  # Collect K600 and date-specific initial values if they're available. If a
+  # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
+  # value==NA), use the default: for xx_init values this is specs$xx_init, for
+  # K600 this is NULL (fit by MLE)
+  GPP.init <- specs$GPP_init
+  ER.init <- specs$ER_init
+  K600.init <- specs$K600_init
+  K600 <- NULL
+  if(!is.null(data_daily_ply)) {
+    inits <- c('GPP.init', 'ER.init', 'K600.init') %>% { .[. %in% names(data_daily_ply)] }
+    if(nrow(data_daily_ply)==0) {
+      if(length(inits) > 0) {
+        warn_strs <- c(warn_strs, paste0(
+          "nrow(data_daily)==0 so using specs for ", paste0(inits, collapse=', ')))
+      }
+      if(exists('K600', data_daily_ply)) {
+        warn_strs <- c(warn_strs, "nrow(data_daily)==0 so fitting K600 by MLE")
+      }
+    } else if(nrow(data_daily_ply)==1) {
+      for(init in inits) {
+        if(is.na(data_daily_ply[[init]])) 
+          warn_strs <- c(warn_strs, paste0("data_daily$", init, "==NA so using specs"))
+        else
+          assign(init, data_daily_ply[[init]])
+      }
+      if(is.na(data_daily_ply$K600)) {
+        warn_strs <- c(warn_strs, "data_daily$K600==NA so fitting by MLE")
+      } else {
+        K600 <- data_daily_ply$K600
+      }
     }
   }
   
   # Calculate metabolism by non linear minimization of an MLE function
   if(length(stop_strs) == 0) {
-    mle_method <- 'old'
+    mle_method <- if(exists('mle_method', specs)) specs$mle_method else 'old'
     if(mle_method=='old') {
       nlm.args <- c(
         list(
@@ -130,18 +145,27 @@ mle_1ply <- function(
           frac.ER = timestep_days,
           frac.D = timestep_days,
           calc_DO_fun = specs$calc_DO_fun,
-          ODE_method = specs$ODE_method
+          ODE_method = mm_parse_name(specs$model_name)$ode_method
         ))
-    } else {
-      dDOdt <- create_calc_dDOdt(data_ply, ode_method=specs$ODE_method, GPP_fun=specs$GPP_fun,
-                                 ER_fun=specs$ER_fun, deficit_src=specs$deficit_src)
-      DO <- create_calc_DO(dDOdt, err_obs_iid=specs$err_obs_iid, err_proc_iid=specs$err_proc_iid)
-      NLL <- create_calc_NLL(DO) # to fit DO.mod.1 and/or , add these to par.names here
-      nlm.args <- list(
-        f = NLM,
-        p = c(GPP=specs$GPP_init, ER=specs$ER_init, K600=specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
-        K600.daily=K600,
-        hessian = TRUE
+    } else if(mle_method=='new') {
+      
+      # parse the model_name
+      features <- mm_parse_name(specs$model_name)
+      dDOdt <- create_calc_dDOdt(
+        data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+      DO <- create_calc_DO(dDOdt, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
+      # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
+      NLL <- create_calc_NLL(DO)
+      nlm.args <- c(
+        list(
+          f = NLL,
+          p = c(
+            GPP.daily=specs$GPP_init, 
+            ER.daily=specs$ER_init, 
+            K600.daily=if(is.null(K600)) specs$K600_init),
+          hessian = TRUE),
+        if(!is.null(K600)) list(K600.daily = K600)
       )
     }
     

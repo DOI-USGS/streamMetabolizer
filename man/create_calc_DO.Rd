@@ -5,7 +5,7 @@
 \title{Create a function to compute the numerical integration of a dDOdt function}
 \usage{
 create_calc_DO(calc_dDOdt, err_obs_iid = FALSE, err_proc_iid = FALSE,
-  ode_method = environment(dDOdt)$ode_method)
+  ode_method = environment(calc_dDOdt)$ode_method)
 }
 \arguments{
 \item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}
@@ -17,9 +17,11 @@ rather than to the DO measurements themselves.}
 \item{err_proc_iid}{logical. Should IID process error be included?}
 
 \item{ode_method}{The method to use in solving the ordinary differential 
-equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP, 
-ER, DO, etc. at t=1. pairmeans: dDOdt from t=1 to t=2 is a function of the 
-mean values of GPP, ER, etc. across t=1 and t=2.}
+equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
+function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
+from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
+t=1 and t=2. With metab_mle, other methods are available including 'rk2'
+and any character method accepted by \code{\link[deSolve]{deSolve::ode}}}
 }
 \value{
 a function that will return a negative log likelihood of the data

@@ -81,7 +81,7 @@
 #' }
 #' @export
 create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
-                           ode_method=environment(dDOdt)$ode_method) {
+                           ode_method=environment(calc_dDOdt)$ode_method) {
   if(!xor(err_obs_iid, err_proc_iid))
     stop("need err_obs_iid or err_proc_iid but not both or neither")
   
@@ -94,14 +94,14 @@ create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
     ode.method <- switch(
       ode_method,
       Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
-      rk2=rkMethod('rk2'),
+      rk2=deSolve::rkMethod('rk2'),
       ode_method
     )
     
     # use numerical integration to predict the timeseries of DO.mod
     calc.DO <- function(metab.pars) {
-      DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else data$DO.obs[1]
-      ode(
+      DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
+      deSolve::ode(
         y=c(DO.mod=DO.mod.1),
         parms=metab.pars,
         times=t,

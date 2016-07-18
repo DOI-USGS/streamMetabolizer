@@ -60,6 +60,15 @@ Produces a unitted data.frame with the column names, units, and
   
   \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
   
+  \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2 
+  d^-1}}, for use in maximum likelihood estimation
+  
+  \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}},
+  for use in maximum likelihood estimation
+  
+  \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use
+  in maximum likelihood estimation
+  
   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
   
   \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}

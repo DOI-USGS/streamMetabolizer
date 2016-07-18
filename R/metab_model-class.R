@@ -135,10 +135,12 @@ setMethod(
         cat("Prediction warnings:", paste0('  ', war$message, collapse='\n'), sep='\n')
         invokeRestart("muffleWarning")
       })
-    if(length(object@fit$warnings) > 0)
-      cat("General fitting warnings:", paste0('  ', object@fit$warnings, collapse='\n'), sep='\n')
-    if(length(object@fit$errors) > 0)
-      cat("General fitting errors:", paste0('  ', object@fit$errors, collapse='\n'), sep='\n')
+    if(!is.data.frame(object@fit)) {
+      if(length(object@fit$warnings) > 0)
+        cat("General fitting warnings:", paste0('  ', object@fit$warnings, collapse='\n'), sep='\n')
+      if(length(object@fit$errors) > 0)
+        cat("General fitting errors:", paste0('  ', object@fit$errors, collapse='\n'), sep='\n')
+    }
   }
 )
 

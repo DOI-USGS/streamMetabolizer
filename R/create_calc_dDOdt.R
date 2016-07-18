@@ -94,6 +94,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
 
   # define the forcing (temp.water, light, DO.sat, etc.) interpolations and
   # other inputs to include in the dDOdt() closure
+  data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data[, 'temp.water'], gas='O2')
   switch(
     ode_method,
     # the simplest methods only require values at integer values of t
@@ -103,7 +104,6 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
       depth <- function(t) data[t, 'depth']
       temp.water <- function(t) data[t, 'temp.water']
       light <- function(t) data[t, 'light']
-      data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data[, 'temp.water'], gas="O2")
       KO2.conv <- function(t) data[t, 'KO2.conv']
     },
     { # other methods require functions that can be applied at non-integer values of t
@@ -112,7 +112,8 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
       depth <- approxfun(data$t, data$depth, rule=2)
       temp.water <- approxfun(data$t, data$temp.water, rule=2)
       light <- approxfun(data$t, data$light, rule=2)
-      KO2.conv <- function(t) convert_k600_to_kGAS(k600=1, temperature=temp.water(t), gas="O2")
+      KO2.conv <- approxfun(data$t, data$KO2.conv, rule=2)
+      #KO2.conv <- function(t) convert_k600_to_kGAS(k600=1, temperature=temp.water(t), gas="O2")
     }
   )
   timestep.days <- suppressWarnings(mean(as.numeric(diff(unitted::v(data$solar.time)), units="days"), na.rm=TRUE))
@@ -129,22 +130,23 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
         list(in.solar.day = data$solar.time < (data$solar.time[1] + as.difftime(1, units='days'))),
         mean(data$light[in.solar.day]))
       metab.needs <<- c(metab.needs, 'GPP.daily')
-      function(t, metab.pars) with(metab.pars, {
-        GPP.daily * light(t) / mean.light
-      })
+      function(t, metab.pars) {
+        metab.pars$GPP.daily * light(t) / mean.light
+      }
     })(),
     satlight=(function(){
       metab.needs <<- c(metab.needs, c('Pmax','alpha'))
-      function(t, metab.pars) with(metab.pars, {
-        Pmax * tanh(alpha * light(t) / Pmax)
-      })
+      function(t, metab.pars) {
+        metab.pars$Pmax * tanh(metab.pars$alpha * light(t) / metab.pars$Pmax)
+      }
     })(),
     satlightq10temp=(function(){
       metab.needs <<- c(metab.needs, c('Pmax','alpha'))
-      function(t, metab.pars) with(metab.pars, {
-        Pmax * tanh(alpha * light(t) / Pmax) * 1.036 ^ (temp.water(t) - 20)
-      })
-    })()
+      function(t, metab.pars) {
+        metab.pars$Pmax * tanh(metab.pars$alpha * light(t) / metab.pars$Pmax) * 1.036 ^ (temp.water(t) - 20)
+      }
+    })(),
+    stop('unrecognized GPP_fun')
   )
 
   # ER: instantaneous ecosystem respiration at time t in d^-1
@@ -152,17 +154,18 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
     ER_fun,
     constant=(function(){
       metab.needs <<- c(metab.needs, 'ER.daily')
-      function(t, metab.pars) with(metab.pars, {
-        ER.daily
-      })
+      function(t, metab.pars) {
+        metab.pars$ER.daily
+      }
     })(),
     q10temp=(function(){
       # song_methods_2016 cite Gulliver & Stefan 1984; Parkhill & Gulliver 1999
       metab.needs <<- c(metab.needs, 'ER20')
-      function(t, metab.pars) with(metab.pars, {
-        ER20 * 1.045 ^ (temp.water(t) - 20)
-      })
-    })()
+      function(t, metab.pars) {
+        metab.pars$ER20 * 1.045 ^ (temp.water(t) - 20)
+      }
+    })(),
+    stop('unrecognized ER_fun')
   )
 
   # D: instantaneous reaeration rate at time t in gO2 m^-3 d^-1
@@ -170,16 +173,17 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
     deficit_src,
     DO_obs=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      function(t, DO.mod.t, metab.pars) with(metab.pars, {
-        K600.daily * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
-      })
+      function(t, DO.mod.t, metab.pars) {
+        metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
+      }
     })(),
     DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      function(t, DO.mod.t, metab.pars) with(metab.pars, {
-        K600.daily * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
-      })
-    })()
+      function(t, DO.mod.t, metab.pars) {
+        metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
+      }
+    })(),
+    stop('unrecognized deficit_src')
   )
 
   # dDOdt: instantaneous rate of change in DO at time t in gO2 m^-3 timestep^-1
@@ -201,30 +205,25 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
     # / (1 + k.O2.daily*frac.k.O2[t+1]/2)
     trapezoid=, pairmeans={
       function(t, state, metab.pars){
-        # pm = pairmeans
-        pm <- function(fun, ...) mean(fun(c(t, t+1), ...))
-        with(c(state, metab.pars), {
-          list(
-            dDOdt=(
-              - DO.mod * K600.daily * pm(KO2.conv) +
-                pm(GPP, metab.pars)/pm(depth) +
-                pm(ER, metab.pars)/pm(depth) +
-                K600.daily * (KO2.conv(t)*DO.sat(t) + KO2.conv(t+1)*DO.sat(t+1))/2
-            ) * timestep.days / (1 + timestep.days * K600.daily * KO2.conv(t+1)/2))
-        })
+        pm <- function(fun, ...) mean(fun(c(t, t+1), ...)) # pm = pairmeans
+        list(
+          dDOdt=(
+            - state['DO.mod'] * metab.pars$K600.daily * pm(KO2.conv) +
+              pm(GPP, metab.pars) / pm(depth) +
+              pm(ER, metab.pars) / pm(depth) +
+              metab.pars$K600.daily * (KO2.conv(t)*DO.sat(t) + KO2.conv(t+1)*DO.sat(t+1))/2
+          ) * timestep.days / (1 + timestep.days * metab.pars$K600.daily * KO2.conv(t+1)/2))
       }
     },
     # all other methods use a straightforward calculation of dDOdt at values of
     # t and DO.mod.t as requested by the ODE solver
     function(t, state, metab.pars){
-      with(c(state, metab.pars), {
-        list(
-          dDOdt=(
-            GPP(t, metab.pars)/depth(t) +
-              ER(t, metab.pars)/depth(t) +
-              D(t, DO.mod, metab.pars)) *
-            timestep.days)
-      })
+      list(
+        dDOdt=(
+          GPP(t, metab.pars) / depth(t) +
+            ER(t, metab.pars) / depth(t) +
+            D(t, state['DO.mod'], metab.pars)) *
+          timestep.days)
     }
   )
 
