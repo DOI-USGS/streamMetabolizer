@@ -16,7 +16,16 @@ manual_temporary_test <- function() {
   mm.debug.old <- metab(replace(sp, 'mle_method', 'old'), dat)
   mm.debug.new <- metab(replace(sp, 'mle_method', 'new'), dat)
   
+  # compare Eulers
+  dat <- data_metab('10','30')
+  sp <- specs(mm_name('mle', ode_method='Euler'))
+  mm.debug.old <- metab(replace(sp, 'mle_method', 'old'), dat)
+  mm.debug.new <- metab(replace(sp, 'mle_method', 'new'), dat)
+  predict_metab(mm.debug.old)
+  predict_metab(mm.debug.new)
+  
   # test with old & new implementations
+  dat <- data_metab('3','30')
   mm <- list(rk2=list(new=NA), rk4=list(new=NA), lsoda=list(new=NA),
              Euler=list(old=NA, new=NA), pairmeans=list(old=NA, new=NA))
   for(ode_method in names(mm)) {
