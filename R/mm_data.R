@@ -8,13 +8,13 @@
 #'   \itemize{
 #'   
 #'   \item{ \code{solar.time} date-time values in mean solar time (see 
-#'   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a nominal 
-#'   time zone of UTC. May be approximated by local, non-daylight-savings clock 
-#'   time (still with nominal UTC timezone but with clock noons close to solar 
-#'   noon), but mean solar time is better for matching model time windows to the
-#'   diel cycle of light availability. Throughout this package, variables named 
-#'   "solar.time" are mean solar time, "app.solar.time" means apparent solar 
-#'   time, and "any.solar.time" means either.}
+#'   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
+#'   attribute of 'UTC'. May be approximated by local, non-daylight-savings 
+#'   clock time (still with nominal UTC timezone but with clock noons close to 
+#'   solar noon), but mean solar time is better for matching model time windows 
+#'   to the diel cycle of light availability. Throughout this package, variables
+#'   named "solar.time" are mean solar time, "app.solar.time" means apparent 
+#'   solar time, and "any.solar.time" means either.}
 #'   
 #'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
 #'   O[2] L^{-1}}{mg O2 / L}}
