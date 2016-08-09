@@ -84,6 +84,12 @@ lines(x=DOtime, y=DO.mod.ode, col='blue')
 DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='Euler')
 DO.mod.DO <- DO(preds.init)
 lines(x=DOtime, y=DO.mod.DO, col='chartreuse3')
+# original calc_DO_mod function
+DO.mod.old <- do.call(calc_DO_mod, 
+  c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
+    list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
+    DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='Euler')))
+lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
 
 # show that method='trapezoid' really is pairmeans by several implementations
 plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
@@ -104,6 +110,12 @@ dDOdt <- create_calc_dDOdt(data, ode_method='rk2', GPP_fun='linlight',
 DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='rk2')
 DO.mod.pm.rk2 <- DO(preds.init)
 lines(x=DOtime, y=DO.mod.pm.rk2, col='red', lty=4)
+# original calc_DO_mod function
+DO.mod.old <- do.call(calc_DO_mod, 
+  c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
+    list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
+    DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
+lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
 }
 }
 

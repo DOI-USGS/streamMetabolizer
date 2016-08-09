@@ -43,8 +43,8 @@ use. The default is pairmeans, where the change in DO between times t-1 and
 t is a function of the mean DO.sat between times t-1 and t, mean temp.water
 between times t-1 and t, mean light between times t-1 and t, etc. The Euler
 method is currently more common in the literature, with each time step 
-depending entirely on DO.sat, GPP, etc. at time t. Both methods are
-imprecise and fast, relative to Runge-Kutta or other numerical integration
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are 
+imprecise and fast, relative to Runge-Kutta or other numerical integration 
 methods}
 
 \item{...}{additional arguments passed to other variants on calc_DO_mod}

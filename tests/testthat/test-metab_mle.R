@@ -8,7 +8,7 @@ manual_temporary_test <- function() {
   
   # get a big enough dataset to take time for mle. this is why the test is manual
   dat <- mda.streams::get_metab_data('nwis_08062500', start_date='2011-04-01', end_date='2011-07-01')
-  expect_equal(dim(dat), c(8724, 6))
+  expect_equal(dim(dat), c(8700, 6))
   
   # debug
   dat <- data_metab('10','30')[(48*6+1):(48*7),]
@@ -21,8 +21,12 @@ manual_temporary_test <- function() {
   sp <- specs(mm_name('mle', ode_method='Euler'))
   mm.debug.old <- metab(replace(sp, 'mle_method', 'old'), dat)
   mm.debug.new <- metab(replace(sp, 'mle_method', 'new'), dat)
-  predict_metab(mm.debug.old)
-  predict_metab(mm.debug.new)
+  plot_metab_preds(mm.debug.old)
+  plot_metab_preds(mm.debug.new)
+  plot_DO_preds(mm.debug.old)
+  plot_DO_preds(mm.debug.new)
+  predict_metab(mm.debug.new)[c('GPP','ER','K600')]-predict_metab(mm.debug.old)[c('GPP','ER','K600')]
+  predict_metab(mm.debug.new)[c('GPP','ER','K600')]/predict_metab(mm.debug.old)[c('GPP','ER','K600')]
   
   # test with old & new implementations
   dat <- data_metab('3','30')

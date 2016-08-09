@@ -55,7 +55,7 @@ dDOdt <- create_calc_dDOdt(data, ode_method='pairmeans', GPP_fun='satlight',
   ER_fun='q10temp', deficit_src='DO_mod')
 names(formals(dDOdt)) # always the same: args to pass to dDOdt()
 environment(dDOdt)$metab.needs # get the names to be included in metab.pars
-dDOdt(t=28, state=c(DO.mod=data$DO.obs[28]),
+dDOdt(t=23, state=c(DO.mod=data$DO.obs[1]),
   metab.pars=list(Pmax=0.2, alpha=0.01, ER20=-0.05, K600.daily=3))$dDOdt
 
 # different required args; try in a timeseries
@@ -63,9 +63,13 @@ dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 environment(dDOdt)$metab.needs # get the names to be included in metab
 # approximate dDOdt and DO using DO.obs for DO deficits & Eulerian integration
-dDOdt.mod.m <- sapply(1:23, function(t) dDOdt(t=t, state=c(DO.mod=data$DO.obs[t]),
-  metab.pars=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21))$dDOdt)
-DO.mod.m <- cumsum(c(data$DO.obs[1], dDOdt.mod.m))
+DO.mod.m <- data$DO.obs[1]
+dDOdt.mod.m <- NA
+for(t in 1:23) {
+ dDOdt.mod.m[t] <- dDOdt(t=t, state=c(DO.mod=DO.mod.m[t]),
+    metab.pars=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21))$dDOdt
+ DO.mod.m[t+1] <- DO.mod.m[t] + dDOdt.mod.m[t]
+}
 par(mfrow=c(2,1), mar=c(3,3,1,1)+0.1)
 plot(x=DOtime, y=data$DO.obs)
 lines(x=DOtime, y=DO.mod.m, type='l', col='purple')
@@ -83,30 +87,34 @@ DO.mod.o <- deSolve::ode(
 par(mfrow=c(2,1), mar=c(3,3,1,1)+0.1)
 plot(x=DOtime, y=data$DO.obs)
 lines(x=DOtime, y=DO.mod.m, type='l', col='purple')
-lines(x=DOtime, y=DO.mod.o, type='l', col='red')
-dDOdt.mod.o <- diff(DO.mod)
+lines(x=DOtime, y=DO.mod.o, type='l', col='red', lty=2)
+dDOdt.mod.o <- diff(DO.mod.o)
 plot(x=dDOtime, y=dDOdt.obs)
 lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
-lines(x=dDOtime, y=dDOdt.mod.o, type='l', col='forestgreen')
+lines(x=dDOtime, y=dDOdt.mod.o, type='l', col='green', lty=2)
 par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 
 # see how values of metab.pars affect the dDOdt predictions
 library(dplyr); library(ggplot2); library(tidyr)
 dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
-apply_dDOdt <- function(t, GPP.daily, ER.daily, K600.daily) {
-  dDOdt(t=t, state=c(DO.mod=data$DO.obs[t]),
-    metab.pars=list(GPP.daily=GPP.daily, ER.daily=ER.daily, K600.daily=K600.daily)
-  )$dDOdt
+apply_dDOdt <- function(GPP.daily, ER.daily, K600.daily) {
+  DO.mod.m <- data$DO.obs[1]
+  dDOdt.mod.m <- NA
+  for(t in 1:23) {
+   dDOdt.mod.m[t] <- dDOdt(t=t, state=c(DO.mod=DO.mod.m[t]),
+    list(GPP.daily=GPP.daily, ER.daily=ER.daily, K600.daily=K600.daily))$dDOdt
+   DO.mod.m[t+1] <- DO.mod.m[t] + dDOdt.mod.m[t]
+  }
+  dDOdt.mod.m
 }
-dDO.preds <- mutate(
-  data,
-  dDO.preds.base = sapply(1:nrow(data), apply_dDOdt, 3, -5, 15),
-  dDO.preds.dblGPP = sapply(1:nrow(data), apply_dDOdt, 6, -5, 15),
-  dDO.preds.dblER = sapply(1:nrow(data), apply_dDOdt, 3, -10, 15),
-  dDO.preds.dblK = sapply(1:nrow(data), apply_dDOdt, 3, -5, 30))
+dDO.preds <- data_frame(
+  solar.time = dDOtime,
+  dDO.preds.base = apply_dDOdt(3, -5, 15),
+  dDO.preds.dblGPP = apply_dDOdt(6, -5, 15),
+  dDO.preds.dblER = apply_dDOdt(3, -10, 15),
+  dDO.preds.dblK = apply_dDOdt(3, -5, 30))
 dDO.preds \%>\%
-  select(solar.time, starts_with('dDO.preds')) \%>\%
   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) \%>\%
   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
 }

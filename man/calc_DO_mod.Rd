@@ -17,7 +17,8 @@ calc_DO_mod_by_diff(GPP.daily, ER.daily, K600.daily, DO.obs, DO.sat, depth,
 
 calc_DO_mod_w_fixed_error(GPP.daily, ER.daily, K600.daily, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, err.obs = rep(0, n),
-  err.proc = rep(0, n), ODE_method = c("pairmeans", "Euler"), ...)
+  err.proc = rep(0, n), ODE_method = c("trapezoid", "pairmeans", "Euler"),
+  ...)
 
 calc_DO_mod_w_sim_error(GPP.daily, ER.daily, K600.daily, DO.sat, depth,
   temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n, err.obs.sigma,
@@ -54,8 +55,8 @@ use. The default is pairmeans, where the change in DO between times t-1 and
 t is a function of the mean DO.sat between times t-1 and t, mean temp.water
 between times t-1 and t, mean light between times t-1 and t, etc. The Euler
 method is currently more common in the literature, with each time step 
-depending entirely on DO.sat, GPP, etc. at time t. Both methods are
-imprecise and fast, relative to Runge-Kutta or other numerical integration
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are 
+imprecise and fast, relative to Runge-Kutta or other numerical integration 
 methods}
 
 \item{...}{additional arguments passed to other variants on calc_DO_mod}
@@ -67,8 +68,10 @@ used to model values at time t+1}
 are those applied to DO.mod after generating the full time series of 
 modeled values.}
 
-\item{err.proc}{A vector process errors of length n. Process errors are 
-applied at each time step, and therefore propagate into the next timestep.}
+\item{err.proc}{A vector process errors of length n-1. Process errors are 
+applied at each time step, and therefore propagate into the next timestep.
+The error at step i applies to the transition from DO.mod[i] to
+DO.mod[i+1].}
 
 \item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 

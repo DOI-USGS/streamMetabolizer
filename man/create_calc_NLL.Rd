@@ -34,12 +34,12 @@ dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)
 NLL <- create_calc_NLL(DO)
-NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
-NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=10; NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=20; NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
 NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'))
-NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
-nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
-nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
+iter=30; NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
+iter=NA; nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=NA; nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
 }
 }
 
