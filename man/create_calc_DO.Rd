@@ -115,7 +115,7 @@ DO.mod.old <- do.call(calc_DO_mod,
   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
-lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
+lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
 }
 }
 

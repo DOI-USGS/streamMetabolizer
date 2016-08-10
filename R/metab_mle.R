@@ -39,6 +39,9 @@ metab_mle <- function(
     # the argument or the function. tell it which:
     specs <- streamMetabolizer::specs(mm_name('mle'))
   }
+  if(mm_parse_name(specs$model_name)$ode_method %in% c('lsoda','lsodes','lsodar'))
+    warning("we've seen bad results with ODE methods 'lsoda', 'lsodes', and 'lsodar'. Use at your own risk")
+  
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_mle")
@@ -141,7 +144,7 @@ mle_1ply <- function(
           data_ply[c("DO.obs","DO.sat","depth","temp.water")]
         ),
         list(
-          frac.GPP = data_ply$light/sum(data_ply$light[as.character(data_ply$solar.time,"%Y-%m-%d")==as.character(ply_date)]),
+          frac.GPP = data_ply$light/sum(data_ply$light[data_ply$solar.time < (data_ply$solar.time[1] + as.difftime(1, units='days'))]),
           frac.ER = timestep_days,
           frac.D = timestep_days,
           calc_DO_fun = specs$calc_DO_fun,

@@ -78,28 +78,10 @@ calc_DO_mod_w_fixed_error <- function(
   
   # if requested, use the means of i and i-1 for DO.sat, DO.mod, temperature, and light
   ODE_method <- match.arg(ODE_method)
-  # if(ODE_method %in% c("trapezoid", "pairmeans")) {
-  #   pairmean <- function(vec) {
-  #     if(length(vec)==1) return(vec)
-  #     (vec[1:(length(vec)-1)] + vec[-1])/2
-  #   }
-  #   frac.GPP <- pairmean(frac.GPP)
-  #   frac.ER <- pairmean(frac.ER)
-  #   frac.D <- pairmean(frac.D)
-  #   depth <- pairmean(depth)
-  #   temp.water <- pairmean(temp.water)
-  #   DO.sat <- pairmean(DO.sat)
-  # }
-  
-  # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
-  # each timestep)
-  GPP <- GPP.daily * frac.GPP / depth
-  ER <- ER.daily * frac.ER / depth
-  K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
-  
+
   # make sure anything required in the core modeling loop has n observations
   if(length(DO.sat) != n) DO.sat <- rep(DO.sat, length.out=n) # this would be odd
-  if(length(err.proc) != (n-1)) err.proc <- rep(err.proc, length.out=n-1) # this is more probable. err.obs can stay length 1 if it is
+  if(length(err.proc) != n) err.proc <- rep(err.proc, length.out=n) # this is more probable. err.obs can stay length 1 if it is
   
   # Model DO with given params
   DO.mod <- numeric(n)
@@ -140,22 +122,23 @@ calc_DO_mod_w_fixed_error <- function(
     "trapezoid"=,"pairmeans"={
       # partition GPP and ER into their timestep-specific rates (mg/L/timestep
       # at each timestep). 'pm' stands for 'pairmean' where the pair is a value
-      # at i and i-1
+      # at i and i+1
       pm <- function(vec) {
-        if(length(vec)==1) return(vec)
+        if(length(vec) == 1) return(vec)
         (vec[1:(length(vec)-1)] + vec[-1])/2
       }
       GPP <- GPP.daily * pm(frac.GPP) / pm(depth)
       ER <- ER.daily * pm(frac.ER) / pm(depth)
-      DO.sat <- 
+      err.proc <- pm(err.proc)
+      # keep K un-pairmeansed
       K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
       
       for(i in seq_len(n-1)) {
         DO.mod[i+1] <- (
-          DO.mod[i] +
+          DO.mod[i] * (1 - K[i]/2) +
           GPP[i] + 
           ER[i] + 
-          K[i] * (DO.sat[i] - DO.mod[i]/2) +
+          (K[i]*DO.sat[i] + K[i+1]*DO.sat[i+1])/2 +
           err.proc[i]
         ) / (1 + K[i+1]/2)
       }

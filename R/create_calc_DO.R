@@ -89,7 +89,7 @@
 #'   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
 #'     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
 #'     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
-#' lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
+#' lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
 #' }
 #' @export
 create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
@@ -112,7 +112,7 @@ create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
     
     # use numerical integration to predict the timeseries of DO.mod
     calc.DO <- function(metab.pars) {
-      DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else DO.obs[1]
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
       deSolve::ode(
         y=c(DO.mod=DO.mod.1),
         parms=metab.pars,
@@ -130,7 +130,7 @@ create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
     
     # use numerical integration to predict the timeseries of DO.mod
     calc.DO <- function(metab.pars) {
-      DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else DO.obs[1]
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
       DO.mod <- c(DO.mod.1, rep(NA, length(t)-1))
       for(i in t[-1]) {
         DO.mod[i] <-
