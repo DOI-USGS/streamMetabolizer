@@ -56,9 +56,10 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
   
   # PRK (metab_mle)
-  smest <- get_fit(metab(
+  mm <- metab(
     specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
-    data=vfrenchshort))[1,c("GPP","ER","K600","minimum")]
+    data=vfrenchshort)
+  smest <- get_fit(mm)[1,c("GPP","ER","K600","minimum")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   expect_lt(abs(smest$GPP - bobest$GPP), 0.01) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
   expect_lt(abs(smest$ER - bobest$ER), 0.01) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
@@ -66,9 +67,10 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   expect_lt(abs(smest$minimum - bobest$lik), 0.000001)
   
   # K (metab_night)
-  smest <- predict_metab(metab(
+  mm <- metab(
     specs=specs(mm_name('night'), day_start=night.start, day_end=night.end, day_tests=c('full_day', 'even_timesteps', 'complete_data')),
-    data=vfrenchnight))[c("GPP","ER","K600")]
+    data=vfrenchnight)
+  smest <- predict_metab(mm)[c("GPP","ER","K600")]
   bobest <- streamMetabolizer:::load_french_creek_std_mle(
     vfrenchnight, estimate='K', start=chron::chron(dates="08/24/12", times="18:45:00"), end=chron::chron(dates="08/24/12", times="22:56:00"))
   expect_lt(abs(smest$K600 - bobest$K), 0.0001) #, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))

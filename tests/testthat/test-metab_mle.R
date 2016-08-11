@@ -140,8 +140,8 @@ test_that("metab_mle outputs look like Bob's", {
     start=c(dates="09/17/12", times="22:00:00"),
     end=c(dates="09/19/12", times="06:00:00"))
   expect_equal(get_fit(mms)[1,"GPP"], mmb[1,"GPP"], tol=0.001) # we handle light slightly differently. i prefer the sM way
-  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.00001)
-  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.0001)
+  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.0001)
   expect_equal(get_fit(mms)[1,"minimum"], mmb[1,"lik"], tol=0.00001)
   
   # PR
