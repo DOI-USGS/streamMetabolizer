@@ -38,7 +38,8 @@ mm_filter_valid_days <- function(
   data_filtered <- mm_model_by_ply(
     model_fun=filter_fun, data=data, data_daily=data_daily, 
     day_start=day_start, day_end=day_end, day_tests=day_tests)
-  removed <- bind_rows(removed) # removed was populated by <<- calls within filter_fun
+  # removed has now been populated by <<- calls within filter_fun
+  removed <- if(length(removed) > 0) bind_rows(removed) else data_frame(date=as.Date(NA), errors='')[c(),]
   
   # filter the daily data to match & return
   if(!is.null(data_daily)) {

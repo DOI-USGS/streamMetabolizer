@@ -281,9 +281,11 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     )
   }
   
-  if(!exists('valid_day', fit)) fit$valid_day <- TRUE
-  attr(preds, 'warnings') <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
-  attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors[fit$valid_day])
+  if(is.list(fit)) {
+    if(!exists('valid_day', fit)) fit$valid_day <- TRUE
+    attr(preds, 'warnings') <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
+    attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors[fit$valid_day])
+  }
   class(preds) <- c('preds_metab', class(preds))
   preds
 }

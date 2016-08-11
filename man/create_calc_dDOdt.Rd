@@ -15,8 +15,9 @@ contain exactly one date worth of inputs (~24 hours according to
 equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
 function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
 from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
-t=1 and t=2. With metab_mle, other methods are available including 'rk2'
-and any character method accepted by \code{\link[deSolve]{deSolve::ode}}}
+t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
+and any character method accepted by \code{\link[deSolve]{ode}} in the
+\code{deSolve} package}
 
 \item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
 a linear function of light with an intercept at 0. \code{satlight} GPP is a
