@@ -27,7 +27,7 @@ test_that("metab_models have default predict_metab and predict_DO methods", {
   
   # predict_metab
   expect_warning(metab <- predict_metab(mm), "model is missing columns")
-  expect_equal(names(metab), c("date","GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper"))
+  expect_equal(names(metab), c("date","GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper","warnings","errors"))
   
   # can't predict_DO
   expect_warning(expect_error(DO_preds <- predict_DO(mm), "day_start must be specified"), "missing columns for estimates")

@@ -20,8 +20,9 @@ detail, and gives default values.}
 
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations (unit-value). Columns must have the same names, units, and 
-format as the default. See the \strong{'Formatting \code{data}'} section 
-below for a full description.}
+format as the default. The solar.time column must also have a timezone code
+('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -43,15 +44,46 @@ argument.
 }
 \examples{
 \dontrun{
-dat <- data_metab() # 1 day of example data
+dat <- data_metab('3', res='30')
 # fast-ish model version, but still too slow to auto-run in examples
-mm <- metab_bayes(
+mm <- metab_bayes(data=dat,
   specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
-        n_chains=1, burnin_steps=300, saved_steps=100),
-  data=dat)
-predict_metab(mm)
+    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
+mm
 get_fitting_time(mm)
+predict_metab(mm)
 plot_DO_preds(predict_DO(mm))
+
+# test that error-free models can be run with split or combined dates, jags or stan
+sp <- function(split_dates, engine) { replace(
+  specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine), 
+    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE), 
+  'split_dates', split_dates
+) }
+dat <- data_metab('1', res='30')
+mm <- metab(sp(FALSE,'jags'), dat)
+mm <- metab(sp(TRUE, 'jags'), dat)
+# new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
+mm <- metab(sp(FALSE,'stan'), dat)
+# subsequent runs of the compiled Stan model are quieter
+mm <- metab(sp(TRUE, 'stan'), dat)
+dat <- data_metab('3', res='30')
+mm <- metab(sp(FALSE,'jags'), dat)
+mm <- metab(sp(TRUE, 'jags'), dat)
+mm <- metab(sp(FALSE,'stan'), dat)
+mm <- metab(sp(TRUE, 'stan'), dat)
+
+# error and warning messages are printed with the mm object if present
+dat <- data_metab('1', res='30', flaws=c('missing start'))
+mm <- metab(sp(FALSE,'jags'), dat)
+mm <- metab(sp(TRUE, 'jags'), dat)
+mm <- metab(sp(FALSE,'stan'), dat)
+mm <- metab(sp(TRUE, 'stan'), dat)
+dat <- data_metab('3', res='30', flaws=c('missing middle'))
+mm <- metab(sp(FALSE,'jags'), dat)
+mm <- metab(sp(TRUE, 'jags'), dat)
+mm <- metab(sp(FALSE,'stan'), dat)
+mm <- metab(sp(TRUE, 'stan'), dat)
 }
 }
 \author{

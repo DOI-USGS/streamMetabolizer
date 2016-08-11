@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.8
-Date: 2016-07-10
+Version: 0.9.8.3
+Date: 2016-08-11
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -27,6 +27,7 @@ Imports:
     tidyr
 Suggests:
     chron,
+    deSolve,
     devtools,
     dygraphs,
     ggplot2,
@@ -45,7 +46,6 @@ Collate:
     'calc_DO_deficit.R'
     'calc_DO_mod.R'
     'calc_DO_mod_by_diff.R'
-    'calc_DO_mod_lightsat.R'
     'calc_DO_mod_w_fixed_error.R'
     'calc_DO_mod_w_sim_error.R'
     'calc_air_pressure.R'

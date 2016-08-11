@@ -10,6 +10,7 @@
 #' @inheritParams mm_model_by_ply
 #' @return list of data and data_daily with same structure as inputs but with 
 #'   invalid days removed, plus a third data.frame of dates that were removed
+#' @import dplyr
 #' @examples
 #' dat <- data_metab(res='30', num_days='10', flaws='missing middle')
 #' datfilt <- mm_filter_valid_days(dat)
@@ -27,7 +28,7 @@ mm_filter_valid_days <- function(
     if(isTRUE(ply_validity)) { # day is valid
       data_ply
     } else {
-      removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(ply_validity, collapse="; "))))
+      removed <<- c(removed, list(data.frame(date=ply_date, errors=paste0(ply_validity, collapse="; "), stringsAsFactors=FALSE)))
       NULL
     }
   }
@@ -37,7 +38,8 @@ mm_filter_valid_days <- function(
   data_filtered <- mm_model_by_ply(
     model_fun=filter_fun, data=data, data_daily=data_daily, 
     day_start=day_start, day_end=day_end, day_tests=day_tests)
-  removed <- do.call(rbind, removed) # removed was populated by <<- calls within filter_fun
+  # removed has now been populated by <<- calls within filter_fun
+  removed <- if(length(removed) > 0) bind_rows(removed) else data_frame(date=as.Date(NA), errors='')[c(),]
   
   # filter the daily data to match & return
   if(!is.null(data_daily)) {
@@ -46,9 +48,10 @@ mm_filter_valid_days <- function(
       c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$date))))
     daily_removed <- data.frame(
       date=daily_unmatched, 
-      errors=rep("date in data_daily but not data", length(daily_unmatched)))
-    removed <- rbind(removed, daily_removed)
-    removed <- removed[order(removed$date),]
+      errors=rep("date in data_daily but not data", length(daily_unmatched)),
+      stringsAsFactors=FALSE)
+    removed <- bind_rows(removed, daily_removed) %>%
+      arrange(date)
     rownames(removed) <- NULL
     data_daily_filtered <- data_daily[data_daily$date %in% unique(data_filtered$date),]
   } else {

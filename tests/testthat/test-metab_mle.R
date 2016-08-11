@@ -1,5 +1,89 @@
 context("metab_mle")
 
+# comparing old method (manual euler/pairmeans) to new (ode() solutions + dDOdt analytical pairmeans)
+manual_temporary_test <- function() {
+    
+  # temporary b/c after checking the transition, i want to remove the 'old'
+  # mle_method from the package
+  
+  # get a big enough dataset to take time for mle. this is why the test is manual
+  # dat <- mda.streams::get_metab_data('nwis_08062500', start_date='2011-04-01', end_date='2011-07-01')
+  # expect_equal(dim(dat), c(8700, 6))
+
+  # compare Eulers
+  dat <- data_metab('10','30')
+  sp <- specs(mm_name('mle', ode_method='Euler'))
+  mm.debug.old <- metab(replace(sp, 'mle_method', 'old'), dat)
+  mm.debug.new <- metab(replace(sp, 'mle_method', 'new'), dat)
+  predict_metab(mm.debug.new)[c('GPP','ER','K600')]-predict_metab(mm.debug.old)[c('GPP','ER','K600')]
+  
+  # compare pairmeans
+  dat <- data_metab('10','30')
+  sp <- specs(mm_name('mle', ode_method='pairmeans'))
+  mm.debug.old <- metab(replace(sp, 'mle_method', 'old'), dat)
+  mm.debug.new <- metab(replace(sp, 'mle_method', 'new'), dat)
+  predict_metab(mm.debug.new)[c('GPP','ER','K600')]-predict_metab(mm.debug.old)[c('GPP','ER','K600')]
+  
+  # test with old & new implementations
+  dat <- data_metab('3','30')
+  mm <- list(rk2=list(new=NA), rk4=list(new=NA),
+             lsoda=list(new=NA), lsodes=list(new=NA), lsodar=list(new=NA),
+             Euler=list(old=NA, new=NA), pairmeans=list(old=NA, new=NA))
+  for(ode_method in names(mm)) {
+    message(ode_method)
+    sp <- specs(mm_name('mle', ode_method=ode_method))
+    for(mle_method in names(mm[[ode_method]])) {
+      mm[[ode_method]][[mle_method]] <- metab(replace(sp, 'mle_method', mle_method), dat)
+    }
+  }
+  
+  # check that we haven't lost much runtime efficiency with the new 
+  # implementation relative to the old; find out how much longer the more
+  # complex methods take
+  fitting.times <- lapply(mm, function(mm_list) {
+    lapply(mm_list, function(mm_obj) {
+      get_fitting_time(mm_obj)[['elapsed']]
+    })
+  })
+  
+  # check that intercepts are 0 and slopes are 1 and correlations are perfect
+  # between old and new implementations of Euler and pairmeans
+  old.new.lms <- lapply(mm, function(mm_list) {
+    if(all(c('old','new') %in% names(mm_list))) {
+      preds.old <- predict_metab(mm_list$old)
+      preds.new <- predict_metab(mm_list$new)
+      sapply(c("GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper"), function(var) {
+        onlm <- lm(preds.new[[var]] ~ preds.old[[var]])
+        c(coef(onlm), r.squared=suppressWarnings(summary(onlm))$r.squared)
+      })
+    }
+  })
+  
+  # compare predictions between ODE methods
+  preds <- lapply(mm, function(mm_list) {
+    predict_metab(mm_list$new)
+  })
+  pred.cors <- lapply(setNames(nm=c("GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper")), function(var) {
+    cor(sapply(preds, function(p) p[[var]]))
+  })
+  rrmse <- function(mat) {
+    rmses <- sapply(1:ncol(mat), function(c1) {
+      sapply(1:ncol(mat), function(c2) {
+        sqrt(mean(((mat[,c1] - mat[,c2])/mat[,c1])^2, na.rm=TRUE))
+      })
+    })
+    colnames(rmses) <- rownames(rmses) <- colnames(mat)
+    rmses
+  }
+  pred.rmse <- lapply(setNames(nm=c("GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper")), function(var) {
+    rrmse(sapply(preds, function(p) p[[var]]))
+  })
+  
+  # can't say why, but lsoda gives consistently bad predictions compared to the
+  # other four methods
+}
+
+
 test_that("metab_mle models can be created", {
   
   mm <- metab_mle(data=data_metab('1', res='30'))
@@ -56,8 +140,8 @@ test_that("metab_mle outputs look like Bob's", {
     start=c(dates="09/17/12", times="22:00:00"),
     end=c(dates="09/19/12", times="06:00:00"))
   expect_equal(get_fit(mms)[1,"GPP"], mmb[1,"GPP"], tol=0.001) # we handle light slightly differently. i prefer the sM way
-  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.00001)
-  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.00001)
+  expect_equal(get_fit(mms)[1,"ER"], mmb[1,"ER"], tol=0.0001)
+  expect_equal(get_fit(mms)[1,"K600"], mmb[1,"K"], tol=0.0001)
   expect_equal(get_fit(mms)[1,"minimum"], mmb[1,"lik"], tol=0.00001)
   
   # PR

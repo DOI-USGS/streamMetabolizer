@@ -37,7 +37,7 @@
 #'   \code{adapt_steps}.
 #'   
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
-#'   ODE_method, GPP_init, ER_init, K600_init}
+#'   GPP_init, ER_init, K600_init}
 #'   
 #'   * metab_night: \code{model_name, day_start, day_end, day_tests}
 #'   
@@ -253,7 +253,6 @@ specs <- function(
   
   # inheritParams negloglik_1ply
   calc_DO_fun,
-  ODE_method,
   
   
   ## Bayes
@@ -338,8 +337,7 @@ specs <- function(
   err.obs.phi = 0,
   err.proc.sigma = 0,
   err.proc.phi = 0,
-  
-  # declared already (for MLE): ODE_method
+  ODE_method,
   
   # sim data predictability
   sim.seed = NA
@@ -455,21 +453,12 @@ specs <- function(
     },
     'mle' = {
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'ODE_method', 'GPP_init', 'ER_init', 'K600_init')
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'GPP_init', 'ER_init', 'K600_init')
       
       if('calc_DO_fun' %in% yes_missing) {
-        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) {
-          if(features$GPP_fun =='linlight'){
-            calc_DO_mod
-          } else if(features$GPP_fun == 'satlight') {
-            calc_DO_mod_lightsat
-          }
-        } else calc_DO_mod_by_diff
+        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
       }
-      if('ODE_method' %in% yes_missing) {
-        all_specs$ODE_method <- features$ode_method
-      }
-      
+
     }, 
     'night' = {
       # list all needed arguments
@@ -528,11 +517,7 @@ specs <- function(
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests',
         'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi',
-        'ODE_method', 'sim.seed')
-      
-      if('ODE_method' %in% yes_missing) {
-        all_specs$ODE_method <- features$ode_method
-      }
+        'sim.seed')
     }
   )
   

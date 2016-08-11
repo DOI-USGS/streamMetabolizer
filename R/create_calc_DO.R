@@ -4,11 +4,10 @@
 #' @inheritParams mm_name
 #' @return a function that will return a negative log likelihood of the data
 #'   given a set of metab.pars
-#' @import deSolve
 #' @examples
 #' \dontrun{
 #' # prepare data for examples
-#' data <- data_metab('3','30')[97:144,]
+#' data <- data_metab('3','30')[97:144,][seq(1,48,by=2),]
 #' preds.init <- as.list(dplyr::select(
 #'   predict_metab(metab(specs(mm_name('mle', ode_method='pairmeans')), data=data)),
 #'   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
@@ -59,6 +58,12 @@
 #' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='Euler')
 #' DO.mod.DO <- DO(preds.init)
 #' lines(x=DOtime, y=DO.mod.DO, col='chartreuse3')
+#' # original calc_DO_mod function
+#' DO.mod.old <- do.call(calc_DO_mod, 
+#'   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
+#'     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
+#'     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='Euler')))
+#' lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
 #'
 #' # show that method='trapezoid' really is pairmeans by several implementations
 #' plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
@@ -79,32 +84,61 @@
 #' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='rk2')
 #' DO.mod.pm.rk2 <- DO(preds.init)
 #' lines(x=DOtime, y=DO.mod.pm.rk2, col='red', lty=4)
+#' # original calc_DO_mod function
+#' DO.mod.old <- do.call(calc_DO_mod, 
+#'   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
+#'     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
+#'     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
+#' lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
 #' }
 #' @export
 create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
-                           ode_method=environment(dDOdt)$ode_method) {
+                           ode_method=environment(calc_dDOdt)$ode_method) {
   if(!xor(err_obs_iid, err_proc_iid))
     stop("need err_obs_iid or err_proc_iid but not both or neither")
-
+  
   # pull out info from the calc_dDOdt closure
   DO.obs <- environment(calc_dDOdt)$data$DO.obs
   t <- environment(calc_dDOdt)$data$t
-
-  # identify the right ode method argument
-  ode.method <- switch(
-    ode_method,
-    Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
-    rk2=rkMethod('rk2'),
-    ode_method
-  )
-
-  function(metab.pars) {
+  
+  if(requireNamespace('deSolve', quietly=TRUE)) {
+    # identify the right ode method argument
+    ode.method <- switch(
+      ode_method,
+      Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      rk2=deSolve::rkMethod('rk2'),
+      ode_method
+    )
+    
     # use numerical integration to predict the timeseries of DO.mod
-    DO.mod.1 <- if('DO.mod.1' %in% metab.pars) metab.pars$DO.mod.1 else data$DO.obs[1]
-    ode(
-      y=c(DO.mod=DO.mod.1),
-      parms=metab.pars,
-      times=t,
-      func=calc_dDOdt, method=ode.method)[,'DO.mod']
+    calc.DO <- function(metab.pars) {
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
+      deSolve::ode(
+        y=c(DO.mod=DO.mod.1),
+        parms=metab.pars,
+        times=t,
+        func=calc_dDOdt, method=ode.method)[,'DO.mod']
+    }
+  } else {
+    # identify the right ode method argument
+    ode.method <- switch(
+      ode_method,
+      Euler=, trapezoid=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      stop("package deSolve is required for ode_method '", ode_method, "'.\n",
+           "  Either install deSolve or select ode_method from c('Euler','trapezoid','pairmeans')")
+    )
+    
+    # use numerical integration to predict the timeseries of DO.mod
+    calc.DO <- function(metab.pars) {
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
+      DO.mod <- c(DO.mod.1, rep(NA, length(t)-1))
+      for(i in t[-1]) {
+        DO.mod[i] <-
+          DO.mod[i-1] +
+          calc_dDOdt(t=i-1, state=c(DO.mod=DO.mod[i-1]), metab.pars=metab.pars)$dDOdt
+      }
+      DO.mod
+    }
   }
+  calc.DO
 }

@@ -10,8 +10,9 @@ prepdata_bayes(data, data_daily, ply_date = NA, specs, engine, model_name,
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations (unit-value). Columns must have the same names, units, and 
-format as the default. See the \strong{'Formatting \code{data}'} section 
-below for a full description.}
+format as the default. The solar.time column must also have a timezone code
+('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 

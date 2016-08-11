@@ -21,15 +21,17 @@
 #' @param err.obs A vector of observation errors of length n. Observation errors
 #'   are those applied to DO.mod after generating the full time series of 
 #'   modeled values.
-#' @param err.proc A vector process errors of length n. Process errors are 
+#' @param err.proc A vector process errors of length n-1. Process errors are 
 #'   applied at each time step, and therefore propagate into the next timestep.
+#'   The error at step i applies to the transition from DO.mod[i] to
+#'   DO.mod[i+1].
 #' @param ODE_method character specifying the numerical integration method to 
 #'   use. The default is pairmeans, where the change in DO between times t-1 and
 #'   t is a function of the mean DO.sat between times t-1 and t, mean temp.water
 #'   between times t-1 and t, mean light between times t-1 and t, etc. The Euler
 #'   method is currently more common in the literature, with each time step 
-#'   depending entirely on DO.sat, GPP, etc. at time t. Both methods are
-#'   imprecise and fast, relative to Runge-Kutta or other numerical integration
+#'   depending entirely on DO.sat, GPP, etc. at time t. Both methods are 
+#'   imprecise and fast, relative to Runge-Kutta or other numerical integration 
 #'   methods
 #' @export
 #' @examples
@@ -72,29 +74,11 @@
 #' }
 calc_DO_mod_w_fixed_error <- function(
   GPP.daily, ER.daily, K600.daily, DO.sat, depth, temp.water, frac.GPP, frac.ER, frac.D, DO.mod.1, n,
-  err.obs=rep(0, n), err.proc=rep(0, n), ODE_method=c("pairmeans","Euler"), ...) {
+  err.obs=rep(0, n), err.proc=rep(0, n), ODE_method=c("trapezoid","pairmeans","Euler"), ...) {
   
   # if requested, use the means of i and i-1 for DO.sat, DO.mod, temperature, and light
   ODE_method <- match.arg(ODE_method)
-  if(ODE_method == "pairmeans") {
-    pairmean <- function(vec) {
-      if(length(vec)==1) return(vec)
-      (c(NA, vec[1:(length(vec)-1)]) + vec)/2
-    }
-    frac.GPP <- pairmean(frac.GPP)
-    frac.ER <- pairmean(frac.ER)
-    frac.D <- pairmean(frac.D)
-    depth <- pairmean(depth)
-    temp.water <- pairmean(temp.water)
-    DO.sat <- pairmean(DO.sat)
-  }
-  
-  # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
-  # each timestep)
-  GPP <- GPP.daily * frac.GPP / depth
-  ER <- ER.daily * frac.ER / depth
-  K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
-  
+
   # make sure anything required in the core modeling loop has n observations
   if(length(DO.sat) != n) DO.sat <- rep(DO.sat, length.out=n) # this would be odd
   if(length(err.proc) != n) err.proc <- rep(err.proc, length.out=n) # this is more probable. err.obs can stay length 1 if it is
@@ -105,26 +89,58 @@ calc_DO_mod_w_fixed_error <- function(
   switch(
     ODE_method,
     "Euler"={
-      for(i in seq_len(n)[-1]) { # seq_len(n)[-1] is robust to n=0 and n=1, whereas 2:n is not
-        DO.mod[i] <- 
-          DO.mod[i-1] +
+      # partition GPP and ER into their timestep-specific rates (mg/L/timestep at
+      # each timestep)
+      GPP <- GPP.daily * frac.GPP / depth
+      ER <- ER.daily * frac.ER / depth
+      K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
+      
+      for(i in seq_len(n-1)) {
+        DO.mod[i+1] <- 
+          DO.mod[i] +
           GPP[i] + 
           ER[i] + 
-          K[i] * (DO.sat[i] - DO.mod[i-1]) +
+          K[i] * (DO.sat[i] - DO.mod[i]) +
           err.proc[i]
       }
     },
-    "pairmeans"={
-      # recall that DO.sat[i] is already mean(DO.sat[i], DO.sat[i-1]), and same 
-      # for frac.GPP, frac.ER, frac.D, depth, and temp.water
-      for(i in seq_len(n)[-1]) {
-        DO.mod[i] <- (
-          DO.mod[i-1] +
+    ### 'pairmeans' and 'trapezoid' are identical and are the analytical
+    ### solution to a trapezoid rule with this starting point:
+    # DO.mod[t+1] =
+    #   DO.mod[t]
+    # + (GPP.daily * (frac.GPP[t]+frac.GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+    # + (ER.daily * (frac.ER[t]+frac.ER[t+1])/2) / (depth[t]+depth[t+1])/2
+    # + k.O2.daily * (frac.k.O2[t](DO.sat[t] - DO.mod[t]) + frac.k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
+    ### and this solution:
+    # DO.mod[t+1] =
+    #   (DO.mod[t] * (1 - k.O2.daily*frac.k.O2[t]/2)
+    #    + (GPP.daily * (frac.GPP[t]+frac.GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+    #    + (ER.daily * (frac.ER[t]+frac.ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+    #    + k.O2.daily*frac.k.O2[t]*DO.sat[t]/2
+    #    + k.O2.daily*frac.k.O2[t+1]*DO.sat[t+1]/2)
+    # / (1 + k.O2.daily*frac.k.O2[t+1]/2)
+    "trapezoid"=,"pairmeans"={
+      # partition GPP and ER into their timestep-specific rates (mg/L/timestep
+      # at each timestep). 'pm' stands for 'pairmean' where the pair is a value
+      # at i and i+1
+      pm <- function(vec) {
+        if(length(vec) == 1) return(vec)
+        (vec[1:(length(vec)-1)] + vec[-1])/2
+      }
+      GPP <- GPP.daily * pm(frac.GPP) / pm(depth)
+      ER <- ER.daily * pm(frac.ER) / pm(depth)
+      err.proc <- pm(err.proc)
+      # keep K un-pairmeansed
+      K <- convert_k600_to_kGAS(K600.daily, temperature=temp.water, gas="O2") * frac.D
+      
+      for(i in seq_len(n-1)) {
+        DO.mod[i+1] <- (
+          DO.mod[i] * (1 - K[i]/2) +
           GPP[i] + 
           ER[i] + 
-          K[i] * (DO.sat[i] - DO.mod[i-1]/2) +
+          (K[i]*DO.sat[i] + K[i+1]*DO.sat[i+1])/2 +
           err.proc[i]
-        ) / (1 + K[i]/2)
+        ) / (1 + K[i+1]/2)
       }
     }
   )

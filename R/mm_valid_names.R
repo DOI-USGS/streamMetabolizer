@@ -39,7 +39,8 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         err_obs_iid=c(TRUE, FALSE),
         err_proc_acor=FALSE,
         err_proc_iid=c(FALSE, TRUE),
-        ode_method=c('pairmeans','Euler'),
+        ode_method=c('Euler','pairmeans','trapezoid','rk2','lsoda','lsode','lsodes','lsodar','vode','daspk',
+                     'euler','rk4','ode23','ode45','radau','bdf','bdf_d','adams','impAdams','impAdams_d'),
         ER_fun=c('constant'), # 'q10temp'
         GPP_fun=c('linlight', 'satlight'),
         deficit_src='DO_mod',

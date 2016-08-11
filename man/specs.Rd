@@ -6,13 +6,12 @@
 \usage{
 specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   day_tests = c("full_day", "even_timesteps", "complete_data"),
-  GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, ODE_method,
-  split_dates, keep_mcmcs = TRUE, keep_mcmc_data = FALSE,
-  GPP_daily_mu = 10, GPP_daily_sigma = 10, ER_daily_mu = -10,
-  ER_daily_sigma = 10, K600_daily_mu = 10, K600_daily_sigma = 10,
-  K600_daily_mu_mu = 10, K600_daily_mu_sigma = 10,
-  K600_daily_beta_mu = c(intercept = 10, slope = 3),
-  K600_daily_beta_sigma = c(intercept = 8, slope = 2),
+  GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, split_dates,
+  keep_mcmcs = TRUE, keep_mcmc_data = FALSE, GPP_daily_mu = 10,
+  GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
+  K600_daily_mu = 10, K600_daily_sigma = 10, K600_daily_mu_mu = 10,
+  K600_daily_mu_sigma = 10, K600_daily_beta_mu = c(intercept = 10, slope =
+  3), K600_daily_beta_sigma = c(intercept = 8, slope = 2),
   K600_daily_beta_num = 5, K600_daily_beta_cuts = "number",
   K600_daily_sigma_location = 0, K600_daily_sigma_scale = 1,
   err_obs_iid_sigma_location = 0, err_obs_iid_sigma_scale = 3,
@@ -28,7 +27,8 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   velocity.daily.max = NA), predictors = c("discharge.daily"),
   transforms = c(K600 = "log", date = NA, velocity.daily = "log",
   discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
-  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
+  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, ODE_method,
+  sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -86,17 +86,8 @@ where K600 is NA. If there are any such dates, K600_init must have a
 numeric (non-NA) value, as this will be used to estimate K600 for those 
 dates.}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER, 
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
-
-\item{ODE_method}{character specifying the numerical integration method to 
-use. The default is pairmeans, where the change in DO between times t-1 and
-t is a function of the mean DO.sat between times t-1 and t, mean temp.water
-between times t-1 and t, mean light between times t-1 and t, etc. The Euler
-method is currently more common in the literature, with each time step 
-depending entirely on DO.sat, GPP, etc. at time t. Both methods are
-imprecise and fast, relative to Runge-Kutta or other numerical integration
-methods}
 
 \item{split_dates}{logical indicating whether the data should be split into 
 daily chunks first (TRUE) or processed within one big model (FALSE). If 
@@ -305,6 +296,15 @@ the next timestep.}
 \item{err.proc.phi}{The autocorrelation coefficient of the process errors, or
 0 for uncorrelated errors.}
 
+\item{ODE_method}{character specifying the numerical integration method to 
+use. The default is pairmeans, where the change in DO between times t-1 and
+t is a function of the mean DO.sat between times t-1 and t, mean temp.water
+between times t-1 and t, mean light between times t-1 and t, etc. The Euler
+method is currently more common in the literature, with each time step 
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are 
+imprecise and fast, relative to Runge-Kutta or other numerical integration 
+methods}
+
 \item{sim.seed}{NA to specify that each call to predict_DO should generate 
 new values, or an integer, as in the \code{seed} argument to 
 \code{\link{set.seed}}, specifying the seed to set before every execution 
@@ -353,7 +353,7 @@ often should, be overridden to tailor the model to your needs.
   \code{adapt_steps}.
   
   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
-  ODE_method, GPP_init, ER_init, K600_init}
+  GPP_init, ER_init, K600_init}
   
   * metab_night: \code{model_name, day_start, day_end, day_tests}
   

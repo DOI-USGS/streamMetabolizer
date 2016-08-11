@@ -166,9 +166,9 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
           metab[1]<-oxy[1]
           for (i in 2:length(oxy)) {
             metab[i] <- metab[i-1]+
-              ((MET[1]/z)*(light[i]/sum(light)))+ 
+              ((MET[1]/z)*(light[i-1]/sum(light)))+ 
               MET[2]*ts/z+
-              (Kcor(temp[i],MET[3]))*ts*(osat(temp[i],bp)-metab[i-1]) 
+              (Kcor(temp[i-1],MET[3]))*ts*(osat(temp[i-1],bp)-metab[i-1]) 
           }
           # calculate likelihood
           sqdiff<-(oxy-metab)^2 
@@ -217,11 +217,19 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
           # simulate DO
           metab<-numeric(length(temp))
           metab[1]<-oxy[1]
+          # original:
+          # for (i in 2:length(oxy)) {
+          #   metab[i]<-metab[i-1]+
+          #     ((MET[1]/z)*(light[i]/sum(light)))+ 
+          #     MET[2]*ts/z+
+          #     (Kcor(temp[i],K))*ts*(osat(temp[i],bp)-metab[i-1]) 
+          # }
+          # new:
           for (i in 2:length(oxy)) {
             metab[i]<-metab[i-1]+
-              ((MET[1]/z)*(light[i]/sum(light)))+ 
+              ((MET[1]/z)*(light[i-1]/sum(light)))+ 
               MET[2]*ts/z+
-              (Kcor(temp[i],K))*ts*(osat(temp[i],bp)-metab[i-1]) 
+              (Kcor(temp[i-1],K))*ts*(osat(temp[i-1],bp)-metab[i-1]) 
           }
           ## calculate likelihood
           sqdiff<-(oxy-metab)^2 
@@ -242,9 +250,9 @@ load_french_creek_std_mle <- function(french, K=35, estimate=c('PRK','K','PR'),
         metab[1]<-oxy[1]
         for (i in 2:length(oxy)) { 
           metab[i] <- metab[i-1]+
-            ((GPP/z)*(light[i]/sum(light)))+ 
+            ((GPP/z)*(light[i-1]/sum(light)))+ 
             ER*ts/z+
-            (Kcor(temp[i],K))*ts*(osat(temp[i],bp)-metab[i-1]) 
+            (Kcor(temp[i-1],K))*ts*(osat(temp[i-1],bp)-metab[i-1]) 
         }
         plot(seq(1:length(oxy)),metab, type="l",xlab="Time", ylab="Dissolved oxygen  (mg/L)", cex.lab=1.5, cex.axis=1.5, lwd=2 )
         points(seq(1:length(oxy)),oxy)

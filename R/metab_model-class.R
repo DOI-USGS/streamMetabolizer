@@ -89,6 +89,13 @@ metab_model <- function(
   pkg_version=as.character(packageVersion("streamMetabolizer")),
   ...) {
   
+  # print the fitting time if requested
+  if(isTRUE(specs$verbose)) {
+    fitting_mins <- floor(fitting_time[['elapsed']] / 60)
+    fitting_secs <- round(fitting_time[['elapsed']] %% 60)
+    message("model fit in ", if(fitting_mins > 0) paste0(fitting_mins, " min, "), fitting_secs, " sec")
+  }
+  
   # Create a metab_model object
   new(model_class, info=info, fit=fit, fitting_time=fitting_time, 
       specs=if(class(specs)[1] == 'specs') specs else add_specs_class(specs), 
@@ -108,18 +115,32 @@ setMethod(
   "show", "metab_model", 
   function(object) {
     cat("metab_model", if(class(object)[1] != "metab_model") paste0("of type ", class(object)[1]), "\n")
-    cat("  User-supplied metadata (access with get_info()):\n")
-    print(get_info(object))
-    cat("  Fitted model (access with get_fit()):\n")
-    cat("    class: ", paste0(class(get_fit(object)), collapse=" & "),"\n")
-    print(get_specs(object), header="  Fitting specifications (access with get_specs()):\n", prefix="    ")
-    cat("  Fitting time (access with get_fitting_time()):\n")
-    print(get_fitting_time(object))
-    cat("  Fitting data (truncated; access with get_data()):\n")
-    print(head(get_data(object)))
-    cat("  Fitting data_daily (truncated; access with get_data_daily()):\n")
-    print(head(get_data_daily(object)))
-    cat("  streamMetabolizer version", object@pkg_version, "\n")
+    if(!is.null(get_info(object))) {
+      cat("  User-supplied metadata:\n")
+      print(get_info(object))
+    }
+    cat("streamMetabolizer version", object@pkg_version, "\n")
+    print(get_specs(object), header="Specifications:\n", prefix="  ")
+    cat("Fitting time: ", get_fitting_time(object)[['elapsed']], " secs elapsed\n", sep="")
+    withCallingHandlers(
+      tryCatch({
+        metab_preds <- predict_metab(object)
+        cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
+        print(head(metab_preds, 10))
+        if(nrow(metab_preds) > 10) cat("  ...")
+      }, error=function(err) {
+        cat("Prediction errors:\n")
+        cat(paste0("  ", err$message))
+      }), warning=function(war) {
+        cat("Prediction warnings:", paste0('  ', war$message, collapse='\n'), sep='\n')
+        invokeRestart("muffleWarning")
+      })
+    if(!is.data.frame(object@fit)) {
+      if(('warnings' %in% names(object@fit)) && length(object@fit$warnings) > 0)
+        cat("General fitting warnings:", paste0('  ', object@fit$warnings, collapse='\n'), sep='\n')
+      if(('errors' %in% names(object@fit)) && length(object@fit$errors) > 0)
+        cat("General fitting errors:", paste0('  ', object@fit$errors, collapse='\n'), sep='\n')
+    }
   }
 )
 
@@ -226,14 +247,14 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       vars=var_vec) %>%
       with(paste0("^(",vars,")_daily_(",medlohi,")$"))
     precalc_cis <- sapply(grepstrs, grep, names(fit), value=TRUE, USE.NAMES=FALSE)
-    fit[c('date', precalc_cis, 'warnings', 'errors')] %>% 
-      setNames(c('date', paste0(rep(c('GPP','ER','K600'), each=3), rep(c('','.lower','.upper'), times=3)), 'warnings', 'errors'))
+    preds <- fit[c('date', precalc_cis, 'warnings', 'errors')] %>% 
+      setNames(c('date', paste0(rep(var_vec, each=length(var_vec)), rep(c('','.lower','.upper'), times=3)), 'warnings', 'errors'))
 
   } else if(length(calcnow_cis) == 6) {
     # the fit includes columns for GPP, GPP.sd, ER, ER.sd, K600, and K600.sd; calculate CIs
     ci_level <- 0.95
     crit <- qnorm((1 + ci_level)/2)
-    c(list(fit['date']),
+    preds <- c(list(fit['date']),
       lapply(var_vec, function(var) {
         est <- fit[[var]]
         sd <- fit[[paste0(var,".sd")]]
@@ -246,19 +267,63 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       }),
       list(fit[c('warnings','errors')])) %>%
       bind_cols() %>%
-      as.data.frame()
+      as.data.frame(stringsAsFactors=FALSE)
     
   } else {
     warning("model is missing columns for estimates and/or CIs")
-    data.frame(
+    preds <- data.frame(
       date=as.Date(NA)[NULL], 
       GPP=numeric(), GPP.lower=numeric(), GPP.upper=numeric(),
       ER=numeric(), ER.lower=numeric(), ER.upper=numeric(),
-      K600=numeric(), K600.lower=numeric(), K600.upper=numeric()
+      K600=numeric(), K600.lower=numeric(), K600.upper=numeric(),
+      warnings=character(), errors=character(),
+      stringsAsFactors=FALSE
     )
+  }
+  
+  if(is.list(fit)) {
+    if(!exists('valid_day', fit)) fit$valid_day <- TRUE
+    attr(preds, 'warnings') <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
+    attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors[fit$valid_day])
+  }
+  class(preds) <- c('preds_metab', class(preds))
+  preds
+}
+
+#' Summarize a vector of warning or error messages
+#' 
+#' Split ;-separated warning/error messages and condense into counts of each
+#' unique message
+#' 
+#' @keywords internal
+format_stopwarn_msgs <- function(msgs) {
+  split_msgs <- unlist(strsplit(msgs, '; '))
+  tbl_msgs <- sort(table(split_msgs))
+  if(length(tbl_msgs) == 0) {
+    c()
+  } else {
+    msgs_w_counts <- paste0(
+      unname(tbl_msgs), " date", ifelse(unname(tbl_msgs)==1,"","s"), ": ",
+      names(tbl_msgs))
+    sort(msgs_w_counts)
   }
 }
 
+#' Print metab preds, warnings, & errors
+#' 
+#' Print metab predictions with their warnings & errors if applicable
+#' @inheritParams base::print
+#' @export
+print.preds_metab <- function(x, ...) {
+  pristine_x <- x
+  class(x) <- class(x)[class(x) != 'preds_metab']
+  print(x)
+  if(!is.null(attr(x, 'warnings')))
+    cat("Summary of date-specific fitting warnings:", paste0('  ', attr(x, 'warnings'), collapse='\n'), sep='\n')
+  if(!is.null(attr(x, 'errors')))
+    cat("Summary of date-specific fitting errors:", paste0('  ', attr(x, 'errors'), collapse='\n'), sep='\n')
+  invisible(pristine_x)
+}
 
 
 #' Make dissolved oxygen predictions from a fitted metab_model.

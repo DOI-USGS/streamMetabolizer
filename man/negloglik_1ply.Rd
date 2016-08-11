@@ -8,10 +8,10 @@ negloglik_1ply(params, K600.daily, DO.obs, DO.sat, depth, temp.water, frac.GPP,
   frac.ER, frac.D, calc_DO_fun, ODE_method)
 }
 \arguments{
-\item{params}{a vector of length 2, where the first element is GPP and the 
+\item{params}{a vector of length 2, where the first element is GPP and the
 second element is ER (both mg/L/d)}
 
-\item{K600.daily}{optional - if K600 is to be fit, leave NULL. If K600 is to 
+\item{K600.daily}{optional - if K600 is to be fit, leave NULL. If K600 is to
 be supplied, this is where to put it.}
 
 \item{DO.obs}{a vector of observed DO, from which values at time t will be 
@@ -31,7 +31,7 @@ equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 
 \item{frac.D}{the fraction of daily D to apply to each timestep}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER, 
+\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
 etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 
 \item{ODE_method}{character specifying the numerical integration method to 
@@ -39,14 +39,14 @@ use. The default is pairmeans, where the change in DO between times t-1 and
 t is a function of the mean DO.sat between times t-1 and t, mean temp.water
 between times t-1 and t, mean light between times t-1 and t, etc. The Euler
 method is currently more common in the literature, with each time step 
-depending entirely on DO.sat, GPP, etc. at time t. Both methods are
-imprecise and fast, relative to Runge-Kutta or other numerical integration
+depending entirely on DO.sat, GPP, etc. at time t. Both methods are 
+imprecise and fast, relative to Runge-Kutta or other numerical integration 
 methods}
 }
 \description{
-Called from mle_1ply(). From ?nlm, this function should be "the function to 
-be minimized, returning a single numeric value. This should be a function 
-with first argument a vector of the length of p followed by any other 
+Called from mle_1ply(). From ?nlm, this function should be "the function to
+be minimized, returning a single numeric value. This should be a function
+with first argument a vector of the length of p followed by any other
 arguments specified by the ... argument."
 }
 \keyword{internal}

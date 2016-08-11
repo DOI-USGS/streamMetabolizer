@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_calc_NLL.R
 \name{create_calc_NLL}
 \alias{create_calc_NLL}
-\title{Create a function to compute the negative log likelihood of a set of
+\title{Create a function to compute the negative log likelihood of a set of 
 metabolism parameter values}
 \usage{
 create_calc_NLL(calc_DO,
@@ -11,32 +11,39 @@ create_calc_NLL(calc_DO,
   err_proc_iid = environment(calc_DO)$err_proc_iid)
 }
 \arguments{
+\item{calc_DO}{a function as from \code{create_calc_DO}}
+
+\item{par.names}{vector of names of parameters that can be expected in calls 
+to the function created by this one (the calc_NLL function)}
+
 \item{err_obs_iid}{logical. Should IID observation error be included? If not,
 the model will be fit to the differences in successive DO measurements, 
 rather than to the DO measurements themselves.}
 
 \item{err_proc_iid}{logical. Should IID process error be included?}
-
-\item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}
 }
 \value{
-a function that will return a negative log likelihood of the data
-  given a set of metab.pars
+a function that will return a negative log likelihood of the data 
+  given a set of metab.pars. metab.pars is the first argument of the returned
+  function; its names are defined in \code{par.names}.
 }
 \description{
-Create a function to compute the negative log likelihood of a set of
+Create a function to compute the negative log likelihood of a set of 
 metabolism parameter values
 }
 \examples{
 \dontrun{
-data <- data_metab('1','30')
+data <- data_metab('1','30')[seq(1,48,by=2),]
 dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)
 NLL <- create_calc_NLL(DO)
-NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
-NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
-nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=10; NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=20; NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
+NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'))
+iter=30; NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
+iter=NA; nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+iter=NA; nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
 }
 }
 

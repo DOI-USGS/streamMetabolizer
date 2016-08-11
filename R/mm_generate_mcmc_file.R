@@ -61,6 +61,7 @@ mm_generate_mcmc_file <- function(
       if(do_indent) p('}')
     )
   }
+  `<b-` <- switch(engine, jags=' <- ', stan=' = ')
   f <- function(distrib, ...) { 
     # switch things to JAGS format if needed
     args <- c(list(...))
@@ -251,30 +252,30 @@ mm_generate_mcmc_file <- function(
         # Coefficient pre-calculations
         if(ode_method == 'Euler') c(
           comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-          s('coef_GPP', N('i'), '  <- frac_GPP', N('i'), ' ', e('/'), ' depth', N('i'), ''),
-          s('coef_ER', N('i'), '   <- frac_ER',  N('i'), ' ', e('/'), ' depth', N('i'), ''),
+          s('coef_GPP', N('i'), ' ', `<b-`, 'frac_GPP', N('i'), ' ', e('/'), ' depth', N('i'), ''),
+          s('coef_ER', N('i'), '  ', `<b-`, 'frac_ER',  N('i'), ' ', e('/'), ' depth', N('i'), ''),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part', N('i'), ' <- KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), '')
+              s('coef_K600_part', N('i'), `<b-`, 'KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), '')
             ),
             DO_obs = c(
-              p('coef_K600_full', N('i'), ' <- KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), ' ', e('*')),
+              p('coef_K600_full', N('i'), `<b-`, 'KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), ' ', e('*')),
               s('  (DO_sat', N('i'), ' - DO_obs', N('i'), ')')
             )
           )
         ) else if(ode_method == 'pairmeans') c(
           comment('Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-          s('coef_GPP', N('i'), '  <- (frac_GPP', N('i'), ' + frac_GPP', N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
-          s('coef_ER', N('i'), '   <- (frac_ER',  N('i'), ' + frac_ER',  N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
+          s('coef_GPP', N('i'), `<b-`, '(frac_GPP', N('i'), ' + frac_GPP', N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
+          s('coef_ER', N('i'), `<b-`, '(frac_ER',  N('i'), ' + frac_ER',  N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
           switch(
             deficit_src,
             DO_mod = c(
-              s('coef_K600_part', N('i'), ' <- (KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0'),
-              s('DO_sat_pairmean', N('i'), ' <- (DO_sat', N('i'), ' + DO_sat', N('i+1'), ')/2.0')
+              s('coef_K600_part', N('i'), `<b-`, '(KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0'),
+              s('DO_sat_pairmean', N('i'), `<b-`, '(DO_sat', N('i'), ' + DO_sat', N('i+1'), ')/2.0')
             ),
             DO_obs = c(
-              p('coef_K600_full', N('i'), ' <- (KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0 ', e('*')),
+              p('coef_K600_full', N('i'), `<b-`, '(KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0 ', e('*')),
               s('  (DO_sat', N('i'), ' + DO_sat', N('i+1'), ' - DO_obs', N('i'), ' - DO_obs', N('i+1'), ')/2.0')
             )
           )
@@ -283,14 +284,14 @@ mm_generate_mcmc_file <- function(
         # dDO pre-calculations
         if(dDO_model) c(
           comment('dDO observations'),
-          s('dDO_obs', N('i'), ' <- DO_obs', N('i+1'), ' - DO_obs', N('i'), '')
+          s('dDO_obs', N('i'), `<b-`, 'DO_obs', N('i+1'), ' - DO_obs', N('i'), '')
         )
         
         # # vector of ones pre-calculations
         # if(dDO_model && engine == 'jags') c(
         #   comment('ones vector for expanding daily vectors into matrices'),
         #   p('for (i in 1:(n-1)) {'),
-        #   indent(s('ones[i] <- 1')),
+        #   indent(s('ones[i] ', `<b-`, ' 1')),
         #   p('}')
         # )
       ),
@@ -383,17 +384,17 @@ mm_generate_mcmc_file <- function(
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        s('K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
+        s('K600_daily_sigma', `<b-`, 'exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
       ),
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
-        s('err_obs_iid_sigma <- exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+        s('err_obs_iid_sigma', `<b-`, 'exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
       if(err_proc_acor) c(
-        # s('err_proc_acor_phi' <- ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-        s('err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+        # s('err_proc_acor_phi, `<b-`, '??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        s('err_proc_acor_sigma', `<b-`, 'exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
       if(err_proc_iid) c(
-        s('err_proc_iid_sigma <- exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+        s('err_proc_iid_sigma', `<b-`, 'exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
     ),
     
     # K600_daily model
@@ -401,11 +402,11 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
+        linear=s('K600_daily_pred', `<b-`, 'K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
         binned=c(
           # JAGS might not require a loop here
           condloop(
-            s('K600_daily_pred', M('j'), ' <- K600_daily_beta[discharge_bin_daily', M('j'), ']')
+            s('K600_daily_pred', M('j'), `<b-`, 'K600_daily_beta[discharge_bin_daily', M('j'), ']')
           )
         )
       )
@@ -422,9 +423,9 @@ mm_generate_mcmc_file <- function(
       # process error (always looped, vectorized across days)
       if(err_proc_acor) c(
         p(''),
-        s('err_proc_acor', N('1'), ' <- err_proc_acor_inc', N('1'), ''),
+        s('err_proc_acor', N('1'), `<b-`, 'err_proc_acor_inc', N('1'), ''),
         p('for(i in 1:(n-2)) {'),
-        s('  err_proc_acor', N('i+1'), ' <- err_proc_acor_phi * err_proc_acor', N('i'), ' + err_proc_acor_inc', N('i+1'), ''),
+        s('  err_proc_acor', N('i+1'), `<b-`, 'err_proc_acor_phi * err_proc_acor', N('i'), ' + err_proc_acor_inc', N('i+1'), ''),
         p('}')
       ),
       
@@ -436,7 +437,7 @@ mm_generate_mcmc_file <- function(
         comment("dDO model"),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('dDO_mod', N('i'), ' <- '),
+          p('dDO_mod', N('i'), `<b-`),
           indent(
             if(err_proc_acor) p('err_proc_acor', N('i'), ' +'),
             p('GPP_daily  ', e('*'), ' coef_GPP', N('i'), ' +'),
@@ -452,10 +453,10 @@ mm_generate_mcmc_file <- function(
       if(DO_model) c(
         p(''),
         comment("DO model"),
-        s('DO_mod', N('1'), ' <- DO_obs_1'),
+        s('DO_mod', N('1'), `<b-`, 'DO_obs_1'),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod', N('i+1'), ' <- ('),
+          p('DO_mod', N('i+1'), `<b-`, '('),
           p('  DO_mod', N('i'), ' +'),
           if(dDO_model) c(
             s('  dDO_mod', N('i'), ' + err_proc_iid', N('i'), ')')

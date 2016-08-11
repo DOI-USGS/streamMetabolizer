@@ -44,12 +44,12 @@ transformed data {
   
   for(i in 1:(n-1)) {
     // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  <- frac_GPP[i] ./ depth[i];
-    coef_ER[i]   <- frac_ER[i] ./ depth[i];
-    coef_K600_full[i] <- KO2_conv[i] .* frac_D[i] .*
+    coef_GPP[i]  = frac_GPP[i] ./ depth[i];
+    coef_ER[i]   = frac_ER[i] ./ depth[i];
+    coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*
       (DO_sat[i] - DO_obs[i]);
     // dDO observations
-    dDO_obs[i] <- DO_obs[i+1] - DO_obs[i];
+    dDO_obs[i] = DO_obs[i+1] - DO_obs[i];
   }
 }
 
@@ -75,8 +75,8 @@ transformed parameters {
   
   // Rescale pooling & error distribution parameters
   // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  K600_daily_sigma <- exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale);
-  err_proc_acor_sigma <- exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  K600_daily_sigma = exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale);
+  err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
   
   // Model DO time series
   // * Euler version
@@ -84,14 +84,14 @@ transformed parameters {
   // * autocorrelated process error
   // * reaeration depends on DO_obs
   
-  err_proc_acor[1] <- err_proc_acor_inc[1];
+  err_proc_acor[1] = err_proc_acor_inc[1];
   for(i in 1:(n-2)) {
-    err_proc_acor[i+1] <- err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1];
+    err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1];
   }
   
   // dDO model
   for(i in 1:(n-1)) {
-    dDO_mod[i] <- 
+    dDO_mod[i] = 
       err_proc_acor[i] +
       GPP_daily  .* coef_GPP[i] +
       ER_daily   .* coef_ER[i] +

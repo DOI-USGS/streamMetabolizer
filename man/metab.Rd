@@ -18,8 +18,9 @@ detail, and gives default values.}
 
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations (unit-value). Columns must have the same names, units, and 
-format as the default. See the \strong{'Formatting \code{data}'} section 
-below for a full description.}
+format as the default. The solar.time column must also have a timezone code
+('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -129,13 +130,16 @@ depend on the model \code{type}, as follows.
     \tabular{llll}{
       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
       date              \tab Date            \tab                 \tab optional      \cr
-      K600              \tab numeric         \tab d^-1            \tab optional      
+      K600              \tab numeric         \tab d^-1            \tab optional      \cr
+      GPP.init          \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
+      ER.init           \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
+      K600.init         \tab numeric         \tab d^-1            \tab optional      
     }
     
     \strong{Example}:
-    \tabular{lr}{
-      \code{date      } \tab \code{K600}\cr
-      \code{2050-03-14} \tab \code{5   }
+    \tabular{lrrrr}{
+      \code{date      } \tab \code{K600} \tab \code{GPP.init} \tab \code{ER.init} \tab \code{K600.init}\cr
+      \code{2050-03-14} \tab \code{5   } \tab \code{5       } \tab \code{5      } \tab \code{5        }
     }
   }
   \item{\code{bayes}}{

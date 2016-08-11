@@ -40,7 +40,7 @@ of required parameters and their defaults depends on the model given in the
 detail, and gives default values.}
 }
 \value{
-data.frame of estimates and \code{\link[stats]{nlm}} model 
+data.frame of estimates and \code{\link[stats]{nlm}} model
   diagnostics
 }
 \description{

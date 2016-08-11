@@ -66,14 +66,17 @@
 #'   autocorrelation term phi fitted) be included?
 #' @param err_proc_iid logical. Should IID process error be included?
 #' @param ode_method The method to use in solving the ordinary differential 
-#'   equation for DO. Euler: dDOdt from t=1 to t=2 is solely a function of GPP, 
-#'   ER, DO, etc. at t=1. pairmeans: dDOdt from t=1 to t=2 is a function of the 
-#'   mean values of GPP, ER, etc. across t=1 and t=2.
+#'   equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
+#'   function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
+#'   from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
+#'   t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
+#'   and any character method accepted by \code{\link[deSolve]{ode}} in the
+#'   \code{deSolve} package
 #' @param GPP_fun How to partition daily GPP over time. \code{linlight}: GPP is 
 #'   a linear function of light with an intercept at 0. \code{satlight} GPP is a
 #'   saturating function of light.
-#' @param ER_fun How to partition daily ER over time. \code{constant}: ER is
-#'   constant over every timestep of the day. \code{q10temp} (not yet
+#' @param ER_fun How to partition daily ER over time. \code{constant}: ER is 
+#'   constant over every timestep of the day. \code{q10temp} (not yet 
 #'   implemented): ER at each timestep is a function of the water temperature.
 #' @param deficit_src From what DO estimate (observed or modeled) should the DO 
 #'   deficit be computed?
@@ -138,7 +141,14 @@ mm_name <- function(
     if(!is.logical(err_obs_iid) || length(err_obs_iid) != 1) stop("need err_obs_iid to be a logical of length 1")
     if(!is.logical(err_proc_acor) || length(err_proc_acor) != 1) stop("need err_proc_acor to be a logical of length 1")
     if(!is.logical(err_proc_iid) || length(err_proc_iid) != 1) stop("need err_proc_iid to be a logical of length 1")
-    ode_method <- match.arg(ode_method)
+    ode_method <- match.arg(ode_method, choices=switch(
+      type, 
+      mle=c('Euler','pairmeans','trapezoid','rk2','lsoda','lsode','lsodes','lsodar','vode','daspk',
+            'euler','rk4','ode23','ode45','radau','bdf','bdf_d','adams','impAdams','impAdams_d'),
+      bayes=c('Euler','pairmeans'),
+      night=c('Euler','pairmeans'),
+      Kmodel=c('NA'),
+      sim=c('Euler','pairmeans')))
     GPP_fun <- match.arg(GPP_fun)
     ER_fun <- match.arg(ER_fun)
     deficit_src <- match.arg(deficit_src)
@@ -157,7 +167,10 @@ mm_name <- function(
     c(none='', normal='Kn', linear='Kl', binned='Kb', complete='Kc')[[pool_K600]],
     c(none='np', partial='', complete='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
-    c(Euler='eu', pairmeans='pm', 'NA'='')[[ode_method]], '_',
+    c(Euler='eu', pairmeans='pm', trapezoid='tr', rk2='r2', 
+      lsoda='o1', lsode='o2', lsodes='o3', lsodar='o4', vode='o5', daspk='o6', euler='o7', rk4='o8', 
+      ode23='o9', ode45='o10', radau='o11', bdf='o12', bdf_d='o13', adams='o14', impAdams='o15', impAdams_d='o16',
+      'NA'='')[[ode_method]], '_',
     c(linlight='pl', satlight='ps', 'NA'='')[[GPP_fun]],
     c(constant='rc', q10temp='rq', 'NA'='')[[ER_fun]], 
     c(DO_mod='km', DO_obs='ko', DO_obs_filter='kf', 'NA'='')[[deficit_src]], 

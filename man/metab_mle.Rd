@@ -5,8 +5,8 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
-  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600, optional
-  = "all"), info = NULL)
+  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600,
+  GPP.init, ER.init, K600.init, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -19,8 +19,9 @@ detail, and gives default values.}
 
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations (unit-value). Columns must have the same names, units, and 
-format as the default. See the \strong{'Formatting \code{data}'} section 
-below for a full description.}
+format as the default. The solar.time column must also have a timezone code
+('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -30,7 +31,7 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_mle object containing the fitted model. This object can be 
+A metab_mle object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
