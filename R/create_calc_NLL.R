@@ -1,6 +1,10 @@
 #' Create a function to compute the negative log likelihood of a set of 
 #' metabolism parameter values
 #' 
+#' Produces a function that can be given to nlm(). K600.daily may be passed to
+#' that function within the p vector (for fitting K600.daily) or as an
+#' additional argument (for fixing it).
+#' 
 #' @param calc_DO a function as from \code{create_calc_DO}
 #' @param par.names vector of names of parameters that can be expected in calls 
 #'   to the function created by this one (the calc_NLL function)
@@ -10,25 +14,23 @@
 #'   function; its names are defined in \code{par.names}.
 #' @importFrom stats dnorm
 #' @examples
-#' \dontrun{
 #' data <- data_metab('1','30')[seq(1,48,by=2),]
 #' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)
-#' NLL <- create_calc_NLL(DO)
-#' iter=10; NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
-#' iter=20; NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
-#' NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'))
-#' iter=30; NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
-#' iter=NA; nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
-#' iter=NA; nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
-#' }
+#' DO <- create_calc_DO(dDOdt)
+#' NLL <- create_calc_NLL(DO, err_obs_iid=TRUE)
+#' NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+#' NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
+#' NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'), err_obs_iid=TRUE)
+#' NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
+#' nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
+#' nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
 #' @export
 create_calc_NLL <- function(
   calc_DO,
   par.names=environment(environment(calc_DO)$calc_dDOdt)$metab.needs,
-  err_obs_iid=environment(calc_DO)$err_obs_iid,
-  err_proc_iid=environment(calc_DO)$err_proc_iid) {
+  err_obs_iid=FALSE, err_proc_iid=FALSE) {
+  
   if(!xor(err_obs_iid, err_proc_iid))
     stop("need err_obs_iid or err_proc_iid but not both or neither")
   

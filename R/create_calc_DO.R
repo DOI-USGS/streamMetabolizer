@@ -14,30 +14,36 @@
 #' DOtime <- data$solar.time
 #' dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
 #'
-#' # integration of dDOdt by Euler, trapezoid, rk4, and lsoda methods
+#' # integration of dDOdt by Euler, trapezoid, rk2, rk4, and lsoda methods
 #' plot(x=DOtime, y=data$DO.obs, pch=3, cex=0.6)
 #' # euler
 #' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='Euler')
+#' DO <- create_calc_DO(dDOdt, ode_method='Euler')
 #' DO.mod.euler <- DO(metab.pars=preds.init)
 #' lines(x=DOtime, y=DO.mod.euler, type='l', col='chartreuse3')
 #' # trapezoid=pairmeans
 #' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='trapezoid')
+#' DO <- create_calc_DO(dDOdt, ode_method='trapezoid')
 #' DO.mod.trap <- DO(metab.pars=preds.init)
 #' lines(x=DOtime, y=DO.mod.trap, type='l', col='gold')
 #' # lsoda
 #' dDOdt <- create_calc_dDOdt(data, ode_method='lsoda', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='lsoda')
+#' DO <- create_calc_DO(dDOdt, ode_method='lsoda')
 #' DO.mod <- DO(metab.pars=preds.init)
 #' lines(x=DOtime, y=DO.mod, type='l', col='navy')
+#' # rk2
+#' dDOdt <- create_calc_dDOdt(data, ode_method='rk2', GPP_fun='linlight',
+#'   ER_fun='constant', deficit_src='DO_mod')
+#' DO <- create_calc_DO(dDOdt, ode_method='rk2')
+#' DO.mod <- DO(metab.pars=preds.init)
+#' lines(x=DOtime, y=DO.mod, type='l', col='blue')
 #' # rk4
 #' dDOdt <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='rk4')
+#' DO <- create_calc_DO(dDOdt, ode_method='rk4')
 #' DO.mod <- DO(metab.pars=preds.init)
 #' lines(x=DOtime, y=DO.mod, type='l', col='magenta')
 #'
@@ -55,7 +61,7 @@
 #'   times=1:nrow(data), func=dDOdt, method='euler')[,'DO.mod']
 #' lines(x=DOtime, y=DO.mod.ode, col='blue')
 #' # DO
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='Euler')
+#' DO <- create_calc_DO(dDOdt, ode_method='Euler')
 #' DO.mod.DO <- DO(preds.init)
 #' lines(x=DOtime, y=DO.mod.DO, col='chartreuse3')
 #' # original calc_DO_mod function
@@ -75,13 +81,13 @@
 #'   DO.mod.dDOdt[t-1] + dDOdt(t-1, c(DO.mod=DO.mod.dDOdt[t-1]), preds.init)$dDOdt }
 #' lines(x=DOtime, y=DO.mod.dDOdt, col='purple')
 #' # DO
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='trapezoid')
+#' DO <- create_calc_DO(dDOdt, ode_method='trapezoid')
 #' DO.mod.pm.DO <- DO(preds.init)
 #' lines(x=DOtime, y=DO.mod.pm.DO, col='forestgreen', lty=3)
 #' # rk2 should be similar, but not identical, to pairmeans
 #' dDOdt <- create_calc_dDOdt(data, ode_method='rk2', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE, ode_method='rk2')
+#' DO <- create_calc_DO(dDOdt, ode_method='rk2')
 #' DO.mod.pm.rk2 <- DO(preds.init)
 #' lines(x=DOtime, y=DO.mod.pm.rk2, col='red', lty=4)
 #' # original calc_DO_mod function
@@ -92,10 +98,7 @@
 #' lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
 #' }
 #' @export
-create_calc_DO <- function(calc_dDOdt, err_obs_iid=FALSE, err_proc_iid=FALSE,
-                           ode_method=environment(calc_dDOdt)$ode_method) {
-  if(!xor(err_obs_iid, err_proc_iid))
-    stop("need err_obs_iid or err_proc_iid but not both or neither")
+create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_method) {
   
   # pull out info from the calc_dDOdt closure
   DO.obs <- environment(calc_dDOdt)$data$DO.obs
