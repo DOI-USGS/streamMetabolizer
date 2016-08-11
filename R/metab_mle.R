@@ -224,45 +224,6 @@ mle_1ply <- function(
   }
 }
 
-#' Return the likelihood value for a given set of parameters and observations
-#'
-#' Called from mle_1ply(). From ?nlm, this function should be "the function to
-#' be minimized, returning a single numeric value. This should be a function
-#' with first argument a vector of the length of p followed by any other
-#' arguments specified by the ... argument."
-#'
-#' @param params a vector of length 2, where the first element is GPP and the
-#'   second element is ER (both mg/L/d)
-#' @param K600.daily optional - if K600 is to be fit, leave NULL. If K600 is to
-#'   be supplied, this is where to put it.
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
-#' @inheritParams calc_DO_mod_w_fixed_error
-#' @keywords internal
-negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water,
-                           frac.GPP, frac.ER, frac.D, calc_DO_fun, ODE_method) {
-  
-  # Count how many DO observations/predictions there should be
-  n <- length(DO.obs)
-  
-  # Parse params vector (passed from nlm) and produce DO.mod estimates. It's
-  # important that these arguments are named because various calc_DO_funs take
-  # slightly different subsets of these arguments
-  DO.mod <- calc_DO_fun(
-    GPP.daily=params[1], ER.daily=params[2], K600.daily=if(is.null(K600.daily)) params[3] else K600.daily,
-    DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
-    frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.obs[1], n=n, ODE_method=ODE_method)
-  
-  # calculate & return the negative log likelihood of DO.mod values relative
-  # to DO.obs values. equivalent to Bob's original code & formula at
-  # http://www.statlect.com/normal_distribution_maximum_likelihood.htm
-  diffs.sq <- (DO.obs-DO.mod)^2
-  sigma.sq <- sum(diffs.sq)/n
-  (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
-  
-}
-
-
 
 #### metab_mle class ####
 

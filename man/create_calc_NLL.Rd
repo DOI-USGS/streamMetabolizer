@@ -32,11 +32,10 @@ that function within the p vector (for fitting K600.daily) or as an
 additional argument (for fixing it).
 }
 \examples{
-\dontrun{
 data <- data_metab('1','30')[seq(1,48,by=2),]
 dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
-DO <- create_calc_DO(dDOdt, err_obs_iid=TRUE)
+DO <- create_calc_DO(dDOdt)
 NLL <- create_calc_NLL(DO, err_obs_iid=TRUE)
 NLL(metab.pars=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
 NLL(metab.pars=c(GPP.daily=4, ER.daily=-7, K600.daily=15))
@@ -44,6 +43,5 @@ NLL2 <- create_calc_NLL(DO, par.names=c('GPP.daily','ER.daily'), err_obs_iid=TRU
 NLL2(metab.pars=c(GPP.daily=2, ER.daily=-2), K600.daily=25)
 nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
 nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
-}
 }
 

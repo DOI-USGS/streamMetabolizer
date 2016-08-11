@@ -81,7 +81,8 @@
 #'   where K600 is NA. If there are any such dates, K600_init must have a 
 #'   numeric (non-NA) value, as this will be used to estimate K600 for those 
 #'   dates.
-#' @inheritParams negloglik_1ply
+#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
+#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #'   
 #' @param split_dates logical indicating whether the data should be split into 
 #'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
