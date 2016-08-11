@@ -104,6 +104,7 @@ mle_1ply <- function(
   ER.init <- specs$ER_init
   K600.init <- specs$K600_init
   K600 <- NULL
+  . <- '.dplyr.var'
   if(!is.null(data_daily_ply)) {
     inits <- c('GPP.init', 'ER.init', 'K600.init') %>% { .[. %in% names(data_daily_ply)] }
     if(nrow(data_daily_ply)==0) {
@@ -175,7 +176,7 @@ mle_1ply <- function(
     mle.1d <- withCallingHandlers(
       tryCatch({
         # first: try to run the MLE fitting function
-        iter <<- NA
+        # iter <<- NA # only useful if create_calc_NLL has plotting uncommented
         mle.1d <- do.call(nlm, nlm.args)
         # if we were successful, also compute the confidence interval as in
         # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which

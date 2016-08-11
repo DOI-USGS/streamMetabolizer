@@ -1,10 +1,13 @@
-#' Create a function to compute the negative log likelihood of a set of
+#' Create a function to compute the negative log likelihood of a set of 
 #' metabolism parameter values
-#'
-#' @param calc_dDOdt a function as from \code{create_calc_dDOdt}
+#' 
+#' @param calc_DO a function as from \code{create_calc_DO}
+#' @param par.names vector of names of parameters that can be expected in calls 
+#'   to the function created by this one (the calc_NLL function)
 #' @inheritParams mm_name
-#' @return a function that will return a negative log likelihood of the data
-#'   given a set of metab.pars
+#' @return a function that will return a negative log likelihood of the data 
+#'   given a set of metab.pars. metab.pars is the first argument of the returned
+#'   function; its names are defined in \code{par.names}.
 #' @importFrom stats dnorm
 #' @examples
 #' \dontrun{
@@ -54,14 +57,17 @@ create_calc_NLL <- function(
       sd <- if('err_proc_iid_sigma' %in% all.pars) all.pars$err_proc_iid_sigma else sqrt(mean(diffs^2))
     }
     nll <- -sum(dnorm(x=diffs, sd=sd, log=TRUE))
-    it <- get('iter', envir=.GlobalEnv)
-    if(is.na(it)) {
-      iter <<- it <- 1
-      plot(DO.mod, type='l', ylim=c(0,20))
-      points(DO.obs, pch=19, col='blue', cex=0.5)
-    }
-    iter <<- it + 1
-    lines(DO.mod, col=grey(0.95-min(0.95,it/150)))
+    
+    # plots for debugging
+    # it <- get('iter', envir=.GlobalEnv)
+    # if(is.na(it)) {
+    #   iter <<- it <- 1
+    #   plot(DO.mod, type='l', ylim=c(0,20))
+    #   points(DO.obs, pch=19, col='blue', cex=0.5)
+    # }
+    # iter <<- it + 1
+    # lines(DO.mod, col=grey(0.95-min(0.95,it/150)))
+    
     nll
   }
 }
