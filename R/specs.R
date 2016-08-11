@@ -456,13 +456,7 @@ specs <- function(
       included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'GPP_init', 'ER_init', 'K600_init')
       
       if('calc_DO_fun' %in% yes_missing) {
-        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) {
-          if(features$GPP_fun =='linlight'){
-            calc_DO_mod
-          } else if(features$GPP_fun == 'satlight') {
-            calc_DO_mod_lightsat
-          }
-        } else calc_DO_mod_by_diff
+        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
       }
 
     }, 
