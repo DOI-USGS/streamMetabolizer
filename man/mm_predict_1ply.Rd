@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 mm_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  timestep_days, ..., calc_DO_fun, calc_DO_args = list())
+  timestep_days, ..., model_name)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

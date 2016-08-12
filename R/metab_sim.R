@@ -17,7 +17,7 @@ NULL
 #' @inheritParams metab
 #' @return A metab_sim object containing the fitted model. This object can be 
 #'   inspected with the functions in the \code{\link{metab_model_interface}}.
-#'   
+#' @importFrom unitted v
 #' @examples
 #' # start with non-DO data (DO used only to pick first DO of each day)
 #' dat <- data_metab('3', res='15')
@@ -26,22 +26,22 @@ NULL
 #' 
 #' # define simulation parameters
 #' mm <- metab_sim(
-#'   specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1),
+#'   specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2),
 #'   data=dat, data_daily=dat_daily)
 #' # actual simulation happens during prediction - different each time
-#' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
-#' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+#' predict_DO(mm)[seq(1,50,by=10),]
+#' predict_DO(mm)[seq(1,50,by=10),]
 #' 
 #' # or same each time if seed is set
 #' mm <- metab_sim(
-#'   specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1, sim.seed=248),
+#'   specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2, sim.seed=248),
 #'   data=dat, data_daily=dat_daily)
 #' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 #' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 #' 
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
-#' plot_DO_preds(predict_DO(mm))
+#' plot_DO_preds(mm)
 #' }
 #' @export
 #' @family metab_model
@@ -60,11 +60,6 @@ metab_sim <- function(
   fitting_time <- system.time({
     # Check data for correct column names & units
     dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_sim")
-    
-    # Move the simulation-relevant parameters to calc_DO_args for use in predict_DO
-    calc_DO_arg_names <- c('err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi')
-    specs$calc_DO_args = c(specs[calc_DO_arg_names], list(ODE_method=mm_parse_name(specs$model_name)$ode_method))
-    specs <- specs[-which(names(specs) %in% calc_DO_arg_names)]
   })
   
   # Package and return results
@@ -134,14 +129,23 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
 #' @family predict_DO
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
-  # call the generic, which generally does what we want
-  sim.seed <- get_specs(metab_model)$sim.seed
+  # call the generic to get the error-free DO estimates
+  DO.mod <- NextMethod(use_saved=FALSE)$DO.mod
+  
+  # compute errors to add to modeled data
+  specs <- get_specs(metab_model)
+  sim.seed <- specs$sim.seed
   if(!is.na(sim.seed)) set.seed(sim.seed)
-  preds_w_err <- NextMethod(calc_DO_fun=calc_DO_mod_w_sim_error, use_saved=FALSE)
-  preds_wo_err <- NextMethod(calc_DO_fun=calc_DO_mod, use_saved=FALSE)
+  n <- nrow(get_data(metab_model))
+  metab_model@data$err.obs <- as.numeric(stats::filter(rnorm(n, 0, specs$err.obs.sigma), filter=specs$err.obs.phi, method="recursive"))
+  metab_model@data$err.proc <- as.numeric(stats::filter(rnorm(n, 0, specs$err.proc.sigma), filter=specs$err.proc.phi, method="recursive"))
   
-  # copy the predictions into the DO.obs column to complete the simulation
-  preds_wo_err$DO.obs <- preds_w_err$DO.mod
+  # call the generic to get the error-added DO estimates
+  preds_w_err <- NextMethod(use_saved=FALSE)
   
-  preds_wo_err
+  # combine the error-free and error-added DO estimates
+  preds_w_err$DO.obs <- preds_w_err$DO.mod # 'observations' are the ones with error included
+  preds_w_err$DO.mod <- DO.mod # the 'model' is the error-free DO timeseries
+  
+  preds_w_err
 }

@@ -53,22 +53,22 @@ dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
 
 # define simulation parameters
 mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1),
+  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
-predict_DO(mm)$DO.obs[seq(1,50,by=10)]
-predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+predict_DO(mm)[seq(1,50,by=10),]
+predict_DO(mm)[seq(1,50,by=10),]
 
 # or same each time if seed is set
 mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.01, err.proc.sigma=0.1, sim.seed=248),
+  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2, sim.seed=248),
   data=dat, data_daily=dat_daily)
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 
 \dontrun{
 plot_DO_preds(predict_DO(mm))
-plot_DO_preds(predict_DO(mm))
+plot_DO_preds(mm)
 }
 }
 \author{

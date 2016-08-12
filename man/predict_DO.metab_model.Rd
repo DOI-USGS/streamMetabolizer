@@ -20,14 +20,6 @@ done.}
 (inclusive) for which to report DO predictions. If NA, no filtering is 
 done.}
 
-\item{calc_DO_fun}{The function to use in predicting DO from metabolism 
-estimates. The default is generally recommended, even if the model was fit 
-with assumptions of process error.}
-
-\item{calc_DO_args}{Any arguments to pass to calc_DO_fun. If not supplied, 
-the original args used when fitting the model will be used; this is the 
-recommended option.}
-
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}
 

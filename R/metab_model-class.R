@@ -332,28 +332,24 @@ print.preds_metab <- function(x, ...) {
 #' etc. from the metabolism model.
 #' 
 #' @inheritParams predict_DO
-#' @param calc_DO_fun The function to use in predicting DO from metabolism 
-#'   estimates. The default is generally recommended, even if the model was fit 
-#'   with assumptions of process error.
-#' @param calc_DO_args Any arguments to pass to calc_DO_fun. If not supplied, 
-#'   the original args used when fitting the model will be used; this is the 
-#'   recommended option.
+#' @param attach.units logical. Should units be attached to the output?
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @import dplyr
 #' @importFrom lubridate tz
+#' @importFrom unitted u v get_units
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc_DO_fun=calc_DO_mod, calc_DO_args, ..., use_saved=TRUE) {
+predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
   
   # pull args from the model
-  if(missing(calc_DO_args)) calc_DO_args <- get_specs(metab_model)$calc_DO_args # OK to be NULL
-  day_start <- get_specs(metab_model)$day_start
-  day_end <- get_specs(metab_model)$day_end
+  specs <- get_specs(metab_model)
+  day_start <- specs$day_start
+  day_end <- specs$day_end
   
   # get the input data; filter if requested
   data <- get_data(metab_model) %>% 
-    v() %>% # units are lost here. someday we'll get them worked through the whole system.
+    v() %>% # units are discarded here. someday we'll get them worked through the whole system.
     mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
@@ -367,9 +363,10 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, calc
   metab_ests <- predict_metab(metab_model, date_start=date_start, date_end=date_end)
     
   # re-process the input data with the metabolism estimates to predict DO
-  mm_model_by_ply(
+  preds <- mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
-    calc_DO_fun=calc_DO_fun, calc_DO_args=calc_DO_args) %>% # for mm_predict_1ply
+    model_name=specs$model_name) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
+  preds
 }
