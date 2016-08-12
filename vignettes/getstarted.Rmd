@@ -273,7 +273,7 @@ above table.)
 bayes_name <- mm_name(
   type='bayes', pool_K600='none', 
   err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE, 
-  ode_method='pairmeans', deficit_src='DO_mod', engine='stan')
+  ode_method='trapezoid', deficit_src='DO_mod', engine='stan')
 bayes_name
 ```
 

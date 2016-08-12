@@ -8,11 +8,17 @@ mm_generate_mcmc_file <- function(
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
-  ode_method=c('pairmeans','Euler'),
+  ode_method=c('trapezoid','euler'),
   GPP_fun=c('linlight'), #'satlight'
   ER_fun=c('constant'), #'q10temp'
   deficit_src=c('DO_mod','DO_obs'),
   engine=c('stan','jags')) {
+  
+  # handle Euler and pairmeans as deprecated arguments. mm_name runs a similar check & warning
+  if(ode_method %in% c('Euler','pairmeans'))
+    warning("for ode_method, 'Euler' and 'pairmeans' are deprecated in favor of 'euler' and 'trapezoid'")
+  if(ode_method == 'Euler') ode_method <- 'euler'
+  if(ode_method == 'pairmeans') ode_method <- 'trapezoid'
   
   # name the model. much argument checking happens here, even with
   # check_validity=FALSE (which is needed to avoid circularity)
@@ -242,7 +248,7 @@ mm_generate_mcmc_file <- function(
           DO_mod = 'vector[d] coef_K600_part[n-1];',
           DO_obs = 'vector[d] coef_K600_full[n-1];'
         ),
-        if(ode_method == 'pairmeans' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
+        if(ode_method == 'trapezoid' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
         if(dDO_model) 'vector[d] dDO_obs[n-1];')
     ),
     
@@ -250,7 +256,7 @@ mm_generate_mcmc_file <- function(
       p('for(i in 1:(n-1)) {'),
       indent(
         # Coefficient pre-calculations
-        if(ode_method == 'Euler') c(
+        if(ode_method == 'euler') c(
           comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
           s('coef_GPP', N('i'), ' ', `<b-`, 'frac_GPP', N('i'), ' ', e('/'), ' depth', N('i'), ''),
           s('coef_ER', N('i'), '  ', `<b-`, 'frac_ER',  N('i'), ' ', e('/'), ' depth', N('i'), ''),
@@ -264,8 +270,8 @@ mm_generate_mcmc_file <- function(
               s('  (DO_sat', N('i'), ' - DO_obs', N('i'), ')')
             )
           )
-        ) else if(ode_method == 'pairmeans') c(
-          comment('Coefficients by pairmeans (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
+        ) else if(ode_method == 'trapezoid') c(
+          comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
           s('coef_GPP', N('i'), `<b-`, '(frac_GPP', N('i'), ' + frac_GPP', N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
           s('coef_ER', N('i'), `<b-`, '(frac_ER',  N('i'), ' + frac_ER',  N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
           switch(
@@ -467,10 +473,10 @@ mm_generate_mcmc_file <- function(
             p('  ER_daily ', e('*'), ' coef_ER', N('i'), ' +'),
             switch(
               ode_method,
-              'Euler' = c(
+              'euler' = c(
                 p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat', N('i'), ' - DO_mod', N('i'), ')'),
                 s(')')),
-              'pairmeans' = c(
+              'trapezoid' = c(
                 p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat_pairmean', N('i'), ' - DO_mod', N('i'), '/2.0)'),
                 s(') ', e('/'), ' (1.0 + K600_daily ', e('*'), ' coef_K600_part', N('i'), ' / 2.0)'))
             )
@@ -589,7 +595,7 @@ mm_generate_mcmc_files <- function() {
     err_obs_iid=c(TRUE, FALSE),
     err_proc_acor=c(FALSE, TRUE),
     err_proc_iid=c(FALSE, TRUE),
-    ode_method=c('pairmeans','Euler'),
+    ode_method=c('trapezoid','euler'),
     GPP_fun='linlight',
     ER_fun='constant',
     deficit_src=c('DO_mod','DO_obs'),

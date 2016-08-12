@@ -25,7 +25,7 @@ model {
   }
   
   # Model DO time series
-  # * Euler version
+  # * euler version
   # * observation error
   # * autocorrelated process error
   # * reaeration depends on DO_obs

@@ -7,7 +7,7 @@
 mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
   "linear", "binned"), err_obs_iid = c(TRUE, FALSE),
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
-  ode_method = c("pairmeans", "Euler"), GPP_fun = c("linlight"),
+  ode_method = c("trapezoid", "euler"), GPP_fun = c("linlight"),
   ER_fun = c("constant"), deficit_src = c("DO_mod", "DO_obs"),
   engine = c("stan", "jags"))
 }
@@ -32,12 +32,12 @@ autocorrelation term phi fitted) be included?}
 \item{err_proc_iid}{logical. Should IID process error be included?}
 
 \item{ode_method}{The method to use in solving the ordinary differential 
-equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
-function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
-from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
-t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
-and any character method accepted by \code{\link[deSolve]{ode}} in the
-\code{deSolve} package}
+equation for DO. euler=Euler: the final change in DO from t=1 to t=2 is
+solely a function of GPP, ER, DO, etc. at t=1. trapezoid=pairmeans: the
+final change in DO from t=1 to t=2 is a function of the mean values of GPP,
+ER, etc. across t=1 and t=2. With metab_mle, other methods are available
+including 'rk2' and any character method accepted by
+\code{\link[deSolve]{ode}} in the \code{deSolve} package}
 
 \item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
 a linear function of light with an intercept at 0. \code{satlight} GPP is a
