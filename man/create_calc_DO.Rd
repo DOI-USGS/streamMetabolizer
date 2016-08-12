@@ -4,7 +4,8 @@
 \alias{create_calc_DO}
 \title{Create a function to compute the numerical integration of a dDOdt function}
 \usage{
-create_calc_DO(calc_dDOdt, ode_method = environment(calc_dDOdt)$ode_method)
+create_calc_DO(calc_dDOdt, ode_method = environment(calc_dDOdt)$ode_method,
+  err.obs = 0)
 }
 \arguments{
 \item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}
@@ -16,9 +17,15 @@ from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across
 t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
 and any character method accepted by \code{\link[deSolve]{ode}} in the
 \code{deSolve} package}
+
+\item{err.obs}{optional numerical vector of length nrow(data) in units of gO2
+m^3. Appropriate for simulation, when this vector of observation errors
+will be added to the calculated DO values to simulate observation error.
+But usually (for MLE or prediction from a fitted MLE/Bayesian/nighttime
+regression model) \code{err.obs} should be missing or 0}
 }
 \value{
-a function that will return a negative log likelihood of the data
+a function that will return a negative log likelihood of the data 
   given a set of metab.pars
 }
 \description{
@@ -116,6 +123,24 @@ DO.mod.old <- do.call(calc_DO_mod,
     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
 lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
+
+# with observation and/or process error
+plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
+dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod')
+DO <- create_calc_DO(dDOdt, ode_method='trapezoid', err.obs=rnorm(nrow(data), 0, 0))
+DO.mod.obs <- DO(preds.init)
+lines(x=DOtime, y=DO.mod.obs, col='black', lty=1)
+dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod')
+DO <- create_calc_DO(dDOdt, ode_method='trapezoid', err.obs=rnorm(nrow(data), 0, 0.3))
+DO.mod.obserr <- DO(preds.init)
+lines(x=DOtime, y=DO.mod.obserr, col='blue', lty=2)
+dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rnorm(nrow(data), 0, 2))
+DO <- create_calc_DO(dDOdt, ode_method='trapezoid', err.obs=rnorm(nrow(data), 0, 0.1))
+DO.mod.operr <- DO(preds.init)
+lines(x=DOtime, y=DO.mod.operr, col='red', lty=2)
 }
 }
 

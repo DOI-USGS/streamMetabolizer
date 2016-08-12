@@ -1,16 +1,23 @@
 #' Create a function that generates a 1-day timeseries of DO.mod
-#'
-#' Creates a closure that bundles data and helper functions into a single
+#' 
+#' Creates a closure that bundles data and helper functions into a single 
 #' function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
-#'
-#' @param data data.frame as in \code{\link{metab}}, except that data must
-#'   contain exactly one date worth of inputs (~24 hours according to
+#' 
+#' @param data data.frame as in \code{\link{metab}}, except that data must 
+#'   contain exactly one date worth of inputs (~24 hours according to 
 #'   \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).
 #' @inheritParams mm_name
+#' @param err.proc optional numerical vector of length nrow(data). Process error
+#'   in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
+#'   Appropriate for simulation, when this vector of process errors will be 
+#'   added to the calculated values of GPP and ER (then divided by depth and
+#'   multiplied by timestep duration) to simulate process error. But usually
+#'   (for MLE or prediction from a fitted MLE/Bayesian/nighttime regression
+#'   model) \code{err.proc} should be missing or 0
 #' @return a function that accepts args \code{t} (the time in 0:(n-1) where n is
 #'   the number of timesteps), \code{DO.mod.t} (the value of DO.mod at time t in
-#'   gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which
-#'   parameters should be included in this list, create \code{dDOdt} with this
+#'   gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which 
+#'   parameters should be included in this list, create \code{dDOdt} with this 
 #'   function and then call \code{environment(dDOdt)$metab.needs})
 #' @import dplyr
 #' @import unitted
@@ -25,7 +32,7 @@
 #'   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
 #' DOtime <- data$solar.time
 #' dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
-#'
+#' 
 #' # args to create_calc_dDOdt determine which values are needed in metab.pars
 #' dDOdt <- create_calc_dDOdt(data, ode_method='pairmeans', GPP_fun='satlight',
 #'   ER_fun='q10temp', deficit_src='DO_mod')
@@ -33,7 +40,7 @@
 #' environment(dDOdt)$metab.needs # get the names to be included in metab.pars
 #' dDOdt(t=23, state=c(DO.mod=data$DO.obs[1]),
 #'   metab.pars=list(Pmax=0.2, alpha=0.01, ER20=-0.05, K600.daily=3))$dDOdt
-#'
+#' 
 #' # different required args; try in a timeseries
 #' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
@@ -52,7 +59,7 @@
 #' plot(x=dDOtime, y=dDOdt.obs)
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 #' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
-#'
+#' 
 #' # compute & plot a full timeseries with ode() integration
 #' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
@@ -69,7 +76,7 @@
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 #' lines(x=dDOtime, y=dDOdt.mod.o, type='l', col='green', lty=2)
 #' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
-#'
+#' 
 #' # see how values of metab.pars affect the dDOdt predictions
 #' library(dplyr); library(ggplot2); library(tidyr)
 #' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
@@ -93,8 +100,44 @@
 #' dDO.preds %>%
 #'   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) %>%
 #'   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
+#' 
+#' # try simulating process eror
+#' data <- data_metab('1','30')[seq(1,48,by=2),]
+#' plot(x=data$solar.time, y=data$DO.obs)
+#' dDOdt.noerr <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+#'   ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+#' DO.mod.noerr <- deSolve::ode(
+#'   y=c(DO.mod=data$DO.obs[1]),
+#'   parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+#'   times=1:nrow(data), func=dDOdt.noerr, method='rk4')[,'DO.mod']
+#' lines(x=data$solar.time, y=DO.mod.noerr, type='l', col='purple')
+#' # with error
+#' dDOdt.err <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+#'   ER_fun='constant', deficit_src='DO_mod', err.proc=rep(+0.4, nrow(data)))
+#' DO.mod.err <- deSolve::ode(
+#'   y=c(DO.mod=data$DO.obs[1]),
+#'   parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+#'   times=1:nrow(data), func=dDOdt.err, method='rk4')[,'DO.mod']
+#' lines(x=data$solar.time, y=DO.mod.err, type='l', col='red', lty=2)
+#' # with same error each timestep is same as with reduced ER
+#' dDOdt.noerr2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+#'   ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+#' DO.mod.noerr2 <- deSolve::ode(
+#'   y=c(DO.mod=data$DO.obs[1]),
+#'   parms=list(GPP.daily=2, ER.daily=-1.4+0.4, K600.daily=21),
+#'   times=1:nrow(data), func=dDOdt.noerr2, method='rk4')[,'DO.mod']
+#' lines(x=data$solar.time, y=DO.mod.noerr2, type='l', col='green', lty=3)
+#' # with different timestep, same error value should mean very similar curve
+#' data <- data_metab('1','30')
+#' dDOdt.err2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+#'   ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0.4, nrow(data)))
+#' DO.mod.err2 <- deSolve::ode(
+#'   y=c(DO.mod=data$DO.obs[1]),
+#'   parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+#'   times=1:nrow(data), func=dDOdt.err2, method='rk4')[,'DO.mod']
+#' lines(x=data$solar.time, y=DO.mod.err2, type='l', col='black', lty=2)
 #' }
-create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
+create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, err.proc=0) {
 
   # simplify time indexing. we've guaranteed in mm_model_by_ply that the
   # timesteps are regular
@@ -103,6 +146,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
   # define the forcing (temp.water, light, DO.sat, etc.) interpolations and
   # other inputs to include in the dDOdt() closure
   data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data[, 'temp.water'], gas='O2')
+  data$err.proc <- err.proc
   switch(
     ode_method,
     # the simplest methods only require values at integer values of t
@@ -113,6 +157,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
       temp.water <- function(t) data[t, 'temp.water']
       light <- function(t) data[t, 'light']
       KO2.conv <- function(t) data[t, 'KO2.conv']
+      err.proc <- if(all(err.proc == 0)) function(t) 0 else function(t) data[t, 'err.proc']
     },
     { # other methods require functions that can be applied at non-integer values of t
       DO.obs <- approxfun(data$t, data$DO.obs, rule=2)
@@ -121,7 +166,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
       temp.water <- approxfun(data$t, data$temp.water, rule=2)
       light <- approxfun(data$t, data$light, rule=2)
       KO2.conv <- approxfun(data$t, data$KO2.conv, rule=2)
-      #KO2.conv <- function(t) convert_k600_to_kGAS(k600=1, temperature=temp.water(t), gas="O2")
+      err.proc <- if(all(err.proc == 0)) function(t) 0 else approxfun(data$t, data$err.proc, rule=2)
     }
   )
   timestep.days <- suppressWarnings(mean(as.numeric(diff(unitted::v(data$solar.time)), units="days"), na.rm=TRUE))
@@ -217,8 +262,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
         list(
           dDOdt=(
             - state[['DO.mod']] * metab.pars$K600.daily * pm(KO2.conv) +
-              pm(GPP, metab.pars) / pm(depth) +
-              pm(ER, metab.pars) / pm(depth) +
+              (pm(GPP, metab.pars) + pm(ER, metab.pars) + pm(err.proc)) / pm(depth) +
               metab.pars$K600.daily * (KO2.conv(t)*DO.sat(t) + KO2.conv(t+1)*DO.sat(t+1))/2
           ) * timestep.days / (1 + timestep.days * metab.pars$K600.daily * KO2.conv(t+1)/2))
       }
@@ -228,8 +272,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src) {
     function(t, state, metab.pars){
       list(
         dDOdt=(
-          GPP(t, metab.pars) / depth(t) +
-            ER(t, metab.pars) / depth(t) +
+          (GPP(t, metab.pars) + ER(t, metab.pars) + err.proc(t)) / depth(t) +
             D(t, state[['DO.mod']], metab.pars)) *
           timestep.days)
     }

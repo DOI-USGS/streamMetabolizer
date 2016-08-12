@@ -4,11 +4,12 @@
 \alias{create_calc_dDOdt}
 \title{Create a function that generates a 1-day timeseries of DO.mod}
 \usage{
-create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src)
+create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src,
+  err.proc = 0)
 }
 \arguments{
-\item{data}{data.frame as in \code{\link{metab}}, except that data must
-contain exactly one date worth of inputs (~24 hours according to
+\item{data}{data.frame as in \code{\link{metab}}, except that data must 
+contain exactly one date worth of inputs (~24 hours according to 
 \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).}
 
 \item{ode_method}{The method to use in solving the ordinary differential 
@@ -29,16 +30,24 @@ implemented): ER at each timestep is a function of the water temperature.}
 
 \item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
 deficit be computed?}
+
+\item{err.proc}{optional numerical vector of length nrow(data). Process error
+in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
+Appropriate for simulation, when this vector of process errors will be 
+added to the calculated values of GPP and ER (then divided by depth and
+multiplied by timestep duration) to simulate process error. But usually
+(for MLE or prediction from a fitted MLE/Bayesian/nighttime regression
+model) \code{err.proc} should be missing or 0}
 }
 \value{
 a function that accepts args \code{t} (the time in 0:(n-1) where n is
   the number of timesteps), \code{DO.mod.t} (the value of DO.mod at time t in
-  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which
-  parameters should be included in this list, create \code{dDOdt} with this
+  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which 
+  parameters should be included in this list, create \code{dDOdt} with this 
   function and then call \code{environment(dDOdt)$metab.needs})
 }
 \description{
-Creates a closure that bundles data and helper functions into a single
+Creates a closure that bundles data and helper functions into a single 
 function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
 }
 \examples{
@@ -118,6 +127,42 @@ dDO.preds <- data_frame(
 dDO.preds \%>\%
   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) \%>\%
   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
+
+# try simulating process eror
+data <- data_metab('1','30')[seq(1,48,by=2),]
+plot(x=data$solar.time, y=data$DO.obs)
+dDOdt.noerr <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+DO.mod.noerr <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.noerr, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.noerr, type='l', col='purple')
+# with error
+dDOdt.err <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(+0.4, nrow(data)))
+DO.mod.err <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.err, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.err, type='l', col='red', lty=2)
+# with same error each timestep is same as with reduced ER
+dDOdt.noerr2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+DO.mod.noerr2 <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4+0.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.noerr2, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.noerr2, type='l', col='green', lty=3)
+# with different timestep, same error value should mean very similar curve
+data <- data_metab('1','30')
+dDOdt.err2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0.4, nrow(data)))
+DO.mod.err2 <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.err2, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.err2, type='l', col='black', lty=2)
 }
 }
 
