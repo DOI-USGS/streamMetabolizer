@@ -225,13 +225,15 @@ get_version.metab_model <- function(metab_model) {
 #' reflecting a 95% CI.
 #' 
 #' @inheritParams predict_metab
+#' @param attach.units logical. Should units be attached to the output?
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @importFrom stats qnorm setNames
 #' @import dplyr
+#' @importFrom unitted u v get_units
 #' @export
 #' @family predict_metab
-predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...) {
+predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {
   
   fit <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
@@ -287,6 +289,9 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     attr(preds, 'errors') <- format_stopwarn_msgs(fit$errors[fit$valid_day])
   }
   class(preds) <- c('preds_metab', class(preds))
+  if(attach.units) {
+    p <- u(preds, get_units(mm_data())[sapply(names(preds), function(x) strsplit(x, '\\.')[[1]][1], USE.NAMES=FALSE)])
+  }
   preds
 }
 
@@ -308,6 +313,25 @@ format_stopwarn_msgs <- function(msgs) {
     sort(msgs_w_counts)
   }
 }
+
+# Define unitted_preds_metab. Pretty limited functionality; hopefully enough for
+# typical user needs
+setOldClass('preds_metab')
+setClass('unitted_preds_metab', contains=c('preds_metab','unitted_data.frame'))
+setMethod("unitted", 'preds_metab', function(object, units) {
+  if(!is.data.frame(object)) stop('expected object to be a data.frame')
+  class(object) <- class(object)[class(object) != 'preds_metab']
+  x <- u(object, units)
+  as(x, 'unitted_preds_metab')
+})
+setMethod("show", 'unitted_preds_metab', function(object) {
+  print.preds_metab(object)
+})
+setMethod("deunitted", 'unitted_preds_metab', function(object) {
+  x <- v(as(x, 'unitted_data.frame'))
+  class(x) <- c('preds_metab', class(x))
+  x
+})
 
 #' Print metab preds, warnings, & errors
 #' 
@@ -368,5 +392,7 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...,
     day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
     model_name=specs$model_name) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
+  
+  if(attach.units) preds <- u(preds, get_units(mm_data())[gsub('DO.mod','DO.obs',names(preds))])
   preds
 }

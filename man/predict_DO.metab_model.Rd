@@ -5,8 +5,7 @@
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
 \method{predict_DO}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, calc_DO_fun = calc_DO_mod, calc_DO_args, ...,
-  use_saved = TRUE)
+  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -22,6 +21,8 @@ done.}
 
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}
+
+\item{attach.units}{logical. Should units be attached to the output?}
 
 \item{use_saved}{logical. Is it OK to use predictions that were saved with 
 the model?}
