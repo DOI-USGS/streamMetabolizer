@@ -87,7 +87,7 @@ metab_mle <- function(
 #' @keywords internal
 mle_1ply <- function(
   data_ply, data_daily_ply, ply_date, ply_validity, timestep_days, ..., # inheritParams mm_model_by_ply_prototype
-  specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab
+  specs=specs('m_np_oi_tr_km.nlm') # inheritParams metab
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating

@@ -95,7 +95,7 @@
 #'     \strong{Example}:
 #'     \tabular{lrrrr}{
 #'       \code{date      } \tab \code{K600} \tab \code{GPP.init} \tab \code{ER.init} \tab \code{K600.init}\cr
-#'       \code{2050-03-14} \tab \code{5   } \tab \code{5       } \tab \code{5      } \tab \code{5        }
+#'       \code{2050-03-14} \tab \code{10  } \tab \code{5       } \tab \code{-5     } \tab \code{10       }
 #'     }
 #'   }
 #'   \item{\code{bayes}}{
@@ -125,7 +125,7 @@
 #'     \strong{Example}:
 #'     \tabular{lrrrrr}{
 #'       \code{date      } \tab \code{K600} \tab \code{K600.lower} \tab \code{K600.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
-#'       \code{2050-03-14} \tab \code{5   } \tab \code{4.5       } \tab \code{5.6       } \tab \code{9              } \tab \code{2             }
+#'       \code{2050-03-14} \tab \code{10  } \tab \code{4.5       } \tab \code{5.6       } \tab \code{9              } \tab \code{2             }
 #'     }
 #'   }
 #'   \item{\code{sim}}{
@@ -141,7 +141,7 @@
 #'     \strong{Example}:
 #'     \tabular{lrrrr}{
 #'       \code{date      } \tab \code{DO.mod.1} \tab \code{GPP} \tab \code{ER} \tab \code{K600}\cr
-#'       \code{2050-03-14} \tab \code{7.5     } \tab \code{5  } \tab \code{5 } \tab \code{5   }
+#'       \code{2050-03-14} \tab \code{7.5     } \tab \code{5  } \tab \code{-5} \tab \code{10  }
 #'     }
 #'   }
 #' }

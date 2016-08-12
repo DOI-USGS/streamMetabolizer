@@ -139,7 +139,7 @@ depend on the model \code{type}, as follows.
     \strong{Example}:
     \tabular{lrrrr}{
       \code{date      } \tab \code{K600} \tab \code{GPP.init} \tab \code{ER.init} \tab \code{K600.init}\cr
-      \code{2050-03-14} \tab \code{5   } \tab \code{5       } \tab \code{5      } \tab \code{5        }
+      \code{2050-03-14} \tab \code{10  } \tab \code{5       } \tab \code{-5     } \tab \code{10       }
     }
   }
   \item{\code{bayes}}{
@@ -169,7 +169,7 @@ depend on the model \code{type}, as follows.
     \strong{Example}:
     \tabular{lrrrrr}{
       \code{date      } \tab \code{K600} \tab \code{K600.lower} \tab \code{K600.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
-      \code{2050-03-14} \tab \code{5   } \tab \code{4.5       } \tab \code{5.6       } \tab \code{9              } \tab \code{2             }
+      \code{2050-03-14} \tab \code{10  } \tab \code{4.5       } \tab \code{5.6       } \tab \code{9              } \tab \code{2             }
     }
   }
   \item{\code{sim}}{
@@ -185,7 +185,7 @@ depend on the model \code{type}, as follows.
     \strong{Example}:
     \tabular{lrrrr}{
       \code{date      } \tab \code{DO.mod.1} \tab \code{GPP} \tab \code{ER} \tab \code{K600}\cr
-      \code{2050-03-14} \tab \code{7.5     } \tab \code{5  } \tab \code{5 } \tab \code{5   }
+      \code{2050-03-14} \tab \code{7.5     } \tab \code{5  } \tab \code{-5} \tab \code{10  }
     }
   }
 }
@@ -201,7 +201,7 @@ get_fitting_time(mm)
 
 # with chaining & customization
 library(dplyr)
-mm <- mm_name('mle', ode_method='Euler') \%>\%
+mm <- mm_name('mle', ode_method='euler') \%>\%
   specs(GPP_init=40) \%>\%
   metab(data=dat)
 predict_metab(mm)

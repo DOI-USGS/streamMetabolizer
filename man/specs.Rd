@@ -49,7 +49,7 @@ process. For type='Kmodel', the name of an interpolation or regression
 method relating K to the predictor[s] of choice. One of \code{c("mean", 
 "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
 one option so it's not included in \code{specs()} (but is nonetheless noted
-in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
+in the suffix of the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses 
 \code{nlm()} for model fitting)}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours 

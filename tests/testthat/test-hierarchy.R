@@ -29,7 +29,7 @@ manual_tests <- function() {
   #get_fitting_time(mms) # 73 sec
   
   
-  mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="pairmeans", deficit_src="DO_mod", engine="stan")
+  mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="trapezoid", deficit_src="DO_mod", engine="stan")
   ms <- specs(mn, burnin_steps=300, saved_steps=200, split_dates=FALSE)
   fitone <- metab_bayes(specs=replace(ms, 'split_dates', TRUE), vfrenchmedium) # one day at a time
   get_fitting_time(fitone) # 126 sec
@@ -37,12 +37,12 @@ manual_tests <- function() {
   get_fitting_time(fitall) # 87 sec
   
   #### super simple jags ####
-  # mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="pairmeans", deficit_src="DO_mod", engine="jags")
+  # mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="trapezoid", deficit_src="DO_mod", engine="jags")
   # ms <- specs(mn, burnin_steps=300, saved_steps=200, split_dates=FALSE)
   # fitall <- metab_bayes(vfrenchmedium, specs=ms) # syntax error on line 3
   
   #### medium-hard model ####
-  mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="pairmeans", deficit_src="DO_mod", engine="stan")
+  mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="trapezoid", deficit_src="DO_mod", engine="stan")
   ms <- specs(mn, burnin_steps=1000, saved_steps=300, n_chains=3, n_cores=4)
   # takes a really really long time! but maybe less now that all the sigmas have
   # gamma distributions? was 2.76 hours for 3 days worth of data (burning=3000,

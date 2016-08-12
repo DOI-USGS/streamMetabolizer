@@ -28,13 +28,13 @@
 #' data <- data_metab('1','30')[seq(1,48,by=2),]
 #' dDOdt.obs <- diff(data$DO.obs)
 #' preds.init <- as.list(dplyr::select(
-#'   predict_metab(metab(specs(mm_name('mle', ode_method='Euler')), data=data)),
+#'   predict_metab(metab(specs(mm_name('mle', ode_method='euler')), data=data)),
 #'   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
 #' DOtime <- data$solar.time
 #' dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
 #' 
 #' # args to create_calc_dDOdt determine which values are needed in metab.pars
-#' dDOdt <- create_calc_dDOdt(data, ode_method='pairmeans', GPP_fun='satlight',
+#' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='satlight',
 #'   ER_fun='q10temp', deficit_src='DO_mod')
 #' names(formals(dDOdt)) # always the same: args to pass to dDOdt()
 #' environment(dDOdt)$metab.needs # get the names to be included in metab.pars
@@ -42,7 +42,7 @@
 #'   metab.pars=list(Pmax=0.2, alpha=0.01, ER20=-0.05, K600.daily=3))$dDOdt
 #' 
 #' # different required args; try in a timeseries
-#' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+#' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
 #' environment(dDOdt)$metab.needs # get the names to be included in metab
 #' # approximate dDOdt and DO using DO.obs for DO deficits & Eulerian integration
@@ -61,7 +61,7 @@
 #' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 #' 
 #' # compute & plot a full timeseries with ode() integration
-#' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+#' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
 #' DO.mod.o <- deSolve::ode(
 #'   y=c(DO.mod=data$DO.obs[1]),
@@ -79,7 +79,7 @@
 #' 
 #' # see how values of metab.pars affect the dDOdt predictions
 #' library(dplyr); library(ggplot2); library(tidyr)
-#' dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+#' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
 #' apply_dDOdt <- function(GPP.daily, ER.daily, K600.daily) {
 #'   DO.mod.m <- data$DO.obs[1]
@@ -150,7 +150,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   switch(
     ode_method,
     # the simplest methods only require values at integer values of t
-    Euler=, trapezoid=, pairmeans={
+    euler=, trapezoid=, Euler=, pairmeans={
       DO.obs <- function(t) data[t, 'DO.obs']
       DO.sat <- function(t) data[t, 'DO.sat']
       depth <- function(t) data[t, 'depth']

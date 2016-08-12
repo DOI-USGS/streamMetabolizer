@@ -93,13 +93,13 @@ mm_data <- function(..., optional='none') {
     date=      u(as.Date("2050-03-14", tz="UTC"), NA), 
     DO.mod.1=  u(7.5,"mgO2 L^-1"),
     GPP=       u(5,"gO2 m^-2 d^-1"), 
-    ER=        u(5,"gO2 m^-2 d^-1"), 
-    K600=      u(5,"d^-1"), 
+    ER=        u(-5,"gO2 m^-2 d^-1"), 
+    K600=      u(10,"d^-1"), 
     K600.lower=u(4.5,"d^-1"), 
     K600.upper=u(5.6,"d^-1"), 
     GPP.init=  u(5,"gO2 m^-2 d^-1"), 
-    ER.init=   u(5,"gO2 m^-2 d^-1"), 
-    K600.init= u(5,"d^-1"), 
+    ER.init=   u(-5,"gO2 m^-2 d^-1"), 
+    K600.init= u(10,"d^-1"), 
     discharge.daily= u(9,"m^3 s^-1"), 
     velocity.daily=  u(2,"m s^-1")))
   .dots <- lazy_dots(...)

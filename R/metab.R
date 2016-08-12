@@ -39,7 +39,7 @@
 #' 
 #' # with chaining & customization
 #' library(dplyr)
-#' mm <- mm_name('mle', ode_method='Euler') %>%
+#' mm <- mm_name('mle', ode_method='euler') %>%
 #'   specs(GPP_init=40) %>%
 #'   metab(data=dat)
 #' predict_metab(mm)

@@ -47,11 +47,11 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   dat <- data_metab('3', res='30')
   mmE <- metab_sim(specs('s_np_oipcpi_eu_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
                    data=select(dat, -DO.obs), data_daily=dd)
-  mmP <- metab_sim(specs('s_np_oipcpi_pm_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
+  mmP <- metab_sim(specs('s_np_oipcpi_tr_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
                   data=select(dat, -DO.obs), data_daily=dd)
   # DO_preds <- bind_rows(
-  #   data.frame(predict_DO(mmE), method="Euler", stringsAsFactors=FALSE),
-  #   data.frame(predict_DO(mmP), method="pairmeans", stringsAsFactors=FALSE))
+  #   data.frame(predict_DO(mmE), method="euler", stringsAsFactors=FALSE),
+  #   data.frame(predict_DO(mmP), method="trapezoid", stringsAsFactors=FALSE))
   # library(ggplot2)
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()

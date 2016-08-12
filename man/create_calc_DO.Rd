@@ -11,12 +11,12 @@ create_calc_DO(calc_dDOdt, ode_method = environment(calc_dDOdt)$ode_method,
 \item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}
 
 \item{ode_method}{The method to use in solving the ordinary differential 
-equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
-function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
-from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
-t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
-and any character method accepted by \code{\link[deSolve]{ode}} in the
-\code{deSolve} package}
+equation for DO. euler=Euler: the final change in DO from t=1 to t=2 is
+solely a function of GPP, ER, DO, etc. at t=1. trapezoid=pairmeans: the
+final change in DO from t=1 to t=2 is a function of the mean values of GPP,
+ER, etc. across t=1 and t=2. With metab_mle, other methods are available
+including 'rk2' and any character method accepted by
+\code{\link[deSolve]{ode}} in the \code{deSolve} package}
 
 \item{err.obs}{optional numerical vector of length nrow(data) in units of gO2
 m^3. Appropriate for simulation, when this vector of observation errors
@@ -35,18 +35,19 @@ Create a function to compute the numerical integration of a dDOdt function
 \dontrun{
 # prepare data for examples
 data <- data_metab('3','30')[97:144,][seq(1,48,by=2),]
+# preds.init <- list(GPP.daily=2.82,ER.daily=-2.12,K600.daily=31.27)
 preds.init <- as.list(dplyr::select(
-  predict_metab(metab(specs(mm_name('mle', ode_method='pairmeans')), data=data)),
+  predict_metab(metab(specs(mm_name('mle', ode_method='trapezoid')), data=data)),
   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
 DOtime <- data$solar.time
 dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
 
-# integration of dDOdt by Euler, trapezoid, rk2, rk4, and lsoda methods
+# integration of dDOdt by euler, trapezoid, rk2, rk4, and lsoda methods
 plot(x=DOtime, y=data$DO.obs, pch=3, cex=0.6)
 # euler
-dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
-DO <- create_calc_DO(dDOdt, ode_method='Euler')
+DO <- create_calc_DO(dDOdt, ode_method='euler')
 DO.mod.euler <- DO(metab.pars=preds.init)
 lines(x=DOtime, y=DO.mod.euler, type='l', col='chartreuse3')
 # trapezoid=pairmeans
@@ -74,10 +75,10 @@ DO <- create_calc_DO(dDOdt, ode_method='rk4')
 DO.mod <- DO(metab.pars=preds.init)
 lines(x=DOtime, y=DO.mod, type='l', col='magenta')
 
-# show that method='euler' really is Euler by several integration implementations
+# show that method='euler' really is euler by several integration implementations
 plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
 # dDOdt
-dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 DO.mod.dDOdt <- data$DO.obs[1]
 for(t in 2:nrow(data)) { DO.mod.dDOdt[t] <-
@@ -88,14 +89,14 @@ DO.mod.ode <- deSolve::ode(y=c(DO.mod=data$DO.obs[1]), parms=preds.init,
   times=1:nrow(data), func=dDOdt, method='euler')[,'DO.mod']
 lines(x=DOtime, y=DO.mod.ode, col='blue')
 # DO
-DO <- create_calc_DO(dDOdt, ode_method='Euler')
+DO <- create_calc_DO(dDOdt, ode_method='euler')
 DO.mod.DO <- DO(preds.init)
 lines(x=DOtime, y=DO.mod.DO, col='chartreuse3')
 # original calc_DO_mod function
 DO.mod.old <- do.call(calc_DO_mod, 
   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
-    DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='Euler')))
+    DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='euler')))
 lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
 
 # show that method='trapezoid' really is pairmeans by several implementations
