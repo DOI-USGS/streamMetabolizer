@@ -22,6 +22,11 @@ NULL
 #' dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
 #' mm <- metab_mle(data=dat, data_daily=dat_daily)
 #' predict_metab(mm)
+#' 
+#' # PRK with day-specific inits on some days
+#' dat_daily <- data.frame(date=as.Date("2012-09-19"), GPP.init=4, K600.init=60)
+#' mm <- metab_mle(data=dat, data_daily=dat_daily)
+#' predict_metab(mm)
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
 #' }
@@ -115,20 +120,23 @@ mle_1ply <- function(
       if(exists('K600', data_daily_ply)) {
         warn_strs <- c(warn_strs, "nrow(data_daily)==0 so fitting K600 by MLE")
       }
-    } else if(nrow(data_daily_ply)==1) {
+    } else if(nrow(data_daily_ply)==1) { # never more than 1 b/c we're in mle_1ply
       for(init in inits) {
         if(is.na(data_daily_ply[[init]])) 
           warn_strs <- c(warn_strs, paste0("data_daily$", init, "==NA so using specs"))
         else
           assign(init, data_daily_ply[[init]])
       }
-      if(is.na(data_daily_ply$K600)) {
-        warn_strs <- c(warn_strs, "data_daily$K600==NA so fitting by MLE")
-      } else {
-        K600 <- data_daily_ply$K600
+      if(exists('K600', data_daily_ply)) {
+        if(is.na(data_daily_ply$K600)) {
+          warn_strs <- c(warn_strs, "data_daily$K600==NA so fitting by MLE")
+        } else {
+          K600 <- data_daily_ply$K600
+        }
       }
     }
   }
+  fix_K600 <- !is.null(K600)
   
   # Find the best metabolism values by non-linear minimization of the likelihood
   # (NLL) of the output from a DO-prediction function, which is the ODE solution
@@ -147,6 +155,7 @@ mle_1ply <- function(
     DO <- create_calc_DO(dDOdt)
     # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
     NLL <- create_calc_NLL(DO, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
+    if(fix_K600) environment(NLL)$par.names %<>% { .[. != 'K600.daily'] } # remove the K600 parameter if we're fixing K600
     
     # package nlm arguments in a list
     nlm.args <- c(
@@ -155,9 +164,9 @@ mle_1ply <- function(
         p = c(
           GPP.daily=specs$GPP_init, 
           ER.daily=specs$ER_init, 
-          K600.daily=if(is.null(K600)) specs$K600_init),
+          K600.daily=if(!fix_K600) specs$K600_init), # if it's not fixed, it gets fitted
         hessian = TRUE),
-      if(!is.null(K600)) list(K600.daily = K600)
+      if(fix_K600) list(K600.daily = K600)
     )
     
     mle.1d <- withCallingHandlers(

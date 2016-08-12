@@ -48,6 +48,11 @@ predict_metab(mm)
 dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
 mm <- metab_mle(data=dat, data_daily=dat_daily)
 predict_metab(mm)
+
+# PRK with day-specific GPP.inits
+dat_daily <- dplyr::rename(predict_metab(mm)[2,c('date','GPP')], GPP.init=GPP)
+mm <- metab_mle(data=dat, data_daily=dat_daily)
+predict_metab(mm)
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 }
