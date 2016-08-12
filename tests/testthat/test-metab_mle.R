@@ -50,7 +50,7 @@ test_that("metab_mle outputs look like Bob's", {
   dat <- data_metab('1', day_start=-2, day_end=30)
   
   # PRK
-  mms <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=-2, day_end=30), data=dat)
+  mms <- metab_mle(specs(mm_name('mle', ode_method='euler'), day_start=-2, day_end=30), data=dat)
   mmb <- streamMetabolizer:::load_french_creek_std_mle(
     dat, estimate='PRK', 
     start=c(dates="09/17/12", times="22:00:00"),
@@ -61,7 +61,7 @@ test_that("metab_mle outputs look like Bob's", {
   expect_equal(get_fit(mms)[1,"minimum"], mmb[1,"lik"], tol=0.00001)
   
   # PR
-  mms <- metab_mle(specs(mm_name('mle', ode_method='Euler'), day_start=-2, day_end=30), 
+  mms <- metab_mle(specs(mm_name('mle', ode_method='euler'), day_start=-2, day_end=30), 
                    data=dat, data_daily=data.frame(date=as.Date("2012-09-18"), K600=35))
   mmb <- streamMetabolizer:::load_french_creek_std_mle(
     dat, estimate='PR', K=35, 
