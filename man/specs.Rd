@@ -6,7 +6,7 @@
 \usage{
 specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   day_tests = c("full_day", "even_timesteps", "complete_data"),
-  GPP_init = 10, ER_init = -10, K600_init = 10, calc_DO_fun, split_dates,
+  GPP_init = 10, ER_init = -10, K600_init = 10, split_dates,
   keep_mcmcs = TRUE, keep_mcmc_data = FALSE, GPP_daily_mu = 10,
   GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
   K600_daily_mu = 10, K600_daily_sigma = 10, K600_daily_mu_mu = 10,
@@ -85,9 +85,6 @@ process. Ignored if K600 is supplied in data_daily, except for those dates
 where K600 is NA. If there are any such dates, K600_init must have a 
 numeric (non-NA) value, as this will be used to estimate K600 for those 
 dates.}
-
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER,
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
 
 \item{split_dates}{logical indicating whether the data should be split into 
 daily chunks first (TRUE) or processed within one big model (FALSE). If 
@@ -169,8 +166,8 @@ value greater than or equal to all ln_discharge_daily values.}
 \item{K600_daily_sigma_location}{hyperparameter for pool_K600 in 
 c('normal','linear','binned'). The location (= meanlog) parameter of a 
 lognormal distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma
-with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x,
+lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, 
 K600_daily_sigma_location, K600_daily_sigma_scale))}}
 
 \item{K600_daily_sigma_scale}{hyperparameter for pool_K600 in 
@@ -352,8 +349,8 @@ often should, be overridden to tailor the model to your needs.
   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
   \code{adapt_steps}.
   
-  * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
-  GPP_init, ER_init, K600_init}
+  * metab_mle: \code{model_name, day_start, day_end, day_tests, GPP_init,
+  ER_init, K600_init}
   
   * metab_night: \code{model_name, day_start, day_end, day_tests}
   

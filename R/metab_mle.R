@@ -52,7 +52,7 @@ metab_mle <- function(
     mle_all <- mm_model_by_ply(
       mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
       day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
-      specs=specs) # for mle_1ply and negloglik_1ply
+      specs=specs) # for mle_1ply and create_calc_dDOdt
   })
   
   # Package results
@@ -130,48 +130,35 @@ mle_1ply <- function(
     }
   }
   
-  # Calculate metabolism by non linear minimization of an MLE function
+  # Find the best metabolism values by non-linear minimization of the likelihood
+  # (NLL) of the output from a DO-prediction function, which is the ODE solution
+  # of predictions from a dDO/dt-prediction function of a trial set of
+  # metabolism values
   if(length(stop_strs) == 0) {
-    mle_method <- if(exists('mle_method', specs)) specs$mle_method else 'old'
-    if(mle_method=='old') {
-      nlm.args <- c(
-        list(
-          f = negloglik_1ply,
-          p = c(GPP=specs$GPP_init, ER=specs$ER_init, K600=specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
-          K600.daily=K600,
-          hessian = TRUE
-        ),
-        as.list(
-          data_ply[c("DO.obs","DO.sat","depth","temp.water")]
-        ),
-        list(
-          frac.GPP = data_ply$light/sum(data_ply$light[data_ply$solar.time < (data_ply$solar.time[1] + as.difftime(1, units='days'))]),
-          frac.ER = timestep_days,
-          frac.D = timestep_days,
-          calc_DO_fun = specs$calc_DO_fun,
-          ODE_method = mm_parse_name(specs$model_name)$ode_method
-        ))
-    } else if(mle_method=='new') {
-      
-      # parse the model_name
-      features <- mm_parse_name(specs$model_name)
-      dDOdt <- create_calc_dDOdt(
-        data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
-      DO <- create_calc_DO(dDOdt, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
-      # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
-      NLL <- create_calc_NLL(DO)
-      nlm.args <- c(
-        list(
-          f = NLL,
-          p = c(
-            GPP.daily=specs$GPP_init, 
-            ER.daily=specs$ER_init, 
-            K600.daily=if(is.null(K600)) specs$K600_init),
-          hessian = TRUE),
-        if(!is.null(K600)) list(K600.daily = K600)
-      )
-    }
+    # parse the model_name
+    features <- mm_parse_name(specs$model_name)
+    
+    # create the series of nested functions to compute the negative log 
+    # likelihood (NLL) for a trio of values for GPP.daily, ER.daily, and
+    # K600.daily
+    dDOdt <- create_calc_dDOdt(
+      data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+      ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+    DO <- create_calc_DO(dDOdt)
+    # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
+    NLL <- create_calc_NLL(DO, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
+    
+    # package nlm arguments in a list
+    nlm.args <- c(
+      list(
+        f = NLL,
+        p = c(
+          GPP.daily=specs$GPP_init, 
+          ER.daily=specs$ER_init, 
+          K600.daily=if(is.null(K600)) specs$K600_init),
+        hessian = TRUE),
+      if(!is.null(K600)) list(K600.daily = K600)
+    )
     
     mle.1d <- withCallingHandlers(
       tryCatch({

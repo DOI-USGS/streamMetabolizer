@@ -36,8 +36,8 @@
 #'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
 #'   \code{adapt_steps}.
 #'   
-#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
-#'   GPP_init, ER_init, K600_init}
+#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, GPP_init,
+#'   ER_init, K600_init}
 #'   
 #'   * metab_night: \code{model_name, day_start, day_end, day_tests}
 #'   
@@ -81,8 +81,6 @@
 #'   where K600 is NA. If there are any such dates, K600_init must have a 
 #'   numeric (non-NA) value, as this will be used to estimate K600 for those 
 #'   dates.
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
 #'   
 #' @param split_dates logical indicating whether the data should be split into 
 #'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
@@ -154,8 +152,8 @@
 #' @param K600_daily_sigma_location hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The location (= meanlog) parameter of a 
 #'   lognormal distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma
-#'   with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x,
+#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+#'   with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, 
 #'   K600_daily_sigma_location, K600_daily_sigma_scale))}
 #' @param K600_daily_sigma_scale hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The scale (= sdlog) parameter of a lognormal
@@ -251,9 +249,6 @@ specs <- function(
   GPP_init = 10, 
   ER_init = -10, 
   K600_init = 10,
-  
-  # inheritParams negloglik_1ply
-  calc_DO_fun,
   
   
   ## Bayes
@@ -454,11 +449,7 @@ specs <- function(
     },
     'mle' = {
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'GPP_init', 'ER_init', 'K600_init')
-      
-      if('calc_DO_fun' %in% yes_missing) {
-        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
-      }
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'GPP_init', 'ER_init', 'K600_init')
 
     }, 
     'night' = {
