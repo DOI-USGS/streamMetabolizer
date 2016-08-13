@@ -177,11 +177,12 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # GPP: instantaneous gross primary production at time t in gO2 m^-2 d^-1
   GPP <- switch(
     GPP_fun,
-    linlight=(function(){
+    'NA'=, linlight=(function(){
       # normalize light by the sum of light in the first 24 hours of the time window
       mean.light <- with(
         list(in.solar.day = data$solar.time < (data$solar.time[1] + as.difftime(1, units='days'))),
         mean(data$light[in.solar.day]))
+      if(mean.light == 0) mean.light <- 1
       metab.needs <<- c(metab.needs, 'GPP.daily')
       function(t, metab.pars) {
         metab.pars$GPP.daily * light(t) / mean.light
@@ -230,7 +231,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
         metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
       }
     })(),
-    DO_mod=(function(){
+    'DO_obs_filter'=, DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
       function(t, DO.mod.t, metab.pars) {
         metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.mod.t)

@@ -4,8 +4,8 @@
 \alias{mm_predict_1ply}
 \title{Helper to predict_DO.metab_model}
 \usage{
-mm_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  timestep_days, ..., model_name)
+mm_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date, ...,
+  model_name)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -29,17 +29,11 @@ before 2006-06-27 06:00.}
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred topresent.}
 
-\item{timestep_days}{numeric length of the mean timestep for this day, if 
-requested by setting \code{timestep_days} to \code{TRUE} or a numeric value
-in the call to \code{\link{mm_model_by_ply}}}
-
 \item{...}{other args that were passed untouched from the function calling 
 mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 
-\item{calc_DO_fun}{the function to use to build DO estimates from GPP, ER, 
-etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff}
-
-\item{calc_DO_args}{a list of other arguments passed to calc_DO_fun}
+\item{model_name}{the coded model name that will determine the GPP_fun,
+ER_fun, deficit_src, and ode_method to use in prediction}
 }
 \value{
 a data.frame of predictions

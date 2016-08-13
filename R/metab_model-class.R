@@ -384,12 +384,13 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
   
   # get the metabolism estimates; filter as we did for data
-  metab_ests <- predict_metab(metab_model, date_start=date_start, date_end=date_end)
+  metab_ests <- predict_metab(metab_model, date_start=date_start, date_end=date_end) %>%
+    select(-warnings, -errors)
     
   # re-process the input data with the metabolism estimates to predict DO
   preds <- mm_model_by_ply(
     mm_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c(), timestep_days=FALSE, # for mm_model_by_ply
     model_name=specs$model_name) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end) # trim off the extra
   

@@ -93,7 +93,7 @@ metab_night <- function(
 nightreg_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, ..., # inheritParams mm_model_by_ply_prototype
   night_tests=TRUE, # new arg here
-  specs=specs('n_np_pi_eu_.lm') # inheritParams metab
+  specs=specs(mm_name('night')) # inheritParams metab
 ) {
   
   # Try to run the model. Collect warnings/errors as a list of strings and
@@ -244,11 +244,13 @@ setClass(
 predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # pull args from the model
-  day_start <- get_specs(metab_model)$day_start
-  day_end <- get_specs(metab_model)$day_end
+  specs <- get_specs(metab_model)
+  day_start <- specs$day_start
+  day_end <- specs$day_end
   
   # get the DO, temperature, etc. data; filter if requested
   data <- get_data(metab_model) %>%
+    v() %>%
     mm_filter_dates(date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end)
   
   # if allowed and available, use previously stored values for DO.mod rather than re-predicting them now
@@ -263,13 +265,14 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   metab_ests <- get_fit(metab_model) %>% 
     dplyr::select(date, ER, K600, row.first, row.last) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end) %>%
-    mutate(GPP = 0)
+    mutate(GPP=0)
   
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, day_tests=c()) %>% # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
+    model_name=specs$model_name) %>% # for mm_predict_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end)
 }
 
@@ -278,10 +281,12 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' Usually assigned to model_fun within mm_model_by_ply, called from there
 #' 
 #' @inheritParams mm_model_by_ply_prototype
+#' @inheritParams mm_predict_1ply
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, timestep_days, ... # inheritParams mm_model_by_ply_prototype
+  data_ply, data_daily_ply, day_start, day_end, ply_date, timestep_days, ..., # inheritParams mm_model_by_ply_prototype
+  model_name
 ) {
   
   # subset to times of darkness, just as we did in nightreg_1ply
@@ -299,8 +304,8 @@ metab_night_predict_1ply <- function(
   
   # apply the regular prediction function
   mm_predict_1ply(
-    data_ply=night_dat, data_daily_ply=data_daily_ply, 
-    day_start, day_end, ply_date, timestep_days=timestep_days, 
-    calc_DO_fun=calc_DO_mod) # use default ODE_method
+    data_ply=night_dat, data_daily_ply=select(data_daily_ply, date, GPP, ER, K600), 
+    day_start, day_end, ply_date, 
+    model_name=model_name)
   
 }

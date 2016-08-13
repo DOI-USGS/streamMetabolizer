@@ -90,7 +90,8 @@ test_that("metab_night predictions can be passed back into metab_mle", {
   mm <- metab_mle(data=mledat, data_daily=predict_metab(mmk)[c('date', 'K600')])
   expect_equal(predict_metab(mm)$K600, predict_metab(mmk)$K600)
   expect_true(rmse_DO(predict_DO(mm)) < 0.2, info="DO.mod tracks DO.obs with not too much error")
-  # plot_DO_preds(predict_DO(mm))
+  # plot_metab_preds(mm)
+  # plot_DO_preds(mm)
   
 })
 
