@@ -384,6 +384,7 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
   
   # get the metabolism estimates; filter as we did for data
+  warnings <- errors <- '.dplyr.var'
   metab_ests <- predict_metab(metab_model, date_start=date_start, date_end=date_end) %>%
     select(-warnings, -errors)
     

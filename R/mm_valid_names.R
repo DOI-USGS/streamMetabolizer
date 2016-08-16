@@ -21,6 +21,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
   }
   
   # get lists of all common possibilities
+  . <- '.dplyr.var'
   all_ode_methods <- formals(mm_name)$ode_method %>% eval() %>% .[.!='NA']
   all_GPP_funs <- formals(mm_name)$GPP_fun %>% eval() %>% .[.!='NA']
   all_ER_funs <- formals(mm_name)$ER_fun %>% eval() %>% .[.!='NA']

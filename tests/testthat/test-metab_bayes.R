@@ -1,6 +1,12 @@
 context("metab_bayes")
 
 manual_test4 <- function() {
+  # these three lines work within testthat() calls:
+  skip_on_cran()
+  skip_on_travis()
+  skip_on_appveyor()
+  skip_if_not_installed('deSolve')
+  
   library(streamMetabolizer)
   library(dplyr)
   dat <- mutate(data_metab('3', res='30'), discharge=3)
