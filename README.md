@@ -16,6 +16,8 @@ This package is in development. We are using it for our own early applications a
 
 ## Installation
 
+### Recommended
+
 The most stable+current version of this package can be installed with this R command:
 ```r
 install.packages("streamMetabolizer", dependencies=TRUE, 
@@ -26,6 +28,8 @@ and updated with this command:
 update.packages(oldPkgs=c("streamMetabolizer","unitted"),
   dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
+
+### For the adventurous
 
 The in-development version of the package can be installed with the `devtools` package. 
 We can make no guarantees about the stability of this version, 
@@ -42,8 +46,13 @@ You can then install the most cutting edge version of streamMetabolizer with thi
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 ```
 
-Regardless of your installation method, if you plan to use Bayesian models with 
-`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/).
+### Software dependencies
+
+If you plan to use Bayesian models with 
+`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/). (JAGS may be deprecated in the future because so far we've seen better performance with Stan. You should be able to switch seamlessly between the two MCMC engines.)
+
+If you plan to use Bayesian models with 
+`engine='stan'`, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.)
 
 
 ## Disclaimer

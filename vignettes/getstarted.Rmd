@@ -22,9 +22,9 @@ This file demonstrates how to estimate stream metabolism using
 `streamMetabolizer` and some example data supplied by Bob Hall for French Creek
 in Laramie, WY.
 
-## Setup
+## Install
 
-### Install
+### Recommended
 
 The most stable+current version of this package can be installed with this R command:
 ```{r, eval=FALSE}
@@ -36,6 +36,8 @@ and updated with this command:
 update.packages(oldPkgs=c("streamMetabolizer","unitted"),
   dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
+
+### For the adventurous
 
 The in-development version of the package can be installed with the `devtools` package. 
 We can make no guarantees about the stability of this version, 
@@ -52,8 +54,13 @@ You can then install the most cutting edge version of streamMetabolizer with thi
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 ```
 
-Regardless of your installation method, if you plan to use Bayesian models with 
-`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/).
+### Software dependencies
+
+If you plan to use Bayesian models with 
+`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/). (JAGS may be deprecated in the future because so far we've seen better performance with Stan. You should be able to switch seamlessly between the two MCMC engines.)
+
+If you plan to use Bayesian models with 
+`engine='stan'`, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.)
 
 
 ### Load
@@ -149,7 +156,7 @@ There are three steps to fitting a metabolism model in `streamMetabolizer`.
 ### 1. Choose a model structure
 
 A model is fully specified by a concise if cryptic model name. Examples are 
-"b_np_oipi_pm_plrckm.stan" and "m_np_oi_pm_plrckm.nlm". You never need to
+"b_np_oipi_tr_plrckm.stan" and "m_np_oi_tr_plrckm.nlm". You never need to
 remember these concise names; instead, you can construct and interpret such
 names using the `mm_name` and `mm_parse_name` functions, respectively.
 
@@ -163,7 +170,7 @@ Here are some example calls to create and parse model names:
 ```{r names}
 three_names <- c(
   mm_name(type='mle'), # the default MLE model
-  mm_name(type='mle', ode_method='Euler'), # override the default ode_method
+  mm_name(type='mle', ode_method='euler'), # override the default ode_method
   mm_name(type='bayes')) # the default Bayesian model
 three_names
 
