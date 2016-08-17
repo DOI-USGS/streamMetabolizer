@@ -143,32 +143,32 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # timesteps are regular
   data$t <- seq_len(nrow(data))
 
-  # define the forcing (temp.water, light, DO.sat, etc.) interpolations and
-  # other inputs to include in the dDOdt() closure
-  data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data[, 'temp.water'], gas='O2')
-  data$err.proc <- err.proc
-  switch(
-    ode_method,
-    # the simplest methods only require values at integer values of t
-    euler=, trapezoid=, Euler=, pairmeans={
-      DO.obs <- function(t) data[t, 'DO.obs']
-      DO.sat <- function(t) data[t, 'DO.sat']
-      depth <- function(t) data[t, 'depth']
-      temp.water <- function(t) data[t, 'temp.water']
-      light <- function(t) data[t, 'light']
-      KO2.conv <- function(t) data[t, 'KO2.conv']
-      err.proc <- if(all(err.proc == 0)) function(t) 0 else function(t) data[t, 'err.proc']
-    },
-    { # other methods require functions that can be applied at non-integer values of t
-      DO.obs <- approxfun(data$t, data$DO.obs, rule=2)
-      DO.sat <- approxfun(data$t, data$DO.sat, rule=2)
-      depth <- approxfun(data$t, data$depth, rule=2)
-      temp.water <- approxfun(data$t, data$temp.water, rule=2)
-      light <- approxfun(data$t, data$light, rule=2)
-      KO2.conv <- approxfun(data$t, data$KO2.conv, rule=2)
-      err.proc <- if(all(err.proc == 0)) function(t) 0 else approxfun(data$t, data$err.proc, rule=2)
-    }
-  )
+  # define the forcing (temp.water, light, DO.sat, etc.) interpolations and 
+  # other inputs to include in the dDOdt() closure. 
+  integer.t <- isTRUE(ode_method %in% c('euler','trapezoid','Euler','pairmeans'))
+  data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas='O2')
+  data$err.proc <- err.proc # get replication if needed
+  if(integer.t) {
+    # for indexing, converting df columns to vectors speeds things up by 40x
+    DO.obs <- data$DO.obs
+    DO.sat <- data$DO.sat
+    temp.water <- data$temp.water
+    depth <- data$depth
+    light <- data$light
+    KO2.conv <- data$KO2.conv
+    err.proc <- data$err.proc
+  } else { 
+    # other methods require functions that can be applied at non-integer 
+    # values of t. approxfun is pretty darn fast and ever-so-slightly faster
+    # with data$x than with independent vectors of t and a variable
+    DO.obs <- approxfun(data$t, data$DO.obs, rule=2)
+    DO.sat <- approxfun(data$t, data$DO.sat, rule=2)
+    depth <- approxfun(data$t, data$depth, rule=2)
+    temp.water <- approxfun(data$t, data$temp.water, rule=2)
+    light <- approxfun(data$t, data$light, rule=2)
+    KO2.conv <- approxfun(data$t, data$KO2.conv, rule=2)
+    err.proc <- if(all(err.proc == 0)) function(t) 0 else approxfun(data$t, data$err.proc, rule=2)
+  }
   timestep.days <- suppressWarnings(mean(as.numeric(diff(unitted::v(data$solar.time)), units="days"), na.rm=TRUE))
 
   # collect the required metab.pars parameter names in a vector called metab.needs
@@ -184,20 +184,26 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
         mean(data$light[in.solar.day]))
       if(mean.light == 0) mean.light <- 1
       metab.needs <<- c(metab.needs, 'GPP.daily')
-      function(t, metab.pars) {
-        metab.pars$GPP.daily * light(t) / mean.light
+      if(integer.t) function(t, metab.pars) { 
+        metab.pars[['GPP.daily']] * light[t] / mean.light
+      } else function(t, metab.pars) {
+        metab.pars[['GPP.daily']] * light(t) / mean.light
       }
     })(),
     satlight=(function(){
       metab.needs <<- c(metab.needs, c('Pmax','alpha'))
-      function(t, metab.pars) {
-        metab.pars$Pmax * tanh(metab.pars$alpha * light(t) / metab.pars$Pmax)
+      if(integer.t) function(t, metab.pars) {
+        Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light[t] / Pmax)
+      } else function(t, metab.pars) { 
+        Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light(t) / Pmax)
       }
     })(),
     satlightq10temp=(function(){
       metab.needs <<- c(metab.needs, c('Pmax','alpha'))
-      function(t, metab.pars) {
-        metab.pars$Pmax * tanh(metab.pars$alpha * light(t) / metab.pars$Pmax) * 1.036 ^ (temp.water(t) - 20)
+      if(integer.t) function(t, metab.pars) {
+        Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light[t] / Pmax) * 1.036 ^ (temp.water[t] - 20)
+      } else function(t, metab.pars) {
+        Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light(t) / Pmax) * 1.036 ^ (temp.water(t) - 20)
       }
     })(),
     stop('unrecognized GPP_fun')
@@ -209,14 +215,16 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     constant=(function(){
       metab.needs <<- c(metab.needs, 'ER.daily')
       function(t, metab.pars) {
-        metab.pars$ER.daily
+        metab.pars[['ER.daily']]
       }
     })(),
     q10temp=(function(){
       # song_methods_2016 cite Gulliver & Stefan 1984; Parkhill & Gulliver 1999
       metab.needs <<- c(metab.needs, 'ER20')
-      function(t, metab.pars) {
-        metab.pars$ER20 * 1.045 ^ (temp.water(t) - 20)
+      if(integer.t) function(t, metab.pars) {
+        metab.pars[['ER20']] * 1.045 ^ (temp.water[t] - 20)
+      } else function(t, metab.pars) {
+        metab.pars[['ER20']] * 1.045 ^ (temp.water(t) - 20)
       }
     })(),
     stop('unrecognized ER_fun')
@@ -227,54 +235,69 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     deficit_src,
     DO_obs=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      function(t, DO.mod.t, metab.pars) {
-        metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
+      if(integer.t) function(t, DO.mod.t, metab.pars) {
+        metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.obs[t])
+      } else function(t, DO.mod.t, metab.pars) {
+        metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
       }
     })(),
     'DO_obs_filter'=, DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      function(t, DO.mod.t, metab.pars) {
-        metab.pars$K600.daily * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
+      if(integer.t) function(t, DO.mod.t, metab.pars) {
+        metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.mod.t)
+      } else function(t, DO.mod.t, metab.pars) {
+        metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
       }
     })(),
     stop('unrecognized deficit_src')
   )
-
+  
   # dDOdt: instantaneous rate of change in DO at time t in gO2 m^-3 timestep^-1
   dDOdt <- switch(
     ode_method,
     ### 'pairmeans' and 'trapezoid' are identical and are the analytical
     ### solution to a trapezoid rule with this starting point:
-    # DO.mod[t+1] =
+    # DO.mod[t+1] = 
     #   DO.mod[t]
-    # + (GPP.daily * (frac.GPP[t]+frac.GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-    # + (ER.daily * (frac.ER[t]+frac.ER[t+1])/2) / (depth[t]+depth[t+1])/2
-    # + k.O2.daily * (frac.k.O2[t](DO.sat[t] - DO.mod[t]) + frac.k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
+    #    + (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+    #    + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+    #    + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2) * timestep
     ### and this solution:
     # DO.mod[t+1] - DO.mod[t] =
-    #   (- DO.mod[t] * k.O2.daily * (frac.k.O2[t]+frac.k.O2[t+1])/2
-    #    + (GPP.daily * (frac.GPP[t]+frac.GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-    #    + (ER.daily * (frac.ER[t]+frac.ER[t+1])/2) / (depth[t]+depth[t+1])/2
-    #    + k.O2.daily * (frac.k.O2[t]*DO.sat[t] + frac.k.O2[t+1]*DO.sat[t+1])/2 )
-    # / (1 + k.O2.daily*frac.k.O2[t+1]/2)
+    #   (- DO.mod[t] * (k.O2[t]+k.O2[t+1])/2
+    #    + (GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+    #    + (ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+    #    + (k.O2[t]*DO.sat[t] +k.O2[t+1]*DO.sat[t+1])/2 )
+    #   * timestep.days / (1 + timestep.days*k.O2[t+1]/2)
+    ### where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER
     trapezoid=, pairmeans={
+      # define pairwise averaging functions pm = pairmeans, f=function, v=vector
+      pmf <- function(fun, t, ...) .Internal(mean(fun(c(t, t+1), ...)))
+      pmv <- function(vec, t) (vec[t] + vec[t+1])/2
       function(t, state, metab.pars){
-        pm <- function(fun, ...) mean(fun(c(t, t+1), ...)) # pm = pairmeans
+        K600.daily <- metab.pars[['K600.daily']]
+        KO2.conv.t1 <- KO2.conv[t+1]
         list(
-          dDOdt=(
-            - state[['DO.mod']] * metab.pars$K600.daily * pm(KO2.conv) +
-              (pm(GPP, metab.pars) + pm(ER, metab.pars) + pm(err.proc)) / pm(depth) +
-              metab.pars$K600.daily * (KO2.conv(t)*DO.sat(t) + KO2.conv(t+1)*DO.sat(t+1))/2
-          ) * timestep.days / (1 + timestep.days * metab.pars$K600.daily * KO2.conv(t+1)/2))
+          dDOdt={
+            - state[['DO.mod']] * K600.daily * pmv(KO2.conv, t) +
+              {pmf(GPP, t, metab.pars) + pmf(ER, t, metab.pars) + pmv(err.proc, t)} / pmv(depth, t) +
+              K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv.t1*DO.sat[t+1]}/2
+          } * timestep.days / {1 + timestep.days * K600.daily * KO2.conv.t1/2})
       }
     },
     # all other methods use a straightforward calculation of dDOdt at values of
     # t and DO.mod.t as requested by the ODE solver
-    function(t, state, metab.pars){
+    if(integer.t) function(t, state, metab.pars) { # Euler and euler, b/c trapezoid and pairmeans are covered above
       list(
-        dDOdt=(
-          (GPP(t, metab.pars) + ER(t, metab.pars) + err.proc(t)) / depth(t) +
-            D(t, state[['DO.mod']], metab.pars)) *
+        dDOdt={
+          {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]} / depth[t] +
+            D(t, state[['DO.mod']], metab.pars)} *
+          timestep.days)
+    } else function(t, state, metab.pars) {
+      list(
+        dDOdt={
+          {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc(t)} / depth(t) +
+            D(t, state[['DO.mod']], metab.pars)} *
           timestep.days)
     }
   )

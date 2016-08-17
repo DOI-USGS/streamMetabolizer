@@ -124,8 +124,8 @@
 #' @export
 create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_method, err.obs=0) {
   
-  # pull out info from the calc_dDOdt closure
-  DO.obs <- environment(calc_dDOdt)$data$DO.obs
+  # pull out info from the calc_dDOdt closure (all from data)
+  DO.obs.1 <- environment(calc_dDOdt)$data$DO.obs[1]
   t <- environment(calc_dDOdt)$data$t
   
   if(requireNamespace('deSolve', quietly=TRUE)) {
@@ -139,7 +139,7 @@ create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_me
     
     # use numerical integration to predict the timeseries of DO.mod
     calc.DO <- function(metab.pars) {
-      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else DO.obs.1
       DO.mod <- deSolve::ode(
         y=c(DO.mod=DO.mod.1),
         parms=metab.pars,
@@ -158,7 +158,7 @@ create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_me
     
     # use numerical integration to predict the timeseries of DO.mod
     calc.DO <- function(metab.pars) {
-      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars$DO.mod.1 else environment(calc_dDOdt)$data$DO.obs[1]
+      DO.mod.1 <- if(exists('DO.mod.1', metab.pars)) metab.pars[['DO.mod.1']] else DO.obs.1
       DO.mod <- c(DO.mod.1, rep(NA, length(t)-1))
       for(i in t[-1]) {
         DO.mod[i] <-

@@ -21,7 +21,7 @@ test_that("mm_parse_name can parse names", {
   # parse a name
   expect_is(mm_parse_name("m_np_oi_tr_km.nlm"), "data.frame")
   expect_equal(dim(mm_parse_name("m_np_oi_tr_km.nlm")), c(1,10))
-  expect_equal(mm_parse_name("n_np_pi_eu_rckf.lm")$ode_method, "Euler")
+  expect_equal(mm_parse_name("n_np_pi_eu_rckf.lm")$ode_method, "euler")
   expect_equal(mm_parse_name("s_np_oipcpi_eu_plrckm.rnorm")$pool_K600, "none")
   expect_equal(mm_parse_name("b_Kl_oipcpi_eu_plrcko.rnorm")$pool_K600, "linear")
   expect_equal(mm_parse_name(mm_valid_names("Kmodel"))$engine, c('lm','mean','loess'))
@@ -41,8 +41,13 @@ test_that("mm_valid_names and mm_validate_names check model names", {
 })
 
 test_that("specs uses any valid mm_name", {
-  specs_list <- lapply(mm_valid_names(), specs)
+  # subsample because there are >1000 valid model names
+  mnames <- mm_valid_names()
+  expect_gte(length(mnames), 1000)
+  specs_list <- lapply(sample(mnames, 50), specs)
   # specs list lengths differ by model type. the exact range could change
-  expect_equal(range(sapply(specs_list, length)), c(4,35))
+  sp_len_range <- range(sapply(specs_list, length))
+  expect_gte(sp_len_range[1], 3)
+  expect_lte(sp_len_range[2], 35)
 })
 

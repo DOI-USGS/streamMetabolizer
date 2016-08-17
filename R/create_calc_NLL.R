@@ -35,7 +35,7 @@ create_calc_NLL <- function(
     stop("need err_obs_iid or err_proc_iid but not both or neither")
   
   # pull out info from the calc_dDOdt closure
-  DO.obs <- environment(calc_DO)$DO.obs
+  DO.obs <- environment(environment(calc_DO)$calc_dDOdt)$data$DO.obs
   
   # pre-calculate anything we can
   if(err_proc_iid) {

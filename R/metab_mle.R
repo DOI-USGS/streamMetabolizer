@@ -20,13 +20,11 @@ NULL
 #'
 #' # PR with fixed K on two days
 #' dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
-#' mm <- metab_mle(data=dat, data_daily=dat_daily)
-#' predict_metab(mm)
+#' metab_mle(data=dat, data_daily=dat_daily)
 #' 
 #' # PRK with day-specific inits on some days
 #' dat_daily <- data.frame(date=as.Date("2012-09-19"), GPP.init=4, K600.init=60)
-#' mm <- metab_mle(data=dat, data_daily=dat_daily)
-#' predict_metab(mm)
+#' metab_mle(data=dat, data_daily=dat_daily)
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
 #' }
