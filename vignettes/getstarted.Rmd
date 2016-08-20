@@ -69,7 +69,6 @@ Load the R libraries that will be used.
 ```{r libs, warning=FALSE}
 suppressPackageStartupMessages({
   library(dplyr)
-  library(tibble)
   library(tidyr)
   library(ggplot2)
   library(streamMetabolizer)
@@ -251,17 +250,14 @@ plot_DO_preds(predict_DO(mle_fit))
 
 ## Other Models
 
-Many model structures are available. We have only demonstrated one above (the
-default MLE model). Here is the full list of model options:
+Many model structures are available. We have only demonstrated one above (the 
+default MLE model). The full list of model options this way (we'll just print a
+sampling of the full list):
 
 ```{r, results='asis'}
-all_models <- mm_valid_names(type=c('bayes','mle','night'))
-opts <- 
-  bind_cols(
-    tibble::tibble(model_name=all_models), 
-    mm_parse_name(all_models)) %>%
-  arrange(model_name)
-knitr::kable(opts)
+valid_names <- mm_valid_names(type=c('bayes','mle','night'))
+length(valid_names)
+valid_names[seq(1,length(valid_names),length.out=20)]
 ```
 
 Remember that any of these structures can be specified by using the model name
@@ -307,7 +303,7 @@ bayes_specs <- replace(bayes_specs, 'split_dates', FALSE)
 
 We now fit the model with the new specifications. Bayesian models take longer to
 run, so be patient.
-```{r bayes_fit, warning=FALSE}
+```{r bayes_fit}
 bayes_fit <- metab(bayes_specs, data=dat)
 ```
 

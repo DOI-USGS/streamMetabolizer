@@ -280,7 +280,7 @@ get_fitted_params.metab_model <- function(metab_model, date_start=NA, date_end=N
   # build the dDOdt function in order to pull out the metab.needs
   features <- mm_parse_name(get_specs(metab_model)$model_name)
   dDOdt <- create_calc_dDOdt(
-    get_data(metab_model)[1,], ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+    v(get_data(metab_model)[1,]), ode_method=features$ode_method, GPP_fun=features$GPP_fun,
     ER_fun=features$ER_fun, deficit_src=features$deficit_src)
   metab.needs <- environment(dDOdt)$metab.needs
   if(!all(metab.needs %in% names(fit))) stop('a necessary metabolism parameter is somehow unavailable')
