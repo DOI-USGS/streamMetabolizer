@@ -208,7 +208,7 @@ values of GPP, ER, and K600 for the likelihood maximization. (I've done this
 just for illustration; the model results aren't affected by these particular
 changes for this particular dataset.)
 ```{r specs_details}
-mle_specs <- specs(mle_name, GPP_init=2, ER_init=-1, K600_init=3)
+mle_specs <- specs(mle_name, init.GPP.daily=2, init.ER.daily=-1, init.K600.daily=3)
 ```
 
 ### 3. Fit the model

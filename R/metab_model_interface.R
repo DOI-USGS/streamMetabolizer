@@ -25,6 +25,8 @@
 #'   
 #'   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
 #'   
+#'   \item \code{\link{get_fitted_params}(metab_model, ...) \{ return(data.frame) \}}
+#'   
 #'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
 #'   \}}
 #'   
@@ -136,8 +138,6 @@ get_data_daily <- function(metab_model) {
   UseMethod("get_data_daily")
 }
 
-
-
 #' Extract the version of streamMetabolizer that was used to fit the model.
 #' 
 #' A function in the metab_model_interface. Returns the version of
@@ -153,35 +153,67 @@ get_version <- function(metab_model) {
   UseMethod("get_version")
 }
 
+#' Predict metabolism from a fitted model.
+#' 
+#' A function in the metab_model_interface. Returns estimates of those 
+#' parameters describing
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, to use in predicting metabolism
+#' @param date_start Date or a class convertible with as.Date. The first date 
+#'   (inclusive) for which to report parameters. If NA, no filtering is done.
+#' @param date_end Date or a class convertible with as.Date. The last date 
+#'   (inclusive) for which to report parameters.. If NA, no filtering is done.
+#' @param uncertainty character. Should columns for the uncertainty of parameter
+#'   estimates be excluded ('none'), reported as standard deviations ('sd'), or 
+#'   reported as lower and upper bounds of a 95 percent confidence interval 
+#'   ('ci')?
+#' @param messages logical. Should warning and error messages from the fitting
+#'   procedure be included in the output?
+#' @param ... Other arguments passed to class-specific implementations of 
+#'   \code{get_fitted_params}
+#' @param attach.units logical. Should units be attached to the output?
+#' @examples 
+#' dat <- data_metab('3', day_start=12, day_end=36)
+#' mm <- metab_night(specs(mm_name('night')), data=dat)
+#' get_fitted_params(mm)
+#' get_fitted_params(mm, date_start=get_fit(mm)$date[2])
+#' @export
+#' @family metab_model_interface
+#' @family get_fitted_params
+get_fitted_params <- function(metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ..., attach.units=FALSE) {
+  UseMethod("get_fitted_params")
+}
+
 
 #' Predict metabolism from a fitted model.
 #' 
 #' A function in the metab_model_interface. Returns predictions (estimates) of 
-#' GPP, ER, and NEP.
+#' GPP, ER, and K600.
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @param date_start Date or a class convertible with as.Date. The first date
-#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
-#'   done.
+#' @param date_start Date or a class convertible with as.Date. The first date 
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering
+#'   is done.
 #' @param date_end Date or a class convertible with as.Date. The last date 
-#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
-#'   done.
-#' @param ... Other arguments passed to class-specific implementations of
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering
+#'   is done.
+#' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_metab}
-#' @param use_saved logical. Is it OK to use predictions that were saved with
+#' @param attach.units logical. Should units be attached to the output?
+#' @param use_saved logical. Is it OK to use predictions that were saved with 
 #'   the model?
-#' @return A data.frame of daily metabolism estimates. Columns include:
+#' @return A data.frame of daily metabolism estimates. Columns include: 
 #'   \describe{
 #'   
 #'   \item{GPP}{numeric estimate of Gross Primary Production, positive when 
 #'   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{ER}{numeric estimate of Ecosystem Respiration, negative when realistic, \eqn{mg
-#'   O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+#'   \item{ER}{numeric estimate of Ecosystem Respiration, negative when 
+#'   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
-#'   }
+#'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}} }
 #' @examples 
 #' dat <- data_metab('3', day_start=12, day_end=36)
 #' mm <- metab_night(specs(mm_name('night')), data=dat)
@@ -190,7 +222,7 @@ get_version <- function(metab_model) {
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
-predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
+predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
   UseMethod("predict_metab")
 }
 
@@ -210,6 +242,7 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_save
 #'   done.
 #' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_DO}
+#' @param attach.units logical. Should units be attached to the output?
 #' @param use_saved logical. Is it OK to use predictions that were saved with 
 #'   the model?
 #' @return A data.frame of dissolved oxygen predictions at the temporal 
@@ -222,6 +255,6 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_save
 #' @export
 #' @family metab_model_interface
 #' @family predict_DO
-predict_DO <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
+predict_DO <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
   UseMethod("predict_DO")
 }

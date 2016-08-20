@@ -19,9 +19,9 @@ passed in when fitting the metabolism model.
 }
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},
-  \code{\link{get_data}}, \code{\link{get_fitting_time}},
-  \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_version}}, \code{\link{predict_DO}},
-  \code{\link{predict_metab}}
+  \code{\link{get_data}}, \code{\link{get_fitted_params}},
+  \code{\link{get_fitting_time}}, \code{\link{get_fit}},
+  \code{\link{get_info}}, \code{\link{get_version}},
+  \code{\link{predict_DO}}, \code{\link{predict_metab}}
 }
 

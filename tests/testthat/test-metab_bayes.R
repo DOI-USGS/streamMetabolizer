@@ -18,6 +18,51 @@ manual_test4 <- function() {
   traceplot(get_mcmc(mm), pars='GPP_daily')
 }
 
+manual_test5 <- function() {
+  test_that("error-free models can be run with split or combined dates, jags or stan", {
+    # this test doesn't actually do any test-that checks
+    sp <- function(split_dates, engine) { replace(
+      specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine),
+            n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
+      'split_dates', split_dates
+    ) }
+    dat <- data_metab('1', res='30')
+    mm <- metab(sp(FALSE,'jags'), dat)
+    mm <- metab(sp(TRUE, 'jags'), dat)
+    # new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
+    mm <- metab(sp(FALSE,'stan'), dat)
+    # subsequent runs of the compiled Stan model are quieter
+    mm <- metab(sp(TRUE, 'stan'), dat)
+    dat <- data_metab('3', res='30')
+    mm <- metab(sp(FALSE,'jags'), dat)
+    mm <- metab(sp(TRUE, 'jags'), dat)
+    mm <- metab(sp(FALSE,'stan'), dat)
+    mm <- metab(sp(TRUE, 'stan'), dat)
+  })
+}
+
+
+manual_test6 <- function() {
+  test_that("error and warning messages are printed with the mm object if present", {
+    # this test doesn't actually do any test-that checks
+    sp <- function(split_dates, engine) { replace(
+      specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine),
+            n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
+      'split_dates', split_dates
+    ) }
+    dat <- data_metab('1', res='30', flaws=c('missing start'))
+    mm <- metab(sp(FALSE,'jags'), dat)
+    mm <- metab(sp(TRUE, 'jags'), dat)
+    mm <- metab(sp(FALSE,'stan'), dat)
+    mm <- metab(sp(TRUE, 'stan'), dat)
+    dat <- data_metab('3', res='30', flaws=c('missing middle'))
+    mm <- metab(sp(FALSE,'jags'), dat)
+    mm <- metab(sp(TRUE, 'jags'), dat)
+    mm <- metab(sp(FALSE,'stan'), dat)
+    mm <- metab(sp(TRUE, 'stan'), dat)
+  })
+}
+
 manual_test3 <- function() {
   library(streamMetabolizer)
   library(dplyr)
@@ -105,7 +150,7 @@ manual_test3 <- function() {
   mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan')
   sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE, 
               GPP_daily_sigma=4, ER_daily_sigma=4, K600_daily_sigma=4)
-              #GPP_daily_sigma=10, ER_daily_sigma=10, K600_daily_sigma=10)
+  #GPP_daily_sigma=10, ER_daily_sigma=10, K600_daily_sigma=10)
   mm_slow <- metab(specs=replace(sp, 'err_obs_iid_sigma_rate', 10), data=dat) # 75 sec w/ new compilation, 36-42 sec w/ daily sigmas at 4, 38-40 sec w/ daily sigmas at 10, 48 w/ err_obs_iid_sigma_rate=1 or 1000, 35 w/ err_obs_iid_sigma_rate=100 or 10
   sp$err_obs_iid_sigma_rate <- 0.2 # need to adjust because we're using the 'rate' as a lognormal scaling parameter now
   sp$model_name <- 'inst/models/b_np_oi_tr_plrckm_faster.stan'

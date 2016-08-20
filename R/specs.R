@@ -36,8 +36,9 @@
 #'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
 #'   \code{adapt_steps}.
 #'   
-#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, GPP_init,
-#'   ER_init, K600_init}
+#'   * metab_mle: \code{model_name, day_start, day_end, day_tests,
+#'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
+#'   init.K600.daily}
 #'   
 #'   * metab_night: \code{model_name, day_start, day_end, day_tests}
 #'   
@@ -48,8 +49,16 @@
 #'   \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, 
-#'   sim.seed}
+#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+#'   
+#' @section MLE Initial Values:
+#'   
+#'   For metab_mle models (maximum likelihood estimation), specification 
+#'   arguments whose names begin with \code{init} are applicable. Which 
+#'   arguments are required depends on the value of model_name and can be 
+#'   determined by calling \code{grep('^init.', names(specs(mname)), 
+#'   value=TRUE)} once for your model name \code{mname} before supplying any 
+#'   arguments.
 #'   
 #' @param model_name character string identifying the model features. Use 
 #'   \code{\link{mm_name}} for valid names. This may be a full model file path 
@@ -73,14 +82,29 @@
 #' @inheritParams mm_model_by_ply
 #' @inheritParams mm_is_valid_day
 #'   
-#' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
-#'   process
-#' @param ER_init the inital value of daily ER to use in the NLM fitting process
-#' @param K600_init the inital value of daily K600 to use in the NLM fitting 
-#'   process. Ignored if K600 is supplied in data_daily, except for those dates 
-#'   where K600 is NA. If there are any such dates, K600_init must have a 
-#'   numeric (non-NA) value, as this will be used to estimate K600 for those 
-#'   dates.
+#' @param init.GPP.daily the inital value of daily mean GPP (gO2 d^-1 m^-2) to 
+#'   use in the NLM fitting process. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.Pmax the initial value of Pmax (gO2 d^-1 m^-2) to use in the GPP 
+#'   versus light relationship in the NLM fitting process. Pmax is the maximum 
+#'   GPP value of the GPP-light curve. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.alpha the inital value of alpha (gO2 s d^-1 umol^-1, i.e., units 
+#'   of GPP/light) to use in the GPP versus light relationship in the NLM 
+#'   fitting process. alpha is the initial slope of the GPP-light curve. See the
+#'   MLE Initial Values section under Details.
+#' @param init.ER.daily the inital value of daily mean ER (gO2 d^-1 m^-2) to use
+#'   in the NLM fitting process. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.ER20 the initial value of ER20 (gO2 d^-1 m^-2) to use in the ER 
+#'   versus temperature relationship in the NLM fitting process. ER20 is the 
+#'   respiration rate at 20 degrees C. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.K600.daily the inital value of daily mean K600 (d^-1) to use in 
+#'   the NLM fitting process. Ignored if K600 is supplied in data_daily, except 
+#'   for those dates where K600 is NA. If there are any such dates, K600_init 
+#'   must have a numeric (non-NA) value, as this will be used to estimate K600 
+#'   for those dates. See the MLE Initial Values section under Details.
 #'   
 #' @param split_dates logical indicating whether the data should be split into 
 #'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
@@ -215,7 +239,16 @@
 #' @inheritParams prepdata_bayes
 #' @inheritParams mcmc_bayes
 #'   
-#' @inheritParams calc_DO_mod_w_sim_error
+#' @param err.obs.sigma The sd of observation error, or 0 for no observation 
+#'   error. Observation errors are those applied to DO.mod after generating the 
+#'   full time series of modeled values.
+#' @param err.obs.phi The autocorrelation coefficient of the observation errors,
+#'   or 0 for uncorrelated errors.
+#' @param err.proc.sigma The sd of process error, or 0 for no process error. 
+#'   Process errors are applied at each time step, and therefore propagate into 
+#'   the next timestep.
+#' @param err.proc.phi The autocorrelation coefficient of the process errors, or
+#'   0 for uncorrelated errors.
 #' @param sim.seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 
 #'   \code{\link{set.seed}}, specifying the seed to set before every execution 
@@ -246,9 +279,12 @@ specs <- function(
   ## MLE
   
   # initial values
-  GPP_init = 10, 
-  ER_init = -10, 
-  K600_init = 10,
+  init.GPP.daily = 5, 
+  init.Pmax = 10,
+  init.alpha = 0.0001,
+  init.ER.daily = -10, 
+  init.ER20 = -10,
+  init.K600.daily = 10,
   
   
   ## Bayes
@@ -328,14 +364,13 @@ specs <- function(
   
   ## Sim
   
-  # inheritParams calc_DO_mod_w_sim_error
+  # simulation parameters
   err.obs.sigma = 0.1,
   err.obs.phi = 0,
   err.proc.sigma = 0,
   err.proc.phi = 0,
-  ODE_method,
   
-  # sim data predictability
+  # simulation replicability
   sim.seed = NA
   
 ) {
@@ -448,8 +483,15 @@ specs <- function(
       
     },
     'mle' = {
+      # determine which init values will be needed
+      dDOdt <- create_calc_dDOdt(
+        data=unitted::v(eval(formals(metab_mle)$data)), 
+        ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+      init.needs <- paste0('init.', environment(dDOdt)$metab.needs)
+      
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'GPP_init', 'ER_init', 'K600_init')
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)
 
     }, 
     'night' = {

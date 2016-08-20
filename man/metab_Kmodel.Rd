@@ -5,9 +5,9 @@
 \title{Combine a time series of K estimates to predict consistent values}
 \usage{
 metab_Kmodel(specs = specs(mm_name("Kmodel")), data = mm_data(solar.time,
-  discharge, velocity, optional = c("all")), data_daily = mm_data(date, K600,
-  K600.lower, K600.upper, discharge.daily, velocity.daily, optional =
-  c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
+  discharge, velocity, optional = c("all")), data_daily = mm_data(date,
+  K600.daily, K600.lower, K600.upper, discharge.daily, velocity.daily, optional
+  = c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
   info = NULL)
 }
 \arguments{

@@ -27,36 +27,12 @@ NULL
 #' predict_metab(mm)
 #' plot_DO_preds(predict_DO(mm))
 #' 
-#' # test that error-free models can be run with split or combined dates, jags or stan
-#' sp <- function(split_dates, engine) { replace(
-#'   specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine), 
-#'     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE), 
-#'   'split_dates', split_dates
-#' ) }
-#' dat <- data_metab('1', res='30')
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' # new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' # subsequent runs of the compiled Stan model are quieter
-#' mm <- metab(sp(TRUE, 'stan'), dat)
-#' dat <- data_metab('3', res='30')
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
-#' 
 #' # error and warning messages are printed with the mm object if present
-#' dat <- data_metab('1', res='30', flaws=c('missing start'))
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
 #' dat <- data_metab('3', res='30', flaws=c('missing middle'))
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
+#' mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
+#'   data=dat)
+#' predict_metab(mm)
 #' }
 #' @export
 #' @family metab_model
@@ -993,7 +969,40 @@ print.logs_metab <- function(x, ...) {
 #' @import dplyr
 #' @export
 #' @family predict_metab
-predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ...) {
+predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {
+  # with Bayesian models, the daily mean metabolism values of GPP, ER, and D
+  # should have been produced during the model fitting
+  
+  # decide on the column names to pull and their new values
+  fit.names <- expand.grid(c('GPP','ER','D'), '_daily_', c('50pct','2.5pct','97.5pct'), stringsAsFactors=FALSE) %>%
+    apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
+  metab.names <- expand.grid(c('GPP','ER','D'), c('','.lower','.upper'), stringsAsFactors=FALSE) %>%
+    apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
+  
+  # pull and retrieve the columns
+  fit <- metab_model@fit$daily %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
+  preds <- fit[c('date', fit.names, 'warnings', 'errors')] %>% 
+    setNames(c('date', metab.names, 'warnings', 'errors'))
+  
+  # attach.units if requested
+  if(attach.units) {
+    pred.units <- get_units(mm_data())[sapply(names(preds), function(x) strsplit(x, '\\.')[[1]][1], USE.NAMES=FALSE)]
+    preds <- u(preds, pred.units)
+  }
+  preds
+}
+
+#' Collect the daily fitted parameters needed to predict GPP, ER, D, and DO
+#' 
+#' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
+#' 
+#' @inheritParams get_fitted_params
+#' @return A data.frame of fitted parameters, as for the generic 
+#'   \code{\link{get_fitted_params}}.
+#' @export
+#' @family get_fitted_params
+get_fitted_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
   metab_model@fit <- metab_model@fit$daily
   NextMethod()
 }

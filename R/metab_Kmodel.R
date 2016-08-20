@@ -71,7 +71,7 @@ NULL
 metab_Kmodel <- function(
   specs=specs(mm_name('Kmodel')),
   data=mm_data(solar.time, discharge, velocity, optional=c("all")), 
-  data_daily=mm_data(date, K600, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
+  data_daily=mm_data(date, K600.daily, K600.lower, K600.upper, discharge.daily, velocity.daily, optional=c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
   info=NULL
 ) {
   
@@ -123,7 +123,7 @@ metab_Kmodel <- function(
   
   # Update data_daily with predictions
   preds <- predict_metab(mm)
-  mm@data_daily %<>% left_join(select(preds, date, K600, K600.lower, K600.upper), by='date')
+  mm@data_daily %<>% left_join(select(preds, date, K600.daily, K600.lower, K600.upper), by='date')
   
   # Return
   mm
@@ -165,9 +165,9 @@ prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_e
   
   # Rename the data so it's clear which K values are inputs and which are new model predictions
   if('K600.lower' %in% names(data_daily)) {
-    data_daily %<>% rename(K600.obs=K600, K600.lower.obs=K600.lower, K600.upper.obs=K600.upper)
+    data_daily %<>% rename(K600.obs=K600.daily, K600.lower.obs=K600.lower, K600.upper.obs=K600.upper)
   } else {
-    data_daily %<>% rename(K600.obs=K600)
+    data_daily %<>% rename(K600.obs=K600.daily)
   }
   
   # Set weights
@@ -332,7 +332,7 @@ predict_metab.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, 
   # use previously stored values for K600.mod
   data_daily <- get_data_daily(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
-  if(!isTRUE(use_saved) || is.null(data_daily) || !("K600" %in% names(data_daily))) {
+  if(!isTRUE(use_saved) || is.null(data_daily) || !("K600.daily" %in% names(data_daily))) {
     engine <- get_specs(metab_model)$engine
     ktrans <- get_specs(metab_model)$transforms['K600']
     fit <- get_fit(metab_model)

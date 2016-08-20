@@ -22,7 +22,7 @@ NULL
 #' # start with non-DO data (DO used only to pick first DO of each day)
 #' dat <- data_metab('3', res='15')
 #' dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
-#'   GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+#'   GPP.daily=2, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
 #' 
 #' # define simulation parameters
 #' mm <- metab_sim(
@@ -39,6 +39,16 @@ NULL
 #' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 #' predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 #' 
+#' # fancy GPP equation
+#' dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
+#'   Pmax=8, alpha=0.01, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
+#' mm <- metab_sim(
+#'   specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0.1, err.proc.sigma=2),
+#'   data=dat, data_daily=dat_daily)
+#' get_fitted_params(mm)
+#' predict_metab(mm) # metab estimates are for data without errors
+#' predict_DO(mm)[seq(1,50,by=10),]
+#' 
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
 #' plot_DO_preds(mm)
@@ -48,7 +58,7 @@ NULL
 metab_sim <- function(
   specs=specs(mm_name('sim')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'),
-  data_daily=mm_data(date, DO.mod.1, GPP, ER, K600, optional='DO.mod.1'),
+  data_daily=mm_data(date, DO.mod.1, GPP.daily, Pmax, alpha, ER.daily, ER20, K600.daily, optional='all'),
   info=NULL
 ) {
   
@@ -104,14 +114,7 @@ setClass(
 #' @export
 #' @family predict_metab
 predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
-  
-  # Select only those columns required for metabolism prediction and available
-  # in the fit. At present this is all of the columns, but that could change
-  fit <- get_fit(metab_model) %>%
-    mm_filter_dates(date_start=date_start, date_end=date_end)
-  vars <- c("date","DO.mod.1","GPP","ER","K600")
-  fit[vars[vars %in% names(fit)]] %>%
-    mutate(warnings=as.character(NA), errors=as.character(NA))
+  NextMethod()
 }
 
 
@@ -126,6 +129,7 @@ predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_DO}}.
 #' @export
+#' @importFrom stats rnorm
 #' @family predict_DO
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 

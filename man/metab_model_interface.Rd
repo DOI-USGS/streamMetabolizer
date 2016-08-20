@@ -33,6 +33,8 @@ the \code{metab_model_interface} defined here.
   
   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
   
+  \item \code{\link{get_fitted_params}(metab_model, ...) \{ return(data.frame) \}}
+  
   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
   \}}
   

@@ -272,7 +272,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
     day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
-    model_name=specs$model_name) %>% # for mm_predict_1ply
+    model_name=specs$model_name) %>% # for mm_predict_DO_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end)
 }
 
@@ -281,7 +281,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
 #' Usually assigned to model_fun within mm_model_by_ply, called from there
 #' 
 #' @inheritParams mm_model_by_ply_prototype
-#' @inheritParams mm_predict_1ply
+#' @inheritParams mm_predict_DO_1ply
 #' @return a data.frame of predictions
 #' @importFrom stats complete.cases
 metab_night_predict_1ply <- function(
@@ -303,7 +303,7 @@ metab_night_predict_1ply <- function(
   }
   
   # apply the regular prediction function
-  mm_predict_1ply(
+  mm_predict_DO_1ply(
     data_ply=night_dat, data_daily_ply=select(data_daily_ply, date, GPP, ER, K600), 
     day_start, day_end, ply_date, 
     model_name=model_name)

@@ -53,56 +53,6 @@
 #' DO.mod <- DO(metab.pars=preds.init)
 #' lines(x=DOtime, y=DO.mod, type='l', col='magenta')
 #' 
-#' # show that method='euler' really is euler by several integration implementations
-#' plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
-#' # dDOdt
-#' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
-#'   ER_fun='constant', deficit_src='DO_mod')
-#' DO.mod.dDOdt <- data$DO.obs[1]
-#' for(t in 2:nrow(data)) { DO.mod.dDOdt[t] <-
-#'   DO.mod.dDOdt[t-1] + dDOdt(t-1, c(DO.mod=DO.mod.dDOdt[t-1]), preds.init)$dDOdt }
-#' lines(x=DOtime, y=DO.mod.dDOdt, col='purple')
-#' # ode
-#' DO.mod.ode <- deSolve::ode(y=c(DO.mod=data$DO.obs[1]), parms=preds.init,
-#'   times=1:nrow(data), func=dDOdt, method='euler')[,'DO.mod']
-#' lines(x=DOtime, y=DO.mod.ode, col='blue')
-#' # DO
-#' DO <- create_calc_DO(dDOdt, ode_method='euler')
-#' DO.mod.DO <- DO(preds.init)
-#' lines(x=DOtime, y=DO.mod.DO, col='chartreuse3')
-#' # original calc_DO_mod function
-#' DO.mod.old <- do.call(calc_DO_mod, 
-#'   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
-#'     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
-#'     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='euler')))
-#' lines(x=DOtime, y=DO.mod.old, col='black', lty=5)
-#' 
-#' # show that method='trapezoid' really is pairmeans by several implementations
-#' plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
-#' # dDOdt
-#' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',
-#'   ER_fun='constant', deficit_src='DO_mod')
-#' DO.mod.dDOdt <- data$DO.obs[1]
-#' for(t in 2:nrow(data)) { DO.mod.dDOdt[t] <-
-#'   DO.mod.dDOdt[t-1] + dDOdt(t-1, c(DO.mod=DO.mod.dDOdt[t-1]), preds.init)$dDOdt }
-#' lines(x=DOtime, y=DO.mod.dDOdt, col='purple')
-#' # DO
-#' DO <- create_calc_DO(dDOdt, ode_method='trapezoid')
-#' DO.mod.pm.DO <- DO(preds.init)
-#' lines(x=DOtime, y=DO.mod.pm.DO, col='forestgreen', lty=3)
-#' # rk2 should be similar, but not identical, to pairmeans
-#' dDOdt <- create_calc_dDOdt(data, ode_method='rk2', GPP_fun='linlight',
-#'   ER_fun='constant', deficit_src='DO_mod')
-#' DO <- create_calc_DO(dDOdt, ode_method='rk2')
-#' DO.mod.pm.rk2 <- DO(preds.init)
-#' lines(x=DOtime, y=DO.mod.pm.rk2, col='red', lty=4)
-#' # original calc_DO_mod function
-#' DO.mod.old <- do.call(calc_DO_mod, 
-#'   c(preds.init, as.list(data[c('DO.sat','depth','temp.water')]), 
-#'     list(frac.GPP = data$light/sum(data$light), frac.ER=1/24, frac.D=1/24,
-#'     DO.mod.1=data$DO.obs[1], n=nrow(data), ODE_method='pairmeans')))
-#' lines(x=DOtime, y=DO.mod.old, col='green', lty=5)
-#' 
 #' # with observation and/or process error
 #' plot(x=DOtime, y=data$DO.obs, col='black', pch=3, cex=0.6)
 #' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='linlight',

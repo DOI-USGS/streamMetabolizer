@@ -5,21 +5,24 @@
 \title{Create a metab_model object.}
 \usage{
 metab_model(model_class = "metab_model", info = "user metadata goes here",
-  fit = "generic metab_model class; no actual fit",
+  metab_daily = NULL, fit = "generic metab_model class; no actual fit",
   fitting_time = system.time({ }), specs = list(),
   data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily = mm_data(date, K600, discharge, velocity, optional = "all"),
+  data_daily = mm_data(date, optional = "all"),
   pkg_version = as.character(packageVersion("streamMetabolizer")), ...)
 }
 \arguments{
-\item{model_class}{character name of a class inheriting from metab_model -
+\item{model_class}{character name of a class inheriting from metab_model - 
 the type of object to create}
 
 \item{info}{User-supplied metadata of any form.}
 
+\item{metab_daily}{a data.frame of daily metabolism estimates produced from
+the fit.}
+
 \item{fit}{An internal representation of a fitted model.}
 
-\item{fitting_time}{A proc_time object giving the time taken to fit the
+\item{fitting_time}{A proc_time object giving the time taken to fit the 
 model.}
 
 \item{specs}{A list of model specifications that were supplied to the fitting
@@ -27,7 +30,7 @@ function.}
 
 \item{data}{The data that were used to fit the model.}
 
-\item{data_daily}{The data_daily that were used to fit the model. May be
+\item{data_daily}{The data_daily that were used to fit the model. May be 
 NULL.}
 
 \item{pkg_version}{A string indicating the package version used to create 

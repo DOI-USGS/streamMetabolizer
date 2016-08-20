@@ -3,6 +3,33 @@
 #' Creates a closure that bundles data and helper functions into a single 
 #' function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
 #' 
+#' @section ode_method 'trapezoid':
+#' 
+#' 'pairmeans' and 'trapezoid' are identical. They are the analytical
+#' solution to a trapezoid rule with this starting point:
+#' \code{
+#'  DO.mod[t+1] = 
+#'   DO.mod[t] +
+#'    (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+#'    + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+#'    + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
+#'    + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2 
+#'    ) * timestep
+#' }
+#' and this solution:
+#' \code{
+#' DO.mod[t+1] - DO.mod[t] =
+#'  (- DO.mod[t] * (k.O2[t]+k.O2[t+1])/2
+#'    + (GPP[t]+GPP[t+1] +
+#'       ER[t]+ER[t+1] +
+#'       err.proc[t]+err.proc[t+1]
+#'      ) / (depth[t]+depth[t+1])
+#'    + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2 
+#'  ) * timestep / (1 + timestep*k.O2[t+1]/2)
+#' }
+#' where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
+#' err.proc=0 for model fitting.
+#' 
 #' @param data data.frame as in \code{\link{metab}}, except that data must 
 #'   contain exactly one date worth of inputs (~24 hours according to 
 #'   \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).
@@ -237,13 +264,13 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
       metab.needs <<- c(metab.needs, 'K600.daily')
       if(integer.t) function(t, DO.mod.t, metab.pars) {
         metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.obs[t])
-      } else function(t, DO.mod.t, metab.pars) {
+      } else function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
       }
     })(),
     'DO_obs_filter'=, DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      if(integer.t) function(t, DO.mod.t, metab.pars) {
+      if(integer.t) function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.mod.t)
       } else function(t, DO.mod.t, metab.pars) {
         metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
@@ -255,21 +282,9 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # dDOdt: instantaneous rate of change in DO at time t in gO2 m^-3 timestep^-1
   dDOdt <- switch(
     ode_method,
-    ### 'pairmeans' and 'trapezoid' are identical and are the analytical
-    ### solution to a trapezoid rule with this starting point:
-    # DO.mod[t+1] = 
-    #   DO.mod[t]
-    #    + (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-    #    + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
-    #    + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2) * timestep
-    ### and this solution:
-    # DO.mod[t+1] - DO.mod[t] =
-    #   (- DO.mod[t] * (k.O2[t]+k.O2[t+1])/2
-    #    + (GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-    #    + (ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
-    #    + (k.O2[t]*DO.sat[t] +k.O2[t+1]*DO.sat[t+1])/2 )
-    #   * timestep.days / (1 + timestep.days*k.O2[t+1]/2)
-    ### where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER
+    # 'pairmeans' and 'trapezoid' are identical and are the analytical solution
+    # to a trapezoid rule. remember we're treating err.proc as a rate in
+    # gO2/m2/d, just like GPP & ER
     trapezoid=, pairmeans={
       # define pairwise averaging functions pm = pairmeans, f=function, v=vector
       pmf <- function(fun, t, ...) .Internal(mean(fun(c(t, t+1), ...)))
@@ -291,13 +306,13 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
       list(
         dDOdt={
           {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]} / depth[t] +
-            D(t, state[['DO.mod']], metab.pars)} *
+            D(t, metab.pars, state[['DO.mod']])} *
           timestep.days)
     } else function(t, state, metab.pars) {
       list(
         dDOdt={
           {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc(t)} / depth(t) +
-            D(t, state[['DO.mod']], metab.pars)} *
+            D(t, metab.pars, state[['DO.mod']])} *
           timestep.days)
     }
   )

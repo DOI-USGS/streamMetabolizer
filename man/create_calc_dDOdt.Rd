@@ -50,6 +50,34 @@ a function that accepts args \code{t} (the time in 0:(n-1) where n is
 Creates a closure that bundles data and helper functions into a single 
 function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
 }
+\section{ode_method 'trapezoid'}{
+
+
+'pairmeans' and 'trapezoid' are identical. They are the analytical
+solution to a trapezoid rule with this starting point:
+\code{
+ DO.mod[t+1] = 
+  DO.mod[t] +
+   (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+   + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+   + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
+   + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2 
+   ) * timestep
+}
+and this solution:
+\code{
+DO.mod[t+1] - DO.mod[t] =
+ (- DO.mod[t] * (k.O2[t]+k.O2[t+1])/2
+   + (GPP[t]+GPP[t+1] +
+      ER[t]+ER[t+1] +
+      err.proc[t]+err.proc[t+1]
+     ) / (depth[t]+depth[t+1])
+   + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2 
+ ) * timestep / (1 + timestep*k.O2[t+1]/2)
+}
+where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
+err.proc=0 for model fitting.
+}
 \examples{
 \dontrun{
 data <- data_metab('1','30')[seq(1,48,by=2),]

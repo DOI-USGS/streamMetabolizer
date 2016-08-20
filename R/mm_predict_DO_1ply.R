@@ -6,16 +6,17 @@
 #' @param model_name the coded model name that will determine the GPP_fun,
 #'   ER_fun, deficit_src, and ode_method to use in prediction
 #' @return a data.frame of predictions
-mm_predict_1ply <- function(
+mm_predict_DO_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, ..., 
   model_name) {
   
-  # The daily metabolism estimates are in data_daily_ply. Skip today (return
-  # DO.mod=NAs) if they're missing. Otherwise, proceed to predict DO
-  if(nrow(data_daily_ply)==0 || any(is.na(data_daily_ply[c("GPP","ER","K600")]))) {
+  # the daily metabolism-relevant parameter estimates are in data_daily_ply.
+  # skip today (return DO.mod=NAs) if they're missing. otherwise, proceed to
+  # predict DO
+  if(nrow(data_daily_ply)==0 || any(is.na(data_daily_ply))) {
     return(data.frame(data_ply, DO.mod=rep(NA, nrow(data_ply))))
   }
-  
+
   # identify any observation and/or process error to be added (only known
   # application is for simulating data)
   err.obs <- if(exists('err.obs', data_ply)) data_ply$err.obs else 0
@@ -31,7 +32,6 @@ mm_predict_1ply <- function(
   
   # call DO prediction function
   DO.mod <- data_daily_ply %>%
-    rename(GPP.daily=GPP, ER.daily=ER, K600.daily=K600) %>%
     select(-date) %>%
     DO()
   

@@ -13,6 +13,13 @@ test_that("metab_mle models can be created", {
   
 })
 
+test_that("metab_mle works with fancy GPP, ER functions", {
+  library(dplyr)
+  mm_name('mle', GPP_fun='satlight', ER_fun='q10temp') %>%
+    specs()
+  
+})
+
 test_that("metab_mle predictions (predict_metab, predict_DO) make sense", {
   
   # 1 day

@@ -5,24 +5,27 @@
 \title{Make metabolism predictions from a fitted metab_model.}
 \usage{
 \method{predict_metab}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, ..., attach.units = FALSE)
+  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
 metab_model_interface, to use in predicting metabolism}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date
-(inclusive) for which to report metabolism predictions. If NA, no filtering is 
-done.}
+\item{date_start}{Date or a class convertible with as.Date. The first date 
+(inclusive) for which to report metabolism predictions. If NA, no filtering
+is done.}
 
 \item{date_end}{Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report metabolism predictions. If NA, no filtering is 
-done.}
+(inclusive) for which to report metabolism predictions. If NA, no filtering
+is done.}
 
-\item{...}{Other arguments passed to class-specific implementations of
+\item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_metab}}
 
 \item{attach.units}{logical. Should units be attached to the output?}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+the model?}
 }
 \value{
 A data.frame of predictions, as for the generic 

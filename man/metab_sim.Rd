@@ -6,8 +6,8 @@
 \usage{
 metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time, DO.obs,
   DO.sat, depth, temp.water, light, optional = "DO.obs"),
-  data_daily = mm_data(date, DO.mod.1, GPP, ER, K600, optional = "DO.mod.1"),
-  info = NULL)
+  data_daily = mm_data(date, DO.mod.1, GPP.daily, Pmax, alpha, ER.daily, ER20,
+  K600.daily, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -49,7 +49,7 @@ a DO.mod.1 column with one starting DO value per day.
 # start with non-DO data (DO used only to pick first DO of each day)
 dat <- data_metab('3', res='15')
 dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
-  GPP=2, ER=-3, K600=21, stringsAsFactors=FALSE)
+  GPP.daily=2, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
 
 # define simulation parameters
 mm <- metab_sim(
@@ -65,6 +65,16 @@ mm <- metab_sim(
   data=dat, data_daily=dat_daily)
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
+
+# fancy GPP equation
+dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
+  Pmax=8, alpha=0.01, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
+mm <- metab_sim(
+  specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0.1, err.proc.sigma=2),
+  data=dat, data_daily=dat_daily)
+get_fitted_params(mm)
+predict_metab(mm) # metab estimates are for data without errors
+predict_DO(mm)[seq(1,50,by=10),]
 
 \dontrun{
 plot_DO_preds(predict_DO(mm))
