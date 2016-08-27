@@ -264,18 +264,19 @@ get_version.metab_model <- function(metab_model) {
 #' 
 #' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
 #' 
-#' @inheritParams get_fitted_params
+#' @inheritParams get_params
 #' @return A data.frame of fitted parameters, as for the generic 
-#'   \code{\link{get_fitted_params}}.
+#'   \code{\link{get_params}}.
 #' @export
-#' @family get_fitted_params
-get_fitted_params.metab_model <- function(metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ..., attach.units=FALSE) {
+#' @family get_params
+get_params.metab_model <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
+  ..., attach.units=FALSE) {
+  
   # process arguments
   uncertainty <- match.arg(uncertainty)
-  
-  # extract the daily parameters plus whatever else is daily (sds, gradients, etc.)
-  fit <- get_fit(metab_model) %>%
-    mm_filter_dates(date_start=date_start, date_end=date_end)
+  fixed <- match.arg(fixed)
   
   # build the dDOdt function in order to pull out the metab.needs
   features <- mm_parse_name(get_specs(metab_model)$model_name)
@@ -283,26 +284,68 @@ get_fitted_params.metab_model <- function(metab_model, date_start=NA, date_end=N
     v(get_data(metab_model)[1,]), ode_method=features$ode_method, GPP_fun=features$GPP_fun,
     ER_fun=features$ER_fun, deficit_src=features$deficit_src)
   metab.needs <- environment(dDOdt)$metab.needs
-  if(!all(metab.needs %in% names(fit))) stop('a necessary metabolism parameter is somehow unavailable')
+  # also.needs <- c()
+  metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.needs) %>%
+    paste0('^', .) %>%
+    paste0(collapse='|')
   
-  # add uncertainty columns
-  if(uncertainty != 'none') {
-    metab.uncert <- paste0(rep(metab.needs, each=1), rep(c('.sd'), times=length(metab.needs)))
-    metab.needs <- c(rbind(metab.needs, metab.uncert)) %>% { .[. %in% names(fit)]}
+  # extract the daily parameters plus whatever else is daily (sds, gradients, etc.)
+  fit <- get_fit(metab_model)
+  ddat <- get_data_daily(metab_model)
+  if(!is.null(ddat) && nrow(ddat) > 0) {
+    pars <- full_join(fit, ddat, by='date', copy=TRUE) 
+  } else {
+    pars <- fit
+  }
+  pars <- pars %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end) %>%
+    { .[grep(metab.search, names(.), value=TRUE)] }
+  
+  # if any variables were available in both x and y forms, combine them to minimize NAs
+  both <- intersect(names(fit), names(ddat)) %>% {.[. != 'date']}
+  for(b in both) {
+    pars[[b]] <- coalesce(pars[[paste0(b,'.x')]], pars[[paste0(b,'.y')]])
+    pars[[paste0(b,'.fixed')]] <- is.na(pars[[paste0(b,'.x')]]) & !is.na(pars[[paste0(b,'.y')]])
   }
   
-  # select those columns of fit that match metab.needs
-  params <- fit[c('date', metab.needs)]
+  # make sure we've got everything we need
+  if(length(missing.metabs <- metab.needs[!metab.needs %in% names(pars)]) > 0) {
+    stop(paste0("can't find metabolism parameter", if(length(missing.metabs)>1) "s", " ", paste0(missing.metabs, collapse=', ')))
+  }
+  
+  # add uncertainty columns if requested
+  if(uncertainty != 'none') {
+    metab.uncert <- paste0(rep(metab.needs, each=1), rep(c('.sd'), times=length(metab.needs)))
+    metab.needs <- c(rbind(metab.needs, metab.uncert)) %>% { .[. %in% names(pars)]}
+  }
+  
+  # add .fixed columns if requested
+  if(fixed == 'columns') {
+    for(b in both) {
+      add.after <- tail(grep(paste0('^', b), metab.needs), 1)
+      metab.needs <- append(metab.needs, paste0(b,'.fixed'), after=add.after)
+    }
+  }
+  
+  # select those columns of pars that match metab.needs
+  params <- pars[c('date', metab.needs)]
   
   # convert sds to CIs if requested
   if(uncertainty == 'ci') {
     params <- mm_sd_to_ci(params)
   }
   
+  # attach stars if requested (do this after mm_sd_to_ci b/c converts to character)
+  if(fixed == 'stars') {
+    params <- bind_cols(select(params, date), format.data.frame(select(params, -date)))
+    for(b in both) {
+      params[[b]] <- paste0(params[[b]], ifelse(pars[[paste0(b,'.fixed')]], '*', ' '))
+    }
+  }
+  
   # attach warnings and errors if requested
   if(messages) {
-    fit <- get_fit(metab_model)
-    messages <- fit[c('date','warnings','errors') %>% { .[. %in% names(fit)] }]
+    messages <- pars[c('date','warnings','errors') %>% { .[. %in% names(pars)] }]
     params <- left_join(params, messages, by='date')
   }
   
@@ -347,7 +390,7 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
   
   # get the metabolism estimates; filter as we did for data
-  metab_ests <- get_fitted_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='none', messages=FALSE)
+  metab_ests <- get_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='none', messages=FALSE)
   
   # re-process the input data with the metabolism estimates to predict DO
   preds <- mm_model_by_ply(
@@ -385,7 +428,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     # otherwise predict them now
     
     # get the metabolism parameters; filter if requested
-    metab_ests <- get_fitted_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='sd', messages=FALSE)
+    metab_ests <- get_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='sd', messages=FALSE)
     
     # pull args from the model
     specs <- get_specs(metab_model)
@@ -404,7 +447,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     # attach warnings and errors
     fit <- get_fit(metab_model)
     messages <- fit[c('date','warnings','errors') %>% { .[. %in% names(fit)] }]
-    preds <- left_join(preds, messages, by='date')
+    preds <- full_join(preds, messages, by='date')
   }
   
   if(attach.units) {
