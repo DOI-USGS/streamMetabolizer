@@ -37,7 +37,9 @@ NULL
 metab_mle <- function(
   specs=specs(mm_name('mle')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(date, K600.daily, init.GPP.daily, init.ER.daily, init.K600.daily, optional='all'),
+  data_daily=mm_data(
+    date, K600.daily, init.GPP.daily, init.Pmax, init.alpha, 
+    init.ER.daily, init.ER20, init.K600.daily, optional='all'),
   info=NULL
 ) {
   
@@ -129,19 +131,20 @@ mle_1ply <- function(
           else
             init.vals[[init]] <- data_daily_ply[[init]]
         }
-        if(exists('K600', data_daily_ply)) {
-          if(is.na(data_daily_ply$K600)) {
-            warn_strs <- c(warn_strs, "data_daily$K600==NA so fitting by MLE")
+        if(exists('K600.daily', data_daily_ply)) {
+          if(is.na(data_daily_ply$K600.daily)) {
+            warn_strs <- c(warn_strs, "data_daily$K600.daily==NA so fitting by MLE")
           } else {
-            K600 <- data_daily_ply$K600
+            K600 <- data_daily_ply$K600.daily
           }
         }
       }
     }
     fix_K600 <- !is.null(K600)
-    if(fix_K600) init.vals[['init.K600.daily']] <- NULL # if K600.daily will be fixed, we don't need to fit it
+    # if K600.daily will be fixed, we don't need to fit it
+    if(fix_K600) init.vals <- init.vals[names(init.vals) != 'init.K600.daily']
     
-    # name the init.vals as their parameters
+    # name the init.vals as their parameters (minus the 'init.')
     init.vals <- setNames(unlist(init.vals), substring(names(init.vals), 6))
     
     # parse the model_name

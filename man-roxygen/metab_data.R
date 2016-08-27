@@ -84,18 +84,21 @@
 #'   }
 #'   \item{\code{mle}}{
 #'     \tabular{llll}{
-#'       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-#'       date              \tab Date            \tab                 \tab optional      \cr
-#'       K600.daily        \tab numeric         \tab d^-1            \tab optional      \cr
-#'       init.GPP.daily    \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
-#'       init.ER.daily     \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
-#'       init.K600.daily   \tab numeric         \tab d^-1            \tab optional      
+#'       \strong{colname} \tab \strong{class} \tab \strong{units}    \tab \strong{need}\cr
+#'       date              \tab Date            \tab                    \tab optional      \cr
+#'       K600.daily        \tab numeric         \tab d^-1               \tab optional      \cr
+#'       init.GPP.daily    \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+#'       init.Pmax         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+#'       init.alpha        \tab numeric         \tab gO2 s d^-1 umol^-1 \tab optional      \cr
+#'       init.ER.daily     \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+#'       init.ER20         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+#'       init.K600.daily   \tab numeric         \tab d^-1               \tab optional      
 #'     }
 #'     
 #'     \strong{Example}:
-#'     \tabular{lrrrr}{
-#'       \code{date      } \tab \code{K600.daily} \tab \code{init.GPP.daily} \tab \code{init.ER.daily} \tab \code{init.K600.daily}\cr
-#'       \code{2050-03-14} \tab \code{10        } \tab \code{5             } \tab \code{-10          } \tab \code{10             }
+#'     \tabular{lrrrrrrr}{
+#'       \code{date      } \tab \code{K600.daily} \tab \code{init.GPP.daily} \tab \code{init.Pmax} \tab \code{init.alpha} \tab \code{init.ER.daily} \tab \code{init.ER20} \tab \code{init.K600.daily}\cr
+#'       \code{2050-03-14} \tab \code{10        } \tab \code{5             } \tab \code{10       } \tab \code{1e-04     } \tab \code{-10          } \tab \code{-10      } \tab \code{10             }
 #'     }
 #'   }
 #'   \item{\code{bayes}}{

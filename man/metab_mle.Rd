@@ -6,8 +6,8 @@
 \usage{
 metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
   DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600.daily,
-  init.GPP.daily, init.ER.daily, init.K600.daily, optional = "all"),
-  info = NULL)
+  init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
+  init.K600.daily, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
