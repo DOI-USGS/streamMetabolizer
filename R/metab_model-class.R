@@ -131,6 +131,15 @@ setMethod(
     cat("Fitting time: ", get_fitting_time(object)[['elapsed']], " secs elapsed\n", sep="")
     
     # print fitting warnings if present
+    params <- get_params(object, uncertainty='ci', fixed='stars', messages=TRUE)
+    fixinfo <- if(any(grepl('\\*', params))) "(* = fixed value)" else ""
+    cat("Parameters (", nrow(params), " date", if(nrow(params)!=1) "s", ")", fixinfo, ":\n", sep='')
+    params %>%
+      head(10) %>%
+      mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
+      select(-warnings, -errors) %>%
+      print()
+    if(nrow(params) > 10) cat("  ...\n")
     fit <- get_fit(object)
     if(is.data.frame(fit) && all(c('warnings','errors') %in% names(fit))) {
       if(!exists('valid_day', fit)) fit$valid_day <- TRUE
@@ -151,7 +160,7 @@ setMethod(
         metab_preds <- predict_metab(object)
         cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
         print(select(head(metab_preds, 10), -warnings, -errors))
-        if(nrow(metab_preds) > 10) cat("  ...")
+        if(nrow(metab_preds) > 10) cat("  ...\n")
       }, error=function(err) {
         cat("Prediction errors:\n")
         cat(paste0("  ", err$message))
