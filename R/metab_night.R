@@ -88,6 +88,7 @@ metab_night <- function(
 #'   Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in 
 #'   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
 #'   (2012); 41:53.
+#' @import dplyr
 #' @importFrom utils head tail
 #' @importFrom stats lm coef setNames
 nightreg_1ply <- function(
@@ -150,22 +151,23 @@ nightreg_1ply <- function(
       
       # fit model & extract the important stuff (see Chapra & DiToro 1991)
       lm_dDOdt <- lm(dDO.dt ~ DO.sat.def, data=v(night_dat))
-      KO2_units <-get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1])
+      KO2_units <- get_units(night_dat$dDO.dt[1] / night_dat$DO.sat.def[1])
       out <- list(
         row.first = which_night[1],
         row.last = which_night[length(which_night)],
         KO2 = u(coef(lm_dDOdt)[["DO.sat.def"]], KO2_units),
         KO2.sd = u(summary(lm_dDOdt)$coefficients[["DO.sat.def","Std. Error"]], KO2_units),
         ER.vol = u(coef(lm_dDOdt)[["(Intercept)"]], get_units(night_dat$dDO.dt)),
-        ER.sd.vol = u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(night_dat$dDO.dt)),
-        rsq = summary(lm_dDOdt)$r.squared,
-        p = summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
+        ER.vol.sd = u(summary(lm_dDOdt)$coefficients[["(Intercept)","Std. Error"]], get_units(night_dat$dDO.dt)),
+        r.squared = summary(lm_dDOdt)$r.squared,
+        p.value = summary(lm_dDOdt)$coefficients[["DO.sat.def","Pr(>|t|)"]]
       )
+      
       # convert ER from volumetric to area-based
       mean_depth <- mean(night_dat$depth)
       out <- c(out, list(
-        ER = out$ER.vol * mean_depth,
-        ER.sd = out$ER.sd.vol * mean_depth
+        ER.daily = out$ER.vol * mean_depth,
+        ER.daily.sd = out$ER.vol.sd * mean_depth
       ))
       
       # convert from KO2 to K600. the coefficients used here differ for 
@@ -178,8 +180,8 @@ nightreg_1ply <- function(
       # 2012, which is probably the newer source. the sd conversion works
       # because the conversion is linear in KO2.
       out <- c(out, list(
-        K600 = convert_kGAS_to_k600(kGAS=out$KO2, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2"),
-        K600.sd = convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2")
+        K600.daily = convert_kGAS_to_k600(kGAS=out$KO2, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2"),
+        K600.daily.sd = convert_kGAS_to_k600(kGAS=out$KO2.sd, temperature=u(mean(night_dat$temp.water), 'degC'), gas="O2")
       ))
       
       # return everything. remove units since we can't fully support them
@@ -196,18 +198,19 @@ nightreg_1ply <- function(
       invokeRestart("muffleWarning")
     })
   
+  # define the desired vector of output columns
+  out.cols <- c(
+    'ER.daily','ER.daily.sd','K600.daily','K600.daily.sd',
+    'r.squared','p.value','row.first','row.last') # could also include 'KO2','KO2.sd','ER.vol','ER.vol.sd'
+  
   # stop_strs may have accumulated during nlm() call. If failed, use dummy data 
   # to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
-    night.1d <- setNames(as.list(rep(NA, 10)), c('KO2','KO2.sd','ER','ER.sd','rsq','p','K600','K600.sd','row.first','row.last'))
+    night.1d <- setNames(as.list(rep(NA, length(out.cols))), out.cols)
   }
   
   # Return, reporting any results, warnings, and errors
-  data.frame(GPP=NA, GPP.sd=NA, 
-             ER=night.1d$ER, ER.sd=night.1d$ER.sd, 
-             K600=night.1d$K600, K600.sd=night.1d$K600.sd,
-             r.squared=night.1d$rsq, p.value=night.1d$p,
-             row.first=night.1d$row.first, row.last=night.1d$row.last,
+  data.frame(select_(as.data.frame(night.1d), .dots=out.cols),
              warnings=paste0(unique(warn_strs), collapse="; "), 
              errors=paste0(unique(stop_strs), collapse="; "),
              stringsAsFactors=FALSE)
@@ -261,11 +264,10 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   }
 
   # get the metabolism (GPP, ER) data and estimates; filter if requested
-  date <- ER <- K600 <- row.first <- row.last <- ".dplyr.var"
-  metab_ests <- get_fit(metab_model) %>% 
-    dplyr::select(date, ER, K600, row.first, row.last) %>%
+  date <- ER.daily <- K600.daily <- row.first <- row.last <- ".dplyr.var"
+  metab_ests <- get_fit(metab_model) %>%
     mm_filter_dates(date_start=date_start, date_end=date_end) %>%
-    mutate(GPP=0)
+    dplyr::select(date, ER.daily, K600.daily, row.first, row.last)
   
   # re-process the input data with the metabolism estimates to predict DO, using
   # our special nighttime regression prediction function
@@ -304,7 +306,7 @@ metab_night_predict_1ply <- function(
   
   # apply the regular prediction function
   mm_predict_DO_1ply(
-    data_ply=night_dat, data_daily_ply=select(data_daily_ply, date, GPP, ER, K600), 
+    data_ply=night_dat, data_daily_ply=select(data_daily_ply, date, ER.daily, K600.daily), 
     day_start, day_end, ply_date, 
     model_name=model_name)
   

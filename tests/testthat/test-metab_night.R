@@ -42,9 +42,11 @@ test_that("day_tests=c('full_day','include_sunset') get handled appropriately", 
   
   # error if day starts after day_start & dusk
   sp <- specs(mm_name('night'), day_start=12, day_end=35, day_tests=c('include_sunset','full_day'))
-  dat <- data_metab('1',        day_start=22, day_end=35)
-  expect_equal(predict_metab(metab_night(replace(sp, 'day_tests', 'full_day'), data=dat))$errors, "data don't start when expected")
-  expect_equal(predict_metab(metab_night(replace(sp, 'day_tests', 'include_sunset'), data=dat))$errors, "data don't include day-night transition")
+  dat <- data_metab('1',        day_start=22, day_end=35) # start the day too late
+  expect_equal(get_fit(metab_night(replace(sp, 'day_tests', 'full_day'), data=dat))$errors, "data don't start when expected")
+  expect_equal(get_fit(metab_night(replace(sp, 'day_tests', 'include_sunset'), data=dat))$errors, "data don't include day-night transition")
+  expect_equal(get_fit(metab_night(sp, data=dat))$errors, "data don't include day-night transition; data don't start when expected")
+  # error strs should be propagated to predict_metab
   expect_equal(predict_metab(metab_night(sp, data=dat))$errors, "data don't include day-night transition; data don't start when expected")
   # plot_DO_preds(predict_DO(metab_night(replace(sp, 'day_tests', c()), data=dat)))
   
@@ -83,12 +85,13 @@ test_that("metab_night predictions can be passed back into metab_mle", {
   # metab_night
   kdat <- data_metab('10', day_start=12, day_end=36)
   mmk <- metab_night(data=kdat)
+  # plot_DO_preds(mmk)
   # plot_metab_preds(predict_metab(mmk))
   
   # metab_mle
   mledat <- data_metab('10')
-  mm <- metab_mle(data=mledat, data_daily=predict_metab(mmk)[c('date', 'K600')])
-  expect_equal(predict_metab(mm)$K600, predict_metab(mmk)$K600)
+  mm <- metab_mle(data=mledat, data_daily=get_params(mmk)[c('date', 'K600.daily')])
+  expect_equal(get_params(mm)$K600.daily, get_params(mmk)$K600.daily)
   expect_true(rmse_DO(predict_DO(mm)) < 0.2, info="DO.mod tracks DO.obs with not too much error")
   # plot_metab_preds(mm)
   # plot_DO_preds(mm)
@@ -102,5 +105,5 @@ test_that("metab_night predictions match Bob's", {
     specs('n_np_pi_eu_rckf.lm', day_start=18, day_end=29, day_tests=c('full_day','even_timesteps','complete_data')), data=dat)
   mmb <- streamMetabolizer:::load_french_creek_std_mle(
     dat, estimate='K', start=c(dates="09/18/12", times="18:00:00"), end=c(dates="09/19/12", times="05:00:00"))
-  expect_equal(predict_metab(mms)$K600, mmb$K)
+  expect_equal(get_params(mms)$K600.daily, mmb$K)
 })

@@ -204,7 +204,10 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # GPP: instantaneous gross primary production at time t in gO2 m^-2 d^-1
   GPP <- switch(
     GPP_fun,
-    'NA'=, linlight=(function(){
+    'NA'=(function(){
+      function(t, metab.pars) 0
+    })(), 
+    linlight=(function(){
       # normalize light by the sum of light in the first 24 hours of the time window
       mean.light <- with(
         list(in.solar.day = data$solar.time < (data$solar.time[1] + as.difftime(1, units='days'))),
