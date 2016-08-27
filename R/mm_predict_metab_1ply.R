@@ -10,20 +10,35 @@ mm_predict_metab_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, ..., 
   model_name) {
   
-  # the daily metabolism-relevant parameter estimates are in data_daily_ply.
-  # skip today (return DO.mod=NAs) if they're missing. otherwise, proceed to
-  # predict DO
-  if(nrow(data_daily_ply)==0) {
-    return(data.frame(data_ply, GPP=NA))
+  # skip today if we're missing metabolism estimates and/or input data (return a
+  # near-empty or empty data.frame, respectively)
+  if(nrow(data_daily_ply) == 0) {
+    na_num <- as.numeric(NA)
+    na_df <- data.frame(
+      date=ply_date, 
+      GPP=na_num, GPP.lower=na_num, GPP.upper=na_num,
+      ER=na_num, ER.lower=na_num, ER.upper=na_num)
+    if(nrow(data_ply) > 0) {
+      # in the more common case, we just need a row of NAs to reflect that
+      # the daily metabolism-relevant parameter estimates are missing
+      return(na_df)
+    } else {
+      # if mm_model_by_ply comes up with 0 data rows total, it calls this 
+      # function once with empty data_daily_ply and data_ply to figure out which
+      # column names to return. Give those names here as a rowless data.frame
+      return(na_df[c(),])
+    }
   }
   
-  # prepare metab prediction function
+  # prepare metab prediction functions
   features <- mm_parse_name(model_name)
-  dDOdt <- create_calc_dDOdt(
-    data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-    ER_fun=features$ER_fun, deficit_src=features$deficit_src, # or maybe 'DO_mod' instead for prediction??
-    err.proc=0)
-  t <- environment(dDOdt)$data$t
+  env.dDOdt <- 
+    create_calc_dDOdt(
+      data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+      ER_fun=features$ER_fun, deficit_src=features$deficit_src, # or maybe 'DO_mod' instead for prediction??
+      err.proc=0) %>%
+    environment()
+  t <- env.dDOdt$data$t
   
   # call prediction functions and/or compute CIs for GPP, ER, & D
   preds <- bind_cols(lapply(c('GPP','ER'), function(met) { # lapply can also apply to 'D', but leaving out for now
@@ -37,8 +52,8 @@ mm_predict_metab_1ply <- function(
             function(t, DO.mod.t) {
               switch(
                 met,
-                GPP=, ER=environment(dDOdt)[[met]](t=t, metab.pars=data_daily_ply),
-                D=environment(dDOdt)[[met]](t=t, metab.pars=data_daily_ply, DO.mod.t=DO.mod.t) * environment(dDOdt)$data$depth
+                GPP=, ER=env.dDOdt[[met]](t=t, metab.pars=data_daily_ply),
+                D=env.dDOdt[[met]](t=t, metab.pars=data_daily_ply, DO.mod.t=DO.mod.t) * env.dDOdt$data$depth
               )
             }, t=t, DO.mod.t=data_ply$DO.mod)),
           lower = NA, # could use delta method to derive CIs here

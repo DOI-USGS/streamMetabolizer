@@ -71,7 +71,8 @@ mm_model_by_ply <- function(
   data.plys <- as.data.frame(v(data))
   if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
-  if((min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]) <= 0) {
+  min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]
+  if(length(min_timestep) == 1 && min_timestep <= 0) {
     timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
     timegoof <- which.min(timesteps) + c(0,1)
     stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
@@ -120,94 +121,119 @@ mm_model_by_ply <- function(
   # Assign each data row to one or two date plys. Because date plys can overlap,
   # there are two columns so that one row can belong to two dates if needed.
   dt.NA <- as.character(NA)
-  data.plys <- bind_cols(
-    data.plys,
-    bind_rows(lapply(seq_len(nrow(date_rows)), function(dt) {
-      run <- date_rows[dt,]
-      dt.today <- run$date
-      dt.yesterday <- if(dt>1) date_rows[[dt-1,'date']] else dt.NA
-      dt.tomorrow <- if(dt<nrow(date_rows)) date_rows[[dt+1,'date']] else dt.NA
-      data.plys.rows <- run$start:run$end
-      hr <- data.plys[data.plys.rows, 'hour']
-      primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start_fudge & hr < day_end_fudge, 1, 2)]
-      secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end_fudge - 24), 1, ifelse(hr < (24 + day_start_fudge), 2, 3))]
-      if(dt.today %in% odd.dates) {
-        tibble(odd.date.group=primary.date, even.date.group=secondary.date)
-        #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(primary.date, secondary.date)
-      } else { # dt.today %in% even.dates
-        tibble(odd.date.group=secondary.date, even.date.group=primary.date)
-        #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(secondary.date, primary.date)
-      }
-    }))) %>%
-    as.data.frame(stringsAsFactors=FALSE)
-  
-  # filter out dates that don't ever appear on their own - this especially weeds
-  # out first and last dates that were probably meant just to be part of the
-  # second or penultimate dates when the date range is >24
-  date.pairings <- setNames(unique(data.plys[, c('odd.date.group','even.date.group')]), c('a','b'))
-  date.pairings <- rbind(date.pairings, setNames(date.pairings, c('b','a')))
-  date.pairings <- date.pairings[!is.na(date.pairings$a),]
-  solo.dates <- date.pairings[is.na(date.pairings$b),]$a
-  tbl.dates <- table(date.pairings$a)
-  double.dates <- names(tbl.dates)[tbl.dates > 1]
-  unique.dates <- sort(unique(c(solo.dates, double.dates)))
-  
-  # Apply model_fun to each ply of the data, using if-else in the lapply loop to
-  # cover both the odd and even groupings in date order
-  runs <- bind_rows(
-    get_runs(data.plys$odd.date.group),
-    get_runs(data.plys$even.date.group)) %>%
-    filter(date %in% unique.dates) %>%
-    arrange(date) %>%
-    mutate(date=as.Date(date, tz=tz(data$solar.time)))
-  hour <- odd.date.group <- even.date.group <- '.dplyr.var'
-  data_plys <- data.plys %>%
-    select(-date, -hour, -odd.date.group, -even.date.group)
-  out_list <- lapply(seq_along(runs$date), function(dt) {
-    # pick out the inst & daily plys for this date
-    run <- runs[dt,]
-    data_ply <- data_plys[run$start:run$end,]
-    data_daily_ply <- 
-      if(!is.null(data_daily)) {
-        data_daily[match(run$date, data_daily$date),]
-      } else {
-        NULL
-      }
-    ply_date <- run$date
+  if(nrow(data.plys) == 0) {
+    data.plys <- bind_cols(
+      data.plys, 
+      data_frame(odd.date.group=dt.NA, even.date.group=dt.NA)[c(),])
+    out_list <- list()
+  } else {
+    data.plys <- bind_cols(
+      data.plys,
+      bind_rows(lapply(seq_len(nrow(date_rows)), function(dt) {
+        run <- date_rows[dt,]
+        dt.today <- run$date
+        dt.yesterday <- if(dt>1) date_rows[[dt-1,'date']] else dt.NA
+        dt.tomorrow <- if(dt<nrow(date_rows)) date_rows[[dt+1,'date']] else dt.NA
+        data.plys.rows <- run$start:run$end
+        hr <- data.plys[data.plys.rows, 'hour']
+        primary.date <- c(dt.today, dt.NA)[ifelse(hr >= day_start_fudge & hr < day_end_fudge, 1, 2)]
+        secondary.date <- c(dt.yesterday, dt.NA, dt.tomorrow)[ifelse(hr <= (day_end_fudge - 24), 1, ifelse(hr < (24 + day_start_fudge), 2, 3))]
+        if(dt.today %in% odd.dates) {
+          tibble(odd.date.group=primary.date, even.date.group=secondary.date)
+          #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(primary.date, secondary.date)
+        } else { # dt.today %in% even.dates
+          tibble(odd.date.group=secondary.date, even.date.group=primary.date)
+          #data.plys[data.plys.rows, c('odd.date.group','even.date.group')] <- c(secondary.date, primary.date)
+        }
+      }))) %>%
+      as.data.frame(stringsAsFactors=FALSE)
     
-    # compute timestep and run validity checks if requested. if timestep_days is
-    # FALSE or NA, it will be passed as NA to the model_fun and only computed
-    # there if needed for specific tests
-    if(length(timestep_days) > 1) stop("expecting no more than 1 value in timestep_days")
-    timestep_days <- if(isTRUE(timestep_days)) {
-      mm_get_timestep(data_ply$solar.time, format='mean') 
-    } else if(is.na(timestep_days) || timestep_days==FALSE) {
-      NA
-    } else timestep_days
-    ply_validity <- if(length(day_tests) > 0) {
-      mm_is_valid_day(
-        data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
-        ply_date=ply_date, timestep_days=timestep_days)
-    } else NA
+    # filter out dates that don't ever appear on their own - this especially weeds
+    # out first and last dates that were probably meant just to be part of the
+    # second or penultimate dates when the date range is >24
+    date.pairings <- setNames(unique(data.plys[, c('odd.date.group','even.date.group')]), c('a','b'))
+    date.pairings <- rbind(date.pairings, setNames(date.pairings, c('b','a')))
+    date.pairings <- date.pairings[!is.na(date.pairings$a),]
+    solo.dates <- date.pairings[is.na(date.pairings$b),]$a
+    tbl.dates <- table(date.pairings$a)
+    double.dates <- names(tbl.dates)[tbl.dates > 1]
+    unique.dates <- sort(unique(c(solo.dates, double.dates)))
     
-    # run the user's model_fun
-    out <- model_fun(
-      data_ply=data_ply, data_daily_ply=data_daily_ply,
-      day_start=day_start, day_end=day_end, ply_date=ply_date,
-      ply_validity=ply_validity, timestep_days=timestep_days, 
-      ...)
-    # attach a date column if anything was returned
-    if(is.null(out) || nrow(out)==0) NULL else data.frame(date=ply_date, out)
-  })
+    # Apply model_fun to each ply of the data, using if-else in the lapply loop to
+    # cover both the odd and even groupings in date order
+    runs <- bind_rows(
+      get_runs(data.plys$odd.date.group),
+      get_runs(data.plys$even.date.group)) %>%
+      filter(date %in% unique.dates) %>%
+      arrange(date) %>%
+      mutate(date=as.Date(date, tz=tz(data$solar.time)))
+    hour <- odd.date.group <- even.date.group <- '.dplyr.var'
+    data_plys <- data.plys %>%
+      select(-date, -hour, -odd.date.group, -even.date.group)
+    out_list <- lapply(seq_along(runs$date), function(dt) {
+      # pick out the inst & daily plys for this date
+      run <- runs[dt,]
+      data_ply <- data_plys[run$start:run$end,]
+      data_daily_ply <- 
+        if(!is.null(data_daily)) {
+          data_daily[match(run$date, data_daily$date),]
+        } else {
+          NULL
+        }
+      ply_date <- run$date
+      
+      # compute timestep and run validity checks if requested. if timestep_days is
+      # FALSE or NA, it will be passed as NA to the model_fun and only computed
+      # there if needed for specific tests
+      if(length(timestep_days) > 1) stop("expecting no more than 1 value in timestep_days")
+      timestep_days <- if(isTRUE(timestep_days)) {
+        mm_get_timestep(data_ply$solar.time, format='mean') 
+      } else if(is.na(timestep_days) || timestep_days==FALSE) {
+        NA
+      } else timestep_days
+      ply_validity <- if(length(day_tests) > 0) {
+        mm_is_valid_day(
+          data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+          ply_date=ply_date, timestep_days=timestep_days)
+      } else NA
+      
+      # run the user's model_fun
+      out <- model_fun(
+        data_ply=data_ply, data_daily_ply=data_daily_ply,
+        day_start=day_start, day_end=day_end, ply_date=ply_date,
+        ply_validity=ply_validity, timestep_days=timestep_days, 
+        ...)
+      # attach a date column if anything was returned
+      if(is.null(out) || nrow(out)==0) NULL else data.frame(date=ply_date, out)
+    })
+  }
+  
+  # if out_list came back with nothing, give the model_fun one more chance to
+  # suggest column names
+  if(length(out_list) == 0 || all(sapply(out_list, is.null))) {
+    out_list <- tryCatch(
+      list(model_fun(
+        data_ply=data[c(),], data_daily_ply=data_daily[c(),],
+        day_start=day_start, day_end=day_end, ply_date=as.Date(NA),
+        ply_validity=NA, timestep_days=NA, 
+        ...)),
+      error=function(e) {
+        # and if it REALLY doesn't work, just return an empty 1-column df
+        data.frame(date=as.Date(NA))[c(),]
+      }
+    )
+  }
+  
   # combine the 1-row dfs, making sure to start with a 0-row df that represents 
   # the dfs with the most columns to keep the column ordering consistent across 
   # runs. dplyr::bind_rows should take care of any missing columns, since these
   # are matched by name, and missing columns are filled with NAs
-  count_cols <- function(out) { if(is.null(out)) 0 else ncol(out) }
-  example_choice <- which.max(sapply(out_list, count_cols))
-  if(length(example_choice) == 0) {
-    data.frame(date=as.Date(NA)) 
+  if(length(out_list) == 0) {
+    
   } else {
+    example_choice <- 
+      sapply(out_list, function(out) { if(is.null(out)) 0 else ncol(out) }) %>%
+      which.max()
     out_example <- out_list[[example_choice]][FALSE,]
     bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
   }
