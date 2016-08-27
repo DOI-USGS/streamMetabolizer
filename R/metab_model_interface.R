@@ -11,6 +11,13 @@
 #'   
 #'   \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
 #'   
+#'   \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
+#'   
+#'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
+#'   \}}
+#'   
+#'   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
+#'   
 #'   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
 #'   
 #'   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
@@ -24,13 +31,6 @@
 #'   \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
 #'   
 #'   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
-#'   
-#'   \item \code{\link{get_fitted_params}(metab_model, ...) \{ return(data.frame) \}}
-#'   
-#'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
-#'   \}}
-#'   
-#'   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
 #'   
 #'   }
 #'   
@@ -153,10 +153,10 @@ get_version <- function(metab_model) {
   UseMethod("get_version")
 }
 
-#' Predict metabolism from a fitted model.
+#' Extract the metabolism parameters (fitted and/or fixed) from a model.
 #' 
 #' A function in the metab_model_interface. Returns estimates of those 
-#' parameters describing
+#' parameters describing the rates and/or shapes of GPP, ER, or reaeration.
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
@@ -168,21 +168,29 @@ get_version <- function(metab_model) {
 #'   estimates be excluded ('none'), reported as standard deviations ('sd'), or 
 #'   reported as lower and upper bounds of a 95 percent confidence interval 
 #'   ('ci')?
-#' @param messages logical. Should warning and error messages from the fitting
+#' @param messages logical. Should warning and error messages from the fitting 
 #'   procedure be included in the output?
+#' @param fixed character. Should values pulled from data_daily (i.e., fixed
+#'   rather that fitted) be treated identically ('none'), paired with a logicals
+#'   column ending in '.fixed' ('columns'), converted to character and marked
+#'   with a leading asterisk ('stars')?
 #' @param ... Other arguments passed to class-specific implementations of 
-#'   \code{get_fitted_params}
+#'   \code{get_params}
 #' @param attach.units logical. Should units be attached to the output?
 #' @examples 
 #' dat <- data_metab('3', day_start=12, day_end=36)
 #' mm <- metab_night(specs(mm_name('night')), data=dat)
-#' get_fitted_params(mm)
-#' get_fitted_params(mm, date_start=get_fit(mm)$date[2])
+#' get_params(mm)
+#' get_params(mm, date_start=get_fit(mm)$date[2])
 #' @export
 #' @family metab_model_interface
-#' @family get_fitted_params
-get_fitted_params <- function(metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ..., attach.units=FALSE) {
-  UseMethod("get_fitted_params")
+#' @family get_params
+get_params <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
+  ..., attach.units=FALSE) {
+  
+  UseMethod("get_params")
 }
 
 

@@ -45,7 +45,7 @@ NULL
 #' mm <- metab_sim(
 #'   specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0.1, err.proc.sigma=2),
 #'   data=dat, data_daily=dat_daily)
-#' get_fitted_params(mm)
+#' get_params(mm)
 #' predict_metab(mm) # metab estimates are for data without errors
 #' predict_DO(mm)[seq(1,50,by=10),]
 #' 

@@ -997,12 +997,12 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
 #' 
 #' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
 #' 
-#' @inheritParams get_fitted_params
+#' @inheritParams get_params
 #' @return A data.frame of fitted parameters, as for the generic 
-#'   \code{\link{get_fitted_params}}.
+#'   \code{\link{get_params}}.
 #' @export
-#' @family get_fitted_params
-get_fitted_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
+#' @family get_params
+get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
   metab_model@fit <- metab_model@fit$daily
   NextMethod()
 }

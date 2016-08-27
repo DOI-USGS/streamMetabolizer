@@ -51,9 +51,9 @@ predict_metab(mm, date_start=get_fit(mm)$date[2])
 }
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},
-  \code{\link{get_data}}, \code{\link{get_fitted_params}},
-  \code{\link{get_fitting_time}}, \code{\link{get_fit}},
-  \code{\link{get_info}}, \code{\link{get_specs}},
+  \code{\link{get_data}}, \code{\link{get_fitting_time}},
+  \code{\link{get_fit}}, \code{\link{get_info}},
+  \code{\link{get_params}}, \code{\link{get_specs}},
   \code{\link{get_version}}, \code{\link{predict_DO}}
 
 Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
