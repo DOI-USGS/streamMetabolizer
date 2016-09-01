@@ -157,8 +157,12 @@ mle_1ply <- function(
       data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
       ER_fun=features$ER_fun, deficit_src=features$deficit_src)
     DO <- create_calc_DO(dDOdt)
-    # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
-    NLL <- create_calc_NLL(DO, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
+    # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these
+    # to par.names in create_calc_NLL and nlm.args$p. to fix them, pass them as
+    # separately named arguments in nlm.args
+    NLL <- create_calc_NLL(
+      DO,
+      err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
     if(fix_K600) environment(NLL)$par.names %<>% { .[. != 'K600.daily'] } # remove the K600 parameter if we're fixing K600
     
     # package nlm arguments in a list. estimate of fscale is based on comparison
@@ -172,7 +176,8 @@ mle_1ply <- function(
         typsize = init.vals,
         fscale = -(1/timestep_days),
         hessian = TRUE),
-      if(fix_K600) list(K600.daily = K600)
+      if(fix_K600) list(K600.daily = K600),
+      list(DO.mod.1 = data_ply$DO.obs[1])
     )
     
     # Find the best metabolism values by non-linear minimization of the likelihood
