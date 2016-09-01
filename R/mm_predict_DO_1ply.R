@@ -30,10 +30,15 @@ mm_predict_DO_1ply <- function(
     err.proc=err.proc)
   DO <- create_calc_DO(dDOdt, ode_method=features$ode_method, err.obs=err.obs)
   
-  # call DO prediction function
-  DO.mod <- data_daily_ply %>%
+  # prepare arguments to DO prediction function. enable 3 possible sources for 
+  # DO.mod.1: (1) fitted params or (2) data_daily (both passed via get_params to
+  # data_daily_ply) or (3) data_ply$DO.obs[1]
+  metab.pars <- data_daily_ply %>%
     select(-date) %>%
-    DO()
+    bind_cols(if(!exists('DO.mod.1', data_daily_ply)) data.frame(DO.mod.1 = data_ply$DO.obs[1]) else NULL)
+  
+  # call DO prediction function
+  DO.mod <- DO(metab.pars)
   
   # return the data with modeled DO attached
   data.frame(data_ply, DO.mod=DO.mod)
