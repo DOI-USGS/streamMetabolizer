@@ -76,7 +76,7 @@ metab_sim <- function(
   metab_model(
     model_class="metab_sim", 
     info=info,
-    fit=dat_list[['data_daily']], # GPP, ER, etc. were given as data but will become our predictors
+    fit=NULL,
     fitting_time=fitting_time,
     specs=specs,
     data=dat_list[['data']],
