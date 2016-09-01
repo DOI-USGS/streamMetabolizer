@@ -134,6 +134,8 @@ setMethod(
     params <- get_params(object, uncertainty='ci', fixed='stars', messages=TRUE)
     fixinfo <- if(any(grepl('\\*', params))) "(* = fixed value)" else ""
     cat("Parameters (", nrow(params), " date", if(nrow(params)!=1) "s", ")", fixinfo, ":\n", sep='')
+    if(!exists('warnings', params)) params$warnings <- ''
+    if(!exists('errors', params)) params$errors <- ''
     params %>%
       head(10) %>%
       mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
@@ -159,7 +161,13 @@ setMethod(
       tryCatch({
         metab_preds <- predict_metab(object)
         cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
-        print(select(head(metab_preds, 10), -warnings, -errors))
+        if(!exists('warnings', metab_preds)) metab_preds$warnings <- ''
+        if(!exists('errors', metab_preds)) metab_preds$errors <- ''
+        metab_preds %>%
+          head(10) %>%
+          mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
+          select(-warnings, -errors) %>%
+          print()
         if(nrow(metab_preds) > 10) cat("  ...\n")
       }, error=function(err) {
         cat("Prediction errors:\n")
