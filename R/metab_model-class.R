@@ -301,51 +301,73 @@ get_params.metab_model <- function(
     v(get_data(metab_model)[1,]), ode_method=features$ode_method, GPP_fun=features$GPP_fun,
     ER_fun=features$ER_fun, deficit_src=features$deficit_src)
   metab.needs <- environment(dDOdt)$metab.needs
-  # also.needs <- c()
-  metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.needs) %>%
+  metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO?
+  metab.all <- union(metab.needs, metab.optional)
+  metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.all) %>%
     paste0('^', .) %>%
     paste0(collapse='|')
   
-  # extract the daily parameters plus whatever else is daily (sds, gradients, etc.)
+  # extract the daily parameters plus whatever else is daily (sds, gradients, etc.) 
   fit <- get_fit(metab_model)
   ddat <- get_data_daily(metab_model)
-  if(!is.null(ddat) && nrow(ddat) > 0) {
-    pars <- full_join(fit, ddat, by='date', copy=TRUE) 
-  } else {
-    pars <- fit
-  }
-  pars <- pars %>%
-    mm_filter_dates(date_start=date_start, date_end=date_end) %>%
-    { .[grep(metab.search, names(.), value=TRUE)] }
-  
-  # if any variables were available in both x and y forms, combine them to minimize NAs
-  both <- intersect(names(fit), names(ddat)) %>% {.[. != 'date']}
-  for(b in both) {
-    pars[[b]] <- coalesce(pars[[paste0(b,'.x')]], pars[[paste0(b,'.y')]])
-    pars[[paste0(b,'.fixed')]] <- is.na(pars[[paste0(b,'.x')]]) & !is.na(pars[[paste0(b,'.y')]])
-  }
   
   # make sure we've got everything we need
-  if(length(missing.metabs <- metab.needs[!metab.needs %in% names(pars)]) > 0) {
+  if(length(missing.metabs <- metab.needs[!metab.needs %in% union(names(fit), names(ddat))]) > 0) {
     stop(paste0("can't find metabolism parameter", if(length(missing.metabs)>1) "s", " ", paste0(missing.metabs, collapse=', ')))
   }
   
+  # combine all daily values into one data.frame
+  if(!is.null(fit) && !is.null(ddat) && nrow(ddat) > 0) {
+    pars <- full_join(fit, ddat, by='date', copy=TRUE) 
+  } else {
+    if(!is.null(fit)) 
+      pars <- fit
+    else if(!is.null(ddat))
+      pars <- ddat
+    else
+      return(NULL) # nothing available
+  }
+  pars <- pars %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end) %>% 
+    { .[grep(metab.search, names(.), value=TRUE)] }
+  
+  # track provenance of each metab parameter. if any variables were available in
+  # both x and y forms, combine them to minimize NAs
+  metab.fit <- names(fit) %>% {.[. %in% metab.all]}
+  metab.ddat <- names(ddat) %>% {.[. %in% metab.all]}
+  metab.both <- intersect(metab.fit, metab.ddat)
+  metab.either <- union(metab.fit, metab.ddat)
+  for(a in metab.either) {
+    if(a %in% metab.both) {
+      a.x <- paste0(a,'.x')
+      a.y <- paste0(a,'.y')
+      pars[[a]] <- coalesce(pars[[a.x]], pars[[a.y]])
+      pars[[paste0(a,'.fixed')]] <- coalesce(ifelse(is.na(pars[[a.x]]), NA, FALSE), ifelse(is.na(pars[[a.y]]), NA, TRUE))
+    } else {
+      pars[[paste0(a,'.fixed')]] <- a %in% metab.ddat
+    }
+  }
+
+  # identify what we actually have, in the order we want it
+  metab.out <- metab.all[metab.all %in% names(pars)]
+  
   # add uncertainty columns if requested
   if(uncertainty != 'none') {
-    metab.uncert <- paste0(rep(metab.needs, each=1), rep(c('.sd'), times=length(metab.needs)))
-    metab.needs <- c(rbind(metab.needs, metab.uncert)) %>% { .[. %in% names(pars)]}
+    metab.uncert <- paste0(rep(metab.out, each=1), rep(c('.sd'), times=length(metab.out)))
+    metab.out <- c(rbind(metab.out, metab.uncert)) %>% { .[. %in% names(pars)]}
   }
   
-  # add .fixed columns if requested
+  # add .fixed columns to the list of exported columns if requested
   if(fixed == 'columns') {
-    for(b in both) {
-      add.after <- tail(grep(paste0('^', b), metab.needs), 1)
-      metab.needs <- append(metab.needs, paste0(b,'.fixed'), after=add.after)
+    for(a in metab.either) {
+      add.after <- tail(grep(paste0('^', a), metab.out), 1)
+      metab.out <- append(metab.out, paste0(a,'.fixed'), after=add.after)
     }
   }
   
-  # select those columns of pars that match metab.needs
-  params <- pars[c('date', metab.needs)]
+  # select and order those columns of pars that match metab.needs,
+  # metab.optional, or other columns we've added
+  params <- pars[c('date', metab.out)]
   
   # convert sds to CIs if requested
   if(uncertainty == 'ci') {
@@ -355,15 +377,16 @@ get_params.metab_model <- function(
   # attach stars if requested (do this after mm_sd_to_ci b/c converts to character)
   if(fixed == 'stars') {
     params <- bind_cols(select(params, date), format.data.frame(select(params, -date)))
-    for(b in both) {
-      params[[b]] <- paste0(params[[b]], ifelse(pars[[paste0(b,'.fixed')]], '*', ' '))
+    for(a in metab.out) {
+      params[[a]] <- paste0(params[[a]], ifelse(pars[[paste0(a,'.fixed')]], '*', ' '))
+      pars[[paste0(a,'.fixed')]] <- NULL
     }
   }
   
   # attach warnings and errors if requested
-  if(messages) {
+  if(messages && exists('date', pars) && any(exists(c('warnings','errors'), pars))) {
     messages <- pars[c('date','warnings','errors') %>% { .[. %in% names(pars)] }]
-    params <- left_join(params, messages, by='date')
+    params <- left_join(params, messages, by='date', copy=TRUE)
   }
   
   # attach units if requested and available in mm_data
@@ -461,10 +484,12 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
       day_start=day_start, day_end=day_end, day_tests=c(), timestep_days=FALSE, # for mm_model_by_ply
       model_name=specs$model_name) # for mm_predict_DO_1ply
     
-    # attach warnings and errors
+    # attach warnings and errors if available
     fit <- get_fit(metab_model)
-    messages <- fit[c('date','warnings','errors') %>% { .[. %in% names(fit)] }]
-    preds <- full_join(preds, messages, by='date')
+    if(!is.null(fit) && exists('date', fit) && any(exists(c('warnings','errors'), fit))) {
+      messages <- fit[c('date','warnings','errors') %>% { .[. %in% names(fit)] }]
+      preds <- full_join(preds, messages, by='date', copy=TRUE)
+    }
   }
   
   if(attach.units) {
