@@ -58,7 +58,6 @@ Other metab_model_interface: \code{\link{get_data_daily}},
 
 Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
   \code{\link{predict_metab.metab_bayes}},
-  \code{\link{predict_metab.metab_model}},
-  \code{\link{predict_metab.metab_sim}}
+  \code{\link{predict_metab.metab_model}}
 }
 

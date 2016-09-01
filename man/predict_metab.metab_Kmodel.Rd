@@ -35,7 +35,6 @@ Makes daily re-predictions of K600.
 \seealso{
 Other predict_metab: \code{\link{predict_metab.metab_bayes}},
   \code{\link{predict_metab.metab_model}},
-  \code{\link{predict_metab.metab_sim}},
   \code{\link{predict_metab}}
 }
 

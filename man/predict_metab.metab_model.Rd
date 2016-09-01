@@ -38,7 +38,6 @@ reflecting a 95% CI.
 \seealso{
 Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
   \code{\link{predict_metab.metab_bayes}},
-  \code{\link{predict_metab.metab_sim}},
   \code{\link{predict_metab}}
 }
 

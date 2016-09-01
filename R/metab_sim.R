@@ -103,21 +103,6 @@ setClass(
 )
 
 
-#' Make metabolism predictions from a fitted metab_model.
-#' 
-#' Makes daily predictions of GPP, ER, and K600.
-#' 
-#' @inheritParams predict_metab
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_metab}}.
-#' @import dplyr
-#' @export
-#' @family predict_metab
-predict_metab.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
-  NextMethod()
-}
-
-
 #' Simulate values for DO.obs (with error) and DO.mod (without)
 #' 
 #' Generate simulated values for DO.obs (including any error specified in the 
