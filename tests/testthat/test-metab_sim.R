@@ -2,22 +2,33 @@ context("metab_sim")
 
 test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
+  library(dplyr)
+  
   # generate data
   dat <- data_metab('3')
   data_date <- mm_model_by_ply(mm_model_by_ply_prototype, dat, day_start=4, day_end=28)$date
-  dd <- data.frame(date=data_date, DO.mod.1=7.5, GPP=4, ER=-c(NA,2,4), K600=30)
+  dd <- data.frame(date=data_date, DO.mod.1=7.5, GPP.daily=4, ER.daily=-c(NA,2,4), K600.daily=30)
   
   # should be able to fit by specifying either data$DO.obs[d,1] or data_daily$DO.mod.1 
   mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd)
   mm2 <- metab_sim(data=dat, data_daily=select(dd, -DO.mod.1))
-  expect_equal(select(get_fit(mm), -DO.mod.1), get_fit(mm2))
+  
+  # get_params
+  expect_equal(select(get_params(mm), -DO.mod.1), get_params(mm2))
   
   # predict_metab
-  expect_equal(get_fit(mm), select(predict_metab(mm), -warnings, -errors))
-  expect_equal(get_fit(mm2), select(predict_metab(mm2), -warnings, -errors))
+  expect_equal(select(get_params(mm), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm), GPP, ER))
+  expect_equal(select(get_params(mm2), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm2), GPP, ER))
   
+  # predict_DO - DO.mod.1 should follow specifications
+  expect_equal(predict_DO(mm) %>% group_by(date) %>% summarize(first.DO.mod = DO.mod[1]) %>% .$first.DO.mod,
+               dd %>% .$DO.mod.1 %>% {.*c(NA,1,1)} )
+  expect_equal(predict_DO(mm2) %>% group_by(date) %>% summarize(first.DO.mod = DO.mod[1]) %>% .$first.DO.mod, 
+               dat %>% filter(format(solar.time, '%H:%M') == '04:00') %>% .$DO.obs %>% {.*c(NA,1,1)} )
+               
   # predict_DO - DO.mod (no error) and DO.obs (with any error) should still be pretty close
-  expect_true(rmse_DO(predict_DO(mm)) < 0.15, "DO.mod tracks DO.obs with not too much error")
+  expect_true(rmse_DO(predict_DO(mm)) < get_specs(mm)$err.obs.sigma*1.5, "DO.mod tracks DO.obs with not too much error")
+  expect_true(rmse_DO(predict_DO(mm2)) < get_specs(mm2)$err.obs.sigma*1.5, "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(predict_DO(mm))
   
   # predict_DO - DO.obs should be different each time unless seed is set. DO.mod should always be the same
@@ -44,16 +55,17 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   # plot_DO_preds(predict_DO(mm))
   
   # should be able to switch ODE methods in fitting
-  dat <- data_metab('3', res='30')
-  mmE <- metab_sim(specs('s_np_oipcpi_eu_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
-                   data=select(dat, -DO.obs), data_daily=dd)
-  mmP <- metab_sim(specs('s_np_oipcpi_tr_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4),
-                  data=select(dat, -DO.obs), data_daily=dd)
+  dat <- select(data_metab('3', res='30'), -DO.obs)
+  mmE <- metab_sim(specs('s_np_oipcpi_eu_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), data=dat, data_daily=dd)
+  mmP <- metab_sim(specs('s_np_oipcpi_tr_plrckm.rnorm', err.obs.sigma=0, err.proc.sigma=0.05, sim.seed=4), data=dat, data_daily=dd)
+  rmseEP <- sqrt(mean((predict_DO(mmE)$DO.obs - predict_DO(mmP)$DO.obs)^2, na.rm=TRUE))
+  expect_gt(rmseEP, 0.001)
+  expect_lt(rmseEP, 0.1)
   # DO_preds <- bind_rows(
   #   data.frame(predict_DO(mmE), method="euler", stringsAsFactors=FALSE),
   #   data.frame(predict_DO(mmP), method="trapezoid", stringsAsFactors=FALSE))
   # library(ggplot2)
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
-  
+
 })
