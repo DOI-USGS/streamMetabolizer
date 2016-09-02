@@ -358,15 +358,16 @@ get_params.metab_model <- function(
   }
   
   # add .fixed columns to the list of exported columns if requested
-  if(fixed == 'columns') {
+  if(fixed %in% c('columns','stars')) {
     for(a in metab.either) {
       add.after <- tail(grep(paste0('^', a), metab.out), 1)
       metab.out <- append(metab.out, paste0(a,'.fixed'), after=add.after)
     }
   }
   
-  # select and order those columns of pars that match metab.needs,
-  # metab.optional, or other columns we've added
+  # select and order those columns of pars that match metab.needs, 
+  # metab.optional, or other columns we've added. useful to order now because 
+  # mm_sd_to_ci will swap columns in place
   params <- pars[c('date', metab.out)]
   
   # convert sds to CIs if requested
@@ -374,12 +375,12 @@ get_params.metab_model <- function(
     params <- mm_sd_to_ci(params)
   }
   
-  # attach stars if requested (do this after mm_sd_to_ci b/c converts to character)
+  # convert .fixed columns to stars if requested (do this after mm_sd_to_ci b/c converts to character)
   if(fixed == 'stars') {
     params <- bind_cols(select(params, date), format.data.frame(select(params, -date)))
-    for(a in metab.out) {
-      params[[a]] <- paste0(params[[a]], ifelse(pars[[paste0(a,'.fixed')]], '*', ' '))
-      pars[[paste0(a,'.fixed')]] <- NULL
+    for(a in metab.either) {
+      params[[a]] <- paste0(params[[a]], ifelse(params[[paste0(a,'.fixed')]], '*', ' '))
+      params[[paste0(a,'.fixed')]] <- NULL
     }
   }
   

@@ -24,6 +24,21 @@ test_that('get_params options are honored (for MLE models)', {
   expect_true(all(sapply(select(ps, -date), class) == 'character'))
   expect_equal(grep('\\*', ps), match('K600.daily', names(ps)))
   
+  # uncertainty + fixed
+  ps <- get_params(mm, uncertainty='ci', fixed='stars')
+  expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower','K600.daily.lower'))
+  expect_equal(grep('\\.fixed$', names(ps), value=TRUE), character(0))
+  expect_equal(length(grep('\\*', ps)), 0)
+  ps <- get_params(mm, uncertainty='ci', fixed='columns')
+  expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower','K600.daily.lower'))
+  expect_equal(grep('\\.fixed$', names(ps), value=TRUE), c('GPP.daily.fixed','ER.daily.fixed','K600.daily.fixed'))
+  ps <- get_params(mm2, uncertainty='ci', fixed='stars')
+  expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower'))
+  expect_equal(grep('\\*', ps), match('K600.daily', names(ps)))
+  ps <- get_params(mm2, uncertainty='ci', fixed='columns')
+  expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower'))
+  expect_equal(grep('\\.fixed$', names(ps), value=TRUE), c('GPP.daily.fixed','ER.daily.fixed','K600.daily.fixed'))
+  
   # messages
   expect_true(all(c('warnings','errors') %in% names(get_params(mm, messages=TRUE))))
   expect_true(!any(c('warnings','errors') %in% names(get_params(mm, messages=FALSE))))
