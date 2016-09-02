@@ -24,16 +24,13 @@ test_that("metab_model objects can be created and accessed", {
 test_that("metab_models have default predict_metab and predict_DO methods", {
   
   mm <- metab_model()
+  expect_null(get_params(mm))
+  expect_null(predict_metab(mm))
+  expect_null(predict_DO(mm))
   
-  # predict_metab
-  expect_warning(metab <- predict_metab(mm), "model is missing columns")
-  expect_equal(names(metab), c("date","GPP","GPP.lower","GPP.upper","ER","ER.lower","ER.upper","K600","K600.lower","K600.upper","warnings","errors"))
-  
-  # can't predict_DO
-  expect_warning(expect_error(DO_preds <- predict_DO(mm), "day_start must be specified"), "missing columns for estimates")
-
 })
 
+# slow, therefore manual
 manual_test <- function() {
   test_that("metab_models can be saved & reloaded (see helper-save_load.R)", {
     
@@ -43,7 +40,7 @@ manual_test <- function() {
     # see if saveRDS with gzfile, compression=9 works well
     rdstimes <- save_load_timing(mm, reps=1) # autoloaded b/c script begins with 'helper' and is in this directory
     expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
-    # plot_save_load_timing(rdstimes)
+    plot_save_load_timing(rdstimes)
     
     # save and load the mm, make sure it stays the same
     test_save_load_recovery(mm)

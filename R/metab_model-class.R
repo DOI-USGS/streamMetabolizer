@@ -132,43 +132,47 @@ setMethod(
     
     # print fitting warnings if present
     params <- get_params(object, uncertainty='ci', fixed='stars', messages=TRUE)
-    fixinfo <- if(any(grepl('\\*', params))) "(* = fixed value)" else ""
-    cat("Parameters (", nrow(params), " date", if(nrow(params)!=1) "s", ")", fixinfo, ":\n", sep='')
-    if(!exists('warnings', params)) params$warnings <- ''
-    if(!exists('errors', params)) params$errors <- ''
-    params %>%
-      head(10) %>%
-      mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
-      select(-warnings, -errors) %>%
-      print()
-    if(nrow(params) > 10) cat("  ...\n")
-    fit <- get_fit(object)
-    if(is.data.frame(fit) && all(c('warnings','errors') %in% names(fit))) {
-      if(!exists('valid_day', fit)) fit$valid_day <- TRUE
-      warn_msgs <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
-      stop_msgs <- format_stopwarn_msgs(fit$errors[fit$valid_day])
-    } else if(is.list(fit)) {
-      warn_msgs <- fit$warnings
-      stop_msgs <- fit$errors
-    } else {
-      warn_msgs <- stop_msgs <- NULL
+    if(!is.null(params)) {
+      fixinfo <- if(any(grepl('\\*', params))) "(* = fixed value)" else ""
+      cat("Parameters (", nrow(params), " date", if(nrow(params)!=1) "s", ")", fixinfo, ":\n", sep='')
+      if(!exists('warnings', params)) params$warnings <- ''
+      if(!exists('errors', params)) params$errors <- ''
+      params %>%
+        head(10) %>%
+        mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
+        select(-warnings, -errors) %>%
+        print()
+      if(nrow(params) > 10) cat("  ...\n")
+      fit <- get_fit(object)
+      if(is.data.frame(fit) && all(c('warnings','errors') %in% names(fit))) {
+        if(!exists('valid_day', fit)) fit$valid_day <- TRUE
+        warn_msgs <- format_stopwarn_msgs(fit$warnings[fit$valid_day])
+        stop_msgs <- format_stopwarn_msgs(fit$errors[fit$valid_day])
+      } else if(is.list(fit)) {
+        warn_msgs <- fit$warnings
+        stop_msgs <- fit$errors
+      } else {
+        warn_msgs <- stop_msgs <- NULL
+      }
+      if(length(warn_msgs) > 0) cat("Fitting warnings:", paste0('  ', warn_msgs, collapse='\n'), sep='\n')
+      if(length(stop_msgs) > 0) cat("Fitting errors:", paste0('  ', stop_msgs, collapse='\n'), sep='\n')
     }
-    if(length(warn_msgs) > 0) cat("Fitting warnings:", paste0('  ', warn_msgs, collapse='\n'), sep='\n')
-    if(length(stop_msgs) > 0) cat("Fitting errors:", paste0('  ', stop_msgs, collapse='\n'), sep='\n')
     
     # print metabolism predictions
     withCallingHandlers(
       tryCatch({
         metab_preds <- predict_metab(object)
-        cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
-        if(!exists('warnings', metab_preds)) metab_preds$warnings <- ''
-        if(!exists('errors', metab_preds)) metab_preds$errors <- ''
-        metab_preds %>%
-          head(10) %>%
-          mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
-          select(-warnings, -errors) %>%
-          print()
-        if(nrow(metab_preds) > 10) cat("  ...\n")
+        if(!is.null(metab_preds)) {
+          cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
+          if(!exists('warnings', metab_preds)) metab_preds$warnings <- ''
+          if(!exists('errors', metab_preds)) metab_preds$errors <- ''
+          metab_preds %>%
+            head(10) %>%
+            mutate(messages = paste0(ifelse(errors != '', ifelse(warnings != '', 'e w', 'e  '), ifelse(warnings != '', '  w', '   ')))) %>%
+            select(-warnings, -errors) %>%
+            print()
+          if(nrow(metab_preds) > 10) cat("  ...\n")
+        }
       }, error=function(err) {
         cat("Prediction errors:\n")
         cat(paste0("  ", err$message))
@@ -294,6 +298,10 @@ get_params.metab_model <- function(
   # process arguments
   uncertainty <- match.arg(uncertainty)
   fixed <- match.arg(fixed)
+  
+  # return quickly if the model is just a shell
+  sp <- get_specs(metab_model)
+  if(!exists('model_name', sp)) return(NULL)
   
   # build the dDOdt function in order to pull out the metab.needs
   features <- mm_parse_name(get_specs(metab_model)$model_name)
@@ -433,6 +441,10 @@ predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ...,
   # get the metabolism estimates; filter as we did for data
   metab_ests <- get_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='none', messages=FALSE)
   
+  # if we lack the data or params to predict, return NULL now
+  if(is.null(data) || nrow(data) == 0 || is.null(metab_ests)) 
+    return(NULL)
+  
   # re-process the input data with the metabolism estimates to predict DO
   preds <- mm_model_by_ply(
     mm_predict_DO_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
@@ -470,6 +482,7 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, .
     
     # get the metabolism parameters; filter if requested
     metab_ests <- get_params(metab_model, date_start=date_start, date_end=date_end, uncertainty='sd', messages=FALSE)
+    if(is.null(metab_ests)) return(NULL)
     
     # pull args from the model
     specs <- get_specs(metab_model)
