@@ -49,6 +49,7 @@ test_that("specs uses any valid mm_name", {
   specs_list <- lapply(sample(mnames, 50), specs)
   # specs list lengths differ by model type. the exact range could change
   sp_len_range <- range(sapply(specs_list, length))
+  expect_gte(diff(sp_len_range), 15) # this will occasionally fail when sampled models happen to be similar
   expect_gte(sp_len_range[1], 3)
   expect_lte(sp_len_range[2], 35)
 })
