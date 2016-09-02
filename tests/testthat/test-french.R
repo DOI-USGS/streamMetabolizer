@@ -80,21 +80,18 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   mm <- metab_mle(
     specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
     data=vfrenchshort, data_daily=data.frame(date=mid.date, K600.daily=35))
-  smest <- get_fit(mm)[,c("GPP","ER","K600","minimum")]
+  smest <- dplyr::select(get_fit(mm), GPP=GPP.daily, ER=ER.daily, minimum)
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PR', K=35)
   expect_lt(abs(smest$GPP - bobest$GPP), 0.02) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
   expect_lt(abs(smest$ER - bobest$ER), 0.01) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
   expect_lt(abs(smest$minimum - bobest$lik), 0.000001)
   
   # Bayes w/ Bob's MLE-PRK for comparison - really loose criteria for prediction agreement
-  prkest <- get_fit(metab_mle(
-    specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
-    data=vfrenchshort))[,c("GPP","ER","K600","minimum")]
-  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   mb <- metab_bayes(
     specs=specs('b_np_oi_eu_plrckm.jags', saved_steps=4000, day_start=start.numeric, day_end=end.numeric), 
     data=vfrenchshort)
   smest <- predict_metab(mb)[,c("GPP","ER","K600")]
+  bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   expect_lt(abs(smest$GPP - bobest$GPP), 0.2) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))
   expect_lt(abs(smest$ER - bobest$ER), 0.2) #, info=paste0("ER by SM: ", smest$ER, "; by Bob: ", bobest$ER))
   expect_lt(abs(smest$K600 - bobest$K), 3) #, info=paste0("K600 by SM: ", smest$K600, "; by Bob: ", bobest$K))
