@@ -35,9 +35,11 @@ test_that("mm_valid_names and mm_validate_names check model names", {
   # all the model names we know about are returned
   expect_lt(53, length(mm_valid_names()))
   
-  # the models given by mm_valid_names() are all valid by mm_validate_name()
-  validations <- sapply(mm_valid_names(), mm_validate_name)
-  expect_true(all(sapply(validations, is.null)))
+  # the models given by mm_valid_names() are all valid by mm_validate_name().
+  # this is too slow to check completely now, so just pick a random sample
+  nms <- sample(mm_valid_names(), size=10)
+  validations <- lapply(nms, mm_validate_name)
+  expect_true(all(sapply(validations, is.null)), info = paste0('validating ', paste(nms, collapse=', ')))
 })
 
 test_that("specs uses any valid mm_name", {
