@@ -14,9 +14,31 @@ test_that("metab_mle models can be created", {
 })
 
 test_that("metab_mle works with fancy GPP, ER functions", {
-  library(dplyr)
-  mm_name('mle', GPP_fun='satlight', ER_fun='q10temp') %>%
-    specs()
+  # setup for example fanciness
+  satlight_q10temp_params <- c('Pmax','alpha','ER20','K600.daily')
+  dat <- data_metab('1', '30')
+  
+  # specs should contain inits for the relevant parameters
+  sp <- specs(mm_name('mle', GPP_fun='satlight', ER_fun='q10temp'))
+  expect_true(all(paste0('init.',satlight_q10temp_params) %in% names(sp)))
+  
+  # model fitting should run without error
+  mm <- metab_mle(sp, dat)
+  
+  # get_params should return values for the relevant parameters
+  expect_true(all(satlight_q10temp_params %in% names(get_params(mm))))
+  
+  # predict_metab should return values
+  mp <- predict_metab(mm)
+  expect_true(!is.na(mp$GPP))
+  expect_true(!is.na(mp$ER))
+})
+
+test_that("metab_mle treats data flaws correctly", {
+  
+  # missing end
+  dat <- data_metab('3','15',flaws='missing end')
+  mm <- metab_mle(data=dat)
   
 })
 

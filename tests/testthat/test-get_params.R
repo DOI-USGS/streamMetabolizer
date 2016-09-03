@@ -51,6 +51,10 @@ test_that('get_params options are honored (for MLE models)', {
 test_that('get_params works for each model type, basic GPP & ER equations', {
   dat <- data_metab('3','15')
   
+  # empty model
+  mm <- metab_model()
+  expect_null(get_params(mm))
+  
   # metab_mle
   mm <- metab_mle(data=dat)
   ps <- get_params(mm, uncertainty='none', messages=FALSE)
