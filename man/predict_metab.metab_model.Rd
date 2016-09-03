@@ -5,7 +5,8 @@
 \title{Make metabolism predictions from a fitted metab_model.}
 \usage{
 \method{predict_metab}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
+  date_end = NA, day_start = get_specs(metab_model)$day_start,
+  day_end = day_start + 24, ..., attach.units = FALSE, use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -18,6 +19,21 @@ is done.}
 \item{date_end}{Date or a class convertible with as.Date. The last date 
 (inclusive) for which to report metabolism predictions. If NA, no filtering
 is done.}
+
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time. For daily metabolism predictions, 
+day_end - day_start should probably equal 24 so that each day's estimate is
+representative of a 24-hour period.}
+
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. For daily metabolism predictions, day_end -
+day_start should probably equal 24 so that each day's estimate is 
+representative of a 24-hour period.}
 
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_metab}}

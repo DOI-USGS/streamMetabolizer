@@ -5,7 +5,9 @@
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
 \method{predict_DO}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
+  date_end = NA, day_start = get_specs(metab_model)$day_start,
+  day_end = get_specs(metab_model)$day_end, ..., attach.units = FALSE,
+  use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
