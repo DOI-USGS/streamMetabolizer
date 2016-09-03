@@ -106,12 +106,12 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
+  init.vals <- unlist(specs[grepl('^init.', names(specs))]) # goes outside in case stop_strs is already non-empty
   if(length(stop_strs) == 0) {
     # Collect K600 and date-specific initial values if they're available. If a
     # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
     # value==NA), use the default: for xx_init values this is specs$xx_init, for
     # K600 this is NULL (fit by MLE)
-    init.vals <- unlist(specs[grepl('^init.', names(specs))])
     K600 <- NULL
     . <- '.dplyr.var'
     if(!is.null(data_daily_ply)) {
