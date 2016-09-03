@@ -5,7 +5,7 @@
 \title{Helper to predict_metab.metab_model}
 \usage{
 mm_predict_metab_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  ..., model_name)
+  ply_validity, ..., model_name)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -28,6 +28,12 @@ before 2006-06-27 06:00.}
 
 \item{ply_date}{the modal date of this ply of data and data_daily, and the 
 date by which this ply should be referred topresent.}
+
+\item{ply_validity}{the output of \code{mm_is_valid_day} as applied to this 
+data_ply for those tests specified in \code{day_tests}. Those tests will 
+have been run before this function is called. The result is TRUE if the ply
+is entirely valid, or a character vector containing one or more error 
+messages if any tests failed.}
 
 \item{...}{other args that were passed untouched from the function calling 
 mm_model_by_ply, through mm_model_by_ply, and finally to this function.}

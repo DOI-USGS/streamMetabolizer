@@ -7,8 +7,13 @@
 #'   ER_fun, deficit_src, and ode_method to use in prediction
 #' @return a data.frame of predictions
 mm_predict_metab_1ply <- function(
-  data_ply, data_daily_ply, day_start, day_end, ply_date, ..., 
+  data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, ..., 
   model_name) {
+  
+  # record date test failures as warnings (flipped from usual model-fitting
+  # practice of recording these as errors)
+  warn_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
+  stop_strs <- character(0)
   
   # skip today if we're missing metabolism estimates and/or input data (return a
   # near-empty or empty data.frame, respectively)
@@ -64,5 +69,9 @@ mm_predict_metab_1ply <- function(
   }))
   
   # return the modeled daily mean metabolism and reaeration rates
-  preds
+  err.cols <- data.frame(
+    warnings=paste0(unique(warn_strs), collapse="; "),
+    errors=paste0(unique(stop_strs), collapse="; "), # so far there will never be error strings; just a placeholder
+    stringsAsFactors=FALSE)
+  data.frame(preds, err.cols)
 }
