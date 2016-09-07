@@ -90,6 +90,7 @@ Collate:
     'mm_generate_mcmc_file.R'
     'mm_get_timestep.R'
     'mm_is_valid_day.R'
+    'mm_locate_filename.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
     'mm_predict_DO_1ply.R'

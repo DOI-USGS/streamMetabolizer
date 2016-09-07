@@ -135,16 +135,8 @@ metab_bayes <- function(
     data <- v(dat_list$data)
     data_daily <- v(dat_list$data_daily)
         
-    # Check and parse model file path. First try the streamMetabolizer models
-    # dir, then try a regular path, then complain / continue depending on
-    # whether we found a file. Add the complete path to specs. This is
-    # best done here, in the metab_bayes call, so that models can be defined,
-    # passed to another computer, and still run successfully.
-    specs$model_path <- system.file(paste0("models/", specs$model_name), package="streamMetabolizer")
-    if(!file.exists(specs$model_path)) 
-      specs$model_path <- specs$model_name
-    if(!file.exists(specs$model_path)) 
-      stop("could not locate the model file at ", specs$model_path)
+    # Check and parse model file path
+    specs$model_path <- mm_locate_filename(specs$model_name)
     
     # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
     if(is.logical(specs$keep_mcmcs)) {

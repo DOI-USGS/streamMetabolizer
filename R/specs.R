@@ -36,8 +36,8 @@
 #'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
 #'   \code{adapt_steps}.
 #'   
-#'   * metab_mle: \code{model_name, day_start, day_end, day_tests,
-#'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
+#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
+#'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
 #'   init.K600.daily}
 #'   
 #'   * metab_night: \code{model_name, day_start, day_end, day_tests}
@@ -61,15 +61,19 @@
 #'   arguments.
 #'   
 #' @param model_name character string identifying the model features. Use 
-#'   \code{\link{mm_name}} for valid names. This may be a full model file path 
-#'   for custom Bayesian models, as long as basename(model_name) can still be 
-#'   parsed correctly with \code{mm_parse_name()}. In that case the file may be 
-#'   specified either as a file path relative to the streamMetabolizer models 
-#'   directory (the first assumption; this directory can be found with 
-#'   \code{system.file("models", package="streamMetabolizer")}) or as an 
-#'   absolute path or a path relative to the current working directory (the 
-#'   second assumption, if the first assumption turns up no files of the given 
-#'   name).
+#'   \code{\link{mm_name}} to create a valid name based on desired attributes, 
+#'   or \code{\link{mm_valid_names}} to see all valid names. Two alternatives to
+#'   the names given by \code{mm_valid_names()} are also accepted: (1) a model 
+#'   type as accepted by the \code{type} argument to \code{mm_name}, which will 
+#'   be used to create the default model name for that model type, or (2) a full
+#'   model file path for custom Bayesian models, as long as basename(model_name)
+#'   can still be parsed correctly with \code{mm_parse_name()} and the file
+#'   exists. In that case the file may be specified either as a file path
+#'   relative to the streamMetabolizer models directory (the first assumption;
+#'   this directory can be found with \code{system.file("models", 
+#'   package="streamMetabolizer")}) or as an absolute path or a path relative to
+#'   the current working directory (the second assumption, if the first 
+#'   assumption turns up no files of the given name).
 #' @param engine The software or function to use in fitting the model. Should be
 #'   specified via \code{mm_name} rather than here. For type='bayes', one of 
 #'   \code{c('jags','stan')} indicating the software package to use for the MCMC
@@ -394,6 +398,9 @@ specs <- function(
     warning("argument[s] that should usually not be specified in specs(): ", paste(redundant, collapse=", "))
   }
   
+  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
+  if(model_name %in% eval(formals(mm_name)$type))
+    model_name <- mm_name(type=model_name)
   
   # check the validity of the model_name against the list of officially accepted model names
   mm_validate_name(model_name)

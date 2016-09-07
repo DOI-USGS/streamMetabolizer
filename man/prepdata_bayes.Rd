@@ -40,15 +40,19 @@ in the suffix of the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses
 \code{nlm()} for model fitting)}
 
 \item{model_name}{character string identifying the model features. Use 
-\code{\link{mm_name}} for valid names. This may be a full model file path 
-for custom Bayesian models, as long as basename(model_name) can still be 
-parsed correctly with \code{mm_parse_name()}. In that case the file may be 
-specified either as a file path relative to the streamMetabolizer models 
-directory (the first assumption; this directory can be found with 
-\code{system.file("models", package="streamMetabolizer")}) or as an 
-absolute path or a path relative to the current working directory (the 
-second assumption, if the first assumption turns up no files of the given 
-name).}
+\code{\link{mm_name}} to create a valid name based on desired attributes, 
+or \code{\link{mm_valid_names}} to see all valid names. Two alternatives to
+the names given by \code{mm_valid_names()} are also accepted: (1) a model 
+type as accepted by the \code{type} argument to \code{mm_name}, which will 
+be used to create the default model name for that model type, or (2) a full
+model file path for custom Bayesian models, as long as basename(model_name)
+can still be parsed correctly with \code{mm_parse_name()} and the file
+exists. In that case the file may be specified either as a file path
+relative to the streamMetabolizer models directory (the first assumption;
+this directory can be found with \code{system.file("models", 
+package="streamMetabolizer")}) or as an absolute path or a path relative to
+the current working directory (the second assumption, if the first 
+assumption turns up no files of the given name).}
 
 \item{priors}{logical. Should the data list be modified such that JAGS will 
 return priors rather than posteriors?}
