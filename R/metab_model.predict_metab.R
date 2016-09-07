@@ -63,9 +63,9 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA,
       } else {
         # but metab_night may not have 24-hour periods available, and 
         # mm_model_by_ply CAN handle <24-hour periods, so make an exception for 
-        # metab_night
-        warning(paste("day_end - day_start is only", day_end - day_start ,"hours;",
-                      "predictions are means of this period and thus do not reflect full 24-hour days"))
+        # metab_night. and actually don't even give a warning because it's
+        # really fine - metab_night will give the correct answers (within its
+        # abilities) regardless of the period of time specified here
       }
     }
     
