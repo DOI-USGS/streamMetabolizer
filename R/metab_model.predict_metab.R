@@ -35,16 +35,43 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA,
     
     # pull args from the model
     specs <- get_specs(metab_model)
-    if(missing(day_end) && specs$day_end != day_end)
-      warning("default day_end (day_start + 24 = ", day_end, ") overrides get_specs(mm)$day_end (", specs$day_end, ")")
-    if((day_end - day_start) != 24) {
-      warning("predictions are means of non-24-hour periods because (day_end - day_start) != 24")
+    
+    # consider the appropriateness of day_start and day_end
+    if(specs$day_start != day_start || specs$day_end != day_end) {
+      if(day_start < specs$day_start) stop("day_start may not be earlier than the day_start stored in metab_model@specs")
+      if(day_end > specs$day_end) stop("day_end may not be later than the day_end stored in metab_model@specs")
+      message(paste(
+        "daily metabolism predictions reflect the period from", day_start, "to", day_end, "hours on each date",
+        "(differs from the model-fitting range of", specs$day_start, "to", specs$day_end, "hours)"))
+    }
+    if(day_end - day_start > 24) {
+      # give error mostly because mm_model_by_ply can't currently handle this, 
+      # but also because it's hard to interpret a mean metabolism for a period 
+      # other than 24 hours, given that light and temperature and DO deficits
+      # all vary systematically with time of day
+      stop("day_end - day_start must not exceed 24 hours for metabolism prediction")
+    } else if((day_end - day_start) < 24) {
+      if(mm_parse_name(specs$model_name)$type != 'night') {
+        # for most models, stop, because the GPP_fun=='linlight' gives the wrong
+        # answers for <24-hour periods (normalizes by a different light value
+        # such that the period-specific average is always either the daily
+        # average or 0, regardless of which period is selected). and who knows
+        # what new GPP or ER functions might break similarly, so stay on the
+        # safe side by requiring what most people will want anyway (a
+        # 24-hour-period prediction)
+        stop("day_end - day_start < 24 hours; this is unacceptable except for metab_night")
+      } else {
+        # but metab_night may not have 24-hour periods available, and 
+        # mm_model_by_ply CAN handle <24-hour periods, so make an exception for 
+        # metab_night
+        warning(paste("day_end - day_start is only", day_end - day_start ,"hours;",
+                      "predictions are means of this period and thus do not reflect full 24-hour days"))
+      }
     }
     
-    # get the instantaneous data, including DO.mod; filter if requested
-    data <- predict_DO(
-      metab_model, date_start=date_start, date_end=date_end, day_start=day_start, day_end=day_end,
-      attach.units=FALSE, use_saved=TRUE)
+    # get the instantaneous data, including DO.mod; filter to a 24-hour period
+    data <- predict_DO(metab_model, date_start=date_start, date_end=date_end, attach.units=FALSE, use_saved=TRUE) %>%
+      mm_filter_hours(day_start=day_start, day_end=day_end)
     
     # re-process the input data with the metabolism estimates to predict daily mean metabolism
     preds <- mm_model_by_ply(

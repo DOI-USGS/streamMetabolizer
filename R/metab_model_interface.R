@@ -263,19 +263,6 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA,
 #' @param date_end Date or a class convertible with as.Date. The last date 
 #'   (inclusive) for which to report DO predictions. If NA, no filtering is 
 #'   done.
-#' @param day_start start time (inclusive) of a day's data in number of hours 
-#'   from the midnight that begins the date. For example, day_start=-1.5 
-#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-#'   the first observation time that occurs after that time if day_start doesn't
-#'   fall exactly on an observation time. For instantaneous (unit value)
-#'   predictions, day_end - day_start can be any length you want, though it
-#'   probably makes sense to stick to the bounds you used to fit the model.
-#' @param day_end end time (exclusive) of a day's data in number of hours from 
-#'   the midnight that begins the date. For example, day_end=30 indicates that 
-#'   data describing 2006-06-26 end at the last observation time that occurs 
-#'   before 2006-06-27 06:00. For instantaneous (unit value) predictions, 
-#'   day_end - day_start can be any length you want, though it probably makes
-#'   sense to stick to the bounds you used to fit the model.
 #' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_DO}
 #' @param attach.units logical. Should units be attached to the output?
@@ -292,7 +279,6 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA,
 #' @family metab_model_interface
 #' @family predict_DO
 predict_DO <- function(metab_model, date_start=NA, date_end=NA, 
-                       day_start=get_specs(metab_model)$day_start, day_end=get_specs(metab_model)$day_end,
                        ..., attach.units=FALSE, use_saved=TRUE) {
   UseMethod("predict_DO")
 }

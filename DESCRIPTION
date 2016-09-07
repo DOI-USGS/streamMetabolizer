@@ -81,6 +81,7 @@ Collate:
     'mm_check_mcmc_file.R'
     'mm_data.R'
     'mm_filter_dates.R'
+    'mm_filter_hours.R'
     'mm_filter_valid_days.R'
     'mm_validate_name.R'
     'mm_valid_names.R'

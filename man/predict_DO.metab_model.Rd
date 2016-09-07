@@ -5,9 +5,7 @@
 \title{Make dissolved oxygen predictions from a fitted metab_model.}
 \usage{
 \method{predict_DO}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, day_start = get_specs(metab_model)$day_start,
-  day_end = get_specs(metab_model)$day_end, ..., attach.units = FALSE,
-  use_saved = TRUE)
+  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -20,21 +18,6 @@ done.}
 \item{date_end}{Date or a class convertible with as.Date. The last date 
 (inclusive) for which to report DO predictions. If NA, no filtering is 
 done.}
-
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
-the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For instantaneous (unit value)
-predictions, day_end - day_start can be any length you want, though it
-probably makes sense to stick to the bounds you used to fit the model.}
-
-\item{day_end}{end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
-before 2006-06-27 06:00. For instantaneous (unit value) predictions, 
-day_end - day_start can be any length you want, though it probably makes
-sense to stick to the bounds you used to fit the model.}
 
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}

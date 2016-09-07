@@ -14,12 +14,12 @@ NULL
 #' @importFrom unitted u v get_units
 #' @export
 #' @family predict_DO
-predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, 
-                                   day_start=get_specs(metab_model)$day_start, day_end=get_specs(metab_model)$day_end,
-                                   ..., attach.units=FALSE, use_saved=TRUE) {
+predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
   
   # pull args from the model
   specs <- get_specs(metab_model)
+  day_start <- specs$day_start
+  day_end <- specs$day_end
   
   # get the input data; filter if requested
   data <- get_data(metab_model) %>% 

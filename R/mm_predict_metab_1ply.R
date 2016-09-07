@@ -49,6 +49,8 @@ mm_predict_metab_1ply <- function(
   preds <- bind_cols(lapply(c('GPP','ER'), function(met) { # lapply can also apply to 'D', but leaving out for now
     precalc.names <- paste0(met, '.daily', c('','.sd'))
     if(all(precalc.names %in% names(data_daily_ply))) {
+      # warning: this shortcut won't work if we permit time periods other than
+      # 24 hours!!
       met.preds <- mm_sd_to_ci(data_daily_ply[precalc.names])
     } else {
       met.preds <- tryCatch({
