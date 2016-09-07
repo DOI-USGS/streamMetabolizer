@@ -20,76 +20,164 @@
 #' Here are the essential model lines (in Stan language) that distinguish the K 
 #' pooling options.
 #' 
-#' \tabular{l}{ \strong{\code{pool_K600 = 'none'}}\cr \code{K600_daily ~ 
-#' normal(K600_daily_mu, K600_daily_sigma)} }
-#' 
-#' \tabular{l}{ \strong{\code{pool_K600 = 'normal'}}\cr \code{K600_daily ~ 
-#' normal(K600_daily_mu, K600_daily_sigma)}\cr \code{K600_daily_mu ~ 
-#' normal(K600_daily_mu_mu, K600_daily_mu_sigma)}\cr \code{K600_daily_sigma ~ 
-#' gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
-#' 
-#' \tabular{l}{ \strong{\code{pool_K600 = 'linear'}}\cr \code{K600_daily_pred <-
-#' K600_daily_beta[1] + K600_daily_beta[2] * discharge_daily}\cr 
-#' \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr 
-#' \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
-#' \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, 
-#' K600_daily_sigma_rate)} }
-#' 
-#' \tabular{l}{ \strong{\code{pool_K600 = 'binned'}}\cr \code{K600_daily_pred <-
-#' K600_daily_beta[Q_bin_daily]}\cr \code{K600_daily ~ normal(K600_daily_pred, 
-#' K600_daily_sigma)}\cr \code{K600_daily_beta ~ normal(K600_daily_beta_mu, 
-#' K600_daily_beta_sigma)}\cr \code{K600_daily_sigma ~ 
-#' gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)} }
-#' 
-#' \tabular{l}{ \strong{\code{pool_K600 = 'complete'}}\cr [This option refers to
-#' complete pooling via \code{metab_Kmodel} in conjunction with preceding 
-#' estimates of K (e.g., by \code{metab_mle} or \code{metab_night}) and 
-#' subsequent estimates of GPP and ER (e.g., by \code{metab_mle} with daily K600
-#' values specified)] }
-#' 
+#' \tabular{ll}{
+#'   \strong{\code{pool_K600}} \tab \strong{Model code}\cr
+#'   
+#'   \code{none} \tab \code{K600_daily ~ normal(K600_daily_mu, K600_daily_sigma)} \cr
+#'   
+#'   \code{normal} \tab \code{K600_daily ~ normal(K600_daily_mu, K600_daily_sigma)}\cr
+#'   \tab \code{K600_daily_mu ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma)}\cr
+#'   \tab \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}\cr
+#'   
+#'   \code{linear} \tab \code{K600_daily_pred <- K600_daily_beta[1] + K600_daily_beta[2] * discharge_daily}\cr 
+#'   \tab \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr 
+#'   \tab \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
+#'   \tab \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}\cr
+#'   
+#'   \code{binned} \tab \code{K600_daily_pred <- K600_daily_beta[Q_bin_daily]}\cr
+#'   \tab \code{K600_daily ~ normal(K600_daily_pred, K600_daily_sigma)}\cr
+#'   \tab \code{K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma)}\cr
+#'   \tab \code{K600_daily_sigma ~ gamma(K600_daily_sigma_shape, K600_daily_sigma_rate)}\cr
+#'   
+#'   \code{complete} \tab [This option refers to complete pooling via \code{metab_Kmodel} in conjunction with preceding\cr
+#'   \tab estimates of K (e.g., by \code{metab_mle} or \code{metab_night}) and
+#'   subsequent estimates of GPP and ER\cr
+#'   \tab (e.g., by \code{metab_mle} with daily K600 values specified)]\cr
+#'  }
 #' }
 #' 
 #' @seealso The converse of this function is \code{\link{mm_parse_name}}.
 #'   
-#' @param type the model type, corresponding to the model fitting function 
-#'   (\code{\link{metab_bayes}}, \code{\link{metab_mle}}, etc.)
-#' @param pool_K600 Should the model pool information among days to get more 
-#'   consistent daily estimates for K600? Options: \code{'none'}=no pooling of 
-#'   K600; \code{'normal'}=\eqn{K600 ~ N(mu, sigma)}; \code{'linear'}=\eqn{K600 
-#'   ~ N(B[0] + B[1]*Q, sigma)}; \code{'binned'}=\eqn{K600 ~ N(B[Q_bin], sigma)}
-#'   where \eqn{mu ~ N(mu_mu, mu_sigma)} and \eqn{sigma ~ N(sigma_mu, 
-#'   sigma_sigma)}. See Details for more.
+#' @param type character. The model type. Options:
+#'   \itemize{
+#'     \item \code{mle}: maximum likelihood estimation (see also \code{\link{metab_mle}}) 
+#'     \item \code{bayes}: bayesian hierarchical models \code{\link{metab_bayes}}
+#'     \item \code{night}: nighttime regression (see also \code{\link{metab_night}}) 
+#'     \item \code{Kmodel}: regression of \emph{daily} estimates of
+#'     \code{K600.daily} versus discharge, time, etc., usually for 3-phase 
+#'     estimation of K alone (by MLE or nighttime regression), K vs discharge 
+#'     (using this model), and then GPP and ER with fixed K (by MLE) (see also 
+#'     \code{\link{metab_Kmodel}})
+#'     \item \code{sim}: simulation of \code{DO.obs} 'data' for testing other models (see also \code{\link{metab_sim}})
+#'   }
+#' @param pool_K600 character. [How] should the model pool information among 
+#'   days to get more consistent daily estimates for K600? Options (see Details
+#'   for more):
+#'   \itemize{
+#'     \item \code{none}: no pooling of K600
+#'     \item \code{normal}: \eqn{K600 ~ N(mu, sigma)}
+#'     \item \code{linear}: \eqn{K600 ~ N(B[0] + B[1]*Q, sigma)}
+#'     \item \code{binned}: \eqn{K600 ~ N(B[Q_bin], sigma)} where \eqn{mu ~
+#'     N(mu_mu, mu_sigma)} and \eqn{sigma ~ N(sigma_mu, sigma_sigma)}
+#'     \item \code{complete}: applicable only for \code{type='Kmodel'}, which is
+#'     generally used in conjunction with preceding estimates of K (e.g., by
+#'     \code{type='mle'} or \code{type='night'}) and subsequent estimates of GPP
+#'     and ER (e.g., by \code{type='mle'} with daily K600 values specified)
+#'   }
 #' @param err_obs_iid logical. Should IID observation error be included? If not,
 #'   the model will be fit to the differences in successive DO measurements, 
 #'   rather than to the DO measurements themselves.
 #' @param err_proc_acor logical. Should autocorrelated process error (with the 
 #'   autocorrelation term phi fitted) be included?
 #' @param err_proc_iid logical. Should IID process error be included?
-#' @param ode_method The method to use in solving the ordinary differential 
-#'   equation for DO. euler=Euler: the final change in DO from t=1 to t=2 is
-#'   solely a function of GPP, ER, DO, etc. at t=1. trapezoid=pairmeans: the
-#'   final change in DO from t=1 to t=2 is a function of the mean values of GPP,
-#'   ER, etc. across t=1 and t=2. With metab_mle, other methods are available
-#'   including 'rk2' and any character method accepted by
-#'   \code{\link[deSolve]{ode}} in the \code{deSolve} package
-#' @param GPP_fun How to partition daily GPP over time. \code{linlight}: GPP is 
-#'   a linear function of light with an intercept at 0. \code{satlight} GPP is a
-#'   saturating function of light.
-#' @param ER_fun How to partition daily ER over time. \code{constant}: ER is 
-#'   constant over every timestep of the day. \code{q10temp} (not yet 
-#'   implemented): ER at each timestep is a function of the water temperature.
-#' @param deficit_src From what DO estimate (observed or modeled) should the DO 
-#'   deficit be computed?
-#' @param engine Which software are we generating code for?
-#' @param check_validity if TRUE, checks the resulting name against 
-#'   mm_valid_names(type).
+#' @param ode_method character. The method to use in solving the ordinary
+#'   differential equation for DO. Options:
+#'   \itemize{
+#'     \item \code{euler}, formerly \code{Euler}: the final change in DO from
+#'     t=1 to t=2 is solely a function of GPP, ER, DO, etc. at t=1
+#'     \item \code{trapezoid}, formerly \code{pairmeans}: the final change in DO
+#'     from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across
+#'     t=1 and t=2.
+#'     \item for \code{type='mle'}, options also include \code{rk2} and any 
+#'     character method accepted by \code{\link[deSolve]{ode}} in the 
+#'     \code{deSolve} package (\code{lsoda}, \code{lsode}, \code{lsodes},
+#'     \code{lsodar}, \code{vode}, \code{daspk}, \code{rk4}, \code{ode23},
+#'     \code{ode45}, \code{radau}, \code{bdf}, \code{bdf_d}, \code{adams},
+#'     \code{impAdams}, and \code{impAdams_d}; note that many of these have not
+#'     been well tested in the context of \code{streamMetabolizer} models)
+#'   }
+#' @param GPP_fun character. Function dictating how gross primary productivity
+#'   (GPP) varies within each day. Options:
+#'   \itemize{ 
+#'     \item \code{linlight}: GPP is a linear function of light with an
+#'     intercept at 0 and a slope that varies by day.
+#'       \cr \code{GPP(t) = GPP.daily * light(t) / mean.light}
+#'       \itemize{
+#'         \item \code{GPP.daily}: the daily mean GPP, which is partitioned into
+#'         timestep-specific rates according to the fraction of that day's
+#'         average light that occurs at each timestep (specifically,
+#'         \code{mean.light} is the mean of the first 24 hours of the date's
+#'         data window)
+#'       } 
+#'     \item \code{satlight}: GPP is a saturating function of light.
+#'       \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax)}
+#'       \itemize{
+#'         \item \code{Pmax}: the maximum possible GPP
+#'         \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+#'       }
+#'     \item \code{satlightq10temp}: GPP is a saturating function of light and
+#'     an exponential function of temperature.
+#'       \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax) * 1.036 ^ (temp.water(t) - 20)}
+#'       \itemize{
+#'         \item \code{Pmax}: the maximum possible GPP
+#'         \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+#'       }
+#'     \item \code{NA}: applicable only to \code{type='Kmodel'}, for which GPP is not estimated
+#'   }
+#' @param ER_fun character. Function dictating how ecosystem respiration (ER)
+#'   varies within each day. Options:
+#'   \itemize{
+#'     \item \code{constant}: ER is constant over every timestep of the day.
+#'       \cr \code{ER(t) = ER.daily} 
+#'       \itemize{
+#'         \item \code{ER.daily}: the daily mean ER, which is equal to instantaneous ER at all times
+#'       }
+#'     \item \code{q10temp}: ER at each timestep is an exponential function of
+#'     the water temperature and a temperature-normalized base rate.
+#'       \cr \code{ER(t) = ER20 * 1.045 ^ (temp.water(t) - 20)}
+#'       \itemize{
+#'         \item \code{ER20}: the value of ER when \code{temp.water} is 20 degrees C
+#'       }
+#'     \item \code{NA}: applicable only to \code{type='Kmodel'}, for which ER is not estimated
+#'   }
+#' @param deficit_src character. From what DO estimate (observed or modeled)
+#'   should the DO deficit be computed? Options:
+#'   \itemize{
+#'     \item \code{DO_mod}: the DO deficit at time t will be {(DO.sat(t) -
+#'     DO_mod(t))}, the difference between the equilibrium-saturation value and
+#'     the current best estimate of the true DO concentration at that time
+#'     \item \code{DO_obs}: the DO deficit at time t will be {(DO.sat(t) -
+#'     DO.obs(t))}, the difference between the equilibrium-saturation value and
+#'     the measured DO concentration at that time
+#'     \item \code{DO_obs_filter}: applicable only to \code{type='night'}: a
+#'     smoothing filter is applied over the measured DO.obs values before
+#'     applying nighttime regression
+#'     \item \code{NA}: applicable only to \code{type='Kmodel'}, for which DO deficit is not estimated
+#'   }
+#' @param engine character. With which function or software should the model
+#'   fitting be done?
+#'   \itemize{
+#'     \item for \code{type='mle'}: \code{nlm} only (the default)
+#'     \item for \code{type='bayes'}: \code{stan} (the default) or \code{jags}, 
+#'     both of which are external software packages that run MCMC chains for 
+#'     Bayesian models. See http://mc-stan.org and
+#'     http://mcmc-jags.sourceforge.net, respectively
+#'     \item for \code{type='night'}: \code{lm} only (the default)
+#'     \item for \code{type='Kmodel'}: \code{mean}, \code{lm}, or \code{loess}
+#'     enable different types of relationships between daily K600 and its
+#'     predictors (nothing, discharge, time, etc.)
+#'     \item for \code{type='sim'}: \code{rnorm} only (the default)
+#'   }
+#' @param check_validity logical. if TRUE, this function checks the resulting
+#'   name against \code{mm_valid_names(type)}.
 #' @import dplyr
 #' @export
 #' @examples 
 #' mm_name('mle')
+#' mm_name('mle', GPP_fun='satlight', ER_fun='q10temp')
 #' mm_name('night')
-#' mm_name('sim')
-#' mm_name('bayes')
+#' mm_name('sim', err_proc_acor=TRUE)
+#' mm_name('bayes', pool_K600='binned')
 mm_name <- function(
   type=c('mle','bayes','night','Kmodel','sim'), 
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',

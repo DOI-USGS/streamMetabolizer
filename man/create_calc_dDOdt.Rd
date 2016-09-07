@@ -12,24 +12,83 @@ create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src,
 contain exactly one date worth of inputs (~24 hours according to 
 \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).}
 
-\item{ode_method}{The method to use in solving the ordinary differential 
-equation for DO. euler=Euler: the final change in DO from t=1 to t=2 is
-solely a function of GPP, ER, DO, etc. at t=1. trapezoid=pairmeans: the
-final change in DO from t=1 to t=2 is a function of the mean values of GPP,
-ER, etc. across t=1 and t=2. With metab_mle, other methods are available
-including 'rk2' and any character method accepted by
-\code{\link[deSolve]{ode}} in the \code{deSolve} package}
+\item{ode_method}{character. The method to use in solving the ordinary
+differential equation for DO. Options:
+\itemize{
+  \item \code{euler}, formerly \code{Euler}: the final change in DO from
+  t=1 to t=2 is solely a function of GPP, ER, DO, etc. at t=1
+  \item \code{trapezoid}, formerly \code{pairmeans}: the final change in DO
+  from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across
+  t=1 and t=2.
+  \item for \code{type='mle'}, options also include \code{rk2} and any 
+  character method accepted by \code{\link[deSolve]{ode}} in the 
+  \code{deSolve} package (\code{lsoda}, \code{lsode}, \code{lsodes},
+  \code{lsodar}, \code{vode}, \code{daspk}, \code{rk4}, \code{ode23},
+  \code{ode45}, \code{radau}, \code{bdf}, \code{bdf_d}, \code{adams},
+  \code{impAdams}, and \code{impAdams_d}; note that many of these have not
+  been well tested in the context of \code{streamMetabolizer} models)
+}}
 
-\item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
-a linear function of light with an intercept at 0. \code{satlight} GPP is a
-saturating function of light.}
+\item{GPP_fun}{character. Function dictating how gross primary productivity
+(GPP) varies within each day. Options:
+\itemize{ 
+  \item \code{linlight}: GPP is a linear function of light with an
+  intercept at 0 and a slope that varies by day.
+    \cr \code{GPP(t) = GPP.daily * light(t) / mean.light}
+    \itemize{
+      \item \code{GPP.daily}: the daily mean GPP, which is partitioned into
+      timestep-specific rates according to the fraction of that day's
+      average light that occurs at each timestep (specifically,
+      \code{mean.light} is the mean of the first 24 hours of the date's
+      data window)
+    } 
+  \item \code{satlight}: GPP is a saturating function of light.
+    \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax)}
+    \itemize{
+      \item \code{Pmax}: the maximum possible GPP
+      \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+    }
+  \item \code{satlightq10temp}: GPP is a saturating function of light and
+  an exponential function of temperature.
+    \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax) * 1.036 ^ (temp.water(t) - 20)}
+    \itemize{
+      \item \code{Pmax}: the maximum possible GPP
+      \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+    }
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which GPP is not estimated
+}}
 
-\item{ER_fun}{How to partition daily ER over time. \code{constant}: ER is 
-constant over every timestep of the day. \code{q10temp} (not yet 
-implemented): ER at each timestep is a function of the water temperature.}
+\item{ER_fun}{character. Function dictating how ecosystem respiration (ER)
+varies within each day. Options:
+\itemize{
+  \item \code{constant}: ER is constant over every timestep of the day.
+    \cr \code{ER(t) = ER.daily} 
+    \itemize{
+      \item \code{ER.daily}: the daily mean ER, which is equal to instantaneous ER at all times
+    }
+  \item \code{q10temp}: ER at each timestep is an exponential function of
+  the water temperature and a temperature-normalized base rate.
+    \cr \code{ER(t) = ER20 * 1.045 ^ (temp.water(t) - 20)}
+    \itemize{
+      \item \code{ER20}: the value of ER when \code{temp.water} is 20 degrees C
+    }
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which ER is not estimated
+}}
 
-\item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
-deficit be computed?}
+\item{deficit_src}{character. From what DO estimate (observed or modeled)
+should the DO deficit be computed? Options:
+\itemize{
+  \item \code{DO_mod}: the DO deficit at time t will be {(DO.sat(t) -
+  DO_mod(t))}, the difference between the equilibrium-saturation value and
+  the current best estimate of the true DO concentration at that time
+  \item \code{DO_obs}: the DO deficit at time t will be {(DO.sat(t) -
+  DO.obs(t))}, the difference between the equilibrium-saturation value and
+  the measured DO concentration at that time
+  \item \code{DO_obs_filter}: applicable only to \code{type='night'}: a
+  smoothing filter is applied over the measured DO.obs values before
+  applying nighttime regression
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which DO deficit is not estimated
+}}
 
 \item{err.proc}{optional numerical vector of length nrow(data). Process error
 in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
