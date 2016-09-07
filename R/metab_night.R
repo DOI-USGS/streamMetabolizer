@@ -61,6 +61,7 @@ metab_night <- function(
   
   # Update data with DO predictions
   mm@data <- predict_DO(mm)
+  mm@metab_daily <- predict_metab(mm)
   
   # Return
   mm
