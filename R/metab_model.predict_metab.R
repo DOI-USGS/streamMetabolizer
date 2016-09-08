@@ -73,10 +73,13 @@ predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA,
     data <- predict_DO(metab_model, date_start=date_start, date_end=date_end, attach.units=FALSE, use_saved=TRUE) %>%
       mm_filter_hours(day_start=day_start, day_end=day_end)
     
-    # re-process the input data with the metabolism estimates to predict daily mean metabolism
+    # re-process the input data with the metabolism estimates to predict daily
+    # mean metabolism. no need to test days again unless we didn't do it during
+    # fitting (which only occurs for sim)
+    day_tests_pred <- if(mm_parse_name(specs$model_name)$type == 'sim') specs$day_tests else c() 
     preds <- mm_model_by_ply(
       mm_predict_metab_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-      day_start=day_start, day_end=day_end, day_tests=c("full day", "even_timesteps", "complete_data"), timestep_days=FALSE, # for mm_model_by_ply
+      day_start=day_start, day_end=day_end, day_tests=day_tests_pred, timestep_days=FALSE, # for mm_model_by_ply
       model_name=specs$model_name) # for mm_predict_DO_1ply
     
     # attach warnings and errors if available
