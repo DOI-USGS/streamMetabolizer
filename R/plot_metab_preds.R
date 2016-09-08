@@ -4,12 +4,12 @@
 #' 
 #' @param metab_preds a data.frame of predictions such as that returned by 
 #'   predict_metab()
-#' @param y_var character. Should the plot display predicted values of GPP, ER, 
-#'   and/or K600? The default is to plot all three.
+#' @param y_var character. Should the plot display predicted values of GPP
+#'   and/or ER? The default is to plot both.
 #' @param style character indicating which graphics package to use
 #' @param y_lim list of named vectors, each of which has length 2 and is numeric
-#'   and has a name in the possible values of y_var. NA within a vector
-#'   indicates that the data range should be used. for ggplot2, y_lim is only
+#'   and has a name in the possible values of y_var. NA within a vector 
+#'   indicates that the data range should be used. for ggplot2, y_lim is only 
 #'   used to exclude values outside that range and is ignored if the data span a
 #'   narrower range
 #' @examples 
@@ -20,9 +20,9 @@
 #' @import dplyr
 #' @importFrom unitted v
 #' @export
-plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'), 
+plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER'), 
                           style=c('ggplot2'),
-                          y_lim=list(GPP=c(NA,NA), ER=c(NA,NA), K600=c(NA,NA))) {
+                          y_lim=list(GPP=c(NA,NA), ER=c(NA,NA))) {
  
   if(is(metab_preds, 'metab_model')) metab_preds <- predict_metab(metab_preds)
   
@@ -32,20 +32,18 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
   params <- list(
     xlab='Local date',
     ylab='Predictions',
-    colors=list(GPP=c('#007929','#23BC47'), ER=c('#A64B00','#FF7400'), K600=c('#05326D','#4282D3'))
+    colors=list(GPP=c('#007929','#23BC47'), ER=c('#A64B00','#FF7400'))
   )
   
-  metab.mod <- GPP <- GPP.lower <- GPP.upper <- ER <- ER.lower <- ER.upper <- K600 <- K600.lower <- K600.upper <- '.dplyr.var'
+  metab.mod <- GPP <- GPP.lower <- GPP.upper <- ER <- ER.lower <- ER.upper <- '.dplyr.var'
   metab_preds_GPP <- mutate(
     metab_preds, as='GPP', fit=GPP, lwr=GPP.lower, upr=GPP.upper, var='GPP (g m^-2 d^-1)', col1=params$colors[['GPP']][1], col2=params$colors[['GPP']][2], lab='GPP~(g~m^-2~d^-1)')
   metab_preds_ER <- mutate(
     metab_preds, as='ER', fit=ER, lwr=ER.lower, upr=ER.upper, var='ER (g m^-2 d^-1)', col1=params$colors[['ER']][1], col2=params$colors[['ER']][2], lab='ER~(g~m^-2~d^-1)')
-  metab_preds_K600 <- mutate(
-      metab_preds, as='K600', fit=K600, lwr=K600.lower, upr=K600.upper, var='K600 (d^-1)', col1=params$colors[['K600']][1], col2=params$colors[['K600']][2], lab='K600~(d^-1)')
   
   var <- '.dplyr.var'
-  metab_preds_all <- bind_rows(metab_preds_GPP, metab_preds_ER, metab_preds_K600) %>%
-    mutate(var=ordered(var, c(GPP='GPP (g m^-2 d^-1)', ER='ER (g m^-2 d^-1)', K600='K600 (d^-1)')[y_var]))
+  metab_preds_all <- bind_rows(metab_preds_GPP, metab_preds_ER) %>%
+    mutate(var=ordered(var, c(GPP='GPP (g m^-2 d^-1)', ER='ER (g m^-2 d^-1)')))
   
   plot_out <- switch(
     style,
@@ -66,10 +64,6 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER','K600'),
       if('ER' %in% names(y_lim)) {
         lim <- y_lim[['ER']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ER' | is.na(fit) | fit >= lim)
         lim <- y_lim[['ER']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ER' | is.na(fit) | fit <= lim)
-      }
-      if('K600' %in% names(y_lim)) {
-        lim <- y_lim[['K600']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit >= lim)
-        lim <- y_lim[['K600']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'K600' | is.na(fit) | fit <= lim)
       }
       g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=date))
       if(any(!is.na(preds_ggplot$lwr) & !is.na(preds_ggplot$upr))) {

@@ -4,22 +4,21 @@
 \alias{plot_metab_preds}
 \title{Plot predictions produced with predict_DO}
 \usage{
-plot_metab_preds(metab_preds, y_var = c("GPP", "ER", "K600"),
-  style = c("ggplot2"), y_lim = list(GPP = c(NA, NA), ER = c(NA, NA), K600 =
-  c(NA, NA)))
+plot_metab_preds(metab_preds, y_var = c("GPP", "ER"), style = c("ggplot2"),
+  y_lim = list(GPP = c(NA, NA), ER = c(NA, NA)))
 }
 \arguments{
 \item{metab_preds}{a data.frame of predictions such as that returned by 
 predict_metab()}
 
-\item{y_var}{character. Should the plot display predicted values of GPP, ER, 
-and/or K600? The default is to plot all three.}
+\item{y_var}{character. Should the plot display predicted values of GPP
+and/or ER? The default is to plot both.}
 
 \item{style}{character indicating which graphics package to use}
 
 \item{y_lim}{list of named vectors, each of which has length 2 and is numeric
-and has a name in the possible values of y_var. NA within a vector
-indicates that the data range should be used. for ggplot2, y_lim is only
+and has a name in the possible values of y_var. NA within a vector 
+indicates that the data range should be used. for ggplot2, y_lim is only 
 used to exclude values outside that range and is ignored if the data span a
 narrower range}
 }
