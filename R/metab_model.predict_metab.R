@@ -42,7 +42,7 @@ predict_metab.metab_model <- function(
       if(day_start < specs$day_start) stop("day_start may not be earlier than the day_start stored in metab_model@specs")
       if(day_end > specs$day_end) stop("day_end may not be later than the day_end stored in metab_model@specs")
       message(paste(
-        "daily metabolism predictions reflect the period from", day_start, "to", day_end, "hours on each date",
+        "daily metabolism predictions are for the period from", day_start, "to", day_end, "hours on each date\n",
         "(differs from the model-fitting range of", specs$day_start, "to", specs$day_end, "hours)"))
     }
     if(day_end - day_start > 24) {
@@ -70,7 +70,8 @@ predict_metab.metab_model <- function(
       }
     }
     
-    # get the instantaneous data, including DO.mod; filter to a 24-hour period
+    # get the instantaneous data, including DO.mod (which we need for predicting
+    # D); filter to a 24-hour period
     data <- predict_DO(metab_model, date_start=date_start, date_end=date_end, attach.units=FALSE, use_saved=TRUE) %>%
       mm_filter_hours(day_start=day_start, day_end=day_end)
     
