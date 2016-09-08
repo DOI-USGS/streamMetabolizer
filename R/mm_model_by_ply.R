@@ -210,11 +210,14 @@ mm_model_by_ply <- function(
   # suggest column names
   if(length(out_list) == 0 || all(sapply(out_list, is.null))) {
     out_list <- tryCatch(
-      list(model_fun(
-        data_ply=data[c(),], data_daily_ply=data_daily[c(),],
-        day_start=day_start, day_end=day_end, ply_date=as.Date(NA),
-        ply_validity=NA, timestep_days=NA, 
-        ...)),
+      list(
+        model_fun(
+          data_ply=data[c(),], data_daily_ply=data_daily[c(),],
+          day_start=day_start, day_end=day_end, ply_date=as.Date(NA),
+          ply_validity=NA, timestep_days=NA, 
+          ...) %>%
+          mutate(date=as.Date(NA)) %>% 
+          select(date, everything())),
       error=function(e) {
         # and if it REALLY doesn't work, just return an empty 1-column df
         data.frame(date=as.Date(NA))[c(),]
