@@ -265,17 +265,18 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     deficit_src,
     DO_obs=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
-      if(integer.t) function(t, DO.mod.t, metab.pars) {
+      if(integer.t) function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.obs[t])
       } else function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
       }
     })(),
-    'DO_obs_filter'=, DO_mod=(function(){
+    DO_obs_filter=, 
+    DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
       if(integer.t) function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv[t] * (DO.sat[t] - DO.mod.t)
-      } else function(t, DO.mod.t, metab.pars) {
+      } else function(t, metab.pars, DO.mod.t) {
         metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.mod.t)
       }
     })(),
