@@ -191,11 +191,9 @@ mm_model_by_ply <- function(
       } else if(is.na(timestep_days) || timestep_days==FALSE) {
         NA
       } else timestep_days
-      ply_validity <- if(length(day_tests) > 0) {
-        mm_is_valid_day(
-          data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
-          ply_date=ply_date, timestep_days=timestep_days)
-      } else NA
+      ply_validity <- mm_is_valid_day(
+        data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+        ply_date=ply_date, timestep_days=timestep_days)
       
       # run the user's model_fun
       out <- model_fun(
