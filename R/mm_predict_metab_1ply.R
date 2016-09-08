@@ -11,10 +11,9 @@ mm_predict_metab_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, ..., 
   model_name) {
   
-  # record date test failures as warnings (flipped from usual model-fitting
-  # practice of recording these as errors)
-  warn_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
-  stop_strs <- character(0)
+  # record ply validity failures if present (only gets tested for sim models)
+  stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
+  warn_strs <- character(0)
   
   # skip today if we're missing metabolism estimates and/or input data (return a
   # near-empty or empty data.frame, respectively, and don't bother reporting on 
