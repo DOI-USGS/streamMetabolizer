@@ -52,8 +52,8 @@ setMethod(
           cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
           pretty_print_ddat(metab_preds, 'msgs.pred')
           #metab_preds$valid_day <- !grepl('e', metab_preds$msgs.fit) # no sense reporting fitting errors twice
-          warn_msgs <<- c(warn_msgs, summarize_stopwarn_msgs(metab_preds$warnings)) # [metab_preds$valid_day]
-          stop_msgs <<- c(stop_msgs, summarize_stopwarn_msgs(metab_preds$errors)) # [metab_preds$valid_day]
+          warn_msgs <- c(warn_msgs, summarize_stopwarn_msgs(metab_preds$warnings)) # [metab_preds$valid_day]
+          stop_msgs <- c(stop_msgs, summarize_stopwarn_msgs(metab_preds$errors)) # [metab_preds$valid_day]
         }
       }, error=function(err) {
         stop_msgs <<- c(stop_msgs, err$message)
