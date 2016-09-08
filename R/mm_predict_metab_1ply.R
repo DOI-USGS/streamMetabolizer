@@ -6,6 +6,7 @@
 #' @param model_name the coded model name that will determine the GPP_fun,
 #'   ER_fun, deficit_src, and ode_method to use in prediction
 #' @return a data.frame of predictions
+#' @import dplyr
 mm_predict_metab_1ply <- function(
   data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, ..., 
   model_name) {
@@ -16,23 +17,27 @@ mm_predict_metab_1ply <- function(
   stop_strs <- character(0)
   
   # skip today if we're missing metabolism estimates and/or input data (return a
-  # near-empty or empty data.frame, respectively)
-  if(nrow(data_daily_ply) == 0) {
-    na_num <- as.numeric(NA)
-    na_df <- data.frame(
-      date=ply_date, 
-      GPP=na_num, GPP.lower=na_num, GPP.upper=na_num,
-      ER=na_num, ER.lower=na_num, ER.upper=na_num)
-    if(nrow(data_ply) > 0) {
-      # in the more common case, we just need a row of NAs to reflect that
-      # the daily metabolism-relevant parameter estimates are missing
-      return(na_df)
-    } else {
-      # if mm_model_by_ply comes up with 0 data rows total, it calls this 
-      # function once with empty data_daily_ply and data_ply to figure out which
-      # column names to return. Give those names here as a rowless data.frame
-      return(na_df[c(),])
-    }
+  # near-empty or empty data.frame, respectively, and don't bother reporting on 
+  # ply validity). order the checks such that skip_for gets set to the most
+  # important reason we're skipping the date (if we are)
+  skip_for <- c()
+  if(nrow(data_daily_ply) == 0) skip_for <- 'empty'
+  else if(data_daily_ply %>% select(-date) %>% sapply(is.na) %>% all()) skip_for <- 'all_NA'
+  else if(length(stop_strs) > 0) skip_for <- 'validity'
+  if(length(skip_for) > 0) {
+    na.df <- data.frame(
+      GPP=NA_real_, GPP.lower=NA_real_, GPP.upper=NA_real_,
+      ER=NA_real_, ER.lower=NA_real_, ER.upper=NA_real_, 
+      warnings=NA_character_, errors=NA_character_, 
+      stringsAsFactors=FALSE)
+    out.df <- switch(
+      skip_for,
+      'validity'=na.df %>% mutate(
+        warnings=paste0(unique(warn_strs), collapse="; "),
+        errors=paste0(unique(stop_strs), collapse="; ")),
+      'all_NA'=na.df,
+      'empty'=filter(na.df, FALSE))
+    return(out.df)
   }
   
   # prepare metab prediction functions

@@ -109,8 +109,8 @@ compress_msgs <- function(ddat, colname='messages') {
 #' @import dplyr
 #' @keywords internal
 pretty_print_ddat <- function(ddat, msg.col) {
-  if(!exists('warnings', ddat)) ddat$warnings <- ''
-  if(!exists('errors', ddat)) ddat$errors <- ''
+  if(!exists('warnings', ddat)) ddat$warnings <- NA
+  if(!exists('errors', ddat)) ddat$errors <- NA
   ddat %>%
     head(10) %>%
     compress_msgs(colname=msg.col) %>%
