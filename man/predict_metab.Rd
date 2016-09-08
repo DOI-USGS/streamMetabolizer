@@ -5,8 +5,9 @@
 \title{Predict metabolism from a fitted model.}
 \usage{
 predict_metab(metab_model, date_start = NA, date_end = NA,
-  day_start = get_specs(metab_model)$day_start, day_end = day_start + 24,
-  ..., attach.units = FALSE, use_saved = TRUE)
+  day_start = get_specs(metab_model)$day_start, day_end = min(day_start +
+  24, get_specs(metab_model)$day_end), ..., attach.units = FALSE,
+  use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 

@@ -15,9 +15,10 @@ NULL
 #' @importFrom unitted u v get_units
 #' @export
 #' @family predict_metab
-predict_metab.metab_model <- function(metab_model, date_start=NA, date_end=NA, 
-                                      day_start=get_specs(metab_model)$day_start, day_end=day_start+24,
-                                      ..., attach.units=FALSE, use_saved=TRUE) {
+predict_metab.metab_model <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  day_start=get_specs(metab_model)$day_start, day_end=min(day_start+24, get_specs(metab_model)$day_end),
+  ..., attach.units=FALSE, use_saved=TRUE) {
   
   if(isTRUE(use_saved) && !is.null(metab_model@metab_daily)) {
     # if allowed and available, use previously stored values rather than
