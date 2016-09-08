@@ -23,7 +23,11 @@ predict_metab.metab_model <- function(
   if(isTRUE(use_saved) && !is.null(metab_model@metab_daily)) {
     # if allowed and available, use previously stored values rather than
     # re-predicting them now
-    preds <- metab_model@metab_daily
+    if((!missing(day_start) && day_start != get_specs(metab_model)$day_start) || 
+       (!missing(day_end) && day_end != min(day_start+24, get_specs(metab_model)$day_end))) 
+      warning("using saved daily metabolism values and so ignoring new day_start and/or day_end values")
+    preds <- metab_model@metab_daily %>%
+      mm_filter_dates(date_start=date_start, date_end=date_end)
     
   } else {
     # otherwise predict them now
