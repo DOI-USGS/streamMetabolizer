@@ -20,7 +20,7 @@ NULL
 #' dat <- data_metab('3', res='30')
 #' # fast-ish model version, but still too slow to auto-run in examples
 #' mm <- metab_bayes(data=dat,
-#'   specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#'   specs(mm_name('bayes', err_proc_iid=FALSE), 
 #'     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
 #' mm
 #' get_fitting_time(mm)
@@ -29,7 +29,7 @@ NULL
 #' 
 #' # error and warning messages are printed with the mm object if present
 #' dat <- data_metab('3', res='30', flaws=c('missing middle'))
-#' mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#' mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE), 
 #'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
 #'   data=dat)
 #' predict_metab(mm)
@@ -966,9 +966,9 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # should have been produced during the model fitting
   
   # decide on the column names to pull and their new values
-  fit.names <- expand.grid(c('GPP','ER','D'), '_daily_', c('50pct','2.5pct','97.5pct'), stringsAsFactors=FALSE) %>%
+  fit.names <- expand.grid(c('GPP','ER'), '_daily_', c('50pct','2.5pct','97.5pct'), stringsAsFactors=FALSE) %>% #,'D'
     apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
-  metab.names <- expand.grid(c('GPP','ER','D'), c('','.lower','.upper'), stringsAsFactors=FALSE) %>%
+  metab.names <- expand.grid(c('GPP','ER'), c('','.lower','.upper'), stringsAsFactors=FALSE) %>% #,'D'
     apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
   
   # pull and retrieve the columns
@@ -995,6 +995,14 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
 #' @export
 #' @family get_params
 get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
+  # Stan prohibits '.' in variable names, so we have to convert back from '_' to
+  # '.' here to become consistent with the non-Bayesian models
+  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
+  for(i in seq_along(parnames)) {
+    names(metab_model@fit$daily) <- gsub(names(parnames[i]), parnames[[i]], names(metab_model@fit$daily))
+  }
+  names(metab_model@fit$daily) <- gsub('_Median$', '', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_SD$', '.sd', names(metab_model@fit$daily))
   metab_model@fit <- metab_model@fit$daily
   NextMethod()
 }
