@@ -71,6 +71,7 @@ predict_metab.metab_model <- function(
         # metab_night. and actually don't even give a warning because it's
         # really fine - metab_night will give the correct answers (within its
         # abilities) regardless of the period of time specified here
+        stop("for metab_night, GPP estimates are 0 because they're for nighttime only ")
       }
     }
     
