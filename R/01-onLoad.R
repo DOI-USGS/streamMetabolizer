@@ -2,7 +2,7 @@
 #' @importFrom utils available.packages contrib.url
 #' @keywords internal
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage("This package is in development. We are using it for our own early applications and welcome bold, flexible, resilient new users who can help us make the package better. Details of the user interface and model implementations will change. Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")
+  packageStartupMessage("This package is in development. We are using it for our own early applications and welcome flexible, resilient new users who can help us make the package better. Details of the user interface and model implementations will change. Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")
   packageStartupMessage("This information is preliminary or provisional and is subject to revision. It is being provided to meet the need for timely best science. The information has not received final approval by the U.S. Geological Survey (USGS) and is provided on the condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from the authorized or unauthorized use of the information. Although this software program has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.")
   
   # Check whether this package is up to date
