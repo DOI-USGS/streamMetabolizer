@@ -1,3 +1,11 @@
+# streamMetabolizer 0.9.12
+
+* removed JAGS from the package. Stan is better for us.
+
+# streamMetabolizer 0.9.11
+
+* this is the last version with JAGS in it.
+
 # streamMetabolizer 0.9.9
 
 * `metab_mle` and `metab_sim` now have several options for relationships among 

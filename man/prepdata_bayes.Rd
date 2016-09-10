@@ -2,10 +2,9 @@
 % Please edit documentation in R/metab_bayes.R
 \name{prepdata_bayes}
 \alias{prepdata_bayes}
-\title{Prepare data for passing to JAGS or Stan}
+\title{Prepare data for passing to Stan}
 \usage{
-prepdata_bayes(data, data_daily, ply_date = NA, specs, engine, model_name,
-  priors = FALSE)
+prepdata_bayes(data, data_daily, ply_date = NA, specs, engine, model_name)
 }
 \arguments{
 \item{data}{data.frame of input data at the temporal resolution of raw 
@@ -30,14 +29,15 @@ of required parameters and their defaults depends on the model given in the
 detail, and gives default values.}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For type='bayes', one of 
-\code{c('jags','stan')} indicating the software package to use for the MCMC
-process. For type='Kmodel', the name of an interpolation or regression 
-method relating K to the predictor[s] of choice. One of \code{c("mean", 
-"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
-one option so it's not included in \code{specs()} (but is nonetheless noted
-in the suffix of the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses 
-\code{nlm()} for model fitting)}
+specified via \code{mm_name} rather than here. For \code{type='bayes'},
+always \code{'stan'} indicating the software package to use for the MCMC 
+process (see http://mc-stan.org/). For types in
+\code{c('mle','night','sim')} there's again only one option per model (R
+functions; these need not be named here but will be noted in the suffix of
+the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
+model fitting). For type='Kmodel', the name of an interpolation or
+regression method relating K to the predictor[s] of choice. One of
+\code{c("mean", "lm", "loess")}.}
 
 \item{model_name}{character string identifying the model features. Use 
 \code{\link{mm_name}} to create a valid name based on desired attributes, 
@@ -46,19 +46,16 @@ the names given by \code{mm_valid_names()} are also accepted: (1) a model
 type as accepted by the \code{type} argument to \code{mm_name}, which will 
 be used to create the default model name for that model type, or (2) a full
 model file path for custom Bayesian models, as long as basename(model_name)
-can still be parsed correctly with \code{mm_parse_name()} and the file
-exists. In that case the file may be specified either as a file path
-relative to the streamMetabolizer models directory (the first assumption;
+can still be parsed correctly with \code{mm_parse_name()} and the file 
+exists. In that case the file may be specified either as a file path 
+relative to the streamMetabolizer models directory (the first assumption; 
 this directory can be found with \code{system.file("models", 
 package="streamMetabolizer")}) or as an absolute path or a path relative to
 the current working directory (the second assumption, if the first 
 assumption turns up no files of the given name).}
-
-\item{priors}{logical. Should the data list be modified such that JAGS will 
-return priors rather than posteriors?}
 }
 \value{
-list of data for input to runjags_bayes or runstan_bayes
+list of data for input to runstan_bayes
 }
 \description{
 This function accepts exactly one day's worth of data, (one ply, which might 

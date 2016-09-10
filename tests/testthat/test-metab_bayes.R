@@ -19,7 +19,7 @@ manual_test4 <- function() {
 }
 
 manual_test5 <- function() {
-  test_that("error-free models can be run with split or combined dates, jags or stan", {
+  test_that("error-free models can be run with split or combined dates", {
     # this test doesn't actually do any test-that checks
     sp <- function(split_dates, engine) { replace(
       specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine),
@@ -27,17 +27,28 @@ manual_test5 <- function() {
       'split_dates', split_dates
     ) }
     dat <- data_metab('1', res='30')
-    mm <- metab(sp(FALSE,'jags'), dat)
-    mm <- metab(sp(TRUE, 'jags'), dat)
-    # new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
+    # new compilation of any Stan model gives deprecation warnings as of 
+    # 7/12/16; THESE ARE OKAY. subsequent runs of the compiled Stan model are 
+    # quieter
     mm <- metab(sp(FALSE,'stan'), dat)
-    # subsequent runs of the compiled Stan model are quieter
+    expect_true(grepl("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)))
     mm <- metab(sp(TRUE, 'stan'), dat)
     dat <- data_metab('3', res='30')
-    mm <- metab(sp(FALSE,'jags'), dat)
-    mm <- metab(sp(TRUE, 'jags'), dat)
     mm <- metab(sp(FALSE,'stan'), dat)
     mm <- metab(sp(TRUE, 'stan'), dat)
+    
+    # ran into an interesting issue - shouldn't be bayes specific, but this is where I found it.
+    # the error message (occurs during predict_DO, on about the 3rd call to metab()):
+    # > mm <- metab(sp(FALSE,'stan'), dat)
+    # Error in .Call("call_rkFixed", as.double(y), as.double(times), Func, Initfunc,  : 
+    #   "call_rkFixed" not resolved from current namespace (deSolve)
+    # Error in .C("unlock_solver") : 
+    #   "unlock_solver" not resolved from current namespace (deSolve)
+    
+    # the solution may be to call library(deSolve) before loading/running
+    # streamMetabolizer (see
+    # http://r.789695.n4.nabble.com/deSolve-unresolved-namespace-error-td4679888.html)
+    
   })
 }
 
@@ -51,15 +62,11 @@ manual_test6 <- function() {
       'split_dates', split_dates
     ) }
     dat <- data_metab('1', res='30', flaws=c('missing start'))
-    mm <- metab(sp(FALSE,'jags'), dat)
-    mm <- metab(sp(TRUE, 'jags'), dat)
-    mm <- metab(sp(FALSE,'stan'), dat)
-    mm <- metab(sp(TRUE, 'stan'), dat)
+    mm <- metab(sp(FALSE,'stan'), dat) # Modeling failed: argument is of length zero
+    mm <- metab(sp(TRUE, 'stan'), dat) # Modeling failed: no valid days of data
     dat <- data_metab('3', res='30', flaws=c('missing middle'))
-    mm <- metab(sp(FALSE,'jags'), dat)
-    mm <- metab(sp(TRUE, 'jags'), dat)
-    mm <- metab(sp(FALSE,'stan'), dat)
-    mm <- metab(sp(TRUE, 'stan'), dat)
+    mm <- metab(sp(FALSE,'stan'), dat) # no problem
+    mm <- metab(sp(TRUE, 'stan'), dat) # no problem
   })
 }
 
@@ -215,33 +222,6 @@ manual_test3 <- function() {
   plot_metab_preds(predict_metab(mm))
   traceplot(get_mcmc(mm), pars=c('GPP_daily[7]','ER_daily[7]','K600_daily[7]','err_obs_iid_sigma'), inc_warmup=TRUE)
   traceplot(get_mcmc(mm), pars=c('GPP_daily[7]','ER_daily[7]','K600_daily[7]','err_obs_iid_sigma'), inc_warmup=FALSE)
-  
-  # light jags 1-day
-  dat <- data_metab('1', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags')
-  sp <- specs(mmb, n_chains=3, n_cores=3, adapt_steps=1000, burnin_steps=3000, saved_steps=1000, keep_mcmc_data=TRUE)
-  sp$model_name <- 'inst/models/b_np_oi_tr_plrckm_light.jags'
-  mm <- metab(specs=sp, data=dat)
-  plot(get_mcmc(mm), 'trace')
-  
-  # light jags 3-day
-  dat <- data_metab('3', res='30')
-  mm <- metab(specs=sp, data=dat)
-  plot(get_mcmc(mm), 'trace')
-  
-  # OI jags 3-day
-  dat <- data_metab('3', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, err_obs_iid=TRUE, engine='jags', deficit_src = 'DO_obs')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
-  mm <- metab(specs=sp, data=dat)
-  plot_DO_preds(predict_DO(mm))
-  
-  # PI jags 3-day
-  dat <- data_metab('3', res='30')
-  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=TRUE, err_obs_iid=FALSE, engine='jags', deficit_src = 'DO_obs')
-  sp <- specs(mmb, n_chains=3, n_cores=3, burnin_steps=3000, saved_steps=1000)
-  mm <- metab(specs=sp, data=dat)
-  plot_DO_preds(predict_DO(mm))
 }
 
 # The tests below cannot touch on all possible Bayesian models; that's
@@ -266,22 +246,11 @@ manual_test1 <- function() {
     expect_lt(rmse_DO(predict_DO(mmb)), 0.2) #, info='stan')
     # plot_DO_preds(predict_DO(mmb))
     
-    # 1-day model in jags
-    mmj <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='jags') %>%
-      specs(n_chains=1, n_cores=1, adapt_steps=250, burnin_steps=250, saved_steps=1000) %>%
-      metab(data=dat)
-    expect_lt(get_fitting_time(mmj)['elapsed'], 30)
-    expect_lt(rmse_DO(predict_DO(mmj)), 0.2) #, info='jags')
-    # plot_DO_preds(predict_DO(mmj))
-    
-    # jags & stan models w/ same options should reach very similar results
-    expect_lt(sqrt(mean((predict_DO(mmb)$DO.mod - predict_DO(mmj)$DO.mod)^2)), 0.1) #, info='stan vs jags')
-    
   })
 }
 
 # takes too long to do all the time. also, saving and reloading a stan model
-# doesn't work! (it does seem to work for jags)
+# doesn't work!
 manual_test2 <- function() {
   testthat("test that metab_models can be saved & reloaded (see helper-save_load.R)", {
     
@@ -309,8 +278,7 @@ useful_code <- function() {
   
   # when things go bad
   debug_metab <- function(specs) {
-    jags_args <- c('engine','model_path','params_out','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
-    mcmc_args <- if(specs$engine == 'jags') jags_args else jags_args[-which(jags_args=='adapt_steps')]
+    mcmc_args <- c('engine','model_path','params_out','n_chains','n_cores','burnin_steps','saved_steps','thin_steps','verbose')
     specs$model_path <- system.file(paste0("models/", specs$model_name), package="streamMetabolizer")
     data_list <- streamMetabolizer:::prepdata_bayes(
       data=vfrench1day, data_daily=NULL, ply_date="2012-08-24", 
@@ -321,7 +289,6 @@ useful_code <- function() {
     })
     mcmc_out
   }
-  runjags::failed.jags()
   mcmc <- debug_metab(specs)
   
   # when things didn't break
@@ -338,13 +305,6 @@ useful_code <- function() {
   
   # useful things to report
   plot_DO_preds(predict_DO(mm))
-  
-  ## Code for JAGS models
-  library(coda)
-  par(mar=c(2,2,2,0.2))
-  plot(as.mcmc.list(get_mcmc(mm)[[2]]), density=FALSE)
-  expect_is(get_mcmc(mm)[[2]], "runjags")
-  get_fit(mm)[grep("psrf", names(get_fit(mm)))]
   
   ## Code you can run after fitting any Stan model
   rstan::traceplot(get_mcmc(mm)[[1]])

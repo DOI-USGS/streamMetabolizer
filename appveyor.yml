@@ -18,16 +18,11 @@ init:
         Invoke-WebRequest http://raw.github.com/USGS-R/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
         Import-Module '..\appveyor-tool.ps1'
 
-install:
-  - ps: Bootstrap
-  - ps: (new-object net.webclient).DownloadFile("https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.2.0-Rtools33.exe", "C:\projects\JAGS-4.2.0.exe")
-  - cmd: C:\projects\JAGS-4.2.0.exe /S
-  - cmd: dir "C:\Program Files\JAGS"
-
 build_script:
   - R --version
   - travis-tool.sh install_github GLEON/LakeMetabolizer
   - travis-tool.sh install_deps
+  - travis-tool.sh install_r deSolve
   - travis-tool.sh install_r modeest
 
 test_script:

@@ -9,7 +9,7 @@ mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
   ode_method = c("trapezoid", "euler"), GPP_fun = c("linlight"),
   ER_fun = c("constant"), deficit_src = c("DO_mod", "DO_obs"),
-  engine = c("stan", "jags"))
+  engine = "stan")
 }
 \arguments{
 \item{type}{character. The model type. Options:
@@ -131,10 +131,9 @@ should the DO deficit be computed? Options:
 fitting be done?
 \itemize{
   \item for \code{type='mle'}: \code{nlm} only (the default)
-  \item for \code{type='bayes'}: \code{stan} (the default) or \code{jags}, 
-  both of which are external software packages that run MCMC chains for 
-  Bayesian models. See http://mc-stan.org and
-  http://mcmc-jags.sourceforge.net, respectively
+  \item for \code{type='bayes'}: \code{stan} only (the default), an
+  external software package that runs MCMC chains for Bayesian models (see
+  http://mc-stan.org)
   \item for \code{type='night'}: \code{lm} only (the default)
   \item for \code{type='Kmodel'}: \code{mean}, \code{lm}, or \code{loess}
   enable different types of relationships between daily K600 and its

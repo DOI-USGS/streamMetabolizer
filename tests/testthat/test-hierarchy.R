@@ -36,11 +36,6 @@ manual_tests <- function() {
   fitall <- metab_bayes(vfrenchmedium, specs=replace(ms, 'split_dates', FALSE)) # all three days at once
   get_fitting_time(fitall) # 87 sec
   
-  #### super simple jags ####
-  # mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=FALSE, ode_method="trapezoid", deficit_src="DO_mod", engine="jags")
-  # ms <- specs(mn, burnin_steps=300, saved_steps=200, split_dates=FALSE)
-  # fitall <- metab_bayes(vfrenchmedium, specs=ms) # syntax error on line 3
-  
   #### medium-hard model ####
   mn <- mm_name("bayes", err_proc_acor=FALSE, err_proc_iid=TRUE, ode_method="trapezoid", deficit_src="DO_mod", engine="stan")
   ms <- specs(mn, burnin_steps=1000, saved_steps=300, n_chains=3, n_cores=4)

@@ -14,9 +14,9 @@ the names given by \code{mm_valid_names()} are also accepted: (1) a model
 type as accepted by the \code{type} argument to \code{mm_name}, which will 
 be used to create the default model name for that model type, or (2) a full
 model file path for custom Bayesian models, as long as basename(model_name)
-can still be parsed correctly with \code{mm_parse_name()} and the file
-exists. In that case the file may be specified either as a file path
-relative to the streamMetabolizer models directory (the first assumption;
+can still be parsed correctly with \code{mm_parse_name()} and the file 
+exists. In that case the file may be specified either as a file path 
+relative to the streamMetabolizer models directory (the first assumption; 
 this directory can be found with \code{system.file("models", 
 package="streamMetabolizer")}) or as an absolute path or a path relative to
 the current working directory (the second assumption, if the first 

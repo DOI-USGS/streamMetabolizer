@@ -17,24 +17,24 @@
 #'   
 #'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
 #'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
-#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
+#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_out, n_chains,
 #'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
 #'   other arguments depends on features of the model structure, as from 
-#'   \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
-#'   \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
-#'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_location, 
-#'   K600_daily_sigma_scale}. If \code{pool_K600=='linear'} then 
-#'   \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_location,
-#'   K600_daily_sigma_scale}. If \code{pool_K600=='binned'} then 
-#'   \code{K600_daily_beta_num, K600_daily_beta_cuts, K600_daily_beta_mu, 
-#'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
-#'   If \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
-#'   err_obs_iid_sigma_scale}. If \code{err_proc_acor} then 
+#'   \code{mm_parse_name(model_name)}: \itemize{ \item If
+#'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}.
+#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu,
+#'   K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
+#'   \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu,
+#'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
+#'   \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num,
+#'   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma,
+#'   K600_daily_sigma_location, K600_daily_sigma_scale}. \item If
+#'   \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
+#'   err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
 #'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-#'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. If 
+#'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. \item If 
 #'   \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
-#'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
-#'   \code{adapt_steps}.
+#'   err_proc_iid_sigma_scale}.|
 #'   
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
 #'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
@@ -67,22 +67,23 @@
 #'   type as accepted by the \code{type} argument to \code{mm_name}, which will 
 #'   be used to create the default model name for that model type, or (2) a full
 #'   model file path for custom Bayesian models, as long as basename(model_name)
-#'   can still be parsed correctly with \code{mm_parse_name()} and the file
-#'   exists. In that case the file may be specified either as a file path
-#'   relative to the streamMetabolizer models directory (the first assumption;
+#'   can still be parsed correctly with \code{mm_parse_name()} and the file 
+#'   exists. In that case the file may be specified either as a file path 
+#'   relative to the streamMetabolizer models directory (the first assumption; 
 #'   this directory can be found with \code{system.file("models", 
 #'   package="streamMetabolizer")}) or as an absolute path or a path relative to
 #'   the current working directory (the second assumption, if the first 
 #'   assumption turns up no files of the given name).
 #' @param engine The software or function to use in fitting the model. Should be
-#'   specified via \code{mm_name} rather than here. For type='bayes', one of 
-#'   \code{c('jags','stan')} indicating the software package to use for the MCMC
-#'   process. For type='Kmodel', the name of an interpolation or regression 
-#'   method relating K to the predictor[s] of choice. One of \code{c("mean", 
-#'   "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
-#'   one option so it's not included in \code{specs()} (but is nonetheless noted
-#'   in the suffix of the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses 
-#'   \code{nlm()} for model fitting)
+#'   specified via \code{mm_name} rather than here. For \code{type='bayes'},
+#'   always \code{'stan'} indicating the software package to use for the MCMC 
+#'   process (see http://mc-stan.org/). For types in
+#'   \code{c('mle','night','sim')} there's again only one option per model (R
+#'   functions; these need not be named here but will be noted in the suffix of
+#'   the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
+#'   model fitting). For type='Kmodel', the name of an interpolation or
+#'   regression method relating K to the predictor[s] of choice. One of
+#'   \code{c("mean", "lm", "loess")}.
 #' @inheritParams mm_model_by_ply
 #' @inheritParams mm_is_valid_day
 #'   
@@ -340,16 +341,12 @@ specs <- function(
   err_proc_iid_sigma_location = 0,
   err_proc_iid_sigma_scale = 4,
   
-  # inheritParams prepdata_bayes
-  priors = FALSE,
-  
   # inheritParams mcmc_bayes
   params_out,
   n_chains = 4,
   n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$engine, jags=250, NA),
-  burnin_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=250, NA),
-  saved_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=1000, NA),
+  burnin_steps = 500,
+  saved_steps = 500,
   thin_steps = 1,
   verbose = FALSE,
   
@@ -439,12 +436,8 @@ specs <- function(
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
         if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale'),
         
-        # inheritParams prepdata_bayes
-        'priors',
-        
         # inheritParams mcmc_bayes
         'params_out', 'n_chains', 'n_cores', 
-        if(features$engine == 'jags') 'adapt_steps', 
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
       

@@ -37,7 +37,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
       # line is why mm_generate_mcmc_file can't call this function (via
       # mm_names(check_validity=TRUE))
       mnames <- grep('^b_', dir(system.file('models', package='streamMetabolizer')), value=TRUE)
-      favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oipi_tr_plrckm.jags')
+      favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oi_tr_plrckm.stan','b_np_pi_tr_plrckm.stan')
     },
     mle={
       opts <- expand.grid(

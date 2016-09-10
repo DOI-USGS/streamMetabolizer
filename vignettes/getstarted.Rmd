@@ -46,7 +46,7 @@ If you go this route, you will need to install the package dependencies separate
 ```{r, eval=FALSE}
 install.packages(
   c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-    "tidyr","chron","dygraphs","ggplot2","RCurl","runjags","rstan","XML","xts"),
+    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
   repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 You can then install the most cutting edge version of streamMetabolizer with this command:
@@ -56,11 +56,7 @@ devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 
 ### Software dependencies
 
-If you plan to use Bayesian models with 
-`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/). (JAGS may be deprecated in the future because so far we've seen better performance with Stan. You should be able to switch seamlessly between the two MCMC engines.)
-
-If you plan to use Bayesian models with 
-`engine='stan'`, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.)
+If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
 
 
 ### Load

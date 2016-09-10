@@ -158,10 +158,9 @@
 #'   fitting be done?
 #'   \itemize{
 #'     \item for \code{type='mle'}: \code{nlm} only (the default)
-#'     \item for \code{type='bayes'}: \code{stan} (the default) or \code{jags}, 
-#'     both of which are external software packages that run MCMC chains for 
-#'     Bayesian models. See http://mc-stan.org and
-#'     http://mcmc-jags.sourceforge.net, respectively
+#'     \item for \code{type='bayes'}: \code{stan} only (the default), an
+#'     external software package that runs MCMC chains for Bayesian models (see
+#'     http://mc-stan.org)
 #'     \item for \code{type='night'}: \code{lm} only (the default)
 #'     \item for \code{type='Kmodel'}: \code{mean}, \code{lm}, or \code{loess}
 #'     enable different types of relationships between daily K600 and its
@@ -191,7 +190,7 @@ mm_name <- function(
   GPP_fun=c('linlight','satlight','satlightq10temp','NA'),
   ER_fun=c('constant','q10temp','NA'),
   deficit_src=c('DO_mod','DO_obs','DO_obs_filter','NA'),
-  engine=c('stan','jags','nlm','lm','mean','loess','rnorm'),
+  engine=c('stan','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
   
   # determine type
@@ -245,7 +244,7 @@ mm_name <- function(
        stop("for Kmodel, only type, engine, and check_validity may be specified")
   }
   engine <- match.arg(engine)
-  if(!(engine %in% list(bayes=c('stan','jags'), mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
+  if(!(engine %in% list(bayes='stan', mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
     stop("mismatch between type (",type,") and engine (",engine,")")
   
   # make the name

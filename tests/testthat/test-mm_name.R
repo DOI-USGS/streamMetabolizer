@@ -41,7 +41,7 @@ test_that("mm_valid_names and mm_validate_names check model names", {
   expect_is(sapply(nms, mm_validate_name), 'character', info = paste0('validating ', paste(nms, collapse=', ')))
   
   # should also work for model filepaths
-  mname <- system.file("models/b_np_oipi_eu_plrcko.jags", package="streamMetabolizer")
+  mname <- system.file("models/b_np_oipi_eu_plrcko.stan", package="streamMetabolizer")
   expect_true(file.exists(mname)) # separate test that the file is there in the current run environment
   expect_equal(mm_validate_name(mname), mname) # now test that validation is OK with a filepath
 })

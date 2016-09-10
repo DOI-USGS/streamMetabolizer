@@ -7,7 +7,7 @@
 format_mcmc_mat_nosplit(mcmc_mat, data_list_d, keep_mcmc, runmcmc_out)
 }
 \arguments{
-\item{mcmc_mat}{matrix as extracted from JAGS or Stan}
+\item{mcmc_mat}{matrix as extracted from Stan}
 }
 \description{
 For multi-day or unsplit models. Formats output into a list of data.frames, 

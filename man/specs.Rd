@@ -18,17 +18,14 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   err_obs_iid_sigma_location = 0, err_obs_iid_sigma_scale = 3,
   err_proc_acor_phi_alpha = 0.1, err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_location = 0, err_proc_acor_sigma_scale = 5,
-  err_proc_iid_sigma_location = 0, err_proc_iid_sigma_scale = 4,
-  priors = FALSE, params_out, n_chains = 4, n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$engine, jags = 250, NA),
-  burnin_steps = switch(mm_parse_name(model_name)$engine, stan = 500, jags =
-  250, NA), saved_steps = switch(mm_parse_name(model_name)$engine, stan = 500,
-  jags = 1000, NA), thin_steps = 1, verbose = FALSE,
-  weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
-  velocity.daily.max = NA), predictors = c("discharge.daily"),
-  transforms = c(K600 = "log", date = NA, velocity.daily = "log",
-  discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
-  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
+  err_proc_iid_sigma_location = 0, err_proc_iid_sigma_scale = 4, params_out,
+  n_chains = 4, n_cores = 4, burnin_steps = 500, saved_steps = 500,
+  thin_steps = 1, verbose = FALSE, weights = c("K600/CI"),
+  filters = c(CI.max = NA, discharge.daily.max = NA, velocity.daily.max = NA),
+  predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
+  velocity.daily = "log", discharge.daily = "log"), other_args = c(),
+  err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
+  err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -38,23 +35,24 @@ the names given by \code{mm_valid_names()} are also accepted: (1) a model
 type as accepted by the \code{type} argument to \code{mm_name}, which will 
 be used to create the default model name for that model type, or (2) a full
 model file path for custom Bayesian models, as long as basename(model_name)
-can still be parsed correctly with \code{mm_parse_name()} and the file
-exists. In that case the file may be specified either as a file path
-relative to the streamMetabolizer models directory (the first assumption;
+can still be parsed correctly with \code{mm_parse_name()} and the file 
+exists. In that case the file may be specified either as a file path 
+relative to the streamMetabolizer models directory (the first assumption; 
 this directory can be found with \code{system.file("models", 
 package="streamMetabolizer")}) or as an absolute path or a path relative to
 the current working directory (the second assumption, if the first 
 assumption turns up no files of the given name).}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For type='bayes', one of 
-\code{c('jags','stan')} indicating the software package to use for the MCMC
-process. For type='Kmodel', the name of an interpolation or regression 
-method relating K to the predictor[s] of choice. One of \code{c("mean", 
-"lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
-one option so it's not included in \code{specs()} (but is nonetheless noted
-in the suffix of the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses 
-\code{nlm()} for model fitting)}
+specified via \code{mm_name} rather than here. For \code{type='bayes'},
+always \code{'stan'} indicating the software package to use for the MCMC 
+process (see http://mc-stan.org/). For types in
+\code{c('mle','night','sim')} there's again only one option per model (R
+functions; these need not be named here but will be noted in the suffix of
+the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
+model fitting). For type='Kmodel', the name of an interpolation or
+regression method relating K to the predictor[s] of choice. One of
+\code{c("mean", "lm", "loess")}.}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours 
 from the midnight that begins the date. For example, day_start=-1.5 
@@ -253,9 +251,6 @@ Visualize the PDF of err_proc_iid_sigma with \code{x=seq(0,10,0.1);
 plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
 err_proc_iid_sigma_scale), type='l')}}
 
-\item{priors}{logical. Should the data list be modified such that JAGS will 
-return priors rather than posteriors?}
-
 \item{params_out}{a character vector of parameters whose values in the MCMC 
 runs should be recorded and summarized}
 
@@ -263,14 +258,12 @@ runs should be recorded and summarized}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{adapt_steps}{the number of steps per chain to use in adapting the model}
-
-\item{burnin_steps}{the number of steps per chain to run and ignore before
+\item{burnin_steps}{the number of steps per chain to run and ignore before 
 starting to collect MCMC 'data'}
 
 \item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step. 1
+\item{thin_steps}{the number of steps to move before saving another step. 1 
 means save all steps.}
 
 \item{verbose}{logical. give status messages?}
@@ -338,46 +331,6 @@ default should rarely be overridden, because their values will be determined
 based on other arguments. Relevant arguments that do have a default can, and 
 often should, be overridden to tailor the model to your needs.
 }
-\section{Relevant arguments}{
-
-  
-  * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
-  keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
-  GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
-  n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
-  other arguments depends on features of the model structure, as from 
-  \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
-  \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
-  \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_location, 
-  K600_daily_sigma_scale}. If \code{pool_K600=='linear'} then 
-  \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_location,
-  K600_daily_sigma_scale}. If \code{pool_K600=='binned'} then 
-  \code{K600_daily_beta_num, K600_daily_beta_cuts, K600_daily_beta_mu, 
-  K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
-  If \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
-  err_obs_iid_sigma_scale}. If \code{err_proc_acor} then 
-  \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-  err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. If 
-  \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
-  err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
-  \code{adapt_steps}.
-  
-  * metab_mle: \code{model_name, day_start, day_end, day_tests, 
-  init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
-  init.K600.daily}
-  
-  * metab_night: \code{model_name, day_start, day_end, day_tests}
-  
-  * metab_Kmodel: \code{model_name, engine, day_start, day_end, day_tests, 
-  weights, filters, predictors, transforms, other_args}. Note that the 
-  defaults for \code{weights}, \code{predictors}, \code{filters}, and 
-  \code{transforms} are adjusted according to the \code{engine} implied by 
-  \code{model_name}.
-  
-  * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
-}
-
 \section{MLE Initial Values}{
 
   

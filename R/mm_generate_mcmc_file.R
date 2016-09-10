@@ -12,7 +12,7 @@ mm_generate_mcmc_file <- function(
   GPP_fun=c('linlight'), #'satlight'
   ER_fun=c('constant'), #'q10temp'
   deficit_src=c('DO_mod','DO_obs'),
-  engine=c('stan','jags')) {
+  engine='stan') {
   
   # handle Euler and pairmeans as deprecated arguments. mm_name runs a similar check & warning
   if(ode_method %in% c('Euler','pairmeans'))
@@ -36,8 +36,7 @@ mm_generate_mcmc_file <- function(
   #### helper functions ####
   comment <- function(...) { 
     # prefix with the appropriate comment character[s]
-    chr <- switch(engine, jags='#', stan='//')
-    paste0(chr, ' ', paste0(...))
+    paste0('// ', paste0(...))
   }
   chunk <- function(..., indent=2, newline=TRUE) { 
     # indent a chunk & add a newline
@@ -54,95 +53,26 @@ mm_generate_mcmc_file <- function(
   indent <- function(..., indent=2) {
     chunk(..., indent=indent, newline=FALSE)
   }
-  condindent <- function(..., engines=c('jags'), indent=2) {
-    # conditional indent; only indent if engine is in engines
-    chunk(..., indent=if(engine %in% engines) indent else 0, newline=FALSE)
-  }
-  condloop <- function(..., iter='j', over='1:d', engines=c('jags'), indent=2) {
-    # conditional loop
-    do_indent <- engine %in% engines
-    c(
-      if(do_indent) p('for(',iter,' in ',over,') {'),
-      chunk(..., indent=if(do_indent) indent else 0, newline=FALSE),
-      if(do_indent) p('}')
-    )
-  }
-  `<b-` <- switch(engine, jags=' <- ', stan=' = ')
   f <- function(distrib, ...) { 
-    # switch things to JAGS format if needed
+    # check that I've named the arguments correctly
     args <- c(list(...))
     switch(
       distrib,
-      normal = {
-        if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)")
-        if(engine=='jags') {
-          distrib <- 'dnorm'
-          args['sigma'] <- sprintf('pow(%s, -2)', args['sigma'])
-        }
-      }, 
-      uniform = {
-        if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)")
-        if(engine=='jags') {
-          distrib <- 'dunif'
-        }
-      },
+      normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
+      uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") },
       gamma = {
-        # shape = alpha = k = first argument to both stan and jags
-        # rate = beta = 1/theta = inverse scale = second argument to both stan and jags
+        # shape = alpha = k = first argument
+        # rate = beta = 1/theta = inverse scale = second argument
         if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
-        if(engine=='jags') {
-          distrib <- 'dgamma'
-        }
       },
-      lognormal = {
-        if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)")
-        if(engine=='jags') {
-          distrib <- 'dlnorm'
-          args['scale'] <- sprintf('pow(%s, -2)', args['scale'])
-        }
-      }
+      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
     )
-    paste0(
-      distrib, '(',
-      paste0(args, collapse=', '),
-      ')')
-  }
-  e <- function(operator) {
-    # element-wise multiplication or division is .* or ./ in Stan but just * or
-    # . in JAGS
-    paste0(
-      switch(engine, jags='', stan='.'),
-      operator)
+    paste0(distrib, '(', paste0(args, collapse=', '), ')')
   }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) {
-    # line with stop/semicolon: combine strings into string & add semicolon if
-    # needed
-    p(p(...), switch(engine, jags='', stan=';'))
-  }
-  N <- function(n) {
-    # index into a matrix according to the index of the time of day (the col for
-    # Stan or the row for JAGS)
-    switch(
-      engine,
-      jags=paste0('[1:d,',n,']'),
-      stan=paste0('[',n,']'))
-  }
-  MN <- function(m, n) {
-    # matrix indexing for distributions, which are vectorizable in Stan (go by
-    # col) but not in JAGS (go by cell)
-    switch(
-      engine,
-      jags=paste0('[',m,',',n,']'),
-      stan=paste0('[',n,']'))
-  }
-  M <- function(m) {
-    # day-by-day or beta-by-beta indexing for distributions of daily values, 
-    # which are vectorizable in Stan but not JAGS
-    switch(
-      engine,
-      jags=paste0('[',m,']'),
-      stan='')
+    # line with stop/semicolon: combine strings into string & add semicolon
+    p(p(...), ';')
   }
   
   #### <begin model definition> ####
@@ -150,11 +80,8 @@ mm_generate_mcmc_file <- function(
     
     comment(model_name), '',
     
-    #### Stan data; omitted from JAGS ####
-    if(engine == 'stan') c(
-      
-      'data {',
-      
+    #### data ####
+    c('data {',
       chunk(
         comment('Parameters of priors on metabolism'),
         'real GPP_daily_mu;',
@@ -231,15 +158,8 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    #### Stan transformed data; JAGS data ####
-    ## transformed data = statements evaluated exactly once
-    if(engine == 'stan') c(
-      'transformed data {'
-    ) else if(engine == 'jags') c(
-      'data {'
-    ),
-    
-    if(engine == 'stan') c(
+    #### transformed data ####
+    c('transformed data {', # transformed data = statements evaluated exactly once
       chunk(
         'vector[d] coef_GPP[n-1];',
         'vector[d] coef_ER[n-1];',
@@ -249,69 +169,57 @@ mm_generate_mcmc_file <- function(
           DO_obs = 'vector[d] coef_K600_full[n-1];'
         ),
         if(ode_method == 'trapezoid' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
-        if(dDO_model) 'vector[d] dDO_obs[n-1];')
-    ),
-    
-    indent(
-      p('for(i in 1:(n-1)) {'),
+        if(dDO_model) 'vector[d] dDO_obs[n-1];'
+      ),
+      
       indent(
-        # Coefficient pre-calculations
-        if(ode_method == 'euler') c(
-          comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-          s('coef_GPP', N('i'), ' ', `<b-`, 'frac_GPP', N('i'), ' ', e('/'), ' depth', N('i'), ''),
-          s('coef_ER', N('i'), '  ', `<b-`, 'frac_ER',  N('i'), ' ', e('/'), ' depth', N('i'), ''),
-          switch(
-            deficit_src,
-            DO_mod = c(
-              s('coef_K600_part', N('i'), `<b-`, 'KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), '')
-            ),
-            DO_obs = c(
-              p('coef_K600_full', N('i'), `<b-`, 'KO2_conv', N('i'), ' ', e('*'), ' frac_D', N('i'), ' ', e('*')),
-              s('  (DO_sat', N('i'), ' - DO_obs', N('i'), ')')
+        p('for(i in 1:(n-1)) {'),
+        indent(
+          # Coefficient pre-calculations
+          if(ode_method == 'euler') c(
+            comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
+            s('coef_GPP[i]  = frac_GPP[i] ./ depth[i]'),
+            s('coef_ER[i]   = frac_ER[i] ./ depth[i]'),
+            switch(
+              deficit_src,
+              DO_mod = c(
+                s('coef_K600_part[i] = KO2_conv[i] .* frac_D[i]')
+              ),
+              DO_obs = c(
+                p('coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*'),
+                s('  (DO_sat[i] - DO_obs[i])')
+              )
             )
-          )
-        ) else if(ode_method == 'trapezoid') c(
-          comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-          s('coef_GPP', N('i'), `<b-`, '(frac_GPP', N('i'), ' + frac_GPP', N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
-          s('coef_ER', N('i'), `<b-`, '(frac_ER',  N('i'), ' + frac_ER',  N('i+1'), ')/2.0 ', e('/'), ' ((depth', N('i'), ' + depth', N('i+1'), ')/2.0)'),
-          switch(
-            deficit_src,
-            DO_mod = c(
-              s('coef_K600_part', N('i'), `<b-`, '(KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0'),
-              s('DO_sat_pairmean', N('i'), `<b-`, '(DO_sat', N('i'), ' + DO_sat', N('i+1'), ')/2.0')
-            ),
-            DO_obs = c(
-              p('coef_K600_full', N('i'), `<b-`, '(KO2_conv', N('i'), ' + KO2_conv', N('i+1'), ')/2.0 ', e('*'), ' (frac_D', N('i'), ' + frac_D', N('i+1'), ')/2.0 ', e('*')),
-              s('  (DO_sat', N('i'), ' + DO_sat', N('i+1'), ' - DO_obs', N('i'), ' - DO_obs', N('i+1'), ')/2.0')
+          ) else if(ode_method == 'trapezoid') c(
+            comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
+            s('coef_GPP[i] = (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+            s('coef_ER[i] = (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+            switch(
+              deficit_src,
+              DO_mod = c(
+                s('coef_K600_part[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
+                s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
+              ),
+              DO_obs = c(
+                p('coef_K600_full[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
+                s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
+              )
             )
+          ),
+          
+          # dDO pre-calculations
+          if(dDO_model) c(
+            comment('dDO observations'),
+            s('dDO_obs[i] = DO_obs[i+1] - DO_obs[i]')
           )
         ),
-        
-        # dDO pre-calculations
-        if(dDO_model) c(
-          comment('dDO observations'),
-          s('dDO_obs', N('i'), `<b-`, 'DO_obs', N('i+1'), ' - DO_obs', N('i'), '')
-        )
-        
-        # # vector of ones pre-calculations
-        # if(dDO_model && engine == 'jags') c(
-        #   comment('ones vector for expanding daily vectors into matrices'),
-        #   p('for (i in 1:(n-1)) {'),
-        #   indent(s('ones[i] ', `<b-`, ' 1')),
-        #   p('}')
-        # )
+        p('}')
       ),
-      p('}')
-    ),
-    
-    # close out transformed data (stan) or data (jags)
-    c(
       '}',''
     ),
     
-    #### Stan parameters; omitted from JAGS ####
-    if(engine == 'stan') c(
-      'parameters {',
+    #### parameters ####
+    c('parameters {',
       indent(
         # daily metabolism rate parameters
         c('vector[d] GPP_daily;',
@@ -349,16 +257,11 @@ mm_generate_mcmc_file <- function(
       '}',''
     ),
     
-    #### Stan transformed parameters; JAGS model ####
-    # transformed parameters = statements evaluated once per leapfrog step
-    if(engine == 'stan') c(
-      'transformed parameters {'
-    ) else if(engine == 'jags') c(
-      'model {'
-    ),
+    #### transformed parameters ####
+    'transformed parameters {', # transformed parameters = statements evaluated once per leapfrog step
     
     # transformed parameter declarations
-    if(engine == 'stan') chunk(
+    chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
         'real K600_daily_sigma;',
@@ -390,17 +293,17 @@ mm_generate_mcmc_file <- function(
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        s('K600_daily_sigma', `<b-`, 'exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
+        s('K600_daily_sigma = exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
       ),
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
-        s('err_obs_iid_sigma', `<b-`, 'exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+        s('err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
       if(err_proc_acor) c(
-        # s('err_proc_acor_phi, `<b-`, '??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-        s('err_proc_acor_sigma', `<b-`, 'exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+        # s('err_proc_acor_phi, ' = ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        s('err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
       if(err_proc_iid) c(
-        s('err_proc_iid_sigma', `<b-`, 'exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+        s('err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
     ),
     
     # K600_daily model
@@ -408,13 +311,8 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_pred', `<b-`, 'K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
-        binned=c(
-          # JAGS might not require a loop here
-          condloop(
-            s('K600_daily_pred', M('j'), `<b-`, 'K600_daily_beta[discharge_bin_daily', M('j'), ']')
-          )
-        )
+        linear=s('K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
+        binned=s('K600_daily_pred = K600_daily_beta[discharge_bin_daily]')
       )
     ),
     
@@ -429,9 +327,9 @@ mm_generate_mcmc_file <- function(
       # process error (always looped, vectorized across days)
       if(err_proc_acor) c(
         p(''),
-        s('err_proc_acor', N('1'), `<b-`, 'err_proc_acor_inc', N('1'), ''),
+        s('err_proc_acor[1] = err_proc_acor_inc[1]'),
         p('for(i in 1:(n-2)) {'),
-        s('  err_proc_acor', N('i+1'), `<b-`, 'err_proc_acor_phi * err_proc_acor', N('i'), ' + err_proc_acor_inc', N('i+1'), ''),
+        s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
         p('}')
       ),
       
@@ -443,12 +341,12 @@ mm_generate_mcmc_file <- function(
         comment("dDO model"),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('dDO_mod', N('i'), `<b-`),
+          p('dDO_mod[i] = '),
           indent(
-            if(err_proc_acor) p('err_proc_acor', N('i'), ' +'),
-            p('GPP_daily  ', e('*'), ' coef_GPP', N('i'), ' +'),
-            p('ER_daily   ', e('*'), ' coef_ER', N('i'), ' +'),
-            s('K600_daily ', e('*'), ' coef_K600_full', N('i'), '')
+            if(err_proc_acor) p('err_proc_acor[i] +'),
+            p('GPP_daily  .* coef_GPP[i] +'),
+            p('ER_daily   .* coef_ER[i] +'),
+            s('K600_daily .* coef_K600_full[i]')
           )
         ),
         p('}')
@@ -459,61 +357,52 @@ mm_generate_mcmc_file <- function(
       if(DO_model) c(
         p(''),
         comment("DO model"),
-        s('DO_mod', N('1'), `<b-`, 'DO_obs_1'),
+        s('DO_mod[1] = DO_obs_1'),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod', N('i+1'), `<b-`, '('),
-          p('  DO_mod', N('i'), ' +'),
+          p('DO_mod[i+1] = ('),
+          p('  DO_mod[i] +'),
           if(dDO_model) c(
-            s('  dDO_mod', N('i'), ' + err_proc_iid', N('i'), ')')
+            s('  dDO_mod[i] + err_proc_iid[i])')
           ) else c(
-            if(err_proc_iid) p('  err_proc_iid', N('i'), ' +'),
-            if(err_proc_acor) p('  err_proc_acor', N('i'), ' +'),
-            p('  GPP_daily ', e('*'), ' coef_GPP', N('i'), ' +'),
-            p('  ER_daily ', e('*'), ' coef_ER', N('i'), ' +'),
+            if(err_proc_iid) p('  err_proc_iid[i] +'),
+            if(err_proc_acor) p('  err_proc_acor[i] +'),
+            p('  GPP_daily .* coef_GPP[i] +'),
+            p('  ER_daily .* coef_ER[i] +'),
             switch(
               ode_method,
               'euler' = c(
-                p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat', N('i'), ' - DO_mod', N('i'), ')'),
+                p('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])'),
                 s(')')),
               'trapezoid' = c(
-                p('  K600_daily ', e('*'), ' coef_K600_part', N('i'), ' ', e('*'), ' (DO_sat_pairmean', N('i'), ' - DO_mod', N('i'), '/2.0)'),
-                s(') ', e('/'), ' (1.0 + K600_daily ', e('*'), ' coef_K600_part', N('i'), ' / 2.0)'))
+                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
+                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
             )
           )
         ),
         p('}')
       )
     ),
+    '}','',
     
-    if(engine == 'stan') c(
-      '}',''
-    ) else if(engine == 'jags') c(
-      ''
-    ),
-    
-    #### Stan model; JAGS model ####
-    if(engine == 'stan') c(
-      'model {'
-    ),
+    #### model ####
+    'model {',
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
       p('for(i in 1:(n-1)) {'),
       indent(
-        condloop(
-          if(err_proc_iid) c(
-            comment('Independent, identically distributed process error'),
-            if(dDO_model) s(
-              'dDO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('dDO_mod', MN('j','i')), sigma='err_proc_iid_sigma')
-            ) else s(
-              'err_proc_iid', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
-            )
-          ),
-          if(err_proc_acor) c(
-            comment('Autocorrelated process error'),
-            s('err_proc_acor_inc', MN('j','i'), ' ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+        if(err_proc_iid) c(
+          comment('Independent, identically distributed process error'),
+          if(dDO_model) s(
+            'dDO_obs[i] ~ ', f('normal', mu=p('dDO_mod[i]'), sigma='err_proc_iid_sigma')
+          ) else s(
+            'err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
           )
+        ),
+        if(err_proc_acor) c(
+          comment('Autocorrelated process error'),
+          s('err_proc_acor_inc[i] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
         )
       ),
       p('}'),
@@ -528,12 +417,10 @@ mm_generate_mcmc_file <- function(
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
-      #s('DO_mod', N('1'), ' ~ normal(DO_obs_1, err_obs_iid_sigma)'),
+      #s('DO_mod[1] ~ normal(DO_obs_1, err_obs_iid_sigma)'),
       p('for(i in 2:n) {'),
       indent(
-        condloop(
-          s('DO_obs', MN('j','i'), ' ~ ', f('normal', mu=p('DO_mod', MN('j','i')), sigma='err_obs_iid_sigma'))
-        )
+        s('DO_obs[i] ~ ', f('normal', mu=p('DO_mod[i]'), sigma='err_obs_iid_sigma'))
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
@@ -541,14 +428,12 @@ mm_generate_mcmc_file <- function(
     
     indent(
       comment('Daily metabolism priors'),
-      condloop(
-        s('GPP_daily', M('j'), ' ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
-        s('ER_daily', M('j'), ' ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
-        if(pool_K600 %in% c('none','normal')) s(
-          'K600_daily', M('j'), ' ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
-        ) else if(pool_K600 %in% c('linear','binned')) s(
-          'K600_daily', M('j'), ' ~ ', f('normal', mu=paste0('K600_daily_pred', M('j')), sigma='K600_daily_sigma')
-        )
+      s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
+      s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
+      if(pool_K600 %in% c('none','normal')) s(
+        'K600_daily ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
+      ) else if(pool_K600 %in% c('linear','binned')) s(
+        'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
       )
     ),
     
@@ -560,10 +445,7 @@ mm_generate_mcmc_file <- function(
           s('K600_daily_mu ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
         ),
         if(pool_K600 %in% c('linear','binned')) c(
-          condloop(
-            iter='k', over=switch(pool_K600, linear='1:2', binned='1:b'),
-            s('K600_daily_beta', M('k'), ' ~ ', f('normal', mu=paste0('K600_daily_beta_mu', M('k')), sigma=paste0('K600_daily_beta_sigma', M('k'))))
-          )
+          s('K600_daily_beta ~ ', f('normal', mu='K600_daily_beta_mu', sigma='K600_daily_beta_sigma'))
         ),
         s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))
       )
@@ -599,7 +481,7 @@ mm_generate_mcmc_files <- function() {
     GPP_fun='linlight',
     ER_fun='constant',
     deficit_src=c('DO_mod','DO_obs'),
-    engine=c('stan','jags'),
+    engine='stan',
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   

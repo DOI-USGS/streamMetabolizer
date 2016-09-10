@@ -8,7 +8,7 @@ format_mcmc_mat_split(mcmc_mat, names_params, names_stats, keep_mcmc,
   runmcmc_out)
 }
 \arguments{
-\item{mcmc_mat}{matrix as extracted from JAGS or Stan}
+\item{mcmc_mat}{matrix as extracted from Stan}
 
 \item{names_params}{character vector of the names of the parameters}
 
