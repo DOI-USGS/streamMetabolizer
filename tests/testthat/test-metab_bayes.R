@@ -12,61 +12,86 @@ manual_test4 <- function() {
   dat <- mutate(data_metab('3', res='30'), discharge=3)
   sp <- specs("b_Kl_oipi_eu_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=200, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
   mm <- metab(specs=sp, data=dat)
-  show_log(mm)
-  plot_metab_preds(mm)
-  plot_DO_preds(mm)
-  traceplot(get_mcmc(mm), pars='GPP_daily')
+  get_log(mm)
 }
 
-manual_test5 <- function() {
-  test_that("error-free models can be run with split or combined dates", {
-    # this test doesn't actually do any test-that checks
-    sp <- function(split_dates, engine) { replace(
-      specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine),
-            n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
-      'split_dates', split_dates
-    ) }
+manual_tests <- function() {
+  
+  test_that("lots of bayesian models available", {
+    expect_lt(42, length(mm_valid_names('bayes')))
+  })
+  
+  test_that("simple bayesian models run and implement the interface", {
+    
+    # simple test data (except for being light saturating)
     dat <- data_metab('1', res='30')
-    # new compilation of any Stan model gives deprecation warnings as of 
-    # 7/12/16; THESE ARE OKAY. subsequent runs of the compiled Stan model are 
-    # quieter
-    mm <- metab(sp(FALSE,'stan'), dat)
-    expect_true(grepl("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)))
-    mm <- metab(sp(TRUE, 'stan'), dat)
-    dat <- data_metab('3', res='30')
-    mm <- metab(sp(FALSE,'stan'), dat)
-    mm <- metab(sp(TRUE, 'stan'), dat)
     
-    # ran into an interesting issue - shouldn't be bayes specific, but this is where I found it.
-    # the error message (occurs during predict_DO, on about the 3rd call to metab()):
-    # > mm <- metab(sp(FALSE,'stan'), dat)
-    # Error in .Call("call_rkFixed", as.double(y), as.double(times), Func, Initfunc,  : 
-    #   "call_rkFixed" not resolved from current namespace (deSolve)
-    # Error in .C("unlock_solver") : 
-    #   "unlock_solver" not resolved from current namespace (deSolve)
+    # 1-core model
+    mm <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE) %>%
+      specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
+      metab(data=dat)
     
-    # the solution may be to call library(deSolve) before loading/running
-    # streamMetabolizer (see
-    # http://r.789695.n4.nabble.com/deSolve-unresolved-namespace-error-td4679888.html)
+    # run the model through its interface paces
+    expect_equal(1, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days))) # breaks. picking up the wrong log file.
+    expect_lt(get_fitting_time(mm)['elapsed'], 120)
+    expect_lt(rmse_DO(predict_DO(mm)), 0.2)
+    plot_metab_preds(mm)
+    plot_DO_preds(mm)
+    traceplot(get_mcmc(mm), pars='GPP_daily')
+    
+    
+    # 4-core model
+    mm <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE) %>%
+      specs(n_chains=3, n_cores=4, burnin_steps=300, saved_steps=100) %>%
+      metab(data=dat)
+    
+    # run the model through its interface paces
+    expect_equal(3, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days))) # breaks. picking up the wrong log file.
+    expect_lt(get_fitting_time(mm)['elapsed'], 120)
+    expect_lt(rmse_DO(predict_DO(mm)), 0.2)
+    plot_metab_preds(mm)
+    plot_DO_preds(mm)
+    traceplot(get_mcmc(mm), pars='GPP_daily')
     
   })
-}
+  
+  # sp() applies to next two test_that calls
+  sp <- function(split_dates) { replace(
+    specs(mm_name('bayes', err_proc_iid=FALSE),
+          n_cores=3, n_chains=3, burnin_steps=300, saved_steps=200, verbose=FALSE),
+    'split_dates', split_dates
+  ) }
 
+  test_that("error-free models can be run with split or combined dates", {
+    dat <- data_metab('1', res='30')
+    nosplit <- metab(sp(split_dates=FALSE), dat)
+    split <- metab(sp(split_dates=TRUE), dat)
+    # expect the same fitted parameter dimensions and similar estimates by either method
+    dim(get_params(nosplit)) == dim(get_params(split))
+    expect_true(max(abs(get_params(nosplit)[c('GPP.daily','ER.daily','K600.daily')] / get_params(split)[c('GPP.daily','ER.daily','K600.daily')] - 1)) < 0.2)
+    
+    dat <- data_metab('3', res='30')
+    nosplit <- metab(sp(split_dates=FALSE), dat)
+    split <- metab(sp(split_dates=TRUE), dat)
+    # expect the same fitted parameter dimensions and similar estimates by either method
+    dim(get_params(nosplit)) == dim(get_params(split))
+    expect_true(max(abs(get_params(nosplit)[c('GPP.daily','ER.daily','K600.daily')] / get_params(split)[c('GPP.daily','ER.daily','K600.daily')] - 1)) < 0.2)
+    
+    # this error message sometimes occurs here and is documented in GitHub issue #225:
+    # Error in .Call("call_rkFixed", as.double(y), as.double(times), Func, Initfunc,  :
+    #   "call_rkFixed" not resolved from current namespace (deSolve)
+    # Error in .C("unlock_solver") :
+    #   "unlock_solver" not resolved from current namespace (deSolve)
+  })
 
-manual_test6 <- function() {
   test_that("error and warning messages are printed with the mm object if present", {
-    # this test doesn't actually do any test-that checks
-    sp <- function(split_dates, engine) { replace(
-      specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine),
-            n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
-      'split_dates', split_dates
-    ) }
     dat <- data_metab('1', res='30', flaws=c('missing start'))
-    mm <- metab(sp(FALSE,'stan'), dat) # Modeling failed: argument is of length zero
-    mm <- metab(sp(TRUE, 'stan'), dat) # Modeling failed: no valid days of data
+    expect_warning(metab(sp(FALSE,'stan'), dat), "Modeling failed: no valid days of data")
+    expect_warning(metab(sp(TRUE,'stan'), dat), "Modeling failed: no valid days of data")
+    
     dat <- data_metab('3', res='30', flaws=c('missing middle'))
-    mm <- metab(sp(FALSE,'stan'), dat) # no problem
-    mm <- metab(sp(TRUE, 'stan'), dat) # no problem
+    expect_equal(get_params(metab(sp(FALSE,'stan'), dat))$errors, c('','uneven timesteps',''))
+    expect_equal(get_params(metab(sp(TRUE, 'stan'), dat))$errors, c('','uneven timesteps',''))
   })
 }
 
@@ -224,30 +249,6 @@ manual_test3 <- function() {
   traceplot(get_mcmc(mm), pars=c('GPP_daily[7]','ER_daily[7]','K600_daily[7]','err_obs_iid_sigma'), inc_warmup=FALSE)
 }
 
-# The tests below cannot touch on all possible Bayesian models; that's
-# work for a computing cluster. Instead we'll just inspect key features and a
-# couple of simple models.
-
-# even these simple tests take too long to do all the time.
-manual_test1 <- function() {
-  test_that("simple bayesian models run correctly", {
-    
-    # lots of bayesian models available
-    expect_lt(42, length(mm_valid_names('bayes')))
-    
-    # get simplest possible data
-    dat <- data_metab('1', res='30')
-    
-    # 1-day model in stan
-    mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
-      specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
-      metab(data=dat)
-    expect_lt(get_fitting_time(mmb)['elapsed'], 120)
-    expect_lt(rmse_DO(predict_DO(mmb)), 0.2) #, info='stan')
-    # plot_DO_preds(predict_DO(mmb))
-    
-  })
-}
 
 # takes too long to do all the time. also, saving and reloading a stan model
 # doesn't work!
