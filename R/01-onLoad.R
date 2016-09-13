@@ -9,7 +9,7 @@
   
   GRAN_update_code <- paste0(
     '  update.packages(oldPkgs=c("streamMetabolizer","unitted"),\n',
-    '    dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))')
+    '    dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))')
   github_owner <- 'USGS-R'
   github_branch <- 'develop'
   github_pkg_ref <- paste0(github_owner,'/',pkgname,'@',github_branch)
@@ -17,7 +17,7 @@
     '  devtools::install_github("',github_pkg_ref,'")')
   
   tryCatch({
-    GRAN_pkg <- available.packages(contrib.url("http://owi.usgs.gov/R"))
+    GRAN_pkg <- available.packages(contrib.url("https://owi.usgs.gov/R"))
     GRAN_version <- package_version(GRAN_pkg[[pkgname, 'Version']])
     local_version <- packageVersion(pkgname)
     if(local_version < GRAN_version) {
