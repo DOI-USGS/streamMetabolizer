@@ -5,8 +5,16 @@ NULL
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 #' temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-#' and \code{\link{specs}} for relevant options for the \code{specs} 
-#' argument.
+#' and \code{\link{specs}} for relevant options for the \code{specs} argument.
+#' 
+#' As of summer and fall 2016, a new compilation of any Stan model gives
+#' deprecation warnings including \code{typedef 'size_type' locally defined but
+#' not used [-Wunused-local-typedefs]}, \code{typedef 'index_range' locally
+#' defined but not used [-Wunused-local-typedefs]}, \code{typedef 'index'
+#' locally defined but not used [-Wunused-local-typedefs]}, and \code{'void
+#' stan::math::set_zero_all_adjoints()' defined but not used
+#' [-Wunused-function]}. THESE ARE OKAY. Subsequent runs of the compiled Stan
+#' model will be quieter, and the model will work.
 #' 
 #' @author Alison Appling, Bob Hall
 #'   
@@ -226,7 +234,7 @@ metab_bayes <- function(
   if(success) {
     mm@data <- predict_DO(mm)
   } else {
-    warning(paste0('Modeling failed:\n', paste0(bayes_all$errors, collapse='\n')))
+    warning(paste0('Modeling failed: ', paste0(bayes_all$errors, collapse='\n')))
   }
   
   # Return
@@ -347,7 +355,7 @@ bayes_allply <- function(
   data_list <- NULL # (in case it doesn't get assigned in the tryCatch)
   bayes_allday <- withCallingHandlers(
     tryCatch({
-      if(nrow(data_all) == 0) stop("no valid days of data")
+      if(is.null(data_all) || nrow(data_all) == 0) stop("no valid days of data")
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
         data=data_all, data_daily=data_daily_all, ply_date=NA,

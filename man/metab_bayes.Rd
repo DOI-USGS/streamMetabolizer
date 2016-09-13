@@ -39,8 +39,17 @@ A metab_bayes object containing the fitted model. This object can be
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-and \code{\link{specs}} for relevant options for the \code{specs} 
-argument.
+and \code{\link{specs}} for relevant options for the \code{specs} argument.
+}
+\details{
+As of summer and fall 2016, a new compilation of any Stan model gives
+deprecation warnings including \code{typedef 'size_type' locally defined but
+not used [-Wunused-local-typedefs]}, \code{typedef 'index_range' locally
+defined but not used [-Wunused-local-typedefs]}, \code{typedef 'index'
+locally defined but not used [-Wunused-local-typedefs]}, and \code{'void
+stan::math::set_zero_all_adjoints()' defined but not used
+[-Wunused-function]}. THESE ARE OKAY. Subsequent runs of the compiled Stan
+model will be quieter, and the model will work.
 }
 \examples{
 \dontrun{
