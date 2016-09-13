@@ -21,12 +21,12 @@ This package is in development. We are using it for our own early applications a
 The most stable+current version of this package can be installed with this R command:
 ```r
 install.packages("streamMetabolizer", dependencies=TRUE, 
-  repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 and updated with this command:
 ```r
 update.packages(oldPkgs=c("streamMetabolizer","unitted"),
-  dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
+  dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
 
 ### For the adventurous
@@ -39,7 +39,7 @@ If you go this route, you will need to install the package dependencies separate
 install.packages(
   c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
     "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
-  repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 You can then install the most cutting edge version of streamMetabolizer with this command:
 ```r
