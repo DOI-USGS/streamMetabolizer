@@ -885,6 +885,7 @@ print.logs_metab <- function(x, ...) {
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @import dplyr
+#' @importFrom unitted get_units u
 #' @export
 #' @family predict_metab
 predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {

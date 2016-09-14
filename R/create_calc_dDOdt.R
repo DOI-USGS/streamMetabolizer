@@ -47,7 +47,7 @@
 #'   parameters should be included in this list, create \code{dDOdt} with this 
 #'   function and then call \code{environment(dDOdt)$metab.needs})
 #' @import dplyr
-#' @import unitted
+#' @importFrom unitted v
 #' @importFrom stats approxfun
 #' @export
 #' @examples
