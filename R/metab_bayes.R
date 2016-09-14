@@ -640,20 +640,26 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   }
   stan_mobj <- readRDS(mobj_path)
   
+  # make note of existing log files so we don't read them later
+  oldlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
+  
+  # run Stan
   if(verbose) message("sampling Stan model")
-  runstan_out <- rstan::sampling(
-    object=stan_mobj,
-    data=data_list,
-    pars=params_out,
-    include=TRUE,
-    chains=n_chains,
-    warmup=burnin_steps,
-    iter=saved_steps+burnin_steps,
-    thin=thin_steps,
-    init="random",
-    verbose=verbose,
-    open_progress=FALSE,
-    cores=n_cores)
+  consolelog <- capture.output(
+    runstan_out <- rstan::sampling(
+      object=stan_mobj,
+      data=data_list,
+      pars=params_out,
+      include=TRUE,
+      chains=n_chains,
+      warmup=burnin_steps,
+      iter=saved_steps+burnin_steps,
+      thin=thin_steps,
+      init="random",
+      verbose=verbose,
+      open_progress=FALSE,
+      cores=n_cores),
+    split=verbose)
 
   # this is a good place for a breakpoint when running small numbers of models
   # manually (or keep_mcmc also helps with inspection)
@@ -681,9 +687,9 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   } 
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
-  logfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
-  logfile <- logfiles[which.max(file.info(logfiles)$mtime)]
-  log <- if(length(logfile) > 0) readLines(logfile) else NA
+  newlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
+  logfile <- setdiff(newlogfiles, oldlogfiles)
+  log <- if(length(logfile) > 0) readLines(logfile) else consolelog
   stan_out <- c(stan_out, c(list(log=log), if(exists('compile_log')) list(compile_log=compile_log)))
   
   return(stan_out)

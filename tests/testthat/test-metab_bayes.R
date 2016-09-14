@@ -1,21 +1,16 @@
 context("metab_bayes")
 
-manual_test4 <- function() {
-  # these three lines work within testthat() calls:
-  skip_on_cran()
-  skip_on_travis()
-  skip_on_appveyor()
-  skip_if_not_installed('deSolve')
+# # NB: these lines work within testthat() calls:
+# skip_on_cran()
+# skip_on_travis()
+# skip_on_appveyor()
+# skip_if_not_installed('deSolve')
+
+manual_tests <- function() {
   
   library(streamMetabolizer)
   library(dplyr)
-  dat <- mutate(data_metab('3', res='30'), discharge=3)
-  sp <- specs("b_Kl_oipi_eu_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=200, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
-  mm <- metab(specs=sp, data=dat)
-  get_log(mm)
-}
-
-manual_tests <- function() {
+  library(deSolve) # for that .C("unlock_solver") issue
   
   test_that("lots of bayesian models available", {
     expect_lt(42, length(mm_valid_names('bayes')))
@@ -32,7 +27,7 @@ manual_tests <- function() {
       metab(data=dat)
     
     # run the model through its interface paces
-    expect_equal(1, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days))) # breaks. picking up the wrong log file.
+    expect_equal(1, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days)))
     expect_lt(get_fitting_time(mm)['elapsed'], 120)
     expect_lt(rmse_DO(predict_DO(mm)), 0.2)
     plot_metab_preds(mm)
@@ -42,11 +37,11 @@ manual_tests <- function() {
     
     # 4-core model
     mm <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE) %>%
-      specs(n_chains=3, n_cores=4, burnin_steps=300, saved_steps=100) %>%
+      specs(n_chains=2, n_cores=4, burnin_steps=300, saved_steps=100) %>%
       metab(data=dat)
     
     # run the model through its interface paces
-    expect_equal(3, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days))) # breaks. picking up the wrong log file.
+    expect_equal(2, length(grep("SAMPLING FOR MODEL 'b_np_oi_tr_plrckm' NOW", get_log(mm)$MCMC_All_Days)))
     expect_lt(get_fitting_time(mm)['elapsed'], 120)
     expect_lt(rmse_DO(predict_DO(mm)), 0.2)
     plot_metab_preds(mm)
@@ -63,7 +58,7 @@ manual_tests <- function() {
   ) }
 
   test_that("error-free models can be run with split or combined dates", {
-    dat <- data_metab('1', res='30')
+    dat <- data_metab('10', res='30')
     nosplit <- metab(sp(split_dates=FALSE), dat)
     split <- metab(sp(split_dates=TRUE), dat)
     # expect the same fitted parameter dimensions and similar estimates by either method
