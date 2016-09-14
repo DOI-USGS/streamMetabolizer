@@ -892,10 +892,12 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # with Bayesian models, the daily mean metabolism values of GPP, ER, and D
   # should have been produced during the model fitting
   
-  # decide on the column names to pull and their new values
-  fit.names <- expand.grid(c('GPP','ER'), '_daily_', c('50pct','2.5pct','97.5pct'), stringsAsFactors=FALSE) %>% #,'D'
-    apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
-  metab.names <- expand.grid(c('GPP','ER'), c('','.lower','.upper'), stringsAsFactors=FALSE) %>% #,'D'
+  # decide on the column names to pull and their new values. fit.names and metab.names should be parallel
+  fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
+    select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
+    apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_daily_'))))
+  metab.names <- expand.grid(c('','.lower','.upper'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
+    select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
     apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
   
   # pull and retrieve the columns
