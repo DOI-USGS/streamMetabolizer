@@ -331,6 +331,46 @@ default should rarely be overridden, because their values will be determined
 based on other arguments. Relevant arguments that do have a default can, and 
 often should, be overridden to tailor the model to your needs.
 }
+\section{Relevant arguments}{
+
+  
+  * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
+  keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
+  GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_out, n_chains,
+  n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
+  other arguments depends on features of the model structure, as from 
+  \code{mm_parse_name(model_name)}: \itemize{ \item If
+  \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}.
+  \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu,
+  K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
+  \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu,
+  K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
+  \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num,
+  K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma,
+  K600_daily_sigma_location, K600_daily_sigma_scale}. \item If
+  \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
+  err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
+  \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
+  err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. \item If 
+  \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
+  err_proc_iid_sigma_scale}.}
+  
+  * metab_mle: \code{model_name, day_start, day_end, day_tests, 
+  init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
+  init.K600.daily}
+  
+  * metab_night: \code{model_name, day_start, day_end, day_tests}
+  
+  * metab_Kmodel: \code{model_name, engine, day_start, day_end, day_tests, 
+  weights, filters, predictors, transforms, other_args}. Note that the 
+  defaults for \code{weights}, \code{predictors}, \code{filters}, and 
+  \code{transforms} are adjusted according to the \code{engine} implied by 
+  \code{model_name}.
+  
+  * metab_sim: \code{model_name, day_start, day_end, day_tests, 
+  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+}
+
 \section{MLE Initial Values}{
 
   

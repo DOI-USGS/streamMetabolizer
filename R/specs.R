@@ -34,7 +34,7 @@
 #'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
 #'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. \item If 
 #'   \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
-#'   err_proc_iid_sigma_scale}.|
+#'   err_proc_iid_sigma_scale}.}
 #'   
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
 #'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
