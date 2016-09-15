@@ -29,16 +29,12 @@ setMethod(
     }
     
     # print fitting warnings & errors
+    warn_msgs <- summarize_stopwarn_msgs(params$warnings)
+    stop_msgs <- summarize_stopwarn_msgs(params$errors)
     fit <- get_fit(object)
-    if(is.data.frame(fit) && all(c('warnings','errors') %in% names(fit))) {
-      #if(!exists('valid_day', fit)) fit$valid_day <- TRUE
-      warn_msgs <- summarize_stopwarn_msgs(fit$warnings) # [fit$valid_day]
-      stop_msgs <- summarize_stopwarn_msgs(fit$errors) # [fit$valid_day]
-    } else if(is.list(fit)) {
-      warn_msgs <- fit$warnings
-      stop_msgs <- fit$errors
-    } else {
-      warn_msgs <- stop_msgs <- character(0)
+    if(!is.data.frame(fit) && is.list(fit)) {
+      warn_msgs <- c(fit$warnings, warn_msgs)
+      stop_msgs <- c(fit$errors, stop_msgs)
     }
     if(length(warn_msgs) > 0) cat("Fitting warnings:", paste0('  ', warn_msgs, collapse='\n'), sep='\n')
     if(length(stop_msgs) > 0) cat("Fitting errors:", paste0('  ', stop_msgs, collapse='\n'), sep='\n')
@@ -51,9 +47,8 @@ setMethod(
         if(!is.null(metab_preds)) {
           cat("Predictions (", nrow(metab_preds), " date", if(nrow(metab_preds)!=1) "s", "):\n", sep='')
           pretty_print_ddat(metab_preds, 'msgs.pred')
-          #metab_preds$valid_day <- !grepl('e', metab_preds$msgs.fit) # no sense reporting fitting errors twice
-          warn_msgs <- c(warn_msgs, summarize_stopwarn_msgs(metab_preds$warnings)) # [metab_preds$valid_day]
-          stop_msgs <- c(stop_msgs, summarize_stopwarn_msgs(metab_preds$errors)) # [metab_preds$valid_day]
+          warn_msgs <- c(warn_msgs, summarize_stopwarn_msgs(metab_preds$warnings))
+          stop_msgs <- c(stop_msgs, summarize_stopwarn_msgs(metab_preds$errors))
         }
       }, error=function(err) {
         stop_msgs <<- c(stop_msgs, err$message)
@@ -73,6 +68,7 @@ setMethod(
 #' 
 #' @keywords internal
 summarize_stopwarn_msgs <- function(msgs) {
+  if(is.null(msgs)) return(c())
   split_msgs <- unlist(strsplit(msgs, '; '))
   tbl_msgs <- sort(table(split_msgs))
   if(length(tbl_msgs) == 0) {
@@ -89,14 +85,33 @@ summarize_stopwarn_msgs <- function(msgs) {
 #' 
 #' Compress two columns of warning and error messages into one short-hand column
 #' 
+#' @param ddat a data.frame including warnings and errors columns
+#' @param colname the name of the column where the summary should be placed
+#' @param warnings.overall any general warnings (for the whole model) to be
+#'   included in the summary
+#' @param errors.overall any general errors (for the whole model) to be included
+#'   in the summary
 #' @import dplyr
 #' @keywords internal
-compress_msgs <- function(ddat, colname='messages') {
+compress_msgs <- function(ddat, colname='messages', warnings.overall=c(), errors.overall=c()) {
+  generr <- length(errors.overall) > 0 | grepl("overall errors", ddat$errors)
+  genwarn <- length(warnings.overall) > 0 | grepl("overall warnings", ddat$warnings)
+  dateerr <- gsub("overall errors(;)*", "", ddat$errors)
+  datewarn <- gsub("overall warnings(;)*", "", ddat$warnings)
   ddat %>%
-    mutate(messages = ifelse(
-      errors != '', 
-      ifelse(warnings != '', 'e w', 'e  '), 
-      ifelse(warnings != '', '  w', '   '))) %>%
+    mutate(
+      messages = paste(
+        # general errors and warnings
+        ifelse(
+          generr,
+          ifelse(genwarn, 'w e', '  e'),
+          ifelse(genwarn, 'w  ', '   ')),
+        # date-specific errors and warnings
+        ifelse(
+          dateerr != '', 
+          ifelse(datewarn != '', 'W E', '  E'), 
+          ifelse(datewarn != '', 'W  ', '   '))
+      )) %>%
     select(-warnings, -errors) %>%
     rename_(.dots=setNames('messages', colname))
 }
