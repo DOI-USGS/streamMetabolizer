@@ -111,7 +111,7 @@ metab_bayes <- function(
     if(pool_K600 %in% c('binned')) {
       if(is.character(specs$K600_daily_beta_cuts)) {
         if(!requireNamespace('ggplot2', quietly=TRUE)) {
-          stop("need ggplot2 for K600_pool='binned' and character value for K600_daily_beta_cuts. ",
+          stop("need ggplot2 for K600_pool='binned' when is.character(K600_daily_beta_cuts). ",
                "either install the ggplot2 package or switch to a numeric vector for K600_daily_beta_cuts")
         }
         cut_fun <- switch(
@@ -134,9 +134,12 @@ metab_bayes <- function(
       }
       dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
       specs$K600_daily_beta_bins <- levels(cuts)
-      # you should be able to retrieve the bin names with
-      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily] or, later,
-      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily]
+      # you should be able to retrieve the bin names with 
+      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily]
+      # or, later, 
+      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily].
+      # specs$K600_daily_beta_breaks and specs$K600_daily_beta_bins are created
+      # here purely for manual inspection after the model has been run
     }
     
     # Use de-unitted version until we pack up the model to return
@@ -538,21 +541,7 @@ prepdata_bayes <- function(
       DO_obs   = time_by_date_matrix(data$DO.obs)
     ),
     
-    specs[c(
-      # Hyperparameters - this section should be identical to the 
-      # hyperparameters section of specs|bayes except that binned can omit 
-      # 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
-      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
-      switch(
-        features$pool_K600,
-        none=c('K600_daily_mu', 'K600_daily_sigma'),
-        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
-    )]
+    specs[specs$params_in]
   )
   
   data_list

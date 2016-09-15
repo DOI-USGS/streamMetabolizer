@@ -17,18 +17,18 @@
 #'   
 #'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
 #'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
-#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_out, n_chains,
-#'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
-#'   other arguments depends on features of the model structure, as from 
-#'   \code{mm_parse_name(model_name)}: \itemize{ \item If
-#'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}.
-#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu,
-#'   K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
-#'   \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu,
-#'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}.
-#'   \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num,
-#'   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma,
-#'   K600_daily_sigma_location, K600_daily_sigma_scale}. \item If
+#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_in, params_out,
+#'   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The
+#'   need for other arguments depends on features of the model structure, as
+#'   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
+#'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
+#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
+#'   K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
+#'   \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
+#'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
+#'   \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
+#'   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma, 
+#'   K600_daily_sigma_location, K600_daily_sigma_scale}. \item If 
 #'   \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
 #'   err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
 #'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
@@ -160,23 +160,25 @@
 #'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 #'   N(beta0_mu, beta0_sigma)
 #'   
-#' @param K600_daily_beta_num hyperparameter for pool_K600='binned'. The number 
-#'   of bins into which daily discharge values should be grouped. Each bin 
-#'   predicts a single value of K600_daily_pred, such that any day on which 
-#'   \code{discharge_bin_daily} equals that bin will have \code{K600_daily ~ 
-#'   N(K600_daily_beta[discharge_bin_daily], K600_daily_sigma)}
-#' @param K600_daily_beta_cuts hyperparameter for pool_K600='binned'. Either (1)
-#'   character of length 1 in c('number','interval') indicating how the bin cuts
-#'   should be determined, or (2) numeric (as in \code{breaks} in 
-#'   \code{\link[base]{cut}}) of length K600_daily_beta_num+1 giving the 
-#'   natural-log-space breakpoints defining the bins. For option 1, the 
-#'   implementation uses or is equivalent to the corresponding functions 
-#'   \code{\link[ggplot2]{cut_interval}} (to cut into bins having equal numeric 
-#'   ranges in natural log space) and \code{\link[ggplot2]{cut_number}} (to cut 
-#'   into bins having ~equal numbers of ln_discharge_daily observations). For 
-#'   option 2, make sure to include the full range of ln_discharge_daily, with 
-#'   the first value smaller than all ln_discharge_daily values and the last 
-#'   value greater than or equal to all ln_discharge_daily values.
+#' @param K600_daily_beta_num data configuration argument for 
+#'   pool_K600='binned'. The number of bins into which daily discharge values 
+#'   should be grouped. Each bin predicts a single value of K600_daily_pred, 
+#'   such that any day on which \code{discharge_bin_daily} equals that bin will 
+#'   have \code{K600_daily ~ N(K600_daily_beta[discharge_bin_daily], 
+#'   K600_daily_sigma)}
+#' @param K600_daily_beta_cuts data configuration argument for 
+#'   pool_K600='binned'. Either (1) character of length 1 in 
+#'   c('number','interval') indicating how the bin cuts should be determined, or
+#'   (2) numeric (as in \code{breaks} in \code{\link[base]{cut}}) of length 
+#'   K600_daily_beta_num+1 giving the natural-log-space breakpoints defining the
+#'   bins. For option 1, the implementation uses or is equivalent to the 
+#'   corresponding functions \code{\link[ggplot2]{cut_interval}} (to cut into 
+#'   bins having equal numeric ranges in natural log space) and 
+#'   \code{\link[ggplot2]{cut_number}} (to cut into bins having ~equal numbers 
+#'   of ln_discharge_daily observations). For option 2, make sure to include the
+#'   full range of ln_discharge_daily, with the first value smaller than all 
+#'   ln_discharge_daily values and the last value greater than or equal to all 
+#'   ln_discharge_daily values.
 #'   
 #' @param K600_daily_sigma_location hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The location (= meanlog) parameter of a 
@@ -238,11 +240,16 @@
 #'   plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
 #'   err_proc_iid_sigma_scale), type='l')}
 #'   
-#' @inheritParams prepdata_Kmodel
-#' @inheritParams Kmodel_allply
+#' @param params_in Character vector of hyperparameters to pass from the specs 
+#'   list into the data list for the MCMC run. Will be automatically generated
+#'   during the specs() call; need only be revised if you're using a custom
+#'   model that requires different hyperparameters.
 #'   
 #' @inheritParams prepdata_bayes
 #' @inheritParams mcmc_bayes
+#'   
+#' @inheritParams prepdata_Kmodel
+#' @inheritParams Kmodel_allply
 #'   
 #' @param err.obs.sigma The sd of observation error, or 0 for no observation 
 #'   error. Observation errors are those applied to DO.mod after generating the 
@@ -260,7 +267,7 @@
 #'   of predict_DO
 #'   
 #' @return an internally consistent list of arguments that may be passed to 
-#'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
+#'   \code{metab} as the \code{specs} argument
 #'   
 #' @examples
 #' specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
@@ -341,6 +348,9 @@ specs <- function(
   err_proc_iid_sigma_location = 0,
   err_proc_iid_sigma_scale = 4,
   
+  # vector of hyperparameters to include as MCMC data
+  params_in,
+  
   # inheritParams mcmc_bayes
   params_out,
   n_chains = 4,
@@ -414,6 +424,20 @@ specs <- function(
     features$type,
     'bayes' = {
       
+      # list the specs that will make it all the way to the Stan model as data
+      all_specs$params_in <- c(
+        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
+        switch(
+          features$pool_K600,
+          none=c('K600_daily_mu', 'K600_daily_sigma'),
+          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
+        if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
+        if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
+        if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
+      )
+      
       # list all needed arguments
       included <- c(
         # model setup
@@ -422,19 +446,12 @@ specs <- function(
         # date ply day_tests
         'day_start', 'day_end', 'day_tests',
         
-        # hyperparameters - this section should be identical to the 
-        # hyperparameters section of prepdata_bayes except that binned should
-        # include 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
-        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
-        switch(
-          features$pool_K600,
-          none=c('K600_daily_mu', 'K600_daily_sigma'),
-          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-          binned=c('K600_daily_beta_num', 'K600_daily_beta_cuts', 'K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
-        if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
-        if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
-        if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale'),
+        # discharge binning parameters are not params_in, though they're 
+        # conceptually related and therefore colocated in formals(specs)
+        if(features$pool_K600 == 'binned') c('K600_daily_beta_num', 'K600_daily_beta_cuts'),
+        
+        # params_in is both a vector of specs to include and a vector to include in specs
+        all_specs$params_in, 'params_in',
         
         # inheritParams mcmc_bayes
         'params_out', 'n_chains', 'n_cores', 
