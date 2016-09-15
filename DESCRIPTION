@@ -98,6 +98,7 @@ Collate:
     'mm_validate_data.R'
     'plot_DO_preds.R'
     'plot_metab_preds.R'
+    'revise.R'
     'specs.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
