@@ -306,8 +306,8 @@ bayes_1ply <- function(
   outdf <- data.frame(
     bayes_1day[!(names(bayes_1day) %in% c('mcmcfit','log','compile_log'))],
     valid_day=isTRUE(ply_validity),
-    warnings=paste0(unique(warn_strs), collapse="; "), 
-    errors=paste0(unique(stop_strs), collapse="; "),
+    warnings=paste0(trimws(unique(warn_strs)), collapse="; "), 
+    errors=paste0(trimws(unique(stop_strs)), collapse="; "),
     stringsAsFactors=FALSE) %>%
     mutate(log = list(bayes_1day$log))
   
@@ -430,8 +430,8 @@ bayes_allply <- function(
   # Return, reporting any results, warnings, and errors
   c(bayes_allday,
     list(mcmc_data=if(specs$keep_mcmc_data) data_list else NULL,
-         warnings=unique(warn_strs),
-         errors=unique(stop_strs)))
+         warnings=trimws(unique(warn_strs)),
+         errors=trimws(unique(stop_strs))))
 }
 
 
@@ -903,8 +903,36 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # pull and retrieve the columns
   fit <- metab_model@fit$daily %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
-  preds <- fit[c('date', fit.names, 'warnings', 'errors')] %>% 
-    setNames(c('date', metab.names, 'warnings', 'errors'))
+  preds <- fit[c('date', fit.names)] %>% 
+    setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
+  
+  # add date-specific fitting warnings and errors as msgs.fit. though these 
+  # could also be prediction messages if split_dates==T, we're planning to force
+  # split_dates to always be F in the near future. and whenever split_dates==F, 
+  # date-specific messages are all just date validity notes and belong in 
+  # fitting alone. general messages apply mostly to fitting so are noted here. 
+  # get_params also handles general messages, but because we don't call
+  # get_params from this predict_metab function, we need to add those messages
+  # separately here
+  if(!is.null(fit) && all(exists(c('date','warnings','errors'), fit))) {
+    messages <- fit %>%
+      select(date, warnings, errors) %>%
+      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
+    preds <- full_join(preds, messages, by='date', copy=TRUE)
+  } else {
+    preds <- mutate(preds, msgs.fit=NA)
+  }
+  
+  # add general fitting warnings and errors. almost always, general errors 
+  # during fitting prohibit prediction and general warnings don't affect 
+  # prediction; treat them here as if this is always the case (because 
+  # prediction-specific errors or warnings would probably be due to a poorly 
+  # written model, which I hope we'll have few of, and I don't know how I'd
+  # distinguish since both types of messages come out of Stan)
+  preds <- mutate(
+    preds,
+    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
+    errors=if(length(metab_model@fit$errors) > 0) NA else '')
   
   # attach.units if requested
   if(attach.units) {
@@ -932,6 +960,16 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
   }
   names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  if(length(metab_model@fit$warnings) > 0) {
+    omsg <- 'overall warnings'
+    dmsg <- metab_model@fit$daily$warnings
+    metab_model@fit$daily$warnings <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
+  if(length(metab_model@fit$errors) > 0) {
+    omsg <- 'overall errors'
+    dmsg <- metab_model@fit$daily$errors
+    metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
   metab_model@fit <- metab_model@fit$daily
   NextMethod()
 }

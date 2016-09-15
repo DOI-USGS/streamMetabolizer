@@ -4,7 +4,19 @@
 \alias{compress_msgs}
 \title{Compress warnings and errors in to a single column}
 \usage{
-compress_msgs(ddat, colname = "messages")
+compress_msgs(ddat, colname = "messages", warnings.overall = c(),
+  errors.overall = c())
+}
+\arguments{
+\item{ddat}{a data.frame including warnings and errors columns}
+
+\item{colname}{the name of the column where the summary should be placed}
+
+\item{warnings.overall}{any general warnings (for the whole model) to be
+included in the summary}
+
+\item{errors.overall}{any general errors (for the whole model) to be included
+in the summary}
 }
 \description{
 Compress two columns of warning and error messages into one short-hand column

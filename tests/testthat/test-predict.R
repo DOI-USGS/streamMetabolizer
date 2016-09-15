@@ -29,7 +29,7 @@ test_that('predict_metab works on allmodel types', {
   expect_equal(nrow(mp), 3)
   
   # metab_bayes
-  mm <- metab_bayes(specs(mm_name('bayes'), burnin_steps=100, saved_steps=100), data=dat) # breaks
+  mm <- metab_bayes(specs(mm_name('bayes'), burnin_steps=100, saved_steps=100), data=dat)
   mp <- predict_metab(mm)
   expect_equal(names(mp), expected_cols)
   expect_equal(nrow(mp), 3)
@@ -52,7 +52,7 @@ test_that('predict_metab works as expected for bad inputs', {
   mp <- predict_metab(mm)
   expect_equal(mp[3,'GPP'], NA_real_)
   expect_equal(mp[3,'ER'], NA_real_)
-  expect_equal(mp[3,'msgs.fit'], 'e  ')
+  expect_equal(mp[3,'msgs.fit'], '      E')
   expect_equal(mp[3,'warnings'], NA_character_)
   expect_equal(get_params(mm)[3,'errors'], "data don't start when expected")
   # notice bad days for metab_sim, which won't have broken on model fitting
@@ -66,7 +66,7 @@ test_that('predict_metab works as expected for bad inputs', {
   # should NOT stop on fitting if we said not to test
   mm <- metab_mle(specs(mm_name('mle'), day_tests=c()), data=dat)
   mp <- predict_metab(mm)
-  expect_true(all(mp$msgs.fit == '   '))
+  expect_true(all(mp$msgs.fit == '       '))
   expect_true(all(mp$warnings == ''))
   expect_true(all(mp$errors == ''))
   mm <- metab_sim(specs(mm_name('sim'), day_tests=c()), data=dat, data_daily=dat_daily)
@@ -82,7 +82,7 @@ test_that('predict_metab works as expected for bad inputs', {
   expect_message(mm <- metab_mle(specs(mm_name('mle'), day_start=2), data=dat), "differs from the model-fitting range")
   mp <- predict_metab(mm)
   expect_true(all(!is.na(mp$GPP)))
-  expect_true(all(mp$msgs.fit == '   '))
+  expect_true(all(mp$msgs.fit == '       '))
   expect_true(all(mp$warnings == ''))
   expect_true(all(mp$warnings == ''))
   expect_message(expect_error(predict_metab(mm, day_start=20, day_end=28, use_saved=FALSE), 'day_end - day_start < 24 hours'), "differs from the model-fitting range")
@@ -92,10 +92,10 @@ test_that('predict_metab works as expected for bad inputs', {
   expect_message(mm <- metab(specs(mm_name('night'), day_start=7), data=dat), "differs from the model-fitting range")
   expect_error(mp <- predict_metab(mm, day_start=7, day_end=36, use_saved=FALSE), 'day_end - day_start must not exceed 24 hours')
   # but should allow <24 hours if needed for nighttime regression
-  mm <- metab(specs(mm_name('night'), day_start=12, day_end=24), data=dat)
+  expect_message(mm <- metab(specs(mm_name('night'), day_start=12, day_end=24), data=dat), "GPP estimates are 0 because they're for nighttime only")
   mp <- predict_metab(mm)
   expect_true(all(!is.na(mp$ER)))
-  expect_true(all(mp$msgs.fit == '   '))
+  expect_true(all(mp$msgs.fit == '       '))
   expect_true(all(mp$warnings == ''))
   expect_true(all(mp$warnings == ''))
   # and should notice if we're ignoring the day_start and day_end values
