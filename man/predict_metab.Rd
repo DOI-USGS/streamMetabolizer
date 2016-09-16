@@ -73,8 +73,7 @@ Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_params}}, \code{\link{get_specs}},
   \code{\link{get_version}}, \code{\link{predict_DO}}
 
-Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
-  \code{\link{predict_metab.metab_bayes}},
+Other predict_metab: \code{\link{predict_metab.metab_bayes}},
   \code{\link{predict_metab.metab_model}}
 }
 

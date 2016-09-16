@@ -53,8 +53,7 @@ Makes daily predictions of GPP, ER, and K600 with upper and lower bounds
 reflecting a 95% CI.
 }
 \seealso{
-Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
-  \code{\link{predict_metab.metab_bayes}},
+Other predict_metab: \code{\link{predict_metab.metab_bayes}},
   \code{\link{predict_metab}}
 }
 

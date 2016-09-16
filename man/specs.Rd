@@ -281,7 +281,7 @@ to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 \item{filters}{For Kmodel, named numeric vector of limits to use in filtering
 data_daily. Elements may include
 c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
-given, the corresponding filter is applied: K600.upper-K600.lower <=
+given, the corresponding filter is applied: K600.daily.upper-K600.daily.lower <=
 CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
 velocity.daily.max}
 
@@ -291,11 +291,11 @@ no predictors. Otherwise, one or more of these may be included: c("date",
 "velocity.daily", "discharge.daily").}
 
 \item{transforms}{For Kmodel, a named character vector of names of functions 
-(probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
+(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should 
 probably be logged. The vector names must match the values of 
 \code{predictors}, although not all elements of \code{predictors} must be 
 included in \code{transforms}. Recommended transforms include 
-\code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
+\code{c(K600.daily='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{other_args}{Other arguments passed to the fitting function given by 
 \code{specs$engine}. \code{na.rm=TRUE} is already passed to 

@@ -163,16 +163,16 @@ depend on the model \code{type}, as follows.
       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
       date              \tab Date            \tab                 \tab required      \cr
       K600.daily        \tab numeric         \tab d^-1            \tab required      \cr
-      K600.lower        \tab numeric         \tab d^-1            \tab optional      \cr
-      K600.upper        \tab numeric         \tab d^-1            \tab optional      \cr
+      K600.daily.lower  \tab numeric         \tab d^-1            \tab optional      \cr
+      K600.daily.upper  \tab numeric         \tab d^-1            \tab optional      \cr
       discharge.daily   \tab numeric         \tab m^3 s^-1        \tab optional      \cr
       velocity.daily    \tab numeric         \tab m s^-1          \tab optional      
     }
     
     \strong{Example}:
     \tabular{lrrrrr}{
-      \code{date      } \tab \code{K600.daily} \tab \code{K600.lower} \tab \code{K600.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
-      \code{2050-03-14} \tab \code{10        } \tab \code{4.5       } \tab \code{15.6      } \tab \code{9              } \tab \code{2             }
+      \code{date      } \tab \code{K600.daily} \tab \code{K600.daily.lower} \tab \code{K600.daily.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
+      \code{2050-03-14} \tab \code{10        } \tab \code{4.5             } \tab \code{15.6            } \tab \code{9              } \tab \code{2             }
     }
   }
   \item{\code{sim}}{

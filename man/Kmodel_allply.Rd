@@ -8,7 +8,7 @@ Kmodel_allply(data_daily_all, engine, weights, predictors, transforms,
   other_args)
 }
 \arguments{
-\item{data_daily_all}{data to use as input, with columns including K600.obs, 
+\item{data_daily_all}{data to use as input, with columns including K600.daily.obs, 
 weight, and any predictors}
 
 \item{engine}{The software or function to use in fitting the model. Should be
@@ -28,11 +28,11 @@ no predictors. Otherwise, one or more of these may be included: c("date",
 "velocity.daily", "discharge.daily").}
 
 \item{transforms}{For Kmodel, a named character vector of names of functions 
-(probably 'log' or NA) to apply to K600 and/or the predictors. K600 should 
+(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should 
 probably be logged. The vector names must match the values of 
 \code{predictors}, although not all elements of \code{predictors} must be 
 included in \code{transforms}. Recommended transforms include 
-\code{c(K600='log', date=NA, velocity.daily="log", discharge.daily="log")}}
+\code{c(K600.daily='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
 \item{other_args}{Other arguments passed to the fitting function given by 
 \code{specs$engine}. \code{na.rm=TRUE} is already passed to 

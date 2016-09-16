@@ -12,10 +12,10 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
     mutate(discharge=exp(rnorm(length(solar.time))))
   # ddat = data.frame of daily date, discharge.daily, and K600 (made-up data)
   ddat <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
-    as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) %>%
+    as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600.daily=rnorm(32,30,4)) %>%
     mutate(K600.lower=K600-5, K600.upper=K600+6)
   # ddat1 = data.frame of just one day of data
-  ddat1 <- data.frame(date=as.Date("2012-08-24"), K600=20, K600.lower=15, K600.upper=25, stringsAsFactors=FALSE)
+  ddat1 <- data.frame(date=as.Date("2012-08-24"), K600.daily=20, K600.daily.lower=15, K600.daily.upper=25, stringsAsFactors=FALSE)
   
   # 1-day tests: show that Kmodel(mean) won't break even if only 1 data point is entered
   expect_warning(mm <- metab_Kmodel(data=NULL, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='mean'))), "no SE available")

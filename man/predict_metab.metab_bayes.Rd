@@ -32,8 +32,7 @@ A data.frame of predictions, as for the generic
 Makes daily predictions of GPP, ER, and K600.
 }
 \seealso{
-Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
-  \code{\link{predict_metab.metab_model}},
+Other predict_metab: \code{\link{predict_metab.metab_model}},
   \code{\link{predict_metab}}
 }
 
