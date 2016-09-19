@@ -1,0 +1,230 @@
+---
+title: "Simulations"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    fig_caption: yes
+    highlight: kate
+vignette: >
+  %\VignetteIndexEntry{get_started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=TRUE,
+	             prompt=FALSE,
+               tidy=TRUE)
+opts_knit$set(width=75)
+```
+
+# Overview
+
+This vignette shows how to simulate dissolved oxygen 'observations' for the
+purpose of exploring and testing metabolism models.
+
+# Setup
+
+Load streamMetabolizer.
+
+```{r, messages=TRUE, warnings=TRUE, errors=TRUE}
+library(streamMetabolizer)
+```
+
+Load dplyr.
+
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+```
+
+Get some data to work with: here we're requesting three days of data at
+15-minute resolution. Thanks to Bob Hall for the test data.
+
+```{r}
+dat <- data_metab('3', '15')
+```
+
+# Creating a Sim Model
+
+To create a simulation model, you should 
+
+1. Choose a model structure
+2. Choose daily metabolism parameters
+3. Choose the other model specifications
+4. Create the model
+5. Generate predictions (simulations) from the model
+
+## 1. Choosing the model structure
+
+You can simulate data using any of the GPP and ER functions available to MLE 
+models. Simulations are done by models of type `'sim'` but otherwise take very 
+similar arguments to those of an MLE model. Here we'll use a model where ER is a
+function of temperature.
+
+```{r}
+name_sim_q10 <- mm_name('sim', ER_fun='q10temp')
+```
+
+## 2. Choosing the daily parameters
+
+To simulate data, you need to specify the daily parameters beforehand. The model
+structure determines which parameters are needed. There are three good ways to
+learn which daily parameters you need to specify.
+
+### A. Trial and error
+
+To learn about parameter needs by trial and error, simply create the model with 
+the equations you want but without daily inputs, ask for the parameters, and 
+read the error message to get a list of parameters. It's fine to use the
+defaults for the specifications for now.
+
+```{r, error=TRUE}
+mm_sim_q10_trial <- metab(specs(name_sim_q10), dat)
+get_params(mm_sim_q10_trial)
+```
+
+Great: we need `GPP.daily`, `ER20`, and `K600.daily`. Now we can pick values for
+those parameters and put them in a data.frame.
+
+```{r}
+params_sim_q10a <- data.frame(date=as.Date(paste0('2012-09-',18:20)), GPP.daily=2.1, ER20=-5:-3, K600.daily=16)
+params_sim_q10a
+```
+
+### B. Generate parameters from another model
+
+You can also use fitted parameters from another model as your input for a
+simulation model. This method could be useful for identifying realistic
+parameters and/or exploring why a model fitting process didn't work so well.
+
+First fit an MLE model to the same data using the `GPP_fun` and `ER_fun` you 
+want. It's fine (again) to use the defaults for the specifications.
+
+```{r}
+mm_mle_q10 <- metab(specs(mm_name('mle', ER_fun='q10temp')), data=dat)
+```
+
+Then ask for the parameters in the right format (without columns for uncertainty
+or messages).
+
+```{r}
+params_sim_q10b <- get_params(mm_mle_q10, uncertainty='none', messages=FALSE)
+params_sim_q10b
+```
+
+### C. Look at `?mm_name`
+
+Try it. We put lots of details in the help file. Check out the documentation for
+the `GPP_fun` and `ER_fun` args in particular.
+
+```{r, eval=FALSE}
+?mm_name
+```
+
+After reading the documentation you'll create a data.frame of the same format as
+in options A or B.
+
+## 3. Choosing the specifications
+
+After choosing parameters, the next step is to choose the rest of the 
+specifications. The main difference between sim models and other models is that 
+you can choose values for the probability distributions of the observation 
+and/or process errors. See `?specs` for details on the distribution parameters
+`err.obs.sigma`, `err.obs.phi`, `err.proc.sigma`, and `err.proc.phi`.
+
+```{r}
+specs_sim_q10 <- specs(name_sim_q10, err.obs.sigma=0, err.proc.sigma=1)
+specs_sim_q10
+```
+
+## 4. Creating a model
+
+Now you can create a simulation model much as you would an MLE or Bayesian
+model. We'll make two models here, one for each of the parameter sets we created
+above.
+
+```{r}
+mm_sim_q10a <- metab(specs_sim_q10, dat, data_daily=params_sim_q10a)
+mm_sim_q10b <- metab(specs_sim_q10, dat, data_daily=params_sim_q10b)
+```
+
+## 5. Generating predictions
+
+Predictions and simulations are one and the same when your model is of type `sim`.
+
+```{r, fig.height=2}
+plot_DO_preds(mm_sim_q10a, y_var='conc')
+plot_DO_preds(mm_sim_q10b, y_var='conc')
+```
+
+
+# Simulating Errors
+
+The main purpose of simulation models is to generate DO 'observations' with
+error, i.e., noise, to see whether other models can recover the underlying
+parameters despite the noise.
+
+For this section we'll use a simulation with GPP as a saturating function of
+light. We'll use method B from above to choose our daily parameters.
+
+```{r}
+specs_sim_sat <- specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0, err.proc.sigma=1)
+params_sim_sat <- get_params(metab(specs(mm_name('mle', GPP_fun='satlight')), data=dat), uncertainty='none', messages=FALSE)
+```
+
+## Innovative errors
+
+By default, simulations generate new noise each time you request predictions.
+
+```{r, fig.height=2}
+mm_sim_sat_i <- metab(specs_sim_sat, dat, data_daily=params_sim_sat)
+plot_DO_preds(mm_sim_sat_i, y_var='conc')
+plot_DO_preds(mm_sim_sat_i, y_var='conc')
+```
+
+## Fixed errors
+
+Alternatively, you can revise the value of `sim.seed` to be a number (any
+number) and then the simulation produces the same noise each time.
+
+```{r, fig.height=2}
+mm_sim_sat_f <- metab(revise(specs_sim_sat, sim.seed=47), dat, data_daily=params_sim_sat)
+plot_DO_preds(mm_sim_sat_f, y_var='conc')
+plot_DO_preds(mm_sim_sat_f, y_var='conc')
+```
+
+
+# Inspecting Models
+
+We'll use a slightly longer dataset here to demonstrate the potential for random
+noise at the levels of both the observations (every time you run `predict_DO()`)
+and the daily parameters (every time you define `data_daily`).
+
+```{r}
+dat <- data_metab('10', '30')
+params <- data.frame(date=as.Date(paste0('2012-09-',18:27)), Pmax=rnorm(10, 6, 2), alpha=rnorm(10, 0.01, 0.001), ER20=rnorm(10, -4, 2), K600.daily=16)
+specs <- specs(mm_name('sim', GPP_fun='satlight', ER_fun='q10temp'), err.obs.sigma=0.2, err.proc.sigma=1)
+mm <- metab(specs, data=dat, data_daily=params)
+```
+
+Sim models print out their parameters with asterisks to denote that the values 
+are fixed rather than fitted. 
+
+```{r}
+mm
+```
+
+Sim models produce daily estimates of GPP and ER, which should help in choosing
+simulation parameters. The GPP and ER predictions have no error bars because
+they're direct calculations from the daily parameters.
+
+```{r}
+plot_metab_preds(mm)
+```

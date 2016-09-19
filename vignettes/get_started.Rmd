@@ -3,10 +3,11 @@ title: "Getting Started with streamMetabolizer"
 author: "Alison Appling"
 date: "`r Sys.Date()`"
 output:
-  rmarkdown::html_vignette:
+  rmdformats::readthedown:
     fig_caption: yes
+    highlight: kate
 vignette: >
-  %\VignetteIndexEntry{getstarted}
+  %\VignetteIndexEntry{get_started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,26 +17,28 @@ knitr::opts_chunk$set(echo = TRUE)
 options(width=100)
 ```
 
-## Introduction
+# Introduction
 
 This file demonstrates how to estimate stream metabolism using
 `streamMetabolizer` and some example data supplied by Bob Hall for French Creek
 in Laramie, WY.
 
-## Setup
+# Installation
 
-### Install
+## Recommended
 
 The most stable+current version of this package can be installed with this R command:
 ```{r, eval=FALSE}
 install.packages("streamMetabolizer", dependencies=TRUE, 
-  repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 and updated with this command:
 ```{r, eval=FALSE}
 update.packages(oldPkgs=c("streamMetabolizer","unitted"),
-  dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
+  dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
+
+## For the adventurous
 
 The in-development version of the package can be installed with the `devtools` package. 
 We can make no guarantees about the stability of this version, 
@@ -44,25 +47,27 @@ If you go this route, you will need to install the package dependencies separate
 ```{r, eval=FALSE}
 install.packages(
   c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-    "tidyr","chron","dygraphs","ggplot2","RCurl","runjags","rstan","XML","xts"),
-  repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 You can then install the most cutting edge version of streamMetabolizer with this command:
 ```{r, eval=FALSE}
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 ```
 
-Regardless of your installation method, if you plan to use Bayesian models with 
-`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/).
+## Software dependencies
+
+If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
 
 
-### Load
+# Preparation
+
+## Load the input data
 
 Load the R libraries that will be used.
 ```{r libs, warning=FALSE}
 suppressPackageStartupMessages({
   library(dplyr)
-  library(tibble)
   library(tidyr)
   library(ggplot2)
   library(streamMetabolizer)
@@ -86,7 +91,7 @@ dim(dat)
 dat[c(1,48,96,240,288),] # some example rows
 ```
 
-### Explore the input data
+## Explore the input data
 
 Now graphically inspect the input data.
 ```{r viz_inputs_DO, fig.width=7, fig.height=3}
@@ -113,7 +118,7 @@ dat %>% unitted::v() %>%
   scale_color_discrete('variable')
 ```
 
-### Check the input data format
+## Check the input data format
 
 Our data need to have specific column names and units to fit an MLE, Bayesian,
 or nighttime-regression model. To see what is required, use the `metab_inputs`
@@ -136,7 +141,7 @@ data.frame(
 
 We're ready to go.
 
-## Modeling Overview
+# Modeling Overview
 
 There are three steps to fitting a metabolism model in `streamMetabolizer`.
 
@@ -144,12 +149,20 @@ There are three steps to fitting a metabolism model in `streamMetabolizer`.
 2. Set the specifications for the model using defaults from`specs()` as a starting point.
 3. Fit the model with `metab()`.
 
-## A Maximum Likelihood Model
+And then a fourth step once you've fit a model.
 
-### 1. Choose a model structure
+4. Inspect the output with functions including `get_params()`, `get_fit()`, 
+`predict_metab()`, `predict_DO()`, `plot_metab_preds()`, and `plot_DO_preds()`.
+
+We will walk through these steps twice in this tutorial to demonstrate two
+different models applied to the same dataset.
+
+# A Maximum Likelihood Model
+
+## 1. Choose a model structure
 
 A model is fully specified by a concise if cryptic model name. Examples are 
-"b_np_oipi_pm_plrckm.stan" and "m_np_oi_pm_plrckm.nlm". You never need to
+"b_np_oipi_tr_plrckm.stan" and "m_np_oi_tr_plrckm.nlm". You never need to
 remember these concise names; instead, you can construct and interpret such
 names using the `mm_name` and `mm_parse_name` functions, respectively.
 
@@ -163,7 +176,7 @@ Here are some example calls to create and parse model names:
 ```{r names}
 three_names <- c(
   mm_name(type='mle'), # the default MLE model
-  mm_name(type='mle', ode_method='Euler'), # override the default ode_method
+  mm_name(type='mle', ode_method='euler'), # override the default ode_method
   mm_name(type='bayes')) # the default Bayesian model
 three_names
 
@@ -182,7 +195,7 @@ mle_name <- mm_name(type='mle')
 mle_name
 ```
 
-### 2. Set the specifications
+## 2. Set the specifications
 
 Having chosen a model, we next need to define a list of specifications for that
 model. The `specs` function creates a list appropriate to the model we chose.
@@ -195,16 +208,16 @@ See `?specs` for definitions of all specifications. Note that most of the
 specifications in that help file are omitted from the output of
 `specs(mle_name)` above - this is because MLE models are simple and don't have
 many parameters to set. Any of those parameters that are included in
-`model_specs` can be modified, either by calling `specs()` again or by replacing
-that value in the `model_specs` list. Here is a command that sets the the inital
+`mle_specs` can be modified, either by calling `specs()` again or by replacing
+that value in the `mle_specs` list. Here is a command that sets the the inital
 values of GPP, ER, and K600 for the likelihood maximization. (I've done this
 just for illustration; the model results aren't affected by these particular
 changes for this particular dataset.)
 ```{r specs_details}
-mle_specs <- specs(mle_name, GPP_init=2, ER_init=-1, K600_init=3)
+mle_specs <- specs(mle_name, init.GPP.daily=2, init.ER.daily=-1, init.K600.daily=3)
 ```
 
-### 3. Fit the model
+## 3. Fit the model
 
 Now actually fit the model using the `metab` function.
 ```{r mle_fit, warning=FALSE}
@@ -215,10 +228,16 @@ It's optional, but sometimes helpful, to include some sort of metadata in the
 `info`, as I've done above. I've chosen to put the metadata in a character
 vector, but metadata can take any format you like.
 
-## Inspect the output
+## 4. Inspect the output
 
-The `info` and `data` are saved in the fitted model object so we can reference
-them later.
+Models show lots of relevant information if you simply print them at the command line.
+```{r show}
+mle_fit
+```
+
+You can also extract specific pieces of information using designated accessor
+functions. For example, the `info` and `data` are saved in the fitted model
+object and can be pulled out with `get_info` and `get_data`, respectively.
 ```{r info}
 get_info(mle_fit)
 head(get_data(mle_fit))
@@ -232,52 +251,43 @@ get_specs(mle_fit) # the specifications we passed in
 ```
 
 There is a function to plot the daily metabolism estimates.
-```{r plot_metab1, fig.width=7, fig.height=6}
-plot_metab_preds(predict_metab(mle_fit))
+```{r plot_metab1, fig.width=7, fig.height=4.5}
+plot_metab_preds(mle_fit)
 ```
 
 There is also a function to plot the dissolved oxygen predictions (lines) along
 with the original observations (points).
 ```{r plot_metab2, fig.width=7, fig.height=6}
-plot_DO_preds(predict_DO(mle_fit))
+plot_DO_preds(mle_fit)
 ```
 
-## Other Models
-
-Many model structures are available. We have only demonstrated one above (the
-default MLE model). Here is the full list of model options:
-
-```{r, results='asis'}
-all_models <- mm_valid_names(type=c('bayes','mle','night'))
-opts <- 
-  bind_cols(
-    tibble::tibble(model_name=all_models), 
-    mm_parse_name(all_models)) %>%
-  arrange(model_name)
-knitr::kable(opts)
+You can output the daily and instantaneous predictions to data.frames for
+further inspection.
+```{r pred_dfs}
+met_preds <- predict_metab(mle_fit)
+met_preds
+oxy_preds <- predict_DO(mle_fit)
+head(oxy_preds)
 ```
 
-Remember that any of these structures can be specified by using the model name
-directly or passing the corresponding arguments to `mm_name` to create the name.
+# A Bayesian Model
 
-## A Bayesian Model
+## 1. Choose a model structure
 
-### 1. Choose a model structure
-
-For our second modeling example, we will specify everything about the model
-structure in our call to `mm_name`. (Some of these arguments are equal to the
-defaults and don't technically need to be specified, but I want to show you that
-the available arguments are the same as those returned in the columns of the
-above table.)
+For our second modeling example, we will specify a Bayesian model with both 
+observation error and process error. We won't pool K600 here because we don't 
+have many days of data, but pooling is one feature that makes Bayesian models 
+better than MLE models in general. Another great feature of Bayesian models is 
+that they produce more accurate and nuanced confidence intervals.
 ```{r bayes_name}
 bayes_name <- mm_name(
   type='bayes', pool_K600='none', 
   err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE, 
-  ode_method='pairmeans', deficit_src='DO_mod', engine='stan')
+  ode_method='trapezoid')
 bayes_name
 ```
 
-### 2. Set the specifications
+## 2. Set the specifications
 
 Just as for the previous model, we now pass the model name to `specs()` to get a
 list of default specifications for this model. Note that the length and contents
@@ -288,45 +298,78 @@ bayes_specs <- specs(bayes_name)
 bayes_specs
 ```
 
-At this point we can alter some of the specifications if desired.
+At this point we can alter some of the specifications if desired. I'm choosing a
+very small number of `burnin_steps` and `saved_steps` because I don't want to 
+wait long for the vignette to run. When you run your own models, consider 
+bumping those numbers up substantially (to several thousand or so, depending on 
+exactly which model you're using.)
 ```{r bayes_specs2}
 # one way to alter specifications: call specs() again
 bayes_specs <- specs(bayes_name, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
-# another way: use replace()
-bayes_specs <- replace(bayes_specs, 'split_dates', FALSE)
+# another way: use revise()
+bayes_specs <- revise(bayes_specs, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
 ```
 
-### 3. Fit the model
+## 3. Fit the model
 
 We now fit the model with the new specifications. Bayesian models take longer to
 run, so be patient.
-```{r bayes_fit, warning=FALSE}
+```{r bayes_fit}
 bayes_fit <- metab(bayes_specs, data=dat)
 ```
 
-### 4. Explore as before
+## 4. Inspect the output
 
 All of the same inspection functions are available as before, including
-`get_fitting_time`, `get_info`, `predict_metab`, and so on.
-```{r bayes_pred}
-get_fitting_time(bayes_fit)
-preds <- predict_metab(bayes_fit)
+`get_fitting_time`, `get_info`, `predict_metab`, and so on. And of course
+you can start by simply printing the model to the console.
+```{r}
+bayes_fit
 ```
 
-One slight difference is that hierarchical Bayesian models store their warnings 
-and errors in attributes to the result of `predict_metab`. If there were any,
-you could inspect them like this:
+One slight difference is that hierarchical Bayesian models sometimes have 
+general warnings and errors not specific to any one day. If there were any, you 
+would see a note in the 'warnings' or 'errors' columns of `preds`, and you could
+see the full message[s] as elements in the list returned by `get_fit()`. There's
+also a [smaller] possibility of errors or warnings directly associated with 
+metabolism prediction rather than fitting, inspectable in the 'warnings' and
+'errors' columns of the data.frame returned by `predict_metab()`.
 ```{r bayes_warning}
-attr(preds, 'warnings')
-attr(preds, 'errors')
+# here's where you'd find fitting messages:
+select(get_params(bayes_fit), warnings, errors)
+get_fit(bayes_fit)$warnings
+get_fit(bayes_fit)$errors
+# and prediction messages
+select(predict_metab(bayes_fit), warnings, errors)
 ```
 
 Here are the predictions from this last model:
 ```{r bayes_pred_tbl, results='asis'}
-preds %>% 
+predict_metab(bayes_fit) %>% 
   lapply(function(col) if(is.numeric(col)) round(col, 2) else col ) %>%
   as.data.frame() %>%
   knitr::kable()
 ```
+
+```{r, fig.width=7, fig.height=6}
+plot_DO_preds(bayes_fit)
+```
+
+# Other Models
+
+Many model structures are available. We have only demonstrated two above (one
+MLE and one Bayesian model). You can see the full list of model options by 
+calling `mm_valid_names()` (here we'll just print a sampling of the full list):
+
+```{r}
+valid_names <- mm_valid_names(type=c('bayes','mle','night'))
+length(valid_names)
+c(valid_names[seq(1,length(valid_names),length.out=20)], '...')
+```
+
+Remember that any of these structures can be specified by using the model name 
+directly or passing the corresponding arguments to `mm_name` to create the name.
+See `?mm_name` for a detailed explanation of the options, and/or
+`mm_parse_name()` to split a cryptic model name into its component features.
 
 You're on your way!

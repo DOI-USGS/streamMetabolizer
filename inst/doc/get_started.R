@@ -4,17 +4,17 @@ options(width=100)
 
 ## ---- eval=FALSE----------------------------------------------------------------------------------
 #  install.packages("streamMetabolizer", dependencies=TRUE,
-#    repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+#    repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 
 ## ---- eval=FALSE----------------------------------------------------------------------------------
 #  update.packages(oldPkgs=c("streamMetabolizer","unitted"),
-#    dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))
+#    dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
 
 ## ---- eval=FALSE----------------------------------------------------------------------------------
 #  install.packages(
 #    c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-#      "tidyr","chron","dygraphs","ggplot2","RCurl","runjags","rstan","XML","xts"),
-#    repos=c("http://owi.usgs.gov/R","https://cran.rstudio.com"))
+#      "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
+#    repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 
 ## ---- eval=FALSE----------------------------------------------------------------------------------
 #  devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
@@ -22,7 +22,6 @@ options(width=100)
 ## ----libs, warning=FALSE--------------------------------------------------------------------------
 suppressPackageStartupMessages({
   library(dplyr)
-  library(tibble)
   library(tidyr)
   library(ggplot2)
   library(streamMetabolizer)
@@ -69,7 +68,7 @@ data.frame(
 ## ----names----------------------------------------------------------------------------------------
 three_names <- c(
   mm_name(type='mle'), # the default MLE model
-  mm_name(type='mle', ode_method='Euler'), # override the default ode_method
+  mm_name(type='mle', ode_method='euler'), # override the default ode_method
   mm_name(type='bayes')) # the default Bayesian model
 three_names
 
@@ -85,10 +84,13 @@ mle_specs <- specs(mle_name)
 mle_specs
 
 ## ----specs_details--------------------------------------------------------------------------------
-mle_specs <- specs(mle_name, GPP_init=2, ER_init=-1, K600_init=3)
+mle_specs <- specs(mle_name, init.GPP.daily=2, init.ER.daily=-1, init.K600.daily=3)
 
 ## ----mle_fit, warning=FALSE-----------------------------------------------------------------------
 mle_fit <- metab(mle_specs, data=dat, info=c(site='French Creek, WY', source='Bob Hall'))
+
+## ----show-----------------------------------------------------------------------------------------
+mle_fit
 
 ## ----info-----------------------------------------------------------------------------------------
 get_info(mle_fit)
@@ -99,26 +101,23 @@ get_fitting_time(mle_fit) # the time it took to fit the model
 get_version(mle_fit) # the streamMetabolizer version used to fit the model
 get_specs(mle_fit) # the specifications we passed in
 
-## ----plot_metab1, fig.width=7, fig.height=6-------------------------------------------------------
-plot_metab_preds(predict_metab(mle_fit))
+## ----plot_metab1, fig.width=7, fig.height=4.5-----------------------------------------------------
+plot_metab_preds(mle_fit)
 
 ## ----plot_metab2, fig.width=7, fig.height=6-------------------------------------------------------
-plot_DO_preds(predict_DO(mle_fit))
+plot_DO_preds(mle_fit)
 
-## ---- results='asis'------------------------------------------------------------------------------
-all_models <- mm_valid_names(type=c('bayes','mle','night'))
-opts <- 
-  bind_cols(
-    tibble::tibble(model_name=all_models), 
-    mm_parse_name(all_models)) %>%
-  arrange(model_name)
-knitr::kable(opts)
+## ----pred_dfs-------------------------------------------------------------------------------------
+met_preds <- predict_metab(mle_fit)
+met_preds
+oxy_preds <- predict_DO(mle_fit)
+head(oxy_preds)
 
 ## ----bayes_name-----------------------------------------------------------------------------------
 bayes_name <- mm_name(
   type='bayes', pool_K600='none', 
   err_obs_iid=TRUE, err_proc_acor=FALSE, err_proc_iid=TRUE, 
-  ode_method='pairmeans', deficit_src='DO_mod', engine='stan')
+  ode_method='trapezoid')
 bayes_name
 
 ## ----bayes_specs----------------------------------------------------------------------------------
@@ -128,23 +127,34 @@ bayes_specs
 ## ----bayes_specs2---------------------------------------------------------------------------------
 # one way to alter specifications: call specs() again
 bayes_specs <- specs(bayes_name, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
-# another way: use replace()
-bayes_specs <- replace(bayes_specs, 'split_dates', FALSE)
+# another way: use revise()
+bayes_specs <- revise(bayes_specs, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
 
-## ----bayes_fit, warning=FALSE--------------------------------------------------------------------------
+## ----bayes_fit------------------------------------------------------------------------------------------
 bayes_fit <- metab(bayes_specs, data=dat)
 
-## ----bayes_pred----------------------------------------------------------------------------------------
-get_fitting_time(bayes_fit)
-preds <- predict_metab(bayes_fit)
+## -------------------------------------------------------------------------------------------------------
+bayes_fit
 
-## ----bayes_warning-------------------------------------------------------------------------------------
-attr(preds, 'warnings')
-attr(preds, 'errors')
+## ----bayes_warning--------------------------------------------------------------------------------------
+# here's where you'd find fitting messages:
+select(get_params(bayes_fit), warnings, errors)
+get_fit(bayes_fit)$warnings
+get_fit(bayes_fit)$errors
+# and prediction messages
+select(predict_metab(bayes_fit), warnings, errors)
 
-## ----bayes_pred_tbl, results='asis'--------------------------------------------------------------------
-preds %>% 
+## ----bayes_pred_tbl, results='asis'---------------------------------------------------------------------
+predict_metab(bayes_fit) %>% 
   lapply(function(col) if(is.numeric(col)) round(col, 2) else col ) %>%
   as.data.frame() %>%
   knitr::kable()
+
+## ---- fig.width=7, fig.height=6-------------------------------------------------------------------------
+plot_DO_preds(bayes_fit)
+
+## -------------------------------------------------------------------------------------------------------
+valid_names <- mm_valid_names(type=c('bayes','mle','night'))
+length(valid_names)
+c(valid_names[seq(1,length(valid_names),length.out=20)], '...')
 
