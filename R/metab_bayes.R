@@ -882,6 +882,7 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # should have been produced during the model fitting
   
   # decide on the column names to pull and their new values. fit.names and metab.names should be parallel
+  Var1 <- Var2 <- '.dplyr.var'
   fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
     select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
     apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_daily_'))))
@@ -903,6 +904,7 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # get_params also handles general messages, but because we don't call
   # get_params from this predict_metab function, we need to add those messages
   # separately here
+  warnings <- errors <- '.dplyr.var'
   if(!is.null(fit) && all(exists(c('date','warnings','errors'), fit))) {
     messages <- fit %>%
       select(date, warnings, errors) %>%

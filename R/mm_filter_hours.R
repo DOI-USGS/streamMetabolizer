@@ -12,6 +12,7 @@
 #' @import dplyr
 #' @keywords internal
 mm_filter_hours <- function(data, day_start, day_end) {
+  d0 <- ds <- de <- '.dplyr.var'
   data %>%
     mutate(d0 = with_tz(as.POSIXct(data$date), 'UTC'),
            ds = d0 + as.difftime(day_start, units='hours'),

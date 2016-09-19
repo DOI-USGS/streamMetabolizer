@@ -90,6 +90,7 @@ predict_metab.metab_model <- function(
       model_name=specs$model_name) # for mm_predict_DO_1ply
     
     # attach warnings and errors if available
+    warnings <- errors <- '.dplyr.var'
     preds.cols <- append(names(preds), 'msgs.fit', after=which(names(preds) == 'warnings') - 1)
     fit <- get_fit(metab_model)
     if(!is.null(fit) && all(exists(c('date','warnings','errors'), fit))) {

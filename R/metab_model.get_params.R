@@ -36,6 +36,7 @@ get_params.metab_model <- function(
     metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO?
   }
   metab.all <- union(metab.needs, metab.optional)
+  . <- '.dplyr.var'
   metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.all) %>%
     paste0('^', .) %>%
     paste0(collapse='|')

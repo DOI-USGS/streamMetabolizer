@@ -87,6 +87,6 @@ mm_data()
 mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light)
 
 # columns typical of daily data
-mm_data(date, K600, discharge, velocity)
+mm_data(date, K600.daily, discharge.daily, velocity.daily)
 }
 

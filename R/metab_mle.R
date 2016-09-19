@@ -234,6 +234,7 @@ mle_1ply <- function(
     valstat.cols <- c(do.call(rbind, mle.1d[stat.names])) %>%
       as.list() %>% as.data.frame() %>%
       setNames(valstat.names)
+    code <- '.dplyr.var'
     goodness.cols <- as.data.frame(mle.1d[goodness.names]) %>%
       # code interpretations are from the Value section of the ?nlm page
       mutate(code.str=c(

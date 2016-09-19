@@ -1,10 +1,11 @@
 #' Change or add named elements of a list
 #' 
-#' Primary use case is for revising a list of specifications as originally
+#' Primary use case is for revising a list of specifications as originally 
 #' created by specs()
 #' 
 #' @param specs a list of specifications to revise
 #' @param ... named values to replace in or add to \code{specs}
+#' @param delete a vector of names of elements to remove from the specs list
 #' @export
 #' @examples
 #' sp <- specs(mm_name('bayes'))

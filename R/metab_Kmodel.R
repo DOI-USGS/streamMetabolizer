@@ -85,7 +85,8 @@ NULL
 #' 
 #' # fit a first-round MLE and extract the K estimates
 #' mm1 <- metab_mle(mle_specs, data=dat)
-#' K600_mm1 <- get_params(mm1, uncertainty='ci') %>% select(date, K600.daily, K600.daily.lower, K600.daily.upper)
+#' K600_mm1 <- get_params(mm1, uncertainty='ci') %>% 
+#'   select(date, K600.daily, K600.daily.lower, K600.daily.upper)
 #' 
 #' # smooth the K600s
 #' mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), 

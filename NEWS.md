@@ -1,3 +1,10 @@
+# streamMetabolizer 0.9.13
+
+* all tests are passing and all examples are running [again]. tests are 
+acceptably comprehensive [for now].
+
+* known issue: K binning in bayesian models is producing unlikely estimates.
+
 # streamMetabolizer 0.9.12
 
 * removed JAGS from the package. Stan is better for us.
@@ -5,6 +12,10 @@
 # streamMetabolizer 0.9.11
 
 * this is the last version with JAGS in it.
+
+# streamMetabolizer 0.9.10
+
+* myriad bug fixes to accommodate changes from version 0.9.9.
 
 # streamMetabolizer 0.9.9
 

@@ -501,6 +501,7 @@ specs <- function(
     },
     'mle' = {
       # determine which init values will be needed
+      . <- '.dplyr.var'
       dummy_data <- unitted::v(eval(formals(metab_mle)$data)) %>%
         bind_rows(.,.)
       dDOdt <- create_calc_dDOdt(

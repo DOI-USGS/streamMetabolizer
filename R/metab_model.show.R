@@ -101,6 +101,7 @@ compress_msgs <- function(ddat, colname='messages', warnings.overall=c(), errors
   genwarn <- length(warnings.overall) > 0 | grepl("overall warnings", ddat$warnings)
   dateerr <- gsub("overall errors(;)*", "", ddat$errors)
   datewarn <- gsub("overall warnings(;)*", "", ddat$warnings)
+  errors <- warnings <- '.dplyr.var'
   ddat %>%
     mutate(
       messages = paste(
