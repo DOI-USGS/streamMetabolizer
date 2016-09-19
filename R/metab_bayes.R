@@ -949,6 +949,7 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
   }
   names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  # code duplicated in get_params.metab_Kmodel:
   if(length(metab_model@fit$warnings) > 0) {
     omsg <- 'overall warnings'
     dmsg <- metab_model@fit$daily$warnings
@@ -959,6 +960,6 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
     dmsg <- metab_model@fit$daily$errors
     metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
   }
-  metab_model@fit <- metab_model@fit$daily
+  metab_model@fit <- metab_model@fit$daily # SUPER-TEMPORARY we're still converting fit$daily to fit until #247, #229
   NextMethod()
 }

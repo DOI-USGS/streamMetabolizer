@@ -272,6 +272,12 @@ Kmodel_aggregate_day <- function(
 #' @importFrom stats sd formula loess
 #' @keywords internal
 Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transforms, other_args) {
+  
+  # Provide ability to skip a poorly-formatted dataset for calculating 
+  # metabolism. Collect problems/errors as a list of strings and proceed. Also
+  # collect warnings.
+  stop_strs <- warn_strs <- character(0)
+  
   # remove rows whose weights signal they should be filtered out
   weight <- '.dplyr.var'
   data_daily_all <- dplyr::filter(data_daily_all, weight > 0)
@@ -286,15 +292,18 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
   })
   # fit & return the model
   other_args[['possible_args']] <- NULL # might be left over from specs(), but don't want it now
+  
   switch(
     engine,
     'mean' = {
-      if(length(predictors) > 0) warning("predictors ignored for engine='mean'")
+      if(length(predictors) > 0) {
+        warn_strs <- c(warn_strs, "predictors ignored for engine='mean'")
+      }
       Kobs <- eval(parse(text=trans_preds[['K600.daily.obs']]), envir=data_daily_all)
-      list(
+      overall <- list(
         mean=sum(Kobs * data_daily_all$weight, na.rm=TRUE),
         se=(if(length(weights) > 0) {
-          warning("omitting sd for weighted mean")
+          warn_strs <- c(warn_strs, "omitting sd for weighted mean")
           NA 
         } else { 
           sd(Kobs, na.rm=TRUE)/sqrt(nrow(data_daily_all)) # SE of the mean
@@ -304,17 +313,21 @@ Kmodel_allply <- function(data_daily_all, engine, weights, predictors, transform
       if(length(predictors) == 0) trans_preds[2] <- "1"
       formul <- formula(paste0(trans_preds["K600.daily.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
       wts <- if(length(weights) > 0) data_daily_all$weight else NULL
-      do.call(lm, c(list(formula=formul, data=data_daily_all, weights=wts), other_args))
+      overall <- do.call(lm, c(list(formula=formul, data=data_daily_all, weights=wts), other_args))
     }, 
     'loess' = {
-      if(length(predictors) < 1) stop("need at least one predictor for engine='loess'")
+      if(length(predictors) < 1) {
+        stop("need at least one predictor for engine='loess'") # stop rather than stop_strs because it's a poorly formatted request
+      }
       formul <- formula(paste0(trans_preds["K600.daily.obs"], " ~ ", paste0(trans_preds[-1], collapse=" + ")))
       if(length(weights) > 0) {
-        do.call(loess, c(list(formula=formul, data=data_daily_all, weights=data_daily_all$weight), other_args))
+        overall <- do.call(loess, c(list(formula=formul, data=data_daily_all, weights=data_daily_all$weight), other_args))
       } else {
-        do.call(loess, c(list(formula=formul, data=data_daily_all), other_args))
+        overall <- do.call(loess, c(list(formula=formul, data=data_daily_all), other_args))
       }
     })
+  
+  list(overall=overall, warnings=warn_strs, errors=stop_strs)
 }
 
 
@@ -351,15 +364,16 @@ get_params.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, unc
   
   # re-predict K600.daily.mod if saved values are disallowed or unavailable; otherwise
   # use previously stored values for K600.daily.mod
-  metab_daily <- metab_model@metab_daily %>% 
-    mm_filter_dates(date_start=date_start, date_end=date_end)
-  if(!isTRUE(use_saved) || is.null(metab_daily)) {
+  if(isTRUE(use_saved) && is.list(metab_model@fit) && exists('daily', metab_model@fit)) {
+    params <- metab_model@fit$daily %>% 
+      mm_filter_dates(date_start=date_start, date_end=date_end)
+  } else {
     data_daily <- get_data_daily(metab_model) %>%
       mm_filter_dates(date_start=date_start, date_end=date_end)
     ktrans <- get_specs(metab_model)$transforms[['K600']]
     do_ktrans <- !is.na(ktrans) && ktrans=='log'
     engine <- get_specs(metab_model)$engine
-    fit <- get_fit(metab_model)
+    fit <- get_fit(metab_model)$overall
     . <- '.dplyr.var'
     params <- select(data_daily, date)
     switch(
@@ -381,18 +395,28 @@ get_params.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, unc
       loess = {
         preds <- predict(fit, newdata=data_daily, se=TRUE)
         params %<>% mutate(
-          K600.daily = preds$fit,
-          K600.daily.sd = preds$se.fit)
+          K600.daily = {preds$fit}, # {} avoids "Error: invalid subscript type 'list'"
+          K600.daily.sd = {preds$se.fit})
       })
     if(do_ktrans) {
       for(col in setdiff(names(params), 'date')) {
         params[[col]] <- exp(params[[col]])
       }
     }
-  } else {
-    params <- metab_daily
   }
-  metab_model@fit <- mutate(params, warnings='', errors='') # temporarily assign to @fit for compatibility with get_params.metab_model
+  metab_model@fit <- c(list(daily=mutate(params, warnings='', errors='')), get_fit(metab_model)) # temporarily assign to @fit for compatibility with get_params.metab_model
+  # code duplicated in get_params.metab_bayes:
+  if(length(metab_model@fit$warnings) > 0) {
+    omsg <- 'overall warnings'
+    dmsg <- metab_model@fit$daily$warnings
+    metab_model@fit$daily$warnings <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
+  if(length(metab_model@fit$errors) > 0) {
+    omsg <- 'overall errors'
+    dmsg <- metab_model@fit$daily$errors
+    metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
+  metab_model@fit <- metab_model@fit$daily # SUPER-TEMPORARY we're still converting fit$daily to fit until #247, #229
   NextMethod()
 }
 
