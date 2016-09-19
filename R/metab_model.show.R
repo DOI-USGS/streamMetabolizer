@@ -40,6 +40,9 @@ setMethod(
     if(length(stop_msgs) > 0) cat("Fitting errors:", paste0('  ', stop_msgs, collapse='\n'), sep='\n')
     
     # print metabolism predictions
+    if(class(object)[1] == "metab_Kmodel") {
+      return() # Kmodel doesn't do metabolism predictions
+    }
     warn_msgs <- stop_msgs <- character(0)
     withCallingHandlers(
       tryCatch({

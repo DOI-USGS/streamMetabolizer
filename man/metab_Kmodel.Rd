@@ -81,18 +81,27 @@ mm <- metab_Kmodel(
   specs(mm_name('Kmodel', engine='mean')), 
   data_daily=example_Ks) # two warnings expected for engine='mean'
 get_params(mm)
+\dontrun{
+plot(get_params(mm)$date, get_params(mm)$K600.daily)
+}
 
 # linear model
 mm <- metab_Kmodel(
   specs(mm_name('Kmodel', engine='lm'), predictors='discharge.daily'),
   data_daily=example_Ks)
 get_params(mm)
+\dontrun{
+plot(get_data_daily(mm)$discharge.daily, get_params(mm)$K600.daily)
+}
 
 # loess
 mm <- metab_Kmodel(    ### breaks ###
   specs(mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)),
   data_daily=example_Ks)
 get_params(mm)
+\dontrun{
+plot(get_params(mm)$date, get_params(mm)$K600.daily)
+}
 
 ## 3-phase workflow (sort of like complete pooling) for estimating K within 
 ## days, then K across days, then GPP and ER within days
@@ -114,6 +123,9 @@ K600_mm2 <- get_params(mm2) \%>\% select(date, K600.daily)
 mm3 <- metab_mle(mle_specs, data=dat, data_daily=K600_mm2)
 get_params(mm3, fixed='stars')
 predict_metab(mm3)
+\dontrun{
+plot_metab_preds(mm3)
+}
 }
 \author{
 Alison Appling
