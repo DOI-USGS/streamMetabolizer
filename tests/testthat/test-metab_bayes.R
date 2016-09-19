@@ -189,7 +189,7 @@ manual_test3 <- function() {
   
   # faster stan oi model
   dat <- data_metab('10', res='10')
-  sp <- specs('b_np_oi_pm_plrckm.stan', n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE, 
+  sp <- specs('b_np_oi_pm_plrckm.stan', n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=FALSE, keep_mcmcs=TRUE, 
               GPP_daily_sigma=4, ER_daily_sigma=4, K600_daily_sigma=4)
   mm_slow <- metab(specs=sp, data=dat) # 9 sec
   # SFS version
@@ -206,7 +206,7 @@ manual_test3 <- function() {
   
   # faster stan Kl model?
   dat <- mutate(data_metab('10', res='10'), discharge=3)
-  sp <- specs("b_Kl_oi_tr_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=TRUE, keep_mcmcs=TRUE)
+  sp <- specs("b_Kl_oi_tr_plrckm.stan", n_chains=3, n_cores=3, burnin_steps=300, saved_steps=100, verbose=FALSE, keep_mcmcs=TRUE)
   mm_old <- metab(
     specs=revise(sp, model_name='inst/models/b_Kl_oi_tr_plrckm.stan'), 
     data=dat) # 20 sec - baseline after june 2016 speed-ups

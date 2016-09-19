@@ -17,8 +17,12 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_equal(select(get_params(mm), -DO.mod.1), get_params(mm2))
   
   # predict_metab
-  expect_equal(select(get_params(mm), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm), GPP, ER))
-  expect_equal(select(get_params(mm2), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm2), GPP, ER))
+  expect_equal(select(get_params(mm)[2:3,], GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm)[2:3,], GPP, ER))
+  expect_equal(select(get_params(mm2)[2:3,], GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm2)[2:3,], GPP, ER))
+  
+  # should be able to omit day_tests and then get preds for all 3 days
+  mm3 <- metab_sim(data=select(dat, -DO.obs), data_daily=dd, specs=specs('sim', day_tests=c()))
+  expect_equal(select(get_params(mm3), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm3), GPP, ER))
   
   # predict_DO - DO.mod.1 should follow specifications
   expect_equal(predict_DO(mm) %>% group_by(date) %>% summarize(first.DO.mod = DO.mod[1]) %>% .$first.DO.mod,

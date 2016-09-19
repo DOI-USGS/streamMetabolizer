@@ -47,9 +47,9 @@ test_that("mm_valid_names and mm_validate_names check model names", {
 })
 
 test_that("specs uses any valid mm_name", {
-  # subsample because there are >1000 valid model names
+  # subsample because there are >500 valid model names
   mnames <- mm_valid_names()
-  expect_gte(length(mnames), 1000)
+  expect_gte(length(mnames), 500)
   specs_list <- lapply(sample(mnames, 50), specs)
   # specs list lengths differ by model type. the exact range could change
   sp_len_range <- range(sapply(specs_list, length))

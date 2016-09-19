@@ -13,38 +13,40 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   # ddat = data.frame of daily date, discharge.daily, and K600 (made-up data)
   ddat <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
     as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600.daily=rnorm(32,30,4)) %>%
-    mutate(K600.lower=K600-5, K600.upper=K600+6)
+    mutate(K600.daily.lower=K600.daily-5, K600.daily.upper=K600.daily+6)
   # ddat1 = data.frame of just one day of data
   ddat1 <- data.frame(date=as.Date("2012-08-24"), K600.daily=20, K600.daily.lower=15, K600.daily.upper=25, stringsAsFactors=FALSE)
   
   # 1-day tests: show that Kmodel(mean) won't break even if only 1 data point is entered
-  expect_warning(mm <- metab_Kmodel(data=NULL, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='mean'))), "no SE available")
-  expect_equal(predict_metab(mm)$K600, ddat1$K600)
+  mm <- metab_Kmodel(data=NULL, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='mean')))
+  expect_equal(get_fit(mm)$warnings, "omitting sd for weighted mean")
+  expect_equal(get_params(mm)$K600.daily, ddat1$K600.daily)
   # show that Kmodel(lm) and Kmodel(loess) do break, on model-specific errors
-  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE)
-  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE)
+  expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE), "Timing stopped")
+  expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE), "Timing stopped")
   
   # mean
-  expect_warning(mm_mean <- metab_Kmodel(data_daily=ddat, specs=specs(mm_name('Kmodel', engine='mean'))), "no SE available")
+  mm_mean <- metab_Kmodel(data_daily=ddat, specs=specs(mm_name('Kmodel', engine='mean')))
+  expect_equal(get_params(mm_mean)$K600.daily[1], get_params(mm_mean)$K600.daily[5])
   
   # lm
   ms <- specs(mm_name('Kmodel', engine='lm'), predictors=c())
   mm <- metab_Kmodel(data_daily=ddat, specs=ms)
-  expect_equal(predict_metab(mm_mean)$K600, predict_metab(mm)$K600)
-  mm <- metab_Kmodel(replace(ms, 'predictors', 'discharge.daily'), data_daily=ddat)
-  mm <- metab_Kmodel(replace(ms, 'predictors', 'date'), data_daily=ddat)
-  mm <- metab_Kmodel(specs(mm_name('Kmodel', engine='lm'), predictors=c('discharge.daily','date')), data_daily=ddat)
+  expect_equal(get_params(mm_mean)$K600.daily, get_params(mm)$K600.daily)
+  mm <- metab_Kmodel(revise(ms, predictors='discharge.daily'), data_daily=ddat)
+  mm <- metab_Kmodel(revise(ms, predictors='date'), data_daily=ddat)
+  mm <- metab_Kmodel(revise(ms, predictors=c('discharge.daily','date')), data_daily=ddat)
   
   # loess
-  mm <- metab_Kmodel(specs(mm_name('Kmodel', engine='loess'), predictors='date'), data_daily=ddat)
-  mm <- metab_Kmodel(specs(mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=1.4)), data_daily=ddat)
-  mm <- metab_Kmodel(specs(mm_name('Kmodel', engine='loess'), predictors=c('discharge.daily','date')), data_daily=ddat)
-  mm <- metab_Kmodel(specs(mm_name('Kmodel', engine='loess'), predictors='discharge.daily', other_args=list(span=2)), data_daily=ddat)
+  ms <- specs(mm_name('Kmodel', engine='loess'), predictors='date')
+  mm <- metab_Kmodel(ms, data_daily=ddat)
+  mm <- metab_Kmodel(revise(ms, other_args=list(span=1.4)), data_daily=ddat)
+  mm <- metab_Kmodel(revise(ms, predictors=c('discharge.daily','date')), data_daily=ddat)
+  mm <- metab_Kmodel(revise(ms, predictors='discharge.daily', other_args=list(span=2)), data_daily=ddat)
   
-  # use graphical check to inspect above mm results
-  # plot_metab_preds(predict_metab(mm))
-  expect_error(predict_DO(mm), "can only predict K, not DO, from metab_Kmodel")
-    
+  # Kmodel should refuse to predict metab or DO
+  expect_error(predict_metab(mm))
+  expect_error(predict_DO(mm))    
 })
 
 test_that("try a complete PRK-K-PR workflow", {
@@ -53,17 +55,15 @@ test_that("try a complete PRK-K-PR workflow", {
   
   # fit a first-round MLE and extract the K estimates
   mm1 <- metab(specs(mm_name('mle'), day_start=-1, day_end=25), data=dat)
-  K600_mm1 <- predict_metab(mm1) %>% select(date, K600, K600.lower, K600.upper)
+  K600_mm1 <- get_params(mm1, uncertainty='ci') %>% select(date, K600.daily, K600.daily.lower, K600.daily.upper)
   
   # smooth the K600s
-  expect_warning({
-    mm2 <- metab(specs(mm_name("Kmodel", engine='mean'), transforms=c(K600='log'), weights=c(), predictors=c()), data_daily=K600_mm1)
-  }, "no SE available")
-  K600_mm2 <- predict_metab(mm2) %>% select(date, K600)
+  mm2 <- metab(specs(mm_name("Kmodel", engine='mean'), transforms=c(K600='log'), weights=c(), predictors=c()), data_daily=K600_mm1)
+  K600_mm2 <- get_params(mm2) %>% select(date, K600.daily)
   
   # refit the MLE with fixed K
   mm3 <- metab(specs(mm_name('mle'), day_start=-1, day_end=25), data=dat, data_daily=K600_mm2)
-  expect_equal(length(unique(predict_metab(mm3)$K600)), 1)
+  expect_equal(length(unique(get_params(mm3)$K600.daily)), 1)
   
   # that should have reduced variance in the GPP & ER predictions
   expect_lt(sd(predict_metab(mm3)$GPP), sd(predict_metab(mm1)$GPP))

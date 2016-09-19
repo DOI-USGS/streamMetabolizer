@@ -51,7 +51,7 @@ manual_tests <- function() {
   
   #### really hard model ####
   ms <- mm_name("bayes", pool_K600="none", err_proc_acor=TRUE, ode_method='Euler', engine="stan")
-  ms <- specs(ms, n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100, verbose=TRUE)
+  ms <- specs(ms, n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100, verbose=FALSE)
   system.time(fitall <- metab_bayes(vfrenchmedium, specs=replace(ms, 'split_dates', FALSE)))
   get_fitting_time(fitall) # 
   
