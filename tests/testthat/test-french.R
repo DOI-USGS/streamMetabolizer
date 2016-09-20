@@ -88,7 +88,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   
   # Bayes w/ Bob's MLE-PRK for comparison - really loose criteria for prediction agreement
   mb <- metab_bayes(
-    specs=specs('b_np_oi_eu_plrckm.stan', saved_steps=200, day_start=start.numeric, day_end=end.numeric), 
+    specs=specs('b_np_oi_eu_plrckm.stan', burnin_steps=300, saved_steps=200, n_cores=1, day_start=start.numeric, day_end=end.numeric), 
     data=vfrenchshort)
   smest <- predict_metab(mb)
   smpar <- get_params(mb)
