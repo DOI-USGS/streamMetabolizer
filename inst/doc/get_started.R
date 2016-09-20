@@ -126,17 +126,17 @@ bayes_specs
 
 ## ----bayes_specs2---------------------------------------------------------------------------------
 # one way to alter specifications: call specs() again
-bayes_specs <- specs(bayes_name, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
+bayes_specs <- specs(bayes_name, burnin_steps=100, saved_steps=200, n_cores=1, GPP_daily_mu=3, GPP_daily_sigma=2)
 # another way: use revise()
-bayes_specs <- revise(bayes_specs, burnin_steps=100, saved_steps=200, GPP_daily_mu=3, GPP_daily_sigma=2)
+bayes_specs <- revise(bayes_specs, burnin_steps=100, saved_steps=200, n_cores=1, GPP_daily_mu=3, GPP_daily_sigma=2)
 
-## ----bayes_fit------------------------------------------------------------------------------------------
+## ----bayes_fit------------------------------------------------------------------------------------
 bayes_fit <- metab(bayes_specs, data=dat)
 
-## -------------------------------------------------------------------------------------------------------
+## -------------------------------------------------------------------------------------------------
 bayes_fit
 
-## ----bayes_warning--------------------------------------------------------------------------------------
+## ----bayes_warning--------------------------------------------------------------------------------
 # here's where you'd find fitting messages:
 select(get_params(bayes_fit), warnings, errors)
 get_fit(bayes_fit)$warnings
@@ -144,16 +144,16 @@ get_fit(bayes_fit)$errors
 # and prediction messages
 select(predict_metab(bayes_fit), warnings, errors)
 
-## ----bayes_pred_tbl, results='asis'---------------------------------------------------------------------
+## ----bayes_pred_tbl, results='asis'---------------------------------------------------------------
 predict_metab(bayes_fit) %>% 
   lapply(function(col) if(is.numeric(col)) round(col, 2) else col ) %>%
   as.data.frame() %>%
   knitr::kable()
 
-## ---- fig.width=7, fig.height=6-------------------------------------------------------------------------
+## ---- fig.width=7, fig.height=6-------------------------------------------------------------------
 plot_DO_preds(bayes_fit)
 
-## -------------------------------------------------------------------------------------------------------
+## -------------------------------------------------------------------------------------------------
 valid_names <- mm_valid_names(type=c('bayes','mle','night'))
 length(valid_names)
 c(valid_names[seq(1,length(valid_names),length.out=20)], '...')

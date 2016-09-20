@@ -2,10 +2,7 @@
 title: "Simulations"
 author: "Alison Appling"
 date: "`r Sys.Date()`"
-output:
-  rmdformats::readthedown:
-    fig_caption: yes
-    highlight: kate
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{get_started}
   %\VignetteEngine{knitr::rmarkdown}
