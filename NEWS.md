@@ -1,9 +1,15 @@
-# streamMetabolizer 0.9.13
+# streamMetabolizer 0.9.14
 
 * all tests are passing and all examples are running [again]. tests are 
 acceptably comprehensive [for now].
 
-* known issue: K binning in bayesian models is producing unlikely estimates.
+* known issue: K binning in bayesian models is producing unlikely estimates. all
+bayesian models need further testing.
+
+# streamMetabolizer 0.9.14
+
+* ongoing bug fixes and re-integration of all model types into new ODE
+production/integration scheme
 
 # streamMetabolizer 0.9.12
 
