@@ -4,7 +4,10 @@
 
 language: r
 sudo: required
-warnings_ar_errors: true
+warnings_are_errors: true
+
+r_build_args: --no-build-vignettes --no-manual --no-multiarch
+r_check_args: --no-build-vignettes --no-manual
 
 repos:
   CRAN: https://cloud.r-project.org

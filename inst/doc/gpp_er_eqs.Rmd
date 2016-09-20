@@ -11,15 +11,8 @@ vignette: >
 
 
 ```{r knitr_init, echo=FALSE, cache=FALSE}
-library(knitr)
-library(rmdformats)
-
-## Global options
-options(max.print="75")
-opts_chunk$set(echo=TRUE,
-	             prompt=FALSE,
-               tidy=TRUE)
-opts_knit$set(width=75)
+knitr::opts_chunk$set(echo = TRUE)
+options(width=100)
 ```
 
 # Overview

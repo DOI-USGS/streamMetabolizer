@@ -1,4 +1,4 @@
-## ----setup, include=FALSE-------------------------------------------------------------------------
+## ----knitr_init, echo=FALSE, cache=FALSE----------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 options(width=100)
 

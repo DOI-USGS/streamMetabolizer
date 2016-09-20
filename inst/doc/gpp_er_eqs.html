@@ -85,17 +85,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Load dplyr.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(dplyr))</code></pre></div>
 <p>Get some data to work with: here we’re requesting three days of data at 15-minute resolution. Thanks to Bob Hall for the test data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">data_metab</span>(<span class="st">&quot;3&quot;</span>, <span class="st">&quot;15&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">data_metab</span>(<span class="st">'3'</span>, <span class="st">'15'</span>)</code></pre></div>
 </div>
 <div id="gpp-and-er-functions" class="section level1">
 <h1>GPP and ER functions</h1>
 <p>Here’s a basic model with GPP proportional to light and ER constant over time.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># the Classic: linear GPP, constant ER (also the default)</span>
-mm_classic &lt;-<span class="st"> </span><span class="kw">mm_name</span>(<span class="st">&quot;mle&quot;</span>, <span class="dt">GPP_fun =</span> <span class="st">&quot;linlight&quot;</span>, <span class="dt">ER_fun =</span> <span class="st">&quot;constant&quot;</span>) %&gt;%<span class="st"> </span>
-<span class="st">    </span><span class="kw">specs</span>() %&gt;%<span class="st"> </span><span class="kw">metab</span>(dat)
+mm_classic &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">mm_name</span>(<span class="st">'mle'</span>, <span class="dt">GPP_fun=</span><span class="st">'linlight'</span>, <span class="dt">ER_fun=</span><span class="st">'constant'</span>) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">specs</span>() %&gt;%
+<span class="st">  </span><span class="kw">metab</span>(dat)
 mm_classic</code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.9.13 
+## streamMetabolizer version 0.9.14 
 ## Specifications:
 ##   model_name      m_np_oi_tr_plrckm.nlm                  
 ##   day_start       4                                      
@@ -104,36 +106,30 @@ mm_classic</code></pre></div>
 ##   init.GPP.daily  5                                      
 ##   init.ER.daily   -10                                    
 ##   init.K600.daily 10                                     
-## Fitting time: 1.82 secs elapsed
+## Fitting time: 1.97 secs elapsed
 ## Parameters (3 dates):
-##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
-## 1 2012-09-18 2.814873         2.161706        3.468040 -2.113937 
-## 2 2012-09-19 3.271369         2.564095        3.978643 -2.466321 
-## 3 2012-09-20 2.590927         2.121745        3.060110 -1.712054 
-##   ER.daily.lower ER.daily.upper K600.daily K600.daily.lower
-## 1      -2.645471      -1.582404  31.06049          24.50308
-## 2      -3.050366      -1.882276  33.23987          26.65187
-## 3      -2.069551      -1.354558  28.71846          24.02637
-##   K600.daily.upper msgs.fit
-## 1         37.61790         
-## 2         39.82786         
-## 3         33.41055         
+##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily ER.daily.lower ER.daily.upper
+## 1 2012-09-18 2.814873         2.161706        3.468040 -2.113937       -2.645471      -1.582404
+## 2 2012-09-19 3.271369         2.564095        3.978643 -2.466321       -3.050366      -1.882276
+## 3 2012-09-20 2.590927         2.121745        3.060110 -1.712054       -2.069551      -1.354558
+##   K600.daily K600.daily.lower K600.daily.upper msgs.fit
+## 1  31.06049          24.50308         37.61790         
+## 2  33.23987          26.65187         39.82786         
+## 3  28.71846          24.02637         33.41055         
 ## Predictions (3 dates):
-##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
-## 1 2012-09-18 2.814873  2.161706  3.468040 -2.113937 -2.645471 -1.582404
-## 2 2012-09-19 3.271369  2.564095  3.978643 -2.466321 -3.050366 -1.882276
-## 3 2012-09-20 2.590927  2.121745  3.060110 -1.712054 -2.069551 -1.354558
-##   msgs.fit msgs.pred
-## 1                   
-## 2                   
-## 3</code></pre>
+##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper msgs.fit msgs.pred
+## 1 2012-09-18 2.814873  2.161706  3.468040 -2.113937 -2.645471 -1.582404                   
+## 2 2012-09-19 3.271369  2.564095  3.978643 -2.466321 -3.050366 -1.882276                   
+## 3 2012-09-20 2.590927  2.121745  3.060110 -1.712054 -2.069551 -1.354558</code></pre>
 <p>Here’s one where GPP is a saturating function of light. ER is still constant.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># the Saturator: GPP saturating with light, constant ER</span>
-mm_saturator &lt;-<span class="st"> </span><span class="kw">mm_name</span>(<span class="st">&quot;mle&quot;</span>, <span class="dt">GPP_fun =</span> <span class="st">&quot;satlight&quot;</span>, <span class="dt">ER_fun =</span> <span class="st">&quot;constant&quot;</span>) %&gt;%<span class="st"> </span>
-<span class="st">    </span><span class="kw">specs</span>() %&gt;%<span class="st"> </span><span class="kw">metab</span>(dat)
+mm_saturator &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">mm_name</span>(<span class="st">'mle'</span>, <span class="dt">GPP_fun=</span><span class="st">'satlight'</span>, <span class="dt">ER_fun=</span><span class="st">'constant'</span>) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">specs</span>() %&gt;%
+<span class="st">  </span><span class="kw">metab</span>(dat)
 mm_saturator</code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.9.13 
+## streamMetabolizer version 0.9.14 
 ## Specifications:
 ##   model_name      m_np_oi_tr_psrckm.nlm                  
 ##   day_start       4                                      
@@ -143,32 +139,24 @@ mm_saturator</code></pre></div>
 ##   init.alpha      1e-04                                  
 ##   init.ER.daily   -10                                    
 ##   init.K600.daily 10                                     
-## Fitting time: 5.26 secs elapsed
+## Fitting time: 5.65 secs elapsed
 ## Parameters (3 dates):
-##         date       Pmax Pmax.lower Pmax.upper         alpha   alpha.lower
-## 1 2012-09-18  6.033049    5.715948   6.350149 0.0083268781   0.0078854775
-## 2 2012-09-19 10.584740  -40.173856  61.343337 0.0007110094  -0.0002512095
-## 3 2012-09-20  6.226657    5.745399   6.707915 0.0073753368   0.0068235666
-##   alpha.upper   ER.daily ER.daily.lower ER.daily.upper K600.daily
-## 1 0.008768279 -1.934453       -2.025453      -1.843452  24.57066 
-## 2 0.001673228  1.370471             NaN            NaN  28.50629 
-## 3 0.007927107 -1.673050       -1.789897      -1.556204  24.40059 
-##   K600.daily.lower K600.daily.upper msgs.fit
-## 1         23.55608         25.58523         
-## 2         22.11192         34.90065      W  
-## 3         23.00300         25.79819         
+##         date       Pmax Pmax.lower Pmax.upper         alpha   alpha.lower alpha.upper   ER.daily
+## 1 2012-09-18  6.033049    5.715948   6.350149 0.0083268781   0.0078854775 0.008768279 -1.934453 
+## 2 2012-09-19 10.584740  -40.173856  61.343337 0.0007110094  -0.0002512095 0.001673228  1.370471 
+## 3 2012-09-20  6.226657    5.745399   6.707915 0.0073753368   0.0068235666 0.007927107 -1.673050 
+##   ER.daily.lower ER.daily.upper K600.daily K600.daily.lower K600.daily.upper msgs.fit
+## 1      -2.025453      -1.843452  24.57066          23.55608         25.58523         
+## 2            NaN            NaN  28.50629          22.11192         34.90065      W  
+## 3      -1.789897      -1.556204  24.40059          23.00300         25.79819         
 ## Fitting warnings:
 ##   1 date: iteration limit exceeded
 ##   1 date: NaNs produced
 ## Predictions (3 dates):
-##         date       GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
-## 1 2012-09-18 2.4687696        NA        NA -1.934453 -2.025453 -1.843452
-## 2 2012-09-19 0.4034888        NA        NA  1.370471       NaN       NaN
-## 3 2012-09-20 2.4077909        NA        NA -1.673050 -1.789897 -1.556204
-##   msgs.fit msgs.pred
-## 1                   
-## 2      W            
-## 3</code></pre>
+##         date       GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper msgs.fit msgs.pred
+## 1 2012-09-18 2.4687696        NA        NA -1.934453 -2.025453 -1.843452                   
+## 2 2012-09-19 0.4034888        NA        NA  1.370471       NaN       NaN      W            
+## 3 2012-09-20 2.4077909        NA        NA -1.673050 -1.789897 -1.556204</code></pre>
 <p>The Saturator produces fitting warnings, which are condensed to ‘w’ and a summary in the above print-out. They can be inspected in detail by looking directly at the fitted daily parameters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">get_params</span>(mm_saturator) %&gt;%<span class="st"> </span><span class="kw">select</span>(date, warnings, errors)</code></pre></div>
 <pre><code>##         date                                warnings errors
@@ -183,35 +171,29 @@ mm_saturator</code></pre></div>
 ## 3 2012-09-20</code></pre>
 <p>You can predict and/or plot instantaneous DO values from the fitted daily parameters.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">predict_DO</span>(mm_saturator) %&gt;%<span class="st"> </span>head</code></pre></div>
-<pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light
-## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
-## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0
-## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0
-## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0
-## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0
-## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0
-##     DO.mod
-## 1 8.410000
-## 2 8.403197
-## 3 8.399110
-## 4 8.397120
-## 5 8.397068
-## 6 8.398825</code></pre>
+<pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light   DO.mod
+## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0 8.410000
+## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0 8.403197
+## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0 8.399110
+## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0 8.397120
+## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0 8.397068
+## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0 8.398825</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot_DO_preds</span>(mm_saturator)</code></pre></div>
 <p><img src="data:image/png;base64,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" alt /><!-- --></p>
 <p>Yep, that fitting warning on day 2 was meaningful! We can encourage the model toward a good fit by adjusting the initial values of Pmax and alpha from which the fitting function should explore likelihood space. There are two ways to do this - as date-specific values in data_daily, or as values that apply to every date in specs(). The two methods can even be combined.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator2 &lt;-<span class="st"> </span><span class="kw">mm_name</span>(<span class="st">&quot;mle&quot;</span>, <span class="dt">GPP_fun =</span> <span class="st">&quot;satlight&quot;</span>, <span class="dt">ER_fun =</span> <span class="st">&quot;constant&quot;</span>) %&gt;%<span class="st"> </span>
-<span class="st">    </span><span class="kw">specs</span>() %&gt;%<span class="st"> </span><span class="kw">metab</span>(dat, <span class="dt">data_daily =</span> <span class="kw">select</span>(<span class="kw">get_params</span>(mm_saturator), date, 
-    <span class="dt">init.Pmax =</span> Pmax, <span class="dt">init.alpha =</span> alpha))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator2 &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">mm_name</span>(<span class="st">'mle'</span>, <span class="dt">GPP_fun=</span><span class="st">'satlight'</span>, <span class="dt">ER_fun=</span><span class="st">'constant'</span>) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">specs</span>() %&gt;%
+<span class="st">  </span><span class="kw">metab</span>(dat, <span class="dt">data_daily=</span><span class="kw">select</span>(<span class="kw">get_params</span>(mm_saturator), date, <span class="dt">init.Pmax=</span>Pmax, <span class="dt">init.alpha=</span>alpha))
 <span class="kw">get_params</span>(mm_saturator2)</code></pre></div>
-<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily
-## 1 2012-09-18 6.033048 0.1614450 0.008326878 0.0002252292 -1.934453
-## 2 2012-09-19 7.270001 0.2810123 0.009041332 0.0003329964 -2.239060
-## 3 2012-09-20 6.226683 0.2451117 0.007375290 0.0002815440 -1.673045
-##   ER.daily.sd K600.daily K600.daily.sd
-## 1  0.04636854   24.57065     0.5166938
-## 2  0.07721978   26.61006     0.7961636
-## 3  0.05956600   24.40066     0.7120840
+<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
+## 1 2012-09-18 6.033048 0.1614450 0.008326878 0.0002252292 -1.934453  0.04636854   24.57065
+## 2 2012-09-19 7.270001 0.2810123 0.009041332 0.0003329964 -2.239060  0.07721978   26.61006
+## 3 2012-09-20 6.226683 0.2451117 0.007375290 0.0002815440 -1.673045  0.05956600   24.40066
+##   K600.daily.sd
+## 1     0.5166938
+## 2     0.7961636
+## 3     0.7120840
 ##                                                                                                                                                 warnings
 ## 1                                                                                                                                                       
 ## 2                                                                                                                                                       
@@ -220,17 +202,19 @@ mm_saturator</code></pre></div>
 ## 1       
 ## 2       
 ## 3</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator3 &lt;-<span class="st"> </span><span class="kw">mm_name</span>(<span class="st">&quot;mle&quot;</span>, <span class="dt">GPP_fun =</span> <span class="st">&quot;satlight&quot;</span>, <span class="dt">ER_fun =</span> <span class="st">&quot;constant&quot;</span>) %&gt;%<span class="st"> </span>
-<span class="st">    </span><span class="kw">specs</span>(<span class="dt">init.Pmax =</span> <span class="fl">6.2</span>, <span class="dt">init.alpha =</span> <span class="fl">0.008</span>) %&gt;%<span class="st"> </span><span class="kw">metab</span>(dat)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator3 &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">mm_name</span>(<span class="st">'mle'</span>, <span class="dt">GPP_fun=</span><span class="st">'satlight'</span>, <span class="dt">ER_fun=</span><span class="st">'constant'</span>) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">specs</span>(<span class="dt">init.Pmax=</span><span class="fl">6.2</span>, <span class="dt">init.alpha=</span><span class="fl">0.008</span>) %&gt;%
+<span class="st">  </span><span class="kw">metab</span>(dat)
 <span class="kw">get_params</span>(mm_saturator3)</code></pre></div>
-<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily
-## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452
-## 2 2012-09-19 7.270001 0.2806163 0.009041332 0.0003330177 -2.239060
-## 3 2012-09-20 6.226684 0.2451105 0.007375292 0.0002815623 -1.673045
-##   ER.daily.sd K600.daily K600.daily.sd
-## 1  0.04637106   24.57065     0.5167332
-## 2  0.07715527   26.61006     0.7952317
-## 3  0.05956607   24.40066     0.7120805
+<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
+## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452  0.04637106   24.57065
+## 2 2012-09-19 7.270001 0.2806163 0.009041332 0.0003330177 -2.239060  0.07715527   26.61006
+## 3 2012-09-20 6.226684 0.2451105 0.007375292 0.0002815623 -1.673045  0.05956607   24.40066
+##   K600.daily.sd
+## 1     0.5167332
+## 2     0.7952317
+## 3     0.7120805
 ##                                                                                                                                                 warnings
 ## 1 last global step failed to locate a point lower than estimate. Either estimate is an approximate local minimum of the function or steptol is too small
 ## 2                                                                                                                                                       
@@ -239,18 +223,19 @@ mm_saturator</code></pre></div>
 ## 1       
 ## 2       
 ## 3</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator4 &lt;-<span class="st"> </span><span class="kw">mm_name</span>(<span class="st">&quot;mle&quot;</span>, <span class="dt">GPP_fun =</span> <span class="st">&quot;satlight&quot;</span>, <span class="dt">ER_fun =</span> <span class="st">&quot;constant&quot;</span>) %&gt;%<span class="st"> </span>
-<span class="st">    </span><span class="kw">specs</span>(<span class="dt">init.Pmax =</span> <span class="fl">6.2</span>, <span class="dt">init.alpha =</span> <span class="fl">0.008</span>) %&gt;%<span class="st"> </span><span class="kw">metab</span>(dat, <span class="kw">transmute</span>(<span class="kw">get_params</span>(mm_saturator), 
-    date, <span class="dt">init.Pmax =</span> Pmax[<span class="dv">1</span>], <span class="dt">init.alpha =</span> alpha[<span class="dv">1</span>])[<span class="dv">2</span>, ])
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mm_saturator4 &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">mm_name</span>(<span class="st">'mle'</span>, <span class="dt">GPP_fun=</span><span class="st">'satlight'</span>, <span class="dt">ER_fun=</span><span class="st">'constant'</span>) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">specs</span>(<span class="dt">init.Pmax=</span><span class="fl">6.2</span>, <span class="dt">init.alpha=</span><span class="fl">0.008</span>) %&gt;%
+<span class="st">  </span><span class="kw">metab</span>(dat, <span class="kw">transmute</span>(<span class="kw">get_params</span>(mm_saturator), date, <span class="dt">init.Pmax=</span>Pmax[<span class="dv">1</span>], <span class="dt">init.alpha=</span>alpha[<span class="dv">1</span>])[<span class="dv">2</span>,])
 <span class="kw">get_params</span>(mm_saturator4)</code></pre></div>
-<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily
-## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452
-## 2 2012-09-19 7.270001 0.2806151 0.009041378 0.0003330192 -2.239069
-## 3 2012-09-20 6.226684 0.2451105 0.007375292 0.0002815623 -1.673045
-##   ER.daily.sd K600.daily K600.daily.sd
-## 1  0.04637106   24.57065     0.5167332
-## 2  0.07715563   26.61007     0.7952308
-## 3  0.05956607   24.40066     0.7120805
+<pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
+## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452  0.04637106   24.57065
+## 2 2012-09-19 7.270001 0.2806151 0.009041378 0.0003330192 -2.239069  0.07715563   26.61007
+## 3 2012-09-20 6.226684 0.2451105 0.007375292 0.0002815623 -1.673045  0.05956607   24.40066
+##   K600.daily.sd
+## 1     0.5167332
+## 2     0.7952308
+## 3     0.7120805
 ##                                                                                                                                                                                                                                    warnings
 ## 1 data_daily$init.Pmax==NA so using specs; data_daily$init.alpha==NA so using specs; last global step failed to locate a point lower than estimate. Either estimate is an approximate local minimum of the function or steptol is too small
 ## 2                                                                                                                                                                                                                                          

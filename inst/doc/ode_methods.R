@@ -1,24 +1,17 @@
-## ----knitr_init, echo=FALSE, cache=FALSE---------------------------------
-library(knitr)
-library(rmdformats)
+## ----knitr_init, echo=FALSE, cache=FALSE----------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+options(width=100)
 
-## Global options
-options(max.print="75")
-opts_chunk$set(echo=TRUE,
-               prompt=FALSE,
-               tidy=TRUE)
-opts_knit$set(width=75)
-
-## ---- messages=TRUE, warnings=TRUE, errors=TRUE--------------------------
+## ---- messages=TRUE, warnings=TRUE, errors=TRUE---------------------------------------------------
 library(streamMetabolizer)
 
-## ------------------------------------------------------------------------
+## -------------------------------------------------------------------------------------------------
 suppressPackageStartupMessages(library(dplyr))
 
-## ------------------------------------------------------------------------
+## -------------------------------------------------------------------------------------------------
 dat <- data_metab('3','30')
 
-## ------------------------------------------------------------------------
+## -------------------------------------------------------------------------------------------------
 mm_euler <- metab(specs(mm_name('mle', ode_method='euler')), dat)
 mm_trapezoid <- metab(specs(mm_name('mle', ode_method='trapezoid')), dat)
 mm_rk4 <- metab(specs(mm_name('mle', ode_method='rk4')), dat) 
