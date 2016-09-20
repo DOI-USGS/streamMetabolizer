@@ -291,7 +291,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     # gO2/m2/d, just like GPP & ER
     trapezoid=, pairmeans={
       # define pairwise averaging functions pm = pairmeans, f=function, v=vector
-      pmf <- function(fun, t, ...) .Internal(mean(fun(c(t, t+1), ...)))
+      pmf <- function(fun, t, ...) mean(fun(c(t, t+1), ...)) # .Internal(mean()) is faster but rountly rejected by R CMD check
       pmv <- function(vec, t) (vec[t] + vec[t+1])/2
       function(t, state, metab.pars){
         K600.daily <- metab.pars[['K600.daily']]
