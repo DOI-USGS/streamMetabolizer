@@ -15,10 +15,11 @@
 revise <- function(specs, ..., delete) {
   # evaluate ... in the context of specs
   args <- {
-    attach(specs, warn.conflicts=FALSE)
-    on.exit(detach(specs))
+    attach(specs, warn.conflicts=FALSE, name='revisespecstemp')
+    on.exit(detach('revisespecstemp'))
     list(...)
   }
+  
   # require names
   if(is.null(names(args)) || any(names(args) == '')) {
     stop("all arguments in ... must be named")
