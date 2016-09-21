@@ -86,7 +86,7 @@ transformed parameters {
   err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale);
   
   // Model DO time series
-  // * Euler version
+  // * euler version
   // * observation error
   // * IID and autocorrelated process error
   // * reaeration depends on DO_mod

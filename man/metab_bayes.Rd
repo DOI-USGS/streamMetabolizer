@@ -39,51 +39,36 @@ A metab_bayes object containing the fitted model. This object can be
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-and \code{\link{specs}} for relevant options for the \code{specs} 
-argument.
+and \code{\link{specs}} for relevant options for the \code{specs} argument.
+}
+\details{
+As of summer and fall 2016, a new compilation of any Stan model gives
+deprecation warnings including \code{typedef 'size_type' locally defined but
+not used [-Wunused-local-typedefs]}, \code{typedef 'index_range' locally
+defined but not used [-Wunused-local-typedefs]}, \code{typedef 'index'
+locally defined but not used [-Wunused-local-typedefs]}, and \code{'void
+stan::math::set_zero_all_adjoints()' defined but not used
+[-Wunused-function]}. THESE ARE OKAY. Subsequent runs of the compiled Stan
+model will be quieter, and the model will work.
 }
 \examples{
 \dontrun{
 dat <- data_metab('3', res='30')
 # fast-ish model version, but still too slow to auto-run in examples
 mm <- metab_bayes(data=dat,
-  specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+  specs(mm_name('bayes', err_proc_iid=FALSE), 
     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
 mm
 get_fitting_time(mm)
 predict_metab(mm)
 plot_DO_preds(predict_DO(mm))
 
-# test that error-free models can be run with split or combined dates, jags or stan
-sp <- function(split_dates, engine) { replace(
-  specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine), 
-    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE), 
-  'split_dates', split_dates
-) }
-dat <- data_metab('1', res='30')
-mm <- metab(sp(FALSE,'jags'), dat)
-mm <- metab(sp(TRUE, 'jags'), dat)
-# new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
-mm <- metab(sp(FALSE,'stan'), dat)
-# subsequent runs of the compiled Stan model are quieter
-mm <- metab(sp(TRUE, 'stan'), dat)
-dat <- data_metab('3', res='30')
-mm <- metab(sp(FALSE,'jags'), dat)
-mm <- metab(sp(TRUE, 'jags'), dat)
-mm <- metab(sp(FALSE,'stan'), dat)
-mm <- metab(sp(TRUE, 'stan'), dat)
-
 # error and warning messages are printed with the mm object if present
-dat <- data_metab('1', res='30', flaws=c('missing start'))
-mm <- metab(sp(FALSE,'jags'), dat)
-mm <- metab(sp(TRUE, 'jags'), dat)
-mm <- metab(sp(FALSE,'stan'), dat)
-mm <- metab(sp(TRUE, 'stan'), dat)
 dat <- data_metab('3', res='30', flaws=c('missing middle'))
-mm <- metab(sp(FALSE,'jags'), dat)
-mm <- metab(sp(TRUE, 'jags'), dat)
-mm <- metab(sp(FALSE,'stan'), dat)
-mm <- metab(sp(TRUE, 'stan'), dat)
+mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE), 
+  n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
+  data=dat)
+predict_metab(mm)
 }
 }
 \author{

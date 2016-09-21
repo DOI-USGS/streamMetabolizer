@@ -85,7 +85,7 @@ transformed parameters {
   err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
   
   // Model DO time series
-  // * Euler version
+  // * euler version
   // * observation error
   // * autocorrelated process error
   // * reaeration depends on DO_obs

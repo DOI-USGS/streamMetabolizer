@@ -74,7 +74,7 @@ transformed parameters {
   err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale);
   
   // Model DO time series
-  // * Euler version
+  // * euler version
   // * observation error
   // * no process error
   // * reaeration depends on DO_obs

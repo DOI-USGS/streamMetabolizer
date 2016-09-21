@@ -16,6 +16,8 @@ This package is in development. We are using it for our own early applications a
 
 ## Installation
 
+### Recommended
+
 The most stable+current version of this package can be installed with this R command:
 ```r
 install.packages("streamMetabolizer", dependencies=TRUE, 
@@ -27,6 +29,8 @@ update.packages(oldPkgs=c("streamMetabolizer","unitted"),
   dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
 
+### For the adventurous
+
 The in-development version of the package can be installed with the `devtools` package. 
 We can make no guarantees about the stability of this version, 
 but it might have new features that you'll like.
@@ -34,7 +38,7 @@ If you go this route, you will need to install the package dependencies separate
 ```r
 install.packages(
   c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-    "tidyr","chron","dygraphs","ggplot2","RCurl","runjags","rstan","XML","xts"),
+    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
   repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
 ```
 You can then install the most cutting edge version of streamMetabolizer with this command:
@@ -42,8 +46,9 @@ You can then install the most cutting edge version of streamMetabolizer with thi
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 ```
 
-Regardless of your installation method, if you plan to use Bayesian models with 
-`engine='jags'`, you will also need to install [JAGS](http://mcmc-jags.sourceforge.net/).
+### Software dependencies
+
+If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
 
 
 ## Disclaimer

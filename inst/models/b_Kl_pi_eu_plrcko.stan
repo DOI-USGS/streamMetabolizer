@@ -78,7 +78,7 @@ transformed parameters {
   K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily;
   
   // Model DO time series
-  // * Euler version
+  // * euler version
   // * no observation error
   // * IID process error
   // * reaeration depends on DO_obs

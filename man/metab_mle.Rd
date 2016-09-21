@@ -5,8 +5,9 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
-  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600,
-  GPP.init, ER.init, K600.init, optional = "all"), info = NULL)
+  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600.daily,
+  init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
+  init.K600.daily, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -31,29 +32,36 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_mle object containing the fitted model. This object can be
-  inspected with the functions in the \code{\link{metab_model_interface}}.
+A metab_mle object containing the fitted model. This object can be 
+  inspected with the functions in the \code{\link{metab_model_interface}}. 
+  The \code{code} column in \code{get_fit(mm)} is defined in the Value
+  subsection of \code{?nlm}.
 }
 \description{
 Uses maximum likelihood to fit a model to estimate GPP and ER from input data
 on DO, temperature, light, etc.
 }
 \examples{
-dat <- data_metab('3')
+dat <- data_metab('3','30')
 # PRK
 mm <- metab_mle(data=dat)
 predict_metab(mm)
 
 # PR with fixed K on two days
-dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
-mm <- metab_mle(data=dat, data_daily=dat_daily)
-predict_metab(mm)
+dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600.daily=35)
+metab_mle(data=dat, data_daily=dat_daily)
+
+# PRK with day-specific inits on some days
+dat_daily <- data.frame(date=as.Date("2012-09-19"), 
+  init.GPP.daily=4, init.K600.daily=60)
+metab_mle(data=dat, data_daily=dat_daily)
+
+# Nonlinear GPP or ER equations
+metab_mle(specs(mm_name('mle', GPP_fun='satlight')), data=dat)
+metab_mle(specs(mm_name('mle', ER_fun='q10temp')), data=dat)
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 }
-}
-\author{
-Alison Appling, Jordan Read, Luke Winslow
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},

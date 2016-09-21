@@ -11,6 +11,13 @@
 #'   
 #'   \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
 #'   
+#'   \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
+#'   
+#'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
+#'   \}}
+#'   
+#'   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
+#'   
 #'   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
 #'   
 #'   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
@@ -24,11 +31,6 @@
 #'   \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
 #'   
 #'   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
-#'   
-#'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
-#'   \}}
-#'   
-#'   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
 #'   
 #'   }
 #'   
@@ -136,8 +138,6 @@ get_data_daily <- function(metab_model) {
   UseMethod("get_data_daily")
 }
 
-
-
 #' Extract the version of streamMetabolizer that was used to fit the model.
 #' 
 #' A function in the metab_model_interface. Returns the version of
@@ -153,35 +153,88 @@ get_version <- function(metab_model) {
   UseMethod("get_version")
 }
 
+#' Extract the metabolism parameters (fitted and/or fixed) from a model.
+#' 
+#' A function in the metab_model_interface. Returns estimates of those 
+#' parameters describing the rates and/or shapes of GPP, ER, or reaeration.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, to use in predicting metabolism
+#' @param date_start Date or a class convertible with as.Date. The first date 
+#'   (inclusive) for which to report parameters. If NA, no filtering is done.
+#' @param date_end Date or a class convertible with as.Date. The last date 
+#'   (inclusive) for which to report parameters.. If NA, no filtering is done.
+#' @param uncertainty character. Should columns for the uncertainty of parameter
+#'   estimates be excluded ('none'), reported as standard deviations ('sd'), or 
+#'   reported as lower and upper bounds of a 95 percent confidence interval 
+#'   ('ci')?
+#' @param messages logical. Should warning and error messages from the fitting 
+#'   procedure be included in the output?
+#' @param fixed character. Should values pulled from data_daily (i.e., fixed
+#'   rather that fitted) be treated identically ('none'), paired with a logicals
+#'   column ending in '.fixed' ('columns'), converted to character and marked
+#'   with a leading asterisk ('stars')?
+#' @param ... Other arguments passed to class-specific implementations of 
+#'   \code{get_params}
+#' @param attach.units logical. Should units be attached to the output?
+#' @examples 
+#' dat <- data_metab('3', day_start=12, day_end=36)
+#' mm <- metab_night(specs(mm_name('night')), data=dat)
+#' get_params(mm)
+#' get_params(mm, date_start=get_fit(mm)$date[2])
+#' @export
+#' @family metab_model_interface
+#' @family get_params
+get_params <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
+  ..., attach.units=FALSE) {
+  
+  UseMethod("get_params")
+}
+
 
 #' Predict metabolism from a fitted model.
 #' 
 #' A function in the metab_model_interface. Returns predictions (estimates) of 
-#' GPP, ER, and NEP.
+#' GPP, ER, and K600.
 #' 
 #' @param metab_model A metabolism model, implementing the 
 #'   metab_model_interface, to use in predicting metabolism
-#' @param date_start Date or a class convertible with as.Date. The first date
-#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
-#'   done.
+#' @param date_start Date or a class convertible with as.Date. The first date 
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering
+#'   is done.
 #' @param date_end Date or a class convertible with as.Date. The last date 
-#'   (inclusive) for which to report metabolism predictions. If NA, no filtering is 
-#'   done.
-#' @param ... Other arguments passed to class-specific implementations of
+#'   (inclusive) for which to report metabolism predictions. If NA, no filtering
+#'   is done.
+#' @param day_start start time (inclusive) of a day's data in number of hours 
+#'   from the midnight that begins the date. For example, day_start=-1.5 
+#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+#'   the first observation time that occurs after that time if day_start doesn't
+#'   fall exactly on an observation time. For daily metabolism predictions, 
+#'   day_end - day_start should probably equal 24 so that each day's estimate is
+#'   representative of a 24-hour period.
+#' @param day_end end time (exclusive) of a day's data in number of hours from 
+#'   the midnight that begins the date. For example, day_end=30 indicates that 
+#'   data describing 2006-06-26 end at the last observation time that occurs 
+#'   before 2006-06-27 06:00. For daily metabolism predictions, day_end -
+#'   day_start should probably equal 24 so that each day's estimate is 
+#'   representative of a 24-hour period.
+#' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_metab}
-#' @param use_saved logical. Is it OK to use predictions that were saved with
+#' @param attach.units logical. Should units be attached to the output?
+#' @param use_saved logical. Is it OK to use predictions that were saved with 
 #'   the model?
-#' @return A data.frame of daily metabolism estimates. Columns include:
+#' @return A data.frame of daily metabolism estimates. Columns include: 
 #'   \describe{
 #'   
 #'   \item{GPP}{numeric estimate of Gross Primary Production, positive when 
 #'   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{ER}{numeric estimate of Ecosystem Respiration, negative when realistic, \eqn{mg
-#'   O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+#'   \item{ER}{numeric estimate of Ecosystem Respiration, negative when 
+#'   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
 #'   
-#'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
-#'   }
+#'   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}} }
 #' @examples 
 #' dat <- data_metab('3', day_start=12, day_end=36)
 #' mm <- metab_night(specs(mm_name('night')), data=dat)
@@ -190,7 +243,11 @@ get_version <- function(metab_model) {
 #' @export
 #' @family metab_model_interface
 #' @family predict_metab
-predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
+predict_metab <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  day_start=get_specs(metab_model)$day_start, day_end=min(day_start+24, get_specs(metab_model)$day_end),
+  ..., attach.units=FALSE, use_saved=TRUE) {
+
   UseMethod("predict_metab")
 }
 
@@ -210,6 +267,7 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_save
 #'   done.
 #' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{predict_DO}
+#' @param attach.units logical. Should units be attached to the output?
 #' @param use_saved logical. Is it OK to use predictions that were saved with 
 #'   the model?
 #' @return A data.frame of dissolved oxygen predictions at the temporal 
@@ -222,6 +280,7 @@ predict_metab <- function(metab_model, date_start=NA, date_end=NA, ..., use_save
 #' @export
 #' @family metab_model_interface
 #' @family predict_DO
-predict_DO <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved) {
+predict_DO <- function(metab_model, date_start=NA, date_end=NA, 
+                       ..., attach.units=FALSE, use_saved=TRUE) {
   UseMethod("predict_DO")
 }

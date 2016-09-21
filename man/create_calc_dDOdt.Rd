@@ -4,55 +4,151 @@
 \alias{create_calc_dDOdt}
 \title{Create a function that generates a 1-day timeseries of DO.mod}
 \usage{
-create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src)
+create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src,
+  err.proc = 0)
 }
 \arguments{
-\item{data}{data.frame as in \code{\link{metab}}, except that data must
-contain exactly one date worth of inputs (~24 hours according to
+\item{data}{data.frame as in \code{\link{metab}}, except that data must 
+contain exactly one date worth of inputs (~24 hours according to 
 \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).}
 
-\item{ode_method}{The method to use in solving the ordinary differential 
-equation for DO. Euler: the final change in DO from t=1 to t=2 is solely a 
-function of GPP, ER, DO, etc. at t=1. pairmeans: the final change in DO 
-from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across 
-t=1 and t=2. With metab_mle, other methods are available including 'rk2' 
-and any character method accepted by \code{\link[deSolve]{ode}} in the
-\code{deSolve} package}
+\item{ode_method}{character. The method to use in solving the ordinary
+differential equation for DO. Options:
+\itemize{
+  \item \code{euler}, formerly \code{Euler}: the final change in DO from
+  t=1 to t=2 is solely a function of GPP, ER, DO, etc. at t=1
+  \item \code{trapezoid}, formerly \code{pairmeans}: the final change in DO
+  from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across
+  t=1 and t=2.
+  \item for \code{type='mle'}, options also include \code{rk2} and any 
+  character method accepted by \code{\link[deSolve]{ode}} in the 
+  \code{deSolve} package (\code{lsoda}, \code{lsode}, \code{lsodes},
+  \code{lsodar}, \code{vode}, \code{daspk}, \code{rk4}, \code{ode23},
+  \code{ode45}, \code{radau}, \code{bdf}, \code{bdf_d}, \code{adams},
+  \code{impAdams}, and \code{impAdams_d}; note that many of these have not
+  been well tested in the context of \code{streamMetabolizer} models)
+}}
 
-\item{GPP_fun}{How to partition daily GPP over time. \code{linlight}: GPP is 
-a linear function of light with an intercept at 0. \code{satlight} GPP is a
-saturating function of light.}
+\item{GPP_fun}{character. Function dictating how gross primary productivity
+(GPP) varies within each day. Options:
+\itemize{ 
+  \item \code{linlight}: GPP is a linear function of light with an
+  intercept at 0 and a slope that varies by day.
+    \cr \code{GPP(t) = GPP.daily * light(t) / mean.light}
+    \itemize{
+      \item \code{GPP.daily}: the daily mean GPP, which is partitioned into
+      timestep-specific rates according to the fraction of that day's
+      average light that occurs at each timestep (specifically,
+      \code{mean.light} is the mean of the first 24 hours of the date's
+      data window)
+    } 
+  \item \code{satlight}: GPP is a saturating function of light.
+    \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax)}
+    \itemize{
+      \item \code{Pmax}: the maximum possible GPP
+      \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+    }
+  \item \code{satlightq10temp}: GPP is a saturating function of light and
+  an exponential function of temperature.
+    \cr \code{GPP(t) = Pmax * tanh(alpha * light(t) / Pmax) * 1.036 ^ (temp.water(t) - 20)}
+    \itemize{
+      \item \code{Pmax}: the maximum possible GPP
+      \item \code{alpha}: a descriptor of the rate of increase of GPP as a function of light
+    }
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which GPP is not estimated
+}}
 
-\item{ER_fun}{How to partition daily ER over time. \code{constant}: ER is 
-constant over every timestep of the day. \code{q10temp} (not yet 
-implemented): ER at each timestep is a function of the water temperature.}
+\item{ER_fun}{character. Function dictating how ecosystem respiration (ER)
+varies within each day. Options:
+\itemize{
+  \item \code{constant}: ER is constant over every timestep of the day.
+    \cr \code{ER(t) = ER.daily} 
+    \itemize{
+      \item \code{ER.daily}: the daily mean ER, which is equal to instantaneous ER at all times
+    }
+  \item \code{q10temp}: ER at each timestep is an exponential function of
+  the water temperature and a temperature-normalized base rate.
+    \cr \code{ER(t) = ER20 * 1.045 ^ (temp.water(t) - 20)}
+    \itemize{
+      \item \code{ER20}: the value of ER when \code{temp.water} is 20 degrees C
+    }
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which ER is not estimated
+}}
 
-\item{deficit_src}{From what DO estimate (observed or modeled) should the DO 
-deficit be computed?}
+\item{deficit_src}{character. From what DO estimate (observed or modeled)
+should the DO deficit be computed? Options:
+\itemize{
+  \item \code{DO_mod}: the DO deficit at time t will be {(DO.sat(t) -
+  DO_mod(t))}, the difference between the equilibrium-saturation value and
+  the current best estimate of the true DO concentration at that time
+  \item \code{DO_obs}: the DO deficit at time t will be {(DO.sat(t) -
+  DO.obs(t))}, the difference between the equilibrium-saturation value and
+  the measured DO concentration at that time
+  \item \code{DO_obs_filter}: applicable only to \code{type='night'}: a
+  smoothing filter is applied over the measured DO.obs values before
+  applying nighttime regression
+  \item \code{NA}: applicable only to \code{type='Kmodel'}, for which DO deficit is not estimated
+}}
+
+\item{err.proc}{optional numerical vector of length nrow(data). Process error
+in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
+Appropriate for simulation, when this vector of process errors will be 
+added to the calculated values of GPP and ER (then divided by depth and
+multiplied by timestep duration) to simulate process error. But usually
+(for MLE or prediction from a fitted MLE/Bayesian/nighttime regression
+model) \code{err.proc} should be missing or 0}
 }
 \value{
 a function that accepts args \code{t} (the time in 0:(n-1) where n is
   the number of timesteps), \code{DO.mod.t} (the value of DO.mod at time t in
-  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which
-  parameters should be included in this list, create \code{dDOdt} with this
+  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which 
+  parameters should be included in this list, create \code{dDOdt} with this 
   function and then call \code{environment(dDOdt)$metab.needs})
 }
 \description{
-Creates a closure that bundles data and helper functions into a single
+Creates a closure that bundles data and helper functions into a single 
 function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
+}
+\section{ode_method 'trapezoid'}{
+
+
+'pairmeans' and 'trapezoid' are identical. They are the analytical
+solution to a trapezoid rule with this starting point:
+\code{
+ DO.mod[t+1] = 
+  DO.mod[t] +
+   (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
+   + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+   + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
+   + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2 
+   ) * timestep
+}
+and this solution:
+\code{
+DO.mod[t+1] - DO.mod[t] =
+ (- DO.mod[t] * (k.O2[t]+k.O2[t+1])/2
+   + (GPP[t]+GPP[t+1] +
+      ER[t]+ER[t+1] +
+      err.proc[t]+err.proc[t+1]
+     ) / (depth[t]+depth[t+1])
+   + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2 
+ ) * timestep / (1 + timestep*k.O2[t+1]/2)
+}
+where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
+err.proc=0 for model fitting.
 }
 \examples{
 \dontrun{
 data <- data_metab('1','30')[seq(1,48,by=2),]
 dDOdt.obs <- diff(data$DO.obs)
 preds.init <- as.list(dplyr::select(
-  predict_metab(metab(specs(mm_name('mle', ode_method='Euler')), data=data)),
+  predict_metab(metab(specs(mm_name('mle', ode_method='euler')), data=data)),
   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
 DOtime <- data$solar.time
 dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
 
 # args to create_calc_dDOdt determine which values are needed in metab.pars
-dDOdt <- create_calc_dDOdt(data, ode_method='pairmeans', GPP_fun='satlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='satlight',
   ER_fun='q10temp', deficit_src='DO_mod')
 names(formals(dDOdt)) # always the same: args to pass to dDOdt()
 environment(dDOdt)$metab.needs # get the names to be included in metab.pars
@@ -60,7 +156,7 @@ dDOdt(t=23, state=c(DO.mod=data$DO.obs[1]),
   metab.pars=list(Pmax=0.2, alpha=0.01, ER20=-0.05, K600.daily=3))$dDOdt
 
 # different required args; try in a timeseries
-dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 environment(dDOdt)$metab.needs # get the names to be included in metab
 # approximate dDOdt and DO using DO.obs for DO deficits & Eulerian integration
@@ -79,7 +175,7 @@ lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 
 # compute & plot a full timeseries with ode() integration
-dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 DO.mod.o <- deSolve::ode(
   y=c(DO.mod=data$DO.obs[1]),
@@ -97,7 +193,7 @@ par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
 
 # see how values of metab.pars affect the dDOdt predictions
 library(dplyr); library(ggplot2); library(tidyr)
-dDOdt <- create_calc_dDOdt(data, ode_method='Euler', GPP_fun='linlight',
+dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
   ER_fun='constant', deficit_src='DO_mod')
 apply_dDOdt <- function(GPP.daily, ER.daily, K600.daily) {
   DO.mod.m <- data$DO.obs[1]
@@ -118,6 +214,42 @@ dDO.preds <- data_frame(
 dDO.preds \%>\%
   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) \%>\%
   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
+
+# try simulating process eror
+data <- data_metab('1','30')[seq(1,48,by=2),]
+plot(x=data$solar.time, y=data$DO.obs)
+dDOdt.noerr <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+DO.mod.noerr <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.noerr, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.noerr, type='l', col='purple')
+# with error
+dDOdt.err <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(+0.4, nrow(data)))
+DO.mod.err <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.err, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.err, type='l', col='red', lty=2)
+# with same error each timestep is same as with reduced ER
+dDOdt.noerr2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0, nrow(data)))
+DO.mod.noerr2 <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4+0.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.noerr2, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.noerr2, type='l', col='green', lty=3)
+# with different timestep, same error value should mean very similar curve
+data <- data_metab('1','30')
+dDOdt.err2 <- create_calc_dDOdt(data, ode_method='rk4', GPP_fun='linlight',
+  ER_fun='constant', deficit_src='DO_mod', err.proc=rep(0.4, nrow(data)))
+DO.mod.err2 <- deSolve::ode(
+  y=c(DO.mod=data$DO.obs[1]),
+  parms=list(GPP.daily=2, ER.daily=-1.4, K600.daily=21),
+  times=1:nrow(data), func=dDOdt.err2, method='rk4')[,'DO.mod']
+lines(x=data$solar.time, y=DO.mod.err2, type='l', col='black', lty=2)
 }
 }
 

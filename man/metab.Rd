@@ -128,18 +128,21 @@ depend on the model \code{type}, as follows.
   }
   \item{\code{mle}}{
     \tabular{llll}{
-      \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-      date              \tab Date            \tab                 \tab optional      \cr
-      K600              \tab numeric         \tab d^-1            \tab optional      \cr
-      GPP.init          \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
-      ER.init           \tab numeric         \tab gO2 d^-1 m^-2   \tab optional      \cr
-      K600.init         \tab numeric         \tab d^-1            \tab optional      
+      \strong{colname} \tab \strong{class} \tab \strong{units}    \tab \strong{need}\cr
+      date              \tab Date            \tab                    \tab optional      \cr
+      K600.daily        \tab numeric         \tab d^-1               \tab optional      \cr
+      init.GPP.daily    \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      init.Pmax         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      init.alpha        \tab numeric         \tab gO2 s d^-1 umol^-1 \tab optional      \cr
+      init.ER.daily     \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      init.ER20         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      init.K600.daily   \tab numeric         \tab d^-1               \tab optional      
     }
     
     \strong{Example}:
-    \tabular{lrrrr}{
-      \code{date      } \tab \code{K600} \tab \code{GPP.init} \tab \code{ER.init} \tab \code{K600.init}\cr
-      \code{2050-03-14} \tab \code{5   } \tab \code{5       } \tab \code{5      } \tab \code{5        }
+    \tabular{lrrrrrrr}{
+      \code{date      } \tab \code{K600.daily} \tab \code{init.GPP.daily} \tab \code{init.Pmax} \tab \code{init.alpha} \tab \code{init.ER.daily} \tab \code{init.ER20} \tab \code{init.K600.daily}\cr
+      \code{2050-03-14} \tab \code{10        } \tab \code{5             } \tab \code{10       } \tab \code{1e-04     } \tab \code{-10          } \tab \code{-10      } \tab \code{10             }
     }
   }
   \item{\code{bayes}}{
@@ -159,33 +162,36 @@ depend on the model \code{type}, as follows.
     \tabular{llll}{
       \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
       date              \tab Date            \tab                 \tab required      \cr
-      K600              \tab numeric         \tab d^-1            \tab required      \cr
-      K600.lower        \tab numeric         \tab d^-1            \tab optional      \cr
-      K600.upper        \tab numeric         \tab d^-1            \tab optional      \cr
+      K600.daily        \tab numeric         \tab d^-1            \tab required      \cr
+      K600.daily.lower  \tab numeric         \tab d^-1            \tab optional      \cr
+      K600.daily.upper  \tab numeric         \tab d^-1            \tab optional      \cr
       discharge.daily   \tab numeric         \tab m^3 s^-1        \tab optional      \cr
       velocity.daily    \tab numeric         \tab m s^-1          \tab optional      
     }
     
     \strong{Example}:
     \tabular{lrrrrr}{
-      \code{date      } \tab \code{K600} \tab \code{K600.lower} \tab \code{K600.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
-      \code{2050-03-14} \tab \code{5   } \tab \code{4.5       } \tab \code{5.6       } \tab \code{9              } \tab \code{2             }
+      \code{date      } \tab \code{K600.daily} \tab \code{K600.daily.lower} \tab \code{K600.daily.upper} \tab \code{discharge.daily} \tab \code{velocity.daily}\cr
+      \code{2050-03-14} \tab \code{10        } \tab \code{4.5             } \tab \code{15.6            } \tab \code{9              } \tab \code{2             }
     }
   }
   \item{\code{sim}}{
     \tabular{llll}{
-      \strong{colname} \tab \strong{class} \tab \strong{units} \tab \strong{need}\cr
-      date              \tab Date            \tab                 \tab required      \cr
-      DO.mod.1          \tab numeric         \tab mgO2 L^-1       \tab optional      \cr
-      GPP               \tab numeric         \tab gO2 d^-1 m^-2   \tab required      \cr
-      ER                \tab numeric         \tab gO2 d^-1 m^-2   \tab required      \cr
-      K600              \tab numeric         \tab d^-1            \tab required      
+      \strong{colname} \tab \strong{class} \tab \strong{units}    \tab \strong{need}\cr
+      date              \tab Date            \tab                    \tab optional      \cr
+      DO.mod.1          \tab numeric         \tab mgO2 L^-1          \tab optional      \cr
+      GPP.daily         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      Pmax              \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      alpha             \tab numeric         \tab gO2 s d^-1 umol^-1 \tab optional      \cr
+      ER.daily          \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      ER20              \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+      K600.daily        \tab numeric         \tab d^-1               \tab optional      
     }
     
     \strong{Example}:
-    \tabular{lrrrr}{
-      \code{date      } \tab \code{DO.mod.1} \tab \code{GPP} \tab \code{ER} \tab \code{K600}\cr
-      \code{2050-03-14} \tab \code{7.5     } \tab \code{5  } \tab \code{5 } \tab \code{5   }
+    \tabular{lrrrrrrr}{
+      \code{date      } \tab \code{DO.mod.1} \tab \code{GPP.daily} \tab \code{Pmax} \tab \code{alpha} \tab \code{ER.daily} \tab \code{ER20} \tab \code{K600.daily}\cr
+      \code{2050-03-14} \tab \code{7.5     } \tab \code{5        } \tab \code{10  } \tab \code{1e-04} \tab \code{-10     } \tab \code{-10 } \tab \code{10        }
     }
   }
 }
@@ -201,8 +207,8 @@ get_fitting_time(mm)
 
 # with chaining & customization
 library(dplyr)
-mm <- mm_name('mle', ode_method='Euler') \%>\%
-  specs(GPP_init=40) \%>\%
+mm <- mm_name('mle', ode_method='euler') \%>\%
+  specs(init.GPP.daily=40) \%>\%
   metab(data=dat)
 predict_metab(mm)
 \dontrun{

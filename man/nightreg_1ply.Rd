@@ -5,7 +5,7 @@
 \title{Make daily reaeration estimates from input parameters}
 \usage{
 nightreg_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date, ...,
-  night_tests = TRUE, specs = specs("n_np_pi_eu_.lm"))
+  night_tests = TRUE, specs = specs(mm_name("night")))
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

@@ -4,7 +4,8 @@
 \alias{predict_DO}
 \title{Predict DO from a fitted model.}
 \usage{
-predict_DO(metab_model, date_start = NA, date_end = NA, ..., use_saved)
+predict_DO(metab_model, date_start = NA, date_end = NA, ...,
+  attach.units = FALSE, use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -20,6 +21,8 @@ done.}
 
 \item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_DO}}
+
+\item{attach.units}{logical. Should units be attached to the output?}
 
 \item{use_saved}{logical. Is it OK to use predictions that were saved with 
 the model?}
@@ -42,8 +45,8 @@ head(preds)
 Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_data}}, \code{\link{get_fitting_time}},
   \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_specs}}, \code{\link{get_version}},
-  \code{\link{predict_metab}}
+  \code{\link{get_params}}, \code{\link{get_specs}},
+  \code{\link{get_version}}, \code{\link{predict_metab}}
 
 Other predict_DO: \code{\link{predict_DO.metab_model}},
   \code{\link{predict_DO.metab_night}},

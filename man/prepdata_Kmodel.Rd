@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_Kmodel.R
 \name{prepdata_Kmodel}
 \alias{prepdata_Kmodel}
-\title{Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 
+\title{Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
 & setting data_daily$weight to reflect user weights & filters}
 \usage{
 prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end,
@@ -19,7 +19,7 @@ to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 \item{filters}{For Kmodel, named numeric vector of limits to use in filtering
 data_daily. Elements may include
 c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
-given, the corresponding filter is applied: K600.upper-K600.lower <=
+given, the corresponding filter is applied: K600.daily.upper-K600.daily.lower <=
 CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
 velocity.daily.max}
 
@@ -47,7 +47,7 @@ passed to \code{model_fun} as the \code{ply_validity} argument to that
 function.}
 }
 \description{
-Prepare data_daily by aggregating any daily data, renaming K600 to K600.obs, 
+Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
 & setting data_daily$weight to reflect user weights & filters
 }
 

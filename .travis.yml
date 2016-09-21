@@ -4,22 +4,14 @@
 
 language: r
 sudo: required
-warnings_ar_errors: true
+warnings_are_errors: true
+
+r_build_args: --no-build-vignettes --no-manual --no-multiarch
+r_check_args: --no-build-vignettes --no-manual
 
 repos:
   CRAN: https://cloud.r-project.org
   GRAN: http://owi.usgs.gov/R
-
-before_install:
-  - wget https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Source/JAGS-4.2.0.tar.gz
-  - tar xfvs JAGS-4.2.0.tar.gz
-  - cd JAGS-4.2.0
-  - sudo ./configure
-  - sudo make
-  - sudo make install
-  - cd ..
-  - sudo rm -f JAGS-4.2.0.tar.gz
-  - sudo rm -rf JAGS-4.2.0
 
 before_script:
   - Rscript -e "install.packages('knitr', repos='http://cran.cnr.Berkeley.edu/')"
@@ -27,10 +19,12 @@ before_script:
 
 r_packages:
  - modeest
+ - deSolve
 
 r_github_packages:
  - jimhester/covr
  - GLEON/LakeMetabolizer
+ - appling/unitted
 
 after_success:
   - Rscript -e 'covr::coveralls()'

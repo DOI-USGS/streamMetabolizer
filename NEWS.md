@@ -1,3 +1,43 @@
+# streamMetabolizer 0.9.14
+
+* all tests are passing and all examples are running [again]. tests are 
+acceptably comprehensive [for now].
+
+* known issue: K binning in bayesian models is producing unlikely estimates. all
+bayesian models need further testing.
+
+# streamMetabolizer 0.9.14
+
+* ongoing bug fixes and re-integration of all model types into new ODE
+production/integration scheme
+
+# streamMetabolizer 0.9.12
+
+* removed JAGS from the package. Stan is better for us.
+
+# streamMetabolizer 0.9.11
+
+* this is the last version with JAGS in it.
+
+# streamMetabolizer 0.9.10
+
+* myriad bug fixes to accommodate changes from version 0.9.9.
+
+# streamMetabolizer 0.9.9
+
+* `metab_mle` and `metab_sim` now have several options for relationships among 
+GPP, light, ER, and temperature.
+
+* `metab_mle` and `metab_sim` now have several options for the method by which 
+the differential equation for dDO/dt is numerically integrated to produce a time
+series of DO predictions.
+
+* `metab_mle` has taken a performance hit to become more flexible in the 
+GPP-light relationship, the ODE method, and so on. Optimization is likely in the
+future.
+
+* `predict_metab` and `predict_DO` optionally attach units to their output.
+
 # streamMetabolizer 0.9.8
 
 * better error and warning handling in metab_bayes, including a new function 
@@ -7,9 +47,6 @@ files are now retrieved for both JAGS and Stan models.
 * updates to accommodate changes in dependency packages (tibble and dplyr)
 
 * more efficient specifications of JAGS and Stan models
-
-* more options, more maintainably coded, slightly slower, for ODE solutions in 
-metab_mle
 
 * incorporated feedback on vignette
 

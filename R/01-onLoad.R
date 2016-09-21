@@ -2,22 +2,23 @@
 #' @importFrom utils available.packages contrib.url
 #' @keywords internal
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage("This package is in development. We are using it for our own early applications and welcome bold, flexible, resilient new users who can help us make the package better. Details of the user interface and model implementations will change. Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")
+  packageStartupMessage("This package is in development. We are using it for our own early applications and welcome flexible, resilient new users who can help us make the package better. Details of the user interface and model implementations will change. Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")
   packageStartupMessage("This information is preliminary or provisional and is subject to revision. It is being provided to meet the need for timely best science. The information has not received final approval by the U.S. Geological Survey (USGS) and is provided on the condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from the authorized or unauthorized use of the information. Although this software program has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.")
   
-  # Check whether this package is up to date
+  # Load deSolve because otherwise after a few model runs we're likely to get
+  # the following error
+  requireNamespace('deSolve', quietly=TRUE)
+  ## Error in .Call("call_rkFixed", as.double(y), as.double(times), Func, Initfunc,  :
+  ##   "call_rkFixed" not resolved from current namespace (deSolve)
+  ## Error in .C("unlock_solver") :
+  ##   "unlock_solver" not resolved from current namespace (deSolve)
   
+  # Check whether this package is up to date on GRAN
   GRAN_update_code <- paste0(
     '  update.packages(oldPkgs=c("streamMetabolizer","unitted"),\n',
-    '    dependencies=TRUE, repos=c("http://owi.usgs.gov/R", "https://cran.rstudio.com"))')
-  github_owner <- 'USGS-R'
-  github_branch <- 'develop'
-  github_pkg_ref <- paste0(github_owner,'/',pkgname,'@',github_branch)
-  github_update_code <- paste0(
-    '  devtools::install_github("',github_pkg_ref,'")')
-  
+    '    dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))')
   tryCatch({
-    GRAN_pkg <- available.packages(contrib.url("http://owi.usgs.gov/R"))
+    GRAN_pkg <- available.packages(contrib.url("https://owi.usgs.gov/R"))
     GRAN_version <- package_version(GRAN_pkg[[pkgname, 'Version']])
     local_version <- packageVersion(pkgname)
     if(local_version < GRAN_version) {
@@ -29,6 +30,12 @@
     packageStartupMessage("Can't check GRAN for new package versions just now. We'll try again next time.")
   })
   
+  # Check whether this package is up to date on GitHub
+  github_owner <- 'USGS-R'
+  github_branch <- 'develop'
+  github_pkg_ref <- paste0(github_owner,'/',pkgname,'@',github_branch)
+  github_update_code <- paste0(
+    '  devtools::install_github("',github_pkg_ref,'")')
   if(requireNamespace('devtools', quietly=TRUE)) {
     tryCatch({
       github_ref <- devtools:::github_resolve_ref(

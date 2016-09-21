@@ -5,8 +5,16 @@ NULL
 #' 
 #' Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 #' temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-#' and \code{\link{specs}} for relevant options for the \code{specs} 
-#' argument.
+#' and \code{\link{specs}} for relevant options for the \code{specs} argument.
+#' 
+#' As of summer and fall 2016, a new compilation of any Stan model gives
+#' deprecation warnings including \code{typedef 'size_type' locally defined but
+#' not used [-Wunused-local-typedefs]}, \code{typedef 'index_range' locally
+#' defined but not used [-Wunused-local-typedefs]}, \code{typedef 'index'
+#' locally defined but not used [-Wunused-local-typedefs]}, and \code{'void
+#' stan::math::set_zero_all_adjoints()' defined but not used
+#' [-Wunused-function]}. THESE ARE OKAY. Subsequent runs of the compiled Stan
+#' model will be quieter, and the model will work.
 #' 
 #' @author Alison Appling, Bob Hall
 #'   
@@ -20,43 +28,19 @@ NULL
 #' dat <- data_metab('3', res='30')
 #' # fast-ish model version, but still too slow to auto-run in examples
 #' mm <- metab_bayes(data=dat,
-#'   specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
+#'   specs(mm_name('bayes', err_proc_iid=FALSE), 
 #'     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
 #' mm
 #' get_fitting_time(mm)
 #' predict_metab(mm)
 #' plot_DO_preds(predict_DO(mm))
 #' 
-#' # test that error-free models can be run with split or combined dates, jags or stan
-#' sp <- function(split_dates, engine) { replace(
-#'   specs(mm_name('bayes', err_proc_iid=FALSE, engine=engine), 
-#'     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE), 
-#'   'split_dates', split_dates
-#' ) }
-#' dat <- data_metab('1', res='30')
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' # new compilation of any Stan model gives deprecation warnings as of 7/12/16; THESE ARE OKAY
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' # subsequent runs of the compiled Stan model are quieter
-#' mm <- metab(sp(TRUE, 'stan'), dat)
-#' dat <- data_metab('3', res='30')
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
-#' 
 #' # error and warning messages are printed with the mm object if present
-#' dat <- data_metab('1', res='30', flaws=c('missing start'))
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
 #' dat <- data_metab('3', res='30', flaws=c('missing middle'))
-#' mm <- metab(sp(FALSE,'jags'), dat)
-#' mm <- metab(sp(TRUE, 'jags'), dat)
-#' mm <- metab(sp(FALSE,'stan'), dat)
-#' mm <- metab(sp(TRUE, 'stan'), dat)
+#' mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE), 
+#'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
+#'   data=dat)
+#' predict_metab(mm)
 #' }
 #' @export
 #' @family metab_model
@@ -127,7 +111,7 @@ metab_bayes <- function(
     if(pool_K600 %in% c('binned')) {
       if(is.character(specs$K600_daily_beta_cuts)) {
         if(!requireNamespace('ggplot2', quietly=TRUE)) {
-          stop("need ggplot2 for K600_pool='binned' and character value for K600_daily_beta_cuts. ",
+          stop("need ggplot2 for K600_pool='binned' when is.character(K600_daily_beta_cuts). ",
                "either install the ggplot2 package or switch to a numeric vector for K600_daily_beta_cuts")
         }
         cut_fun <- switch(
@@ -150,25 +134,20 @@ metab_bayes <- function(
       }
       dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
       specs$K600_daily_beta_bins <- levels(cuts)
-      # you should be able to retrieve the bin names with
-      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily] or, later,
-      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily]
+      # you should be able to retrieve the bin names with 
+      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily]
+      # or, later, 
+      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily].
+      # specs$K600_daily_beta_breaks and specs$K600_daily_beta_bins are created
+      # here purely for manual inspection after the model has been run
     }
     
     # Use de-unitted version until we pack up the model to return
     data <- v(dat_list$data)
     data_daily <- v(dat_list$data_daily)
         
-    # Check and parse model file path. First try the streamMetabolizer models
-    # dir, then try a regular path, then complain / continue depending on
-    # whether we found a file. Add the complete path to specs. This is
-    # best done here, in the metab_bayes call, so that models can be defined,
-    # passed to another computer, and still run successfully.
-    specs$model_path <- system.file(paste0("models/", specs$model_name), package="streamMetabolizer")
-    if(!file.exists(specs$model_path)) 
-      specs$model_path <- specs$model_name
-    if(!file.exists(specs$model_path)) 
-      stop("could not locate the model file at ", specs$model_path)
+    # Check and parse model file path
+    specs$model_path <- mm_locate_filename(specs$model_name)
     
     # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
     if(is.logical(specs$keep_mcmcs)) {
@@ -186,7 +165,7 @@ metab_bayes <- function(
       stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
     }
     
-    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from JAGS or Stan)
+    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from tan)
     if(specs$split_dates == TRUE) {
       if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
       if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
@@ -258,7 +237,7 @@ metab_bayes <- function(
   if(success) {
     mm@data <- predict_DO(mm)
   } else {
-    warning(paste0('Modeling failed:\n', paste0(bayes_all$errors, collapse='\n')))
+    warning(paste0('Modeling failed: ', paste0(bayes_all$errors, collapse='\n')))
   }
   
   # Return
@@ -302,8 +281,8 @@ bayes_1ply <- function(
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
-          specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
-        all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+          specs=specs, engine=specs$engine, model_name=specs$model_name)
+        all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','burnin_steps','saved_steps','thin_steps','verbose')
         do.call(mcmc_bayes, c(
           list(data_list=data_list),
           specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
@@ -330,8 +309,8 @@ bayes_1ply <- function(
   outdf <- data.frame(
     bayes_1day[!(names(bayes_1day) %in% c('mcmcfit','log','compile_log'))],
     valid_day=isTRUE(ply_validity),
-    warnings=paste0(unique(warn_strs), collapse="; "), 
-    errors=paste0(unique(stop_strs), collapse="; "),
+    warnings=paste0(trimws(unique(warn_strs)), collapse="; "), 
+    errors=paste0(trimws(unique(stop_strs)), collapse="; "),
     stringsAsFactors=FALSE) %>%
     mutate(log = list(bayes_1day$log))
   
@@ -379,14 +358,14 @@ bayes_allply <- function(
   data_list <- NULL # (in case it doesn't get assigned in the tryCatch)
   bayes_allday <- withCallingHandlers(
     tryCatch({
-      if(nrow(data_all) == 0) stop("no valid days of data")
+      if(is.null(data_all) || nrow(data_all) == 0) stop("no valid days of data")
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
-        specs=specs, engine=specs$engine, model_name=specs$model_name, priors=specs$priors)
+        specs=specs, engine=specs$engine, model_name=specs$model_name)
       specs$keep_mcmc <- specs$keep_mcmcs
       all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc',
-                         'n_chains','n_cores','adapt_steps','burnin_steps','saved_steps','thin_steps','verbose')
+                         'n_chains','n_cores','burnin_steps','saved_steps','thin_steps','verbose')
       do.call(mcmc_bayes, c(
         list(data_list=data_list),
         specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
@@ -454,14 +433,14 @@ bayes_allply <- function(
   # Return, reporting any results, warnings, and errors
   c(bayes_allday,
     list(mcmc_data=if(specs$keep_mcmc_data) data_list else NULL,
-         warnings=unique(warn_strs),
-         errors=unique(stop_strs)))
+         warnings=trimws(unique(warn_strs)),
+         errors=trimws(unique(stop_strs))))
 }
 
 
 #### helpers to the helper ####
 
-#' Prepare data for passing to JAGS or Stan
+#' Prepare data for passing to Stan
 #' 
 #' This function accepts exactly one day's worth of data, (one ply, which might 
 #' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
@@ -470,16 +449,13 @@ bayes_allply <- function(
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams metab
 #' @inheritParams specs
-#' @param priors logical. Should the data list be modified such that JAGS will 
-#'   return priors rather than posteriors?
-#' @return list of data for input to runjags_bayes or runstan_bayes
+#' @return list of data for input to runstan_bayes
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
   data, data_daily, ply_date=NA, # inheritParams mm_model_by_ply_prototype
   specs, # inheritParams metab (for hierarchical priors)
-  engine, model_name, #inheritParams specs
-  priors=FALSE # inherited by specs
+  engine, model_name #inheritParams specs
 ) {
   
   # remove units if present
@@ -504,30 +480,25 @@ prepdata_bayes <- function(
     stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   }
   time_by_date_matrix <- function(vec) {
-    switch(
-      engine,
-      jags=matrix(data=vec, ncol=num_daily_obs, nrow=num_dates, byrow=TRUE),
-      stan=matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
-    )
+    matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
   }
-  date_margin <- switch(engine, jags=1, stan=2)
   
   # double-check that our dates are going to line up with the input dates. this 
   # should be redundant w/ above date_table checks, so just being extra careful
   obs_dates <- time_by_date_matrix(as.character(data$date, "%Y-%m-%d"))
-  unique_dates <- apply(obs_dates, MARGIN=date_margin, FUN=function(timevec) unique(timevec))
+  unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
   if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
   
   # confirm that every day has the same modal timestep and put a value on that timestep
   obs_times <- time_by_date_matrix(as.numeric(data$solar.time - data$solar.time[1], units='days'))
-  unique_timesteps <- unique(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
+  unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
   if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
-  timestep_days <- mean(apply(obs_times, MARGIN=date_margin, FUN=function(timevec) mean(diff(timevec))))
+  timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(timevec) mean(diff(timevec))))
   
   # parse model name into features for deciding what data to include
   features <- mm_parse_name(model_name)
   
-  # Format the data for JAGS/Stan. Stan disallows period-separated names, so
+  # Format the data for Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
   # specs are already underscore-separated for this reason
   data_list = c(
@@ -556,10 +527,8 @@ prepdata_bayes <- function(
         mat_light <- time_by_date_matrix(data$light)
         if(isTRUE(mm_parse_name(model_name)$GPP_fun == 'linlight')) {
           # normalize light by the sum of light in the first 24 hours of the time window
-          in_solar_day <- apply(obs_times, MARGIN=date_margin, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-          if(engine == 'jags') in_solar_day <- t(in_solar_day)
-          sum_by_date <- switch(engine, jags=rowSums, stan=colSums)
-          sweep(mat_light, MARGIN=date_margin, STATS=sum_by_date(mat_light*in_solar_day), FUN=`/`)
+          in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
+          sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
         } else {
           mat_light
         }
@@ -572,57 +541,36 @@ prepdata_bayes <- function(
       DO_obs   = time_by_date_matrix(data$DO.obs)
     ),
     
-    specs[c(
-      # Hyperparameters - this section should be identical to the 
-      # hyperparameters section of specs|bayes except that binned can omit 
-      # 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
-      c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
-      switch(
-        features$pool_K600,
-        none=c('K600_daily_mu', 'K600_daily_sigma'),
-        normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-        linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-        binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
-      if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
-      if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
-      if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
-    )]
+    specs[specs$params_in]
   )
-  if(priors) {
-    switch(
-      engine,
-      jags={ data_list <- data_list[-which(names(data_list)=="DO_obs")] },
-      stan={ stop("sorry, Stan doesn't allow NAs in data, so priors can't be TRUE") })
-  }
   
   data_list
 }
 
 #' Run an MCMC simulation on a formatted data ply
 #' 
-#' @param data_list a formatted list of inputs to the JAGS model
+#' @param data_list a formatted list of inputs to the Stan model
 #' @param engine character string indicating which software to use
-#' @param model_path the JAGS model file to use, as a full file path
+#' @param model_path the Stan model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
-#' @param keep_mcmc logical. If TRUE, the Jags or Stan output object will be 
-#'   saved. Be careful; these can be big, and a run with many models might 
-#'   overwhelm R's memory.
+#' @param keep_mcmc logical. If TRUE, the Stan output object will be saved. Be 
+#'   careful; these can be big, and a run with many models might overwhelm R's 
+#'   memory.
 #' @param n_chains the number of chains to run
 #' @param n_cores the number of cores to apply to this run
-#' @param adapt_steps the number of steps per chain to use in adapting the model
-#' @param burnin_steps the number of steps per chain to run and ignore before
+#' @param burnin_steps the number of steps per chain to run and ignore before 
 #'   starting to collect MCMC 'data'
 #' @param saved_steps the number of MCMC steps per chain to save
-#' @param thin_steps the number of steps to move before saving another step. 1
+#' @param thin_steps the number of steps to move before saving another step. 1 
 #'   means save all steps.
 #' @param verbose logical. give status messages?
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, engine='stan', model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
   engine <- match.arg(engine)
-  bayes_function <- switch(engine, jags = runjags_bayes, stan = runstan_bayes)
+  bayes_function <- switch(engine, stan = runstan_bayes)
   
   tot_cores <- detectCores()
   if (!is.finite(tot_cores)) { tot_cores <- 1 } 
@@ -631,78 +579,7 @@ mcmc_bayes <- function(data_list, engine=c('stan','jags'), model_path, params_ou
   
   bayes_function(
     data_list=data_list, model_path=model_path, params_out=params_out, split_dates=split_dates, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
-    adapt_steps=adapt_steps, burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
-}
-
-#' Run JAGS on a formatted data ply
-#' 
-#' Seems to need to import rjags but does not, for now, because I can't get 
-#' rjags to install on the Condor cluster. Including an import rjags line here 
-#' allowed runjags to do its job last time I tried.
-#' 
-#' @inheritParams mcmc_bayes
-#' @param ... args passed to other runxx_bayes functions but ignored here
-#' @import dplyr
-#' @import tibble
-#' @keywords internal
-runjags_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, adapt_steps=1000, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
-  
-  if(!requireNamespace("runjags", quietly = TRUE)) {
-    stop("the runjags package is required for JAGS MCMC models")
-  }
-  jags_msg <- tryCatch({runjags::findjags(); 'OK'}, warning=function(w) w$message)
-  if(jags_msg != 'OK') {
-    stop("JAGS not found. Install and/or seek help from sourceforge.net/projects/mcmc-jags")
-  }
-  
-  inits_fun <- function(chain) {
-    list(.RNG.name=
-           c("base::Wichmann-Hill",
-             "base::Marsaglia-Multicarry",
-             "base::Super-Duper",
-             "base::Mersenne-Twister")[chain])
-    # Let JAGS initialize other parameters automatically
-  }
-  
-  runjags::runjags.options(force.summary=TRUE)
-  live_log <- capture.output({
-    runjags_out <- runjags::run.jags(
-      method=c("rjags","parallel","snow")[2],
-      model=model_path,
-      monitor=params_out,
-      data=data_list,
-      inits=inits_fun,
-      n.chains=n_chains,
-      adapt=adapt_steps,
-      burnin=burnin_steps,
-      sample=saved_steps,
-      thin=thin_steps,
-      summarise=TRUE,
-      plots=FALSE,
-      silent.jags=FALSE)
-  }, type='output', split=verbose)
-  
-  # format output
-  if(split_dates) {
-    # for one-day models, create a 1-row data.frame. see ls('package:rstan')
-    jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
-                      runjags_out$summaries,
-                      runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
-    names_params <- rep(rownames(jags_mat), each=ncol(jags_mat)) # the GPP, ER, etc. part of the name
-    names_stats <- rep(tolower(gsub(" |-", "_", gsub("%", "pct", colnames(jags_mat)))), times=nrow(jags_mat)) # add the mean, sd, etc. part of the name
-    jags_out <- format_mcmc_mat_split(jags_mat, names_params, names_stats, keep_mcmc, runjags_out)
-  } else {
-    # for multi-day or unsplit models, format output into a list of data.frames
-    jags_mat <- cbind(runjags_out$summary$statistics[,c('Naive SE','Time-series SE')], 
-                      runjags_out$summaries,
-                      runjags_out$summary$quantiles) %>% as.matrix() # combine 2 matrices of statistics
-    jags_out <- format_mcmc_mat_nosplit(jags_mat, data_list$d, keep_mcmc, runjags_out)
-  }
-  
-  # attach the contents of the most recent logfile in tempdir(), which should be for this model
-  jags_out <- c(jags_out, list(log=live_log))
-  
-  return(jags_out)
+    burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
 }
 
 #' Run Stan on a formatted data ply
@@ -752,20 +629,26 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   }
   stan_mobj <- readRDS(mobj_path)
   
+  # make note of existing log files so we don't read them later
+  oldlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
+  
+  # run Stan
   if(verbose) message("sampling Stan model")
-  runstan_out <- rstan::sampling(
-    object=stan_mobj,
-    data=data_list,
-    pars=params_out,
-    include=TRUE,
-    chains=n_chains,
-    warmup=burnin_steps,
-    iter=saved_steps+burnin_steps,
-    thin=thin_steps,
-    init="random",
-    verbose=verbose,
-    open_progress=FALSE,
-    cores=n_cores)
+  consolelog <- capture.output(
+    runstan_out <- rstan::sampling(
+      object=stan_mobj,
+      data=data_list,
+      pars=params_out,
+      include=TRUE,
+      chains=n_chains,
+      warmup=burnin_steps,
+      iter=saved_steps+burnin_steps,
+      thin=thin_steps,
+      init="random",
+      verbose=verbose,
+      open_progress=FALSE,
+      cores=n_cores),
+    split=verbose)
 
   # this is a good place for a breakpoint when running small numbers of models
   # manually (or keep_mcmc also helps with inspection)
@@ -793,9 +676,9 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   } 
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
-  logfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
-  logfile <- logfiles[which.max(file.info(logfiles)$mtime)]
-  log <- if(length(logfile) > 0) readLines(logfile) else NA
+  newlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
+  logfile <- setdiff(newlogfiles, oldlogfiles)
+  log <- if(length(logfile) > 0) readLines(logfile) else consolelog
   stan_out <- c(stan_out, c(list(log=log), if(exists('compile_log')) list(compile_log=compile_log)))
   
   return(stan_out)
@@ -806,7 +689,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
 #' For split_dates models. Formats output into a one-row data.frame for 
 #' row-binding with other such data.frames
 #' 
-#' @param mcmc_mat matrix as extracted from JAGS or Stan
+#' @param mcmc_mat matrix as extracted from Stan
 #' @param names_params character vector of the names of the parameters
 #' @param names_stats character vector of the names of the statistics
 #' @import dplyr
@@ -830,7 +713,7 @@ format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc
 #' For multi-day or unsplit models. Formats output into a list of data.frames, 
 #' one per unique number of nodes sharing a variable name
 #' 
-#' @param mcmc_mat matrix as extracted from JAGS or Stan
+#' @param mcmc_mat matrix as extracted from Stan
 #' @import dplyr
 #' @keywords internal
 format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, keep_mcmc, runmcmc_out) {
@@ -991,9 +874,94 @@ print.logs_metab <- function(x, ...) {
 #' @return A data.frame of predictions, as for the generic 
 #'   \code{\link{predict_metab}}.
 #' @import dplyr
+#' @importFrom unitted get_units u
 #' @export
 #' @family predict_metab
-predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ...) {
-  metab_model@fit <- metab_model@fit$daily
+predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {
+  # with Bayesian models, the daily mean metabolism values of GPP, ER, and D
+  # should have been produced during the model fitting
+  
+  # decide on the column names to pull and their new values. fit.names and metab.names should be parallel
+  Var1 <- Var2 <- '.dplyr.var'
+  fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
+    select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
+    apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_daily_'))))
+  metab.names <- expand.grid(c('','.lower','.upper'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
+    select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
+    apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
+  
+  # pull and retrieve the columns
+  fit <- metab_model@fit$daily %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
+  preds <- fit[c('date', fit.names)] %>% 
+    setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
+  
+  # add date-specific fitting warnings and errors as msgs.fit. though these 
+  # could also be prediction messages if split_dates==T, we're planning to force
+  # split_dates to always be F in the near future. and whenever split_dates==F, 
+  # date-specific messages are all just date validity notes and belong in 
+  # fitting alone. general messages apply mostly to fitting so are noted here. 
+  # get_params also handles general messages, but because we don't call
+  # get_params from this predict_metab function, we need to add those messages
+  # separately here
+  warnings <- errors <- '.dplyr.var'
+  if(!is.null(fit) && all(exists(c('date','warnings','errors'), fit))) {
+    messages <- fit %>%
+      select(date, warnings, errors) %>%
+      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
+    preds <- full_join(preds, messages, by='date', copy=TRUE)
+  } else {
+    preds <- mutate(preds, msgs.fit=NA)
+  }
+  
+  # add general fitting warnings and errors. almost always, general errors 
+  # during fitting prohibit prediction and general warnings don't affect 
+  # prediction; treat them here as if this is always the case (because 
+  # prediction-specific errors or warnings would probably be due to a poorly 
+  # written model, which I hope we'll have few of, and I don't know how I'd
+  # distinguish since both types of messages come out of Stan)
+  preds <- mutate(
+    preds,
+    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
+    errors=if(length(metab_model@fit$errors) > 0) NA else '')
+  
+  # attach.units if requested
+  if(attach.units) {
+    pred.units <- get_units(mm_data())[sapply(names(preds), function(x) strsplit(x, '\\.')[[1]][1], USE.NAMES=FALSE)]
+    preds <- u(preds, pred.units)
+  }
+  preds
+}
+
+#' Collect the daily fitted parameters needed to predict GPP, ER, D, and DO
+#' 
+#' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
+#' 
+#' @inheritParams get_params
+#' @return A data.frame of fitted parameters, as for the generic 
+#'   \code{\link{get_params}}.
+#' @export
+#' @family get_params
+get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
+  # Stan prohibits '.' in variable names, so we have to convert back from '_' to
+  # '.' here to become consistent with the non-Bayesian models
+  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
+  for(i in seq_along(parnames)) {
+    names(metab_model@fit$daily) <- gsub(names(parnames[i]), parnames[[i]], names(metab_model@fit$daily))
+  }
+  names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  # code duplicated in get_params.metab_Kmodel:
+  if(length(metab_model@fit$warnings) > 0) {
+    omsg <- 'overall warnings'
+    dmsg <- metab_model@fit$daily$warnings
+    metab_model@fit$daily$warnings <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
+  if(length(metab_model@fit$errors) > 0) {
+    omsg <- 'overall errors'
+    dmsg <- metab_model@fit$daily$errors
+    metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
+  }
+  metab_model@fit <- metab_model@fit$daily # SUPER-TEMPORARY we're still converting fit$daily to fit until #247, #229
   NextMethod()
 }

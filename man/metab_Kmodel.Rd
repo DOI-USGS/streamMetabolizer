@@ -5,10 +5,10 @@
 \title{Combine a time series of K estimates to predict consistent values}
 \usage{
 metab_Kmodel(specs = specs(mm_name("Kmodel")), data = mm_data(solar.time,
-  discharge, velocity, optional = c("all")), data_daily = mm_data(date, K600,
-  K600.lower, K600.upper, discharge.daily, velocity.daily, optional =
-  c("K600.lower", "K600.upper", "discharge.daily", "velocity.daily")),
-  info = NULL)
+  discharge, velocity, optional = c("all")), data_daily = mm_data(date,
+  K600.daily, K600.daily.lower, K600.daily.upper, discharge.daily,
+  velocity.daily, optional = c("K600.daily.lower", "K600.daily.upper",
+  "discharge.daily", "velocity.daily")), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -73,26 +73,60 @@ library(dplyr)
 # create example data
 set.seed(24842)
 example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
-  as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600=rnorm(32,30,4)) \%>\%
-  mutate(K600.lower=K600-5, K600.upper=K600+6)
+  as.difftime(1,units='days')), discharge.daily=exp(rnorm(32,2,1)), K600.daily=rnorm(32,30,4)) \%>\%
+  mutate(K600.daily.lower=K600.daily-5, K600.daily.upper=K600.daily+6)
 
 # mean
 mm <- metab_Kmodel(
   specs(mm_name('Kmodel', engine='mean')), 
   data_daily=example_Ks) # two warnings expected for engine='mean'
-\dontrun{ plot_metab_preds(predict_metab(mm)) # flat b/c it's a mean }
+get_params(mm)
+\dontrun{
+plot(get_params(mm)$date, get_params(mm)$K600.daily)
+}
 
 # linear model
 mm <- metab_Kmodel(
   specs(mm_name('Kmodel', engine='lm'), predictors='discharge.daily'),
   data_daily=example_Ks)
-\dontrun{ plot_metab_preds(predict_metab(mm)) }
+get_params(mm)
+\dontrun{
+plot(get_data_daily(mm)$discharge.daily, get_params(mm)$K600.daily)
+}
 
 # loess
-mm <- metab_Kmodel(
+mm <- metab_Kmodel(    ### breaks ###
   specs(mm_name('Kmodel', engine='loess'), predictors='date', other_args=list(span=0.4)),
   data_daily=example_Ks)
-\dontrun{ plot_metab_preds(predict_metab(mm)) }
+get_params(mm)
+\dontrun{
+plot(get_params(mm)$date, get_params(mm)$K600.daily)
+}
+
+## 3-phase workflow (sort of like complete pooling) for estimating K within 
+## days, then K across days, then GPP and ER within days
+
+# 1. data and specifications for both of the MLE models
+dat <- data_metab('10','15')
+mle_specs <- specs(mm_name('mle'))
+
+# fit a first-round MLE and extract the K estimates
+mm1 <- metab_mle(mle_specs, data=dat)
+K600_mm1 <- get_params(mm1, uncertainty='ci') \%>\% 
+  select(date, K600.daily, K600.daily.lower, K600.daily.upper)
+
+# smooth the K600s
+mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), 
+  day_start=-1, day_end=23), data_daily=K600_mm1)
+K600_mm2 <- get_params(mm2) \%>\% select(date, K600.daily)
+
+# refit the MLE with fixed K
+mm3 <- metab_mle(mle_specs, data=dat, data_daily=K600_mm2)
+get_params(mm3, fixed='stars')
+predict_metab(mm3)
+\dontrun{
+plot_metab_preds(mm3)
+}
 }
 \author{
 Alison Appling

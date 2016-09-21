@@ -4,42 +4,61 @@
 \alias{predict_metab}
 \title{Predict metabolism from a fitted model.}
 \usage{
-predict_metab(metab_model, date_start = NA, date_end = NA, ..., use_saved)
+predict_metab(metab_model, date_start = NA, date_end = NA,
+  day_start = get_specs(metab_model)$day_start, day_end = min(day_start +
+  24, get_specs(metab_model)$day_end), ..., attach.units = FALSE,
+  use_saved = TRUE)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
 metab_model_interface, to use in predicting metabolism}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date
-(inclusive) for which to report metabolism predictions. If NA, no filtering is 
-done.}
+\item{date_start}{Date or a class convertible with as.Date. The first date 
+(inclusive) for which to report metabolism predictions. If NA, no filtering
+is done.}
 
 \item{date_end}{Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report metabolism predictions. If NA, no filtering is 
-done.}
+(inclusive) for which to report metabolism predictions. If NA, no filtering
+is done.}
 
-\item{...}{Other arguments passed to class-specific implementations of
+\item{day_start}{start time (inclusive) of a day's data in number of hours 
+from the midnight that begins the date. For example, day_start=-1.5 
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+the first observation time that occurs after that time if day_start doesn't
+fall exactly on an observation time. For daily metabolism predictions, 
+day_end - day_start should probably equal 24 so that each day's estimate is
+representative of a 24-hour period.}
+
+\item{day_end}{end time (exclusive) of a day's data in number of hours from 
+the midnight that begins the date. For example, day_end=30 indicates that 
+data describing 2006-06-26 end at the last observation time that occurs 
+before 2006-06-27 06:00. For daily metabolism predictions, day_end -
+day_start should probably equal 24 so that each day's estimate is 
+representative of a 24-hour period.}
+
+\item{...}{Other arguments passed to class-specific implementations of 
 \code{predict_metab}}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with
+\item{attach.units}{logical. Should units be attached to the output?}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with 
 the model?}
 }
 \value{
-A data.frame of daily metabolism estimates. Columns include:
+A data.frame of daily metabolism estimates. Columns include: 
   \describe{
   
   \item{GPP}{numeric estimate of Gross Primary Production, positive when 
   realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
   
-  \item{ER}{numeric estimate of Ecosystem Respiration, negative when realistic, \eqn{mg
-  O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+  \item{ER}{numeric estimate of Ecosystem Respiration, negative when 
+  realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
   
-  \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}}
-  }
+  \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}} }
 }
 \description{
 A function in the metab_model_interface. Returns predictions (estimates) of 
-GPP, ER, and NEP.
+GPP, ER, and K600.
 }
 \examples{
 dat <- data_metab('3', day_start=12, day_end=36)
@@ -51,12 +70,10 @@ predict_metab(mm, date_start=get_fit(mm)$date[2])
 Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_data}}, \code{\link{get_fitting_time}},
   \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_specs}}, \code{\link{get_version}},
-  \code{\link{predict_DO}}
+  \code{\link{get_params}}, \code{\link{get_specs}},
+  \code{\link{get_version}}, \code{\link{predict_DO}}
 
-Other predict_metab: \code{\link{predict_metab.metab_Kmodel}},
-  \code{\link{predict_metab.metab_bayes}},
-  \code{\link{predict_metab.metab_model}},
-  \code{\link{predict_metab.metab_sim}}
+Other predict_metab: \code{\link{predict_metab.metab_bayes}},
+  \code{\link{predict_metab.metab_model}}
 }
 

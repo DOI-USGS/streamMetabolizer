@@ -51,6 +51,8 @@ zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
 #' @keywords internal
 zz_build_docs <- function() {
   
+  if(!dir.exists('man-roxygen')) dir.create('man-roxygen')
+  
   . <- 'dplyr.var'
   c("@section Formatting \\code{data}:",
     "Unit-value model inputs passed via the \\code{data} argument should",

@@ -2,26 +2,33 @@
 NULL
 
 #' Maximum likelihood metabolism model fitting function
-#'
+#' 
 #' Uses maximum likelihood to fit a model to estimate GPP and ER from input data
 #' on DO, temperature, light, etc.
-#'
-#' @author Alison Appling, Jordan Read, Luke Winslow
-#'
+#' 
 #' @inheritParams metab
-#' @return A metab_mle object containing the fitted model. This object can be
-#'   inspected with the functions in the \code{\link{metab_model_interface}}.
-#'
+#' @return A metab_mle object containing the fitted model. This object can be 
+#'   inspected with the functions in the \code{\link{metab_model_interface}}. 
+#'   The \code{code} column in \code{get_fit(mm)} is defined in the Value
+#'   subsection of \code{?nlm}.
 #' @examples
-#' dat <- data_metab('3')
+#' dat <- data_metab('3','30')
 #' # PRK
 #' mm <- metab_mle(data=dat)
 #' predict_metab(mm)
-#'
+#' 
 #' # PR with fixed K on two days
-#' dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600=35)
-#' mm <- metab_mle(data=dat, data_daily=dat_daily)
-#' predict_metab(mm)
+#' dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600.daily=35)
+#' metab_mle(data=dat, data_daily=dat_daily)
+#' 
+#' # PRK with day-specific inits on some days
+#' dat_daily <- data.frame(date=as.Date("2012-09-19"), 
+#'   init.GPP.daily=4, init.K600.daily=60)
+#' metab_mle(data=dat, data_daily=dat_daily)
+#' 
+#' # Nonlinear GPP or ER equations
+#' metab_mle(specs(mm_name('mle', GPP_fun='satlight')), data=dat)
+#' metab_mle(specs(mm_name('mle', ER_fun='q10temp')), data=dat)
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
 #' }
@@ -30,7 +37,9 @@ NULL
 metab_mle <- function(
   specs=specs(mm_name('mle')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
-  data_daily=mm_data(date, K600, GPP.init, ER.init, K600.init, optional='all'),
+  data_daily=mm_data(
+    date, K600.daily, init.GPP.daily, init.Pmax, init.alpha, 
+    init.ER.daily, init.ER20, init.K600.daily, optional='all'),
   info=NULL
 ) {
   
@@ -52,7 +61,7 @@ metab_mle <- function(
     mle_all <- mm_model_by_ply(
       mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
       day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
-      specs=specs) # for mle_1ply and negloglik_1ply
+      specs=specs) # for mle_1ply and create_calc_dDOdt
   })
   
   # Package results
@@ -65,8 +74,9 @@ metab_mle <- function(
     data=dat_list[['data']], # keep the units if given
     data_daily=dat_list[['data_daily']])
   
-  # Update data with DO predictions
+  # Update data with DO & metab predictions
   mm@data <- predict_DO(mm)
+  mm@metab_daily <- predict_metab(mm)
   
   # Return
   mm
@@ -87,7 +97,7 @@ metab_mle <- function(
 #' @keywords internal
 mle_1ply <- function(
   data_ply, data_daily_ply, ply_date, ply_validity, timestep_days, ..., # inheritParams mm_model_by_ply_prototype
-  specs=specs('m_np_oi_pm_km.nlm') # inheritParams metab
+  specs=specs('m_np_oi_tr_km.nlm') # inheritParams metab
 ) {
   
   # Provide ability to skip a poorly-formatted day for calculating
@@ -96,88 +106,90 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
-  # Collect K600 and date-specific initial values if they're available. If a
-  # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
-  # value==NA), use the default: for xx_init values this is specs$xx_init, for
-  # K600 this is NULL (fit by MLE)
-  GPP.init <- specs$GPP_init
-  ER.init <- specs$ER_init
-  K600.init <- specs$K600_init
-  K600 <- NULL
-  . <- '.dplyr.var'
-  if(!is.null(data_daily_ply)) {
-    inits <- c('GPP.init', 'ER.init', 'K600.init') %>% { .[. %in% names(data_daily_ply)] }
-    if(nrow(data_daily_ply)==0) {
-      if(length(inits) > 0) {
-        warn_strs <- c(warn_strs, paste0(
-          "nrow(data_daily)==0 so using specs for ", paste0(inits, collapse=', ')))
-      }
-      if(exists('K600', data_daily_ply)) {
-        warn_strs <- c(warn_strs, "nrow(data_daily)==0 so fitting K600 by MLE")
-      }
-    } else if(nrow(data_daily_ply)==1) {
-      for(init in inits) {
-        if(is.na(data_daily_ply[[init]])) 
-          warn_strs <- c(warn_strs, paste0("data_daily$", init, "==NA so using specs"))
-        else
-          assign(init, data_daily_ply[[init]])
-      }
-      if(is.na(data_daily_ply$K600)) {
-        warn_strs <- c(warn_strs, "data_daily$K600==NA so fitting by MLE")
-      } else {
-        K600 <- data_daily_ply$K600
-      }
-    }
-  }
-  
-  # Calculate metabolism by non linear minimization of an MLE function
+  init.vals <- unlist(specs[grepl('^init.', names(specs))]) # goes outside in case stop_strs is already non-empty
   if(length(stop_strs) == 0) {
-    mle_method <- if(exists('mle_method', specs)) specs$mle_method else 'old'
-    if(mle_method=='old') {
-      nlm.args <- c(
-        list(
-          f = negloglik_1ply,
-          p = c(GPP=specs$GPP_init, ER=specs$ER_init, K600=specs$K600_init)[if(is.null(K600)) 1:3 else 1:2],
-          K600.daily=K600,
-          hessian = TRUE
-        ),
-        as.list(
-          data_ply[c("DO.obs","DO.sat","depth","temp.water")]
-        ),
-        list(
-          frac.GPP = data_ply$light/sum(data_ply$light[data_ply$solar.time < (data_ply$solar.time[1] + as.difftime(1, units='days'))]),
-          frac.ER = timestep_days,
-          frac.D = timestep_days,
-          calc_DO_fun = specs$calc_DO_fun,
-          ODE_method = mm_parse_name(specs$model_name)$ode_method
-        ))
-    } else if(mle_method=='new') {
-      
-      # parse the model_name
-      features <- mm_parse_name(specs$model_name)
-      dDOdt <- create_calc_dDOdt(
-        data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
-      DO <- create_calc_DO(dDOdt, err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
-      # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these to par.names in create_calc_NLL and nlm.args$p
-      NLL <- create_calc_NLL(DO)
-      nlm.args <- c(
-        list(
-          f = NLL,
-          p = c(
-            GPP.daily=specs$GPP_init, 
-            ER.daily=specs$ER_init, 
-            K600.daily=if(is.null(K600)) specs$K600_init),
-          hessian = TRUE),
-        if(!is.null(K600)) list(K600.daily = K600)
-      )
+    # Collect K600 and date-specific initial values if they're available. If a
+    # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
+    # value==NA), use the default: for xx_init values this is specs$xx_init, for
+    # K600 this is NULL (fit by MLE)
+    K600 <- NULL
+    . <- '.dplyr.var'
+    if(!is.null(data_daily_ply)) {
+      daily.inits <- names(init.vals) %>% { .[. %in% names(data_daily_ply)] }
+      if(nrow(data_daily_ply)==0) {
+        if(length(daily.inits) > 0) {
+          warn_strs <- c(warn_strs, paste0(
+            "nrow(data_daily)==0 so using specs for ", paste0(daily.inits, collapse=', ')))
+        }
+        if(exists('K600', data_daily_ply)) {
+          warn_strs <- c(warn_strs, "nrow(data_daily)==0 so fitting K600 by MLE")
+        }
+      } else { # nrow(data_daily_ply)==1 because we're in mle_1ply, so it can only be 0 or 1
+        for(init in daily.inits) {
+          if(is.na(data_daily_ply[[init]])) 
+            warn_strs <- c(warn_strs, paste0("data_daily$", init, "==NA so using specs"))
+          else
+            init.vals[[init]] <- data_daily_ply[[init]]
+        }
+        if(exists('K600.daily', data_daily_ply)) {
+          if(is.na(data_daily_ply$K600.daily)) {
+            warn_strs <- c(warn_strs, "data_daily$K600.daily==NA so fitting by MLE")
+          } else {
+            K600 <- data_daily_ply$K600.daily
+          }
+        }
+      }
     }
+    fix_K600 <- !is.null(K600)
+    # if K600.daily will be fixed, we don't need to fit it
+    if(fix_K600) init.vals <- init.vals[names(init.vals) != 'init.K600.daily']
     
+    # name the init.vals as their parameters (minus the 'init.')
+    init.vals <- setNames(unlist(init.vals), substring(names(init.vals), 6))
+    
+    # parse the model_name
+    features <- mm_parse_name(specs$model_name)
+    
+    # create the series of nested functions to compute the negative log 
+    # likelihood (NLL) for a trio of values for GPP.daily, ER.daily, and
+    # K600.daily
+    dDOdt <- create_calc_dDOdt(
+      data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+      ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+    DO <- create_calc_DO(dDOdt)
+    # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these
+    # to par.names in create_calc_NLL and nlm.args$p. to fix them, pass them as
+    # separately named arguments in nlm.args
+    NLL <- create_calc_NLL(
+      DO,
+      err_obs_iid=features$err_obs_iid, err_proc_iid=features$err_proc_iid)
+    if(fix_K600) environment(NLL)$par.names %<>% { .[. != 'K600.daily'] } # remove the K600 parameter if we're fixing K600
+    
+    # package nlm arguments in a list. estimate of fscale is based on comparison
+    # of dat=data_metab('10','5') and dat=data_metab('10','30') in mm <- 
+    # metab_mle(specs(mm_name('mle', GPP_fun='satlight')), data=dat), for which
+    # typical minima are -300 and -70, and obs/day are 288 and 48, respectively
+    nlm.args <- c(
+      list(
+        f = NLL,
+        p = init.vals,
+        typsize = init.vals,
+        fscale = -(1/timestep_days),
+        hessian = TRUE),
+      if(fix_K600) list(K600.daily = K600),
+      list(DO.mod.1 = data_ply$DO.obs[1])
+    )
+    
+    # Find the best metabolism values by non-linear minimization of the likelihood
+    # (NLL) of the output from a DO-prediction function, which is the ODE solution
+    # of predictions from a dDO/dt-prediction function of a trial set of
+    # metabolism values
     mle.1d <- withCallingHandlers(
       tryCatch({
-        # first: try to run the MLE fitting function
+        # try to run the MLE fitting function
         # iter <<- NA # only useful if create_calc_NLL has plotting uncommented
         mle.1d <- do.call(nlm, nlm.args)
+
         # if we were successful, also compute the confidence interval as in
         # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which
         # says: 'Inverse Fisher information gives the asymptotic variance matrix
@@ -188,7 +200,10 @@ mle_1ply <- function(
         # errors are autocorrelated. Still, it's a start.
         inv_fish <- solve(mle.1d$hessian)
         mle.1d$sd <- sqrt(diag(inv_fish))
+        
+        # return from tryCatch
         mle.1d
+        
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -203,65 +218,40 @@ mle_1ply <- function(
   
   # Return, reporting any results, warnings, and errors. if the model fitting
   # failed, use dummy data to fill in the output with NAs.
+  val.names <- names(init.vals) # trust nlm to return the parameters in the same order we passed them in
+  stat.names <- c('estimate','sd','gradient')
+  valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names)))
+  goodness.names <- c('minimum','iterations','code')
   if(length(stop_strs) > 0) {
-    data.frame(
-      GPP=NA, ER=NA, K600=NA,
-      GPP.sd=NA, ER.sd=NA, K600.sd=NA,
-      GPP.grad=NA, ER.grad=NA, K600.grad=NA,
-      minimum=NA, code=NA, iterations=NA,
-      warnings=paste0(unique(warn_strs), collapse="; "),
-      errors=paste0(unique(stop_strs), collapse="; "),
-      stringsAsFactors=FALSE)
+    valstat.cols <- as.list(rep(as.numeric(NA), length(valstat.names))) %>%
+      as.data.frame() %>%
+      setNames(valstat.names)
+    goodness.cols <- as.list(rep(as.numeric(NA), length(goodness.names))) %>%
+      as.data.frame() %>%
+      setNames(goodness.names) %>%
+      mutate(code.str=as.character(NA))
   } else {
-    data.frame(
-      GPP=mle.1d$estimate[1], ER=mle.1d$estimate[2], K600=if(is.null(K600)) mle.1d$estimate[3] else K600,
-      GPP.sd=mle.1d$sd[1], ER.sd=mle.1d$sd[2], K600.sd=if(is.null(K600)) mle.1d$sd[3] else NA,
-      GPP.grad=mle.1d$gradient[1], ER.grad=mle.1d$gradient[2], K600.grad=if(is.null(K600)) mle.1d$gradient[3] else NA,
-      minimum=mle.1d$minimum, code=mle.1d$code, iterations=mle.1d$iterations,
-      warnings=paste0(unique(warn_strs), collapse="; "),
-      errors=paste0(unique(stop_strs), collapse="; "),
-      stringsAsFactors=FALSE)
+    valstat.cols <- c(do.call(rbind, mle.1d[stat.names])) %>%
+      as.list() %>% as.data.frame() %>%
+      setNames(valstat.names)
+    code <- '.dplyr.var'
+    goodness.cols <- as.data.frame(mle.1d[goodness.names]) %>%
+      # code interpretations are from the Value section of the ?nlm page
+      mutate(code.str=c(
+        'relative gradient is close to zero, current iterate is probably solution',
+        'successive iterates within tolerance, current iterate is probably solution',
+        'last global step failed to locate a point lower than estimate. Either estimate is an approximate local minimum of the function or steptol is too small',
+        'iteration limit exceeded',
+        'maximum step size stepmax exceeded five consecutive times. Either the function is unbounded below, becomes asymptotic to a finite value from above in some direction or stepmax is too small'
+      )[code])
+    if(goodness.cols$code > 2) warn_strs <- c(warn_strs, goodness.cols$code.str)
   }
+  err.cols <- data.frame(
+    warnings=paste0(unique(warn_strs), collapse="; "),
+    errors=paste0(unique(stop_strs), collapse="; "),
+    stringsAsFactors=FALSE)
+  data.frame(valstat.cols, goodness.cols, err.cols)
 }
-
-#' Return the likelihood value for a given set of parameters and observations
-#'
-#' Called from mle_1ply(). From ?nlm, this function should be "the function to
-#' be minimized, returning a single numeric value. This should be a function
-#' with first argument a vector of the length of p followed by any other
-#' arguments specified by the ... argument."
-#'
-#' @param params a vector of length 2, where the first element is GPP and the
-#'   second element is ER (both mg/L/d)
-#' @param K600.daily optional - if K600 is to be fit, leave NULL. If K600 is to
-#'   be supplied, this is where to put it.
-#' @param calc_DO_fun the function to use to build DO estimates from GPP, ER,
-#'   etc. default is calc_DO_mod, but could also be calc_DO_mod_by_diff
-#' @inheritParams calc_DO_mod_w_fixed_error
-#' @keywords internal
-negloglik_1ply <- function(params, K600.daily, DO.obs, DO.sat, depth, temp.water,
-                           frac.GPP, frac.ER, frac.D, calc_DO_fun, ODE_method) {
-  
-  # Count how many DO observations/predictions there should be
-  n <- length(DO.obs)
-  
-  # Parse params vector (passed from nlm) and produce DO.mod estimates. It's
-  # important that these arguments are named because various calc_DO_funs take
-  # slightly different subsets of these arguments
-  DO.mod <- calc_DO_fun(
-    GPP.daily=params[1], ER.daily=params[2], K600.daily=if(is.null(K600.daily)) params[3] else K600.daily,
-    DO.obs=DO.obs, DO.sat=DO.sat, depth=depth, temp.water=temp.water,
-    frac.GPP=frac.GPP, frac.ER=frac.ER, frac.D=frac.D, DO.mod.1=DO.obs[1], n=n, ODE_method=ODE_method)
-  
-  # calculate & return the negative log likelihood of DO.mod values relative
-  # to DO.obs values. equivalent to Bob's original code & formula at
-  # http://www.statlect.com/normal_distribution_maximum_likelihood.htm
-  diffs.sq <- (DO.obs-DO.mod)^2
-  sigma.sq <- sum(diffs.sq)/n
-  (n/2)*log(sigma.sq) + (n/2)*log(2*pi) + (1/(2*sigma.sq))*sum(diffs.sq)
-  
-}
-
 
 
 #### metab_mle class ####
