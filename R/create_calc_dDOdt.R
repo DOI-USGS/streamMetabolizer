@@ -290,11 +290,11 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     # to a trapezoid rule. remember we're treating err.proc as a rate in
     # gO2/m2/d, just like GPP & ER
     trapezoid=, pairmeans={
-      function(t, state, metab.pars){
+      function(t, state, metab.pars) {
         K600.daily <- metab.pars[['K600.daily']]
         list(
           dDOdt={
-            - state[['DO.mod']] * K600.daily * {KO2.conv[t]+KO2.conv[t+1]}/2 +
+            - {if(deficit_src == 'DO_obs') DO.obs[t] else state[['DO.mod']]} * K600.daily * {KO2.conv[t]+KO2.conv[t+1]}/2 +
               0.5*{GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] +
               0.5*{GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] +
               K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}/2
