@@ -290,18 +290,15 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     # to a trapezoid rule. remember we're treating err.proc as a rate in
     # gO2/m2/d, just like GPP & ER
     trapezoid=, pairmeans={
-      # define pairwise averaging functions pm = pairmeans, f=function, v=vector
-      pmf <- function(fun, t, ...) mean(fun(c(t, t+1), ...)) # .Internal(mean()) is faster but rountly rejected by R CMD check
-      pmv <- function(vec, t) (vec[t] + vec[t+1])/2
       function(t, state, metab.pars){
         K600.daily <- metab.pars[['K600.daily']]
-        KO2.conv.t1 <- KO2.conv[t+1]
         list(
           dDOdt={
-            - state[['DO.mod']] * K600.daily * pmv(KO2.conv, t) +
-              {pmf(GPP, t, metab.pars) + pmf(ER, t, metab.pars) + pmv(err.proc, t)} / pmv(depth, t) +
-              K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv.t1*DO.sat[t+1]}/2
-          } * timestep.days / {1 + timestep.days * K600.daily * KO2.conv.t1/2})
+            - state[['DO.mod']] * K600.daily * {KO2.conv[t]+KO2.conv[t+1]}/2 +
+              0.5*{GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] +
+              0.5*{GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] +
+              K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}/2
+          } * timestep.days / {1 + timestep.days * K600.daily * KO2.conv[t+1]/2})
       }
     },
     # all other methods use a straightforward calculation of dDOdt at values of
