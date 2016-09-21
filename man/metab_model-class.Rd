@@ -12,15 +12,17 @@ A metabolism model class.
 \describe{
 \item{\code{info}}{Any metadata the user chooses to package with metabolism model.}
 
+\item{\code{metab_daily}}{A data.frame of daily metabolism predictions.}
+
 \item{\code{fit}}{An internal representation of a fitted model.}
 
-\item{\code{fitting_time}}{Usually stored as a proc_time; the time required to fit
+\item{\code{fitting_time}}{Usually stored as a proc_time; the time required to fit 
 the model.}
 
 \item{\code{pkg_version}}{A string indicating the package version used to create this
 metab_model object.}
 
-\item{\code{specs}}{A list of model specifications that were supplied to the fitting
+\item{\code{specs}}{A list of model specifications that were supplied to the fitting 
 function.}
 
 \item{\code{data}}{The data that were used to fit the model.}

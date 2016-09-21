@@ -20,8 +20,9 @@ detail, and gives default values.}
 
 \item{data}{data.frame of input data at the temporal resolution of raw 
 observations (unit-value). Columns must have the same names, units, and 
-format as the default. See the \strong{'Formatting \code{data}'} section 
-below for a full description.}
+format as the default. The solar.time column must also have a timezone code
+('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -38,20 +39,36 @@ A metab_bayes object containing the fitted model. This object can be
 \description{
 Fits a Bayesian model to estimate GPP and ER from input data on DO, 
 temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
-and \code{\link{specs}} for relevant options for the \code{specs} 
-argument.
+and \code{\link{specs}} for relevant options for the \code{specs} argument.
+}
+\details{
+As of summer and fall 2016, a new compilation of any Stan model gives
+deprecation warnings including \code{typedef 'size_type' locally defined but
+not used [-Wunused-local-typedefs]}, \code{typedef 'index_range' locally
+defined but not used [-Wunused-local-typedefs]}, \code{typedef 'index'
+locally defined but not used [-Wunused-local-typedefs]}, and \code{'void
+stan::math::set_zero_all_adjoints()' defined but not used
+[-Wunused-function]}. THESE ARE OKAY. Subsequent runs of the compiled Stan
+model will be quieter, and the model will work.
 }
 \examples{
 \dontrun{
-dat <- data_metab() # 1 day of example data
+dat <- data_metab('3', res='30')
 # fast-ish model version, but still too slow to auto-run in examples
-mm <- metab_bayes(
-  specs(mm_name('bayes', err_proc_iid=FALSE, engine='jags'), 
-        n_chains=1, burnin_steps=300, saved_steps=100),
+mm <- metab_bayes(data=dat,
+  specs(mm_name('bayes', err_proc_iid=FALSE), 
+    n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
+mm
+get_fitting_time(mm)
+predict_metab(mm)
+plot_DO_preds(predict_DO(mm))
+
+# error and warning messages are printed with the mm object if present
+dat <- data_metab('3', res='30', flaws=c('missing middle'))
+mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE), 
+  n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
   data=dat)
 predict_metab(mm)
-get_fitting_time(mm)
-plot_DO_preds(predict_DO(mm))
 }
 }
 \author{

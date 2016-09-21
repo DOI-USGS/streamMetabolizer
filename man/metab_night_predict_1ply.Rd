@@ -5,7 +5,7 @@
 \title{Helper to predict_DO.metab_model}
 \usage{
 metab_night_predict_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  timestep_days, ...)
+  timestep_days, ..., model_name)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -35,6 +35,9 @@ in the call to \code{\link{mm_model_by_ply}}}
 
 \item{...}{other args that were passed untouched from the function calling 
 mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
+
+\item{model_name}{the coded model name that will determine the GPP_fun,
+ER_fun, deficit_src, and ode_method to use in prediction}
 }
 \value{
 a data.frame of predictions

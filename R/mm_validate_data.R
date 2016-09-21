@@ -35,7 +35,7 @@ mm_validate_data <- function(
       if('all' %in% optional.data) {
         return(dat)
       } else {
-        stop(paste0(data_type, " is NULL but required"))
+        stop(paste0(data_type, " is NULL but required"), call.=FALSE)
       }
     }
     
@@ -44,13 +44,13 @@ mm_validate_data <- function(
       missing.columns <- setdiff(names(expected.data), names(dat))
       missing.columns <- setdiff(missing.columns, optional.data) # optional cols don't count
       if(length(missing.columns) > 0) {
-        stop(paste0(data_type, " is missing these columns: ", paste0(missing.columns, collapse=", ")))
+        stop(paste0(data_type, " is missing these columns: ", paste0(missing.columns, collapse=", ")), call.=FALSE)
       }
     }
     if('extra_cols' %in% data_tests) {
       extra.columns <- setdiff(names(dat), names(expected.data))
       if(length(extra.columns) > 0) {
-        stop(paste0(data_type, " should omit these extra columns: ", paste0(extra.columns, collapse=", ")))
+        stop(paste0(data_type, " should omit these extra columns: ", paste0(extra.columns, collapse=", ")), call.=FALSE)
       }
     }
     
@@ -60,13 +60,14 @@ mm_validate_data <- function(
     # specified without a timestamp column
     if('na_times' %in% data_tests) {
       timecol <- grep('date|time', names(dat), value=TRUE)
-      if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns")
+      if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns", call.=FALSE)
       na.times <- which(is.na(dat[,timecol]))
       if(length(na.times) > 0) {
-        stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")))
+        stop(paste0(data_type, " has NA date stamps in these rows: ", paste0(na.times, collapse=", ")), call.=FALSE)
       }
-      if(timecol=='solar.time' && !lubridate::is.POSIXct(dat[,timecol])) stop("expecting 'solar.time' to be of class 'POSIXct'")
-      if(timecol=='date' && !lubridate::is.Date(dat[,timecol])) stop("expecting 'date' to be of class 'Date'")
+      if(timecol=='solar.time' && !lubridate::is.POSIXct(dat[,timecol])) stop("expecting 'solar.time' to be of class 'POSIXct'", call.=FALSE)
+      if(timecol=='solar.time' && !(lubridate::tz(dat[,timecol]) %in% c('UTC','GMT'))) stop("expecting 'solar.time' to have timezone 'UTC'", call.=FALSE)
+      if(timecol=='date' && !lubridate::is.Date(dat[,timecol])) stop("expecting 'date' to be of class 'Date'", call.=FALSE)
     }
     
     # put the data columns in the same order as expected.data and eliminate any 
@@ -85,7 +86,7 @@ mm_validate_data <- function(
         stop(paste0("unexpected units in ", data_type, ": ", paste0(
           "(", 1:length(mismatched.units), ") ", 
           names(data.units), " = ", data.units, ", expected ", expected.units,
-          collapse="; ")))
+          collapse="; ")), call.=FALSE)
       }
     }
     

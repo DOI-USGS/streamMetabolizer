@@ -1,14 +1,66 @@
+# streamMetabolizer 0.9.14
+
+* all tests are passing and all examples are running [again]. tests are 
+acceptably comprehensive [for now].
+
+* known issue: K binning in bayesian models is producing unlikely estimates. all
+bayesian models need further testing.
+
+# streamMetabolizer 0.9.14
+
+* ongoing bug fixes and re-integration of all model types into new ODE
+production/integration scheme
+
+# streamMetabolizer 0.9.12
+
+* removed JAGS from the package. Stan is better for us.
+
+# streamMetabolizer 0.9.11
+
+* this is the last version with JAGS in it.
+
+# streamMetabolizer 0.9.10
+
+* myriad bug fixes to accommodate changes from version 0.9.9.
+
+# streamMetabolizer 0.9.9
+
+* `metab_mle` and `metab_sim` now have several options for relationships among 
+GPP, light, ER, and temperature.
+
+* `metab_mle` and `metab_sim` now have several options for the method by which 
+the differential equation for dDO/dt is numerically integrated to produce a time
+series of DO predictions.
+
+* `metab_mle` has taken a performance hit to become more flexible in the 
+GPP-light relationship, the ODE method, and so on. Optimization is likely in the
+future.
+
+* `predict_metab` and `predict_DO` optionally attach units to their output.
+
+# streamMetabolizer 0.9.8
+
+* better error and warning handling in metab_bayes, including a new function 
+`get_log()` that retrieves log file[s] from MCMC model compilation & run[s]. log
+files are now retrieved for both JAGS and Stan models.
+
+* updates to accommodate changes in dependency packages (tibble and dplyr)
+
+* more efficient specifications of JAGS and Stan models
+
+* incorporated feedback on vignette
+
 # streamMetabolizer 0.9.6
 
-* model names (from mm_name()) and bayesian model file names (in models folder)
-now include info on the GPP and ER functions - default is still pl = GPP is a
-linear function of light, and rc = ER is constant over every 24-hour period
+* model names (from `mm_name()`) and bayesian model file names (in models 
+folder) now include info on the GPP and ER functions - default is still pl = GPP
+is a linear function of light, and rc = ER is constant over every 24-hour period
 
-* more informative error messages for timesteps <= 0 in mm_model_by_ply
+* more informative error messages for timesteps <= 0 in `mm_model_by_ply`
 
 # streamMetabolizer 0.9.5.1
 
-* in metab_Kmodel, now avoiding negative weights
+* in `metab_Kmodel`, now avoiding negative weights
 
 # streamMetabolizer 0.9.5
 
@@ -18,18 +70,18 @@ linear function of light, and rc = ER is constant over every 24-hour period
 
 * Now automatically checks for available updates when you attach the package
 
-* Improved units handling in convert_k600/kGAS
+* Improved units handling in `convert_k600`/`kGAS`
 
 # streamMetabolizer 0.9.2
 
 * Hierarchical constraints on K600 are now available! Options are 'normal', 
-'linear', and 'binned'; see the details section on pool_K600 in ?mm_name and the
-description of parameters starting with K600_daily in ?specs.
+'linear', and 'binned'; see the details section on `pool_K600` in `?mm_name` and
+the description of parameters starting with `K600_daily` in `?specs`.
 
-* Interface change: specs lists now print more prettily and have class 'specs' 
+* Interface change: `specs` lists now print more prettily and have class 'specs'
 (though they're still fundamentally just lists)
 
-* Vignette: see vignette('getstarted')
+* Vignette: see `vignette('getstarted')`
 
 # streamMetabolizer 0.9.0
 

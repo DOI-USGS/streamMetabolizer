@@ -14,8 +14,9 @@
 #'   detail, and gives default values.
 #' @param data data.frame of input data at the temporal resolution of raw 
 #'   observations (unit-value). Columns must have the same names, units, and 
-#'   format as the default. See the \strong{'Formatting \code{data}'} section 
-#'   below for a full description.
+#'   format as the default. The solar.time column must also have a timezone code
+#'   ('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
+#'   section below for a full description.
 #' @param data_daily data.frame containing inputs with a daily timestep. See the
 #'   \strong{'Formatting \code{data_daily}'} section below for a full 
 #'   description.
@@ -38,8 +39,8 @@
 #' 
 #' # with chaining & customization
 #' library(dplyr)
-#' mm <- mm_name('mle', ode_method='Euler') %>%
-#'   specs(GPP_init=40) %>%
+#' mm <- mm_name('mle', ode_method='euler') %>%
+#'   specs(init.GPP.daily=40) %>%
 #'   metab(data=dat)
 #' predict_metab(mm)
 #' \dontrun{

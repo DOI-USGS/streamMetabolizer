@@ -1,0 +1,67 @@
+---
+title: "ODE Methods"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{get_started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+  
+```{r knitr_init, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=100)
+```
+
+# Overview
+
+This vignette demonstrates how you can choose and compare the ODE solution
+method, which is the numerical algorithm used to translate from a given set of
+daily metabolism parameters into a time series of dissolved oxygen predictions.
+
+# Setup
+
+Load streamMetabolizer.
+
+```{r, messages=TRUE, warnings=TRUE, errors=TRUE}
+library(streamMetabolizer)
+```
+
+Load dplyr.
+
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+```
+
+Get some data to work with: here we're requesting three days of data at 
+30-minute resolution. Thanks to Bob Hall for the test data.
+
+```{r}
+dat <- data_metab('3','30')
+```
+
+# Numerical integration
+
+Inspired by Song et al. 2016, we can now do several types of numerical 
+integration and compare them. `lsoda` often fails to converge, but `rk4` and 
+`trapezoid` perform well and very similarly to one another (and `trapezoid` is 
+faster). `trapezoid` is available for both MLE and Bayesian models.
+
+```{r}
+mm_euler <- metab(specs(mm_name('mle', ode_method='euler')), dat)
+mm_trapezoid <- metab(specs(mm_name('mle', ode_method='trapezoid')), dat)
+mm_rk4 <- metab(specs(mm_name('mle', ode_method='rk4')), dat) 
+mm_lsoda <- metab(specs(mm_name('mle', ode_method='lsoda')), dat) 
+DO.standard <- rep(predict_DO(mm_rk4)$'DO.mod', times=4)
+ode_preds <- bind_rows(
+  mutate(predict_DO(mm_euler), method='euler'),
+  mutate(predict_DO(mm_trapezoid), method='trapezoid'),
+  mutate(predict_DO(mm_rk4), method='rk4'),
+  mutate(predict_DO(mm_lsoda), method='lsoda')) %>%
+  mutate(DO.mod.diffeuler = DO.mod - DO.standard)
+library(ggplot2)
+ggplot(ode_preds, aes(x=solar.time)) + geom_point(aes(y=DO.obs), color='grey', alpha=0.3) + geom_line(aes(y=DO.mod, color=method), size=1) + theme_bw()
+ggplot(ode_preds, aes(x=solar.time)) + geom_point(aes(y=pmax(-0.2, pmin(0.2, DO.mod.diffeuler)), color=method), size=1, alpha=0.8) + scale_y_continuous(limits=c(-0.2,0.2)) + theme_bw() + ylab("Deviations from rk4 (capped at +/- 0.2)")
+```

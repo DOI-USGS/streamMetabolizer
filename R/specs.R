@@ -17,27 +17,28 @@
 #'   
 #'   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
 #'   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
-#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, priors, params_out, n_chains,
-#'   n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The need for 
-#'   other arguments depends on features of the model structure, as from 
-#'   \code{mm_parse_name(model_name)}: If \code{$pool_K600=='none'} then 
-#'   \code{K600_daily_mu, K600_daily_sigma}. If \code{$pool_K600=='normal'} then
-#'   \code{K600_daily_mu_mu, K600_daily_mu_sigma, K600_daily_sigma_location, 
-#'   K600_daily_sigma_scale}. If \code{pool_K600=='linear'} then 
-#'   \code{K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_location,
-#'   K600_daily_sigma_scale}. If \code{pool_K600=='binned'} then 
-#'   \code{K600_daily_beta_num, K600_daily_beta_cuts, K600_daily_beta_mu, 
+#'   GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_in, params_out,
+#'   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The
+#'   need for other arguments depends on features of the model structure, as
+#'   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
+#'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
+#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
+#'   K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
+#'   \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
 #'   K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
-#'   If \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
-#'   err_obs_iid_sigma_scale}. If \code{err_proc_acor} then 
+#'   \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
+#'   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma, 
+#'   K600_daily_sigma_location, K600_daily_sigma_scale}. \item If 
+#'   \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
+#'   err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
 #'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-#'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. If 
+#'   err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. \item If 
 #'   \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
-#'   err_proc_iid_sigma_scale}. If \code{engine == 'jags'} then 
-#'   \code{adapt_steps}.
+#'   err_proc_iid_sigma_scale}.}
 #'   
-#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, calc_DO_fun, 
-#'   ODE_method, GPP_init, ER_init, K600_init}
+#'   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
+#'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
+#'   init.K600.daily}
 #'   
 #'   * metab_night: \code{model_name, day_start, day_end, day_tests}
 #'   
@@ -48,40 +49,67 @@
 #'   \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, ODE_method, 
-#'   sim.seed}
+#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+#'   
+#' @section MLE Initial Values:
+#'   
+#'   For metab_mle models (maximum likelihood estimation), specification 
+#'   arguments whose names begin with \code{init} are applicable. Which 
+#'   arguments are required depends on the value of model_name and can be 
+#'   determined by calling \code{grep('^init.', names(specs(mname)), 
+#'   value=TRUE)} once for your model name \code{mname} before supplying any 
+#'   arguments.
 #'   
 #' @param model_name character string identifying the model features. Use 
-#'   \code{\link{mm_name}} for valid names. This may be a full model file path 
-#'   for custom Bayesian models, as long as basename(model_name) can still be 
-#'   parsed correctly with \code{mm_parse_name()}. In that case the file may be 
-#'   specified either as a file path relative to the streamMetabolizer models 
-#'   directory (the first assumption; this directory can be found with 
-#'   \code{system.file("models", package="streamMetabolizer")}) or as an 
-#'   absolute path or a path relative to the current working directory (the 
-#'   second assumption, if the first assumption turns up no files of the given 
-#'   name).
+#'   \code{\link{mm_name}} to create a valid name based on desired attributes, 
+#'   or \code{\link{mm_valid_names}} to see all valid names. Two alternatives to
+#'   the names given by \code{mm_valid_names()} are also accepted: (1) a model 
+#'   type as accepted by the \code{type} argument to \code{mm_name}, which will 
+#'   be used to create the default model name for that model type, or (2) a full
+#'   model file path for custom Bayesian models, as long as basename(model_name)
+#'   can still be parsed correctly with \code{mm_parse_name()} and the file 
+#'   exists. In that case the file may be specified either as a file path 
+#'   relative to the streamMetabolizer models directory (the first assumption; 
+#'   this directory can be found with \code{system.file("models", 
+#'   package="streamMetabolizer")}) or as an absolute path or a path relative to
+#'   the current working directory (the second assumption, if the first 
+#'   assumption turns up no files of the given name).
 #' @param engine The software or function to use in fitting the model. Should be
-#'   specified via \code{mm_name} rather than here. For type='bayes', one of 
-#'   \code{c('jags','stan')} indicating the software package to use for the MCMC
-#'   process. For type='Kmodel', the name of an interpolation or regression 
-#'   method relating K to the predictor[s] of choice. One of \code{c("mean", 
-#'   "lm", "loess")}. For types in \code{c('mle','night','sim')} there's only 
-#'   one option so it's not included in \code{specs()} (but is nonetheless noted
-#'   in the suffix of the model name, e.g., \code{"m_np_oi_pm_km.nlm"} uses 
-#'   \code{nlm()} for model fitting)
+#'   specified via \code{mm_name} rather than here. For \code{type='bayes'},
+#'   always \code{'stan'} indicating the software package to use for the MCMC 
+#'   process (see http://mc-stan.org/). For types in
+#'   \code{c('mle','night','sim')} there's again only one option per model (R
+#'   functions; these need not be named here but will be noted in the suffix of
+#'   the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
+#'   model fitting). For type='Kmodel', the name of an interpolation or
+#'   regression method relating K to the predictor[s] of choice. One of
+#'   \code{c("mean", "lm", "loess")}.
 #' @inheritParams mm_model_by_ply
 #' @inheritParams mm_is_valid_day
 #'   
-#' @param GPP_init the inital value of daily GPP to use in the NLM fitting 
-#'   process
-#' @param ER_init the inital value of daily ER to use in the NLM fitting process
-#' @param K600_init the inital value of daily K600 to use in the NLM fitting 
-#'   process. Ignored if K600 is supplied in data_daily, except for those dates 
-#'   where K600 is NA. If there are any such dates, K600_init must have a 
-#'   numeric (non-NA) value, as this will be used to estimate K600 for those 
-#'   dates.
-#' @inheritParams negloglik_1ply
+#' @param init.GPP.daily the inital value of daily mean GPP (gO2 d^-1 m^-2) to 
+#'   use in the NLM fitting process. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.Pmax the initial value of Pmax (gO2 d^-1 m^-2) to use in the GPP 
+#'   versus light relationship in the NLM fitting process. Pmax is the maximum 
+#'   GPP value of the GPP-light curve. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.alpha the inital value of alpha (gO2 s d^-1 umol^-1, i.e., units 
+#'   of GPP/light) to use in the GPP versus light relationship in the NLM 
+#'   fitting process. alpha is the initial slope of the GPP-light curve. See the
+#'   MLE Initial Values section under Details.
+#' @param init.ER.daily the inital value of daily mean ER (gO2 d^-1 m^-2) to use
+#'   in the NLM fitting process. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.ER20 the initial value of ER20 (gO2 d^-1 m^-2) to use in the ER 
+#'   versus temperature relationship in the NLM fitting process. ER20 is the 
+#'   respiration rate at 20 degrees C. See the MLE Initial Values section under 
+#'   Details.
+#' @param init.K600.daily the inital value of daily mean K600 (d^-1) to use in 
+#'   the NLM fitting process. Ignored if K600 is supplied in data_daily, except 
+#'   for those dates where K600 is NA. If there are any such dates, K600_init 
+#'   must have a numeric (non-NA) value, as this will be used to estimate K600 
+#'   for those dates. See the MLE Initial Values section under Details.
 #'   
 #' @param split_dates logical indicating whether the data should be split into 
 #'   daily chunks first (TRUE) or processed within one big model (FALSE). If 
@@ -132,29 +160,31 @@
 #'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 #'   N(beta0_mu, beta0_sigma)
 #'   
-#' @param K600_daily_beta_num hyperparameter for pool_K600='binned'. The number 
-#'   of bins into which daily discharge values should be grouped. Each bin 
-#'   predicts a single value of K600_daily_pred, such that any day on which 
-#'   \code{discharge_bin_daily} equals that bin will have \code{K600_daily ~ 
-#'   N(K600_daily_beta[discharge_bin_daily], K600_daily_sigma)}
-#' @param K600_daily_beta_cuts hyperparameter for pool_K600='binned'. Either (1)
-#'   character of length 1 in c('number','interval') indicating how the bin cuts
-#'   should be determined, or (2) numeric (as in \code{breaks} in 
-#'   \code{\link[base]{cut}}) of length K600_daily_beta_num+1 giving the 
-#'   natural-log-space breakpoints defining the bins. For option 1, the 
-#'   implementation uses or is equivalent to the corresponding functions 
-#'   \code{\link[ggplot2]{cut_interval}} (to cut into bins having equal numeric 
-#'   ranges in natural log space) and \code{\link[ggplot2]{cut_number}} (to cut 
-#'   into bins having ~equal numbers of ln_discharge_daily observations). For 
-#'   option 2, make sure to include the full range of ln_discharge_daily, with 
-#'   the first value smaller than all ln_discharge_daily values and the last 
-#'   value greater than or equal to all ln_discharge_daily values.
+#' @param K600_daily_beta_num data configuration argument for 
+#'   pool_K600='binned'. The number of bins into which daily discharge values 
+#'   should be grouped. Each bin predicts a single value of K600_daily_pred, 
+#'   such that any day on which \code{discharge_bin_daily} equals that bin will 
+#'   have \code{K600_daily ~ N(K600_daily_beta[discharge_bin_daily], 
+#'   K600_daily_sigma)}
+#' @param K600_daily_beta_cuts data configuration argument for 
+#'   pool_K600='binned'. Either (1) character of length 1 in 
+#'   c('number','interval') indicating how the bin cuts should be determined, or
+#'   (2) numeric (as in \code{breaks} in \code{\link[base]{cut}}) of length 
+#'   K600_daily_beta_num+1 giving the natural-log-space breakpoints defining the
+#'   bins. For option 1, the implementation uses or is equivalent to the 
+#'   corresponding functions \code{\link[ggplot2]{cut_interval}} (to cut into 
+#'   bins having equal numeric ranges in natural log space) and 
+#'   \code{\link[ggplot2]{cut_number}} (to cut into bins having ~equal numbers 
+#'   of ln_discharge_daily observations). For option 2, make sure to include the
+#'   full range of ln_discharge_daily, with the first value smaller than all 
+#'   ln_discharge_daily values and the last value greater than or equal to all 
+#'   ln_discharge_daily values.
 #'   
 #' @param K600_daily_sigma_location hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The location (= meanlog) parameter of a 
 #'   lognormal distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma
-#'   with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x,
+#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+#'   with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, 
 #'   K600_daily_sigma_location, K600_daily_sigma_scale))}
 #' @param K600_daily_sigma_scale hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The scale (= sdlog) parameter of a lognormal
@@ -210,20 +240,34 @@
 #'   plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
 #'   err_proc_iid_sigma_scale), type='l')}
 #'   
-#' @inheritParams prepdata_Kmodel
-#' @inheritParams Kmodel_allply
+#' @param params_in Character vector of hyperparameters to pass from the specs 
+#'   list into the data list for the MCMC run. Will be automatically generated
+#'   during the specs() call; need only be revised if you're using a custom
+#'   model that requires different hyperparameters.
 #'   
 #' @inheritParams prepdata_bayes
 #' @inheritParams mcmc_bayes
 #'   
-#' @inheritParams calc_DO_mod_w_sim_error
+#' @inheritParams prepdata_Kmodel
+#' @inheritParams Kmodel_allply
+#'   
+#' @param err.obs.sigma The sd of observation error, or 0 for no observation 
+#'   error. Observation errors are those applied to DO.mod after generating the 
+#'   full time series of modeled values.
+#' @param err.obs.phi The autocorrelation coefficient of the observation errors,
+#'   or 0 for uncorrelated errors.
+#' @param err.proc.sigma The sd of process error, or 0 for no process error. 
+#'   Process errors are applied at each time step, and therefore propagate into 
+#'   the next timestep.
+#' @param err.proc.phi The autocorrelation coefficient of the process errors, or
+#'   0 for uncorrelated errors.
 #' @param sim.seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 
 #'   \code{\link{set.seed}}, specifying the seed to set before every execution 
 #'   of predict_DO
 #'   
 #' @return an internally consistent list of arguments that may be passed to 
-#'   \code{metab_bayes}, \code{metab_mle}, etc. as the \code{specs} argument
+#'   \code{metab} as the \code{specs} argument
 #'   
 #' @examples
 #' specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
@@ -247,13 +291,12 @@ specs <- function(
   ## MLE
   
   # initial values
-  GPP_init = 10, 
-  ER_init = -10, 
-  K600_init = 10,
-  
-  # inheritParams negloglik_1ply
-  calc_DO_fun,
-  ODE_method,
+  init.GPP.daily = 5, 
+  init.Pmax = 10,
+  init.alpha = 0.0001,
+  init.ER.daily = -10, 
+  init.ER20 = -10,
+  init.K600.daily = 10,
   
   
   ## Bayes
@@ -305,16 +348,15 @@ specs <- function(
   err_proc_iid_sigma_location = 0,
   err_proc_iid_sigma_scale = 4,
   
-  # inheritParams prepdata_bayes
-  priors = FALSE,
+  # vector of hyperparameters to include as MCMC data
+  params_in,
   
   # inheritParams mcmc_bayes
   params_out,
   n_chains = 4,
   n_cores = 4,
-  adapt_steps = switch(mm_parse_name(model_name)$engine, jags=250, NA),
-  burnin_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=250, NA),
-  saved_steps = switch(mm_parse_name(model_name)$engine, stan=500, jags=1000, NA),
+  burnin_steps = 500,
+  saved_steps = 500,
   thin_steps = 1,
   verbose = FALSE,
   
@@ -333,15 +375,13 @@ specs <- function(
   
   ## Sim
   
-  # inheritParams calc_DO_mod_w_sim_error
+  # simulation parameters
   err.obs.sigma = 0.1,
   err.obs.phi = 0,
   err.proc.sigma = 0,
   err.proc.phi = 0,
   
-  # declared already (for MLE): ODE_method
-  
-  # sim data predictability
+  # simulation replicability
   sim.seed = NA
   
 ) {
@@ -365,6 +405,9 @@ specs <- function(
     warning("argument[s] that should usually not be specified in specs(): ", paste(redundant, collapse=", "))
   }
   
+  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
+  if(model_name %in% eval(formals(mm_name)$type))
+    model_name <- mm_name(type=model_name)
   
   # check the validity of the model_name against the list of officially accepted model names
   mm_validate_name(model_name)
@@ -381,6 +424,20 @@ specs <- function(
     features$type,
     'bayes' = {
       
+      # list the specs that will make it all the way to the Stan model as data
+      all_specs$params_in <- c(
+        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
+        switch(
+          features$pool_K600,
+          none=c('K600_daily_mu', 'K600_daily_sigma'),
+          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
+          binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
+        if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
+        if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
+        if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale')
+      )
+      
       # list all needed arguments
       included <- c(
         # model setup
@@ -389,26 +446,15 @@ specs <- function(
         # date ply day_tests
         'day_start', 'day_end', 'day_tests',
         
-        # hyperparameters - this section should be identical to the 
-        # hyperparameters section of prepdata_bayes except that binned should
-        # include 'K600_daily_beta_num' and 'K600_daily_beta_cuts'
-        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
-        switch(
-          features$pool_K600,
-          none=c('K600_daily_mu', 'K600_daily_sigma'),
-          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale'),
-          binned=c('K600_daily_beta_num', 'K600_daily_beta_cuts', 'K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_location', 'K600_daily_sigma_scale')),
-        if(features$err_obs_iid) c('err_obs_iid_sigma_location', 'err_obs_iid_sigma_scale'),
-        if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_location', 'err_proc_acor_sigma_scale'),
-        if(features$err_proc_iid) c('err_proc_iid_sigma_location', 'err_proc_iid_sigma_scale'),
+        # discharge binning parameters are not params_in, though they're 
+        # conceptually related and therefore colocated in formals(specs)
+        if(features$pool_K600 == 'binned') c('K600_daily_beta_num', 'K600_daily_beta_cuts'),
         
-        # inheritParams prepdata_bayes
-        'priors',
+        # params_in is both a vector of specs to include and a vector to include in specs
+        all_specs$params_in, 'params_in',
         
         # inheritParams mcmc_bayes
         'params_out', 'n_chains', 'n_cores', 
-        if(features$engine == 'jags') 'adapt_steps', 
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
       
@@ -454,16 +500,19 @@ specs <- function(
       
     },
     'mle' = {
+      # determine which init values will be needed
+      . <- '.dplyr.var'
+      dummy_data <- unitted::v(eval(formals(metab_mle)$data)) %>%
+        bind_rows(.,.)
+      dDOdt <- create_calc_dDOdt(
+        data=dummy_data, 
+        ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+      init.needs <- paste0('init.', environment(dDOdt)$metab.needs)
+      
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'calc_DO_fun', 'ODE_method', 'GPP_init', 'ER_init', 'K600_init')
-      
-      if('calc_DO_fun' %in% yes_missing) {
-        all_specs$calc_DO_fun <- if(features$err_obs_iid && !features$err_proc_iid) calc_DO_mod else calc_DO_mod_by_diff
-      }
-      if('ODE_method' %in% yes_missing) {
-        all_specs$ODE_method <- features$ode_method
-      }
-      
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)
+
     }, 
     'night' = {
       # list all needed arguments
@@ -522,11 +571,7 @@ specs <- function(
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests',
         'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi',
-        'ODE_method', 'sim.seed')
-      
-      if('ODE_method' %in% yes_missing) {
-        all_specs$ODE_method <- features$ode_method
-      }
+        'sim.seed')
     }
   )
   

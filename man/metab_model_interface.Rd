@@ -19,6 +19,13 @@ the \code{metab_model_interface} defined here.
   
   \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
   
+  \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
+  
+  \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
+  \}}
+  
+  \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
+  
   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
   
   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
@@ -32,11 +39,6 @@ the \code{metab_model_interface} defined here.
   \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
   
   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
-  
-  \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
-  \}}
-  
-  \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
   
   }
 }

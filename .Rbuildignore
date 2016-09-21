@@ -1,4 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$
-^appveyor\.yml$ 
+^appveyor\.yml$
+man-roxygen
+temp

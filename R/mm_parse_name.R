@@ -40,7 +40,10 @@ mm_parse_name <- function(model_name, keep_name=FALSE) {
   err_obs_iid <- grepl('oi', sapply(parsed, `[`, 3))
   err_proc_acor <- grepl('pc', sapply(parsed, `[`, 3))
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
-  ode_method <- unname(c(eu='Euler', pm='pairmeans')[sapply(parsed, `[`, 4)])
+  ode_method <- unname(
+    c(Eu='Euler', pm='pairmeans', tr='trapezoid', r2='rk2', o1='lsoda', o2='lsode', o3='lsodes', 
+      o4='lsodar', o5='vode', o6='daspk', o7='euler', eu='euler', o8='rk4', o9='ode23', o10='ode45', o11='radau', 
+      o12='bdf', o13='bdf_d', o14='adams', o15='impAdams', o16='impAdams_d')[sapply(parsed, `[`, 4)])
   prk_terms <- bind_rows(lapply(parsed, function(parsed1) {
     prk_term <- parsed1[5]
     prk_pairs <- if(nchar(prk_term)==0) c() else sapply(seq(2, nchar(prk_term), by=2), function(pos) substring(prk_term, pos-1, pos))

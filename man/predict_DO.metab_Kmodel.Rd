@@ -28,27 +28,6 @@ the model?}
 \description{
 metab_Kmodel predicts K at daily timesteps and usually knows nothing about 
 GPP or ER. So it's not possible to predict DO from this model. Try passing 
-the ouptut to metab_mle and THEN predicting DO.
-}
-\examples{
-\dontrun{
-vfrench <- streamMetabolizer:::load_french_creek(attach.units=FALSE)
-
-# set the specifications for the MLE models
-mle_specs <- specs(mm_name('mle'), day_start=-1, day_end=23)
-
-# fit a first-round MLE and extract the K estimates
-mm1 <- metab_mle(mle_specs, data=vfrench)
-K600_mm1 <- predict_metab(mm1) \%>\% select(date, K600, K600.lower, K600.upper)
-
-# smooth the K600s
-mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), 
-  day_start=-1, day_end=23), data_daily=K600_mm1)
-K600_mm2 <- predict_metab(mm2) \%>\% select(date, K600)
-
-# refit the MLE with fixed K
-mm3 <- metab_mle(mle_specs, data=vfrench, data_daily=K600_mm2)
-predict_metab(mm3)
-}
+the output to metab_mle and THEN predicting DO.
 }
 

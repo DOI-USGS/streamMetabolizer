@@ -5,7 +5,7 @@
 #' 
 #' @inheritParams specs
 #' @examples 
-#' mm_validate_name("b_np_oipi_pm_plrckm.stan")
+#' mm_validate_name("b_np_oipi_tr_plrckm.stan")
 #' \dontrun{
 #' mm_validate_name("b_np_oipn") # throws error
 #' }
@@ -30,15 +30,20 @@ mm_validate_name <- function(model_name) {
   
   # require valid type
   type <- parsed$type
-  valid_types <- eval(formals(mm_name)[[1]])
+  valid_types <- eval(formals(mm_name)$type)
   if(is.na(type) || !(type %in% valid_types)) {
     stop('model name implies unknown model type (', type, '). try constructing with mm_name()')
   }
   
-  # check against known valid names
+  # check against known or findable valid names
   valid_names <- mm_valid_names(type)
-  if(!(model_name %in% valid_names)) {
+  if(basename(model_name) != model_name) {
+    mm_locate_filename(model_name)
+  } else if(!(model_name %in% valid_names)) {
     stop("model_name (", model_name, ") is not among valid ", type, 
          sprintf(" model_names (see mm_valid_names('%s'))", type))
   }
+  
+  # return the model name
+  model_name
 }

@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.7.1
-Date: 2016-07-07
+Version: 0.9.14
+Date: 2016-09-20
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -27,6 +27,7 @@ Imports:
     tidyr
 Suggests:
     chron,
+    deSolve,
     devtools,
     dygraphs,
     ggplot2,
@@ -34,7 +35,6 @@ Suggests:
     microbenchmark,
     plyr,
     RCurl,
-    runjags,
     rstan,
     testthat,
     XML,
@@ -43,10 +43,6 @@ Collate:
     '01-onLoad.R'
     'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
-    'calc_DO_mod.R'
-    'calc_DO_mod_by_diff.R'
-    'calc_DO_mod_w_fixed_error.R'
-    'calc_DO_mod_w_sim_error.R'
     'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
@@ -58,6 +54,9 @@ Collate:
     'convert_UTC_to_solartime.R'
     'convert_date_to_doyhr.R'
     'convert_k600_to_kGAS.R'
+    'create_calc_DO.R'
+    'create_calc_NLL.R'
+    'create_calc_dDOdt.R'
     'data_metab.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
@@ -71,12 +70,17 @@ Collate:
     'metab_bayes.R'
     'metab_inputs.R'
     'metab_mle.R'
+    'metab_model.get_params.R'
+    'metab_model.predict_DO.R'
+    'metab_model.predict_metab.R'
+    'metab_model.show.R'
     'metab_model_interface.R'
     'metab_night.R'
     'metab_sim.R'
     'mm_check_mcmc_file.R'
     'mm_data.R'
     'mm_filter_dates.R'
+    'mm_filter_hours.R'
     'mm_filter_valid_days.R'
     'mm_validate_name.R'
     'mm_valid_names.R'
@@ -85,12 +89,16 @@ Collate:
     'mm_generate_mcmc_file.R'
     'mm_get_timestep.R'
     'mm_is_valid_day.R'
+    'mm_locate_filename.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
-    'mm_predict_1ply.R'
+    'mm_predict_DO_1ply.R'
+    'mm_predict_metab_1ply.R'
+    'mm_sd_to_ci.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
     'plot_metab_preds.R'
+    'revise.R'
     'specs.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'

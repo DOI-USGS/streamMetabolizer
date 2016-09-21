@@ -54,7 +54,7 @@ test_that("mm_validate_data works", {
   expect_is(mm_validate_data(ok_data, NULL, "metab_mle"), 'list')
   expect_error(mm_validate_data(ok_data, data.frame(), "metab_mle"), "found 0 possible timestamp columns")
   expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, temp.air=9), "metab_mle"), "data_daily should omit these extra columns: temp.air")
-  expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, K600=u(K600, "mgO L^-1")), "metab_mle"), "unexpected units in data_daily:")
+  expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, init.K600.daily=u(init.K600.daily, "mgO L^-1")), "metab_mle"), "unexpected units in data_daily:")
   expect_is(mm_validate_data(ok_data, unitted::v(ok_data_daily), "metab_mle"), 'list') # should we accept units for one but not other? for now, we do.
   
 })

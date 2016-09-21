@@ -5,7 +5,7 @@
 \title{Make daily metabolism estimates from input parameters}
 \usage{
 mle_1ply(data_ply, data_daily_ply, ply_date, ply_validity, timestep_days, ...,
-  specs = specs("m_np_oi_pm_km.nlm"))
+  specs = specs("m_np_oi_tr_km.nlm"))
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -40,7 +40,7 @@ of required parameters and their defaults depends on the model given in the
 detail, and gives default values.}
 }
 \value{
-data.frame of estimates and \code{\link[stats]{nlm}} model 
+data.frame of estimates and \code{\link[stats]{nlm}} model
   diagnostics
 }
 \description{

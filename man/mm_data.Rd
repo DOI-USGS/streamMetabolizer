@@ -27,13 +27,13 @@ Produces a unitted data.frame with the column names, units, and
   \itemize{
   
   \item{ \code{solar.time} date-time values in mean solar time (see 
-  \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a nominal 
-  time zone of UTC. May be approximated by local, non-daylight-savings clock 
-  time (still with nominal UTC timezone but with clock noons close to solar 
-  noon), but mean solar time is better for matching model time windows to the
-  diel cycle of light availability. Throughout this package, variables named 
-  "solar.time" are mean solar time, "app.solar.time" means apparent solar 
-  time, and "any.solar.time" means either.}
+  \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
+  attribute of 'UTC'. May be approximated by local, non-daylight-savings 
+  clock time (still with nominal UTC timezone but with clock noons close to 
+  solar noon), but mean solar time is better for matching model time windows 
+  to the diel cycle of light availability. Throughout this package, variables
+  named "solar.time" are mean solar time, "app.solar.time" means apparent 
+  solar time, and "any.solar.time" means either.}
   
   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
   O[2] L^{-1}}{mg O2 / L}}
@@ -60,6 +60,15 @@ Produces a unitted data.frame with the column names, units, and
   
   \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
   
+  \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2 
+  d^-1}}, for use in maximum likelihood estimation
+  
+  \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}},
+  for use in maximum likelihood estimation
+  
+  \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use
+  in maximum likelihood estimation
+  
   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
   
   \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}
@@ -78,6 +87,6 @@ mm_data()
 mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light)
 
 # columns typical of daily data
-mm_data(date, K600, discharge, velocity)
+mm_data(date, K600.daily, discharge.daily, velocity.daily)
 }
 
