@@ -372,8 +372,9 @@ bayes_allply <- function(
       invokeRestart("muffleWarning")
     })
 
-  # match dates back to daily estimates
+  # match dates back to daily estimates, datetimes back to inst
   date_vec <- unique(data_all$date)
+  datetime_vec <- data_all$solar.time
   
   # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
@@ -387,13 +388,16 @@ bayes_allply <- function(
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
   } else {
-    # check this now in case we're not saving the data_list
+    # match dates back to daily estiamtes, datetimes back to inst
+    index <- '.dplyr.var'
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
       stop_strs <- c(stop_strs, "couldn't match dates to date indices")
-    index <- '.dplyr.var'
-    bayes_allday$daily <- bayes_allday$daily %>%
-      rename(date=index) %>% 
-      mutate(date=date_vec)
+    bayes_allday$daily <- bayes_allday$daily %>% rename(date=index) %>% mutate(date=date_vec)
+    if(!is.null(bayes_allday$inst)) {
+      if(length(datetime_vec) != data_list$n || length(datetime_vec) != nrow(bayes_allday$inst))
+        stop_strs <- c(stop_strs, "couldn't match solar.times to datetime indices")
+      bayes_allday$inst <- bayes_allday$inst %>% rename(solar.time=index) %>% mutate(solar.time=datetime_vec)
+    }
   }
 
   # add columns for compatibility with other dfs (e.g., removed) & methods
@@ -666,7 +670,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # for multi-day or unsplit models, format output into a list of data.frames,
     # one per unique number of nodes sharing a variable name
     stan_mat <- rstan::summary(runstan_out)$summary
-    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, keep_mcmc, runstan_out)
+    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, keep_mcmc, runstan_out)
   } 
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
@@ -710,15 +714,16 @@ format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc
 #' @param mcmc_mat matrix as extracted from Stan
 #' @import dplyr
 #' @keywords internal
-format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, keep_mcmc, runmcmc_out) {
+format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcmc, runmcmc_out) {
   stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
   
   colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
   
   # determine how many unique nrows, & therefore data.frames, there should be
-  var_table <- table(gsub("\\[[[:digit:]]+\\]", "", rownames(mcmc_mat)))
+  var_table <- table(gsub("\\[[[:digit:]|,]+\\]", "", rownames(mcmc_mat)))
   all_dims <- unique(var_table) %>% setNames(., .)
   names(all_dims)[all_dims == 1] <- "overall"
+  names(all_dims)[all_dims == data_list_n] <- "inst" # overrides 'overall' if d==1. that's OK
   names(all_dims)[all_dims == data_list_d] <- "daily" # overrides 'overall' if d==1. that's OK
   
   # for each unique nrows, create the data.frame with vars in columns and indices in rows
@@ -728,11 +733,12 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, keep_mcmc, runmcmc_ou
     row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1])))
     varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
     
-    as.data.frame(mcmc_mat[dim_rows,,drop=FALSE]) %>% # stan version didn't have drop=FALSE
+    as.data.frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
       rownames_to_column() %>%
       gather(stat, value=val, 2:ncol(.)) %>%
-      mutate(variable=gsub("\\[[[:digit:]]+\\]", "", rowname),
-             index=if(odim == 1) 1 else as.numeric(sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2)),
+      mutate(variable=gsub("\\[[[:digit:]|,]+\\]", "", rowname),
+             index=if(odim == 1) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+             index=ordered(index, levels=index[seq_len(odim)]),
              varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
       select(index, varstat, val) %>%
       spread(varstat, val)
