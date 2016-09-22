@@ -1,4 +1,4 @@
-# streamMetabolizer 0.9.14
+# 0.9.14
 
 * all tests are passing and all examples are running [again]. tests are 
 acceptably comprehensive [for now].
@@ -6,24 +6,24 @@ acceptably comprehensive [for now].
 * known issue: K binning in bayesian models is producing unlikely estimates. all
 bayesian models need further testing.
 
-# streamMetabolizer 0.9.14
+# 0.9.13
 
-* ongoing bug fixes and re-integration of all model types into new ODE
+* ongoing bug fixes and re-integration of all model types into new ODE 
 production/integration scheme
 
-# streamMetabolizer 0.9.12
+# 0.9.12
 
 * removed JAGS from the package. Stan is better for us.
 
-# streamMetabolizer 0.9.11
+# 0.9.11
 
 * this is the last version with JAGS in it.
 
-# streamMetabolizer 0.9.10
+# 0.9.10
 
 * myriad bug fixes to accommodate changes from version 0.9.9.
 
-# streamMetabolizer 0.9.9
+# 0.9.9
 
 * `metab_mle` and `metab_sim` now have several options for relationships among 
 GPP, light, ER, and temperature.
@@ -38,7 +38,7 @@ future.
 
 * `predict_metab` and `predict_DO` optionally attach units to their output.
 
-# streamMetabolizer 0.9.8
+# 0.9.8
 
 * better error and warning handling in metab_bayes, including a new function 
 `get_log()` that retrieves log file[s] from MCMC model compilation & run[s]. log
@@ -50,7 +50,7 @@ files are now retrieved for both JAGS and Stan models.
 
 * incorporated feedback on vignette
 
-# streamMetabolizer 0.9.6
+# 0.9.6
 
 * model names (from `mm_name()`) and bayesian model file names (in models 
 folder) now include info on the GPP and ER functions - default is still pl = GPP
@@ -58,21 +58,21 @@ is a linear function of light, and rc = ER is constant over every 24-hour period
 
 * more informative error messages for timesteps <= 0 in `mm_model_by_ply`
 
-# streamMetabolizer 0.9.5.1
+# 0.9.5.1
 
 * in `metab_Kmodel`, now avoiding negative weights
 
-# streamMetabolizer 0.9.5
+# 0.9.5
 
 * Bug fixes and error prevention
 
-# streamMetabolizer 0.9.4
+# 0.9.4
 
 * Now automatically checks for available updates when you attach the package
 
 * Improved units handling in `convert_k600`/`kGAS`
 
-# streamMetabolizer 0.9.2
+# 0.9.2
 
 * Hierarchical constraints on K600 are now available! Options are 'normal', 
 'linear', and 'binned'; see the details section on `pool_K600` in `?mm_name` and
@@ -83,7 +83,7 @@ the description of parameters starting with `K600_daily` in `?specs`.
 
 * Vignette: see `vignette('getstarted')`
 
-# streamMetabolizer 0.9.0
+# 0.9.0
 
 * New function: metab() serves as a gateway to all model types. You can now pass
 specs to metab() and expect the appropriate model to be chosen and called based 
@@ -128,7 +128,7 @@ is itself a list.
 parameters for distributions on error and K600 (normal, linear, and binned). 
 Some models are known to work; complete testing for all models is forthcoming.
 
-# streamMetabolizer 0.8.0
+# 0.8.0
 
 * Major interface change (renamed variable) to clarify types of time: solar.time
 (mean solar time), app.solar.time (apparent solar time), local.time (time in 
@@ -136,11 +136,11 @@ local time zone). Metabolism models now accept solar.time rather than
 local.time, though it's still possible to pass in local time but just call it 
 solar.time (as long as you don't have daylight savings time).
 
-# streamMetabolizer 0.7.3
+# 0.7.3
 
 * Remove calc\_schmidt because it is never used
 
-# streamMetabolizer 0.7.2
+# 0.7.2
 
 This package is not ready for use by many, but it does currently have:
 
