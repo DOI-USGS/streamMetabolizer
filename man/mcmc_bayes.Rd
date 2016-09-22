@@ -6,7 +6,7 @@
 \usage{
 mcmc_bayes(data_list, engine = "stan", model_path, params_out, split_dates,
   keep_mcmc = FALSE, n_chains = 4, n_cores = 4, burnin_steps = 4000,
-  saved_steps = 40000, thin_steps = 1, verbose = FALSE)
+  saved_steps = 40000, thin_steps = 1, verbose = FALSE, ...)
 }
 \arguments{
 \item{data_list}{a formatted list of inputs to the Stan model}
@@ -35,6 +35,8 @@ starting to collect MCMC 'data'}
 means save all steps.}
 
 \item{verbose}{logical. give status messages?}
+
+\item{...}{ignored arguments}
 }
 \value{
 a data.frame of outputs

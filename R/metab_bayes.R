@@ -282,10 +282,7 @@ bayes_1ply <- function(
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
           specs=specs, engine=specs$engine, model_name=specs$model_name)
-        all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc','n_chains','n_cores','burnin_steps','saved_steps','thin_steps','verbose')
-        do.call(mcmc_bayes, c(
-          list(data_list=data_list),
-          specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
+        do.call(mcmc_bayes, c(list(data_list=data_list), specs))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -364,11 +361,7 @@ bayes_allply <- function(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
         specs=specs, engine=specs$engine, model_name=specs$model_name)
       specs$keep_mcmc <- specs$keep_mcmcs
-      all_mcmc_args <- c('engine','model_path','params_out','split_dates','keep_mcmc',
-                         'n_chains','n_cores','burnin_steps','saved_steps','thin_steps','verbose')
-      do.call(mcmc_bayes, c(
-        list(data_list=data_list),
-        specs[all_mcmc_args[all_mcmc_args %in% names(specs)]]))
+      do.call(mcmc_bayes, c(list(data_list=data_list), specs))
     }, error=function(err) {
       # on error: give up, remembering error. dummy values provided below
       stop_strs <<- c(stop_strs, err$message)
@@ -565,10 +558,11 @@ prepdata_bayes <- function(
 #' @param thin_steps the number of steps to move before saving another step. 1 
 #'   means save all steps.
 #' @param verbose logical. give status messages?
+#' @param ... ignored arguments
 #' @return a data.frame of outputs
 #' @import parallel
 #' @keywords internal
-mcmc_bayes <- function(data_list, engine='stan', model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE) {
+mcmc_bayes <- function(data_list, engine='stan', model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
   engine <- match.arg(engine)
   bayes_function <- switch(engine, stan = runstan_bayes)
   
