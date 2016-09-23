@@ -1,0 +1,53 @@
+---
+title: "Data Preparation"
+author: "Alison Appling and Bob Hall"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Time
+
+To prepare your timestamps for metabolism modeling, you need to convert from the
+initial number or text format into POSIXct with the correct timezone (tz), then
+convert to UTC, then convert to solar mean time.
+
+Step 1: Convert your logger-format data to POSIXct in a local timezone (with or
+without daylight savings).
+
+```{r}
+# starting with numeric datetimes, e.g., from PMEs
+num.time <- 1471867200 + seq(0, 86400, by=600) # suppose this is seconds since 1/1/1970 at Greenwich (i.e., in UTC)
+posix.time.localtz <- as.POSIXct(num.time, origin='1970-01-01', tz='UTC')
+
+num.time <- 1471867200 + seq(0, 86400, by=600) # suppose this is seconds since 1/1/1970 at Laramie, WY (i.e., in MST, no daylight savings)
+posix.time.nominalUTC <- as.POSIXct(num.time, origin='1970-01-01', tz='UTC') # the numbers get interpreted as UTC no matter what you ask it for
+posix.time.localtz <- lubridate::force_tz(posix.time.utc, 'Etc/GMT+7') # +7 = mountain standard time
+
+
+# starting with text timestamps
+text.time <- '2016-08-22 12:00:00' # suppose this is in UTC
+posix.time.utc <- as.POSIXct(text.time, tz='UTC')
+
+text.time <- '2016-08-22 12:00:00' # now suppose this is in EST/EDT
+posix.time.localtz <- strptime(text.time, format="%Y-%m-%d %H:%M:%S", tz='America/New_York')
+
+text.time <- '2016-08-22 12:00:00' # now suppose this is in EST only
+posix.time.localtz <- as.POSIXct(text.time, format="%Y-%m-%d %H:%M:%S", tz='Etc/GMT+5')
+```
+
+Step 2: Convert from local time to solar time via UTC.
+
+```{r}
+# if you have the correct time in a local timezone and the
+# lubridate::tz(yourtime) reflects the correct timezone, you're ready to convert
+# to UTC. 
+posix.time.utc <- streamMetabolizer::convert_localtime_to_UTC(posix.time.localtz) # can also be done with lubridate::with_tz
+
+# Now convert from UTC to [mean] solar time using the longitude of your site
+posix.time.solar <- streamMetabolizer::convert_UTC_to_solartime(posix.time.utc, longitude=-106.3, time.type='mean solar')
+```
+
