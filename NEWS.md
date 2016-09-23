@@ -1,3 +1,8 @@
+# 0.9.15
+
+* refined treatment of depth in trapezoid method - effect will mainly be
+noticeable for sites/times with rapidly changing depth
+
 # 0.9.14
 
 * all tests are passing and all examples are running [again]. tests are 
