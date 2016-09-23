@@ -13,6 +13,21 @@ manual_tests <- function() {
   #### data prep ####
   dat <- data_metab('10', res='10')
   
+  # pool_K600="none"
+  sp <- specs(mm_name('bayes', pool_K600='none'))
+  mm <- metab(sp, dat)
+  
+  # pool_K600="normal"
+  sp <- specs(mm_name('bayes', pool_K600='normal'))
+  
+  # pool_K600="linear"
+  sp <- specs(mm_name('bayes', pool_K600='linear'))
+  
+  # pool_K600="binned"
+  sp <- specs(mm_name('bayes', pool_K600='binned'))
+  
+  
+  
   #### normal hierarchical model ####
   x <- seq(0,1,by=0.01)
   plot(x=x, y=dgamma(x, shape=1, rate=10), type='l', ylim=c(0,4))
