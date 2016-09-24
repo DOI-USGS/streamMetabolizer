@@ -92,9 +92,9 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
     },
     'dygraphs' = {
       if(!requireNamespace("dygraphs", quietly=TRUE))
-        stop("call install.packages(dygraphs') before plotting with style='dygraphs'")
+        stop("call install.packages('dygraphs') before plotting with style='dygraphs'")
       if(!requireNamespace("xts", quietly=TRUE))
-        stop("call install.packages(dygraphs') before plotting with style='dygraphs'")
+        stop("call install.packages('xts') before plotting with style='dygraphs'")
       
       . <- '.dplyr.var'
       preds_xts <- v(DO_preds_all) %>%

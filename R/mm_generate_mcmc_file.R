@@ -60,10 +60,10 @@ mm_generate_mcmc_file <- function(
       distrib,
       normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
       uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") },
-      gamma = {
+      beta = { if(!all(names(args) == c('alpha','beta'))) stop("expecting beta(alpha,beta)") },
+      gamma = { if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
         # shape = alpha = k = first argument
         # rate = beta = 1/theta = inverse scale = second argument
-        if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
       },
       lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
     )
