@@ -114,3 +114,19 @@ test_that("converting between UTC and local time works", {
   expect_equal(convert_localtime_to_UTC(convert_UTC_to_localtime(adate, latitude=40, longitude=-103.8, time.type="standard")), adate)
   
 })
+
+test_that("common use-case conversions (calc_solar_time) works", {
+  adate <- as.POSIXct("2014-02-01 00:00:00", tz="Etc/GMT+8")
+  asummerdate <- as.POSIXct("2014-07-04 12:14:16", tz="America/New_York")
+  somedates <- seq(adate, adate+as.difftime(365*2, units="days"), by=as.difftime(10.35, units="days"))
+  
+  # i wish the error-checking code could be more extensive/precise - e.g., catch
+  # the mismatch between -120 and Chicago or Fairbanks or GMT as well, without
+  # being annoying...but for now, at least we're catching the most likley case
+  # of user confusion between solar time and local time
+  expect_warning(calc_solar_time(lubridate::with_tz(adate, 'UTC'), -120), "Are you sure")
+  expect_equal(calc_solar_time(adate, -120), calc_solar_time(lubridate::with_tz(adate, 'America/Chicago'), -120))
+  expect_equal(calc_solar_time(adate, -120), calc_solar_time(lubridate::with_tz(adate, 'America/Fairbanks'), -120))
+  expect_equal(lubridate::force_tz(asummerdate, 'UTC'), calc_solar_time(asummerdate, -60), tol=as.difftime(10, units='mins'))
+  expect_equal(lubridate::force_tz(somedates, 'UTC'), calc_solar_time(somedates, -120), tol=as.difftime(10, units='mins'))
+})

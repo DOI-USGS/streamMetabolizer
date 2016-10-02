@@ -27,6 +27,7 @@ Produces a unitted data.frame with the column names, units, and
   \itemize{
   
   \item{ \code{solar.time} date-time values in mean solar time (see 
+  \code{\link{calc_solar_time}} and/or
   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
   attribute of 'UTC'. May be approximated by local, non-daylight-savings 
   clock time (still with nominal UTC timezone but with clock noons close to 

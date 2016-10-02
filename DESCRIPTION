@@ -48,6 +48,7 @@ Collate:
     'calc_is_daytime.R'
     'calc_light.R'
     'calc_solar_insolation.R'
+    'calc_solar_time.R'
     'calc_sun_rise_set.R'
     'calc_velocity.R'
     'convert_PAR_to_SW.R'
