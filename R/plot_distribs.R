@@ -10,7 +10,6 @@
 #' @param parname character. the name of the parameter whose distribution[s] you
 #'   wish to plot
 #' @import dplyr
-#' @import ggplot2
 #' @importFrom stats rnorm runif rgamma rlnorm
 #' @export
 #' @examples
