@@ -17,5 +17,12 @@ release.
   \item \code{\link{alc_velocity}} - if you like and want this function, submit a GitHub issue to keep it
 }
 
+These functions will are currently exported but will soon be internal-only.
+You are encouraged not to use these.
+
+\itemize{
+  \item \code{\link{convert_date_to_doyhr}}
+  \item \code{\link{convert_doyhr_to_date}}
+}
 }
 

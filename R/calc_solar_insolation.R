@@ -157,14 +157,17 @@ calc_zenith_angle <- function(latitude, declination.angle, hour.angle, format=c(
 #' @param attach.units logical. Should the returned vector be a unitted object?
 #' @examples
 #' insdf <- data.frame(
-#'   lat=rep(c(0,20,40,60), each=24*4),
-#'   jday=rep(rep(c(1,101,201,301), each=24), times=4), 
-#'   hour=rep(c(0:12,13.5:23.5), times=4*4))
-#' insdf <- transform(insdf, datetime=convert_doyhr_to_date(jday + hour/24, year=2004))
+#'   lat=rep(c(0,20,40,60), each=48*4),
+#'   date=rep(as.Date(sprintf('2004-%d-15', rep(c(1,4,7,10), each=48)), tz='UTC'), times=4),
+#'   hour=rep(seq(0,23.5,0.5), times=4*4)
+#' )
+#' insdf <- transform(insdf, datetime=lubridate::with_tz(as.POSIXct(date), 'UTC') + 
+#'   as.difftime(hour, units='hours'))
+#' insdf <- transform(insdf, date=as.character(date))
 #' insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 #' \dontrun{
 #' library(ggplot2)
-#' ggplot(insdf, aes(color=factor(jday), y=ins, x=hour)) + 
+#' ggplot(insdf, aes(color=date, y=ins, x=hour)) + 
 #'   geom_line() + facet_wrap(~lat) + 
 #'   ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 #' }
