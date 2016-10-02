@@ -23,6 +23,7 @@ You are encouraged not to use these.
 \itemize{
   \item \code{\link{convert_date_to_doyhr}}
   \item \code{\link{convert_doyhr_to_date}}
+  \item \code{\link{lookup_google_timezone}} - use \code{\link{lookup_timezone}} instead
 }
 }
 
