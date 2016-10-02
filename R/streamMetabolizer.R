@@ -11,6 +11,7 @@
 #'   
 #'   \item \code{\link{calc_DO_sat}}
 #'   
+#'   \item \code{\link{calc_light}}
 #'   
 #'   }
 #'   
@@ -75,3 +76,4 @@
 #' @docType package
 #' @name streamMetabolizer
 #' @aliases streamMetabolizer-package
+NULL

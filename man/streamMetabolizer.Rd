@@ -18,6 +18,7 @@ metabolism in streams and rivers.
   
   \item \code{\link{calc_DO_sat}}
   
+  \item \code{\link{calc_light}}
   
   }
 }

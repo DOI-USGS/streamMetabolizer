@@ -1,5 +1,11 @@
 context("calc_light")
 
+test_that("high-level light function works", {
+  stimes <- lubridate::force_tz(as.POSIXct(sprintf('2016-09-27 %02d:00', 1:24)), 'UTC')
+  expect_equal(which.max(calc_light(stimes, 40, -120)), 12)
+  expect_equal(calc_light(stimes[1], 40, -120), 0)
+})
+
 test_that("can generate light predictions from basic light model", {
   library(dplyr); library(unitted)
   

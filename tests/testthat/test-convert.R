@@ -1,4 +1,4 @@
-context("conversion functions")
+context("convert")
 
 test_that("converting between k600 and kgas works", {
   # k600 to kgas
@@ -15,10 +15,10 @@ test_that("converting between k600 and kgas works", {
 test_that("converting between SW and PAR works", {
   # sw to par
   expect_equal(convert_SW_to_PAR(sw=800), 1691.2)
-  expect_equal(convert_SW_to_PAR(sw=800, coeff=2), 1600)
+  expect_equal(convert_SW_to_PAR(sw=800, coef=2), 1600)
   # par to sw
   expect_equal(convert_PAR_to_SW(par=400), 189.2)
-  expect_equal(convert_PAR_to_SW(par=400, coeff=0.5), 200)
+  expect_equal(convert_PAR_to_SW(par=400, coef=0.5), 200)
   # there and back
   expect_equal(convert_PAR_to_SW(convert_SW_to_PAR(sw=800)), 800, tol=0.0001)
   expect_equal(convert_SW_to_PAR(convert_PAR_to_SW(par=800)), 800, tol=0.0001)
