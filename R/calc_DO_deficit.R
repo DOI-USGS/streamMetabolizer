@@ -26,7 +26,10 @@
 #' @export
 calc_DO_deficit <- function(DO.obs, temp.water, pressure.air, salinity.water = 0, ...){
   
-  DO.equil <- calc_DO_at_sat(temp.water, pressure.air, salinity.water, ...)
+  .Deprecated()
+  warning("submit a GitHub issue if you want calc_DO_deficit() to stick around")
+  
+  DO.equil <- calc_DO_sat(temp.water, pressure.air, salinity.water, ...)
   
   # to do: verify incoming units (convert if needed?) and set DO.equil units to mgO2 L^-1
   DO.deficit <- DO.equil-DO.obs

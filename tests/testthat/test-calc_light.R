@@ -68,8 +68,8 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
     mutate(
       date=as.Date(sprintf("2000-%d",jday), format="%Y-%j"),
       app.solar.time=as.POSIXct(strptime(sprintf("2000-%d 00",jday), format="%Y-%j %H"), tz="UTC"),
-      lm_sunrise=calc_sun_rise_set(date, lat)[,1],
-      lm_sunset=calc_sun_rise_set(date, lat)[,2]) %>%
+      lm_sunrise=suppressWarnings(calc_sun_rise_set(date, lat))[,1],
+      lm_sunset=suppressWarnings(calc_sun_rise_set(date, lat))[,2]) %>%
     group_by(jday, lat) %>%
     do(with(., {
       # compare to streamMetabolizer method, which determines light at any given time
@@ -82,7 +82,7 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
         sm_daytime <- c(NA,NA)
       
       # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- calc_is_daytime(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
+      isday <- LakeMetabolizer::is.day(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
       whichdaytime <- which(isday)
       if(any(!is.na(whichdaytime)))
         id_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")

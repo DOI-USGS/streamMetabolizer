@@ -15,5 +15,9 @@
 #' calc_is_daytime(datetimes=as.POSIXct(paste('2013-03-31', c('1:00','11:00'))), lat=40.75)
 #' @export
 calc_is_daytime <- function(datetimes, lat) {
+  
+  .Deprecated()
+  warning("submit a GitHub issue if you want calc_is_daytime() to stick around")
+  
   LakeMetabolizer::is.day(datetimes, lat)
 }

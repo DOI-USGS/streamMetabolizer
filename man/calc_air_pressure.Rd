@@ -21,7 +21,7 @@ a numeric vector of barometric pressures in mb, with units attached
   if requested.
 }
 \description{
-Corrects air pressure for air temperature and elevation
+Estimates air pressure from air temperature and elevation
 }
 \examples{
 calc_air_pressure(15, 762)

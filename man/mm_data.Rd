@@ -40,7 +40,7 @@ Produces a unitted data.frame with the column names, units, and
   
   \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at 
   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
-  \link{calc_DO_at_sat}}
+  \link{calc_DO_sat}}
   
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
   

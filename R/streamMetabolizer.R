@@ -9,15 +9,8 @@
 #'   
 #'   \item \code{\link{calc_depth}}
 #'   
-#'   \item \code{\link{calc_DO_at_sat}}
+#'   \item \code{\link{calc_DO_sat}}
 #'   
-#'   \item \code{\link{calc_DO_deficit}}
-#'   
-#'   \item \code{\link{calc_is_daytime}}
-#'   
-#'   \item \code{\link{calc_solar_insolation}}
-#'   
-#'   \item \code{\link{calc_sun_rise_set}}
 #'   
 #'   }
 #'   
@@ -82,4 +75,3 @@
 #' @docType package
 #' @name streamMetabolizer
 #' @aliases streamMetabolizer-package
-NULL

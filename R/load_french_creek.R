@@ -27,7 +27,7 @@ load_french_creek <- function(attach.units=TRUE) {
   french$solar.time <- convert_UTC_to_solartime(french$utc.time, longitude=-106.3, time.type='mean solar')
   
   # DO at sat
-  french$DO.sat <- calc_DO_at_sat(temp.water=french$temp.water, pressure.air=unitted::u(523, "mmHg")*unitted::u(1.33322368, "mb mmHg^-1")) # ~10000 ft, 523 mmHg -> 697.27 mb
+  french$DO.sat <- calc_DO_sat(temp.water=french$temp.water, pressure.air=unitted::u(523, "mmHg")*unitted::u(1.33322368, "mb mmHg^-1")) # ~10000 ft, 523 mmHg -> 697.27 mb
     
   # depth
   french$depth <- unitted::u(0.16, "m")

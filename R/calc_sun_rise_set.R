@@ -15,6 +15,10 @@
 #' @seealso \link{calc_is_daytime}
 #' @export
 calc_sun_rise_set <- function(date, latitude) {
+  
+  .Deprecated
+  warning("submit a GitHub issue if you want calc_sun_rise_set() to stick around")
+  
   app.solar.time <- as.POSIXct(strftime(date, "%Y-%m-%d 0"), format="%Y-%m-%d %H") # use local tz, as LakeMetabolizer does
   sun.rise.set <- LakeMetabolizer::sun.rise.set(app.solar.time, latitude)
   # reformat

@@ -30,6 +30,9 @@
 #' @export
 calc_velocity <- function(Q, k=u(0.194,"m s^-1"), m=u(0.285,"")) {
   
+  .Deprecated()
+  warning("submit a GitHub issue if you want calc_velocity() to stick around")
+  
   with.units <- is.unitted(Q) || (if(!missing(k)) is.unitted(k) else FALSE) || (if(!missing(m)) is.unitted(m) else FALSE)
   
   if(with.units) {

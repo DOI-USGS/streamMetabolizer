@@ -41,8 +41,8 @@ Suggests:
     xts
 Collate:
     '01-onLoad.R'
-    'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
+    'calc_DO_sat.R'
     'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
@@ -101,6 +101,7 @@ Collate:
     'plot_metab_preds.R'
     'revise.R'
     'specs.R'
+    'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
 RoxygenNote: 5.0.1
