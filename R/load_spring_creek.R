@@ -18,7 +18,7 @@ load_spring_creek <- function(attach.units=TRUE) {
       temp.water = u(temp, 'degC')) %>% 
     u() %>%
     mutate(
-      DO.sat = calc_DO_at_sat(temp.water=temp.water, pressure.air=u(595, "mmHg")*unitted::u(1.33322368, "mb mmHg^-1")),
+      DO.sat = calc_DO_sat(temp.water=temp.water, pressure.air=u(595, "mmHg")*unitted::u(1.33322368, "mb mmHg^-1")),
       depth = u(rep(0.18, length(temp.water)), "m"),
       solar.time = convert_UTC_to_solartime(utc.time, longitude=-105.6, time.type='mean solar'),
       app.solar.time = convert_UTC_to_solartime(utc.time, longitude=-105.6, time.type='apparent solar'),

@@ -1,6 +1,6 @@
 #' Calculates the average air pressure for a site
 #' 
-#' Corrects air pressure for air temperature and elevation
+#' Estimates air pressure from air temperature and elevation
 #' 
 #' @param temp.air air temperature in degrees C. Default is 15 degC.
 #' @param elevation the site elevation above sea level in m. Default is the

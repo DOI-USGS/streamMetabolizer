@@ -89,8 +89,7 @@ transformed parameters {
       err_proc_acor[i] +
       GPP_daily .* coef_GPP[i] +
       ER_daily .* coef_ER[i] +
-      K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])
-    );
+      K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]));
   }
 }
 

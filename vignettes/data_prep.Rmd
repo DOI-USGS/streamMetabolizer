@@ -1,0 +1,77 @@
+---
+title: "Data Preparation"
+author: "Alison Appling and Bob Hall"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{get_started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Time
+
+To prepare your timestamps for metabolism modeling, you need to convert from the
+initial number or text format into POSIXct with the correct timezone (tz), then
+convert to UTC, then convert to solar mean time.
+
+## Step 1: POSIXct
+
+Convert your logger-format data to POSIXct in a local timezone (with or without
+daylight savings). Here are a few examples of specific scenarios and solutions.
+
+### Starting with numeric datetimes, e.g., from PMEs
+
+If you have datetimes stored in seconds since 1/1/1970 at Greenwich (i.e., in UTC):
+```{r}
+num.time <- 1471867200
+(posix.time.localtz <- as.POSIXct(num.time, origin='1970-01-01', tz='UTC'))
+```
+
+If you have datetimes stored in seconds since 1/1/1970 at Laramie, WY (i.e., in MST, no daylight savings):
+```{r}
+num.time <- 1471867200
+(posix.time.nominalUTC <- as.POSIXct(num.time, origin='1970-01-01', tz='UTC')) # the numbers get treated as UTC no matter what tz you request
+(posix.time.localtz <- lubridate::force_tz(posix.time.nominalUTC, 'Etc/GMT+7')) # +7 = mountain standard time
+```
+
+
+### Starting with text timestamps
+
+If you have datetimes stored as text timestamps in UTC:
+```{r}
+text.time <- '2016-08-22 12:00:00'
+(posix.time.utc <- as.POSIXct(text.time, tz='UTC'))
+```
+
+If you have datetimes stored as text timestamps in EST/EDT (no daylight savings):
+```{r}
+text.time <- '2016-08-22 12:00:00'
+(posix.time.localtz <- as.POSIXct(text.time, format="%Y-%m-%d %H:%M:%S", tz='America/New_York'))
+```
+
+If you have datetimes stored as text timestamps in EST (no daylight savings):
+```{r}
+text.time <- '2016-08-22 12:00:00'
+(posix.time.localtz <- as.POSIXct(text.time, format="%Y-%m-%d %H:%M:%S", tz='Etc/GMT+5'))
+```
+
+See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for a list of timezone names.
+
+## Step 2: Solar time
+
+Now convert from local time to solar time. In `streamMetabolizer` vocabulary, 
+`solar.time` specifically means mean solar time, the kind where every day is 
+exactly 24 hours, in contrast to apparent solar time. You're ready for this step
+when you have the correct time in a local timezone and `lubridate::tz(yourtime)`
+reflects the correct timezone.
+
+```{r}
+lubridate::tz(posix.time.localtz) # yep, we want and have the code for EST
+(posix.time.solar <- streamMetabolizer::calc_solar_time(posix.time.localtz, longitude=-106.3))
+```
+

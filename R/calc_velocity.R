@@ -9,12 +9,15 @@
 #' @param m exponent in velocity-discharge relation (unitless; f in Raymond et al.)
 #' @return v (= V = U), stream flow velcoity, in the same units as k
 #' @examples
+#' \dontrun{
+#' # Warning: this function is deprecated.
 #' Qs <- seq(1,9,2)
 #' calc_velocity(Q=Qs)
 #' calc_velocity(Q=Qs, k=0.4)
 #' library(unitted)
 #' calc_velocity(Q=u(Qs, "m^3 s^-1"), m=u(40))
 #' calc_velocity(Q=u(Qs, "m^3 s^-1"), k=u(0.36, "m s^-1"))
+#' }
 #' @references Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. 
 #'   Bott, Jody Potter, Patrick Mulholland, Andrew E. Laursen, William H. 
 #'   McDowell, and Denis Newbold. \emph{Scaling the gas transfer velocity and 
@@ -29,6 +32,9 @@
 #' @importFrom unitted u v verify_units
 #' @export
 calc_velocity <- function(Q, k=u(0.194,"m s^-1"), m=u(0.285,"")) {
+  
+  .Deprecated()
+  warning("submit a GitHub issue if you want calc_velocity() to stick around")
   
   with.units <- is.unitted(Q) || (if(!missing(k)) is.unitted(k) else FALSE) || (if(!missing(m)) is.unitted(m) else FALSE)
   

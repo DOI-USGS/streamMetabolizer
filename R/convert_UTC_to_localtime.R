@@ -2,7 +2,8 @@
 #' 
 #' Convert time from UTC to local time, either standard or with daylight 
 #' savings. Recommended for post-analysis visualization only; most functions in 
-#' streamMetabolizer use times in UTC.
+#' streamMetabolizer use times in UTC. If you know the timezone code for your
+#' local site, use \code{\link[lubridate]{with_tz}} instead.
 #' 
 #' @param date.time POSIXct object the date and time in UTC
 #' @param latitude numeric, in degrees, either positive and unitted ("degN" or 
@@ -10,7 +11,7 @@
 #' @param longitude numeric, in degrees, either positive and unitted ("degE" or 
 #'   "degW") or with sign indicating direction (positive = East)
 #' @param time.type character. The type of time zone desired - either standard 
-#'   time without any daylight savings time or daylight time where daylight
+#'   time without any daylight savings time or daylight time where daylight 
 #'   savings is on during the appropriate days
 #' @importFrom lubridate with_tz
 #' @importFrom unitted u v
@@ -43,17 +44,8 @@ convert_UTC_to_localtime <- function(date.time, latitude, longitude, time.type=c
     }    
   }
   
-  # ask the cache or Google for a time offset. The Google API limits requests to
-  # 5/sec, so caching helps limit the number of requests we have to make.
-  lookup_key <- sprintf("%.10f,%.10f", latitude, longitude)
-  tz_info <- pkg.env$tz_lookups[[lookup_key]]
-  if(is.null(tz_info) || tz_info$retry > 0) { # give lookup a second chance if it didn't come out right
-    retry <- tz_info$retry # save the retry info
-    tz_info <- lookup_google_timezone(latitude, longitude) # ask Google
-    tz_info$retry <- if(tz_info$tz == "" || is.na(tz_info$std_offset)) retry - 1 else 0 # check the output for validity
-    pkg.env$tz_lookups[[lookup_key]] <- tz_info # update tz_lookups
-    if(tz_info$retry > 0) stop("sorry, could not find time zone for specified lat/long") # if there was a problem, throw the error now
-  }
+  # ask the cache and/or Google for the timezone at these coordinates
+  tz_info <- lookup_timezone(latitude, longitude)
   
   # return in specified format
   if(time.type == "daylight local") {

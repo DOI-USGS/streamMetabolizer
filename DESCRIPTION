@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.14
-Date: 2016-09-20
+Version: 0.9.15
+Date: 2016-10-03
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: Modeling package for stream metabolism.
@@ -41,12 +41,14 @@ Suggests:
     xts
 Collate:
     '01-onLoad.R'
-    'calc_DO_at_sat.R'
     'calc_DO_deficit.R'
+    'calc_DO_sat.R'
     'calc_air_pressure.R'
     'calc_depth.R'
     'calc_is_daytime.R'
+    'calc_light.R'
     'calc_solar_insolation.R'
+    'calc_solar_time.R'
     'calc_sun_rise_set.R'
     'calc_velocity.R'
     'convert_PAR_to_SW.R'
@@ -61,7 +63,7 @@ Collate:
     'load_french_creek.R'
     'load_french_creek_std.R'
     'load_spring_creek.R'
-    'lookup_google_timezone.R'
+    'lookup_timezone.R'
     'lookup_usgs_elevation.R'
     'metab.R'
     'specs-class.R'
@@ -97,9 +99,11 @@ Collate:
     'mm_sd_to_ci.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
+    'plot_distribs.R'
     'plot_metab_preds.R'
     'revise.R'
     'specs.R'
+    'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
 RoxygenNote: 5.0.1

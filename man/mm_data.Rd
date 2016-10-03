@@ -27,6 +27,7 @@ Produces a unitted data.frame with the column names, units, and
   \itemize{
   
   \item{ \code{solar.time} date-time values in mean solar time (see 
+  \code{\link{calc_solar_time}} and/or
   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
   attribute of 'UTC'. May be approximated by local, non-daylight-savings 
   clock time (still with nominal UTC timezone but with clock noons close to 
@@ -40,7 +41,7 @@ Produces a unitted data.frame with the column names, units, and
   
   \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at 
   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
-  \link{calc_DO_at_sat}}
+  \link{calc_DO_sat}}
   
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
   

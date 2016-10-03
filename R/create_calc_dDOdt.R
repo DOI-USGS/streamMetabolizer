@@ -286,22 +286,32 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # dDOdt: instantaneous rate of change in DO at time t in gO2 m^-3 timestep^-1
   dDOdt <- switch(
     ode_method,
-    # 'pairmeans' and 'trapezoid' are identical and are the analytical solution
-    # to a trapezoid rule. remember we're treating err.proc as a rate in
-    # gO2/m2/d, just like GPP & ER
+    # 'pairmeans' and 'trapezoid' are identical and are the analytical solution 
+    # to a trapezoid rule. for the derivations, see 
+    # https://github.com/USGS-R/streamMetabolizer/issues/252. remember we're 
+    # treating err.proc as a rate in gO2/m2/d, just like GPP & ER. no need to 
+    # switch on integer.t because trapezoid and pairmeans are always integer.t
     trapezoid=, pairmeans={
-      # define pairwise averaging functions pm = pairmeans, f=function, v=vector
-      pmf <- function(fun, t, ...) mean(fun(c(t, t+1), ...)) # .Internal(mean()) is faster but rountly rejected by R CMD check
-      pmv <- function(vec, t) (vec[t] + vec[t+1])/2
-      function(t, state, metab.pars){
+      if(deficit_src == 'DO_obs') function(t, state, metab.pars) {
         K600.daily <- metab.pars[['K600.daily']]
-        KO2.conv.t1 <- KO2.conv[t+1]
         list(
           dDOdt={
-            - state[['DO.mod']] * K600.daily * pmv(KO2.conv, t) +
-              {pmf(GPP, t, metab.pars) + pmf(ER, t, metab.pars) + pmv(err.proc, t)} / pmv(depth, t) +
-              K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv.t1*DO.sat[t+1]}/2
-          } * timestep.days / {1 + timestep.days * K600.daily * KO2.conv.t1/2})
+            - K600.daily * {KO2.conv[t]*DO.obs[t] + KO2.conv[t+1]*DO.obs[t+1]} + # - (jv + kw)
+            {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] + # same for either deficit_src
+            {GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] + # same for either deficit_src
+            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}} # same for either deficit_src
+          } * timestep.days / 2 # /2
+        )
+      } else function(t, state, metab.pars) {
+        K600.daily <- metab.pars[['K600.daily']]
+        list(
+          dDOdt={
+            - K600.daily * {KO2.conv[t] + KO2.conv[t+1]} * state[['DO.mod']] + # - (jx + kx)
+            {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] + # same for either deficit_src
+            {GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] + # same for either deficit_src
+            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}} # same for either deficit_src
+          } * timestep.days / (2 + K600.daily * KO2.conv[t+1] * timestep.days) # /(2 + ks)
+        )
       }
     },
     # all other methods use a straightforward calculation of dDOdt at values of
