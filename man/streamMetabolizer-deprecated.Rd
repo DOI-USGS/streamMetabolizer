@@ -10,11 +10,11 @@ release.
 }
 \details{
 \itemize{
-  \item \code{\link{calc_DO_deficit}} - see \code{\link{calc_DO_sat}}
-  \item \code{\link{calc_DO_at_sat}} - use \code{\link{calc_DO_sat}} instead
+  \item \code{\link{calc_DO_deficit}} - instead, subtract \code{DO.obs} from output of \code{\link{calc_DO_sat}}
+  \item \code{calc_DO_at_sat} - use \code{\link{calc_DO_sat}} instead
   \item \code{\link{calc_is_daytime}} - if you like and want this function, submit a GitHub issue to keep it
   \item \code{\link{calc_sun_rise_set}} - if you like and want this function, submit a GitHub issue to keep it
-  \item \code{\link{alc_velocity}} - if you like and want this function, submit a GitHub issue to keep it
+  \item \code{\link{calc_velocity}} - if you like and want this function, submit a GitHub issue to keep it
 }
 
 These functions will are currently exported but will soon be internal-only.

@@ -12,6 +12,10 @@ calc_light(solar.time, latitude, longitude, max.PAR = 2326,
 \item{solar.time}{mean solar time, as required for input to metabolism 
 models. See \code{\link{mm_data}} and \code{\link{calc_solar_time}}.}
 
+\item{latitude}{numeric value or vector indicating the site latitude in 
+decimal degrees (never radians or deg-min-sec, no matter what \code{format}
+is) between -90 (South Pole) and 90 (North Pole).}
+
 \item{longitude}{numeric, in degrees, either positive and unitted ("degE" or 
 "degW") or with sign indicating direction (positive = East), describing 
 location of the site}
@@ -19,7 +23,7 @@ location of the site}
 \item{max.PAR}{numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
 day should reach at peak light}
 
-\item{coef.SW.to.PAR}{conversion coefficient; see \code{code} in
+\item{coef.SW.to.PAR}{conversion coefficient; see \code{code} in 
 \code{\link{convert_SW_to_PAR}}}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}

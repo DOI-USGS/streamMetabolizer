@@ -9,8 +9,9 @@
 #'   \code{metab_model(specs=sp)} and assign the result to this argument
 #' @param parname character. the name of the parameter whose distribution[s] you
 #'   wish to plot
+#' @param style character indicating which graphics package to use
 #' @import dplyr
-#' @importFrom stats rnorm runif rgamma rlnorm
+#' @importFrom stats dunif qnorm dnorm qlnorm dlnorm qbeta dbeta qgamma dgamma
 #' @export
 #' @examples
 #' mm_priors_only <- metab_model(specs=specs('bayes', K600_daily_mu=30))
@@ -91,13 +92,17 @@ plot_distribs <- function(
     ggplot2={
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
-      ggplot(densdf, aes(x=x, y=prior)) + geom_area(fill='blue', color='blue', alpha=0.4) + theme_bw()
+      x <- prior <- '.ggplot2Var'
+      ggplot2::ggplot(densdf, ggplot2::aes(x=x, y=prior)) + 
+        ggplot2::geom_area(fill='blue', color='blue', alpha=0.4) + 
+        ggplot2::theme_bw()
     },
     dygraphs={
       if(!requireNamespace("dygraphs", quietly=TRUE))
         stop("call install.packages('dygraphs') before plotting with style='dygraphs'")
-      dygraph(densdf) %>% dySeries('prior', color='blue', fillGraph = TRUE) %>% 
-        dyOptions(fillAlpha = 0.4) %>%
+      dygraphs::dygraph(densdf) %>% 
+        dygraphs::dySeries('prior', color='blue', fillGraph = TRUE) %>% 
+        dygraphs::dyOptions(fillAlpha = 0.4) %>%
         dygraphs::dyRangeSelector(height = 20)
     })
   

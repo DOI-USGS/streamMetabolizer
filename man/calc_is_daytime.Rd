@@ -20,7 +20,10 @@ Determines if specified datetime is during the daytime
 Returns T/F indicating whether a datetime occurs during the daytime (sunlight hours)
 }
 \examples{
+\dontrun{
+# Warning: this function is deprecated.
 calc_is_daytime(datetimes=as.POSIXct(paste('2013-03-31', c('1:00','11:00'))), lat=40.75)
+}
 }
 \author{
 Luke A. Winslow

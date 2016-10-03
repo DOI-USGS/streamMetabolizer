@@ -12,7 +12,10 @@
 #' \link{calc_sun_rise_set}
 #' @importFrom LakeMetabolizer is.day
 #' @examples
+#' \dontrun{
+#' # Warning: this function is deprecated.
 #' calc_is_daytime(datetimes=as.POSIXct(paste('2013-03-31', c('1:00','11:00'))), lat=40.75)
+#' }
 #' @export
 calc_is_daytime <- function(datetimes, lat) {
   

@@ -5,12 +5,13 @@
 #' 
 #' @param solar.time mean solar time, as required for input to metabolism 
 #'   models. See \code{\link{mm_data}} and \code{\link{calc_solar_time}}.
+#' @inheritParams calc_zenith_angle
 #' @inheritParams convert_solartime_to_UTC
-#' @inheritParams calc_solar_insolation
 #' @param max.PAR numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
 #'   day should reach at peak light
-#' @param coef.SW.to.PAR conversion coefficient; see \code{code} in
+#' @param coef.SW.to.PAR conversion coefficient; see \code{code} in 
 #'   \code{\link{convert_SW_to_PAR}}
+#' @inheritParams calc_solar_insolation
 #' @import dplyr
 #' @examples 
 #' solar.time <- lubridate::force_tz(as.POSIXct('2016-09-27 12:00'), 'UTC')

@@ -15,14 +15,16 @@
 #'   \code{\link[LakeMetabolizer]{o2.at.sat.base}}
 #' @return a vector of DO.deficit values
 #' @examples
+#' \dontrun{
+#' # Warning: this function is deprecated.
 #' calc_DO_deficit(DO.obs=7, temp.water=25, pressure.air=900, salinity.water=2.43)
-#' 
 #' library(unitted)
 #' calc_DO_deficit(
 #'   DO.obs = u(c(7,7.5,7),'mgO2 L^-1'),
 #'   temp.water = u(c(25,24.5,18.9), 'degC'),
 #'   pressure.air = u(c(900,903,910), 'mb'),
 #'   salinity.water = u(2.43, 'PSU'))
+#' }
 #' @export
 calc_DO_deficit <- function(DO.obs, temp.water, pressure.air, salinity.water = 0, ...){
   

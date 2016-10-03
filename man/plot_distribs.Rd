@@ -17,6 +17,8 @@ complete specs list into a shell of a metab_model with
 
 \item{parname}{character. the name of the parameter whose distribution[s] you
 wish to plot}
+
+\item{style}{character indicating which graphics package to use}
 }
 \description{
 Plot the prior and/or posterior disitrubtions as implied by the 
