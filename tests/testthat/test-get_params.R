@@ -1,9 +1,11 @@
 context('get_params')
 
-test_that('get_params options are honored (for MLE models)', {
-  dat <- data_metab('3','15')
-  mm <- metab_mle(specs("m_np_oi_tr_plrckm.nlm"), data=dat)
-  
+dat <- data_metab('3','15')
+mm <- metab_mle(specs("m_np_oi_tr_plrckm.nlm"), data=dat)
+dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)), K600.daily=21)
+mm2 <- metab_mle(specs("m_np_oi_tr_plrckm.nlm"), data=dat, data_daily=dat_daily)
+
+test_that('get_params options are honored (for MLE models): uncertainty', {
   # uncertainty
   ps <- get_params(mm, uncertainty='sd')
   expect_equal(grep('\\.sd$', names(ps), value=TRUE), c('GPP.daily.sd','ER.daily.sd','K600.daily.sd'))
@@ -11,10 +13,10 @@ test_that('get_params options are honored (for MLE models)', {
   expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower','K600.daily.lower'))
   ps <- get_params(mm, uncertainty='none')
   expect_equal(length(grep('lower$|upper$|sd$', names(ps), value=TRUE)), 0)
-  
+})
+
+test_that('get_params options are honored (for MLE models): fixed', {
   # fixed
-  dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)), K600.daily=21)
-  mm2 <- metab_mle(specs("m_np_oi_tr_plrckm.nlm"), data=dat, data_daily=dat_daily)
   ps <- get_params(mm2, fixed='none')
   expect_equal(length(grep('\\.fixed$', names(ps), value=TRUE)), 0)
   expect_equal(length(grep('\\*', ps)), 0)
@@ -23,7 +25,9 @@ test_that('get_params options are honored (for MLE models)', {
   ps <- get_params(mm2, fixed='stars')
   expect_true(all(sapply(dplyr::select(ps, -date), is.character)))
   expect_equal(grep('\\*', ps), match('K600.daily', names(ps)))
-  
+})
+
+test_that('get_params options are honored (for MLE models): uncertainty+fixed', {
   # uncertainty + fixed
   ps <- get_params(mm, uncertainty='ci', fixed='stars')
   expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower','K600.daily.lower'))
@@ -38,11 +42,15 @@ test_that('get_params options are honored (for MLE models)', {
   ps <- get_params(mm2, uncertainty='ci', fixed='columns')
   expect_equal(grep('\\.lower$', names(ps), value=TRUE), c('GPP.daily.lower','ER.daily.lower'))
   expect_equal(grep('\\.fixed$', names(ps), value=TRUE), c('GPP.daily.fixed','ER.daily.fixed','K600.daily.fixed'))
-  
+})
+
+test_that('get_params options are honored (for MLE models): messages', {
   # messages
   expect_true(all(c('warnings','errors') %in% names(get_params(mm, messages=TRUE))))
   expect_true(!any(c('warnings','errors') %in% names(get_params(mm, messages=FALSE))))
-  
+})
+
+test_that('get_params options are honored (for MLE models): units', {
   # units
   expect_s3_class(get_params(mm, attach.units=FALSE), 'data.frame')
   expect_s4_class(get_params(mm, attach.units=TRUE), 'unitted')
