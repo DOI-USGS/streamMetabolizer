@@ -1,6 +1,13 @@
 # 0.9.15
 
-* refined treatment of depth in trapezoid method - effect will mainly be
+* new function: `plot_distribs` to explore priors
+
+* bayesian models can now track `err_obs_iid` and other parameters fit at the
+resolution of `data`
+
+* new functions: `calc_solar_time` and `calc_light` for faster data preparation
+
+* refined treatment of depth in trapezoid method - effect will mainly be 
 noticeable for sites/times with rapidly changing depth
 
 # 0.9.14
