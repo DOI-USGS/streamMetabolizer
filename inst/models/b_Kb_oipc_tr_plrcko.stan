@@ -115,7 +115,7 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod[i+1] = (
       DO_mod[i] +
-      dDO_mod[i] + err_proc_iid[i]);
+      dDO_mod[i]);
   }
 }
 

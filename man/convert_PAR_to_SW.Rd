@@ -4,13 +4,13 @@
 \alias{convert_PAR_to_SW}
 \title{Convert from photosynthetically active to shortwave radiation}
 \usage{
-convert_PAR_to_SW(par, coeff = 0.473)
+convert_PAR_to_SW(par, coef = 0.473)
 }
 \arguments{
-\item{par}{Vector of photosynthetically active radiation (400-700 nm;
+\item{par}{Vector of photosynthetically active radiation (400-700 nm; 
 umol/m^2/sec)}
 
-\item{coeff}{Numerical coefficient to convert PAR (umol/m^2/sec) to SW
+\item{coef}{Numerical coefficient to convert PAR (umol/m^2/sec) to SW 
 (W/m^2). Defaults to value from Britton and Dodd (1976).}
 }
 \value{
@@ -18,7 +18,8 @@ Numeric vector of shortwave values with units W/m^2
 }
 \description{
 Convert photosynthetically active radiation (PAR) to shortwave radiation 
-(SW).
+(SW). Uses a fixed ratio between PAR and SW, ignoring the minor seasonal
+changes in this ratio (see Britton and Dodd (1976)).
 }
 \examples{
 convert_PAR_to_SW(par=400, coef=0.47)

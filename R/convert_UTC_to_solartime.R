@@ -80,6 +80,10 @@ convert_UTC_to_solartime <- function(date.time, longitude, time.type=c("apparent
 #'   Influence of topographic complexity on solar insolation estimates for the 
 #'   Colorado River, Grand Canyon, AZ. Ecological Modelling.
 convert_solartime_to_UTC <- function(any.solar.time, longitude, time.type=c("apparent solar", "mean solar")) {
+  
+  # quick check to try to warn users away from using non-solar time
+  if(!(tz(any.solar.time) %in% c("GMT","Etc/GMT-0","Etc/GMT+0","UTC"))) stop("expecting nominal tz=UTC for solar.time")
+  
   conversion <- any.solar.time - convert_UTC_to_solartime(any.solar.time, longitude, time.type)
   return(any.solar.time + conversion)
 }

@@ -22,12 +22,15 @@ Leopold and Maddock, 1953; default values for k and m as in Raymond et al.
 2012)
 }
 \examples{
+\dontrun{
+# Warning: this function is deprecated.
 Qs <- seq(1,9,2)
 calc_velocity(Q=Qs)
 calc_velocity(Q=Qs, k=0.4)
 library(unitted)
 calc_velocity(Q=u(Qs, "m^3 s^-1"), m=u(40))
 calc_velocity(Q=u(Qs, "m^3 s^-1"), k=u(0.36, "m s^-1"))
+}
 }
 \references{
 Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. 

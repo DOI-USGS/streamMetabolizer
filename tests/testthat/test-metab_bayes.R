@@ -1,6 +1,7 @@
 context("metab_bayes")
 
 # # NB: these lines work within testthat() calls:
+# skip()
 # skip_on_cran()
 # skip_on_travis()
 # skip_on_appveyor()
@@ -12,7 +13,6 @@ manual_tests <- function() {
   library(testthat)
   library(dplyr)
   source('tests/testthat/helper-rmse_DO.R')
-  # library(deSolve) # for that .C("unlock_solver") issue # should be taken care of in .onAttach now
   
   test_that("lots of bayesian models available", {
     expect_lt(42, length(mm_valid_names('bayes')))
@@ -74,11 +74,6 @@ manual_tests <- function() {
     expect_true(all(dim(get_params(nosplit)) == dim(get_params(split))))
     expect_true(max(abs(get_params(nosplit)[c('GPP.daily','ER.daily','K600.daily')] / get_params(split)[c('GPP.daily','ER.daily','K600.daily')] - 1)) < 0.2)
     
-    # this error message sometimes occurs here and is documented in GitHub issue #225:
-    # Error in .Call("call_rkFixed", as.double(y), as.double(times), Func, Initfunc,  :
-    #   "call_rkFixed" not resolved from current namespace (deSolve)
-    # Error in .C("unlock_solver") :
-    #   "unlock_solver" not resolved from current namespace (deSolve)
   })
 
   test_that("error and warning messages are printed with the mm object if present", {
@@ -90,6 +85,21 @@ manual_tests <- function() {
     expect_equal(get_params(metab(sp(FALSE), dat))$errors, c('','uneven timesteps',''))
     expect_equal(get_params(metab(sp(TRUE), dat))$errors, c('','uneven timesteps',''))
   })
+}
+
+manual_test2 <- function() {
+  
+  library(streamMetabolizer)
+  library(testthat)
+  library(dplyr)
+  source('tests/testthat/helper-rmse_DO.R')
+  
+  # Make sure many combinations of models run
+  dat <- data_metab('1','30')
+  
+  mm <- metab(revise(specs("b_np_oi_tr_plrckm.stan"), params_out=c(params_out, 'DO_mod')), dat)
+  mm <- metab(revise(specs("b_np_oi_tr_plrcko.stan"), params_out=c(params_out, 'DO_mod')), dat)
+  
 }
 
 manual_test3 <- function() {
@@ -229,29 +239,29 @@ manual_test3 <- function() {
 
 # takes too long to do all the time. also, saving and reloading a stan model
 # doesn't work!
-manual_test2 <- function() {
-  testthat("test that metab_models can be saved & reloaded (see helper-save_load.R)", {
-    
-    source('tests/testthat/helper-save_load.R')
-    
-    # fit model
-    dat <- data_metab('1', res='30')
-    mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
-      specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
-      metab(data=dat)
-    mm <- mmb
-    
-    # see if saveRDS with gzfile, compression=9 works well
-    rdstimes <- save_load_timing(mm, reps=1)
-    expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
-    plot_save_load_timing(rdstimes)
-    
-    # save and load the mm, make sure it stays the same
-    mmls <- test_save_load_recovery(mm) # fails!
-    expect_equal(get_mcmc(mmls$original), get_mcmc(mmls$reloaded)) # fails!
-    
-  })
-}
+test_that("test that metab_models can be saved & reloaded (see helper-save_load.R)", {
+  
+  skip("NB: saving and reloading a stan model doesn't work!")
+  
+  source('tests/testthat/helper-save_load.R')
+  
+  # fit model
+  dat <- data_metab('1', res='30')
+  mmb <- mm_name('bayes', err_proc_acor=FALSE, err_proc_iid=FALSE, engine='stan') %>%
+    specs(n_chains=1, n_cores=1, burnin_steps=300, saved_steps=100) %>%
+    metab(data=dat)
+  mm <- mmb
+  
+  # see if saveRDS with gzfile, compression=9 works well
+  rdstimes <- save_load_timing(mm, reps=1)
+  expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
+  plot_save_load_timing(rdstimes)
+  
+  # save and load the mm, make sure it stays the same
+  mmls <- test_save_load_recovery(mm) # fails!
+  expect_equal(get_mcmc(mmls$original), get_mcmc(mmls$reloaded)) # fails!
+  
+})
 
 ## Code you can run after fitting any MCMC model
 useful_code <- function() {

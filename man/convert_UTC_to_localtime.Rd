@@ -17,13 +17,14 @@ convert_UTC_to_localtime(date.time, latitude, longitude,
 "degW") or with sign indicating direction (positive = East)}
 
 \item{time.type}{character. The type of time zone desired - either standard 
-time without any daylight savings time or daylight time where daylight
+time without any daylight savings time or daylight time where daylight 
 savings is on during the appropriate days}
 }
 \description{
 Convert time from UTC to local time, either standard or with daylight 
 savings. Recommended for post-analysis visualization only; most functions in 
-streamMetabolizer use times in UTC.
+streamMetabolizer use times in UTC. If you know the timezone code for your
+local site, use \code{\link[lubridate]{with_tz}} instead.
 }
 \references{
 http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude

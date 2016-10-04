@@ -60,10 +60,10 @@ mm_generate_mcmc_file <- function(
       distrib,
       normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
       uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") },
-      gamma = {
+      beta = { if(!all(names(args) == c('alpha','beta'))) stop("expecting beta(alpha,beta)") },
+      gamma = { if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
         # shape = alpha = k = first argument
         # rate = beta = 1/theta = inverse scale = second argument
-        if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
       },
       lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
     )
@@ -363,7 +363,7 @@ mm_generate_mcmc_file <- function(
           p('DO_mod[i+1] = ('),
           p('  DO_mod[i] +'),
           if(dDO_model) c(
-            s('  dDO_mod[i] + err_proc_iid[i])')
+            s('  dDO_mod[i]', if(err_proc_iid) ' + err_proc_iid[i]', ')')
           ) else c(
             if(err_proc_iid) p('  err_proc_iid[i] +'),
             if(err_proc_acor) p('  err_proc_acor[i] +'),
@@ -372,8 +372,7 @@ mm_generate_mcmc_file <- function(
             switch(
               ode_method,
               'euler' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i])'),
-                s(')')),
+                s('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]))')),
               'trapezoid' = c(
                 p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
                 s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
