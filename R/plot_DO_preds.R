@@ -80,15 +80,13 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         lim <- y_lim[['ddodt']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod >= lim & obs >= lim))
         lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod <= lim & obs <= lim))
       }
-      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
-        ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6) +
-        ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8) +
+      ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
+        ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6, na.tm=TRUE) +
+        ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8, na.tm=TRUE) +
         ggplot2::scale_color_identity(guide='none') +
         ggplot2::theme_bw() + 
         ggplot2::facet_grid(var ~ ., scales="free_y") + 
         ggplot2::xlab(params$xlab) + ggplot2::ylab(params$ylab)
-      
-      suppressWarnings(print(g))
     },
     'dygraphs' = {
       if(!requireNamespace("dygraphs", quietly=TRUE))
@@ -128,11 +126,10 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
           dygraphs::dyAxis('y', valueRange=(c(ymin,ymax)+(ymax-ymin)*c(-0.05,0.15))) %>%
           dygraphs::dyOptions(colorSaturation=1) %>%
           dygraphs::dyLegend(labelsSeparateLines = TRUE, width=300) %>%
-          dygraphs::dyRangeSelector(height = 20) %>%
-          print()
+          dygraphs::dyRangeSelector(height = 20)
       })
     }
   )
   
-  invisible(plot_out)
+  plot_out
 }
