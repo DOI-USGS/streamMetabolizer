@@ -770,10 +770,16 @@ setClass(
 
 #' Extract any MCMC model objects that were stored with the model
 #' 
-#' A function specific to metab_bayes models. Returns an MCMC object or, for 
-#' nopool models, a list of MCMC objects. These objects are saved by default
-#' because they should usually be inspected manually; see \code{keep_mcmcs}
-#' argument to \code{\link{specs}} for options for saving space.
+#' A function specific to metab_bayes models. Returns an MCMC object of class 
+#' \code{\link[rstan]{stanfit}}, which is saved in the metab_model by default 
+#' because you should almost always inspect it; see \code{keep_mcmcs} argument 
+#' to \code{\link{specs}} for options for saving space. The \code{rstan} methods
+#' for \code{stanfit} objects include \code{summary}, 
+#' \code{\link[rstan]{get_stancode}}, \code{\link[rstan]{stan_dens}}, 
+#' \code{\link[rstan]{stan_diag}}, and many more. See 
+#' \code{\link[rstan]{rstan-plotting-functions}}, \code{\link[rstan]{stanfit}}, 
+#' and the \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan 
+#' manual}.
 #' 
 #' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
 #'   return the MCMC model object[s]
