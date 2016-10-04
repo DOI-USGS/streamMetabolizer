@@ -8,6 +8,7 @@ manual_tests <- function() {
   
   # devtools::install_github("stan-dev/shinystan")
   # library(shinystan)
+  library(streamMetabolizer)
   library(dplyr)
   
   #### data prep ####
@@ -15,6 +16,7 @@ manual_tests <- function() {
   
   # pool_K600="none"
   sp <- specs(mm_name('bayes', pool_K600='none'))
+  plot_distribs(metab_model(specs=sp), parnam='err_obs_iid_sigma')
   mm <- metab(sp, dat)
   
   # pool_K600="normal"

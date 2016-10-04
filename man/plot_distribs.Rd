@@ -7,7 +7,7 @@
 plot_distribs(metab_model, parname = c("GPP_daily", "ER_daily", "K600_daily",
   "K600_daily_mu", "K600_daily_beta", "K600_daily_sigma", "err_obs_iid_sigma",
   "err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"),
-  style = c("dygraphs", "ggplot2"))
+  index = TRUE, style = c("dygraphs", "ggplot2"))
 }
 \arguments{
 \item{metab_model}{a metab_model object from which the specs (for priors) and
@@ -17,6 +17,14 @@ complete specs list into a shell of a metab_model with
 
 \item{parname}{character. the name of the parameter whose distribution[s] you
 wish to plot}
+
+\item{index}{integer or logical. Applicable only if plotting posteriors, and 
+useful only if the parname is for a parameter having multiple (e.g., daily)
+instances. In this case, the index selects the instance and corresponds to 
+the row number in the data.frame element of \code{get_fit(metab_model)} 
+that contains the parameter, e.g. \code{get_fit(metab_model)$daily} for 
+\code{'GPP_daily'}. The default, TRUE, selects and pools all instances of
+the parameter.}
 
 \item{style}{character indicating which graphics package to use}
 }
