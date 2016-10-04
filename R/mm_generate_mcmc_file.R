@@ -65,9 +65,31 @@ mm_generate_mcmc_file <- function(
         # shape = alpha = k = first argument
         # rate = beta = 1/theta = inverse scale = second argument
       },
-      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
+      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") 
+        # location = mu = first argument
+        # scale = sigma = second argument
+      }
     )
+    # create the function call text
     paste0(distrib, '(', paste0(args, collapse=', '), ')')
+  }
+  fs <- function(distrib, Y) {
+    # Y_scaled is from a standard normal distribution, e.g., Y_scaled ~
+    # normal(0, 1). this function returns an equation calculating Y, the
+    # rescaled values of Y_scaled that follow the distrib distribution. It
+    # assumes there exist parameters with suffixes corresponding to the args
+    # required by f()
+    paste0(
+      Y, ' = ',
+      switch(
+        distrib,
+        normal = stop(),
+        uniform = stop(),
+        beta = stop(),
+        gamma = stop(),
+        lognormal = paste0('exp(', paste0(Y, '_location'), ') * pow(exp(', paste0(Y, '_scaled'), '), ', paste0(Y, '_scale'), ')')
+      )
+    )
   }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) {
@@ -298,12 +320,12 @@ mm_generate_mcmc_file <- function(
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
-        s('err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+        s(fs('lognormal', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
-        # s('err_proc_acor_phi, ' = ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-        s('err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+        # s(fs('beta', 'err_proc_acor_phi'?)), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        s(fs('lognormal', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
-        s('err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+        s(fs('lognormal', 'err_proc_iid_sigma')))
     ),
     
     # K600_daily model
