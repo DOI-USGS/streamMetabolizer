@@ -41,6 +41,9 @@ NULL
 #'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
 #'   data=dat)
 #' predict_metab(mm)
+#' 
+#' # view the Stan model file as stored on your system
+#' file.edit(get_specs(mm)$model_path)
 #' }
 #' @export
 #' @family metab_model
