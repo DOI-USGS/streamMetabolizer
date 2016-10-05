@@ -191,7 +191,7 @@ manual_test3 <- function() {
     revise(K600_daily_sigma_rate=1, err_proc_iid_sigma_rate=0.03, 
            params_in=c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_beta_mu','K600_daily_beta_sigma',
                        'K600_daily_sigma_rate','err_proc_iid_sigma_rate'),
-           delete=c('K600_daily_sigma_location','K600_daily_sigma_scale','err_proc_iid_sigma_location','err_proc_iid_sigma_scale'))
+           delete=c('K600_daily_sigma_scale','err_proc_iid_sigma_scale'))
   mm_new <- metab(specs=sp, data=dat) # 8-12 sec for 200/100
   plot_metab_preds(mm_new)
   plot_DO_preds(mm_new)
@@ -204,8 +204,8 @@ manual_test3 <- function() {
   mm_slow <- metab(specs=sp, data=dat) # 9 sec
   # SFS version
   mm_fast <- sp %>% 
-    revise(err_obs_iid_sigma_rate=0.2, model_name='b_np_oi_pm_plrckm_faster.stan', delete=c('err_obs_iid_sigma_location','err_obs_iid_sigma_scale'),
-           params_in=setdiff(c(params_in, 'err_obs_iid_sigma_rate'),c('err_obs_iid_sigma_location','err_obs_iid_sigma_scale'))) %>%
+    revise(err_obs_iid_sigma_rate=0.2, model_name='b_np_oi_pm_plrckm_faster.stan', delete=c('err_obs_iid_sigma_scale'),
+           params_in=setdiff(c(params_in, 'err_obs_iid_sigma_rate'),c('err_obs_iid_sigma_scale'))) %>%
     metab(data=dat) # 51 sec w/ new compilation, 16-17 sec w/ err_obs_sigma_rate at 0.2 or 2 or 0.02
   mm <- mm_fast
   get_fitting_time(mm)
@@ -226,7 +226,7 @@ manual_test3 <- function() {
     K600_daily_beta_mu=c(intercept=1, slope=2.3),
     K600_daily_beta_sigma=c(intercept=0.3, slope=0.3),
     K600_daily_sigma_rate=1,err_obs_iid_sigma_rate=0.1,
-    delete=c("K600_daily_sigma_location","K600_daily_sigma_scale","err_obs_iid_sigma_location","err_obs_iid_sigma_scale"))
+    delete=c("K600_daily_sigma_location","K600_daily_sigma_scale","err_obs_iid_sigma_scale"))
   sp3 <- sp2 %>% revise(
     K600_daily_beta_mu=c(intercept=10, slope=3),
     K600_daily_beta_sigma=c(intercept=8, slope=2))

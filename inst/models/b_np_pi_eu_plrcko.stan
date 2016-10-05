@@ -10,8 +10,7 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_proc_iid_sigma_location;
-  real err_proc_iid_sigma_scale;
+  real<lower=0> err_proc_iid_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -61,7 +60,7 @@ transformed parameters {
   
   // Rescale pooling & error distribution parameters
   // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale);
+  err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Model DO time series
   // * euler version
@@ -85,7 +84,7 @@ model {
     dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
   }
   // SD (sigma) of the IID process errors
-  err_proc_iid_sigma_scaled ~ normal(0, 1);
+  err_proc_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

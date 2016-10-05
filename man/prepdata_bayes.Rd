@@ -29,14 +29,14 @@ of required parameters and their defaults depends on the model given in the
 detail, and gives default values.}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For \code{type='bayes'},
+specified via \code{mm_name} rather than here. For \code{type='bayes'}, 
 always \code{'stan'} indicating the software package to use for the MCMC 
-process (see http://mc-stan.org/). For types in
-\code{c('mle','night','sim')} there's again only one option per model (R
-functions; these need not be named here but will be noted in the suffix of
-the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
-model fitting). For type='Kmodel', the name of an interpolation or
-regression method relating K to the predictor[s] of choice. One of
+process (see http://mc-stan.org/). For types in 
+\code{c('mle','night','sim')} there's again only one option per model (R 
+functions; these need not be named here but will be noted in the suffix of 
+the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for 
+model fitting). For type='Kmodel', the name of an interpolation or 
+regression method relating K to the predictor[s] of choice. One of 
 \code{c("mean", "lm", "loess")}.}
 
 \item{model_name}{character string identifying the model features. Use 

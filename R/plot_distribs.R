@@ -73,45 +73,16 @@ plot_distribs <- function(
     K600_daily='normal',
     K600_daily_mu='normal',
     K600_daily_beta='normal',
-    K600_daily_sigma='lognormal',
-    err_obs_iid_sigma='lognormal',
+    K600_daily_sigma='halfcauchy',
+    err_obs_iid_sigma='halfcauchy',
     err_proc_acor_phi='beta',
-    err_proc_acor_sigma='lognormal',
-    err_proc_iid_sigma='lognormal'
+    err_proc_acor_sigma='halfcauchy',
+    err_proc_iid_sigma='halfcauchy'
   )[parname]
   
   # create a data.frame illustrating the prior distribution
   densdf <- switch(
     distrib,
-    uniform={
-      xlim <- c(min=hyperpars$min, max=hyperpars$max)
-      data_frame(
-        dist = 'prior',
-        x = seq(xlim[1], xlim[2], length.out=1000),
-        y = dunif(x, min=hyperpars$min, max=hyperpars$max))
-    },
-    normal={
-      xlim <- qnorm(c(0.001, 0.999), mean=hyperpars$mu, sd=hyperpars$sigma)
-      data_frame(
-        dist = 'prior',
-        x = seq(xlim[1], xlim[2], length.out=1000),
-        y = dnorm(x, mean=hyperpars$mu, sd=hyperpars$sigma))
-    },
-    lognormal={
-      xlim <- qlnorm(c(0.0001, 0.9), meanlog=hyperpars$location, sdlog=hyperpars$scale)
-      prior_rescaled <- exp(hyperpars$location + rnorm(1000000, 0, 1)*hyperpars$scale) %>%
-        log() %>% density() %>% # density is smoother if done in log space
-        .[c('x','y')] %>%
-        as.data.frame() %>%
-        mutate(x = exp(x)) # have to stop here and make separate call to mutate(dist=...) to avoid "Error in FUN(left, right) : non-numeric argument to binary operator"
-      bind_rows(
-        data_frame(
-          dist = 'prior',
-          x = exp(seq(log(xlim[1]), log(xlim[2]), length.out=1000)),
-          y = dlnorm(x, meanlog=hyperpars$location, sdlog=hyperpars$scale)),
-        prior_rescaled %>%
-          mutate(dist = 'prior_rescaled'))
-    },
     beta={
       xlim <- qbeta(c(0, 1), shape1=hyperpars$alpha, shape2=hyperpars$beta)
       data_frame(
@@ -126,6 +97,60 @@ plot_distribs <- function(
         x = seq(xlim[1], xlim[2], length.out=1000),
         y = dgamma(x, shape=hyperpars$shape, rate=hyperpars$rate))
     },
+    halfcauchy={
+      # half-Cauchy and half-normal are similarly shaped except that half-Cauchy
+      # has heavier tails and therefore, for large values of scale, can be a 
+      # weaker prior than a corresponding half-normal. See 
+      # http://www.stat.columbia.edu/~gelman/research/published/taumain.pdf and 
+      # http://web.ipac.caltech.edu/staff/fmasci/home/mystats/CauchyVsGaussian.pdf
+      xlim <- qcauchy(c(0.5, 0.95), location=0, scale=hyperpars$scale)
+      bind_rows(
+        data_frame(
+          dist = 'prior',
+          x = seq(xlim[1], xlim[2], length.out=1000),
+          y = dcauchy(x, location=0, scale=hyperpars$scale)),
+        (rcauchy(1000000, 0, 1)*hyperpars$scale) %>%
+          density(from=xlim[1], to=xlim[2]) %>%
+          .[c('x','y')] %>%
+          as.data.frame() %>%
+          mutate(dist = 'prior_rescaled'))
+    },
+    lognormal={
+      # prior_rescaled and prior diverge from one another as scale goes > 1. 
+      # this seems to be mainly due to numerical computation/algorithm 
+      # challenges in density(), rather than any problem with the scaling
+      # equation: high scale means high peak near 0 but also really long tail.
+      # high scale may not actually be a problem for MCMCs, but regardless, it's
+      # better to adjust location than scale for getting a distribution close to
+      # 0; e.g., location=-5, scale=1 gives distribution w/ peak at ~0.003 and
+      # not-too-long tail
+      xlim <- qlnorm(c(0.0001, 0.9), meanlog=hyperpars$location, sdlog=hyperpars$scale)
+      bind_rows(
+        data_frame(
+          dist = 'prior',
+          x = exp(seq(log(xlim[1]), log(xlim[2]), length.out=1000)),
+          y = dlnorm(x, meanlog=hyperpars$location, sdlog=hyperpars$scale)),
+        exp(hyperpars$location + rnorm(1000000, 0, 1)*hyperpars$scale) %>% { .[. < xlim[2]]} %>%
+          density(n=512*12, from=xlim[1], to=xlim[2]) %>%
+          .[c('x','y')] %>%
+          as.data.frame() %>%
+          mutate(dist = 'prior_rescaled'))
+    },
+    normal={
+      xlim <- qnorm(c(0.001, 0.999), mean=hyperpars$mu, sd=hyperpars$sigma)
+      data_frame(
+        dist = 'prior',
+        x = seq(xlim[1], xlim[2], length.out=1000),
+        y = dnorm(x, mean=hyperpars$mu, sd=hyperpars$sigma))
+    },
+    uniform={
+      xlim <- c(min=hyperpars$min, max=hyperpars$max)
+      data_frame(
+        dist = 'prior',
+        x = seq(xlim[1], xlim[2], length.out=1000),
+        y = dunif(x, min=hyperpars$min, max=hyperpars$max))
+    },
+    
     stop('unrecognized distribution function'))
   plot_prior_rescaled <- plot_prior_rescaled && ('prior_rescaled' %in% densdf$dist)
   if(!plot_prior_rescaled) {

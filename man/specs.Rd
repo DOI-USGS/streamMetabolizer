@@ -14,12 +14,10 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   K600_daily_mu_sigma = 10, K600_daily_beta_mu = c(intercept = 10, slope =
   3), K600_daily_beta_sigma = c(intercept = 8, slope = 2),
   K600_daily_beta_num = 5, K600_daily_beta_cuts = "number",
-  K600_daily_sigma_location = 0, K600_daily_sigma_scale = 1,
-  err_obs_iid_sigma_location = 0, err_obs_iid_sigma_scale = 3,
+  K600_daily_sigma_scale = 5, err_obs_iid_sigma_scale = 0.1,
   err_proc_acor_phi_alpha = 0.1, err_proc_acor_phi_beta = 1,
-  err_proc_acor_sigma_location = 0, err_proc_acor_sigma_scale = 5,
-  err_proc_iid_sigma_location = 0, err_proc_iid_sigma_scale = 4, params_in,
-  params_out, n_chains = 4, n_cores = 4, burnin_steps = 500,
+  err_proc_acor_sigma_scale = 0.1, err_proc_iid_sigma_scale = 0.1,
+  params_in, params_out, n_chains = 4, n_cores = 4, burnin_steps = 500,
   saved_steps = 500, thin_steps = 1, verbose = FALSE,
   weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
   velocity.daily.max = NA), predictors = c("discharge.daily"),
@@ -44,14 +42,14 @@ the current working directory (the second assumption, if the first
 assumption turns up no files of the given name).}
 
 \item{engine}{The software or function to use in fitting the model. Should be
-specified via \code{mm_name} rather than here. For \code{type='bayes'},
+specified via \code{mm_name} rather than here. For \code{type='bayes'}, 
 always \code{'stan'} indicating the software package to use for the MCMC 
-process (see http://mc-stan.org/). For types in
-\code{c('mle','night','sim')} there's again only one option per model (R
-functions; these need not be named here but will be noted in the suffix of
-the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for
-model fitting). For type='Kmodel', the name of an interpolation or
-regression method relating K to the predictor[s] of choice. One of
+process (see http://mc-stan.org/). For types in 
+\code{c('mle','night','sim')} there's again only one option per model (R 
+functions; these need not be named here but will be noted in the suffix of 
+the model name, e.g., \code{"m_np_oi_tr_plrckm.nlm"} uses \code{nlm()} for 
+model fitting). For type='Kmodel', the name of an interpolation or 
+regression method relating K to the predictor[s] of choice. One of 
 \code{c("mean", "lm", "loess")}.}
 
 \item{day_start}{start time (inclusive) of a day's data in number of hours 
@@ -185,77 +183,41 @@ full range of ln_discharge_daily, with the first value smaller than all
 ln_discharge_daily values and the last value greater than or equal to all 
 ln_discharge_daily values.}
 
-\item{K600_daily_sigma_location}{hyperparameter for pool_K600 in 
-c('normal','linear','binned'). The location (= meanlog) parameter of a 
-lognormal distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
-with \code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, 
-K600_daily_sigma_location, K600_daily_sigma_scale))}}
-
 \item{K600_daily_sigma_scale}{hyperparameter for pool_K600 in 
-c('normal','linear','binned'). The scale (= sdlog) parameter of a lognormal
-distribution of sigma in K ~ N(mu, sigma), sigma ~ lnN(meanlog=location, 
-sdlog=scale). Visualize the PDF of K600_daily_sigma with 
-\code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, K600_daily_sigma_location, 
-K600_daily_sigma_scale))}}
+c('normal','linear','binned'). The scale (= sigma) parameter of a 
+half-Cauchy distribution of sigma in K ~ N(mu, sigma), sigma ~ 
+lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+with \code{\link{plot_distribs}}.}
 
-\item{err_obs_iid_sigma_location}{The location (= meanlog) parameter of a 
-lognormal distribution for err_obs_iid_sigma, the standard deviation of the
-observation error. Visualize the PDF of err_obs_iid_sigma with 
-\code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, err_obs_iid_sigma_location, 
-err_obs_iid_sigma_scale), type='l')}}
-
-\item{err_obs_iid_sigma_scale}{The scale (= sdlog) parameter of a lognormal 
+\item{err_obs_iid_sigma_scale}{The scale (= sigma) parameter of a half-Cauchy
 distribution for err_obs_iid_sigma, the standard deviation of the 
 observation error. Visualize the PDF of err_obs_iid_sigma with 
-\code{x=seq(0,10,0.1); plot(x=x, y=dlnorm(x, err_obs_iid_sigma_location, 
-err_obs_iid_sigma_scale), type='l')}}
+\code{\link{plot_distribs}}.}
 
 \item{err_proc_acor_phi_alpha}{The alpha (= shape1) parameter on a beta 
 distribution for err_proc_acor_phi, the autocorrelation coefficient for the
 autocorrelated component of process [& sometimes observation] error. 
-Visualize the PDF of err_proc_acor_phi with \code{x=seq(0,1,0.01); 
-plot(x=x, y=dbeta(x, err_proc_acor_phi_alpha, err_proc_acor_phi_beta), 
-type='l')}}
+Visualize the PDF of err_proc_acor_phi with \code{\link{plot_distribs}}.}
 
 \item{err_proc_acor_phi_beta}{The beta (= shape2) parameter on a beta 
 distribution for err_proc_acor_phi, the autocorrelation coefficient for the
 autocorrelated component of process [& sometimes observation] error. 
-Visualize the PDF of err_proc_acor_phi with \code{x=seq(0,1,0.01); 
-plot(x=x, y=dbeta(x, err_proc_acor_phi_alpha, err_proc_acor_phi_beta), 
-type='l')}}
+Visualize the PDF of err_proc_acor_phi with \code{\link{plot_distribs}}.}
 
-\item{err_proc_acor_sigma_location}{The location (= meanlog) parameter of a 
-lognormal distribution for err_proc_acor_sigma, the standard deviation of 
+\item{err_proc_acor_sigma_scale}{The scale (= sigma) parameter of a 
+half-Cauchy distribution for err_proc_acor_sigma, the standard deviation of
 the autocorrelated component of process [& sometimes observation] error. 
-Visualize the PDF of err_proc_acor_sigma with \code{x=seq(0,10,0.1); 
-plot(x=x, y=dlnorm(x, err_proc_acor_sigma_location, 
-err_proc_acor_sigma_scale), type='l')}}
+Visualize the PDF of err_proc_acor_sigma with \code{\link{plot_distribs}}.}
 
-\item{err_proc_acor_sigma_scale}{The scale (= sdlog) parameter of a lognormal
-distribution for err_proc_acor_sigma, the standard deviation of the 
-autocorrelated component of process [& sometimes observation] error. 
-Visualize the PDF of err_proc_acor_sigma with \code{x=seq(0,10,0.1); 
-plot(x=x, y=dlnorm(x, err_proc_acor_sigma_location, 
-err_proc_acor_sigma_scale), type='l')}}
-
-\item{err_proc_iid_sigma_location}{The location (= meanlog) parameter of a 
-lognormal distribution for err_proc_iid_sigma, the standard deviation of 
+\item{err_proc_iid_sigma_scale}{The scale (= sigma) parameter of a 
+half-Cauchy distribution for err_proc_iid_sigma, the standard deviation of 
 the uncorrelated (IID) component of process [& sometimes observation] 
-error. Visualize the PDF of err_proc_iid_sigma with \code{x=seq(0,10,0.1); 
-plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
-err_proc_iid_sigma_scale), type='l')}}
-
-\item{err_proc_iid_sigma_scale}{The scale (= sdlog) parameter of a lognormal 
-distribution for err_proc_iid_sigma, the standard deviation of the 
-uncorrelated (IID) component of process [& sometimes observation] error. 
-Visualize the PDF of err_proc_iid_sigma with \code{x=seq(0,10,0.1); 
-plot(x=x, y=dlnorm(x, err_proc_iid_sigma_location, 
-err_proc_iid_sigma_scale), type='l')}}
+error. Visualize the PDF of err_proc_iid_sigma with 
+\code{\link{plot_distribs}}.}
 
 \item{params_in}{Character vector of hyperparameters to pass from the specs 
-list into the data list for the MCMC run. Will be automatically generated
-during the specs() call; need only be revised if you're using a custom
+list into the data list for the MCMC run. Will be automatically generated 
+during the specs() call; need only be revised if you're using a custom 
 model that requires different hyperparameters.}
 
 \item{params_out}{a character vector of parameters whose values in the MCMC 
@@ -343,23 +305,21 @@ often should, be overridden to tailor the model to your needs.
   
   * metab_bayes: Always relevant: \code{model_name, engine, split_dates, 
   keep_mcmcs, keep_mcmc_data, day_start, day_end, day_tests, GPP_daily_mu, 
-  GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_in, params_out,
-  n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The
-  need for other arguments depends on features of the model structure, as
+  GPP_daily_sigma, ER_daily_mu, ER_daily_sigma, params_in, params_out, 
+  n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The 
+  need for other arguments depends on features of the model structure, as 
   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
-  K600_daily_mu_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
-  \item If \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
-  K600_daily_beta_sigma, K600_daily_sigma_location, K600_daily_sigma_scale}. 
-  \item If \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
+  K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If
+  \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
+  K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If
+  \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma, 
-  K600_daily_sigma_location, K600_daily_sigma_scale}. \item If 
-  \code{err_obs_iid} then \code{err_obs_iid_sigma_location, 
+  K600_daily_sigma_scale}. \item If \code{err_obs_iid} then \code{ 
   err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-  err_proc_acor_sigma_location, err_proc_acor_sigma_scale}. \item If 
-  \code{err_proc_iid} then \code{err_proc_iid_sigma_location, 
+  err_proc_acor_sigma_scale}. \item If \code{err_proc_iid} then \code{ 
   err_proc_iid_sigma_scale}.}
   
   * metab_mle: \code{model_name, day_start, day_end, day_tests, 

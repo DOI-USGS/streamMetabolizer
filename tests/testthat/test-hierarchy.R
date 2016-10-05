@@ -11,21 +11,37 @@ manual_tests <- function() {
   library(streamMetabolizer)
   library(dplyr)
   
-  #### data prep ####
-  dat <- data_metab('10', res='10')
-  
   # pool_K600="none"
-  sp <- specs(mm_name('bayes', pool_K600='none'))
-  plot_distribs(metab_model(specs=sp), parnam='err_obs_iid_sigma')
-  mm <- metab(sp, dat)
+  dat <- data_metab('1', res='30')
+  oi <- metab(specs(mm_name('bayes', err_obs_iid=TRUE, err_proc_iid=FALSE, pool_K600='none')), dat)
+  plot_distribs(oi, 'err_obs_iid_sigma')
+  stan_trace(get_mcmc(oi), pars='err_obs_iid_sigma')
+  stan_hist(get_mcmc(oi), pars='err_obs_iid_sigma')
+  pi <- metab(specs(mm_name('bayes', err_obs_iid=FALSE, err_proc_iid=TRUE, pool_K600='none', deficit_src='DO_obs'), err_proc_iid_sigma_scale=0.001), dat) # DO_obs currently required for pi models
+  plot_distribs(pi, 'err_proc_iid_sigma')
+  stan_trace(get_mcmc(pi), pars='err_proc_iid_sigma')
+  stan_hist(get_mcmc(pi), pars='err_proc_iid_sigma')
+  oipi <- metab(specs(mm_name('bayes', err_obs_iid=TRUE, err_proc_iid=TRUE, pool_K600='none')), dat)
+  plot_distribs(oipi, 'err_obs_iid_sigma')
+  plot_distribs(oipi, 'err_proc_iid_sigma')
+  stan_trace(get_mcmc(oipi), pars=c('err_obs_iid_sigma','err_proc_iid_sigma'))
+  stan_hist(get_mcmc(oipi), pars=c('err_obs_iid_sigma','err_proc_iid_sigma'))
+  
+  lapply(list(oi,pi,oipi), get_fitting_time)
+  lapply(list(oi,pi,oipi), get_params)
+  lapply(list(oi,pi,oipi), predict_metab)
+  lapply(list(oi,pi,oipi), plot_DO_preds)
   
   # pool_K600="normal"
+  dat <- data_metab('10', res='30')
   sp <- specs(mm_name('bayes', pool_K600='normal'))
   
   # pool_K600="linear"
+  dat <- data_metab('10', res='30')
   sp <- specs(mm_name('bayes', pool_K600='linear'))
   
   # pool_K600="binned"
+  dat <- data_metab('10', res='30')
   sp <- specs(mm_name('bayes', pool_K600='binned'))
   
   
