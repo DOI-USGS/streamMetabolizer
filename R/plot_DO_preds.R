@@ -81,8 +81,8 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod <= lim & obs <= lim))
       }
       ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
-        ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6, na.tm=TRUE) +
-        ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8, na.tm=TRUE) +
+        ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6, na.rm=TRUE) +
+        ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8, na.rm=TRUE) +
         ggplot2::scale_color_identity(guide='none') +
         ggplot2::theme_bw() + 
         ggplot2::facet_grid(var ~ ., scales="free_y") + 
@@ -113,21 +113,22 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
           mutate(solar.time=lubridate::force_tz(solar.time, Sys.getenv("TZ"))) %>% # dygraphs makes some funky tz assumptions. this seems to help.
           xts::xts(x=select(., -solar.time), order.by=.$solar.time, unique=FALSE, tzone=Sys.getenv("TZ"))
       }
-      if(length(y_var) > 1) warning("can only plot one dygraph y_var at a time for now; plotting y_vars in succession")
-      sapply(y_var, function(yvar) {
-        y_var_long <- preds_xts %>% filter(as==yvar) %>% slice(1) %>% .[['var']] %>% as.character()
-        y_var_col <- params$colors[[yvar]]
-        dat <- prep_dygraph(yvar)
-        ymin <- max(c(min(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[yvar]][1]), na.rm=TRUE)
-        ymax <- min(c(max(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[yvar]][2]), na.rm=TRUE)
-        dygraphs::dygraph(dat, xlab=params$xlab, ylab=y_var_long, group='plot_DO_preds') %>%
-          dygraphs::dySeries('mod', drawPoints = FALSE, label=paste0("Modeled ", y_var_long), color=y_var_col[1]) %>%
-          dygraphs::dySeries('obs', drawPoints = TRUE, strokeWidth=0, label=paste0("Observed ", y_var_long), color=y_var_col[2]) %>%
-          dygraphs::dyAxis('y', valueRange=(c(ymin,ymax)+(ymax-ymin)*c(-0.05,0.15))) %>%
-          dygraphs::dyOptions(colorSaturation=1) %>%
-          dygraphs::dyLegend(labelsSeparateLines = TRUE, width=300) %>%
-          dygraphs::dyRangeSelector(height = 20)
-      })
+      if(length(y_var) > 1) {
+        y_var <- y_var[1]
+        warning("can only plot one dygraph y_var at a time for now; plotting ", y_var)
+      }
+      y_var_long <- preds_xts %>% filter(as==y_var) %>% slice(1) %>% .[['var']] %>% as.character()
+      y_var_col <- params$colors[[y_var]]
+      dat <- prep_dygraph(y_var)
+      ymin <- max(c(min(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[y_var]][1]), na.rm=TRUE)
+      ymax <- min(c(max(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[y_var]][2]), na.rm=TRUE)
+      dygraphs::dygraph(dat, xlab=params$xlab, ylab=y_var_long, group='plot_DO_preds') %>%
+        dygraphs::dySeries('mod', drawPoints = FALSE, label=paste0("Modeled ", y_var_long), color=y_var_col[1]) %>%
+        dygraphs::dySeries('obs', drawPoints = TRUE, strokeWidth=0, label=paste0("Observed ", y_var_long), color=y_var_col[2]) %>%
+        dygraphs::dyAxis('y', valueRange=(c(ymin,ymax)+(ymax-ymin)*c(-0.05,0.15))) %>%
+        dygraphs::dyOptions(colorSaturation=1) %>%
+        dygraphs::dyLegend(labelsSeparateLines = TRUE, width=300) %>%
+        dygraphs::dyRangeSelector(height = 20)
     }
   )
   
