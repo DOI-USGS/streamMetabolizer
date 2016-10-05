@@ -13,7 +13,7 @@ manual_tests <- function() {
   
   # pool_K600="none"
   dat <- data_metab('1', res='30')
-  oi <- metab(specs(mm_name('bayes', err_obs_iid=TRUE, err_proc_iid=FALSE, pool_K600='none')), dat)
+  oi <- metab(specs(mm_name('bayes', err_obs_iid=TRUE, err_proc_iid=FALSE, pool_K600='none', ode_method='euler')), dat)
   plot_distribs(oi, 'err_obs_iid_sigma')
   stan_trace(get_mcmc(oi), pars='err_obs_iid_sigma')
   stan_hist(get_mcmc(oi), pars='err_obs_iid_sigma')

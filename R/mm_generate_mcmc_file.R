@@ -219,16 +219,16 @@ mm_generate_mcmc_file <- function(
             )
           ) else if(ode_method == 'trapezoid') c(
             comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-            s('coef_GPP[i] = (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
-            s('coef_ER[i] = (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+            s('coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0'),
+            s('coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0'),
             switch(
               deficit_src,
               DO_mod = c(
-                s('coef_K600_part[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
+                s('coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0'),
                 s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
               ),
               DO_obs = c(
-                p('coef_K600_full[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
+                p('coef_K600_full[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0 .*'),
                 s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
               )
             )
