@@ -10,16 +10,13 @@ data {
   // Parameters of hierarchical priors on K600_daily (linear model)
   vector[2] K600_daily_beta_mu;
   vector[2] K600_daily_beta_sigma;
-  real K600_daily_sigma_location;
-  real K600_daily_sigma_scale;
+  real<lower=0> K600_daily_sigma_scale;
   
   // Error distributions
-  real err_obs_iid_sigma_location;
-  real err_obs_iid_sigma_scale;
+  real<lower=0> err_obs_iid_sigma_scale;
   real err_proc_acor_phi_alpha;
   real err_proc_acor_phi_beta;
-  real err_proc_acor_sigma_location;
-  real err_proc_acor_sigma_scale;
+  real<lower=0> err_proc_acor_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -77,9 +74,9 @@ transformed parameters {
   
   // Rescale pooling & error distribution parameters
   // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  K600_daily_sigma = exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale);
-  err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale);
-  err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
+  err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   
   // Hierarchical, linear model of K600_daily
   K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily;
@@ -115,14 +112,14 @@ model {
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
-  err_proc_acor_sigma_scaled ~ normal(0, 1);
+  err_proc_acor_sigma_scaled ~ cauchy(0, 1);
   
   // Independent, identically distributed observation error
   for(i in 2:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  err_obs_iid_sigma_scaled ~ normal(0, 1);
+  err_obs_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
@@ -131,5 +128,5 @@ model {
 
   // Hierarchical constraints on K600_daily (linear model)
   K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma_scaled ~ normal(0, 1);
+  K600_daily_sigma_scaled ~ cauchy(0, 1);
 }

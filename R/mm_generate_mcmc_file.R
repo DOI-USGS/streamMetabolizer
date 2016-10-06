@@ -58,16 +58,47 @@ mm_generate_mcmc_file <- function(
     args <- c(list(...))
     switch(
       distrib,
-      normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
-      uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") },
       beta = { if(!all(names(args) == c('alpha','beta'))) stop("expecting beta(alpha,beta)") },
       gamma = { if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
         # shape = alpha = k = first argument
         # rate = beta = 1/theta = inverse scale = second argument
       },
-      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
+      halfcauchy = { if(!all(names(args) == c('scale'))) stop("expecting halfcauchy(scale)")
+        distrib <- 'cauchy'
+        args <- c(list(location=0), args)
+      },
+      halfnormal = { if(!all(names(args) == c('sigma'))) stop("expecting halfnormal(sigma)")
+        distrib <- 'normal'
+        args <- c(list(mu=0), args)
+      },
+      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") 
+        # location = mu = first argument
+        # scale = sigma = second argument
+      },
+      normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
+      uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") }
     )
+    # create the function call text
     paste0(distrib, '(', paste0(args, collapse=', '), ')')
+  }
+  fs <- function(distrib, Y) {
+    # Y_scaled is from a standard normal distribution, e.g., Y_scaled ~
+    # normal(0, 1). this function returns an equation calculating Y, the
+    # rescaled values of Y_scaled that follow the distrib distribution. It
+    # assumes there exist parameters with suffixes corresponding to the args
+    # required by f()
+    paste0(
+      Y, ' = ',
+      switch(
+        distrib,
+        beta = stop(),
+        gamma = stop(),
+        halfcauchy = sprintf('%s_scale * %s_scaled', Y, Y), # scaled = cauchy(0,1)
+        lognormal = sprintf('exp(%s_location + %s_scale * %s_scaled)', Y, Y, Y), # scaled = norm(0,1)
+        normal = sprintf('%s_sigma * %s_scaled', Y, Y), # scaled = norm(0,1)
+        uniform = sprintf('%s_min + (%s_max - %s_min) * %s_scaled', Y, Y) # scaled = unif(0,1)
+      )
+    )
   }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) {
@@ -112,23 +143,19 @@ mm_generate_mcmc_file <- function(
               'vector[b] K600_daily_beta_mu;',
               'vector[b] K600_daily_beta_sigma;')
           ),
-          'real K600_daily_sigma_location;',
-          'real K600_daily_sigma_scale;'
+          'real<lower=0> K600_daily_sigma_scale;'
         )),
       
       chunk(
         comment('Error distributions'),
         if(err_obs_iid) c(
-          'real err_obs_iid_sigma_location;',
-          'real err_obs_iid_sigma_scale;'),
+          'real<lower=0> err_obs_iid_sigma_scale;'),
         if(err_proc_acor) c(
           'real err_proc_acor_phi_alpha;',
           'real err_proc_acor_phi_beta;',
-          'real err_proc_acor_sigma_location;',
-          'real err_proc_acor_sigma_scale;'),
+          'real<lower=0> err_proc_acor_sigma_scale;'),
         if(err_proc_iid) c(
-          'real err_proc_iid_sigma_location;',
-          'real err_proc_iid_sigma_scale;')),
+          'real<lower=0> err_proc_iid_sigma_scale;')),
       
       chunk(
         comment('Data dimensions'),
@@ -192,16 +219,16 @@ mm_generate_mcmc_file <- function(
             )
           ) else if(ode_method == 'trapezoid') c(
             comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-            s('coef_GPP[i] = (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
-            s('coef_ER[i] = (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
+            s('coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0'),
+            s('coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0'),
             switch(
               deficit_src,
               DO_mod = c(
-                s('coef_K600_part[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
+                s('coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0'),
                 s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
               ),
               DO_obs = c(
-                p('coef_K600_full[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
+                p('coef_K600_full[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0 .*'),
                 s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
               )
             )
@@ -293,17 +320,17 @@ mm_generate_mcmc_file <- function(
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        s('K600_daily_sigma = exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
+        s(fs('halfcauchy', 'K600_daily_sigma'))
       ),
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
-        s('err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+        s(fs('halfcauchy', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
-        # s('err_proc_acor_phi, ' = ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-        s('err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+        # s(fs('beta', 'err_proc_acor_phi'?)), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
-        s('err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+        s(fs('halfcauchy', 'err_proc_iid_sigma')))
     ),
     
     # K600_daily model
@@ -407,11 +434,11 @@ mm_generate_mcmc_file <- function(
       p('}'),
       if(err_proc_iid) c(
         comment('SD (sigma) of the IID process errors'),
-        s('err_proc_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
+        s('err_proc_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
       if(err_proc_acor) c(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
         s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
-        s('err_proc_acor_sigma_scaled ~ ', f('normal', mu='0', sigma='1')))
+        s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
     ),
     
     if(err_obs_iid) chunk(
@@ -423,7 +450,7 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
+      s('err_obs_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
     
     indent(
       comment('Daily metabolism priors'),
@@ -446,7 +473,7 @@ mm_generate_mcmc_file <- function(
         if(pool_K600 %in% c('linear','binned')) c(
           s('K600_daily_beta ~ ', f('normal', mu='K600_daily_beta_mu', sigma='K600_daily_beta_sigma'))
         ),
-        s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))
+        s('K600_daily_sigma_scaled ~ ', f('halfcauchy', scale='1'))
       )
     ),
     

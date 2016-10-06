@@ -70,24 +70,23 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER'),
         g <- g + ggplot2::geom_errorbar(ggplot2::aes(ymin=lwr, ymax=upr, color=col1), alpha=0.5)
       }
       g <- g + 
-        ggplot2::geom_line(ggplot2::aes(y=fit, color=col1)) +
-        ggplot2::geom_point(ggplot2::aes(y=fit, color=col1)) +
+        ggplot2::geom_line(ggplot2::aes(y=fit, color=col1), na.rm=TRUE) +
+        ggplot2::geom_point(ggplot2::aes(y=fit, color=col1), na.rm=TRUE) +
         ggplot2::scale_color_identity(guide='none') +
         ggplot2::theme_bw() + 
         ggplot2::facet_grid(var ~ ., scales="free_y") + 
         ggplot2::xlab(params$xlab) + ggplot2::ylab(params$ylab)
-      
-      suppressWarnings(print(g))
+      g
     },
     'dygraphs' = {
       if(!requireNamespace("dygraphs", quietly=TRUE))
-        stop("call install.packages(dygraphs') before plotting with style='dygraphs'")
+        stop("call install.packages('dygraphs') before plotting with style='dygraphs'")
       if(!requireNamespace("xts", quietly=TRUE))
-        stop("call install.packages(dygraphs') before plotting with style='dygraphs'")
+        stop("call install.packages('xts') before plotting with style='dygraphs'")
       
       stop("no dygraphs option yet")
     }
   )
   
-  invisible(plot_out)
+  plot_out
 }

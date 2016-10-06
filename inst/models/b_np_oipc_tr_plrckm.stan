@@ -10,12 +10,10 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real err_obs_iid_sigma_location;
-  real err_obs_iid_sigma_scale;
+  real<lower=0> err_obs_iid_sigma_scale;
   real err_proc_acor_phi_alpha;
   real err_proc_acor_phi_beta;
-  real err_proc_acor_sigma_location;
-  real err_proc_acor_sigma_scale;
+  real<lower=0> err_proc_acor_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -42,9 +40,9 @@ transformed data {
   
   for(i in 1:(n-1)) {
     // Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i] = (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
-    coef_ER[i] = (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0);
-    coef_K600_part[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0;
+    coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0;
+    coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0;
+    coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0;
     DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0;
   }
 }
@@ -69,8 +67,8 @@ transformed parameters {
   
   // Rescale pooling & error distribution parameters
   // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale);
-  err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
+  err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   
   // Model DO time series
   // * trapezoid version
@@ -104,14 +102,14 @@ model {
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
-  err_proc_acor_sigma_scaled ~ normal(0, 1);
+  err_proc_acor_sigma_scaled ~ cauchy(0, 1);
   
   // Independent, identically distributed observation error
   for(i in 2:n) {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  err_obs_iid_sigma_scaled ~ normal(0, 1);
+  err_obs_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

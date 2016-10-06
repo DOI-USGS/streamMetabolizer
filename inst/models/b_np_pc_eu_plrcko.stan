@@ -12,8 +12,7 @@ data {
   // Error distributions
   real err_proc_acor_phi_alpha;
   real err_proc_acor_phi_beta;
-  real err_proc_acor_sigma_location;
-  real err_proc_acor_sigma_scale;
+  real<lower=0> err_proc_acor_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -67,7 +66,7 @@ transformed parameters {
   
   // Rescale pooling & error distribution parameters
   // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale);
+  err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   
   // Model DO time series
   // * euler version
@@ -98,7 +97,7 @@ model {
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
-  err_proc_acor_sigma_scaled ~ normal(0, 1);
+  err_proc_acor_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
