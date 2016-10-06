@@ -7,11 +7,10 @@
 plot_distribs(dist_data, parname = c("GPP_daily", "ER_daily", "K600_daily",
   "K600_daily_mu", "K600_daily_beta", "K600_daily_sigma", "err_obs_iid_sigma",
   "err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"),
-  index = TRUE, style = c("dygraphs", "ggplot2"),
-  plot_prior_rescaled = TRUE)
+  index = TRUE, style = c("dygraphs", "ggplot2"))
 }
 \arguments{
-\item{dist_data}{Either a specs list (for priors only) or a metab_model
+\item{dist_data}{Either a specs list (for priors only) or a metab_model 
 object (for both priors and posteriors).}
 
 \item{parname}{character. the name of the parameter whose distribution[s] you
@@ -30,5 +29,20 @@ the parameter.}
 \description{
 Plot the prior and/or posterior disitrubtions as implied by the 
 hyperparameters in a specs list and/or the
+}
+\examples{
+\dontrun{
+# priors only
+plot_distribs(specs('bayes', K600_daily_mu=30), 'K600_daily')
+
+# posteriors, too
+mm <- metab(specs(mm_name('bayes')), data=data_metab('1', res='30'))
+plot_distribs(mm, 'GPP_daily', 1)
+
+# with modifications
+plot_distribs(mm, 'err_proc_iid_sigma') \%>\%
+  dygraphs::dyRangeSelector(dateWindow=c(-0.1,1.3)) \%>\%
+  dygraphs::dyAxis(name='y', valueRange=c(0,15))
+}
 }
 

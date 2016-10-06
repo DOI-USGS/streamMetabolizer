@@ -3,7 +3,7 @@
 #' Plot the prior and/or posterior disitrubtions as implied by the 
 #' hyperparameters in a specs list and/or the
 #' 
-#' @param dist_data Either a specs list (for priors only) or a metab_model
+#' @param dist_data Either a specs list (for priors only) or a metab_model 
 #'   object (for both priors and posteriors).
 #' @param parname character. the name of the parameter whose distribution[s] you
 #'   wish to plot
@@ -18,9 +18,10 @@
 #' @import dplyr
 #' @importFrom tidyr spread
 #' @importFrom stats dunif qnorm dnorm qlnorm dlnorm qbeta dbeta qgamma dgamma
+#'   qcauchy dcauchy rcauchy density
 #' @export
 #' @examples
-#' \dontrun
+#' \dontrun{
 #' # priors only
 #' plot_distribs(specs('bayes', K600_daily_mu=30), 'K600_daily')
 #' 
@@ -38,8 +39,11 @@ plot_distribs <- function(
   parname=c('GPP_daily','ER_daily','K600_daily','K600_daily_mu','K600_daily_beta','K600_daily_sigma',
             'err_obs_iid_sigma','err_proc_acor_phi','err_proc_acor_sigma','err_proc_iid_sigma'), 
   index=TRUE,
-  style=c('dygraphs','ggplot2'),
-  plot_prior_rescaled=TRUE) {
+  style=c('dygraphs','ggplot2')) {
+  
+  # choosing not to expose this as an arg because most people shouldn't need it,
+  # but want it up top to ease manual exploration of parameter scaling
+  plot_prior_rescaled <- TRUE
   
   style <- match.arg(style)
   if(!class(dist_data)[1] %in% c('specs','metab_bayes')) {
@@ -81,6 +85,7 @@ plot_distribs <- function(
   )[parname]
   
   # create a data.frame illustrating the prior distribution
+  . <- '.dplyr.var'
   densdf <- switch(
     distrib,
     beta={
@@ -160,10 +165,12 @@ plot_distribs <- function(
   # if available, augment the data.frame with data illustrating the posterior
   plot_posterior <- class(dist_data)[1] == 'metab_bayes' && !is.null(get_mcmc(dist_data))
   if(plot_posterior) {
+    if(!requireNamespace("rstan", quietly=TRUE))
+      stop("the rstan package is required to investigate Stan MCMC models")
     mc <- get_mcmc(dist_data)
     # extract MCMC draws from the specified index/indices. If indices, collapse
     # from matrix into vector
-    draws <- extract(mc, pars=parname)[[parname]]
+    draws <- rstan::extract(mc, pars=parname)[[parname]]
     indexed <- is.matrix(draws)
     if(indexed) draws <- c(draws[,index])
     # generate density w/ 1000 points along the line
@@ -217,6 +224,7 @@ plot_distribs <- function(
       # approx those in
       dydensdf <- spread(densdf, dist, y)
       if(plot_prior_rescaled || plot_posterior) {
+        prior <- prior_rescaled <- posterior <- '.dplyr.var'
         dydensdf <- dydensdf %>%
           arrange(x) %>%
           mutate(prior = approx(x=x, y=prior, xout=x)$y)
