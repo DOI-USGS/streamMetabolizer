@@ -72,7 +72,7 @@ parameters {
 }
 
 transformed parameters {
-  real K600_daily_sigma;
+  real<lower=0> K600_daily_sigma;
   vector[d] K600_daily_pred;
   real<lower=0> err_obs_iid_sigma;
   real<lower=0> err_proc_acor_sigma;
@@ -82,7 +82,6 @@ transformed parameters {
   vector[d] err_proc_acor[n-1];
   
   // Rescale pooling & error distribution parameters
-  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
   K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;

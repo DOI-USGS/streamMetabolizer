@@ -55,7 +55,6 @@ transformed parameters {
   vector[d] DO_mod[n];
   
   // Rescale pooling & error distribution parameters
-  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   
   // Model DO time series

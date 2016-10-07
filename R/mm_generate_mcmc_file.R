@@ -291,7 +291,7 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        'real K600_daily_sigma;',
+        'real<lower=0> K600_daily_sigma;',
         if(pool_K600 %in% c('linear','binned'))
           'vector[d] K600_daily_pred;'
       ),
@@ -300,7 +300,7 @@ mm_generate_mcmc_file <- function(
       if(err_obs_iid) c(
         'real<lower=0> err_obs_iid_sigma;'),
       if(err_proc_acor) c(
-        # 'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        # 'real<lower=0, upper=1> err_proc_acor_phi;', # currently opting not to scale phi (which might be 0-1 or very close to 0)
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
@@ -316,7 +316,6 @@ mm_generate_mcmc_file <- function(
     
     chunk(
       comment('Rescale pooling & error distribution parameters'),
-      comment('lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)'),
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
@@ -327,7 +326,7 @@ mm_generate_mcmc_file <- function(
       if(err_obs_iid) c(
         s(fs('halfcauchy', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
-        # s(fs('beta', 'err_proc_acor_phi'?)), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        # s(fs('beta', 'err_proc_acor_phi'?)), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
         s(fs('halfcauchy', 'err_proc_iid_sigma')))
@@ -437,7 +436,7 @@ mm_generate_mcmc_file <- function(
         s('err_proc_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
       if(err_proc_acor) c(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
+        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
     ),
     
