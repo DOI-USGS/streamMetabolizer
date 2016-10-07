@@ -279,12 +279,12 @@ specs <- function(
   ER_daily_sigma = 10,
   
   # hyperparameters for non-hierarchical K600
-  K600_daily_mu = 10,
-  K600_daily_sigma = 10,
+  K600_daily_mu = 30,
+  K600_daily_sigma = 30,
   
   # hyperparameters for hierarchical K600 - normal
-  K600_daily_mu_mu = 10,
-  K600_daily_mu_sigma = 10,
+  K600_daily_mu_mu = 30,
+  K600_daily_mu_sigma = 30,
   
   # hyperparameters for hierarchical K600 - linear. defaults should be reasonably
   # constrained, not too wide. element names are ignored
@@ -305,7 +305,7 @@ specs <- function(
   
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.1,
-  err_proc_acor_phi_alpha = 0.1,
+  err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 0.1,
   err_proc_iid_sigma_scale = 0.1,
