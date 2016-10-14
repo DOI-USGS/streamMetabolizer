@@ -29,10 +29,6 @@ mm_generate_mcmc_file <- function(
     ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   
-  # define rules for when to model as process, obs, or both
-  dDO_model <- (deficit_src == 'DO_obs')
-  DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
-  
   #### helper functions ####
   comment <- function(...) { 
     # prefix with the appropriate comment character[s]
@@ -239,9 +235,9 @@ mm_generate_mcmc_file <- function(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
         
         # instantaneous process error values
-        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
+        if(err_proc_iid || err_proc_acor) c(
           '',
-          if(err_proc_iid && !dDO_model) c(
+          if(err_proc_iid) c(
             'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
             'vector[d] err_proc_acor_inc[n-1];'))
@@ -285,11 +281,8 @@ mm_generate_mcmc_file <- function(
         )
       ),
       
-      # instantaneous DO, dDO, and/or process error values
-      if(DO_model)
-        'vector[d] DO_mod[n];',
-      if(dDO_model)
-        'vector[d] dDO_mod[n-1];',
+      # instantaneous DO and possibly process error values
+      'vector[d] DO_mod[n];',
       if(err_proc_acor)
         'vector[d] err_proc_acor[n-1];'
     ),
@@ -355,34 +348,10 @@ mm_generate_mcmc_file <- function(
         ),
         p('}')
       ),
-            
-      # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
-      # all process-only models because we've banned 'DO_mod' for them). looping
-      # over times of day, doing all days at once for each time of day
-      if(dDO_model) c(
-        p(''),
-        comment("dDO model"),
-        p('for(i in 1:(n-1)) {'),
-        indent(
-          p('dDO_mod[i] = '),
-          indent(
-            if(err_proc_acor) p('err_proc_acor[i] +'),
-            s('('),
-            p('  (GPP[i] + ER[i]) ./ depth[i] +'),
-            switch(
-              deficit_src,
-              'DO_obs' = p('  KO2[i] .* (DO_sat[i] - DO_obs[i])'),
-              'DO_mod' = p('  KO2[i] .* (DO_sat[i] - DO_mod[i])')
-            ),
-            s(') .* timestep')
-          )
-        ),
-        p('}')
-      ),
       
       # DO model - any model that includes observation error or is a function of
       # the previous moment's DO_mod
-      if(DO_model) c(
+      c(
         p(''),
         comment("DO model"),
         s('DO_mod[1] = DO_obs_1'),
@@ -390,9 +359,7 @@ mm_generate_mcmc_file <- function(
         indent(
           p('DO_mod[i+1] = ('),
           p('  DO_mod[i] + ('),
-          if(dDO_model) c(
-            s('  dDO_mod[i]', if(err_proc_iid) ' + err_proc_iid[i]', ')')
-          ) else c(
+          c(
             if(err_proc_iid) p('  err_proc_iid[i] +'),
             if(err_proc_acor) p('  err_proc_acor[i] +'),
             p('(GPP[i] + ER[i]) ./ depth[i] +'),
@@ -434,11 +401,7 @@ mm_generate_mcmc_file <- function(
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),
-          if(dDO_model) s(
-            'dDO_obs[i] ~ ', f('normal', mu=p('dDO_mod[i]'), sigma='err_proc_iid_sigma')
-          ) else s(
-            'err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
-          )
+          s('err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma'))
         ),
         if(err_proc_acor) c(
           comment('Autocorrelated process error'),
