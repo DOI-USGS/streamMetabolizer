@@ -336,6 +336,11 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("Calculate individual process rates"),
+        # set the first element of DO_mod_partial_sigma to a value. We never use
+        # it, just want indexing such that DO_mod_partial_sigma[i] refers to the
+        # difference between (DO_mod or DO_obs)[i] and DO_mod_partial[i]
+        if(ode_method == 'trapezoid') 
+          s('DO_mod_partial_sigma[1] = 0'),
         switch(
           ode_method,
           'euler' = p('for(i in 1:(n-1)) {'),
@@ -357,32 +362,45 @@ mm_generate_mcmc_file <- function(
         s('DO_mod[1] = DO_obs_1'),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod[i+1] = ('),
-          p('  DO_mod[i] + ('),
-          c(
-            if(err_proc_iid) p('  err_proc_iid[i] +'),
-            if(err_proc_acor) p('  err_proc_acor[i] +'),
-            p('(GPP[i] + ER[i]) ./ depth[i] +'),
+          if(!err_proc_iid) p('DO_mod[i+1] =') else p('DO_mod_partial[i+1] ='),
+          indent(
+            p('DO_mod[i] + ('),
+            if(err_proc_acor) p('err_proc_acor[i] +'),
+            p('  (GPP[i] + ER[i]) ./ depth[i] +'),
             switch(
               ode_method,
-              'euler' = switch(
-                deficit_src,
-                'DO_obs' = s('  KO2[i] .* (DO_sat[i] - DO_obs[i]))'),
-                'DO_mod' = s('  KO2[i] .* (DO_sat[i] - DO_mod[i]))')
+              'euler' = c(
+                switch(
+                  deficit_src,
+                  'DO_obs' = p('  KO2[i] .* (DO_sat[i] - DO_obs[i])'),
+                  'DO_mod' = p('  KO2[i] .* (DO_sat[i] - DO_mod[i])')
+                ),
+                s(') * timestep')
               ),
               'trapezoid' = c(
-                p('(GPP[i+1] + ER[i+1]) ./ depth[i+1] +'),
+                p('  (GPP[i+1] + ER[i+1]) ./ depth[i+1] +'),
                 switch(
                   deficit_src,
                   'DO_obs' = c(
                     p('  KO2[i] .* (DO_sat[i] - DO_obs[i]) +'),
                     p('  KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])'),
-                    s(') * timestep / 2.0')),
+                    s(') * (timestep / 2.0)')),
                   'DO_mod' = c(
                     p('  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'),
                     p('  KO2[i+1] .* DO_sat[i+1]'),
-                    s(') .* timestep ./ (2.0 + KO2[i+1] * timestep)'))
+                    s(') .* (timestep / (2.0 + KO2[i+1] * timestep))'))
                 )
+              )
+            )
+          ),
+          if(ode_method == 'trapezoid') c(
+            'DO_mod_partial_sigma[i+1] = err_proc_iid_sigma * ',
+            indent(
+              'sqrt(pow(depth[i], -2) + pow(depth[i+1], -2)) .*',
+              switch(
+                deficit_src,
+                'DO_obs' = s('(timestep / 2.0)'),
+                'DO_mod' = s('(timestep / (2.0 + KO2[i+1] * timestep))')
               )
             )
           )
@@ -397,15 +415,17 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      p('for(i in 1:(n-1)) {'),
+      p('for(i in 2:n) {'),
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),
-          s('err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma'))
+          s(if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', ' ~ ', 
+            f('normal', mu='DO_mod_partial[i]', sigma='DO_mod_partial_sigma[i]')
+          )
         ),
         if(err_proc_acor) c(
           comment('Autocorrelated process error'),
-          s('err_proc_acor_inc[i] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+          s('err_proc_acor_inc[i-1] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
         )
       ),
       p('}'),
@@ -478,7 +498,7 @@ mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
     pool_K600=c('none','normal','linear','binned'),
     err_obs_iid=c(TRUE, FALSE),
-    err_proc_acor=c(FALSE, TRUE),
+    err_proc_acor=FALSE, # omitting TRUE until I understand it (see #264)
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun='linlight',
@@ -488,9 +508,7 @@ mm_generate_mcmc_files <- function() {
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   
-  incompatible <- 
-    (!opts$err_obs_iid & opts$deficit_src == 'DO_mod') |
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
+  incompatible <- (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {
