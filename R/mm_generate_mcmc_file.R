@@ -176,7 +176,10 @@ mm_generate_mcmc_file <- function(
         comment('Data'),
         'vector[d] DO_obs[n];',
         'vector[d] DO_sat[n];',
-        'vector[d] frac_GPP[n];',
+        # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
+        # than fractions (i.e., must yield per-day rather than per-timestep
+        # rates)
+        'vector[d] frac_GPP[n];', 
         'vector[d] frac_ER[n];',
         'vector[d] frac_D[n];',
         'vector[d] depth[n];',
@@ -187,62 +190,24 @@ mm_generate_mcmc_file <- function(
     
     #### transformed data ####
     c('transformed data {', # transformed data = statements evaluated exactly once
-      chunk(
-        'vector[d] coef_GPP[n-1];',
-        'vector[d] coef_ER[n-1];',
-        switch(
-          deficit_src,
-          DO_mod = 'vector[d] coef_K600_part[n-1];',
-          DO_obs = 'vector[d] coef_K600_full[n-1];'
-        ),
-        if(ode_method == 'trapezoid' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
-        if(dDO_model) 'vector[d] dDO_obs[n-1];'
-      ),
       
-      indent(
-        p('for(i in 1:(n-1)) {'),
-        indent(
-          # Coefficient pre-calculations
-          if(ode_method == 'euler') c(
-            comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-            s('coef_GPP[i]  = frac_GPP[i] ./ depth[i]'),
-            s('coef_ER[i]   = frac_ER[i] ./ depth[i]'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = KO2_conv[i] .* frac_D[i]')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*'),
-                s('  (DO_sat[i] - DO_obs[i])')
-              )
-            )
-          ) else if(ode_method == 'trapezoid') c(
-            comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-            s('coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0'),
-            s('coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0'),
-                s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0 .*'),
-                s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
-              )
-            )
-          ),
-          
-          # dDO pre-calculations
-          if(dDO_model) c(
-            comment('dDO observations'),
-            s('dDO_obs[i] = DO_obs[i+1] - DO_obs[i]')
-          )
-        ),
-        p('}')
-      ),
-      '}',''
+      # move timestep to data once frac_GPP, frac_ER, and frac_D have been
+      # replaced with timestep and other coefficients in the data prep code
+      'real<lower=0> timestep; # length of each timestep in days',
+      s('timestep = frac_D[1]')
+      
+      #   chunk(
+      #     # Coefficient declarations, if any, go here
+      #   ),
+      #   
+      #   indent(
+      #     p('for(i in 1:n) {'),
+      #     indent(
+      #       # Coefficient pre-calculations, if any, go here
+      #     ),
+      #     p('}')
+      #   ),
+      #   '}',''
     ),
     
     #### parameters ####
@@ -305,6 +270,21 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
 
+      # instantaneous GPP, ER, and KO2
+      switch(
+        ode_method,
+        'euler' = c(
+          'vector[d] GPP[n-1];',
+          'vector[d] ER[n-1];',
+          'vector[d] KO2[n-1];'
+        ),
+        'trapezoid' = c(
+          'vector[d] GPP[n];',
+          'vector[d] ER[n];',
+          'vector[d] KO2[n];'
+        )
+      ),
+      
       # instantaneous DO, dDO, and/or process error values
       if(DO_model)
         'vector[d] DO_mod[n];',
@@ -358,7 +338,24 @@ mm_generate_mcmc_file <- function(
         s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
         p('}')
       ),
-      
+
+      # individual processes
+      c(
+        p(''),
+        comment("Calculate individual process rates"),
+        switch(
+          ode_method,
+          'euler' = p('for(i in 1:(n-1)) {'),
+          'trapezoid' = p('for(i in 1:n) {')
+        ),
+        indent(
+          s('GPP[i] = GPP_daily .* frac_GPP[i]'),
+          s('ER[i] = ER_daily .* frac_ER[i]'),
+          s('KO2[i] = K600_daily .* KO2_conv[i]')
+        ),
+        p('}')
+      ),
+            
       # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
       # all process-only models because we've banned 'DO_mod' for them). looping
       # over times of day, doing all days at once for each time of day
@@ -370,9 +367,14 @@ mm_generate_mcmc_file <- function(
           p('dDO_mod[i] = '),
           indent(
             if(err_proc_acor) p('err_proc_acor[i] +'),
-            p('GPP_daily  .* coef_GPP[i] +'),
-            p('ER_daily   .* coef_ER[i] +'),
-            s('K600_daily .* coef_K600_full[i]')
+            s('('),
+            p('  (GPP[i] + ER[i]) ./ depth[i] +'),
+            switch(
+              deficit_src,
+              'DO_obs' = p('  KO2[i] .* (DO_sat[i] - DO_obs[i])'),
+              'DO_mod' = p('  KO2[i] .* (DO_sat[i] - DO_mod[i])')
+            ),
+            s(') .* timestep')
           )
         ),
         p('}')
@@ -387,21 +389,34 @@ mm_generate_mcmc_file <- function(
         p('for(i in 1:(n-1)) {'),
         indent(
           p('DO_mod[i+1] = ('),
-          p('  DO_mod[i] +'),
+          p('  DO_mod[i] + ('),
           if(dDO_model) c(
             s('  dDO_mod[i]', if(err_proc_iid) ' + err_proc_iid[i]', ')')
           ) else c(
             if(err_proc_iid) p('  err_proc_iid[i] +'),
             if(err_proc_acor) p('  err_proc_acor[i] +'),
-            p('  GPP_daily .* coef_GPP[i] +'),
-            p('  ER_daily .* coef_ER[i] +'),
+            p('(GPP[i] + ER[i]) ./ depth[i] +'),
             switch(
               ode_method,
-              'euler' = c(
-                s('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]))')),
+              'euler' = switch(
+                deficit_src,
+                'DO_obs' = s('  KO2[i] .* (DO_sat[i] - DO_obs[i]))'),
+                'DO_mod' = s('  KO2[i] .* (DO_sat[i] - DO_mod[i]))')
+              ),
               'trapezoid' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
-                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
+                p('(GPP[i+1] + ER[i+1]) ./ depth[i+1] +'),
+                switch(
+                  deficit_src,
+                  'DO_obs' = c(
+                    p('  KO2[i] .* (DO_sat[i] - DO_obs[i]) +'),
+                    p('  KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])'),
+                    s(') * timestep / 2.0')),
+                  'DO_mod' = c(
+                    p('  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'),
+                    p('  KO2[i+1] .* DO_sat[i+1]'),
+                    s(') .* timestep ./ (2.0 + KO2[i+1] * timestep)'))
+                )
+              )
             )
           )
         ),

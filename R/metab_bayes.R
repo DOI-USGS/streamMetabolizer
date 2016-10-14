@@ -532,8 +532,8 @@ prepdata_bayes <- function(
         } else {
           mat_light
         }
-      },
-      frac_ER  = time_by_date_matrix(timestep_days),
+      } / timestep_days,
+      frac_ER  = time_by_date_matrix(1),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
       KO2_conv = time_by_date_matrix(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2")),
       depth    = time_by_date_matrix(data$depth),
