@@ -1,4 +1,4 @@
-// b_np_oi_tr_plrcko.stan
+// b_np_pi_eu_plrckm.stan
 
 data {
   // Parameters of priors on metabolism
@@ -10,7 +10,7 @@ data {
   real K600_daily_sigma;
   
   // Error distributions
-  real<lower=0> err_obs_iid_sigma_scale;
+  real<lower=0> err_proc_iid_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -39,52 +39,59 @@ parameters {
   vector[d] ER_daily;
   vector<lower=0>[d] K600_daily;
   
-  real<lower=0> err_obs_iid_sigma_scaled;
+  real<lower=0> err_proc_iid_sigma_scaled;
+  
+  vector[d] err_proc_iid[n-1];
 }
 
 transformed parameters {
-  real<lower=0> err_obs_iid_sigma;
-  vector[d] GPP[n];
-  vector[d] ER[n];
-  vector[d] KO2[n];
-  vector[d] DO_mod[n];
+  vector[d] DO_mod_partial_sigma[n];
+  real<lower=0> err_proc_iid_sigma;
+  vector[d] GPP[n-1];
+  vector[d] ER[n-1];
+  vector[d] KO2[n-1];
+  vector[d] DO_mod_partial[n];
   
   // Rescale pooling & error distribution parameters
-  err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
+  err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Model DO time series
-  // * trapezoid version
-  // * observation error
-  // * no process error
-  // * reaeration depends on DO_obs
+  // * euler version
+  // * no observation error
+  // * IID process error
+  // * reaeration depends on DO_mod
   
   // Calculate individual process rates
-  for(i in 1:n) {
+  for(i in 1:(n-1)) {
     GPP[i] = GPP_daily .* frac_GPP[i];
     ER[i] = ER_daily .* frac_ER[i];
     KO2[i] = K600_daily .* KO2_conv[i];
   }
   
   // DO model
-  DO_mod[1] = DO_obs_1;
+  DO_mod_partial[1] = DO_obs_1;
+  DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1];
   for(i in 1:(n-1)) {
-    DO_mod[i+1] =
-      DO_mod[i] + (
+    DO_mod_partial[i+1] =
+      DO_obs[i] + (
         (GPP[i] + ER[i]) ./ depth[i] +
-        (GPP[i+1] + ER[i+1]) ./ depth[i+1] +
-        KO2[i] .* (DO_sat[i] - DO_obs[i]) +
-        KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])
-      ) * (timestep / 2.0);
+        KO2[i] .* (DO_sat[i] - DO_mod_partial[i])
+      ) * timestep;
+    for(j in 1:d) {
+      DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
+        timestep ./ depth[i,j];
+    }
   }
 }
 
 model {
-  // Independent, identically distributed observation error
-  for(i in 2:n) {
-    DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
+  // Process error
+  for(i in 1:n) {
+    // Independent, identically distributed process error
+    DO_obs[i] ~ normal(DO_mod_partial[i], DO_mod_partial_sigma[i]);
   }
-  // SD (sigma) of the observation errors
-  err_obs_iid_sigma_scaled ~ cauchy(0, 1);
+  // SD (sigma) of the IID process errors
+  err_proc_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);

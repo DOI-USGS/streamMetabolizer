@@ -65,7 +65,6 @@ transformed parameters {
   vector[d] err_proc_acor[n-1];
   
   // Rescale pooling & error distribution parameters
-  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
   err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   
   // Model DO time series

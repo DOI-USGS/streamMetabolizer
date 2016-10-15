@@ -238,7 +238,6 @@ mm_name <- function(
     GPP_fun <- match.arg(GPP_fun)
     ER_fun <- match.arg(ER_fun)
     deficit_src <- match.arg(deficit_src)
-    if(type=='bayes' && !err_obs_iid && deficit_src == 'DO_mod') stop("for bayesian models, if there's no err_obs, deficit_src must be DO_obs")
   } else {
     if(any(!(given_args %in% c('type','engine','check_validity'))))
        stop("for Kmodel, only type, engine, and check_validity may be specified")

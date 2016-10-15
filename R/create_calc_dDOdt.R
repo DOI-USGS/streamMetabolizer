@@ -296,20 +296,20 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
         K600.daily <- metab.pars[['K600.daily']]
         list(
           dDOdt={
-            - K600.daily * {KO2.conv[t]*DO.obs[t] + KO2.conv[t+1]*DO.obs[t+1]} + # - (jv + kw)
             {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] + # same for either deficit_src
             {GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] + # same for either deficit_src
-            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}} # same for either deficit_src
+            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1] # same for either deficit_src
+              - {KO2.conv[t]*DO.obs[t] + KO2.conv[t+1]*DO.obs[t+1]}}} # - (jv + kw)
           } * timestep.days / 2 # /2
         )
       } else function(t, state, metab.pars) {
         K600.daily <- metab.pars[['K600.daily']]
         list(
           dDOdt={
-            - K600.daily * {KO2.conv[t] + KO2.conv[t+1]} * state[['DO.mod']] + # - (jx + kx)
             {GPP(t, metab.pars) + ER(t, metab.pars) + err.proc[t]}/depth[t] + # same for either deficit_src
             {GPP(t+1, metab.pars) + ER(t+1, metab.pars) + err.proc[t+1]}/depth[t+1] + # same for either deficit_src
-            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1]}} # same for either deficit_src
+            {K600.daily * {KO2.conv[t]*DO.sat[t] + KO2.conv[t+1]*DO.sat[t+1] # same for either deficit_src
+              - {KO2.conv[t] + KO2.conv[t+1]} * state[['DO.mod']]}} # - (jx + kx)
           } * timestep.days / (2 + K600.daily * KO2.conv[t+1] * timestep.days) # /(2 + ks)
         )
       }

@@ -29,10 +29,6 @@ mm_generate_mcmc_file <- function(
     ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   
-  # define rules for when to model as process, obs, or both
-  dDO_model <- (deficit_src == 'DO_obs')
-  DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
-  
   #### helper functions ####
   comment <- function(...) { 
     # prefix with the appropriate comment character[s]
@@ -176,7 +172,10 @@ mm_generate_mcmc_file <- function(
         comment('Data'),
         'vector[d] DO_obs[n];',
         'vector[d] DO_sat[n];',
-        'vector[d] frac_GPP[n];',
+        # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
+        # than fractions (i.e., must yield per-day rather than per-timestep
+        # rates)
+        'vector[d] frac_GPP[n];', 
         'vector[d] frac_ER[n];',
         'vector[d] frac_D[n];',
         'vector[d] depth[n];',
@@ -187,61 +186,23 @@ mm_generate_mcmc_file <- function(
     
     #### transformed data ####
     c('transformed data {', # transformed data = statements evaluated exactly once
-      chunk(
-        'vector[d] coef_GPP[n-1];',
-        'vector[d] coef_ER[n-1];',
-        switch(
-          deficit_src,
-          DO_mod = 'vector[d] coef_K600_part[n-1];',
-          DO_obs = 'vector[d] coef_K600_full[n-1];'
-        ),
-        if(ode_method == 'trapezoid' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
-        if(dDO_model) 'vector[d] dDO_obs[n-1];'
-      ),
       
-      indent(
-        p('for(i in 1:(n-1)) {'),
-        indent(
-          # Coefficient pre-calculations
-          if(ode_method == 'euler') c(
-            comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-            s('coef_GPP[i]  = frac_GPP[i] ./ depth[i]'),
-            s('coef_ER[i]   = frac_ER[i] ./ depth[i]'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = KO2_conv[i] .* frac_D[i]')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*'),
-                s('  (DO_sat[i] - DO_obs[i])')
-              )
-            )
-          ) else if(ode_method == 'trapezoid') c(
-            comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-            s('coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0'),
-            s('coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0'),
-                s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0 .*'),
-                s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
-              )
-            )
-          ),
-          
-          # dDO pre-calculations
-          if(dDO_model) c(
-            comment('dDO observations'),
-            s('dDO_obs[i] = DO_obs[i+1] - DO_obs[i]')
-          )
-        ),
-        p('}')
-      ),
+      # move timestep to data once frac_GPP, frac_ER, and frac_D have been
+      # replaced with timestep and other coefficients in the data prep code
+      'real<lower=0> timestep; # length of each timestep in days',
+      s('timestep = frac_D[1,1]'),
+      
+      #   chunk(
+      #     # Coefficient declarations, if any, go here
+      #   ),
+      #   
+      #   indent(
+      #     p('for(i in 1:n) {'),
+      #     indent(
+      #       # Coefficient pre-calculations, if any, go here
+      #     ),
+      #     p('}')
+      #   ),
       '}',''
     ),
     
@@ -274,12 +235,17 @@ mm_generate_mcmc_file <- function(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
         
         # instantaneous process error values
-        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
+        if(err_proc_iid || err_proc_acor) c(
           '',
-          if(err_proc_iid && !dDO_model) c(
+          if(err_proc_iid) c(
             'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
-            'vector[d] err_proc_acor_inc[n-1];'))
+            'vector[d] err_proc_acor_inc[n-1];')),
+        
+        # DO_mod if it's a fitted parameter (oipi models)
+        if(err_obs_iid && err_proc_iid) c(
+          'vector[d] DO_mod[n];')
+        
       ),
       '}',''
     ),
@@ -291,7 +257,7 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        'real K600_daily_sigma;',
+        'real<lower=0> K600_daily_sigma;',
         if(pool_K600 %in% c('linear','binned'))
           'vector[d] K600_daily_pred;'
       ),
@@ -299,24 +265,41 @@ mm_generate_mcmc_file <- function(
       # rescaled error distribution parameters
       if(err_obs_iid) c(
         'real<lower=0> err_obs_iid_sigma;'),
+      if(err_proc_acor || err_proc_iid) c(
+        'vector[d] DO_mod_partial_sigma[n];'
+      ),
       if(err_proc_acor) c(
-        # 'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        # 'real<lower=0, upper=1> err_proc_acor_phi;', # currently opting not to scale phi (which might be 0-1 or very close to 0)
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
 
-      # instantaneous DO, dDO, and/or process error values
-      if(DO_model)
+      # instantaneous GPP, ER, and KO2
+      switch(
+        ode_method,
+        'euler' = c(
+          'vector[d] GPP[n-1];',
+          'vector[d] ER[n-1];',
+          'vector[d] KO2[n-1];'
+        ),
+        'trapezoid' = c(
+          'vector[d] GPP[n];',
+          'vector[d] ER[n];',
+          'vector[d] KO2[n];'
+        )
+      ),
+      
+      # instantaneous DO and possibly process error values
+      if(err_obs_iid && !err_proc_iid)  
         'vector[d] DO_mod[n];',
-      if(dDO_model)
-        'vector[d] dDO_mod[n-1];',
+      if(err_proc_acor || err_proc_iid)
+        'vector[d] DO_mod_partial[n];',
       if(err_proc_acor)
         'vector[d] err_proc_acor[n-1];'
     ),
     
     chunk(
       comment('Rescale pooling & error distribution parameters'),
-      comment('lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)'),
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
@@ -327,7 +310,7 @@ mm_generate_mcmc_file <- function(
       if(err_obs_iid) c(
         s(fs('halfcauchy', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
-        # s(fs('beta', 'err_proc_acor_phi'?)), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        # s(fs('beta', 'err_proc_acor_phi'?)), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
         s(fs('halfcauchy', 'err_proc_iid_sigma')))
@@ -359,51 +342,100 @@ mm_generate_mcmc_file <- function(
         s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
         p('}')
       ),
-      
-      # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
-      # all process-only models because we've banned 'DO_mod' for them). looping
-      # over times of day, doing all days at once for each time of day
-      if(dDO_model) c(
+
+      # individual processes
+      c(
         p(''),
-        comment("dDO model"),
-        p('for(i in 1:(n-1)) {'),
+        comment("Calculate individual process rates"),
+        switch(
+          ode_method,
+          'euler' = p('for(i in 1:(n-1)) {'),
+          'trapezoid' = p('for(i in 1:n) {')
+        ),
         indent(
-          p('dDO_mod[i] = '),
-          indent(
-            if(err_proc_acor) p('err_proc_acor[i] +'),
-            p('GPP_daily  .* coef_GPP[i] +'),
-            p('ER_daily   .* coef_ER[i] +'),
-            s('K600_daily .* coef_K600_full[i]')
-          )
+          s('GPP[i] = GPP_daily .* frac_GPP[i]'),
+          s('ER[i] = ER_daily .* frac_ER[i]'),
+          s('KO2[i] = K600_daily .* KO2_conv[i]')
         ),
         p('}')
       ),
       
       # DO model - any model that includes observation error or is a function of
       # the previous moment's DO_mod
-      if(DO_model) c(
+      c(
         p(''),
         comment("DO model"),
-        s('DO_mod[1] = DO_obs_1'),
+        if(err_obs_iid && !err_proc_iid)  
+          s('DO_mod[1] = DO_obs_1')
+        else if(err_proc_iid && ((deficit_src=='DO_mod' && !err_obs_iid) || (err_obs_iid))) c(
+          s('DO_mod_partial[1] = DO_obs_1'),
+          s('DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1]')
+        ),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod[i+1] = ('),
-          p('  DO_mod[i] +'),
-          if(dDO_model) c(
-            s('  dDO_mod[i]', if(err_proc_iid) ' + err_proc_iid[i]', ')')
-          ) else c(
-            if(err_proc_iid) p('  err_proc_iid[i] +'),
-            if(err_proc_acor) p('  err_proc_acor[i] +'),
-            p('  GPP_daily .* coef_GPP[i] +'),
-            p('  ER_daily .* coef_ER[i] +'),
+          if(!err_proc_iid) p(
+            'DO_mod[i+1] ='
+          ) else p(
+            'DO_mod_partial[i+1] ='
+          ),
+          indent(
+            if(err_obs_iid) p(
+              'DO_mod[i] + ('
+            ) else p(
+              'DO_obs[i] + ('
+            ),
+            p('  (GPP[i] + ER[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
-                s('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]))')),
+                p('  KO2[i] .* (DO_sat[i] - ',
+                  if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) 'DO_mod_partial' else deficit_src
+                  ,'[i])'),
+                s(') * timestep')
+              ),
               'trapezoid' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
-                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
+                p('  (GPP[i+1] + ER[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                switch(
+                  deficit_src,
+                  'DO_obs' = c(
+                    p('  KO2[i] .* (DO_sat[i] - DO_obs[i]) +'),
+                    p('  KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])'),
+                    s(') * (timestep / 2.0)')),
+                  'DO_mod' = c(
+                    if(err_proc_iid && !err_obs_iid) p(
+                      # in process models DO_mod[i] == DO_obs[i], and
+                      # deficit_src is a concept specific to metabolism
+                      # modeling, so this obs/mod distinction gets fuzzy here
+                      '  KO2[i] .* (DO_sat[i] - DO_mod_partial[i]) +'
+                    ) else p(
+                      '  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'
+                    ),
+                    p('  KO2[i+1] .* DO_sat[i+1]'),
+                    s(') .* (timestep ./ (2.0 + KO2[i+1] * timestep))'))
+                )
+              )
             )
+          ),
+          if(err_proc_iid) c(
+            p('for(j in 1:d) {'),
+            indent(
+              'DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * ',
+              switch(
+                ode_method,
+                'euler' = indent(
+                  s('timestep ./ depth[i,j]')
+                ),
+                'trapezoid' = indent(
+                  'sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*',
+                  switch(
+                    deficit_src,
+                    'DO_obs' = s('(timestep / 2.0)'),
+                    'DO_mod' = s('(timestep / (2.0 + KO2[i+1,j] * timestep))')
+                  )
+                )
+              )
+            ),
+            p('}')
           )
         ),
         p('}')
@@ -416,19 +448,21 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      p('for(i in 1:(n-1)) {'),
+      if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) c(
+        p('for(i in 1:n) {')
+      ) else c(
+        p('for(i in 2:n) {')
+      ),
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),
-          if(dDO_model) s(
-            'dDO_obs[i] ~ ', f('normal', mu=p('dDO_mod[i]'), sigma='err_proc_iid_sigma')
-          ) else s(
-            'err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
+          s(if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', ' ~ ', 
+            f('normal', mu='DO_mod_partial[i]', sigma='DO_mod_partial_sigma[i]')
           )
         ),
         if(err_proc_acor) c(
           comment('Autocorrelated process error'),
-          s('err_proc_acor_inc[i] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+          s('err_proc_acor_inc[i-1] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
         )
       ),
       p('}'),
@@ -437,7 +471,7 @@ mm_generate_mcmc_file <- function(
         s('err_proc_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
       if(err_proc_acor) c(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
+        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
     ),
     
@@ -501,7 +535,7 @@ mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
     pool_K600=c('none','normal','linear','binned'),
     err_obs_iid=c(TRUE, FALSE),
-    err_proc_acor=c(FALSE, TRUE),
+    err_proc_acor=FALSE, # omitting TRUE until I understand it (see #264)
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun='linlight',
@@ -511,9 +545,7 @@ mm_generate_mcmc_files <- function() {
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   
-  incompatible <- 
-    (!opts$err_obs_iid & opts$deficit_src == 'DO_mod') |
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
+  incompatible <- (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {

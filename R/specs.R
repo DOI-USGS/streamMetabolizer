@@ -279,12 +279,12 @@ specs <- function(
   ER_daily_sigma = 10,
   
   # hyperparameters for non-hierarchical K600
-  K600_daily_mu = 10,
-  K600_daily_sigma = 10,
+  K600_daily_mu = 30,
+  K600_daily_sigma = 30,
   
   # hyperparameters for hierarchical K600 - normal
-  K600_daily_mu_mu = 10,
-  K600_daily_mu_sigma = 10,
+  K600_daily_mu_mu = 30,
+  K600_daily_mu_sigma = 30,
   
   # hyperparameters for hierarchical K600 - linear. defaults should be reasonably
   # constrained, not too wide. element names are ignored
@@ -305,7 +305,7 @@ specs <- function(
   
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.1,
-  err_proc_acor_phi_alpha = 0.1,
+  err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 0.1,
   err_proc_iid_sigma_scale = 0.1,
@@ -436,7 +436,6 @@ specs <- function(
         all_specs$K600_daily_beta_sigma <- rep(10, all_specs$K600_daily_beta_num)
       }
       if('params_out' %in% yes_missing) {
-        DO_model <- (features$err_obs_iid || features$deficit_src == 'DO_mod')
         all_specs$params_out <- c(
           c('GPP_daily','ER_daily','K600_daily'),
           if(features$pool_K600 != 'none') 'K600_daily_pred',
@@ -446,9 +445,9 @@ specs <- function(
             normal=c('K600_daily_mu', 'K600_daily_sigma'),
             linear=c('K600_daily_beta', 'K600_daily_sigma'),
             binned=c('K600_daily_beta', 'K600_daily_sigma')), 
-          if(features$err_obs_iid) 'err_obs_iid_sigma',
+          if(features$err_obs_iid) 'err_obs_iid_sigma', # add in err_obs_iid later
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c(if(DO_model) 'err_proc_iid', 'err_proc_iid_sigma'))
+          if(features$err_proc_iid) c('err_proc_iid_sigma')) # add in err_proc_iid later
       }
       
       # check for errors/inconsistencies
