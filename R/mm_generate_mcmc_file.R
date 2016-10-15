@@ -190,7 +190,7 @@ mm_generate_mcmc_file <- function(
       # move timestep to data once frac_GPP, frac_ER, and frac_D have been
       # replaced with timestep and other coefficients in the data prep code
       'real<lower=0> timestep; # length of each timestep in days',
-      s('timestep = frac_D[1]')
+      s('timestep = frac_D[1,1]'),
       
       #   chunk(
       #     # Coefficient declarations, if any, go here
@@ -203,7 +203,7 @@ mm_generate_mcmc_file <- function(
       #     ),
       #     p('}')
       #   ),
-      #   '}',''
+      '}',''
     ),
     
     #### parameters ####
@@ -240,7 +240,12 @@ mm_generate_mcmc_file <- function(
           if(err_proc_iid) c(
             'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
-            'vector[d] err_proc_acor_inc[n-1];'))
+            'vector[d] err_proc_acor_inc[n-1];')),
+        
+        # DO_mod if it's a fitted parameter (oipi models)
+        if(err_obs_iid && err_proc_iid) c(
+          'vector[d] DO_mod[n];')
+        
       ),
       '}',''
     ),
@@ -260,6 +265,9 @@ mm_generate_mcmc_file <- function(
       # rescaled error distribution parameters
       if(err_obs_iid) c(
         'real<lower=0> err_obs_iid_sigma;'),
+      if(err_proc_acor || err_proc_iid) c(
+        'vector[d] DO_mod_partial_sigma[n];'
+      ),
       if(err_proc_acor) c(
         # 'real<lower=0, upper=1> err_proc_acor_phi;', # currently opting not to scale phi (which might be 0-1 or very close to 0)
         'real<lower=0> err_proc_acor_sigma;'),
@@ -282,7 +290,10 @@ mm_generate_mcmc_file <- function(
       ),
       
       # instantaneous DO and possibly process error values
-      'vector[d] DO_mod[n];',
+      if(err_obs_iid && !err_proc_iid)  
+        'vector[d] DO_mod[n];',
+      if(err_proc_acor || err_proc_iid)
+        'vector[d] DO_mod_partial[n];',
       if(err_proc_acor)
         'vector[d] err_proc_acor[n-1];'
     ),
@@ -336,11 +347,6 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("Calculate individual process rates"),
-        # set the first element of DO_mod_partial_sigma to a value. We never use
-        # it, just want indexing such that DO_mod_partial_sigma[i] refers to the
-        # difference between (DO_mod or DO_obs)[i] and DO_mod_partial[i]
-        if(ode_method == 'trapezoid') 
-          s('DO_mod_partial_sigma[1] = 0'),
         switch(
           ode_method,
           'euler' = p('for(i in 1:(n-1)) {'),
@@ -359,26 +365,36 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("DO model"),
-        s('DO_mod[1] = DO_obs_1'),
+        if(err_obs_iid && !err_proc_iid)  
+          s('DO_mod[1] = DO_obs_1')
+        else if(err_proc_iid && ((deficit_src=='DO_mod' && !err_obs_iid) || (err_obs_iid))) c(
+          s('DO_mod_partial[1] = DO_obs_1'),
+          s('DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1]')
+        ),
         p('for(i in 1:(n-1)) {'),
         indent(
-          if(!err_proc_iid) p('DO_mod[i+1] =') else p('DO_mod_partial[i+1] ='),
+          if(!err_proc_iid) p(
+            'DO_mod[i+1] ='
+          ) else p(
+            'DO_mod_partial[i+1] ='
+          ),
           indent(
-            p('DO_mod[i] + ('),
-            if(err_proc_acor) p('err_proc_acor[i] +'),
-            p('  (GPP[i] + ER[i]) ./ depth[i] +'),
+            if(err_obs_iid) p(
+              'DO_mod[i] + ('
+            ) else p(
+              'DO_obs[i] + ('
+            ),
+            p('  (GPP[i] + ER[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
-                switch(
-                  deficit_src,
-                  'DO_obs' = p('  KO2[i] .* (DO_sat[i] - DO_obs[i])'),
-                  'DO_mod' = p('  KO2[i] .* (DO_sat[i] - DO_mod[i])')
-                ),
+                p('  KO2[i] .* (DO_sat[i] - ',
+                  if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) 'DO_mod_partial' else deficit_src
+                  ,'[i])'),
                 s(') * timestep')
               ),
               'trapezoid' = c(
-                p('  (GPP[i+1] + ER[i+1]) ./ depth[i+1] +'),
+                p('  (GPP[i+1] + ER[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
                 switch(
                   deficit_src,
                   'DO_obs' = c(
@@ -386,23 +402,40 @@ mm_generate_mcmc_file <- function(
                     p('  KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])'),
                     s(') * (timestep / 2.0)')),
                   'DO_mod' = c(
-                    p('  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'),
+                    if(err_proc_iid && !err_obs_iid) p(
+                      # in process models DO_mod[i] == DO_obs[i], and
+                      # deficit_src is a concept specific to metabolism
+                      # modeling, so this obs/mod distinction gets fuzzy here
+                      '  KO2[i] .* (DO_sat[i] - DO_mod_partial[i]) +'
+                    ) else p(
+                      '  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'
+                    ),
                     p('  KO2[i+1] .* DO_sat[i+1]'),
-                    s(') .* (timestep / (2.0 + KO2[i+1] * timestep))'))
+                    s(') .* (timestep ./ (2.0 + KO2[i+1] * timestep))'))
                 )
               )
             )
           ),
-          if(ode_method == 'trapezoid') c(
-            'DO_mod_partial_sigma[i+1] = err_proc_iid_sigma * ',
+          if(err_proc_iid) c(
+            p('for(j in 1:d) {'),
             indent(
-              'sqrt(pow(depth[i], -2) + pow(depth[i+1], -2)) .*',
+              'DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * ',
               switch(
-                deficit_src,
-                'DO_obs' = s('(timestep / 2.0)'),
-                'DO_mod' = s('(timestep / (2.0 + KO2[i+1] * timestep))')
+                ode_method,
+                'euler' = indent(
+                  s('timestep ./ depth[i,j]')
+                ),
+                'trapezoid' = indent(
+                  'sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*',
+                  switch(
+                    deficit_src,
+                    'DO_obs' = s('(timestep / 2.0)'),
+                    'DO_mod' = s('(timestep / (2.0 + KO2[i+1,j] * timestep))')
+                  )
+                )
               )
-            )
+            ),
+            p('}')
           )
         ),
         p('}')
@@ -415,7 +448,11 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      p('for(i in 2:n) {'),
+      if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) c(
+        p('for(i in 1:n) {')
+      ) else c(
+        p('for(i in 2:n) {')
+      ),
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),

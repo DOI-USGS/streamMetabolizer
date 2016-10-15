@@ -7,7 +7,45 @@ context("metab_bayes")
 # skip_on_appveyor()
 # skip_if_not_installed('deSolve')
 
-manual_tests <- function() {
+manual_test4 <- function() {
+  
+  library(streamMetabolizer)
+  library(testthat)
+  library(dplyr)
+  source('tests/testthat/helper-rmse_DO.R')
+  
+  # simple test data (except for being light saturating)
+  dat <- data_metab('1', res='30')
+  
+  # 12 core models as in https://github.com/USGS-R/streamMetabolizer/issues/264
+  stanfiles <- matrix(c(
+    'b_np_oi_eu_plrcko.stan', 'b_np_pi_eu_plrcko.stan', 'b_np_oipi_eu_plrcko.stan',
+    'b_np_oi_eu_plrckm.stan', 'b_np_pi_eu_plrckm.stan', 'b_np_oipi_eu_plrckm.stan',
+    'b_np_oi_tr_plrcko.stan', 'b_np_pi_tr_plrcko.stan', 'b_np_oipi_tr_plrcko.stan',
+    'b_np_oi_tr_plrckm.stan', 'b_np_pi_tr_plrckm.stan', 'b_np_oipi_tr_plrckm.stan'),
+    ncol=3, byrow=TRUE, dimnames=list(c('eu_ko','eu_km','tr_ko','tr_km'), c('oi','pi','oipi')))
+  
+  mms <- lapply(c(stanfiles), function(sf) {
+    message(sf)
+    file.edit(paste0('inst/models/', sf))
+    metab(specs(sf), dat)
+  })
+  
+  sapply(mms, get_fitting_time)
+  
+  bind_rows(lapply(mms, function(mm) {
+    get_params(mm) %>%
+      mutate(model=get_specs(mm)$model_name) %>%
+      select(model, everything()) %>%
+      bind_cols(select(get_fit(mm)$daily, ends_with('Rhat')))
+  }))
+  
+  library(gridExtra)
+  do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
+    plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
+}
+
+manual_test1 <- function() {
   
   library(streamMetabolizer)
   library(testthat)
