@@ -78,11 +78,11 @@ create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_me
   DO.obs.1 <- environment(calc_dDOdt)$data$DO.obs[1]
   t <- environment(calc_dDOdt)$data$t
   
-  if(requireNamespace('deSolve', quietly=TRUE)) {
+  if(requireNamespace('deSolve', quietly=TRUE) && !(ode_method %in% c('Euler','pairmeans'))) {
     # identify the right ode method argument
     ode.method <- switch(
       ode_method,
-      euler=, trapezoid=, Euler=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      euler=, trapezoid='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
       rk2=deSolve::rkMethod('rk2'),
       ode_method
     )
@@ -101,7 +101,7 @@ create_calc_DO <- function(calc_dDOdt, ode_method=environment(calc_dDOdt)$ode_me
     # identify the right ode method argument
     ode.method <- switch(
       ode_method,
-      euler=, trapezoid=, Euler=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
+      Euler=, pairmeans='euler', # we do the trapezoidy/pairmeansy stuff in calc_dDOdt
       stop("package deSolve is required for ode_method '", ode_method, "'.\n",
            "  Either install deSolve or select ode_method from c('euler','trapezoid')")
     )
