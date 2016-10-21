@@ -18,19 +18,23 @@ manual_test4 <- function() {
   dat <- data_metab('1', res='30')
   
   # 12 core models as in https://github.com/USGS-R/streamMetabolizer/issues/264
-  stanfiles <- matrix(c(
-    'b_np_oi_eu_plrcko.stan', 'b_np_pi_eu_plrcko.stan', 'b_np_oipi_eu_plrcko.stan',
-    'b_np_oi_eu_plrckm.stan', 'b_np_pi_eu_plrckm.stan', 'b_np_oipi_eu_plrckm.stan',
+  stanfiles <- c(
     'b_np_oi_tr_plrcko.stan', 'b_np_pi_tr_plrcko.stan', 'b_np_oipi_tr_plrcko.stan',
-    'b_np_oi_tr_plrckm.stan', 'b_np_pi_tr_plrckm.stan', 'b_np_oipi_tr_plrckm.stan'),
-    ncol=3, byrow=TRUE, dimnames=list(c('eu_ko','eu_km','tr_ko','tr_km'), c('oi','pi','oipi')))
+    'b_np_oi_tr_plrckm.stan', 'b_np_pi_tr_plrckm.stan', 'b_np_oipi_tr_plrckm.stan')#,
+    # 'b_np_oi_eu_plrcko.stan', 'b_np_pi_eu_plrcko.stan', 'b_np_oipi_eu_plrcko.stan',
+    # 'b_np_oi_eu_plrckm.stan', 'b_np_pi_eu_plrckm.stan', 'b_np_oipi_eu_plrckm.stan',
+    # 'm_np_oi_tr_plrcko.nlm', 'm_np_pi_tr_plrcko.nlm',
+    # 'm_np_oi_tr_plrckm.nlm', 'm_np_pi_tr_plrckm.nlm',
+    # 'm_np_oi_eu_plrcko.nlm', 'm_np_pi_eu_plrcko.nlm',
+    # 'm_np_oi_eu_plrckm.nlm', 'm_np_pi_eu_plrckm.nlm')
   
-  mms <- lapply(c(stanfiles), function(sf) {
+  mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
-    file.edit(paste0('inst/models/', sf))
+    #file.edit(paste0('inst/models/', sf))
     metab(specs(sf), dat)
   })
   
+  bind_rows(lapply(mms, get_params))
   sapply(mms, get_fitting_time)
   
   bind_rows(lapply(mms, function(mm) {

@@ -78,11 +78,11 @@ transformed parameters {
   DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1];
   for(i in 1:(n-1)) {
     DO_mod_partial[i+1] =
-      DO_mod[i] + (
+      DO_mod[i] .*
+        (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + (
         (GPP[i] + ER[i]) ./ depth[i] +
         (GPP[i+1] + ER[i+1]) ./ depth[i+1] +
-        KO2[i] .* (DO_sat[i] - DO_mod[i]) +
-        KO2[i+1] .* DO_sat[i+1]
+        KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
       ) .* (timestep ./ (2.0 + KO2[i+1] * timestep));
     for(j in 1:d) {
       DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 

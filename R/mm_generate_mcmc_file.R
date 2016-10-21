@@ -379,38 +379,40 @@ mm_generate_mcmc_file <- function(
             'DO_mod_partial[i+1] ='
           ),
           indent(
-            if(err_obs_iid) p(
-              'DO_mod[i] + ('
-            ) else p(
-              'DO_obs[i] + ('
+            switch(
+              ode_method,
+              'euler' = c(
+                p(if(err_obs_iid) 'DO_mod' else 'DO_obs', '[i] + (')
+              ),
+              'trapezoid' = c(
+                switch(
+                  deficit_src,
+                  'DO_obs' = c(
+                    p(if(err_obs_iid) 'DO_mod' else 'DO_obs', '[i] + ('),
+                    p('  - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +')),
+                  'DO_mod' = c(
+                    p(if(err_obs_iid) 'DO_mod' else 'DO_mod_partial', '[i] .*'),
+                    p('  (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + ('))
+                )
+              )
             ),
             p('  (GPP[i] + ER[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
                 p('  KO2[i] .* (DO_sat[i] - ',
-                  if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) 'DO_mod_partial' else deficit_src
-                  ,'[i])'),
+                  if(deficit_src=='DO_mod' && !err_obs_iid) 'DO_mod_partial' else deficit_src,
+                  '[i])'),
                 s(') * timestep')
               ),
               'trapezoid' = c(
                 p('  (GPP[i+1] + ER[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                p('  KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]'),
                 switch(
                   deficit_src,
                   'DO_obs' = c(
-                    p('  KO2[i] .* (DO_sat[i] - DO_obs[i]) +'),
-                    p('  KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])'),
                     s(') * (timestep / 2.0)')),
                   'DO_mod' = c(
-                    if(err_proc_iid && !err_obs_iid) p(
-                      # in process models DO_mod[i] == DO_obs[i], and
-                      # deficit_src is a concept specific to metabolism
-                      # modeling, so this obs/mod distinction gets fuzzy here
-                      '  KO2[i] .* (DO_sat[i] - DO_mod_partial[i]) +'
-                    ) else p(
-                      '  KO2[i] .* (DO_sat[i] - DO_mod[i]) +'
-                    ),
-                    p('  KO2[i+1] .* DO_sat[i+1]'),
                     s(') .* (timestep ./ (2.0 + KO2[i+1] * timestep))'))
                 )
               )
@@ -545,7 +547,8 @@ mm_generate_mcmc_files <- function() {
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   
-  incompatible <- (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
+  incompatible <- 
+    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid) # need at least 1 kind of error
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {
