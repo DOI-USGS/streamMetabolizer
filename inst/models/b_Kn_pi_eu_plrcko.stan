@@ -33,20 +33,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_full[n-1];
-  vector[d] dDO_obs[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  = frac_GPP[i] ./ depth[i];
-    coef_ER[i]   = frac_ER[i] ./ depth[i];
-    coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*
-      (DO_sat[i] - DO_obs[i]);
-    // dDO observations
-    dDO_obs[i] = DO_obs[i+1] - DO_obs[i];
-  }
+real<lower=0> timestep; # length of each timestep in days
+timestep = frac_D[1,1];
 }
 
 parameters {
@@ -58,12 +46,18 @@ parameters {
   real<lower=0> K600_daily_sigma_scaled;
   
   real<lower=0> err_proc_iid_sigma_scaled;
+  
+  vector[d] err_proc_iid[n-1];
 }
 
 transformed parameters {
   real<lower=0> K600_daily_sigma;
+  vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_iid_sigma;
-  vector[d] dDO_mod[n-1];
+  vector[d] GPP[n-1];
+  vector[d] ER[n-1];
+  vector[d] KO2[n-1];
+  vector[d] DO_mod_partial[n];
   
   // Rescale pooling & error distribution parameters
   K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
@@ -75,20 +69,32 @@ transformed parameters {
   // * IID process error
   // * reaeration depends on DO_obs
   
-  // dDO model
+  // Calculate individual process rates
   for(i in 1:(n-1)) {
-    dDO_mod[i] = 
-      GPP_daily  .* coef_GPP[i] +
-      ER_daily   .* coef_ER[i] +
-      K600_daily .* coef_K600_full[i];
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
+  }
+  
+  // DO model
+  for(i in 1:(n-1)) {
+    DO_mod_partial[i+1] =
+      DO_obs[i] + (
+        (GPP[i] + ER[i]) ./ depth[i] +
+        KO2[i] .* (DO_sat[i] - DO_obs[i])
+      ) * timestep;
+    for(j in 1:d) {
+      DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
+        timestep ./ depth[i,j];
+    }
   }
 }
 
 model {
   // Process error
-  for(i in 1:(n-1)) {
+  for(i in 2:n) {
     // Independent, identically distributed process error
-    dDO_obs[i] ~ normal(dDO_mod[i], err_proc_iid_sigma);
+    DO_obs[i] ~ normal(DO_mod_partial[i], DO_mod_partial_sigma[i]);
   }
   // SD (sigma) of the IID process errors
   err_proc_iid_sigma_scaled ~ cauchy(0, 1);
@@ -96,9 +102,9 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
+  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
 
   // Hierarchical constraints on K600_daily (normal model)
-  K600_daily_mu ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma);
+  K600_daily_pred ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma);
   K600_daily_sigma_scaled ~ cauchy(0, 1);
 }
