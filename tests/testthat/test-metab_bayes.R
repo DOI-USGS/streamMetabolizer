@@ -15,18 +15,14 @@ manual_test4 <- function() {
   source('tests/testthat/helper-rmse_DO.R')
   
   # simple test data (except for being light saturating)
-  dat <- data_metab('1', res='30')
+  dat <- mutate(data_metab('10', res='30'), discharge=seq(5,15,length.out=n()))
   
   # 12 core models as in https://github.com/USGS-R/streamMetabolizer/issues/264
   stanfiles <- c(
-    'b_np_oi_tr_plrcko.stan', 'b_np_pi_tr_plrcko.stan', 'b_np_oipi_tr_plrcko.stan',
-    'b_np_oi_tr_plrckm.stan', 'b_np_pi_tr_plrckm.stan', 'b_np_oipi_tr_plrckm.stan')#,
-    # 'b_np_oi_eu_plrcko.stan', 'b_np_pi_eu_plrcko.stan', 'b_np_oipi_eu_plrcko.stan',
-    # 'b_np_oi_eu_plrckm.stan', 'b_np_pi_eu_plrckm.stan', 'b_np_oipi_eu_plrckm.stan',
-    # 'm_np_oi_tr_plrcko.nlm', 'm_np_pi_tr_plrcko.nlm',
-    # 'm_np_oi_tr_plrckm.nlm', 'm_np_pi_tr_plrckm.nlm',
-    # 'm_np_oi_eu_plrcko.nlm', 'm_np_pi_eu_plrcko.nlm',
-    # 'm_np_oi_eu_plrckm.nlm', 'm_np_pi_eu_plrckm.nlm')
+    'b_Kl_oi_tr_plrcko.stan', 'b_Kl_pi_tr_plrcko.stan', 'b_Kl_oipi_tr_plrcko.stan',
+    'b_Kl_oi_tr_plrckm.stan', 'b_Kl_pi_tr_plrckm.stan', 'b_Kl_oipi_tr_plrckm.stan',
+    'b_Kl_oi_eu_plrcko.stan', 'b_Kl_pi_eu_plrcko.stan', 'b_Kl_oipi_eu_plrcko.stan',
+    'b_Kl_oi_eu_plrckm.stan', 'b_Kl_pi_eu_plrckm.stan', 'b_Kl_oipi_eu_plrckm.stan')
   
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
@@ -45,8 +41,14 @@ manual_test4 <- function() {
   }))
   
   library(gridExtra)
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_metab_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
   do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
     plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
+  do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
+    traceplot(get_mcmc(mm), 'K600_daily_mu') + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
 }
 
 manual_test1 <- function() {

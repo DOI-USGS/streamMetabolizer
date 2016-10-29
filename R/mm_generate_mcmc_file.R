@@ -492,9 +492,9 @@ mm_generate_mcmc_file <- function(
       comment('Daily metabolism priors'),
       s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
       s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
-      if(pool_K600 %in% c('none','normal')) s(
+      if(pool_K600 %in% c('none')) s(
         'K600_daily ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
-      ) else if(pool_K600 %in% c('linear','binned')) s(
+      ) else if(pool_K600 %in% c('normal','linear','binned')) s(
         'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
       )
     ),
@@ -504,7 +504,7 @@ mm_generate_mcmc_file <- function(
       indent(
         comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
         if(pool_K600 == 'normal') c(
-          s('K600_daily_mu ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
+          s('K600_daily_pred ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
         ),
         if(pool_K600 %in% c('linear','binned')) c(
           s('K600_daily_beta ~ ', f('normal', mu='K600_daily_beta_mu', sigma='K600_daily_beta_sigma'))
