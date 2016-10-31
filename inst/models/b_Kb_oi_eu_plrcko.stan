@@ -35,20 +35,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_full[n-1];
-  vector[d] dDO_obs[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  = frac_GPP[i] ./ depth[i];
-    coef_ER[i]   = frac_ER[i] ./ depth[i];
-    coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*
-      (DO_sat[i] - DO_obs[i]);
-    // dDO observations
-    dDO_obs[i] = DO_obs[i+1] - DO_obs[i];
-  }
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -66,8 +54,10 @@ transformed parameters {
   real<lower=0> K600_daily_sigma;
   vector[d] K600_daily_pred;
   real<lower=0> err_obs_iid_sigma;
+  vector[d] GPP[n-1];
+  vector[d] ER[n-1];
+  vector[d] KO2[n-1];
   vector[d] DO_mod[n];
-  vector[d] dDO_mod[n-1];
   
   // Rescale pooling & error distribution parameters
   K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
@@ -82,20 +72,21 @@ transformed parameters {
   // * no process error
   // * reaeration depends on DO_obs
   
-  // dDO model
+  // Calculate individual process rates
   for(i in 1:(n-1)) {
-    dDO_mod[i] = 
-      GPP_daily  .* coef_GPP[i] +
-      ER_daily   .* coef_ER[i] +
-      K600_daily .* coef_K600_full[i];
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
   }
   
   // DO model
   DO_mod[1] = DO_obs_1;
   for(i in 1:(n-1)) {
-    DO_mod[i+1] = (
-      DO_mod[i] +
-      dDO_mod[i]);
+    DO_mod[i+1] =
+      DO_mod[i] + (
+        (GPP[i] + ER[i]) ./ depth[i] +
+        KO2[i] .* (DO_sat[i] - DO_obs[i])
+      ) * timestep;
   }
 }
 

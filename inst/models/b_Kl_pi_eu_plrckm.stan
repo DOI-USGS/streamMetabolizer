@@ -34,8 +34,8 @@ data {
 }
 
 transformed data {
-real<lower=0> timestep; # length of each timestep in days
-timestep = frac_D[1,1];
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {

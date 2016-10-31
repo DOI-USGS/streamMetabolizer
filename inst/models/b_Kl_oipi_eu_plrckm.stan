@@ -35,8 +35,8 @@ data {
 }
 
 transformed data {
-real<lower=0> timestep; # length of each timestep in days
-timestep = frac_D[1,1];
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -87,8 +87,6 @@ transformed parameters {
   }
   
   // DO model
-  DO_mod_partial[1] = DO_obs_1;
-  DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1];
   for(i in 1:(n-1)) {
     DO_mod_partial[i+1] =
       DO_mod[i] + (
