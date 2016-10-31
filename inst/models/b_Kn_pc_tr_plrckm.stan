@@ -1,4 +1,4 @@
-// b_Kn_pc_tr_plrcko.stan
+// b_Kn_pc_tr_plrckm.stan
 
 data {
   // Parameters of priors on metabolism
@@ -71,7 +71,7 @@ transformed parameters {
   // * trapezoid version
   // * no observation error
   // * autocorrelated process error
-  // * reaeration depends on DO_obs
+  // * reaeration depends on DO_mod
   
   err_proc_acor[1] = err_proc_acor_inc[1];
   for(i in 1:(n-1)) {
@@ -89,12 +89,12 @@ transformed parameters {
   DO_mod[1] = DO_obs_1;
   for(i in 1:(n-1)) {
     DO_mod[i+1] =
-      DO_obs[i] + (
-        - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +
+      DO_mod_partial[i] .*
+        (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + (
         (GPP[i] + ER[i] + err_proc_acor[i]) ./ depth[i] +
         (GPP[i+1] + ER[i+1] + err_proc_acor[i+1]) ./ depth[i+1] +
         KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
-      ) * (timestep / 2.0);
+      ) .* (timestep ./ (2.0 + KO2[i+1] * timestep));
   }
 }
 

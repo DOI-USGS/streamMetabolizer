@@ -186,23 +186,24 @@ mm_generate_mcmc_file <- function(
     
     #### transformed data ####
     c('transformed data {', # transformed data = statements evaluated exactly once
-      
-      # move timestep to data once frac_GPP, frac_ER, and frac_D have been
-      # replaced with timestep and other coefficients in the data prep code
-      'real<lower=0> timestep; # length of each timestep in days',
-      s('timestep = frac_D[1,1]'),
-      
-      #   chunk(
-      #     # Coefficient declarations, if any, go here
-      #   ),
-      #   
-      #   indent(
-      #     p('for(i in 1:n) {'),
-      #     indent(
-      #       # Coefficient pre-calculations, if any, go here
-      #     ),
-      #     p('}')
-      #   ),
+      indent(
+        # move timestep to data once frac_GPP, frac_ER, and frac_D have been
+        # replaced with timestep and other coefficients in the data prep code
+        'real<lower=0> timestep; # length of each timestep in days',
+        s('timestep = frac_D[1,1]')
+        
+        #   chunk(
+        #     # Coefficient declarations, if any, go here
+        #   ),
+        #   
+        #   indent(
+        #     p('for(i in 1:n) {'),
+        #     indent(
+        #       # Coefficient pre-calculations, if any, go here
+        #     ),
+        #     p('}')
+        #   ),
+      ),
       '}',''
     ),
     
@@ -240,7 +241,7 @@ mm_generate_mcmc_file <- function(
           if(err_proc_iid) c(
             'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
-            'vector[d] err_proc_acor_inc[n-1];')),
+            sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n', trapezoid='n+1')))),
         
         # DO_mod if it's a fitted parameter (oipi models)
         if(err_obs_iid && err_proc_iid) c(
@@ -275,27 +276,20 @@ mm_generate_mcmc_file <- function(
         'real<lower=0> err_proc_iid_sigma;'),
 
       # instantaneous GPP, ER, and KO2
-      switch(
-        ode_method,
-        'euler' = c(
-          'vector[d] GPP[n-1];',
-          'vector[d] ER[n-1];',
-          'vector[d] KO2[n-1];'
-        ),
-        'trapezoid' = c(
-          'vector[d] GPP[n];',
-          'vector[d] ER[n];',
-          'vector[d] KO2[n];'
-        )
+      sprintf(
+        c('vector[d] GPP[%s];',
+          'vector[d] ER[%s];',
+          'vector[d] KO2[%s];'), 
+        switch(ode_method, euler='n-1', trapezoid='n')
       ),
       
       # instantaneous DO and possibly process error values
-      if(err_obs_iid && !err_proc_iid)  
+      if(err_proc_iid)
+        'vector[d] DO_mod_partial[n];'
+      else # err_obs_iid and/or err_proc_acor without err_proc_iid
         'vector[d] DO_mod[n];',
-      if(err_proc_acor || err_proc_iid)
-        'vector[d] DO_mod_partial[n];',
       if(err_proc_acor)
-        'vector[d] err_proc_acor[n-1];'
+        sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
     ),
     
     chunk(
@@ -338,7 +332,7 @@ mm_generate_mcmc_file <- function(
       if(err_proc_acor) c(
         p(''),
         s('err_proc_acor[1] = err_proc_acor_inc[1]'),
-        p('for(i in 1:(n-2)) {'),
+        p(sprintf('for(i in 1:(n-%d)) {', switch(ode_method, euler=2, trapezoid=1))),
         s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
         p('}')
       ),
@@ -347,11 +341,7 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("Calculate individual process rates"),
-        switch(
-          ode_method,
-          'euler' = p('for(i in 1:(n-1)) {'),
-          'trapezoid' = p('for(i in 1:n) {')
-        ),
+        sprintf('for(i in 1:%s) {', switch(ode_method, euler='(n-1)', trapezoid='n')),
         indent(
           s('GPP[i] = GPP_daily .* frac_GPP[i]'),
           s('ER[i] = ER_daily .* frac_ER[i]'),
@@ -365,18 +355,20 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("DO model"),
-        if(err_obs_iid && !err_proc_iid)  
+        if(!err_proc_iid)
           s('DO_mod[1] = DO_obs_1')
-        else if(err_proc_iid && ((deficit_src=='DO_mod' && !err_obs_iid) || (err_obs_iid))) c(
+        else if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
+          # pi_km and pcpi_km models are the only ones where we need
+          # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
           s('DO_mod_partial[1] = DO_obs_1'),
           s('DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1]')
         ),
         p('for(i in 1:(n-1)) {'),
         indent(
-          if(!err_proc_iid) p(
-            'DO_mod[i+1] ='
-          ) else p(
+          if(err_proc_iid) p(
             'DO_mod_partial[i+1] ='
+          ) else p( # err_obs_iid and/or err_proc_acor without err_proc_iid
+            'DO_mod[i+1] ='
           ),
           indent(
             switch(
@@ -450,7 +442,9 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      if(deficit_src=='DO_mod' && err_proc_iid && !err_obs_iid) c(
+      if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
+        # pi_km and pcpi_km models are the only ones where we need
+        # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
         p('for(i in 1:n) {')
       ) else c(
         p('for(i in 2:n) {')
@@ -537,7 +531,7 @@ mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
     pool_K600=c('none','normal','linear','binned'),
     err_obs_iid=c(TRUE, FALSE),
-    err_proc_acor=FALSE, # omitting TRUE until I understand it (see #264)
+    err_proc_acor=c(TRUE, FALSE),
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun='linlight',

@@ -38,20 +38,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_full[n-1];
-  vector[d] dDO_obs[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0;
-    coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0;
-    coef_K600_full[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0 .*
-      (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0;
-    // dDO observations
-    dDO_obs[i] = DO_obs[i+1] - DO_obs[i];
-  }
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -66,17 +54,20 @@ parameters {
   real<lower=0, upper=1> err_proc_acor_phi;
   real<lower=0> err_proc_acor_sigma_scaled;
   
-  vector[d] err_proc_acor_inc[n-1];
+  vector[d] err_proc_acor_inc[n+1];
 }
 
 transformed parameters {
   real<lower=0> K600_daily_sigma;
   vector[d] K600_daily_pred;
   real<lower=0> err_obs_iid_sigma;
+  vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_acor_sigma;
+  vector[d] GPP[n];
+  vector[d] ER[n];
+  vector[d] KO2[n];
   vector[d] DO_mod[n];
-  vector[d] dDO_mod[n-1];
-  vector[d] err_proc_acor[n-1];
+  vector[d] err_proc_acor[n];
   
   // Rescale pooling & error distribution parameters
   K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
@@ -93,33 +84,35 @@ transformed parameters {
   // * reaeration depends on DO_obs
   
   err_proc_acor[1] = err_proc_acor_inc[1];
-  for(i in 1:(n-2)) {
+  for(i in 1:(n-1)) {
     err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1];
   }
   
-  // dDO model
-  for(i in 1:(n-1)) {
-    dDO_mod[i] = 
-      err_proc_acor[i] +
-      GPP_daily  .* coef_GPP[i] +
-      ER_daily   .* coef_ER[i] +
-      K600_daily .* coef_K600_full[i];
+  // Calculate individual process rates
+  for(i in 1:n) {
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
   }
   
   // DO model
   DO_mod[1] = DO_obs_1;
   for(i in 1:(n-1)) {
-    DO_mod[i+1] = (
-      DO_mod[i] +
-      dDO_mod[i]);
+    DO_mod[i+1] =
+      DO_mod[i] + (
+        - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +
+        (GPP[i] + ER[i] + err_proc_acor[i]) ./ depth[i] +
+        (GPP[i+1] + ER[i+1] + err_proc_acor[i+1]) ./ depth[i+1] +
+        KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
+      ) * (timestep / 2.0);
   }
 }
 
 model {
   // Process error
-  for(i in 1:(n-1)) {
+  for(i in 2:n) {
     // Autocorrelated process error
-    err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
+    err_proc_acor_inc[i-1] ~ normal(0, err_proc_acor_sigma);
   }
   // Autocorrelation (phi) & SD (sigma) of the process errors
   err_proc_acor_phi ~ beta(err_proc_acor_phi_alpha, err_proc_acor_phi_beta);
