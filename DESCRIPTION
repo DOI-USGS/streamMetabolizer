@@ -51,6 +51,7 @@ Collate:
     'calc_DO_deficit.R'
     'calc_DO_sat.R'
     'calc_air_pressure.R'
+    'calc_bins.R'
     'calc_depth.R'
     'calc_is_daytime.R'
     'calc_light.R'

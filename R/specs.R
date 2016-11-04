@@ -23,16 +23,15 @@
 #'   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
 #'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
 #'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
-#'   K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If
+#'   K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If 
 #'   \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
-#'   K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If
-#'   \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
-#'   K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma, 
-#'   K600_daily_sigma_scale}. \item If \code{err_obs_iid} then \code{ 
-#'   err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
-#'   \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-#'   err_proc_acor_sigma_scale}. \item If \code{err_proc_iid} then \code{ 
-#'   err_proc_iid_sigma_scale}.}
+#'   K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If 
+#'   \code{pool_K600=='binned'} then \code{K600_daily_beta_breaks, 
+#'   K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_scale}. \item 
+#'   If \code{err_obs_iid} then \code{ err_obs_iid_sigma_scale}. \item If 
+#'   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
+#'   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
+#'   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
 #'   
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
 #'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
@@ -150,33 +149,21 @@
 #'   K600_daily_beta paramters. For pool_K600='linear', there are 2 betas 
 #'   corresponding to the intercept and slope, respectively, of the linear model
 #'   \code{log(K600) ~ K600_daily_beta[1] + K600_daily_beta[2]*log(Q)}. For 
-#'   pool_K600='binned', there are K600_daily_beta_num betas each giving the 
-#'   predicted K600 when Q_daily is in the corresponding bin (see 
-#'   \code{K600_daily_beta_cuts}).
+#'   pool_K600='binned', there are length(K600_daily_beta_breaks)-1 betas each
+#'   giving the predicted K600 when Q_daily is in the corresponding bin (see 
+#'   \code{K600_daily_beta_breaks}).
 #' @param K600_daily_beta_sigma hyperparameter for pool_K600='linear'. The 
 #'   standard deviation parameter of a normally distributed intercept term 
 #'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 #'   N(beta0_mu, beta0_sigma)
 #'   
-#' @param K600_daily_beta_num data configuration argument for 
-#'   pool_K600='binned'. The number of bins into which daily discharge values 
-#'   should be grouped. Each bin predicts a single value of K600_daily_pred, 
-#'   such that any day on which \code{discharge_bin_daily} equals that bin will 
-#'   have \code{K600_daily ~ N(K600_daily_beta[discharge_bin_daily], 
-#'   K600_daily_sigma)}
-#' @param K600_daily_beta_cuts data configuration argument for 
-#'   pool_K600='binned'. Either (1) character of length 1 in 
-#'   c('number','interval') indicating how the bin cuts should be determined, or
-#'   (2) numeric (as in \code{breaks} in \code{\link[base]{cut}}) of length 
-#'   K600_daily_beta_num+1 giving the natural-log-space breakpoints defining the
-#'   bins. For option 1, the implementation uses or is equivalent to the 
-#'   corresponding functions \code{\link[ggplot2]{cut_interval}} (to cut into 
-#'   bins having equal numeric ranges in natural log space) and 
-#'   \code{\link[ggplot2]{cut_number}} (to cut into bins having ~equal numbers 
-#'   of ln_discharge_daily observations). For option 2, make sure to include the
-#'   full range of ln_discharge_daily, with the first value smaller than all 
-#'   ln_discharge_daily values and the last value greater than or equal to all 
-#'   ln_discharge_daily values.
+#' @param K600_daily_beta_breaks data configuration argument for 
+#'   pool_K600='binned'. numeric (as in \code{breaks} in
+#'   \code{\link[base]{cut}}) giving the natural-log-space breakpoints defining
+#'   the bins. Make sure to include the full range of ln_discharge_daily, with
+#'   the first value smaller than all ln_discharge_daily values and the last
+#'   value greater than or equal to all ln_discharge_daily values. See also
+#'   \code{\link{calc_bins}}
 #'   
 #' @param K600_daily_sigma_scale hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The scale (= sigma) parameter of a 
@@ -291,14 +278,13 @@ specs <- function(
   K600_daily_beta_mu = c(intercept=10, slope=3),
   K600_daily_beta_sigma = c(intercept=8, slope=2),
   
-  # hyperparameters for hierarchical K600 - binned. K ~ beta[Q_bin_daily]
-  # (constant for each binned log(Q), i.e., rectangular interpolation among
-  # bins). beta_mu and beta_sigma may be length K600_daily_beta_num or length 1
-  # (to be replicated to length K600_daily_beta_num)
-  K600_daily_beta_num = 5,
-  K600_daily_beta_cuts = 'number',
-  # K600_daily_beta_mu = rep(10, K600_daily_beta_num), # already declared for linear hierarchy above
-  # K600_daily_beta_sigma = rep(10, K600_daily_beta_num), # already declared for linear hierarchy above
+  # hyperparameters for hierarchical K600 - binned. K ~ beta[Q_bin_daily] 
+  # (constant for each binned log(Q), i.e., rectangular interpolation among 
+  # bins). beta_mu and beta_sigma may be length length(K600_daily_beta_breaks)-1
+  # or length 1 (to be replicated to length length(K600_daily_beta_breaks)-1). 
+  # -8:6 covers almost all points in Raymond et al. 2012 and will therefore
+  # always be too broad a range for a single stream
+  K600_daily_beta_breaks = -8:6, 
   
   # hyperparameters for any hierarchical K600
   K600_daily_sigma_scale = 5,
@@ -410,7 +396,7 @@ specs <- function(
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
-        if(features$pool_K600 == 'binned') c('K600_daily_beta_num', 'K600_daily_beta_cuts'),
+        if(features$pool_K600 == 'binned') c('K600_daily_beta_breaks'),
         
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -432,8 +418,8 @@ specs <- function(
       }
       if(features$pool_K600 == 'binned') {
         # defaults are for linear pool_K600 & need adjustment for binned method
-        all_specs$K600_daily_beta_mu <- rep(10, all_specs$K600_daily_beta_num)
-        all_specs$K600_daily_beta_sigma <- rep(10, all_specs$K600_daily_beta_num)
+        all_specs$K600_daily_beta_mu <- rep(10, length(all_specs$K600_daily_beta_breaks)-1)
+        all_specs$K600_daily_beta_sigma <- rep(10, length(all_specs$K600_daily_beta_breaks)-1)
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(

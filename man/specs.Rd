@@ -13,17 +13,17 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   K600_daily_mu = 30, K600_daily_sigma = 30, K600_daily_mu_mu = 30,
   K600_daily_mu_sigma = 30, K600_daily_beta_mu = c(intercept = 10, slope =
   3), K600_daily_beta_sigma = c(intercept = 8, slope = 2),
-  K600_daily_beta_num = 5, K600_daily_beta_cuts = "number",
-  K600_daily_sigma_scale = 5, err_obs_iid_sigma_scale = 0.1,
-  err_proc_acor_phi_alpha = 1, err_proc_acor_phi_beta = 1,
-  err_proc_acor_sigma_scale = 0.1, err_proc_iid_sigma_scale = 0.1,
-  params_in, params_out, n_chains = 4, n_cores = 4, burnin_steps = 500,
-  saved_steps = 500, thin_steps = 1, verbose = FALSE,
-  weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
-  velocity.daily.max = NA), predictors = c("discharge.daily"),
-  transforms = c(K600 = "log", date = NA, velocity.daily = "log",
-  discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
-  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
+  K600_daily_beta_breaks = -8:6, K600_daily_sigma_scale = 5,
+  err_obs_iid_sigma_scale = 0.1, err_proc_acor_phi_alpha = 1,
+  err_proc_acor_phi_beta = 1, err_proc_acor_sigma_scale = 0.1,
+  err_proc_iid_sigma_scale = 0.1, params_in, params_out, n_chains = 4,
+  n_cores = 4, burnin_steps = 500, saved_steps = 500, thin_steps = 1,
+  verbose = FALSE, weights = c("K600/CI"), filters = c(CI.max = NA,
+  discharge.daily.max = NA, velocity.daily.max = NA),
+  predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
+  velocity.daily = "log", discharge.daily = "log"), other_args = c(),
+  err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
+  err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -153,35 +153,22 @@ c('linear','binned'). The means of prior distributions for the
 K600_daily_beta paramters. For pool_K600='linear', there are 2 betas 
 corresponding to the intercept and slope, respectively, of the linear model
 \code{log(K600) ~ K600_daily_beta[1] + K600_daily_beta[2]*log(Q)}. For 
-pool_K600='binned', there are K600_daily_beta_num betas each giving the 
-predicted K600 when Q_daily is in the corresponding bin (see 
-\code{K600_daily_beta_cuts}).}
+pool_K600='binned', there are length(K600_daily_beta_breaks)-1 betas each
+giving the predicted K600 when Q_daily is in the corresponding bin (see 
+\code{K600_daily_beta_breaks}).}
 
 \item{K600_daily_beta_sigma}{hyperparameter for pool_K600='linear'. The 
 standard deviation parameter of a normally distributed intercept term 
 (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
 N(beta0_mu, beta0_sigma)}
 
-\item{K600_daily_beta_num}{data configuration argument for 
-pool_K600='binned'. The number of bins into which daily discharge values 
-should be grouped. Each bin predicts a single value of K600_daily_pred, 
-such that any day on which \code{discharge_bin_daily} equals that bin will 
-have \code{K600_daily ~ N(K600_daily_beta[discharge_bin_daily], 
-K600_daily_sigma)}}
-
-\item{K600_daily_beta_cuts}{data configuration argument for 
-pool_K600='binned'. Either (1) character of length 1 in 
-c('number','interval') indicating how the bin cuts should be determined, or
-(2) numeric (as in \code{breaks} in \code{\link[base]{cut}}) of length 
-K600_daily_beta_num+1 giving the natural-log-space breakpoints defining the
-bins. For option 1, the implementation uses or is equivalent to the 
-corresponding functions \code{\link[ggplot2]{cut_interval}} (to cut into 
-bins having equal numeric ranges in natural log space) and 
-\code{\link[ggplot2]{cut_number}} (to cut into bins having ~equal numbers 
-of ln_discharge_daily observations). For option 2, make sure to include the
-full range of ln_discharge_daily, with the first value smaller than all 
-ln_discharge_daily values and the last value greater than or equal to all 
-ln_discharge_daily values.}
+\item{K600_daily_beta_breaks}{data configuration argument for 
+pool_K600='binned'. numeric (as in \code{breaks} in
+\code{\link[base]{cut}}) giving the natural-log-space breakpoints defining
+the bins. Make sure to include the full range of ln_discharge_daily, with
+the first value smaller than all ln_discharge_daily values and the last
+value greater than or equal to all ln_discharge_daily values. See also
+\code{\link{calc_bins}}}
 
 \item{K600_daily_sigma_scale}{hyperparameter for pool_K600 in 
 c('normal','linear','binned'). The scale (= sigma) parameter of a 
@@ -311,16 +298,15 @@ often should, be overridden to tailor the model to your needs.
   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
-  K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If
+  K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If 
   \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
-  K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If
-  \code{pool_K600=='binned'} then \code{K600_daily_beta_num, 
-  K600_daily_beta_cuts, K600_daily_beta_mu, K600_daily_beta_sigma, 
-  K600_daily_sigma_scale}. \item If \code{err_obs_iid} then \code{ 
-  err_obs_iid_sigma_scale}. \item If \code{err_proc_acor} then 
-  \code{err_proc_acor_phi_alpha, err_proc_acor_phi_beta, 
-  err_proc_acor_sigma_scale}. \item If \code{err_proc_iid} then \code{ 
-  err_proc_iid_sigma_scale}.}
+  K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If 
+  \code{pool_K600=='binned'} then \code{K600_daily_beta_breaks, 
+  K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_scale}. \item 
+  If \code{err_obs_iid} then \code{ err_obs_iid_sigma_scale}. \item If 
+  \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
+  err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
+  \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
   
   * metab_mle: \code{model_name, day_start, day_end, day_tests, 
   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20, 
