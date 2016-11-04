@@ -5,11 +5,11 @@ Version: 0.9.17
 Date: 2016-11-02
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
-Description: streamMetabolizer uses inverse modeling to estimate aquatic 
+Description: streamMetabolizer uses inverse modeling to estimate aquatic
     photosynthesis and respiration (collectively, metabolism) from time series
-    data on dissolved oxygen, water temperature, depth, and light. The package 
+    data on dissolved oxygen, water temperature, depth, and light. The package
     assists with data preparation, handles data gaps during modeling, and
-    provides tabular and graphical reports of model outputs. Several 
+    provides tabular and graphical reports of model outputs. Several
     time-honored methods are implemented along with many promising new variants,
     still under development, that produce more accurate and precise metabolism
     estimates.
@@ -23,18 +23,18 @@ VignetteBuilder: knitr
 Depends:
     R (>= 3.0)
 Imports:
-    LakeMetabolizer (>= 1.4.1),
-    unitted (>= 0.2.6),
+    deSolve,
     dplyr (>= 0.5.0),
-    tibble (>= 1.1.0),
+    LakeMetabolizer (>= 1.4.1),
     lazyeval,
     lubridate,
     magrittr,
     methods,
-    tidyr
+    tibble (>= 1.1.0),
+    tidyr,
+    unitted (>= 0.2.6)
 Suggests:
     chron,
-    deSolve,
     devtools,
     dygraphs,
     ggplot2,
