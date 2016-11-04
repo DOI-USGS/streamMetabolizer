@@ -17,12 +17,22 @@ manual_test4 <- function() {
   # simple test data (except for being light saturating)
   dat <- mutate(data_metab('10', res='30'), discharge=seq(5,15,length.out=n()))
   
-  # 12 core models as in https://github.com/USGS-R/streamMetabolizer/issues/264
-  stanfiles <- c(
-    'b_Kl_oi_tr_plrcko.stan', 'b_Kl_pi_tr_plrcko.stan', 'b_Kl_oipi_tr_plrcko.stan',
-    'b_Kl_oi_tr_plrckm.stan', 'b_Kl_pi_tr_plrckm.stan', 'b_Kl_oipi_tr_plrckm.stan',
-    'b_Kl_oi_eu_plrcko.stan', 'b_Kl_pi_eu_plrcko.stan', 'b_Kl_oipi_eu_plrcko.stan',
-    'b_Kl_oi_eu_plrckm.stan', 'b_Kl_pi_eu_plrckm.stan', 'b_Kl_oipi_eu_plrckm.stan')
+  # create a list of all models to run
+  opts <- expand.grid(
+    type='bayes',
+    pool_K600=c('none','normal','linear','binned'),
+    err_obs_iid=c(TRUE, FALSE),
+    err_proc_acor=FALSE,
+    err_proc_iid=c(FALSE, TRUE),
+    ode_method=c('trapezoid','euler'),
+    GPP_fun='linlight',
+    ER_fun='constant',
+    deficit_src=c('DO_mod','DO_obs'),
+    engine='stan',
+    check_validity=FALSE,
+    stringsAsFactors=FALSE)
+  stanfiles <- opts %>% rowwise %>% do(data_frame(model_name=do.call(mm_name, .))) %>% unlist(use.names=FALSE) %>% sort %>%
+  {.[!grepl('__', .)]}
   
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
