@@ -6,8 +6,8 @@ data {
   real GPP_daily_sigma;
   real ER_daily_mu;
   real ER_daily_sigma;
-  real K600_daily_mu;
-  real K600_daily_sigma;
+  real K600_daily_meanlog;
+  real K600_daily_sdlog;
   
   // Error distributions
   real err_proc_acor_phi_alpha;
@@ -40,7 +40,7 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector<lower=0>[d] K600_daily;
+  vector[d] K600_daily;
   
   real<lower=0, upper=1> err_proc_acor_phi;
   real<lower=0> err_proc_acor_sigma_scaled;
@@ -118,5 +118,5 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_meanlog, K600_daily_sdlog);
 }

@@ -74,10 +74,16 @@ plot_distribs <- function(
   distrib <- c(
     GPP_daily='normal', 
     ER_daily='normal',
-    K600_daily='normal',
-    K600_daily_mu='normal',
-    K600_daily_beta='normal',
-    K600_daily_sigma='halfcauchy',
+    K600_daily='lognormal',
+    # Kn
+    K600_daily_meanlog='lognormal',
+    K600_daily_sdlog='halfcauchy',
+    # Kl
+    lnK600_lnQ_intercept='normal',
+    lnK600_lnQ_slope='normal',
+    # Kb
+    K600_lnQ_nodes='lognormal', #K600_lnQ_nodediffs='lognormal',
+    # errors
     err_obs_iid_sigma='halfcauchy',
     err_proc_acor_phi='beta',
     err_proc_acor_sigma='halfcauchy',
@@ -121,21 +127,21 @@ plot_distribs <- function(
           mutate(dist = 'prior_rescaled'))
     },
     lognormal={
-      # prior_rescaled and prior diverge from one another as scale goes > 1. 
+      # prior_rescaled and prior diverge from one another as sdlog goes > 1. 
       # this seems to be mainly due to numerical computation/algorithm 
       # challenges in density(), rather than any problem with the scaling
-      # equation: high scale means high peak near 0 but also really long tail.
-      # high scale may not actually be a problem for MCMCs, but regardless, it's
-      # better to adjust location than scale for getting a distribution close to
-      # 0; e.g., location=-5, scale=1 gives distribution w/ peak at ~0.003 and
+      # equation: high sdlog means high peak near 0 but also really long tail.
+      # high sdlog may not actually be a problem for MCMCs, but regardless, it's
+      # better to adjust meanlog than sdlog for getting a distribution close to
+      # 0; e.g., meanlog=-5, sdlog=1 gives distribution w/ peak at ~0.003 and
       # not-too-long tail
-      xlim <- qlnorm(c(0.0001, 0.9), meanlog=hyperpars$location, sdlog=hyperpars$scale)
+      xlim <- qlnorm(c(0.0001, 0.9), meanlog=hyperpars$meanlog, sdlog=hyperpars$sdlog)
       bind_rows(
         data_frame(
           dist = 'prior',
           x = exp(seq(log(xlim[1]), log(xlim[2]), length.out=1000)),
-          y = dlnorm(x, meanlog=hyperpars$location, sdlog=hyperpars$scale)),
-        exp(hyperpars$location + rnorm(1000000, 0, 1)*hyperpars$scale) %>% { .[. < xlim[2]]} %>%
+          y = dlnorm(x, meanlog=hyperpars$meanlog, sdlog=hyperpars$sdlog)),
+        exp(hyperpars$meanlog + rnorm(1000000, 0, 1)*hyperpars$sdlog) %>% { .[. < xlim[2]]} %>%
           density(n=512*12, from=xlim[1], to=xlim[2]) %>%
           .[c('x','y')] %>%
           as.data.frame() %>%

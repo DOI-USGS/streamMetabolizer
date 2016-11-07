@@ -10,20 +10,23 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   init.ER.daily = -10, init.ER20 = -10, init.K600.daily = 10, split_dates,
   keep_mcmcs = TRUE, keep_mcmc_data = FALSE, GPP_daily_mu = 10,
   GPP_daily_sigma = 10, ER_daily_mu = -10, ER_daily_sigma = 10,
-  K600_daily_mu = 30, K600_daily_sigma = 30, K600_daily_mu_mu = 30,
-  K600_daily_mu_sigma = 30, K600_daily_beta_mu = c(intercept = 10, slope =
-  3), K600_daily_beta_sigma = c(intercept = 8, slope = 2),
-  K600_daily_beta_breaks = -8:6, K600_daily_sigma_scale = 5,
-  err_obs_iid_sigma_scale = 0.1, err_proc_acor_phi_alpha = 1,
-  err_proc_acor_phi_beta = 1, err_proc_acor_sigma_scale = 0.1,
-  err_proc_iid_sigma_scale = 0.1, params_in, params_out, n_chains = 4,
-  n_cores = 4, burnin_steps = 500, saved_steps = 500, thin_steps = 1,
-  verbose = FALSE, weights = c("K600/CI"), filters = c(CI.max = NA,
-  discharge.daily.max = NA, velocity.daily.max = NA),
-  predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
-  velocity.daily = "log", discharge.daily = "log"), other_args = c(),
-  err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
-  err.proc.phi = 0, sim.seed = NA)
+  K600_daily_meanlog = log(6), K600_daily_sdlog = 1,
+  K600_daily_meanlog_meanlog = log(6), K600_daily_meanlog_sdlog = 1,
+  lnK600_lnQ_intercept_mu = 2, lnK600_lnQ_intercept_sigma = 2.4,
+  lnK600_lnQ_slope_mu = 0, lnK600_lnQ_slope_sigma = 0.5,
+  K600_lnQ_nodes_centers = -3:3, K600_lnQ_nodediffs_sdlog = 0.05,
+  K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)),
+  K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
+  K600_daily_sdlog_scale = 0.3, err_obs_iid_sigma_scale = 0.1,
+  err_proc_acor_phi_alpha = 1, err_proc_acor_phi_beta = 1,
+  err_proc_acor_sigma_scale = 0.1, err_proc_iid_sigma_scale = 0.1,
+  params_in, params_out, n_chains = 4, n_cores = 4, burnin_steps = 500,
+  saved_steps = 500, thin_steps = 1, verbose = FALSE,
+  weights = c("K600/CI"), filters = c(CI.max = NA, discharge.daily.max = NA,
+  velocity.daily.max = NA), predictors = c("discharge.daily"),
+  transforms = c(K600 = "log", date = NA, velocity.daily = "log",
+  discharge.daily = "log"), other_args = c(), err.obs.sigma = 0.1,
+  err.obs.phi = 0, err.proc.sigma = 0, err.proc.phi = 0, sim.seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -133,47 +136,58 @@ rate of ecosystem respiration}
 \item{ER_daily_sigma}{The standard deviation of a dnorm distribution for 
 ER_daily, the daily rate of ecosystem respiration}
 
-\item{K600_daily_mu}{Applies when pool_K600 is 'none'. The mean of a dnorm 
-distribution for K600_daily, the daily rate of reaeration}
+\item{K600_daily_meanlog}{Applies when pool_K600 is 'none'. The mean of a 
+dlnorm distribution for K600_daily, the daily rate of reaeration}
 
-\item{K600_daily_sigma}{Applies when pool_K600 is 'none'. The standard 
-deviation of a dnorm distribution for K600_daily, the daily rate of 
+\item{K600_daily_sdlog}{Applies when pool_K600 is 'none'. The standard 
+deviation of a dlnorm distribution for K600_daily, the daily rate of 
 reaeration}
 
-\item{K600_daily_mu_mu}{hyperparameter for pool_K600='normal'. The mean 
-parameter (mu_mu) of a normal distribution of mu in K ~ N(mu, sigma), mu ~ 
-N(mu_mu, mu_sigma)}
+\item{K600_daily_meanlog_meanlog}{hyperparameter for pool_K600='normal'. The 
+mean parameter (meanlog_meanlog) of a lognormal distribution of meanlog in 
+K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, meanlog_sdlog)}
 
-\item{K600_daily_mu_sigma}{hyperparameter for pool_K600='normal'. The 
-standard deviation parameter (mu_sigma) of a normal distribution of mu in K
-~ N(mu, sigma), mu ~ N(mu_mu, mu_sigma)}
+\item{K600_daily_meanlog_sdlog}{hyperparameter for pool_K600='normal'. The 
+standard deviation parameter (meanlog_sdlog) of a lognormal distribution of
+meanlog in K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, 
+meanlog_sdlog)}
 
-\item{K600_daily_beta_mu}{hyperparameter for pool_K600 in 
-c('linear','binned'). The means of prior distributions for the 
-K600_daily_beta paramters. For pool_K600='linear', there are 2 betas 
-corresponding to the intercept and slope, respectively, of the linear model
-\code{log(K600) ~ K600_daily_beta[1] + K600_daily_beta[2]*log(Q)}. For 
-pool_K600='binned', there are length(K600_daily_beta_breaks)-1 betas each
-giving the predicted K600 when Q_daily is in the corresponding bin (see 
-\code{K600_daily_beta_breaks}).}
+\item{lnK600_lnQ_intercept_mu}{hyperparameter for pool_K600 == 'linear'. The 
+mean of the prior distribution for the intercept parameter in 
+\code{log(K600) ~ lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}}
 
-\item{K600_daily_beta_sigma}{hyperparameter for pool_K600='linear'. The 
-standard deviation parameter of a normally distributed intercept term 
-(beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
-N(beta0_mu, beta0_sigma)}
+\item{lnK600_lnQ_intercept_sigma}{hyperparameter for pool_K600 == 'linear'. 
+The standard deviation of the prior distribution for the intercept 
+parameter in \code{log(K600) ~ lnK600_lnQ_intercept + 
+lnK600_lnQ_slope*log(Q)}}
 
-\item{K600_daily_beta_breaks}{data configuration argument for 
-pool_K600='binned'. numeric (as in \code{breaks} in
-\code{\link[base]{cut}}) giving the natural-log-space breakpoints defining
-the bins. Make sure to include the full range of ln_discharge_daily, with
-the first value smaller than all ln_discharge_daily values and the last
-value greater than or equal to all ln_discharge_daily values. See also
-\code{\link{calc_bins}}}
+\item{lnK600_lnQ_slope_mu}{hyperparameter for pool_K600='linear'. The mean of
+the prior distribution for the slope parameter in \code{log(K600) ~ 
+lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}}
 
-\item{K600_daily_sigma_scale}{hyperparameter for pool_K600 in 
+\item{lnK600_lnQ_slope_sigma}{hyperparameter for pool_K600='linear'. The 
+standard deviation of the prior distribution for the slope parameter in 
+\code{log(K600) ~ lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}}
+
+\item{K600_lnQ_nodes_centers}{data configuration argument for 
+pool_K600='binned'. numeric vector giving the natural-log-space centers of 
+the discharge bins. See also \code{\link{calc_bins}}}
+
+\item{K600_lnQ_nodediffs_sdlog}{hyperparameter for pool_K600='binned'. The 
+standard deviations of the differences in estimated K600 between successive
+lnQ_nodes (bins), where the means of those differences are always zero}
+
+\item{K600_lnQ_nodes_meanlog}{hyperparameter for pool_K600='binned'. The 
+means of lognormal prior distributions for the K600_lnQ_nodes parameters.}
+
+\item{K600_lnQ_nodes_sdlog}{hyperparameter for pool_K600='binned'. The 
+standard deviations of lognormal prior distributions for the K600_lnQ_nodes
+parameters.}
+
+\item{K600_daily_sdlog_scale}{hyperparameter for pool_K600 in 
 c('normal','linear','binned'). The scale (= sigma) parameter of a 
-half-Cauchy distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+half-Cauchy distribution of sdlog in K ~ lN(meanlog, sdlog), sdlog ~ 
+halfCauchy(0, sdlog=sdlog_sdlog). Visualize the PDF of K600_daily_sdlog 
 with \code{\link{plot_distribs}}.}
 
 \item{err_obs_iid_sigma_scale}{The scale (= sigma) parameter of a half-Cauchy
@@ -296,14 +310,15 @@ often should, be overridden to tailor the model to your needs.
   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The 
   need for other arguments depends on features of the model structure, as 
   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
-  \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
-  \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
-  K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If 
-  \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
-  K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If 
-  \code{pool_K600=='binned'} then \code{K600_daily_beta_breaks, 
-  K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_scale}. \item 
-  If \code{err_obs_iid} then \code{ err_obs_iid_sigma_scale}. \item If 
+  \code{$pool_K600=='none'} then \code{K600_daily_meanlog, K600_daily_sdlog}.
+  \item If \code{$pool_K600=='normal'} then \code{K600_daily_meanlog_meanlog,
+  K600_daily_meanlog_sdlog, K600_daily_sdlog_scale}. \item If 
+  \code{pool_K600=='linear'} then \code{lnK600_lnQ_intercept_mu, 
+  lnK600_lnQ_intercept_sigma, lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma, 
+  K600_daily_sdlog_scale}. \item If \code{pool_K600=='binned'} then 
+  \code{K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog, 
+  K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sdlog_scale}. 
+  \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}

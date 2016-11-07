@@ -21,7 +21,7 @@
 #' 
 #' # for use in setting specs
 #' brks <- calc_bins(ln.disch, 'width', width=0.8)$bounds
-#' specs('b_Kb_oipi_tr_plrckm.stan', K600_daily_beta_breaks=brks)
+#' specs('b_Kb_oipi_tr_plrckm.stan', K600_lnQ_nodes_centers=brks)
 #' 
 #' # variations
 #' 

@@ -8,9 +8,11 @@ data {
   real ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (linear model)
-  vector[2] K600_daily_beta_mu;
-  vector[2] K600_daily_beta_sigma;
-  real<lower=0> K600_daily_sigma_scale;
+  real lnK600_lnQ_intercept_mu;
+  real lnK600_lnQ_intercept_sigma;
+  real lnK600_lnQ_slope_mu;
+  real lnK600_lnQ_slope_sigma;
+  real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
   real<lower=0> err_obs_iid_sigma_scale;
@@ -21,7 +23,7 @@ data {
   
   // Daily data
   vector[d] DO_obs_1;
-  vector[d] ln_discharge_daily;
+  vector[d] lnQ_daily;
   
   // Data
   vector[d] DO_obs[n];
@@ -41,16 +43,17 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector<lower=0>[d] K600_daily;
+  vector[d] K600_daily;
   
-  vector[2] K600_daily_beta;
-  real<lower=0> K600_daily_sigma_scaled;
+  real lnK600_lnQ_intercept;
+  real lnK600_lnQ_slope;
+  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0> err_obs_iid_sigma_scaled;
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sdlog;
   vector[d] K600_daily_pred;
   real<lower=0> err_obs_iid_sigma;
   vector[d] GPP[n];
@@ -59,11 +62,11 @@ transformed parameters {
   vector[d] DO_mod[n];
   
   // Rescale pooling & error distribution parameters
-  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   
   // Hierarchical, linear model of K600_daily
-  K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily;
+  K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily);
   
   // Model DO time series
   // * trapezoid version
@@ -102,9 +105,10 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (linear model)
-  K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma_scaled ~ cauchy(0, 1);
+  lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);
+  lnK600_lnQ_slope ~ normal(lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma);
+  K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }

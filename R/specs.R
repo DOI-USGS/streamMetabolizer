@@ -21,14 +21,15 @@
 #'   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The 
 #'   need for other arguments depends on features of the model structure, as 
 #'   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
-#'   \code{$pool_K600=='none'} then \code{K600_daily_mu, K600_daily_sigma}. 
-#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_mu_mu, 
-#'   K600_daily_mu_sigma, K600_daily_sigma_scale}. \item If 
-#'   \code{pool_K600=='linear'} then \code{K600_daily_beta_mu, 
-#'   K600_daily_beta_sigma, K600_daily_sigma_scale}. \item If 
-#'   \code{pool_K600=='binned'} then \code{K600_daily_beta_breaks, 
-#'   K600_daily_beta_mu, K600_daily_beta_sigma, K600_daily_sigma_scale}. \item 
-#'   If \code{err_obs_iid} then \code{ err_obs_iid_sigma_scale}. \item If 
+#'   \code{$pool_K600=='none'} then \code{K600_daily_meanlog, K600_daily_sdlog}.
+#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_meanlog_meanlog,
+#'   K600_daily_meanlog_sdlog, K600_daily_sdlog_scale}. \item If 
+#'   \code{pool_K600=='linear'} then \code{lnK600_lnQ_intercept_mu, 
+#'   lnK600_lnQ_intercept_sigma, lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma, 
+#'   K600_daily_sdlog_scale}. \item If \code{pool_K600=='binned'} then 
+#'   \code{K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog, 
+#'   K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sdlog_scale}. 
+#'   \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
 #'   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
 #'   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
 #'   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
@@ -131,44 +132,50 @@
 #'   rate of ecosystem respiration
 #' @param ER_daily_sigma The standard deviation of a dnorm distribution for 
 #'   ER_daily, the daily rate of ecosystem respiration
-#' @param K600_daily_mu Applies when pool_K600 is 'none'. The mean of a dnorm 
-#'   distribution for K600_daily, the daily rate of reaeration
-#' @param K600_daily_sigma Applies when pool_K600 is 'none'. The standard 
-#'   deviation of a dnorm distribution for K600_daily, the daily rate of 
+#' @param K600_daily_meanlog Applies when pool_K600 is 'none'. The mean of a 
+#'   dlnorm distribution for K600_daily, the daily rate of reaeration
+#' @param K600_daily_sdlog Applies when pool_K600 is 'none'. The standard 
+#'   deviation of a dlnorm distribution for K600_daily, the daily rate of 
 #'   reaeration
 #'   
-#' @param K600_daily_mu_mu hyperparameter for pool_K600='normal'. The mean 
-#'   parameter (mu_mu) of a normal distribution of mu in K ~ N(mu, sigma), mu ~ 
-#'   N(mu_mu, mu_sigma)
-#' @param K600_daily_mu_sigma hyperparameter for pool_K600='normal'. The 
-#'   standard deviation parameter (mu_sigma) of a normal distribution of mu in K
-#'   ~ N(mu, sigma), mu ~ N(mu_mu, mu_sigma)
+#' @param K600_daily_meanlog_meanlog hyperparameter for pool_K600='normal'. The 
+#'   mean parameter (meanlog_meanlog) of a lognormal distribution of meanlog in 
+#'   K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, meanlog_sdlog)
+#' @param K600_daily_meanlog_sdlog hyperparameter for pool_K600='normal'. The 
+#'   standard deviation parameter (meanlog_sdlog) of a lognormal distribution of
+#'   meanlog in K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, 
+#'   meanlog_sdlog)
 #'   
-#' @param K600_daily_beta_mu hyperparameter for pool_K600 in 
-#'   c('linear','binned'). The means of prior distributions for the 
-#'   K600_daily_beta paramters. For pool_K600='linear', there are 2 betas 
-#'   corresponding to the intercept and slope, respectively, of the linear model
-#'   \code{log(K600) ~ K600_daily_beta[1] + K600_daily_beta[2]*log(Q)}. For 
-#'   pool_K600='binned', there are length(K600_daily_beta_breaks)-1 betas each
-#'   giving the predicted K600 when Q_daily is in the corresponding bin (see 
-#'   \code{K600_daily_beta_breaks}).
-#' @param K600_daily_beta_sigma hyperparameter for pool_K600='linear'. The 
-#'   standard deviation parameter of a normally distributed intercept term 
-#'   (beta0) in the linear model K ~ N(beta0 + beta1*log(Q)), beta0 ~ 
-#'   N(beta0_mu, beta0_sigma)
+#' @param lnK600_lnQ_intercept_mu hyperparameter for pool_K600 == 'linear'. The 
+#'   mean of the prior distribution for the intercept parameter in 
+#'   \code{log(K600) ~ lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}
+#' @param lnK600_lnQ_intercept_sigma hyperparameter for pool_K600 == 'linear'. 
+#'   The standard deviation of the prior distribution for the intercept 
+#'   parameter in \code{log(K600) ~ lnK600_lnQ_intercept + 
+#'   lnK600_lnQ_slope*log(Q)}
+#' @param lnK600_lnQ_slope_mu hyperparameter for pool_K600='linear'. The mean of
+#'   the prior distribution for the slope parameter in \code{log(K600) ~ 
+#'   lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}
+#' @param lnK600_lnQ_slope_sigma hyperparameter for pool_K600='linear'. The 
+#'   standard deviation of the prior distribution for the slope parameter in 
+#'   \code{log(K600) ~ lnK600_lnQ_intercept + lnK600_lnQ_slope*log(Q)}
 #'   
-#' @param K600_daily_beta_breaks data configuration argument for 
-#'   pool_K600='binned'. numeric (as in \code{breaks} in
-#'   \code{\link[base]{cut}}) giving the natural-log-space breakpoints defining
-#'   the bins. Make sure to include the full range of ln_discharge_daily, with
-#'   the first value smaller than all ln_discharge_daily values and the last
-#'   value greater than or equal to all ln_discharge_daily values. See also
-#'   \code{\link{calc_bins}}
+#' @param K600_lnQ_nodes_centers data configuration argument for 
+#'   pool_K600='binned'. numeric vector giving the natural-log-space centers of 
+#'   the discharge bins. See also \code{\link{calc_bins}}
+#' @param K600_lnQ_nodediffs_sdlog hyperparameter for pool_K600='binned'. The 
+#'   standard deviations of the differences in estimated K600 between successive
+#'   lnQ_nodes (bins), where the means of those differences are always zero
+#' @param K600_lnQ_nodes_meanlog hyperparameter for pool_K600='binned'. The 
+#'   means of lognormal prior distributions for the K600_lnQ_nodes parameters.
+#' @param K600_lnQ_nodes_sdlog hyperparameter for pool_K600='binned'. The 
+#'   standard deviations of lognormal prior distributions for the K600_lnQ_nodes
+#'   parameters.
 #'   
-#' @param K600_daily_sigma_scale hyperparameter for pool_K600 in 
+#' @param K600_daily_sdlog_scale hyperparameter for pool_K600 in 
 #'   c('normal','linear','binned'). The scale (= sigma) parameter of a 
-#'   half-Cauchy distribution of sigma in K ~ N(mu, sigma), sigma ~ 
-#'   lnN(meanlog=location, sdlog=scale). Visualize the PDF of K600_daily_sigma 
+#'   half-Cauchy distribution of sdlog in K ~ lN(meanlog, sdlog), sdlog ~ 
+#'   halfCauchy(0, sdlog=sdlog_sdlog). Visualize the PDF of K600_daily_sdlog 
 #'   with \code{\link{plot_distribs}}.
 #'   
 #' @param err_obs_iid_sigma_scale The scale (= sigma) parameter of a half-Cauchy
@@ -266,28 +273,35 @@ specs <- function(
   ER_daily_sigma = 10,
   
   # hyperparameters for non-hierarchical K600
-  K600_daily_mu = 30,
-  K600_daily_sigma = 30,
+  K600_daily_meanlog = log(6),
+  K600_daily_sdlog = 1,
   
   # hyperparameters for hierarchical K600 - normal
-  K600_daily_mu_mu = 30,
-  K600_daily_mu_sigma = 30,
+  K600_daily_meanlog_meanlog = log(6),
+  K600_daily_meanlog_sdlog = 1,
   
-  # hyperparameters for hierarchical K600 - linear. defaults should be reasonably
-  # constrained, not too wide. element names are ignored
-  K600_daily_beta_mu = c(intercept=10, slope=3),
-  K600_daily_beta_sigma = c(intercept=8, slope=2),
+  # hyperparameters for hierarchical K600 - linear. defaults should be
+  # reasonably constrained, not too wide
+  lnK600_lnQ_intercept_mu = 2,
+  lnK600_lnQ_intercept_sigma = 2.4,
+  lnK600_lnQ_slope_mu = 0,
+  lnK600_lnQ_slope_sigma = 0.5,
   
-  # hyperparameters for hierarchical K600 - binned. K ~ beta[Q_bin_daily] 
-  # (constant for each binned log(Q), i.e., rectangular interpolation among 
-  # bins). beta_mu and beta_sigma may be length length(K600_daily_beta_breaks)-1
-  # or length 1 (to be replicated to length length(K600_daily_beta_breaks)-1). 
-  # -8:6 covers almost all points in Raymond et al. 2012 and will therefore
-  # always be too broad a range for a single stream
-  K600_daily_beta_breaks = -8:6, 
+  # hyperparameters for hierarchical K600 - binned. K600_daily ~ 
+  # lognormal(K600_daily_nodes_meanlog[lnQ_bin], 
+  # K600_daily_nodes_sdlog[lnQ_bin]) with linear interpolation among bins before
+  # exponentiating. nodes_meanlog and nodes_sdlog may be length b = 
+  # length(K600_daily_lnQ_nodes) or length 1 (to be replicated to length b). 
+  # -8:6 covers almost all points in Raymond et al. 2012 and will therefore 
+  # always be too broad a range for a single stream. -3:3 will catch most
+  # streams to rivers as a first cut, though users should still modify
+  K600_lnQ_nodes_centers = -3:3, # the x=lnQ values for the nodes
+  K600_lnQ_nodediffs_sdlog = 0.05, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
+  K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
+  K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
   
   # hyperparameters for any hierarchical K600
-  K600_daily_sigma_scale = 5,
+  K600_daily_sdlog_scale = 0.3,
   
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.1,
@@ -377,10 +391,10 @@ specs <- function(
         c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
         switch(
           features$pool_K600,
-          none=c('K600_daily_mu', 'K600_daily_sigma'),
-          normal=c('K600_daily_mu_mu', 'K600_daily_mu_sigma', 'K600_daily_sigma_scale'),
-          linear=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_scale'),
-          binned=c('K600_daily_beta_mu', 'K600_daily_beta_sigma', 'K600_daily_sigma_scale')),
+          none=c('K600_daily_meanlog', 'K600_daily_sdlog'),
+          normal=c('K600_daily_meanlog_meanlog', 'K600_daily_meanlog_sdlog', 'K600_daily_sdlog_scale'),
+          linear=c('lnK600_lnQ_intercept_mu', 'lnK600_lnQ_intercept_sigma', 'lnK600_lnQ_slope_mu', 'lnK600_lnQ_slope_sigma', 'K600_daily_sdlog_scale'),
+          binned=c('K600_lnQ_nodediffs_sdlog', 'K600_lnQ_nodes_meanlog', 'K600_lnQ_nodes_sdlog', 'K600_daily_sdlog_scale')),
         if(features$err_obs_iid) 'err_obs_iid_sigma_scale',
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_scale'),
         if(features$err_proc_iid) 'err_proc_iid_sigma_scale'
@@ -396,7 +410,7 @@ specs <- function(
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
-        if(features$pool_K600 == 'binned') c('K600_daily_beta_breaks'),
+        if(features$pool_K600 == 'binned') c('K600_lnQ_nodes_centers'),
         
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -418,8 +432,8 @@ specs <- function(
       }
       if(features$pool_K600 == 'binned') {
         # defaults are for linear pool_K600 & need adjustment for binned method
-        all_specs$K600_daily_beta_mu <- rep(10, length(all_specs$K600_daily_beta_breaks)-1)
-        all_specs$K600_daily_beta_sigma <- rep(10, length(all_specs$K600_daily_beta_breaks)-1)
+        all_specs$K600_daily_beta_mu <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
+        all_specs$K600_daily_beta_sigma <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
@@ -427,9 +441,9 @@ specs <- function(
           switch(
             features$pool_K600,
             none=c(),
-            normal=c('K600_daily_pred', 'K600_daily_sigma'),
-            linear=c('K600_daily_pred', 'K600_daily_beta', 'K600_daily_sigma'),
-            binned=c('K600_daily_pred', 'K600_daily_beta', 'K600_daily_sigma')), 
+            normal=c('K600_daily_pred', 'K600_daily_sdlog'),
+            linear=c('K600_daily_pred', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope', 'K600_daily_sdlog'),
+            binned=c('K600_daily_pred', 'lnK600_lnQ_nodes', 'K600_daily_sdlog')), 
           if(features$err_obs_iid) 'err_obs_iid_sigma', # add in err_obs_iid later
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma')) # add in err_proc_iid later

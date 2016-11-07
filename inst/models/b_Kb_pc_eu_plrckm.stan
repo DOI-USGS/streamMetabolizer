@@ -8,10 +8,11 @@ data {
   real ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (binned model)
-  int <lower=1> b; # number of K600_daily_betas
-  vector[b] K600_daily_beta_mu;
-  vector[b] K600_daily_beta_sigma;
-  real<lower=0> K600_daily_sigma_scale;
+  int <lower=1> b; # number of K600_lnQ_nodes
+  real K600_lnQ_nodediffs_sdlog;
+  vector[b] K600_lnQ_nodes_meanlog;
+  vector[b] K600_lnQ_nodes_sdlog;
+  real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
   real err_proc_acor_phi_alpha;
@@ -24,7 +25,8 @@ data {
   
   // Daily data
   vector[d] DO_obs_1;
-  int<lower=1,upper=b> discharge_bin_daily[d];
+  int<lower=1,upper=b> lnQ_bins[2,d];
+  vector<lower=0,upper=1>[d] lnQ_bin_weights[2];
   
   // Data
   vector[d] DO_obs[n];
@@ -44,10 +46,10 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector<lower=0>[d] K600_daily;
+  vector[d] K600_daily;
   
-  vector[b] K600_daily_beta;
-  real<lower=0> K600_daily_sigma_scaled;
+  vector[b] lnK600_lnQ_nodes;
+  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0, upper=1> err_proc_acor_phi;
   real<lower=0> err_proc_acor_sigma_scaled;
@@ -56,7 +58,7 @@ parameters {
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sdlog;
   vector[d] K600_daily_pred;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_acor_sigma;
@@ -67,11 +69,12 @@ transformed parameters {
   vector[d] err_proc_acor[n-1];
   
   // Rescale pooling & error distribution parameters
-  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
   err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   
   // Hierarchical, binned model of K600_daily
-  K600_daily_pred = K600_daily_beta[discharge_bin_daily];
+  K600_daily_pred = exp(lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + 
+                        lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2]);
   
   // Model DO time series
   // * euler version
@@ -115,9 +118,12 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (binned model)
-  K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma_scaled ~ cauchy(0, 1);
+  lnK600_lnQ_nodes ~ normal(K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog);
+  for(k in 2:b) {
+    lnK600_lnQ_nodes[k] ~ normal(lnK600_lnQ_nodes[k-1], K600_lnQ_nodediffs_sdlog);
+  }
+  K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }

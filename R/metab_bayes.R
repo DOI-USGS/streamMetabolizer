@@ -108,12 +108,24 @@ metab_bayes <- function(
     # If we have discharge.daily, then we need logged discharge.daily. compute
     # and store it now
     if('discharge.daily' %in% names(dat_list$data_daily)) {
-      dat_list$data_daily$ln.discharge.daily <- log(v(dat_list$data_daily$discharge.daily))
+      dat_list$data_daily$lnQ.daily <- log(v(dat_list$data_daily$discharge.daily))
     }
     # If we need discharge bins, compute & store those now, as well
     if(pool_K600 %in% c('binned')) {
-      cuts <- cut(dat_list$data_daily$ln.discharge.daily, breaks=specs$K600_daily_beta_breaks, ordered_result=TRUE)
-      dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
+      # linear interpolation from node to node, horizontal at the edges
+      bounds <- c(-Inf, specs$K600_daily_lnQ_nodes, Inf)
+      cuts <- cut(dat_list$data_daily$lnQ.daily, breaks=bounds, ordered_result=TRUE)
+      widths <- diff(bounds)[cuts]
+      bins <- rbind(pmax(1, as.numeric(cuts) - 1), pmin(length(specs$K600_daily_lnQ_nodes), as.numeric(cuts)))
+      weights <- ifelse(is.infinite(widths), 1, (bounds[as.numeric(cuts)+1] - dat_list$data_daily$lnQ.daily)/widths)
+      
+      # package info so it gets passed to specs
+      dat_list$data_daily <- mutate(
+        dat_list$data_daily,
+        lnQ.bin1 = bins[1,],
+        lnQ.bin2 = bins[2,],
+        lnQ.bin1.weight = weights,
+        lnQ.bin2.weight = 1-weights)
     }
     
     # Use de-unitted version until we pack up the model to return
@@ -484,10 +496,11 @@ prepdata_bayes <- function(
       
     switch(
       features$pool_K600,
-      linear = list(ln_discharge_daily = data_daily$ln.discharge.daily),
+      linear = list(lnQ_daily = data_daily$lnQ.daily),
       binned = list(
-        b = length(specs$K600_daily_beta_breaks)-1,
-        discharge_bin_daily = data_daily$discharge.bin.daily)
+          b = length(specs$K600_daily_lnQ_nodes),
+          lnQ_bins = rbind(data_daily$lnQ.bin1, data_daily$lnQ.bin2),
+          lnQ_bin_weights = rbind(data_daily$lnQ.bin1.weight, data_daily$lnQ.bin2.weight))
     ),
     
     list(

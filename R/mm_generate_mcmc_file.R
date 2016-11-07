@@ -67,9 +67,9 @@ mm_generate_mcmc_file <- function(
         distrib <- 'normal'
         args <- c(list(mu=0), args)
       },
-      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") 
-        # location = mu = first argument
-        # scale = sigma = second argument
+      lognormal = { if(!all(names(args) == c('meanlog','sdlog'))) stop("expecting lognormal(meanlog,sdlog)") 
+        # meanlog = mu = first argument
+        # sdlog = sigma = second argument
       },
       normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
       uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") }
@@ -90,7 +90,7 @@ mm_generate_mcmc_file <- function(
         beta = stop(),
         gamma = stop(),
         halfcauchy = sprintf('%s_scale * %s_scaled', Y, Y), # scaled = cauchy(0,1)
-        lognormal = sprintf('exp(%s_location + %s_scale * %s_scaled)', Y, Y, Y), # scaled = norm(0,1)
+        lognormal = sprintf('exp(%s_meanlog + %s_sdlog * %s_scaled)', Y, Y, Y), # scaled = norm(0,1)
         normal = sprintf('%s_sigma * %s_scaled', Y, Y), # scaled = norm(0,1)
         uniform = sprintf('%s_min + (%s_max - %s_min) * %s_scaled', Y, Y) # scaled = unif(0,1)
       )
@@ -121,25 +121,28 @@ mm_generate_mcmc_file <- function(
           comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
         if(pool_K600 == 'none') c(
-          'real K600_daily_mu;',
-          'real K600_daily_sigma;'
+          'real K600_daily_meanlog;',
+          'real K600_daily_sdlog;'
         ) else c(
           # hierarchical models each do K600_daily_mu/K600_daily_pred
-          # differently, but K600_daily_sigma they all do the same
+          # differently, but K600_daily_sdlog they all do the same
           switch(
             pool_K600,
             normal=c(
-              'real K600_daily_mu_mu;',
-              'real K600_daily_mu_sigma;'),
+              'real K600_daily_meanlog_meanlog;',
+              'real K600_daily_meanlog_sdlog;'),
             linear=c(
-              'vector[2] K600_daily_beta_mu;',
-              'vector[2] K600_daily_beta_sigma;'),
+              'real lnK600_lnQ_intercept_mu;',
+              'real lnK600_lnQ_intercept_sigma;',
+              'real lnK600_lnQ_slope_mu;',
+              'real lnK600_lnQ_slope_sigma;'),
             binned=c(
-              'int <lower=1> b; # number of K600_daily_betas',
-              'vector[b] K600_daily_beta_mu;',
-              'vector[b] K600_daily_beta_sigma;')
+              'int <lower=1> b; # number of K600_lnQ_nodes',
+              'real K600_lnQ_nodediffs_sdlog;',
+              'vector[b] K600_lnQ_nodes_meanlog;',
+              'vector[b] K600_lnQ_nodes_sdlog;')
           ),
-          'real<lower=0> K600_daily_sigma_scale;'
+          'real<lower=0> K600_daily_sdlog_scale;'
         )),
       
       chunk(
@@ -163,8 +166,12 @@ mm_generate_mcmc_file <- function(
         'vector[d] DO_obs_1;',
         switch(
           pool_K600,
-          linear='vector[d] ln_discharge_daily;',
-          binned='int<lower=1,upper=b> discharge_bin_daily[d];')),
+          linear=c(
+            'vector[d] lnQ_daily;'),
+          binned=c(
+            'int<lower=1,upper=b> lnQ_bins[2,d];',
+            'vector<lower=0,upper=1>[d] lnQ_bin_weights[2];')
+        )),
       
       # prepare to iterate over n obs for all d at a time:
       # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
@@ -213,7 +220,7 @@ mm_generate_mcmc_file <- function(
         # daily metabolism rate parameters
         c('vector[d] GPP_daily;',
           'vector[d] ER_daily;',
-          'vector<lower=0>[d] K600_daily;'),
+          'vector[d] K600_daily;'),
         
         # K600 pooling parameters
         if(pool_K600 != 'none') c(
@@ -221,9 +228,13 @@ mm_generate_mcmc_file <- function(
           switch(
             pool_K600,
             normal='real K600_daily_mu;',
-            linear='vector[2] K600_daily_beta;',
-            binned='vector[b] K600_daily_beta;'),
-          'real<lower=0> K600_daily_sigma_scaled;'),
+            linear=c(
+              'real lnK600_lnQ_intercept;',
+              'real lnK600_lnQ_slope;'),
+            binned=c(
+              'vector[b] lnK600_lnQ_nodes;')
+          ),
+          'real<lower=0> K600_daily_sdlog_scaled;'),
         
         # error distributions
         '',
@@ -258,7 +269,7 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        'real<lower=0> K600_daily_sigma;',
+        'real<lower=0> K600_daily_sdlog;',
         if(pool_K600 %in% c('linear','binned'))
           'vector[d] K600_daily_pred;'
       ),
@@ -297,7 +308,7 @@ mm_generate_mcmc_file <- function(
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        s(fs('halfcauchy', 'K600_daily_sigma'))
+        s(fs('halfcauchy', 'K600_daily_sdlog'))
       ),
       
       # rescaled error distribution parameters
@@ -315,8 +326,9 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
-        binned=s('K600_daily_pred = K600_daily_beta[discharge_bin_daily]')
+        linear=s('K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily)'),
+        binned=s('K600_daily_pred = exp(lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
+                 '                      lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2])')
       )
     ),
     
@@ -487,9 +499,9 @@ mm_generate_mcmc_file <- function(
       s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
       s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
       if(pool_K600 %in% c('none')) s(
-        'K600_daily ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
+        'K600_daily ~ ', f('lognormal', meanlog='K600_daily_meanlog', sdlog='K600_daily_sdlog')
       ) else if(pool_K600 %in% c('normal','linear','binned')) s(
-        'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
+        'K600_daily ~ ', f('lognormal', meanlog='K600_daily_pred', sdlog='K600_daily_sdlog')
       )
     ),
     
@@ -497,13 +509,23 @@ mm_generate_mcmc_file <- function(
       '',
       indent(
         comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
-        if(pool_K600 == 'normal') c(
-          s('K600_daily_pred ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
+        switch(
+          pool_K600,
+          'normal' = c(
+            s('K600_daily_pred ~ ', f('lognormal', meanlog='K600_daily_meanlog_meanlog', sdlog='K600_daily_meanlog_sdlog '))
+          ),
+          'linear' = c(
+            s('lnK600_lnQ_intercept ~ ', f('normal', mu='lnK600_lnQ_intercept_mu', sigma='lnK600_lnQ_intercept_sigma')),
+            s('lnK600_lnQ_slope ~ ', f('normal', mu='lnK600_lnQ_slope_mu', sigma='lnK600_lnQ_slope_sigma'))
+          ),
+          'binned' = c(
+            s('lnK600_lnQ_nodes ~ ', f('normal', mu='K600_lnQ_nodes_meanlog', sigma='K600_lnQ_nodes_sdlog')),
+            p('for(k in 2:b) {'),
+            s('  lnK600_lnQ_nodes[k] ~ ', f('normal', mu='lnK600_lnQ_nodes[k-1]', sigma='K600_lnQ_nodediffs_sdlog')),
+            p('}')
+          )
         ),
-        if(pool_K600 %in% c('linear','binned')) c(
-          s('K600_daily_beta ~ ', f('normal', mu='K600_daily_beta_mu', sigma='K600_daily_beta_sigma'))
-        ),
-        s('K600_daily_sigma_scaled ~ ', f('halfcauchy', scale='1'))
+        s('K600_daily_sdlog_scaled ~ ', f('halfcauchy', scale='1'))
       )
     ),
     

@@ -34,10 +34,9 @@ manual_test4 <- function() {
   stanfiles <- opts %>% rowwise %>% do(data_frame(model_name=do.call(mm_name, .))) %>% unlist(use.names=FALSE) %>% sort %>%
   {.[!grepl('__', .)]}
   
-  mms <- lapply(setNames(nm=stanfiles), function(sf) {
+  mms <- lapply(setNames(nm=stanfiles[1]), function(sf) {
     message(sf)
-    #file.edit(paste0('inst/models/', sf))
-    metab(specs(sf), dat)
+    metab(specs(sf), if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge))
   })
   
   bind_rows(lapply(mms, get_params))
@@ -49,6 +48,14 @@ manual_test4 <- function() {
       select(model, everything()) %>%
       bind_cols(select(get_fit(mm)$daily, ends_with('Rhat')))
   }))
+  
+  # if models were run on a cluster, pull and query them here. get in the right directory.
+  mm_files <- dir(path='../metab_tests/explore/007_stan_tests/', pattern='16.*', full.names = TRUE)
+  mm_run <- substring(gsub('\\.Rds', '.stan', basename(mm_files)), 8)
+  mm_unrun <- sort(setdiff(stanfiles, mm_run))
+  mms <- lapply(mm_files, readRDS)
+  mm_failures <- mm_run[sapply(mms, function(mm) is.null(get_mcmc(mm)))]
+  setdiff(mm_run, mm_failures)
   
   library(gridExtra)
   do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 

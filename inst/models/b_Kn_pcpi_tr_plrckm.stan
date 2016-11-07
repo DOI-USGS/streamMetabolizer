@@ -8,9 +8,9 @@ data {
   real ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (normal model)
-  real K600_daily_mu_mu;
-  real K600_daily_mu_sigma;
-  real<lower=0> K600_daily_sigma_scale;
+  real K600_daily_meanlog_meanlog;
+  real K600_daily_meanlog_sdlog;
+  real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
   real err_proc_acor_phi_alpha;
@@ -43,10 +43,10 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector<lower=0>[d] K600_daily;
+  vector[d] K600_daily;
   
   real K600_daily_mu;
-  real<lower=0> K600_daily_sigma_scaled;
+  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0, upper=1> err_proc_acor_phi;
   real<lower=0> err_proc_acor_sigma_scaled;
@@ -57,7 +57,7 @@ parameters {
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sdlog;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_acor_sigma;
   real<lower=0> err_proc_iid_sigma;
@@ -68,7 +68,7 @@ transformed parameters {
   vector[d] err_proc_acor[n];
   
   // Rescale pooling & error distribution parameters
-  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
   err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
@@ -126,9 +126,9 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (normal model)
-  K600_daily_pred ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma);
-  K600_daily_sigma_scaled ~ cauchy(0, 1);
+  K600_daily_pred ~ lognormal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
+  K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }
