@@ -36,7 +36,8 @@
 #' }
 plot_distribs <- function(
   dist_data, 
-  parname=c('GPP_daily','ER_daily','K600_daily','K600_daily_mu','K600_daily_beta','K600_daily_sigma',
+  parname=c('GPP_daily','ER_daily','K600_daily',
+            'K600_daily_meanlog','lnK600_lnQ_intercept','lnK600_lnQ_slope','K600_lnQ_nodes','K600_daily_sdlog',
             'err_obs_iid_sigma','err_proc_acor_phi','err_proc_acor_sigma','err_proc_iid_sigma'), 
   index=TRUE,
   style=c('dygraphs','ggplot2')) {
@@ -60,7 +61,7 @@ plot_distribs <- function(
   knownpars <- eval(formals(plot_distribs)$parname)
   if(length(hpspecs) == 0 || !parname %in% knownpars) {
     couldabeen <- unlist(lapply(knownpars, function(kp) if(any(grepl(paste0("^", kp, "_"), names(sp)))) kp else c()))
-    msg1 <- if(length(parname) > 0) {
+    msg1 <- if(length(parname) > 1) {
       paste0("parname must have length 1.")
     } else {
       paste0("could not find ", parname, " hyperparameters in get_specs(dist_data).")
@@ -77,12 +78,13 @@ plot_distribs <- function(
     K600_daily='lognormal',
     # Kn
     K600_daily_meanlog='lognormal',
-    K600_daily_sdlog='halfcauchy',
     # Kl
     lnK600_lnQ_intercept='normal',
     lnK600_lnQ_slope='normal',
     # Kb
-    K600_lnQ_nodes='lognormal', #K600_lnQ_nodediffs='lognormal',
+    K600_lnQ_nodes='lognormal', # K600_lnQ_nodediffs='lognormal', # means are [k-1]th values so are hard to represent here
+    # Kn, Kl, and Kb
+    K600_daily_sdlog='halfcauchy',
     # errors
     err_obs_iid_sigma='halfcauchy',
     err_proc_acor_phi='beta',
@@ -91,6 +93,7 @@ plot_distribs <- function(
   )[parname]
   
   # create a data.frame illustrating the prior distribution
+  indexed_prior <- FALSE # the usual case
   . <- '.dplyr.var'
   densdf <- switch(
     distrib,
@@ -135,6 +138,19 @@ plot_distribs <- function(
       # better to adjust meanlog than sdlog for getting a distribution close to
       # 0; e.g., meanlog=-5, sdlog=1 gives distribution w/ peak at ~0.003 and
       # not-too-long tail
+      # K600_lnQ_nodes priors are indexed
+      if(length(hyperpars$meanlog) > 1 || length(hyperpars$sdlog) > 1) {
+        indexed_prior <- TRUE
+        if(!isTRUE(index)) {
+          if(length(index) > 1) warning('only using index[1] for the prior')
+          if(length(hyperpars$meanlog) > 1) hyperpars$meanlog <- hyperpars$meanlog[index[1]]
+          if(length(hyperpars$sdlog) > 1) hyperpars$sdlog <- hyperpars$sdlog[index[1]]
+        } else {
+          warning('multiple priors for this parameter; only showing the first')
+          hyperpars$meanlog <- hyperpars$meanlog[1]
+          hyperpars$sdlog <- hyperpars$sdlog[1]
+        }
+      }
       xlim <- qlnorm(c(0.0001, 0.9), meanlog=hyperpars$meanlog, sdlog=hyperpars$sdlog)
       bind_rows(
         data_frame(
@@ -177,24 +193,26 @@ plot_distribs <- function(
     # extract MCMC draws from the specified index/indices. If indices, collapse
     # from matrix into vector
     draws <- rstan::extract(mc, pars=parname)[[parname]]
-    indexed <- is.matrix(draws)
-    if(indexed) draws <- c(draws[,index])
+    indexed_posterior <- is.matrix(draws)
+    if(indexed_posterior) draws <- c(draws[,index])
     # generate density w/ 1000 points along the line
     post <- density(draws, n=1000)[c('x','y')] %>% 
       as_data_frame() %>%
       mutate(dist='posterior') %>%
       select(dist, x, y)
     densdf <- bind_rows(densdf, post)
-    if(!indexed && !missing(index)) warning('index will be ignored because posterior is not indexed')
+    if(!indexed_prior &&!indexed_posterior && !missing(index))
+      warning('index will be ignored because prior & posterior are not indexed')
   } else {
-    indexed <- FALSE
-    if(!missing(index)) warning('index will be ignored because priors are never indexed and posterior is unavailable')
+    indexed_posterior <- FALSE
+    if(!indexed_prior && !missing(index))
+      warning('index will be ignored because prior is unindexed and posterior is unavailable')
   }
   
   # prepare the plot title
   ptitle <- paste0(
     parname, 
-    if(indexed) paste0(
+    if(indexed_prior || indexed_posterior) paste0(
       '[',
       if(is.logical(index) || length(index) == 1) { 
         as.character(index)
