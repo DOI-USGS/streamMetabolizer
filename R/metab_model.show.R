@@ -117,7 +117,8 @@ compress_msgs <- function(ddat, colname='messages', warnings.overall=c(), errors
           ifelse(datewarn != '', 'W  ', '   '))
       )) %>%
     select(-warnings, -errors) %>%
-    rename_(.dots=setNames('messages', colname))
+    #rename_(.dots=setNames('messages', colname))
+    {setNames(., replace(names(.), names(.)=='messages', colname))}
 }
 
 #' Format and print a summary of data frame of daily values
