@@ -7,7 +7,70 @@ context("metab_bayes")
 # skip_on_appveyor()
 # skip_if_not_installed('deSolve')
 
-manual_tests <- function() {
+manual_test4 <- function() {
+  
+  library(streamMetabolizer)
+  library(testthat)
+  library(dplyr)
+  source('tests/testthat/helper-rmse_DO.R')
+  
+  # simple test data (except for being light saturating)
+  dat <- mda.streams::get_metab_data('nwis_03259757')
+  dat60 <- streamMetabolizer:::mm_filter_dates(dat, date_start='2015-04-01', date_end='2015-06-01')
+  dat <- mutate(data_metab('10', res='30'), discharge=seq(5,15,length.out=n()))
+  
+  # create a list of all models to run
+  opts <- expand.grid(
+    type='bayes',
+    pool_K600=c('none','normal','linear','binned'),
+    err_obs_iid=T,#c(TRUE, FALSE),
+    err_proc_acor=F,#c(FALSE, TRUE),
+    err_proc_iid=F,#c(FALSE, TRUE),
+    ode_method='trapezoid',#c('trapezoid','euler'),
+    GPP_fun='linlight',
+    ER_fun='constant',
+    deficit_src='DO_mod',#c('DO_mod','DO_obs'),
+    engine='stan',
+    check_validity=FALSE,
+    stringsAsFactors=FALSE)
+  stanfiles <- opts %>% rowwise %>% do(data_frame(model_name=do.call(mm_name, .))) %>% unlist(use.names=FALSE) %>% sort %>%
+  {.[!grepl('__', .)]}
+  
+  mms <- lapply(setNames(nm=stanfiles), function(sf) {
+    message(sf)
+    metab(specs(sf), if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge))
+  })
+  
+  bind_rows(lapply(mms, get_params))
+  sapply(mms, get_fitting_time)
+  
+  bind_rows(lapply(mms, function(mm) {
+    get_params(mm) %>%
+      mutate(model=get_specs(mm)$model_name) %>%
+      select(model, everything()) %>%
+      bind_cols(select(get_fit(mm)$daily, ends_with('Rhat')))
+  }))
+  
+  # if models were run on a cluster, pull and query them here. get in the right directory.
+  mm_files <- dir(path='../metab_tests/explore/007_stan_tests/', pattern='16.*', full.names = TRUE)
+  mm_run <- substring(gsub('\\.Rds', '.stan', basename(mm_files)), 8)
+  mm_unrun <- sort(setdiff(stanfiles, mm_run))
+  mms <- lapply(mm_files, readRDS)
+  mm_failures <- mm_run[sapply(mms, function(mm) is.null(get_mcmc(mm)))]
+  setdiff(mm_run, mm_failures)
+  
+  library(gridExtra)
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_metab_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
+  do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
+    plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
+  do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
+    traceplot(get_mcmc(mm), 'K600_daily_mu') + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
+}
+
+manual_test1 <- function() {
   
   library(streamMetabolizer)
   library(testthat)
@@ -191,7 +254,7 @@ manual_test3 <- function() {
     revise(K600_daily_sigma_rate=1, err_proc_iid_sigma_rate=0.03, 
            params_in=c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma','K600_daily_beta_mu','K600_daily_beta_sigma',
                        'K600_daily_sigma_rate','err_proc_iid_sigma_rate'),
-           delete=c('K600_daily_sigma_location','K600_daily_sigma_scale','err_proc_iid_sigma_location','err_proc_iid_sigma_scale'))
+           delete=c('K600_daily_sigma_scale','err_proc_iid_sigma_scale'))
   mm_new <- metab(specs=sp, data=dat) # 8-12 sec for 200/100
   plot_metab_preds(mm_new)
   plot_DO_preds(mm_new)
@@ -204,8 +267,8 @@ manual_test3 <- function() {
   mm_slow <- metab(specs=sp, data=dat) # 9 sec
   # SFS version
   mm_fast <- sp %>% 
-    revise(err_obs_iid_sigma_rate=0.2, model_name='b_np_oi_pm_plrckm_faster.stan', delete=c('err_obs_iid_sigma_location','err_obs_iid_sigma_scale'),
-           params_in=setdiff(c(params_in, 'err_obs_iid_sigma_rate'),c('err_obs_iid_sigma_location','err_obs_iid_sigma_scale'))) %>%
+    revise(err_obs_iid_sigma_rate=0.2, model_name='b_np_oi_pm_plrckm_faster.stan', delete=c('err_obs_iid_sigma_scale'),
+           params_in=setdiff(c(params_in, 'err_obs_iid_sigma_rate'),c('err_obs_iid_sigma_scale'))) %>%
     metab(data=dat) # 51 sec w/ new compilation, 16-17 sec w/ err_obs_sigma_rate at 0.2 or 2 or 0.02
   mm <- mm_fast
   get_fitting_time(mm)
@@ -226,7 +289,7 @@ manual_test3 <- function() {
     K600_daily_beta_mu=c(intercept=1, slope=2.3),
     K600_daily_beta_sigma=c(intercept=0.3, slope=0.3),
     K600_daily_sigma_rate=1,err_obs_iid_sigma_rate=0.1,
-    delete=c("K600_daily_sigma_location","K600_daily_sigma_scale","err_obs_iid_sigma_location","err_obs_iid_sigma_scale"))
+    delete=c("K600_daily_sigma_location","K600_daily_sigma_scale","err_obs_iid_sigma_scale"))
   sp3 <- sp2 %>% revise(
     K600_daily_beta_mu=c(intercept=10, slope=3),
     K600_daily_beta_sigma=c(intercept=8, slope=2))

@@ -29,8 +29,9 @@ get_params.metab_model <- function(
     metab.needs <- c('K600.daily')
     metab.optional <- c()
   } else {
+    egdat <- get_data(metab_model) %>% v() %>% .[which(complete.cases(.))[1:2], ]
     dDOdt <- create_calc_dDOdt(
-      v(get_data(metab_model)[1:2,]), ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+      egdat, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
       ER_fun=features$ER_fun, deficit_src=features$deficit_src)
     metab.needs <- environment(dDOdt)$metab.needs
     metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO?

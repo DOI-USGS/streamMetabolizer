@@ -6,8 +6,13 @@
 \alias{streamMetabolizer-package}
 \title{Functions for calculating ecosystem metabolism in streams}
 \description{
-This package contains functions that help the user prepare data and model
-metabolism in streams and rivers.
+This package uses inverse modeling to estimate aquatic photosynthesis and 
+respiration (collectively, metabolism) from time series data on dissolved 
+oxygen, water temperature, depth, and light. The package assists with data 
+preparation, handles data gaps during modeling, and provides tabular and 
+graphical reports of model outputs. Several time-honored methods are 
+implemented along with many promising new variants, still under development, 
+that produce more accurate and precise metabolism estimates.
 }
 \section{Creating new columns}{
 

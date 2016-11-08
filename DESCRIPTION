@@ -1,11 +1,18 @@
 Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.15
-Date: 2016-10-03
+Version: 0.9.18
+Date: 2016-11-08
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
-Description: Modeling package for stream metabolism.
+Description: streamMetabolizer uses inverse modeling to estimate aquatic
+    photosynthesis and respiration (collectively, metabolism) from time series
+    data on dissolved oxygen, water temperature, depth, and light. The package
+    assists with data preparation, handles data gaps during modeling, and
+    provides tabular and graphical reports of model outputs. Several
+    time-honored methods are implemented along with many promising new variants,
+    still under development, that produce more accurate and precise metabolism
+    estimates.
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of
@@ -16,24 +23,23 @@ VignetteBuilder: knitr
 Depends:
     R (>= 3.0)
 Imports:
-    LakeMetabolizer (>= 1.4.1),
-    unitted (>= 0.2.6),
+    deSolve,
     dplyr (>= 0.5.0),
-    tibble (>= 1.1.0),
+    LakeMetabolizer (>= 1.4.1),
     lazyeval,
     lubridate,
     magrittr,
     methods,
-    tidyr
+    tibble (>= 1.1.0),
+    tidyr,
+    unitted (>= 0.2.6)
 Suggests:
     chron,
-    deSolve,
     devtools,
     dygraphs,
     ggplot2,
     knitr,
     microbenchmark,
-    plyr,
     RCurl,
     rstan,
     testthat,
@@ -44,6 +50,7 @@ Collate:
     'calc_DO_deficit.R'
     'calc_DO_sat.R'
     'calc_air_pressure.R'
+    'calc_bins.R'
     'calc_depth.R'
     'calc_is_daytime.R'
     'calc_light.R'

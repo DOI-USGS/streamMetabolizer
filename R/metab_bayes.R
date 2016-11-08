@@ -41,6 +41,9 @@ NULL
 #'   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
 #'   data=dat)
 #' predict_metab(mm)
+#' 
+#' # view the Stan model file as stored on your system
+#' file.edit(get_specs(mm)$model_path)
 #' }
 #' @export
 #' @family metab_model
@@ -105,41 +108,24 @@ metab_bayes <- function(
     # If we have discharge.daily, then we need logged discharge.daily. compute
     # and store it now
     if('discharge.daily' %in% names(dat_list$data_daily)) {
-      dat_list$data_daily$ln.discharge.daily <- log(v(dat_list$data_daily$discharge.daily))
+      dat_list$data_daily$lnQ.daily <- log(v(dat_list$data_daily$discharge.daily))
     }
     # If we need discharge bins, compute & store those now, as well
     if(pool_K600 %in% c('binned')) {
-      if(is.character(specs$K600_daily_beta_cuts)) {
-        if(!requireNamespace('ggplot2', quietly=TRUE)) {
-          stop("need ggplot2 for K600_pool='binned' when is.character(K600_daily_beta_cuts). ",
-               "either install the ggplot2 package or switch to a numeric vector for K600_daily_beta_cuts")
-        }
-        cut_fun <- switch(
-          specs$K600_daily_beta_cuts,
-          interval = ggplot2::cut_interval,
-          number = ggplot2::cut_number)
-        # run once with high dig.lab to parse the breaks from levels(cuts) as numeric
-        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num, dig.lab=20)
-        specs$K600_daily_beta_breaks <- levels(cuts) %>%
-          strsplit('\\[|\\(|\\]|,') %>%
-          lapply(function(lev) as.numeric(lev[2:3])) %>%
-          unlist() %>%
-          unique()
-        # run again with default dig.lab for prettier bin labels
-        cuts <- cut_fun(v(dat_list$data_daily$ln.discharge.daily), n=specs$K600_daily_beta_num)
-      } else {
-        # we already know breaks precisely because we're supplying them
-        specs$K600_daily_beta_breaks <- specs$K600_daily_beta_cuts
-        cuts <- cut(dat_list$data_daily$ln.discharge.daily, breaks=specs$K600_daily_beta_cuts, ordered_result=TRUE)
-      }
-      dat_list$data_daily$discharge.bin.daily <- as.numeric(cuts)
-      specs$K600_daily_beta_bins <- levels(cuts)
-      # you should be able to retrieve the bin names with 
-      # specs$K600_daily_beta_bins[dat_list[['data_daily']]$discharge.bin.daily]
-      # or, later, 
-      # get_specs(fit)$K600_daily_beta_bins[get_data_daily(fit)$discharge.bin.daily].
-      # specs$K600_daily_beta_breaks and specs$K600_daily_beta_bins are created
-      # here purely for manual inspection after the model has been run
+      # linear interpolation from node to node, horizontal at the edges
+      bounds <- c(-Inf, specs$K600_lnQ_nodes_centers, Inf)
+      cuts <- cut(dat_list$data_daily$lnQ.daily, breaks=bounds, ordered_result=TRUE)
+      widths <- diff(bounds)[cuts]
+      bins <- rbind(pmax(1, as.numeric(cuts) - 1), pmin(length(specs$K600_lnQ_nodes_centers), as.numeric(cuts)))
+      weights <- ifelse(is.infinite(widths), 1, (bounds[as.numeric(cuts)+1] - dat_list$data_daily$lnQ.daily)/widths)
+      
+      # package info so it gets passed to specs
+      dat_list$data_daily <- mutate(
+        dat_list$data_daily,
+        lnQ.bin1 = bins[1,],
+        lnQ.bin2 = bins[2,],
+        lnQ.bin1.weight = weights,
+        lnQ.bin2.weight = 1-weights)
     }
     
     # Use de-unitted version until we pack up the model to return
@@ -510,10 +496,11 @@ prepdata_bayes <- function(
       
     switch(
       features$pool_K600,
-      linear = list(ln_discharge_daily = data_daily$ln.discharge.daily),
+      linear = list(lnQ_daily = data_daily$lnQ.daily),
       binned = list(
-        b = specs$K600_daily_beta_num,
-        discharge_bin_daily = data_daily$discharge.bin.daily)
+          b = length(specs$K600_lnQ_nodes_centers),
+          lnQ_bins = rbind(data_daily$lnQ.bin1, data_daily$lnQ.bin2),
+          lnQ_bin_weights = rbind(data_daily$lnQ.bin1.weight, data_daily$lnQ.bin2.weight))
     ),
     
     list(
@@ -529,8 +516,8 @@ prepdata_bayes <- function(
         } else {
           mat_light
         }
-      },
-      frac_ER  = time_by_date_matrix(timestep_days),
+      } / timestep_days,
+      frac_ER  = time_by_date_matrix(1),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
       KO2_conv = time_by_date_matrix(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2")),
       depth    = time_by_date_matrix(data$depth),
@@ -540,6 +527,10 @@ prepdata_bayes <- function(
     
     specs[specs$params_in]
   )
+  if(features$pool_K600 == 'binned') {
+    data_list$K600_lnQ_nodes_meanlog <- array(data_list$K600_lnQ_nodes_meanlog, dim=data_list$b)
+    data_list$K600_lnQ_nodes_sdlog <- array(data_list$K600_lnQ_nodes_sdlog, dim=data_list$b)
+  }
   
   data_list
 }
@@ -770,10 +761,16 @@ setClass(
 
 #' Extract any MCMC model objects that were stored with the model
 #' 
-#' A function specific to metab_bayes models. Returns an MCMC object or, for 
-#' nopool models, a list of MCMC objects. These objects are saved by default
-#' because they should usually be inspected manually; see \code{keep_mcmcs}
-#' argument to \code{\link{specs}} for options for saving space.
+#' A function specific to metab_bayes models. Returns an MCMC object of class 
+#' \code{\link[rstan]{stanfit}}, which is saved in the metab_model by default 
+#' because you should almost always inspect it; see \code{keep_mcmcs} argument 
+#' to \code{\link{specs}} for options for saving space. The \code{rstan} methods
+#' for \code{stanfit} objects include \code{summary}, 
+#' \code{\link[rstan]{get_stancode}}, \code{\link[rstan]{stan_dens}}, 
+#' \code{\link[rstan]{stan_diag}}, and many more. See 
+#' \code{\link[rstan]{rstan-plotting-functions}}, \code{\link[rstan]{stanfit}}, 
+#' and the \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan 
+#' manual}.
 #' 
 #' @param metab_model A Bayesian metabolism model (metab_bayes) from which to 
 #'   return the MCMC model object[s]

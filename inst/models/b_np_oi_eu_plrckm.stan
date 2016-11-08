@@ -3,15 +3,14 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
-  real K600_daily_mu;
-  real K600_daily_sigma;
+  real<lower=0> ER_daily_sigma;
+  real K600_daily_meanlog;
+  real<lower=0> K600_daily_sdlog;
   
   // Error distributions
-  real err_obs_iid_sigma_location;
-  real err_obs_iid_sigma_scale;
+  real<lower=0> err_obs_iid_sigma_scale;
   
   // Data dimensions
   int<lower=1> d; # number of dates
@@ -31,16 +30,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_part[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  = frac_GPP[i] ./ depth[i];
-    coef_ER[i]   = frac_ER[i] ./ depth[i];
-    coef_K600_part[i] = KO2_conv[i] .* frac_D[i];
-  }
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -53,11 +44,13 @@ parameters {
 
 transformed parameters {
   real<lower=0> err_obs_iid_sigma;
+  vector[d] GPP[n-1];
+  vector[d] ER[n-1];
+  vector[d] KO2[n-1];
   vector[d] DO_mod[n];
   
   // Rescale pooling & error distribution parameters
-  // lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)
-  err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale);
+  err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   
   // Model DO time series
   // * euler version
@@ -65,14 +58,21 @@ transformed parameters {
   // * no process error
   // * reaeration depends on DO_mod
   
+  // Calculate individual process rates
+  for(i in 1:(n-1)) {
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
+  }
+  
   // DO model
   DO_mod[1] = DO_obs_1;
   for(i in 1:(n-1)) {
-    DO_mod[i+1] = (
-      DO_mod[i] +
-      GPP_daily .* coef_GPP[i] +
-      ER_daily .* coef_ER[i] +
-      K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]));
+    DO_mod[i+1] =
+      DO_mod[i] + (
+        (GPP[i] + ER[i]) ./ depth[i] +
+        KO2[i] .* (DO_sat[i] - DO_mod[i])
+      ) * timestep;
   }
 }
 
@@ -82,10 +82,10 @@ model {
     DO_obs[i] ~ normal(DO_mod[i], err_obs_iid_sigma);
   }
   // SD (sigma) of the observation errors
-  err_obs_iid_sigma_scaled ~ normal(0, 1);
+  err_obs_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_meanlog, K600_daily_sdlog);
 }

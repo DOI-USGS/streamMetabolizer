@@ -53,7 +53,7 @@ lookup_google_timezone <- function(
   timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="UTC") else as.POSIXct("2015-07-01 00:00:00", tz="UTC")) {
   
   called_as_internal <- all(c(':::','streamMetabolizer') %in% as.character(sys.call()[[1]])) ||
-    any(sapply(sys.calls()[-sys.nframe()], function(sc) tail(as.character(sc[[1]], 1))) %in% ls('package:streamMetabolizer'))
+    any(sapply(sys.calls()[-sys.nframe()], function(sc) tail(as.character(sc[[1]], 1))) %in% ls(envir = asNamespace("streamMetabolizer")))
   if(!called_as_internal) {
     .Deprecated('lookup_timezone') # deprecation plan is to make this internal. everybody can and should use the lookup_timezone instead
   }

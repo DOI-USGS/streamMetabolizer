@@ -29,10 +29,6 @@ mm_generate_mcmc_file <- function(
     ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   
-  # define rules for when to model as process, obs, or both
-  dDO_model <- (deficit_src == 'DO_obs')
-  DO_model <- (err_obs_iid || deficit_src == 'DO_mod')
-  
   #### helper functions ####
   comment <- function(...) { 
     # prefix with the appropriate comment character[s]
@@ -58,16 +54,47 @@ mm_generate_mcmc_file <- function(
     args <- c(list(...))
     switch(
       distrib,
-      normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
-      uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") },
       beta = { if(!all(names(args) == c('alpha','beta'))) stop("expecting beta(alpha,beta)") },
       gamma = { if(!all(names(args) == c('shape','rate'))) stop("expecting gamma(shape,rate)")
         # shape = alpha = k = first argument
         # rate = beta = 1/theta = inverse scale = second argument
       },
-      lognormal = { if(!all(names(args) == c('location','scale'))) stop("expecting lognormal(location,scale)") }
+      halfcauchy = { if(!all(names(args) == c('scale'))) stop("expecting halfcauchy(scale)")
+        distrib <- 'cauchy'
+        args <- c(list(location=0), args)
+      },
+      halfnormal = { if(!all(names(args) == c('sigma'))) stop("expecting halfnormal(sigma)")
+        distrib <- 'normal'
+        args <- c(list(mu=0), args)
+      },
+      lognormal = { if(!all(names(args) == c('meanlog','sdlog'))) stop("expecting lognormal(meanlog,sdlog)") 
+        # meanlog = mu = first argument
+        # sdlog = sigma = second argument
+      },
+      normal = { if(!all(names(args) == c('mu','sigma'))) stop("expecting normal(mu,sigma)") }, 
+      uniform = { if(!all(names(args) == c('min','max'))) stop("expecting uniform(min,max)") }
     )
+    # create the function call text
     paste0(distrib, '(', paste0(args, collapse=', '), ')')
+  }
+  fs <- function(distrib, Y) {
+    # Y_scaled is from a standard normal distribution, e.g., Y_scaled ~
+    # normal(0, 1). this function returns an equation calculating Y, the
+    # rescaled values of Y_scaled that follow the distrib distribution. It
+    # assumes there exist parameters with suffixes corresponding to the args
+    # required by f()
+    paste0(
+      Y, ' = ',
+      switch(
+        distrib,
+        beta = stop(),
+        gamma = stop(),
+        halfcauchy = sprintf('%s_scale * %s_scaled', Y, Y), # scaled = cauchy(0,1)
+        lognormal = sprintf('exp(%s_meanlog + %s_sdlog * %s_scaled)', Y, Y, Y), # scaled = norm(0,1)
+        normal = sprintf('%s_sigma * %s_scaled', Y, Y), # scaled = norm(0,1)
+        uniform = sprintf('%s_min + (%s_max - %s_min) * %s_scaled', Y, Y) # scaled = unif(0,1)
+      )
+    )
   }
   p <- paste0 # partial line: just combine strings into string
   s <- function(...) {
@@ -85,50 +112,49 @@ mm_generate_mcmc_file <- function(
       chunk(
         comment('Parameters of priors on metabolism'),
         'real GPP_daily_mu;',
-        'real GPP_daily_sigma;',
+        'real<lower=0> GPP_daily_sigma;',
         'real ER_daily_mu;',
-        'real ER_daily_sigma;',
+        'real<lower=0> ER_daily_sigma;',
         
         if(pool_K600 %in% c('normal','linear','binned')) c(
           p(''),
           comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
         if(pool_K600 == 'none') c(
-          'real K600_daily_mu;',
-          'real K600_daily_sigma;'
+          'real K600_daily_meanlog;',
+          'real<lower=0> K600_daily_sdlog;'
         ) else c(
-          # hierarchical models each do K600_daily_mu/K600_daily_pred
-          # differently, but K600_daily_sigma they all do the same
+          # hierarchical models each do K600_daily_meanlog/K600_daily_predlog
+          # differently, but K600_daily_sdlog they all do the same
           switch(
             pool_K600,
             normal=c(
-              'real K600_daily_mu_mu;',
-              'real K600_daily_mu_sigma;'),
+              'real K600_daily_meanlog_meanlog;',
+              'real<lower=0> K600_daily_meanlog_sdlog;'),
             linear=c(
-              'vector[2] K600_daily_beta_mu;',
-              'vector[2] K600_daily_beta_sigma;'),
+              'real lnK600_lnQ_intercept_mu;',
+              'real<lower=0> lnK600_lnQ_intercept_sigma;',
+              'real lnK600_lnQ_slope_mu;',
+              'real<lower=0> lnK600_lnQ_slope_sigma;'),
             binned=c(
-              'int <lower=1> b; # number of K600_daily_betas',
-              'vector[b] K600_daily_beta_mu;',
-              'vector[b] K600_daily_beta_sigma;')
+              'int <lower=1> b; # number of K600_lnQ_nodes',
+              'real K600_lnQ_nodediffs_sdlog;',
+              'vector[b] K600_lnQ_nodes_meanlog;',
+              'vector[b] K600_lnQ_nodes_sdlog;')
           ),
-          'real K600_daily_sigma_location;',
-          'real K600_daily_sigma_scale;'
+          'real<lower=0> K600_daily_sdlog_scale;'
         )),
       
       chunk(
         comment('Error distributions'),
         if(err_obs_iid) c(
-          'real err_obs_iid_sigma_location;',
-          'real err_obs_iid_sigma_scale;'),
+          'real<lower=0> err_obs_iid_sigma_scale;'),
         if(err_proc_acor) c(
           'real err_proc_acor_phi_alpha;',
           'real err_proc_acor_phi_beta;',
-          'real err_proc_acor_sigma_location;',
-          'real err_proc_acor_sigma_scale;'),
+          'real<lower=0> err_proc_acor_sigma_scale;'),
         if(err_proc_iid) c(
-          'real err_proc_iid_sigma_location;',
-          'real err_proc_iid_sigma_scale;')),
+          'real<lower=0> err_proc_iid_sigma_scale;')),
       
       chunk(
         comment('Data dimensions'),
@@ -140,8 +166,12 @@ mm_generate_mcmc_file <- function(
         'vector[d] DO_obs_1;',
         switch(
           pool_K600,
-          linear='vector[d] ln_discharge_daily;',
-          binned='int<lower=1,upper=b> discharge_bin_daily[d];')),
+          linear=c(
+            'vector[d] lnQ_daily;'),
+          binned=c(
+            'int<lower=1,upper=b> lnQ_bins[2,d];',
+            'vector<lower=0,upper=1>[d] lnQ_bin_weights[2];')
+        )),
       
       # prepare to iterate over n obs for all d at a time:
       # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
@@ -149,7 +179,10 @@ mm_generate_mcmc_file <- function(
         comment('Data'),
         'vector[d] DO_obs[n];',
         'vector[d] DO_sat[n];',
-        'vector[d] frac_GPP[n];',
+        # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
+        # than fractions (i.e., must yield per-day rather than per-timestep
+        # rates)
+        'vector[d] frac_GPP[n];', 
         'vector[d] frac_ER[n];',
         'vector[d] frac_D[n];',
         'vector[d] depth[n];',
@@ -160,60 +193,23 @@ mm_generate_mcmc_file <- function(
     
     #### transformed data ####
     c('transformed data {', # transformed data = statements evaluated exactly once
-      chunk(
-        'vector[d] coef_GPP[n-1];',
-        'vector[d] coef_ER[n-1];',
-        switch(
-          deficit_src,
-          DO_mod = 'vector[d] coef_K600_part[n-1];',
-          DO_obs = 'vector[d] coef_K600_full[n-1];'
-        ),
-        if(ode_method == 'trapezoid' && deficit_src == 'DO_mod') 'vector[d] DO_sat_pairmean[n-1];',
-        if(dDO_model) 'vector[d] dDO_obs[n-1];'
-      ),
-      
       indent(
-        p('for(i in 1:(n-1)) {'),
-        indent(
-          # Coefficient pre-calculations
-          if(ode_method == 'euler') c(
-            comment('Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)'),
-            s('coef_GPP[i]  = frac_GPP[i] ./ depth[i]'),
-            s('coef_ER[i]   = frac_ER[i] ./ depth[i]'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = KO2_conv[i] .* frac_D[i]')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = KO2_conv[i] .* frac_D[i] .*'),
-                s('  (DO_sat[i] - DO_obs[i])')
-              )
-            )
-          ) else if(ode_method == 'trapezoid') c(
-            comment('Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)'),
-            s('coef_GPP[i] = (frac_GPP[i] + frac_GPP[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
-            s('coef_ER[i] = (frac_ER[i] + frac_ER[i+1])/2.0 ./ ((depth[i] + depth[i+1])/2.0)'),
-            switch(
-              deficit_src,
-              DO_mod = c(
-                s('coef_K600_part[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0'),
-                s('DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0')
-              ),
-              DO_obs = c(
-                p('coef_K600_full[i] = (KO2_conv[i] + KO2_conv[i+1])/2.0 .* (frac_D[i] + frac_D[i+1])/2.0 .*'),
-                s('  (DO_sat[i] + DO_sat[i+1] - DO_obs[i] - DO_obs[i+1])/2.0')
-              )
-            )
-          ),
-          
-          # dDO pre-calculations
-          if(dDO_model) c(
-            comment('dDO observations'),
-            s('dDO_obs[i] = DO_obs[i+1] - DO_obs[i]')
-          )
-        ),
-        p('}')
+        # move timestep to data once frac_GPP, frac_ER, and frac_D have been
+        # replaced with timestep and other coefficients in the data prep code
+        'real<lower=0> timestep; # length of each timestep in days',
+        s('timestep = frac_D[1,1]')
+        
+        #   chunk(
+        #     # Coefficient declarations, if any, go here
+        #   ),
+        #   
+        #   indent(
+        #     p('for(i in 1:n) {'),
+        #     indent(
+        #       # Coefficient pre-calculations, if any, go here
+        #     ),
+        #     p('}')
+        #   ),
       ),
       '}',''
     ),
@@ -231,10 +227,15 @@ mm_generate_mcmc_file <- function(
           '',
           switch(
             pool_K600,
-            normal='real K600_daily_mu;',
-            linear='vector[2] K600_daily_beta;',
-            binned='vector[b] K600_daily_beta;'),
-          'real<lower=0> K600_daily_sigma_scaled;'),
+            normal=c(
+              'real K600_daily_predlog;'),
+            linear=c(
+              'real lnK600_lnQ_intercept;',
+              'real lnK600_lnQ_slope;'),
+            binned=c(
+              'vector[b] lnK600_lnQ_nodes;')
+          ),
+          'real<lower=0> K600_daily_sdlog_scaled;'),
         
         # error distributions
         '',
@@ -247,12 +248,17 @@ mm_generate_mcmc_file <- function(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
         
         # instantaneous process error values
-        if((err_proc_iid && !dDO_model) || err_proc_acor) c(
+        if(err_proc_iid || err_proc_acor) c(
           '',
-          if(err_proc_iid && !dDO_model) c(
+          if(err_proc_iid) c(
             'vector[d] err_proc_iid[n-1];'),
           if(err_proc_acor) c(
-            'vector[d] err_proc_acor_inc[n-1];'))
+            sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n', trapezoid='n+1')))),
+        
+        # DO_mod if it's a fitted parameter (oipi models)
+        if(err_obs_iid && err_proc_iid) c(
+          'vector[d] DO_mod[n];')
+        
       ),
       '}',''
     ),
@@ -264,46 +270,56 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        'real K600_daily_sigma;',
+        'real<lower=0> K600_daily_sdlog;',
         if(pool_K600 %in% c('linear','binned'))
-          'vector[d] K600_daily_pred;'
+          'vector[d] K600_daily_predlog;'
       ),
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
         'real<lower=0> err_obs_iid_sigma;'),
+      if(err_proc_acor || err_proc_iid) c(
+        'vector[d] DO_mod_partial_sigma[n];'
+      ),
       if(err_proc_acor) c(
-        # 'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+        # 'real<lower=0, upper=1> err_proc_acor_phi;', # currently opting not to scale phi (which might be 0-1 or very close to 0)
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
 
-      # instantaneous DO, dDO, and/or process error values
-      if(DO_model)
+      # instantaneous GPP, ER, and KO2
+      sprintf(
+        c('vector[d] GPP[%s];',
+          'vector[d] ER[%s];',
+          'vector[d] KO2[%s];'), 
+        switch(ode_method, euler='n-1', trapezoid='n')
+      ),
+      
+      # instantaneous DO and possibly process error values
+      if(err_proc_iid)
+        'vector[d] DO_mod_partial[n];'
+      else # err_obs_iid and/or err_proc_acor without err_proc_iid
         'vector[d] DO_mod[n];',
-      if(dDO_model)
-        'vector[d] dDO_mod[n-1];',
       if(err_proc_acor)
-        'vector[d] err_proc_acor[n-1];'
+        sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
     ),
     
     chunk(
       comment('Rescale pooling & error distribution parameters'),
-      comment('lnN(location,scale) = exp(location)*(exp(N(0,1))^scale)'),
       
       # rescaled K600 pooling parameters
       if(pool_K600 != 'none') c(
-        s('K600_daily_sigma = exp(K600_daily_sigma_location) * pow(exp(K600_daily_sigma_scaled), K600_daily_sigma_scale)')
+        s(fs('halfcauchy', 'K600_daily_sdlog'))
       ),
       
       # rescaled error distribution parameters
       if(err_obs_iid) c(
-        s('err_obs_iid_sigma = exp(err_obs_iid_sigma_location) * pow(exp(err_obs_iid_sigma_scaled), err_obs_iid_sigma_scale)')),
+        s(fs('halfcauchy', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
-        # s('err_proc_acor_phi, ' = ??), # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-        s('err_proc_acor_sigma = exp(err_proc_acor_sigma_location) * pow(exp(err_proc_acor_sigma_scaled), err_proc_acor_sigma_scale)')),
+        # s(fs('beta', 'err_proc_acor_phi'?)), # currently opting not to scale phi (which might be 0-1 or very close to 0)
+        s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
-        s('err_proc_iid_sigma = exp(err_proc_iid_sigma_location) * pow(exp(err_proc_iid_sigma_scaled), err_proc_iid_sigma_scale)'))
+        s(fs('halfcauchy', 'err_proc_iid_sigma')))
     ),
     
     # K600_daily model
@@ -311,8 +327,9 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily'),
-        binned=s('K600_daily_pred = K600_daily_beta[discharge_bin_daily]')
+        linear=s('K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily'),
+        binned=s('K600_daily_predlog = lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
+                 '                     lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2]')
       )
     ),
     
@@ -328,55 +345,104 @@ mm_generate_mcmc_file <- function(
       if(err_proc_acor) c(
         p(''),
         s('err_proc_acor[1] = err_proc_acor_inc[1]'),
-        p('for(i in 1:(n-2)) {'),
+        p(sprintf('for(i in 1:(n-%d)) {', switch(ode_method, euler=2, trapezoid=1))),
         s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
         p('}')
       ),
-      
-      # dDO model - applies to any model with deficit_src == 'DO_obs' (includes 
-      # all process-only models because we've banned 'DO_mod' for them). looping
-      # over times of day, doing all days at once for each time of day
-      if(dDO_model) c(
+
+      # individual processes
+      c(
         p(''),
-        comment("dDO model"),
-        p('for(i in 1:(n-1)) {'),
+        comment("Calculate individual process rates"),
+        sprintf('for(i in 1:%s) {', switch(ode_method, euler='(n-1)', trapezoid='n')),
         indent(
-          p('dDO_mod[i] = '),
-          indent(
-            if(err_proc_acor) p('err_proc_acor[i] +'),
-            p('GPP_daily  .* coef_GPP[i] +'),
-            p('ER_daily   .* coef_ER[i] +'),
-            s('K600_daily .* coef_K600_full[i]')
-          )
+          s('GPP[i] = GPP_daily .* frac_GPP[i]'),
+          s('ER[i] = ER_daily .* frac_ER[i]'),
+          s('KO2[i] = K600_daily .* KO2_conv[i]')
         ),
         p('}')
       ),
       
       # DO model - any model that includes observation error or is a function of
       # the previous moment's DO_mod
-      if(DO_model) c(
+      c(
         p(''),
         comment("DO model"),
-        s('DO_mod[1] = DO_obs_1'),
+        if(!err_proc_iid)
+          s('DO_mod[1] = DO_obs_1')
+        else if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
+          # pi_km and pcpi_km models are the only ones where we need
+          # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
+          s('DO_mod_partial[1] = DO_obs_1'),
+          s('DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1]')
+        ),
         p('for(i in 1:(n-1)) {'),
         indent(
-          p('DO_mod[i+1] = ('),
-          p('  DO_mod[i] +'),
-          if(dDO_model) c(
-            s('  dDO_mod[i]', if(err_proc_iid) ' + err_proc_iid[i]', ')')
-          ) else c(
-            if(err_proc_iid) p('  err_proc_iid[i] +'),
-            if(err_proc_acor) p('  err_proc_acor[i] +'),
-            p('  GPP_daily .* coef_GPP[i] +'),
-            p('  ER_daily .* coef_ER[i] +'),
+          if(err_proc_iid) p(
+            'DO_mod_partial[i+1] ='
+          ) else p( # err_obs_iid and/or err_proc_acor without err_proc_iid
+            'DO_mod[i+1] ='
+          ),
+          indent(
             switch(
               ode_method,
               'euler' = c(
-                s('  K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]))')),
+                p(if(err_obs_iid) 'DO_mod' else 'DO_obs', '[i] + (')
+              ),
               'trapezoid' = c(
-                p('  K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)'),
-                s(') ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0)'))
+                switch(
+                  deficit_src,
+                  'DO_obs' = c(
+                    p(if(err_obs_iid) 'DO_mod' else 'DO_obs', '[i] + ('),
+                    p('  - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +')),
+                  'DO_mod' = c(
+                    p(if(err_obs_iid) 'DO_mod' else 'DO_mod_partial', '[i] .*'),
+                    p('  (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + ('))
+                )
+              )
+            ),
+            p('  (GPP[i] + ER[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
+            switch(
+              ode_method,
+              'euler' = c(
+                p('  KO2[i] .* (DO_sat[i] - ',
+                  if(deficit_src=='DO_mod' && !err_obs_iid) 'DO_mod_partial' else deficit_src,
+                  '[i])'),
+                s(') * timestep')
+              ),
+              'trapezoid' = c(
+                p('  (GPP[i+1] + ER[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                p('  KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]'),
+                switch(
+                  deficit_src,
+                  'DO_obs' = c(
+                    s(') * (timestep / 2.0)')),
+                  'DO_mod' = c(
+                    s(') .* (timestep ./ (2.0 + KO2[i+1] * timestep))'))
+                )
+              )
             )
+          ),
+          if(err_proc_iid) c(
+            p('for(j in 1:d) {'),
+            indent(
+              'DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * ',
+              switch(
+                ode_method,
+                'euler' = indent(
+                  s('timestep ./ depth[i,j]')
+                ),
+                'trapezoid' = indent(
+                  'sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*',
+                  switch(
+                    deficit_src,
+                    'DO_obs' = s('(timestep / 2.0)'),
+                    'DO_mod' = s('(timestep / (2.0 + KO2[i+1,j] * timestep))')
+                  )
+                )
+              )
+            ),
+            p('}')
           )
         ),
         p('}')
@@ -389,29 +455,33 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      p('for(i in 1:(n-1)) {'),
+      if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
+        # pi_km and pcpi_km models are the only ones where we need
+        # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
+        p('for(i in 1:n) {')
+      ) else c(
+        p('for(i in 2:n) {')
+      ),
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),
-          if(dDO_model) s(
-            'dDO_obs[i] ~ ', f('normal', mu=p('dDO_mod[i]'), sigma='err_proc_iid_sigma')
-          ) else s(
-            'err_proc_iid[i] ~ ', f('normal', mu='0', sigma='err_proc_iid_sigma')
+          s(if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', ' ~ ', 
+            f('normal', mu='DO_mod_partial[i]', sigma='DO_mod_partial_sigma[i]')
           )
         ),
         if(err_proc_acor) c(
           comment('Autocorrelated process error'),
-          s('err_proc_acor_inc[i] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+          s('err_proc_acor_inc[i-1] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
         )
       ),
       p('}'),
       if(err_proc_iid) c(
         comment('SD (sigma) of the IID process errors'),
-        s('err_proc_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
+        s('err_proc_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
       if(err_proc_acor) c(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
-        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')),
-        s('err_proc_acor_sigma_scaled ~ ', f('normal', mu='0', sigma='1')))
+        s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')), # currently opting not to scale phi (which might be 0-1 or very close to 0)
+        s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
     ),
     
     if(err_obs_iid) chunk(
@@ -423,16 +493,16 @@ mm_generate_mcmc_file <- function(
       ),
       p('}'),
       comment('SD (sigma) of the observation errors'),
-      s('err_obs_iid_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))),
+      s('err_obs_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
     
     indent(
       comment('Daily metabolism priors'),
       s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
       s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
-      if(pool_K600 %in% c('none','normal')) s(
-        'K600_daily ~ ', f('normal', mu='K600_daily_mu', sigma='K600_daily_sigma')
-      ) else if(pool_K600 %in% c('linear','binned')) s(
-        'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
+      if(pool_K600 %in% c('none')) s(
+        'K600_daily ~ ', f('lognormal', meanlog='K600_daily_meanlog', sdlog='K600_daily_sdlog')
+      ) else if(pool_K600 %in% c('normal','linear','binned')) s(
+        'K600_daily ~ ', f('lognormal', meanlog='K600_daily_predlog', sdlog='K600_daily_sdlog')
       )
     ),
     
@@ -440,13 +510,23 @@ mm_generate_mcmc_file <- function(
       '',
       indent(
         comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
-        if(pool_K600 == 'normal') c(
-          s('K600_daily_mu ~ ', f('normal', mu='K600_daily_mu_mu', sigma='K600_daily_mu_sigma'))
+        switch(
+          pool_K600,
+          'normal' = c(
+            s('K600_daily_predlog ~ ', f('normal', mu='K600_daily_meanlog_meanlog', sigma='K600_daily_meanlog_sdlog '))
+          ),
+          'linear' = c(
+            s('lnK600_lnQ_intercept ~ ', f('normal', mu='lnK600_lnQ_intercept_mu', sigma='lnK600_lnQ_intercept_sigma')),
+            s('lnK600_lnQ_slope ~ ', f('normal', mu='lnK600_lnQ_slope_mu', sigma='lnK600_lnQ_slope_sigma'))
+          ),
+          'binned' = c(
+            s('lnK600_lnQ_nodes ~ ', f('normal', mu='K600_lnQ_nodes_meanlog', sigma='K600_lnQ_nodes_sdlog')),
+            p('for(k in 2:b) {'),
+            s('  lnK600_lnQ_nodes[k] ~ ', f('normal', mu='lnK600_lnQ_nodes[k-1]', sigma='K600_lnQ_nodediffs_sdlog')),
+            p('}')
+          )
         ),
-        if(pool_K600 %in% c('linear','binned')) c(
-          s('K600_daily_beta ~ ', f('normal', mu='K600_daily_beta_mu', sigma='K600_daily_beta_sigma'))
-        ),
-        s('K600_daily_sigma_scaled ~ ', f('normal', mu='0', sigma='1'))
+        s('K600_daily_sdlog_scaled ~ ', f('halfcauchy', scale='1'))
       )
     ),
     
@@ -474,7 +554,7 @@ mm_generate_mcmc_files <- function() {
   opts <- expand.grid(
     pool_K600=c('none','normal','linear','binned'),
     err_obs_iid=c(TRUE, FALSE),
-    err_proc_acor=c(FALSE, TRUE),
+    err_proc_acor=c(TRUE, FALSE),
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun='linlight',
@@ -485,8 +565,7 @@ mm_generate_mcmc_files <- function() {
   attr(opts, 'out.attrs') <- NULL
   
   incompatible <- 
-    (!opts$err_obs_iid & opts$deficit_src == 'DO_mod') |
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid)
+    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid) # need at least 1 kind of error
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {

@@ -18,11 +18,11 @@ of required parameters and their defaults depends on the model given in the
 \code{\link{specs}} lists the necessary parameters, describes them in 
 detail, and gives default values.}
 
-\item{data}{data.frame of input data at the temporal resolution of raw 
-observations (unit-value). Columns must have the same names, units, and 
-format as the default. The solar.time column must also have a timezone code
-('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
-section below for a full description.}
+\item{data}{data.frame (not a tbl_df) of input data at the temporal
+resolution of raw observations (unit-value). Columns must have the same
+names, units, and format as the default. The solar.time column must also
+have a timezone code ('tzone' attribute) of 'UTC'. See the
+\strong{'Formatting \code{data}'} section below for a full description.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -69,6 +69,9 @@ mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE),
   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
   data=dat)
 predict_metab(mm)
+
+# view the Stan model file as stored on your system
+file.edit(get_specs(mm)$model_path)
 }
 }
 \author{
