@@ -3,14 +3,16 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
+  real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (linear model)
-  vector[2] K600_daily_beta_mu;
-  vector[2] K600_daily_beta_sigma;
-  real<lower=0> K600_daily_sigma_scale;
+  real lnK600_lnQ_intercept_mu;
+  real<lower=0> lnK600_lnQ_intercept_sigma;
+  real lnK600_lnQ_slope_mu;
+  real<lower=0> lnK600_lnQ_slope_sigma;
+  real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
   real<lower=0> err_obs_iid_sigma_scale;
@@ -22,7 +24,7 @@ data {
   
   // Daily data
   vector[d] DO_obs_1;
-  vector[d] ln_discharge_daily;
+  vector[d] lnQ_daily;
   
   // Data
   vector[d] DO_obs[n];
@@ -35,18 +37,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_part[n-1];
-  vector[d] DO_sat_pairmean[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients for trapezoid rule (e.g., mean(frac_GPP[i:(i+1)]) applies to the DO step from i to i+1)
-    coef_GPP[i] = ((frac_GPP[i] ./ depth[i]) + (frac_GPP[i+1] ./ depth[i+1]))/2.0;
-    coef_ER[i] = ((frac_ER[i] ./ depth[i]) + (frac_ER[i+1] ./ depth[i+1]))/2.0;
-    coef_K600_part[i] = ((KO2_conv[i] .* frac_D[i]) + (KO2_conv[i+1] .* frac_D[i+1]))/2.0;
-    DO_sat_pairmean[i] = (DO_sat[i] + DO_sat[i+1])/2.0;
-  }
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -54,29 +46,35 @@ parameters {
   vector[d] ER_daily;
   vector<lower=0>[d] K600_daily;
   
-  vector[2] K600_daily_beta;
-  real<lower=0> K600_daily_sigma_scaled;
+  real lnK600_lnQ_intercept;
+  real lnK600_lnQ_slope;
+  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0> err_obs_iid_sigma_scaled;
   real<lower=0> err_proc_iid_sigma_scaled;
   
   vector[d] err_proc_iid[n-1];
+  vector[d] DO_mod[n];
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sigma;
-  vector[d] K600_daily_pred;
+  real<lower=0> K600_daily_sdlog;
+  vector[d] K600_daily_predlog;
   real<lower=0> err_obs_iid_sigma;
+  vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_iid_sigma;
-  vector[d] DO_mod[n];
+  vector[d] GPP[n];
+  vector[d] ER[n];
+  vector[d] KO2[n];
+  vector[d] DO_mod_partial[n];
   
   // Rescale pooling & error distribution parameters
-  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Hierarchical, linear model of K600_daily
-  K600_daily_pred = K600_daily_beta[1] + K600_daily_beta[2] * ln_discharge_daily;
+  K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily;
   
   // Model DO time series
   // * trapezoid version
@@ -84,24 +82,35 @@ transformed parameters {
   // * IID process error
   // * reaeration depends on DO_mod
   
+  // Calculate individual process rates
+  for(i in 1:n) {
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
+  }
+  
   // DO model
-  DO_mod[1] = DO_obs_1;
   for(i in 1:(n-1)) {
-    DO_mod[i+1] = (
-      DO_mod[i] +
-      err_proc_iid[i] +
-      GPP_daily .* coef_GPP[i] +
-      ER_daily .* coef_ER[i] +
-      K600_daily .* coef_K600_part[i] .* (DO_sat_pairmean[i] - DO_mod[i]/2.0)
-    ) ./ (1.0 + K600_daily .* coef_K600_part[i] / 2.0);
+    DO_mod_partial[i+1] =
+      DO_mod[i] .*
+        (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + (
+        (GPP[i] + ER[i]) ./ depth[i] +
+        (GPP[i+1] + ER[i+1]) ./ depth[i+1] +
+        KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
+      ) .* (timestep ./ (2.0 + KO2[i+1] * timestep));
+    for(j in 1:d) {
+      DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
+        sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*
+        (timestep / (2.0 + KO2[i+1,j] * timestep));
+    }
   }
 }
 
 model {
   // Process error
-  for(i in 1:(n-1)) {
+  for(i in 2:n) {
     // Independent, identically distributed process error
-    err_proc_iid[i] ~ normal(0, err_proc_iid_sigma);
+    DO_mod[i] ~ normal(DO_mod_partial[i], DO_mod_partial_sigma[i]);
   }
   // SD (sigma) of the IID process errors
   err_proc_iid_sigma_scaled ~ cauchy(0, 1);
@@ -116,9 +125,10 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (linear model)
-  K600_daily_beta ~ normal(K600_daily_beta_mu, K600_daily_beta_sigma);
-  K600_daily_sigma_scaled ~ cauchy(0, 1);
+  lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);
+  lnK600_lnQ_slope ~ normal(lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma);
+  K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }

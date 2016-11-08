@@ -1,8 +1,15 @@
+# 0.9.18
+
+* solidified the model feature options, including error types, DO deficit 
+source, ODE integration methods, and hierarchy
+
+* revised hierarchical methods to be consistent with recent email exchanges.
+
 # 0.9.15
 
 * new function: `plot_distribs` to explore priors
 
-* bayesian models can now track `err_obs_iid` and other parameters fit at the
+* bayesian models can now track `err_obs_iid` and other parameters fit at the 
 resolution of `data`
 
 * new functions: `calc_solar_time` and `calc_light` for faster data preparation

@@ -12,11 +12,11 @@
 #'   \code{model_name} argument to \code{specs}. The help file for 
 #'   \code{\link{specs}} lists the necessary parameters, describes them in 
 #'   detail, and gives default values.
-#' @param data data.frame of input data at the temporal resolution of raw 
-#'   observations (unit-value). Columns must have the same names, units, and 
-#'   format as the default. The solar.time column must also have a timezone code
-#'   ('tzone' attribute) of 'UTC'. See the \strong{'Formatting \code{data}'} 
-#'   section below for a full description.
+#' @param data data.frame (not a tbl_df) of input data at the temporal
+#'   resolution of raw observations (unit-value). Columns must have the same
+#'   names, units, and format as the default. The solar.time column must also
+#'   have a timezone code ('tzone' attribute) of 'UTC'. See the
+#'   \strong{'Formatting \code{data}'} section below for a full description.
 #' @param data_daily data.frame containing inputs with a daily timestep. See the
 #'   \strong{'Formatting \code{data_daily}'} section below for a full 
 #'   description.

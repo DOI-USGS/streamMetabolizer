@@ -3,14 +3,14 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
+  real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (normal model)
-  real K600_daily_mu_mu;
-  real K600_daily_mu_sigma;
-  real<lower=0> K600_daily_sigma_scale;
+  real K600_daily_meanlog_meanlog;
+  real<lower=0> K600_daily_meanlog_sdlog;
+  real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
   real<lower=0> err_obs_iid_sigma_scale;
@@ -37,16 +37,8 @@ data {
 }
 
 transformed data {
-  vector[d] coef_GPP[n-1];
-  vector[d] coef_ER[n-1];
-  vector[d] coef_K600_part[n-1];
-  
-  for(i in 1:(n-1)) {
-    // Coefficients by lag (e.g., frac_GPP[i] applies to the DO step from i to i+1)
-    coef_GPP[i]  = frac_GPP[i] ./ depth[i];
-    coef_ER[i]   = frac_ER[i] ./ depth[i];
-    coef_K600_part[i] = KO2_conv[i] .* frac_D[i];
-  }
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -54,8 +46,8 @@ parameters {
   vector[d] ER_daily;
   vector<lower=0>[d] K600_daily;
   
-  real K600_daily_mu;
-  real<lower=0> K600_daily_sigma_scaled;
+  real K600_daily_predlog;
+  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0> err_obs_iid_sigma_scaled;
   real<lower=0, upper=1> err_proc_acor_phi;
@@ -63,19 +55,24 @@ parameters {
   real<lower=0> err_proc_iid_sigma_scaled;
   
   vector[d] err_proc_iid[n-1];
-  vector[d] err_proc_acor_inc[n-1];
+  vector[d] err_proc_acor_inc[n];
+  vector[d] DO_mod[n];
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sdlog;
   real<lower=0> err_obs_iid_sigma;
+  vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_acor_sigma;
   real<lower=0> err_proc_iid_sigma;
-  vector[d] DO_mod[n];
+  vector[d] GPP[n-1];
+  vector[d] ER[n-1];
+  vector[d] KO2[n-1];
+  vector[d] DO_mod_partial[n];
   vector[d] err_proc_acor[n-1];
   
   // Rescale pooling & error distribution parameters
-  K600_daily_sigma = K600_daily_sigma_scale * K600_daily_sigma_scaled;
+  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   err_proc_acor_sigma = err_proc_acor_sigma_scale * err_proc_acor_sigma_scaled;
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
@@ -91,26 +88,34 @@ transformed parameters {
     err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1];
   }
   
-  // DO model
-  DO_mod[1] = DO_obs_1;
+  // Calculate individual process rates
   for(i in 1:(n-1)) {
-    DO_mod[i+1] = (
-      DO_mod[i] +
-      err_proc_iid[i] +
-      err_proc_acor[i] +
-      GPP_daily .* coef_GPP[i] +
-      ER_daily .* coef_ER[i] +
-      K600_daily .* coef_K600_part[i] .* (DO_sat[i] - DO_mod[i]));
+    GPP[i] = GPP_daily .* frac_GPP[i];
+    ER[i] = ER_daily .* frac_ER[i];
+    KO2[i] = K600_daily .* KO2_conv[i];
+  }
+  
+  // DO model
+  for(i in 1:(n-1)) {
+    DO_mod_partial[i+1] =
+      DO_mod[i] + (
+        (GPP[i] + ER[i] + err_proc_acor[i]) ./ depth[i] +
+        KO2[i] .* (DO_sat[i] - DO_mod[i])
+      ) * timestep;
+    for(j in 1:d) {
+      DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
+        timestep ./ depth[i,j];
+    }
   }
 }
 
 model {
   // Process error
-  for(i in 1:(n-1)) {
+  for(i in 2:n) {
     // Independent, identically distributed process error
-    err_proc_iid[i] ~ normal(0, err_proc_iid_sigma);
+    DO_mod[i] ~ normal(DO_mod_partial[i], DO_mod_partial_sigma[i]);
     // Autocorrelated process error
-    err_proc_acor_inc[i] ~ normal(0, err_proc_acor_sigma);
+    err_proc_acor_inc[i-1] ~ normal(0, err_proc_acor_sigma);
   }
   // SD (sigma) of the IID process errors
   err_proc_iid_sigma_scaled ~ cauchy(0, 1);
@@ -128,9 +133,9 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (normal model)
-  K600_daily_mu ~ normal(K600_daily_mu_mu, K600_daily_mu_sigma);
-  K600_daily_sigma_scaled ~ cauchy(0, 1);
+  K600_daily_predlog ~ normal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
+  K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }

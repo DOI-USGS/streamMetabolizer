@@ -59,7 +59,11 @@ create_calc_NLL <- function(
       diffs <- DO.obs - DO.mod
       sd <- if('err_obs_iid_sigma' %in% all.pars) all.pars$err_obs_iid_sigma else sqrt(mean(diffs^2))
     } else if(err_proc_iid) {
-      dDOdt.mod <- diff(DO.mod) # should this be diff(DO.mod) or calc_dDOdt over all times?
+      # diff(DO.mod) is similar to dDOdt(1:T-1) (identical, in fact, for euler &
+      # trapezoid), but I think diff(DO.mod) is most correct. besides, if we
+      # used dDOdt then models with different integration methods would report 
+      # identical fitted params
+      dDOdt.mod <- diff(DO.mod) 
       diffs <- dDOdt.obs - dDOdt.mod
       sd <- if('err_proc_iid_sigma' %in% all.pars) all.pars$err_proc_iid_sigma else sqrt(mean(diffs^2))
     }

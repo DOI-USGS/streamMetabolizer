@@ -15,22 +15,33 @@ manual_test4 <- function() {
   source('tests/testthat/helper-rmse_DO.R')
   
   # simple test data (except for being light saturating)
-  dat <- data_metab('1', res='30')
+  dat <- mda.streams::get_metab_data('nwis_03259757')
+  dat60 <- streamMetabolizer:::mm_filter_dates(dat, date_start='2015-04-01', date_end='2015-06-01')
+  dat <- mutate(data_metab('10', res='30'), discharge=seq(5,15,length.out=n()))
   
-  # 12 core models as in https://github.com/USGS-R/streamMetabolizer/issues/264
-  stanfiles <- matrix(c(
-    'b_np_oi_eu_plrcko.stan', 'b_np_pi_eu_plrcko.stan', 'b_np_oipi_eu_plrcko.stan',
-    'b_np_oi_eu_plrckm.stan', 'b_np_pi_eu_plrckm.stan', 'b_np_oipi_eu_plrckm.stan',
-    'b_np_oi_tr_plrcko.stan', 'b_np_pi_tr_plrcko.stan', 'b_np_oipi_tr_plrcko.stan',
-    'b_np_oi_tr_plrckm.stan', 'b_np_pi_tr_plrckm.stan', 'b_np_oipi_tr_plrckm.stan'),
-    ncol=3, byrow=TRUE, dimnames=list(c('eu_ko','eu_km','tr_ko','tr_km'), c('oi','pi','oipi')))
+  # create a list of all models to run
+  opts <- expand.grid(
+    type='bayes',
+    pool_K600=c('none','normal','linear','binned'),
+    err_obs_iid=T,#c(TRUE, FALSE),
+    err_proc_acor=F,#c(FALSE, TRUE),
+    err_proc_iid=F,#c(FALSE, TRUE),
+    ode_method='trapezoid',#c('trapezoid','euler'),
+    GPP_fun='linlight',
+    ER_fun='constant',
+    deficit_src='DO_mod',#c('DO_mod','DO_obs'),
+    engine='stan',
+    check_validity=FALSE,
+    stringsAsFactors=FALSE)
+  stanfiles <- opts %>% rowwise %>% do(data_frame(model_name=do.call(mm_name, .))) %>% unlist(use.names=FALSE) %>% sort %>%
+  {.[!grepl('__', .)]}
   
-  mms <- lapply(c(stanfiles), function(sf) {
+  mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
-    file.edit(paste0('inst/models/', sf))
-    metab(specs(sf), dat)
+    metab(specs(sf), if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge))
   })
   
+  bind_rows(lapply(mms, get_params))
   sapply(mms, get_fitting_time)
   
   bind_rows(lapply(mms, function(mm) {
@@ -40,9 +51,23 @@ manual_test4 <- function() {
       bind_cols(select(get_fit(mm)$daily, ends_with('Rhat')))
   }))
   
+  # if models were run on a cluster, pull and query them here. get in the right directory.
+  mm_files <- dir(path='../metab_tests/explore/007_stan_tests/', pattern='16.*', full.names = TRUE)
+  mm_run <- substring(gsub('\\.Rds', '.stan', basename(mm_files)), 8)
+  mm_unrun <- sort(setdiff(stanfiles, mm_run))
+  mms <- lapply(mm_files, readRDS)
+  mm_failures <- mm_run[sapply(mms, function(mm) is.null(get_mcmc(mm)))]
+  setdiff(mm_run, mm_failures)
+  
   library(gridExtra)
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
+  do.call(grid.arrange, c(lapply(mms[c(1,4,2,3)], function(mm) 
+    plot_metab_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=2, ncol=2)))
   do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
     plot_DO_preds(mm) + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
+  do.call(grid.arrange, c(lapply(mms[c(1,5,9,2,6,10,3,7,11,4,8,12)], function(mm) 
+    traceplot(get_mcmc(mm), 'K600_daily_mu') + ggtitle(mm@specs$model_name)), list(nrow=4, ncol=3)))
 }
 
 manual_test1 <- function() {

@@ -3,11 +3,11 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
-  real K600_daily_mu;
-  real K600_daily_sigma;
+  real<lower=0> ER_daily_sigma;
+  real K600_daily_meanlog;
+  real<lower=0> K600_daily_sdlog;
   
   // Error distributions
   real<lower=0> err_proc_iid_sigma_scale;
@@ -30,8 +30,8 @@ data {
 }
 
 transformed data {
-real<lower=0> timestep; # length of each timestep in days
-timestep = frac_D[1,1];
+  real<lower=0> timestep; # length of each timestep in days
+  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -72,10 +72,10 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod_partial[i+1] =
       DO_obs[i] + (
+        - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +
         (GPP[i] + ER[i]) ./ depth[i] +
         (GPP[i+1] + ER[i+1]) ./ depth[i+1] +
-        KO2[i] .* (DO_sat[i] - DO_obs[i]) +
-        KO2[i+1] .* (DO_sat[i+1] - DO_obs[i+1])
+        KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
       ) * (timestep / 2.0);
     for(j in 1:d) {
       DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
@@ -97,5 +97,5 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_mu, K600_daily_sigma);
+  K600_daily ~ lognormal(K600_daily_meanlog, K600_daily_sdlog);
 }
