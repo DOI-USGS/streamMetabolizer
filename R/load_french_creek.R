@@ -18,6 +18,7 @@ load_french_creek <- function(attach.units=TRUE) {
   french <- unique(french[!is.na(french$oxy),])
   
   # rename DO.obs, temp.water
+  oxy <- temp <- '.dplyr.var'
   french <- rename(french, DO.obs=oxy, temp.water=temp)
   
   # datetime
