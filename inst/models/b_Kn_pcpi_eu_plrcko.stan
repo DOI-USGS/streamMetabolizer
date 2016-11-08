@@ -3,13 +3,13 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
+  real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (normal model)
   real K600_daily_meanlog_meanlog;
-  real K600_daily_meanlog_sdlog;
+  real<lower=0> K600_daily_meanlog_sdlog;
   real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
@@ -43,9 +43,9 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
-  real K600_daily_mu;
+  real K600_daily_predlog;
   real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0, upper=1> err_proc_acor_phi;
@@ -121,9 +121,9 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
+  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (normal model)
-  K600_daily_pred ~ lognormal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
+  K600_daily_predlog ~ normal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
   K600_daily_sdlog_scaled ~ cauchy(0, 1);
 }

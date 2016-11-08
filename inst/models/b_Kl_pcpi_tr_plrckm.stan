@@ -3,15 +3,15 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
+  real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (linear model)
   real lnK600_lnQ_intercept_mu;
-  real lnK600_lnQ_intercept_sigma;
+  real<lower=0> lnK600_lnQ_intercept_sigma;
   real lnK600_lnQ_slope_mu;
-  real lnK600_lnQ_slope_sigma;
+  real<lower=0> lnK600_lnQ_slope_sigma;
   real<lower=0> K600_daily_sdlog_scale;
   
   // Error distributions
@@ -46,7 +46,7 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
   real lnK600_lnQ_intercept;
   real lnK600_lnQ_slope;
@@ -62,7 +62,7 @@ parameters {
 
 transformed parameters {
   real<lower=0> K600_daily_sdlog;
-  vector[d] K600_daily_pred;
+  vector[d] K600_daily_predlog;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_acor_sigma;
   real<lower=0> err_proc_iid_sigma;
@@ -78,7 +78,7 @@ transformed parameters {
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Hierarchical, linear model of K600_daily
-  K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily);
+  K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily;
   
   // Model DO time series
   // * trapezoid version
@@ -134,7 +134,7 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
+  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (linear model)
   lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);

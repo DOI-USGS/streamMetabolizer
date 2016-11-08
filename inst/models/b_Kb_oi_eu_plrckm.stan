@@ -3,9 +3,9 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
-  real GPP_daily_sigma;
+  real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
-  real ER_daily_sigma;
+  real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (binned model)
   int <lower=1> b; # number of K600_lnQ_nodes
@@ -44,7 +44,7 @@ transformed data {
 parameters {
   vector[d] GPP_daily;
   vector[d] ER_daily;
-  vector[d] K600_daily;
+  vector<lower=0>[d] K600_daily;
   
   vector[b] lnK600_lnQ_nodes;
   real<lower=0> K600_daily_sdlog_scaled;
@@ -54,7 +54,7 @@ parameters {
 
 transformed parameters {
   real<lower=0> K600_daily_sdlog;
-  vector[d] K600_daily_pred;
+  vector[d] K600_daily_predlog;
   real<lower=0> err_obs_iid_sigma;
   vector[d] GPP[n-1];
   vector[d] ER[n-1];
@@ -66,8 +66,8 @@ transformed parameters {
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   
   // Hierarchical, binned model of K600_daily
-  K600_daily_pred = exp(lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + 
-                        lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2]);
+  K600_daily_predlog = lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + 
+                       lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2];
   
   // Model DO time series
   // * euler version
@@ -104,7 +104,7 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ lognormal(K600_daily_pred, K600_daily_sdlog);
+  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
 
   // Hierarchical constraints on K600_daily (binned model)
   lnK600_lnQ_nodes ~ normal(K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog);

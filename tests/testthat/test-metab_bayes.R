@@ -15,26 +15,28 @@ manual_test4 <- function() {
   source('tests/testthat/helper-rmse_DO.R')
   
   # simple test data (except for being light saturating)
+  dat <- mda.streams::get_metab_data('nwis_03259757')
+  dat60 <- streamMetabolizer:::mm_filter_dates(dat, date_start='2015-04-01', date_end='2015-06-01')
   dat <- mutate(data_metab('10', res='30'), discharge=seq(5,15,length.out=n()))
   
   # create a list of all models to run
   opts <- expand.grid(
     type='bayes',
     pool_K600=c('none','normal','linear','binned'),
-    err_obs_iid=c(TRUE, FALSE),
-    err_proc_acor=FALSE,
-    err_proc_iid=c(FALSE, TRUE),
-    ode_method=c('trapezoid','euler'),
+    err_obs_iid=T,#c(TRUE, FALSE),
+    err_proc_acor=F,#c(FALSE, TRUE),
+    err_proc_iid=F,#c(FALSE, TRUE),
+    ode_method='trapezoid',#c('trapezoid','euler'),
     GPP_fun='linlight',
     ER_fun='constant',
-    deficit_src=c('DO_mod','DO_obs'),
+    deficit_src='DO_mod',#c('DO_mod','DO_obs'),
     engine='stan',
     check_validity=FALSE,
     stringsAsFactors=FALSE)
   stanfiles <- opts %>% rowwise %>% do(data_frame(model_name=do.call(mm_name, .))) %>% unlist(use.names=FALSE) %>% sort %>%
   {.[!grepl('__', .)]}
   
-  mms <- lapply(setNames(nm=stanfiles[1]), function(sf) {
+  mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
     metab(specs(sf), if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge))
   })

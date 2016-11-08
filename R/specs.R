@@ -264,13 +264,13 @@ specs <- function(
   # model setup
   split_dates,
   keep_mcmcs = TRUE,
-  keep_mcmc_data = FALSE,
+  keep_mcmc_data = TRUE,
   
   # hyperparameters for non-hierarchical GPP & ER
-  GPP_daily_mu = 10,
-  GPP_daily_sigma = 10,
+  GPP_daily_mu = 8,
+  GPP_daily_sigma = 4,
   ER_daily_mu = -10,
-  ER_daily_sigma = 10,
+  ER_daily_sigma = 5,
   
   # hyperparameters for non-hierarchical K600
   K600_daily_meanlog = log(6),
@@ -441,9 +441,9 @@ specs <- function(
           switch(
             features$pool_K600,
             none=c(),
-            normal=c('K600_daily_pred', 'K600_daily_sdlog'),
-            linear=c('K600_daily_pred', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope', 'K600_daily_sdlog'),
-            binned=c('K600_daily_pred', 'lnK600_lnQ_nodes', 'K600_daily_sdlog')), 
+            normal=c('K600_daily_predlog', 'K600_daily_sdlog'),
+            linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope', 'K600_daily_sdlog'),
+            binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes', 'K600_daily_sdlog')), 
           if(features$err_obs_iid) 'err_obs_iid_sigma', # add in err_obs_iid later
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma')) # add in err_proc_iid later

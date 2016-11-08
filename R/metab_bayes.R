@@ -113,10 +113,10 @@ metab_bayes <- function(
     # If we need discharge bins, compute & store those now, as well
     if(pool_K600 %in% c('binned')) {
       # linear interpolation from node to node, horizontal at the edges
-      bounds <- c(-Inf, specs$K600_daily_lnQ_nodes, Inf)
+      bounds <- c(-Inf, specs$K600_lnQ_nodes_centers, Inf)
       cuts <- cut(dat_list$data_daily$lnQ.daily, breaks=bounds, ordered_result=TRUE)
       widths <- diff(bounds)[cuts]
-      bins <- rbind(pmax(1, as.numeric(cuts) - 1), pmin(length(specs$K600_daily_lnQ_nodes), as.numeric(cuts)))
+      bins <- rbind(pmax(1, as.numeric(cuts) - 1), pmin(length(specs$K600_lnQ_nodes_centers), as.numeric(cuts)))
       weights <- ifelse(is.infinite(widths), 1, (bounds[as.numeric(cuts)+1] - dat_list$data_daily$lnQ.daily)/widths)
       
       # package info so it gets passed to specs
@@ -498,7 +498,7 @@ prepdata_bayes <- function(
       features$pool_K600,
       linear = list(lnQ_daily = data_daily$lnQ.daily),
       binned = list(
-          b = length(specs$K600_daily_lnQ_nodes),
+          b = length(specs$K600_lnQ_nodes_centers),
           lnQ_bins = rbind(data_daily$lnQ.bin1, data_daily$lnQ.bin2),
           lnQ_bin_weights = rbind(data_daily$lnQ.bin1.weight, data_daily$lnQ.bin2.weight))
     ),
@@ -527,6 +527,10 @@ prepdata_bayes <- function(
     
     specs[specs$params_in]
   )
+  if(features$pool_K600 == 'binned') {
+    data_list$K600_lnQ_nodes_meanlog <- array(data_list$K600_lnQ_nodes_meanlog, dim=data_list$b)
+    data_list$K600_lnQ_nodes_sdlog <- array(data_list$K600_lnQ_nodes_sdlog, dim=data_list$b)
+  }
   
   data_list
 }
