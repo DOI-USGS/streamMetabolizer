@@ -101,7 +101,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
   # mm_valid_names
   if(all(is.na(mnames))) mnames <- sapply(seq_len(nrow(opts)), function(i) suppressWarnings(do.call(mm_name, c(opts[i,], list(check_validity=FALSE)))))
   
-  # rename so our favorite is first
+  # reorder so our favorite is first
   c(favorites, mnames[-which(mnames %in% favorites)])
 }
 

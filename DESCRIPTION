@@ -2,7 +2,7 @@ Package: streamMetabolizer
 Type: Package
 Title: Estimate Stream Metabolism from Dissolved Oxygen Data
 Version: 0.9.18
-Date: 2016-11-07
+Date: 2016-11-08
 Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: streamMetabolizer uses inverse modeling to estimate aquatic
@@ -40,7 +40,6 @@ Suggests:
     ggplot2,
     knitr,
     microbenchmark,
-    plyr,
     RCurl,
     rstan,
     testthat,
