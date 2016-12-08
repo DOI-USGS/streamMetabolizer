@@ -344,6 +344,7 @@ mm_generate_mcmc_file <- function(
       # process error (always looped, vectorized across days)
       if(err_proc_acor) c(
         p(''),
+        comment("Calculate autocorrelated process error rates"),
         s('err_proc_acor[1] = err_proc_acor_inc[1]'),
         p(sprintf('for(i in 1:(n-%d)) {', switch(ode_method, euler=2, trapezoid=1))),
         s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
