@@ -1,9 +1,16 @@
 Package: streamMetabolizer
 Type: Package
-Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.18
-Date: 2016-11-08
-Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
+Title: Models for Estimating Aquatic Photosynthesis and Respiration
+Version: 0.9.20
+Date: 2016-12-13
+Author: Alison P. Appling, Robert O. Hall, Maite Arroita, and Charles B.
+    Yackulic
+Authors@R: c(
+    person("Alison P.", "Appling", , "aappling@usgs.gov", c("aut", "cre")),
+    person("Robert O.", "Hall", , , "aut"),
+    person("Maite", "Arroita", , , "aut"),
+    person("Charles B.", "Yackulic", , , "aut")
+    )
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: streamMetabolizer uses inverse modeling to estimate aquatic
     photosynthesis and respiration (collectively, metabolism) from time series
@@ -19,6 +26,8 @@ Copyright: This software is in the public domain because it contains materials
     the United States Department of Interior. For more information, see the
     official USGS copyright policy at
     http://www.usgs.gov/visual-id/credit_usgs.html#copyright
+URL: https://github.com/USGS-R/streamMetabolizer
+BugReports: https://github.com/USGS-R/streamMetabolizer/issues
 VignetteBuilder: knitr
 Depends:
     R (>= 3.0)

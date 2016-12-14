@@ -74,7 +74,7 @@ test_that('get_params works for each model type, basic GPP & ER equations', {
   expect_equal(names(ps), c('date','ER.daily','K600.daily'))
   
   # metab_bayes
-  mm <- metab_bayes(specs(mm_name('bayes'), burnin_steps=300, saved_steps=200, n_cores=1), data=dat)
+  mm <- metab_bayes(specs("b_np_oi_tr_plrckm.stan", burnin_steps=50, saved_steps=50, n_cores=1), data=dat)
   ps <- get_params(mm, uncertainty='none', messages=FALSE)
   expect_equal(names(ps), c('date','GPP.daily','ER.daily','K600.daily'))
   

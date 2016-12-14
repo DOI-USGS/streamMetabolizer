@@ -8,7 +8,7 @@ test_that("mm_name can generate names", {
   expect_equal(mm_name('sim'), "s_np_oipcpi_tr_plrckm.rnorm")
   expect_equal(mm_name('Kmodel'), "K_Kc___.lm")
   expect_equal(mm_name('b', pool_K600='none'), "b_np_oipi_tr_plrckm.stan")
-  expect_equal(mm_name('b', pool_K600='none', err_proc_acor=TRUE), "b_np_oipcpi_tr_plrckm.stan")
+  expect_equal(mm_name('b', pool_K600='none', err_proc_acor=TRUE, check_validity=FALSE), "b_np_oipcpi_tr_plrckm.stan")
   
   # catches bad arg combos
   expect_error(mm_name('b', pool_K600='none', err_proc_acor=TRUE, engine='nlm'), 'mismatch')

@@ -51,9 +51,9 @@ parameters {
 transformed parameters {
   real<lower=0> K600_daily_sdlog;
   real<lower=0> err_obs_iid_sigma;
-  vector[d] GPP[n-1];
-  vector[d] ER[n-1];
-  vector[d] KO2[n-1];
+  vector[d] GPP_inst[n];
+  vector[d] ER_inst[n];
+  vector[d] KO2_inst[n];
   vector[d] DO_mod[n];
   
   // Rescale pooling & error distribution parameters
@@ -67,10 +67,10 @@ transformed parameters {
   // * reaeration depends on DO_obs
   
   // Calculate individual process rates
-  for(i in 1:(n-1)) {
-    GPP[i] = GPP_daily .* frac_GPP[i];
-    ER[i] = ER_daily .* frac_ER[i];
-    KO2[i] = K600_daily .* KO2_conv[i];
+  for(i in 1:n) {
+    GPP_inst[i] = GPP_daily .* frac_GPP[i];
+    ER_inst[i] = ER_daily .* frac_ER[i];
+    KO2_inst[i] = K600_daily .* KO2_conv[i];
   }
   
   // DO model
@@ -78,8 +78,8 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod[i+1] =
       DO_mod[i] + (
-        (GPP[i] + ER[i]) ./ depth[i] +
-        KO2[i] .* (DO_sat[i] - DO_obs[i])
+        (GPP_inst[i] + ER_inst[i]) ./ depth[i] +
+        KO2_inst[i] .* (DO_sat[i] - DO_obs[i])
       ) * timestep;
   }
 }
@@ -96,8 +96,22 @@ model {
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
-
   // Hierarchical constraints on K600_daily (normal model)
   K600_daily_predlog ~ normal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
   K600_daily_sdlog_scaled ~ cauchy(0, 1);
+  
+}
+generated quantities {
+  vector[d] err_obs_iid[n-1];
+  vector[d] GPP;
+  vector[d] ER;
+  
+  for(i in 1:(n-1)) {
+    err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1];
+  }
+  for(j in 1:d) {
+    GPP[j] = sum(GPP_inst[1:n,j]) / n;
+    ER[j] = sum(ER_inst[1:n,j]) / n;
+  }
+  
 }

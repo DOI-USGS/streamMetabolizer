@@ -56,9 +56,9 @@ transformed parameters {
   real<lower=0> K600_daily_sdlog;
   vector[d] K600_daily_predlog;
   real<lower=0> err_obs_iid_sigma;
-  vector[d] GPP[n];
-  vector[d] ER[n];
-  vector[d] KO2[n];
+  vector[d] GPP_inst[n];
+  vector[d] ER_inst[n];
+  vector[d] KO2_inst[n];
   vector[d] DO_mod[n];
   
   // Rescale pooling & error distribution parameters
@@ -76,9 +76,9 @@ transformed parameters {
   
   // Calculate individual process rates
   for(i in 1:n) {
-    GPP[i] = GPP_daily .* frac_GPP[i];
-    ER[i] = ER_daily .* frac_ER[i];
-    KO2[i] = K600_daily .* KO2_conv[i];
+    GPP_inst[i] = GPP_daily .* frac_GPP[i];
+    ER_inst[i] = ER_daily .* frac_ER[i];
+    KO2_inst[i] = K600_daily .* KO2_conv[i];
   }
   
   // DO model
@@ -86,11 +86,11 @@ transformed parameters {
   for(i in 1:(n-1)) {
     DO_mod[i+1] =
       DO_mod[i] .*
-        (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + (
-        (GPP[i] + ER[i]) ./ depth[i] +
-        (GPP[i+1] + ER[i+1]) ./ depth[i+1] +
-        KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]
-      ) .* (timestep ./ (2.0 + KO2[i+1] * timestep));
+        (2.0 - KO2_inst[i] * timestep) ./ (2.0 + KO2_inst[i+1] * timestep) + (
+        (GPP_inst[i] + ER_inst[i]) ./ depth[i] +
+        (GPP_inst[i+1] + ER_inst[i+1]) ./ depth[i+1] +
+        KO2_inst[i] .* DO_sat[i] + KO2_inst[i+1] .* DO_sat[i+1]
+      ) .* (timestep ./ (2.0 + KO2_inst[i+1] * timestep));
   }
 }
 
@@ -106,9 +106,23 @@ model {
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
-
   // Hierarchical constraints on K600_daily (linear model)
   lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);
   lnK600_lnQ_slope ~ normal(lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma);
   K600_daily_sdlog_scaled ~ cauchy(0, 1);
+  
+}
+generated quantities {
+  vector[d] err_obs_iid[n-1];
+  vector[d] GPP;
+  vector[d] ER;
+  
+  for(i in 1:(n-1)) {
+    err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1];
+  }
+  for(j in 1:d) {
+    GPP[j] = sum(GPP_inst[1:n,j]) / n;
+    ER[j] = sum(ER_inst[1:n,j]) / n;
+  }
+  
 }
