@@ -275,7 +275,7 @@ specs <- function(
   K600_daily_meanlog_sdlog = 1,
   
   # hyperparameters for any K pooling or non-pooling strategy
-  K600_daily_sdlog = 1,
+  K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, 0.2),
   
   # hyperparameters for hierarchical K600 - linear. defaults should be
   # reasonably constrained, not too wide
@@ -296,9 +296,6 @@ specs <- function(
   K600_lnQ_nodediffs_sdlog = 0.05, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
   K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
   K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
-  
-  # hyperparameters for any hierarchical K600
-  K600_daily_sdlog_scale = 0.3,
   
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.1,
