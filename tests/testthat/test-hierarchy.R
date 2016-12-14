@@ -43,9 +43,12 @@ manual_tests2 <- function() {
   
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
+    msp <- if(mm_parse_name(sf)$pool_K600 %in% c('none')) specs(sf) else 
+      specs(sf, K600_daily_sdlog_scale=0.01)
+      #specs(sf, err_obs_iid_sigma_scale=3)
     mdat <- if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge)
-    metab(specs(sf, burnin_steps=10, saved_steps=10), mdat) # just to compile model
-    metab(specs(sf, burnin_steps=200, saved_steps=200), mdat)
+    #metab(revise(msp, burnin_steps=10, saved_steps=10), mdat) # just to compile model
+    metab(revise(msp, burnin_steps=200, saved_steps=200), mdat)
   })
   
   # see issue #291 for periodic output reports
