@@ -10,7 +10,7 @@ data {
   // Parameters of hierarchical priors on K600_daily (normal model)
   real K600_daily_meanlog_meanlog;
   real<lower=0> K600_daily_meanlog_sdlog;
-  real<lower=0> K600_daily_sdlog_scale;
+  real<lower=0> K600_daily_sdlog;
   
   // Error distributions
   real<lower=0> err_proc_iid_sigma_scale;
@@ -43,13 +43,11 @@ parameters {
   vector<lower=0>[d] K600_daily;
   
   real K600_daily_predlog;
-  real<lower=0> K600_daily_sdlog_scaled;
   
   real<lower=0> err_proc_iid_sigma_scaled;
 }
 
 transformed parameters {
-  real<lower=0> K600_daily_sdlog;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_iid_sigma;
   vector[d] GPP_inst[n];
@@ -57,8 +55,7 @@ transformed parameters {
   vector[d] KO2_inst[n];
   vector[d] DO_mod_partial[n];
   
-  // Rescale pooling & error distribution parameters
-  K600_daily_sdlog = K600_daily_sdlog_scale * K600_daily_sdlog_scaled;
+  // Rescale error distribution parameters
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Model DO time series
@@ -108,7 +105,6 @@ model {
   K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
   // Hierarchical constraints on K600_daily (normal model)
   K600_daily_predlog ~ normal(K600_daily_meanlog_meanlog, K600_daily_meanlog_sdlog );
-  K600_daily_sdlog_scaled ~ cauchy(0, 1);
   
 }
 generated quantities {

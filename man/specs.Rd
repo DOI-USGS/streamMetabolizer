@@ -10,8 +10,8 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   init.ER.daily = -10, init.ER20 = -10, init.K600.daily = 10, split_dates,
   keep_mcmcs = TRUE, keep_mcmc_data = TRUE, GPP_daily_mu = 8,
   GPP_daily_sigma = 4, ER_daily_mu = -10, ER_daily_sigma = 5,
-  K600_daily_meanlog = log(6), K600_daily_sdlog = 1,
-  K600_daily_meanlog_meanlog = log(6), K600_daily_meanlog_sdlog = 1,
+  K600_daily_meanlog = log(6), K600_daily_meanlog_meanlog = log(6),
+  K600_daily_meanlog_sdlog = 1, K600_daily_sdlog = 1,
   lnK600_lnQ_intercept_mu = 2, lnK600_lnQ_intercept_sigma = 2.4,
   lnK600_lnQ_slope_mu = 0, lnK600_lnQ_slope_sigma = 0.5,
   K600_lnQ_nodes_centers = -3:3, K600_lnQ_nodediffs_sdlog = 0.05,
@@ -139,10 +139,6 @@ ER_daily, the daily rate of ecosystem respiration}
 \item{K600_daily_meanlog}{Applies when pool_K600 is 'none'. The mean of a 
 dlnorm distribution for K600_daily, the daily rate of reaeration}
 
-\item{K600_daily_sdlog}{Applies when pool_K600 is 'none'. The standard 
-deviation of a dlnorm distribution for K600_daily, the daily rate of 
-reaeration}
-
 \item{K600_daily_meanlog_meanlog}{hyperparameter for pool_K600='normal'. The 
 mean parameter (meanlog_meanlog) of a lognormal distribution of meanlog in 
 K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, meanlog_sdlog)}
@@ -151,6 +147,11 @@ K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, meanlog_sdlog)}
 standard deviation parameter (meanlog_sdlog) of a lognormal distribution of
 meanlog in K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog, 
 meanlog_sdlog)}
+
+\item{K600_daily_sdlog}{The lognormal scale parameter (standard deviation) of
+a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog}
+(when pool_K600 is 'none') or \code{K600_daily_pred} (otherwise) for
+K600_daily, the daily rate of reaeration}
 
 \item{lnK600_lnQ_intercept_mu}{hyperparameter for pool_K600 == 'linear'. The 
 mean of the prior distribution for the intercept parameter in 
@@ -183,12 +184,6 @@ means of lognormal prior distributions for the K600_lnQ_nodes parameters.}
 \item{K600_lnQ_nodes_sdlog}{hyperparameter for pool_K600='binned'. The 
 standard deviations of lognormal prior distributions for the K600_lnQ_nodes
 parameters.}
-
-\item{K600_daily_sdlog_scale}{hyperparameter for pool_K600 in 
-c('normal','linear','binned'). The scale (= sigma) parameter of a 
-half-Cauchy distribution of sdlog in K ~ lN(meanlog, sdlog), sdlog ~ 
-halfCauchy(0, sdlog=sdlog_sdlog). Visualize the PDF of K600_daily_sdlog 
-with \code{\link{plot_distribs}}.}
 
 \item{err_obs_iid_sigma_scale}{The scale (= sigma) parameter of a half-Cauchy
 distribution for err_obs_iid_sigma, the standard deviation of the 
@@ -312,13 +307,13 @@ often should, be overridden to tailor the model to your needs.
   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
   \code{$pool_K600=='none'} then \code{K600_daily_meanlog, K600_daily_sdlog}.
   \item If \code{$pool_K600=='normal'} then \code{K600_daily_meanlog_meanlog,
-  K600_daily_meanlog_sdlog, K600_daily_sdlog_scale}. \item If 
+  K600_daily_meanlog_sdlog, K600_daily_sdlog}. \item If 
   \code{pool_K600=='linear'} then \code{lnK600_lnQ_intercept_mu, 
   lnK600_lnQ_intercept_sigma, lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma, 
-  K600_daily_sdlog_scale}. \item If \code{pool_K600=='binned'} then 
+  K600_daily_sdlog}. \item If \code{pool_K600=='binned'} then 
   \code{K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog, 
-  K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sdlog_scale}. 
-  \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
+  K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sdlog}. \item If 
+  \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}

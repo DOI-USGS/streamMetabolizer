@@ -43,8 +43,7 @@ manual_tests2 <- function() {
   
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
-    msp <- if(mm_parse_name(sf)$pool_K600 %in% c('none')) specs(sf) else 
-      specs(sf, K600_daily_sdlog_scale=0.0001, err_obs_iid_sigma_scale=3)
+    msp <- if(mm_parse_name(sf)$pool_K600 %in% c('none')) specs(sf) else specs(sf, K600_daily_sdlog=0.1)
     mdat <- if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge)
     #metab(revise(msp, burnin_steps=10, saved_steps=10), mdat) # just to compile model
     metab(revise(msp, burnin_steps=200, saved_steps=200), mdat)
@@ -69,16 +68,26 @@ manual_tests2 <- function() {
     switch(
       mm_parse_name(mname)$pool_K600,
       'none'={
-        ggplot(pars, aes(x=date, y=K600.daily)) + 
-          geom_abline(intercept=0, color='darkgrey') +
-          geom_point() + geom_errorbar(aes(ymin=pmax(0, K600.daily.lower), ymax=K600.daily.upper)) +
-          scale_y_log10() +
-          ylab('K600') + xlab('date')
+        # ggplot(pars, aes(x=date, y=K600.daily)) + 
+        #   geom_abline(intercept=0, color='darkgrey') +
+        #   geom_point() + geom_errorbar(aes(ymin=pmax(0, K600.daily.lower), ymax=K600.daily.upper)) +
+        #   scale_y_log10() +
+        #   ylab('K600') + xlab('date')
+        K <- list(
+          mean=get_specs(mm)$K600_daily_meanlog,
+          sd=get_specs(mm)$K600_daily_sdlog)
+        ggplot(pars, aes(x=log(K600.daily))) +
+          geom_density(fill='lightgrey') +
+          geom_rug(sides='t') +
+          geom_point(x=K$mean, y=0, color='purple') +
+          geom_errorbarh(aes(x=K$mean, y=0, xmin=K$mean-K$sd, xmax=K$mean+K$sd), color='purple', height=0.05) + 
+          stat_function(fun=dnorm, args=list(mean=K$mean, sd=K$sd), color="purple") +
+          xlab('ln(K600)') + ylab('density')
       },
       'normal'={
         K <- list(
           mean=fit$overall$K600_daily_predlog_50pct,
-          sd=fit$overall$K600_daily_sdlog_50pct)
+          sd=get_specs(mm)$K600_daily_sdlog)
         ggplot(pars, aes(x=log(K600.daily))) +
           geom_density(fill='lightgrey') +
           geom_rug(sides='t') +
@@ -99,7 +108,7 @@ manual_tests2 <- function() {
         K <- list(
           icpt=fit$overall$lnK600_lnQ_intercept_50pct,
           slope=fit$overall$lnK600_lnQ_slope_50pct,
-          sd=fit$overall$K600_daily_sdlog_50pct)
+          sd=get_specs(mm)$K600_daily_sdlog)
         ggplot(parslnQ, aes(x=lnQ, y=lnK, ymin=lnK.lower, ymax=lnK.upper)) +
           geom_abline(intercept=K$icpt, slope=K$slope, col='red') +
           geom_ribbon(aes(ymin=lnK.pred-K$sd, ymax=lnK.pred+K$sd), color=NA, fill='red', alpha=0.2) +
@@ -111,7 +120,8 @@ manual_tests2 <- function() {
           lnQ=get_specs(mm)$K600_lnQ_nodes_centers,
           lnKbin=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_50pct,
           lnKbin.lower=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_2.5pct,
-          lnKbin.upper=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_97.5pct)
+          lnKbin.upper=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_97.5pct,
+          sd=get_specs(mm)$K600_daily_sdlog)
         lnQdat <- 
           data_frame(
             lnQ_bin1=get_mcmc_data(mm)$lnQ_bins[1,],
@@ -131,7 +141,7 @@ manual_tests2 <- function() {
           lnK.upper=log(K600.daily.upper))
         ggplot(parslnQ, aes(x=lnQ)) +
           geom_line(data=K, aes(y=lnKbin), col='red') +
-          geom_ribbon(data=K, aes(ymin=lnKbin.lower, ymax=lnKbin.upper), color=NA, fill='red', alpha=0.2) +
+          geom_ribbon(data=K, aes(ymin=lnKbin-K$sd, ymax=lnKbin+K$sd), color=NA, fill='red', alpha=0.2) +
           geom_point(data=K, aes(y=lnKbin), col='red') +
           geom_point(aes(y=lnK)) + geom_errorbar(aes(ymin=lnK.lower, ymax=lnK.upper)) +
           ylab('ln(K600)') + xlab('ln(Q)')

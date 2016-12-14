@@ -49,7 +49,7 @@ transformed parameters {
   vector[d] KO2_inst[n];
   vector[d] DO_mod[n];
   
-  // Rescale pooling & error distribution parameters
+  // Rescale error distribution parameters
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
   
   // Model DO time series
