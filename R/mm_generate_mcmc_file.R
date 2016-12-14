@@ -248,12 +248,9 @@ mm_generate_mcmc_file <- function(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
         
         # instantaneous process error values
-        if(err_proc_iid || err_proc_acor) c(
+        if(err_proc_acor) c(
           '',
-          if(err_proc_iid) c(
-            'vector[d] err_proc_iid[n-1];'),
-          if(err_proc_acor) c(
-            sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n', trapezoid='n+1')))),
+          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
         
         # DO_mod if it's a fitted parameter (oipi models)
         if(err_obs_iid && err_proc_iid) c(
@@ -287,13 +284,11 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
 
-      # instantaneous GPP, ER, and KO2
-      sprintf(
-        c('vector[d] GPP[%s];',
-          'vector[d] ER[%s];',
-          'vector[d] KO2[%s];'), 
-        switch(ode_method, euler='n-1', trapezoid='n')
-      ),
+      # instantaneous GPP, ER, and KO2. the nth value isn't used to calculate DO
+      # when ode_method=euler, but it's always used to calculate GPP and ER
+      c('vector[d] GPP_inst[n];',
+        'vector[d] ER_inst[n];',
+        'vector[d] KO2_inst[n];'),
       
       # instantaneous DO and possibly process error values
       if(err_proc_iid)
@@ -346,8 +341,8 @@ mm_generate_mcmc_file <- function(
         p(''),
         comment("Calculate autocorrelated process error rates"),
         s('err_proc_acor[1] = err_proc_acor_inc[1]'),
-        p(sprintf('for(i in 1:(n-%d)) {', switch(ode_method, euler=2, trapezoid=1))),
-        s('  err_proc_acor[i+1] = err_proc_acor_phi * err_proc_acor[i] + err_proc_acor_inc[i+1]'),
+        p(sprintf('for(i in 2:%s) {', switch(ode_method, euler='(n-1)', trapezoid='n'))),
+        s('  err_proc_acor[i] = err_proc_acor_phi * err_proc_acor[i-1] + err_proc_acor_inc[i]'),
         p('}')
       ),
 
@@ -355,11 +350,11 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("Calculate individual process rates"),
-        sprintf('for(i in 1:%s) {', switch(ode_method, euler='(n-1)', trapezoid='n')),
+        p('for(i in 1:n) {'),
         indent(
-          s('GPP[i] = GPP_daily .* frac_GPP[i]'),
-          s('ER[i] = ER_daily .* frac_ER[i]'),
-          s('KO2[i] = K600_daily .* KO2_conv[i]')
+          s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
+          s('ER_inst[i] = ER_daily .* frac_ER[i]'),
+          s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),
         p('}')
       ),
@@ -395,31 +390,31 @@ mm_generate_mcmc_file <- function(
                   deficit_src,
                   'DO_obs' = c(
                     p(if(err_obs_iid) 'DO_mod' else 'DO_obs', '[i] + ('),
-                    p('  - KO2[i] .* DO_obs[i] - KO2[i+1] .* DO_obs[i+1] +')),
+                    p('  - KO2_inst[i] .* DO_obs[i] - KO2_inst[i+1] .* DO_obs[i+1] +')),
                   'DO_mod' = c(
                     p(if(err_obs_iid) 'DO_mod' else 'DO_mod_partial', '[i] .*'),
-                    p('  (2.0 - KO2[i] * timestep) ./ (2.0 + KO2[i+1] * timestep) + ('))
+                    p('  (2.0 - KO2_inst[i] * timestep) ./ (2.0 + KO2_inst[i+1] * timestep) + ('))
                 )
               )
             ),
-            p('  (GPP[i] + ER[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
+            p('  (GPP_inst[i] + ER_inst[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
-                p('  KO2[i] .* (DO_sat[i] - ',
+                p('  KO2_inst[i] .* (DO_sat[i] - ',
                   if(deficit_src=='DO_mod' && !err_obs_iid) 'DO_mod_partial' else deficit_src,
                   '[i])'),
                 s(') * timestep')
               ),
               'trapezoid' = c(
-                p('  (GPP[i+1] + ER[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
-                p('  KO2[i] .* DO_sat[i] + KO2[i+1] .* DO_sat[i+1]'),
+                p('  (GPP_inst[i+1] + ER_inst[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                p('  KO2_inst[i] .* DO_sat[i] + KO2_inst[i+1] .* DO_sat[i+1]'),
                 switch(
                   deficit_src,
                   'DO_obs' = c(
                     s(') * (timestep / 2.0)')),
                   'DO_mod' = c(
-                    s(') .* (timestep ./ (2.0 + KO2[i+1] * timestep))'))
+                    s(') .* (timestep ./ (2.0 + KO2_inst[i+1] * timestep))'))
                 )
               )
             )
@@ -438,7 +433,7 @@ mm_generate_mcmc_file <- function(
                   switch(
                     deficit_src,
                     'DO_obs' = s('(timestep / 2.0)'),
-                    'DO_mod' = s('(timestep / (2.0 + KO2[i+1,j] * timestep))')
+                    'DO_mod' = s('(timestep / (2.0 + KO2_inst[i+1,j] * timestep))')
                   )
                 )
               )
@@ -456,13 +451,7 @@ mm_generate_mcmc_file <- function(
     
     if(err_proc_iid || err_proc_acor) chunk(
       comment('Process error'),
-      if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
-        # pi_km and pcpi_km models are the only ones where we need
-        # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
-        p('for(i in 1:n) {')
-      ) else c(
-        p('for(i in 2:n) {')
-      ),
+      p('for(i in 2:n) {'),
       indent(
         if(err_proc_iid) c(
           comment('Independent, identically distributed process error'),
@@ -507,9 +496,7 @@ mm_generate_mcmc_file <- function(
       )
     ),
     
-    if(pool_K600 != 'none') c(
-      '',
-      indent(
+    if(pool_K600 != 'none') chunk(
         comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
         switch(
           pool_K600,
@@ -528,7 +515,36 @@ mm_generate_mcmc_file <- function(
           )
         ),
         s('K600_daily_sdlog_scaled ~ ', f('halfcauchy', scale='1'))
-      )
+    ),
+    
+    '}',
+    
+    #### generated quantities ####
+    'generated quantities {',
+    
+    chunk(
+      if(err_obs_iid) 'vector[d] err_obs_iid[n-1];',
+      if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
+      'vector[d] GPP;',
+      'vector[d] ER;',
+      '',
+      if(err_obs_iid || err_proc_iid) c(
+        'for(i in 1:(n-1)) {',
+        indent(
+          if(err_obs_iid) 
+            s('err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1]'),
+          if(err_proc_iid) 
+            s('err_proc_iid[i] = (DO_mod_partial[i+1] - ', if(!err_obs_iid) 'DO_obs[i+1]' else 'DO_mod[i+1]', 
+              ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i+1])')
+        ),
+        p('}')
+      ),
+      'for(j in 1:d) {',
+      indent(
+        s('GPP[j] = sum(GPP_inst[1:n,j]) / n'),
+        s('ER[j] = sum(ER_inst[1:n,j]) / n')
+      ),
+      p('}')
     ),
     
     '}'
