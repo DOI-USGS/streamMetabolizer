@@ -121,8 +121,7 @@ mm_generate_mcmc_file <- function(
           comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
         if(pool_K600 == 'none') c(
-          'real K600_daily_meanlog;',
-          'real<lower=0> K600_daily_sdlog;'
+          'real K600_daily_meanlog;'
         ) else c(
           # hierarchical models each do K600_daily_meanlog/K600_daily_predlog
           # differently, but K600_daily_sdlog they all do the same
@@ -141,9 +140,10 @@ mm_generate_mcmc_file <- function(
               'real K600_lnQ_nodediffs_sdlog;',
               'vector[b] K600_lnQ_nodes_meanlog;',
               'vector[b] K600_lnQ_nodes_sdlog;')
-          ),
-          'real<lower=0> K600_daily_sdlog_scale;'
-        )),
+          )
+        ),
+        'real<lower=0> K600_daily_sdlog;'
+        ),
       
       chunk(
         comment('Error distributions'),
@@ -234,8 +234,7 @@ mm_generate_mcmc_file <- function(
               'real lnK600_lnQ_slope;'),
             binned=c(
               'vector[b] lnK600_lnQ_nodes;')
-          ),
-          'real<lower=0> K600_daily_sdlog_scaled;'),
+          )),
         
         # error distributions
         '',
@@ -266,10 +265,8 @@ mm_generate_mcmc_file <- function(
     # transformed parameter declarations
     chunk(
       # rescaled K600 pooling parameters
-      if(pool_K600 != 'none') c(
-        'real<lower=0> K600_daily_sdlog;',
-        if(pool_K600 %in% c('linear','binned'))
-          'vector[d] K600_daily_predlog;'
+      if(pool_K600 %in% c('linear','binned')) c(
+        'vector[d] K600_daily_predlog;'
       ),
       
       # rescaled error distribution parameters
@@ -299,15 +296,9 @@ mm_generate_mcmc_file <- function(
         sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
     ),
     
+    # error distribution parameters
     chunk(
-      comment('Rescale pooling & error distribution parameters'),
-      
-      # rescaled K600 pooling parameters
-      if(pool_K600 != 'none') c(
-        s(fs('halfcauchy', 'K600_daily_sdlog'))
-      ),
-      
-      # rescaled error distribution parameters
+      comment('Rescale error distribution parameters'),
       if(err_obs_iid) c(
         s(fs('halfcauchy', 'err_obs_iid_sigma'))),
       if(err_proc_acor) c(
@@ -497,24 +488,23 @@ mm_generate_mcmc_file <- function(
     ),
     
     if(pool_K600 != 'none') chunk(
-        comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
-        switch(
-          pool_K600,
-          'normal' = c(
-            s('K600_daily_predlog ~ ', f('normal', mu='K600_daily_meanlog_meanlog', sigma='K600_daily_meanlog_sdlog '))
-          ),
-          'linear' = c(
-            s('lnK600_lnQ_intercept ~ ', f('normal', mu='lnK600_lnQ_intercept_mu', sigma='lnK600_lnQ_intercept_sigma')),
-            s('lnK600_lnQ_slope ~ ', f('normal', mu='lnK600_lnQ_slope_mu', sigma='lnK600_lnQ_slope_sigma'))
-          ),
-          'binned' = c(
-            s('lnK600_lnQ_nodes ~ ', f('normal', mu='K600_lnQ_nodes_meanlog', sigma='K600_lnQ_nodes_sdlog')),
-            p('for(k in 2:b) {'),
-            s('  lnK600_lnQ_nodes[k] ~ ', f('normal', mu='lnK600_lnQ_nodes[k-1]', sigma='K600_lnQ_nodediffs_sdlog')),
-            p('}')
-          )
+      comment('Hierarchical constraints on K600_daily (', pool_K600, ' model)'),
+      switch(
+        pool_K600,
+        'normal' = c(
+          s('K600_daily_predlog ~ ', f('normal', mu='K600_daily_meanlog_meanlog', sigma='K600_daily_meanlog_sdlog '))
         ),
-        s('K600_daily_sdlog_scaled ~ ', f('halfcauchy', scale='1'))
+        'linear' = c(
+          s('lnK600_lnQ_intercept ~ ', f('normal', mu='lnK600_lnQ_intercept_mu', sigma='lnK600_lnQ_intercept_sigma')),
+          s('lnK600_lnQ_slope ~ ', f('normal', mu='lnK600_lnQ_slope_mu', sigma='lnK600_lnQ_slope_sigma'))
+        ),
+        'binned' = c(
+          s('lnK600_lnQ_nodes ~ ', f('normal', mu='K600_lnQ_nodes_meanlog', sigma='K600_lnQ_nodes_sdlog')),
+          p('for(k in 2:b) {'),
+          s('  lnK600_lnQ_nodes[k] ~ ', f('normal', mu='lnK600_lnQ_nodes[k-1]', sigma='K600_lnQ_nodediffs_sdlog')),
+          p('}')
+        )
+      )
     ),
     
     '}',
