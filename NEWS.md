@@ -1,3 +1,12 @@
+# 0.9.22
+
+* renamed `metab_sim` specs for consistency with other model arguments, e.g.,
+`err.obs.sigma` is now `err_obs_sigma`
+
+# 0.9.21
+
+* simplified Bayesian K pooling models to make the pooling more effective
+
 # 0.9.18
 
 * solidified the model feature options, including error types, DO deficit 

@@ -53,7 +53,7 @@ dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
 
 # define simulation parameters
 mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2),
+  specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
 predict_DO(mm)[seq(1,50,by=10),]
@@ -61,7 +61,7 @@ predict_DO(mm)[seq(1,50,by=10),]
 
 # or same each time if seed is set
 mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2, sim.seed=248),
+  specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2, sim_seed=248),
   data=dat, data_daily=dat_daily)
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
@@ -70,7 +70,7 @@ predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
   Pmax=8, alpha=0.01, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
 mm <- metab_sim(
-  specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0.1, err.proc.sigma=2),
+  specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 get_params(mm)
 predict_metab(mm) # metab estimates are for data without errors

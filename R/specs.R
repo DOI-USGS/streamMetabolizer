@@ -47,7 +47,7 @@
 #'   \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+#'   err_obs_sigma, err_obs_phi, err_proc_sigma, err_proc_phi, sim_seed}
 #'   
 #' @section MLE Initial Values:
 #'   
@@ -206,17 +206,17 @@
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
 #'   
-#' @param err.obs.sigma The sd of observation error, or 0 for no observation 
+#' @param err_obs_sigma The sd of observation error, or 0 for no observation 
 #'   error. Observation errors are those applied to DO.mod after generating the 
 #'   full time series of modeled values.
-#' @param err.obs.phi The autocorrelation coefficient of the observation errors,
+#' @param err_obs_phi The autocorrelation coefficient of the observation errors,
 #'   or 0 for uncorrelated errors.
-#' @param err.proc.sigma The sd of process error, or 0 for no process error. 
+#' @param err_proc_sigma The sd of process error, or 0 for no process error. 
 #'   Process errors are applied at each time step, and therefore propagate into 
 #'   the next timestep.
-#' @param err.proc.phi The autocorrelation coefficient of the process errors, or
+#' @param err_proc_phi The autocorrelation coefficient of the process errors, or
 #'   0 for uncorrelated errors.
-#' @param sim.seed NA to specify that each call to predict_DO should generate 
+#' @param sim_seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 
 #'   \code{\link{set.seed}}, specifying the seed to set before every execution 
 #'   of predict_DO
@@ -332,13 +332,13 @@ specs <- function(
   ## Sim
   
   # simulation parameters
-  err.obs.sigma = 0.1,
-  err.obs.phi = 0,
-  err.proc.sigma = 0,
-  err.proc.phi = 0,
+  err_obs_sigma = 0.01,
+  err_obs_phi = 0,
+  err_proc_sigma = 0.2,
+  err_proc_phi = 0,
   
   # simulation replicability
-  sim.seed = NA
+  sim_seed = NA
   
 ) {
   
@@ -524,8 +524,8 @@ specs <- function(
       # list all needed arguments
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests',
-        'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi',
-        'sim.seed')
+        'err_obs_sigma', 'err_obs_phi', 'err_proc_sigma', 'err_proc_phi',
+        'sim_seed')
     }
   )
   

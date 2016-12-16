@@ -26,8 +26,8 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   discharge.daily.max = NA, velocity.daily.max = NA),
   predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
   velocity.daily = "log", discharge.daily = "log"), other_args = c(),
-  err.obs.sigma = 0.1, err.obs.phi = 0, err.proc.sigma = 0,
-  err.proc.phi = 0, sim.seed = NA)
+  err_obs_sigma = 0.01, err_obs_phi = 0, err_proc_sigma = 0.2,
+  err_proc_phi = 0, sim_seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -260,21 +260,21 @@ included in \code{transforms}. Recommended transforms include
 \code{specs$engine}. \code{na.rm=TRUE} is already passed to 
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 
-\item{err.obs.sigma}{The sd of observation error, or 0 for no observation 
+\item{err_obs_sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 
 full time series of modeled values.}
 
-\item{err.obs.phi}{The autocorrelation coefficient of the observation errors,
+\item{err_obs_phi}{The autocorrelation coefficient of the observation errors,
 or 0 for uncorrelated errors.}
 
-\item{err.proc.sigma}{The sd of process error, or 0 for no process error. 
+\item{err_proc_sigma}{The sd of process error, or 0 for no process error. 
 Process errors are applied at each time step, and therefore propagate into 
 the next timestep.}
 
-\item{err.proc.phi}{The autocorrelation coefficient of the process errors, or
+\item{err_proc_phi}{The autocorrelation coefficient of the process errors, or
 0 for uncorrelated errors.}
 
-\item{sim.seed}{NA to specify that each call to predict_DO should generate 
+\item{sim_seed}{NA to specify that each call to predict_DO should generate 
 new values, or an integer, as in the \code{seed} argument to 
 \code{\link{set.seed}}, specifying the seed to set before every execution 
 of predict_DO}
@@ -332,7 +332,7 @@ often should, be overridden to tailor the model to your needs.
   \code{model_name}.
   
   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-  err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+  err_obs_sigma, err_obs_phi, err_proc_sigma, err_proc_phi, sim_seed}
 }
 
 \section{MLE Initial Values}{

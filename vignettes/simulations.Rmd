@@ -127,10 +127,10 @@ After choosing parameters, the next step is to choose the rest of the
 specifications. The main difference between sim models and other models is that 
 you can choose values for the probability distributions of the observation 
 and/or process errors. See `?specs` for details on the distribution parameters
-`err.obs.sigma`, `err.obs.phi`, `err.proc.sigma`, and `err.proc.phi`.
+`err_obs_sigma`, `err_obs_phi`, `err_proc_sigma`, and `err_proc_phi`.
 
 ```{r}
-specs_sim_q10 <- specs(name_sim_q10, err.obs.sigma=0, err.proc.sigma=1)
+specs_sim_q10 <- specs(name_sim_q10, err_obs_sigma=0, err_proc_sigma=1)
 specs_sim_q10
 ```
 
@@ -165,7 +165,7 @@ For this section we'll use a simulation with GPP as a saturating function of
 light. We'll use method B from above to choose our daily parameters.
 
 ```{r}
-specs_sim_sat <- specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0, err.proc.sigma=1)
+specs_sim_sat <- specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0, err_proc_sigma=1)
 params_sim_sat <- get_params(metab(specs(mm_name('mle', GPP_fun='satlight')), data=dat), uncertainty='none', messages=FALSE)
 ```
 
@@ -200,7 +200,7 @@ and the daily parameters (every time you define `data_daily`).
 ```{r}
 dat <- data_metab('10', '30')
 params <- data.frame(date=as.Date(paste0('2012-09-',18:27)), Pmax=rnorm(10, 6, 2), alpha=rnorm(10, 0.01, 0.001), ER20=rnorm(10, -4, 2), K600.daily=16)
-specs <- specs(mm_name('sim', GPP_fun='satlight', ER_fun='q10temp'), err.obs.sigma=0.2, err.proc.sigma=1)
+specs <- specs(mm_name('sim', GPP_fun='satlight', ER_fun='q10temp'), err_obs_sigma=0.2, err_proc_sigma=1)
 mm <- metab(specs, data=dat, data_daily=params)
 ```
 
