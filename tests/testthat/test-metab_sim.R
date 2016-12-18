@@ -35,9 +35,10 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_true(rmse_DO(predict_DO(mm2)) < get_specs(mm2)$err_obs_sigma*1.5, "DO.mod tracks DO.obs with not too much error")
   # plot_DO_preds(predict_DO(mm))
   
-  # predict_DO - DO.obs should be different each time unless seed is set. DO.mod should always be the same
+  # predict_DO - DO.obs & DO.mod should be different each time unless seed is set. DO.pure should always be the same
   expect_true(!isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
-  expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
+  expect_true(!isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
+  expect_true(isTRUE(all.equal(predict_DO(mm)$DO.pure, predict_DO(mm)$DO.pure)))
   mm <- metab_sim(data=dat, data_daily=select(dd, -DO.mod.1), 
                   specs=specs('s_np_oipcpi_eu_plrckm.rnorm', sim_seed=626, day_start=-1, day_end=23))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
@@ -54,7 +55,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd,
                   specs=specs('s_np_oipcpi_eu_plrckm.rnorm', err_obs_sigma=0, err_proc_sigma=0.5))
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
-  acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
+  acf_out <- acf(DO_preds$DO.pure - DO_preds$DO.mod, plot=FALSE)
   expect_gt(acf_out$acf[acf_out$lag==1], 0.6)
   # plot_DO_preds(predict_DO(mm))
   
