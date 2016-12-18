@@ -880,9 +880,12 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   
   # decide on the column names to pull and their new values. fit.names and metab.names should be parallel
   Var1 <- Var2 <- '.dplyr.var'
-  fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
+  fit.names.metab <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
     select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
-    apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_daily_'))))
+    apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_'))))
+  fit.names.param <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP_daily','ER_daily'), stringsAsFactors=FALSE) %>% #,'D'
+    select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
+    apply(MARGIN = 1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_'))))
   metab.names <- expand.grid(c('','.lower','.upper'), c('GPP','ER'), stringsAsFactors=FALSE) %>% #,'D'
     select(Var2, Var1) %>% # variables were in their expand.grid order; now reshuffle them into their paste order
     apply(MARGIN = 1, FUN=function(row) do.call(paste0, as.list(row)))
@@ -890,6 +893,13 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   # pull and retrieve the columns
   fit <- metab_model@fit$daily %>%
     mm_filter_dates(date_start=date_start, date_end=date_end)
+  fit.names <- if(all(fit.names.metab %in% names(fit))) {
+    fit.names.metab
+  } else if(all(fit.names.param %in% names(fit))) {
+    fit.names.param
+  } else {
+    stop('could find neither GPP & ER nor GPP_daily & ER_daily in the model fit')
+  }
   preds <- fit[c('date', fit.names)] %>% 
     setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
   
@@ -943,11 +953,14 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
   # Stan prohibits '.' in variable names, so we have to convert back from '_' to
   # '.' here to become consistent with the non-Bayesian models
   parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
+  parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
   for(i in seq_along(parnames)) {
     names(metab_model@fit$daily) <- gsub(names(parnames[i]), parnames[[i]], names(metab_model@fit$daily))
   }
   names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_2.5pct$', '.lower', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_97.5pct$', '.upper', names(metab_model@fit$daily))
   # code duplicated in get_params.metab_Kmodel:
   if(length(metab_model@fit$warnings) > 0) {
     omsg <- 'overall warnings'

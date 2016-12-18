@@ -88,7 +88,8 @@ get_params.metab_model <- function(
   
   # add uncertainty columns if requested
   if(uncertainty != 'none') {
-    metab.uncert <- paste0(rep(metab.out, each=1), rep(c('.sd'), times=length(metab.out)))
+    metab.vars <- metab.out
+    metab.uncert <- matrix(paste0(rep(metab.out, each=3), rep(c('.sd','.lower','.upper'), times=length(metab.out))), ncol=3)
     metab.out <- c(rbind(metab.out, metab.uncert)) %>% { .[. %in% names(pars)]}
   }
   
@@ -106,7 +107,18 @@ get_params.metab_model <- function(
   params <- pars[c('date', metab.out)]
   
   # convert sds to CIs if requested
-  if(uncertainty == 'ci') {
+  if(uncertainty == 'sd') {
+    extra.cols <- grep('\\.lower$|\\.upper$', names(params))
+    if(length(extra.cols) > 0) params <- params[-extra.cols]
+  } else if(uncertainty == 'ci') {
+    # use existing .lower and .upper cols if available
+    for(mv in metab.vars) {
+      if(all(paste0(mv,c('.lower','.upper')) %in% names(params))) {
+        extra.cols <- grep(paste0(mv,'\\.sd$'), names(params))
+        if(length(extra.cols) > 0) params <- params[-extra.cols]
+      }
+    }
+    # convert any remaining .sd cols to .lower and .upper parametrically
     params <- mm_sd_to_ci(params)
   }
   

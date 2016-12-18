@@ -431,6 +431,7 @@ specs <- function(
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
+          c('GPP','ER'),
           c('GPP_daily','ER_daily','K600_daily'),
           switch(
             features$pool_K600,
@@ -438,9 +439,9 @@ specs <- function(
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
-          if(features$err_obs_iid) 'err_obs_iid_sigma', # add in err_obs_iid later
+          if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c('err_proc_iid_sigma')) # add in err_proc_iid later
+          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
       }
       
       # check for errors/inconsistencies
