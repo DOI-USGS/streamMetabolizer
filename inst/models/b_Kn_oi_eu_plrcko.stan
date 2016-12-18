@@ -17,6 +17,8 @@ data {
   
   // Data dimensions
   int<lower=1> d; # number of dates
+  real<lower=0> timestep; # length of each timestep in days
+  int<lower=1> n24; # number of observations in first 24 hours per date
   int<lower=1> n; # number of observations per date
   
   // Daily data
@@ -30,11 +32,6 @@ data {
   vector[d] frac_D[n];
   vector[d] depth[n];
   vector[d] KO2_conv[n];
-}
-
-transformed data {
-  real<lower=0> timestep; # length of each timestep in days
-  timestep = frac_D[1,1];
 }
 
 parameters {
@@ -106,8 +103,8 @@ generated quantities {
     err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1];
   }
   for(j in 1:d) {
-    GPP[j] = sum(GPP_inst[1:n,j]) / n;
-    ER[j] = sum(ER_inst[1:n,j]) / n;
+    GPP[j] = sum(GPP_inst[1:n24,j]) / n24;
+    ER[j] = sum(ER_inst[1:n24,j]) / n24;
   }
   
 }

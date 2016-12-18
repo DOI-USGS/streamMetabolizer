@@ -477,6 +477,10 @@ prepdata_bayes <- function(
   unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
   if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
   timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(timevec) mean(diff(timevec))))
+  n24 <- round(1/timestep_days)
+  
+  # give message if day length is too short
+  if(n24 > num_daily_obs) stop("day_end - day_start < 24 hours; aborting because daily metabolism could be wrong")
   
   # parse model name into features for deciding what data to include
   features <- mm_parse_name(model_name)
@@ -489,6 +493,8 @@ prepdata_bayes <- function(
       
       # Overall
       d = num_dates,
+      timestep = timestep_days, # length of each timestep in days
+      n24 = n24, # number of observations in first 24 hours, for computing GPP & ER
       
       # Daily
       n = num_daily_obs # one value applicable to every day
