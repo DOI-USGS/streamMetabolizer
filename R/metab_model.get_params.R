@@ -89,7 +89,7 @@ get_params.metab_model <- function(
   # add uncertainty columns if requested
   if(uncertainty != 'none') {
     metab.vars <- metab.out
-    metab.uncert <- matrix(paste0(rep(metab.out, each=3), rep(c('.sd','.lower','.upper'), times=length(metab.out))), ncol=3)
+    metab.uncert <- matrix(paste0(rep(metab.out, each=3), rep(c('.sd','.lower','.upper'), times=length(metab.out))), nrow=3, byrow=FALSE)
     metab.out <- c(rbind(metab.out, metab.uncert)) %>% { .[. %in% names(pars)]}
   }
   
