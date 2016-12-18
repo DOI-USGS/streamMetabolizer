@@ -79,6 +79,7 @@ predict_DO(mm)[seq(1,50,by=10),]
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 plot_DO_preds(mm)
+plot_DO_preds(mm, y_var='conc') + geom_line(aes(y=DO.pure), color='tan', alpha=0.8, size=1)
 }
 }
 \author{

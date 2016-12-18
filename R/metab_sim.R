@@ -52,6 +52,7 @@ NULL
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
 #' plot_DO_preds(mm)
+#' plot_DO_preds(mm, y_var='conc') + geom_line(aes(y=DO.pure), color='tan', alpha=0.8, size=1)
 #' }
 #' @export
 #' @family metab_model
@@ -118,23 +119,25 @@ setClass(
 #' @family predict_DO
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
-  # call the generic to get the error-free DO estimates
-  DO.mod <- NextMethod(use_saved=FALSE)$DO.mod
-  
-  # compute errors to add to modeled data
+  # simulate errors to add to modeled data
   specs <- get_specs(metab_model)
   sim_seed <- specs$sim_seed
   if(!is.na(sim_seed)) set.seed(sim_seed)
   n <- nrow(get_data(metab_model))
-  metab_model@data$err.obs <- as.numeric(stats::filter(rnorm(n, 0, specs$err_obs_sigma), filter=specs$err_obs_phi, method="recursive"))
-  metab_model@data$err.proc <- as.numeric(stats::filter(rnorm(n, 0, specs$err_proc_sigma), filter=specs$err_proc_phi, method="recursive"))
+  err.obs <- as.numeric(stats::filter(rnorm(n, 0, specs$err_obs_sigma), filter=specs$err_obs_phi, method="recursive"))
+  err.proc <- as.numeric(stats::filter(rnorm(n, 0, specs$err_proc_sigma), filter=specs$err_proc_phi, method="recursive"))
   
-  # call the generic to get the error-added DO estimates
-  preds_w_err <- NextMethod(use_saved=FALSE)
+  # call the generic a few times to get DO with proc and proc+obs error
+  preds <- NextMethod(use_saved=FALSE)
+  preds$DO.pure <- preds$DO.mod # DO.mod has the DO implied by the daily metab params (error-free, not predicted by anybody)
+  metab_model@data$err.proc <- err.proc
+  preds$DO.mod <- NextMethod(use_saved=FALSE)$DO.mod # DO.mod has the 'true' DO (with proc err)
+  metab_model@data$err.obs <- err.obs
+  preds$DO.obs <- NextMethod(use_saved=FALSE)$DO.mod # the 'observed' DO (with obs err)
   
-  # combine the error-free and error-added DO estimates
-  preds_w_err$DO.obs <- preds_w_err$DO.mod # 'observations' are the ones with error included
-  preds_w_err$DO.mod <- DO.mod # the 'model' is the error-free DO timeseries
+  # add additional observation error in the form of DO rounding if requested
+  if(!is.na(specs$err_round)) preds_w_err$DO.obs <- round(preds_w_err$DO.obs, digits=specs$err_round)
   
-  preds_w_err
+  # return
+  preds
 }

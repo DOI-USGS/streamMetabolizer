@@ -27,7 +27,7 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
   velocity.daily = "log", discharge.daily = "log"), other_args = c(),
   err_obs_sigma = 0.01, err_obs_phi = 0, err_proc_sigma = 0.2,
-  err_proc_phi = 0, sim_seed = NA)
+  err_proc_phi = 0, err_round = NA, sim_seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -150,8 +150,8 @@ meanlog in K ~ lN(meanlog, sdlog), meanlog ~ lN(meanlog_meanlog,
 meanlog_sdlog)}
 
 \item{K600_daily_sdlog}{The lognormal scale parameter (standard deviation) of
-a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog}
-(when pool_K600 is 'none') or \code{K600_daily_pred} (otherwise) for
+a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog} 
+(when pool_K600 is 'none') or \code{K600_daily_pred} (otherwise) for 
 K600_daily, the daily rate of reaeration}
 
 \item{lnK600_lnQ_intercept_mu}{hyperparameter for pool_K600 == 'linear'. The 
@@ -273,6 +273,10 @@ the next timestep.}
 
 \item{err_proc_phi}{The autocorrelation coefficient of the process errors, or
 0 for uncorrelated errors.}
+
+\item{err_round}{NA for no effect, or an integer as in the \code{digits} 
+argument to \code{\link{round}} if simulated DO.obs should be rounded to
+the given number of digits beyond \code{.}.}
 
 \item{sim_seed}{NA to specify that each call to predict_DO should generate 
 new values, or an integer, as in the \code{seed} argument to 
