@@ -7,7 +7,8 @@
 \method{get_info}{metab_model}(metab_model)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the metab_model_interface, for which to return the metadata information.}
+\item{metab_model}{A metabolism model, implementing the
+metab_model_interface, for which to return the metadata information.}
 }
 \description{
 Retrieve the user-supplied model metadata

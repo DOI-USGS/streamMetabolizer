@@ -53,7 +53,8 @@ NULL
 #' 
 #' A function in the metab_model_interface. Returns any user-supplied metadata.
 #' 
-#' @param metab_model A metabolism model, implementing the metab_model_interface, for which to return the metadata information.
+#' @param metab_model A metabolism model, implementing the
+#'   metab_model_interface, for which to return the metadata information.
 #' @return The user-supplied metadata in the original format.
 #' @export
 #' @family metab_model_interface
@@ -193,6 +194,24 @@ get_params <- function(
   UseMethod("get_params")
 }
 
+#' Extract the daily parameter names from a metabolism model.
+#' 
+#' A function in the metab_model_interface. Returns vectors of the required and
+#' optional daily metabolism parameters for the model.
+#' 
+#' @param metab_model A metabolism model, implementing the 
+#'   metab_model_interface, for which to return the list of required and 
+#'   optional metabolism parameters.
+#' @return Returns a list of two vectors, the names of the required and optional
+#'   daily metabolism parameters, respectively.
+#' @examples 
+#' get_param_names(mm_name('mle'))
+#' @export
+#' @family metab_model_interface
+#' @family get_param_names
+get_param_names <- function(metab_model, ...) {
+  UseMethod("get_param_names")
+}
 
 #' Predict metabolism from a fitted model.
 #' 

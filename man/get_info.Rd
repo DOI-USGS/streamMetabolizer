@@ -7,7 +7,8 @@
 get_info(metab_model)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the metab_model_interface, for which to return the metadata information.}
+\item{metab_model}{A metabolism model, implementing the
+metab_model_interface, for which to return the metadata information.}
 }
 \value{
 The user-supplied metadata in the original format.
@@ -20,8 +21,9 @@ Other get_info: \code{\link{get_info.metab_model}}
 
 Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_data}}, \code{\link{get_fitting_time}},
-  \code{\link{get_fit}}, \code{\link{get_params}},
-  \code{\link{get_specs}}, \code{\link{get_version}},
-  \code{\link{predict_DO}}, \code{\link{predict_metab}}
+  \code{\link{get_fit}}, \code{\link{get_param_names}},
+  \code{\link{get_params}}, \code{\link{get_specs}},
+  \code{\link{get_version}}, \code{\link{predict_DO}},
+  \code{\link{predict_metab}}
 }
 

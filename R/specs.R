@@ -461,13 +461,7 @@ specs <- function(
     'mle' = {
       # determine which init values will be needed
       . <- '.dplyr.var'
-      dummy_data <- unitted::v(eval(formals(metab_mle)$data)) %>%
-        bind_rows(.,.)
-      dDOdt <- create_calc_dDOdt(
-        data=dummy_data, 
-        ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
-      init.needs <- paste0('init.', environment(dDOdt)$metab.needs)
+      init.needs <- paste0('init.', get_param_names(model_name)$required)
       
       # list all needed arguments
       included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)

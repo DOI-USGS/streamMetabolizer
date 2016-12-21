@@ -25,18 +25,7 @@ get_params.metab_model <- function(
   
   # build the dDOdt function in order to pull out the metab.needs
   features <- mm_parse_name(get_specs(metab_model)$model_name)
-  if(features$type == 'Kmodel') {
-    metab.needs <- c('K600.daily')
-    metab.optional <- c()
-  } else {
-    egdat <- get_data(metab_model) %>% v() %>% .[which(complete.cases(.))[1:2], ]
-    dDOdt <- create_calc_dDOdt(
-      egdat, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-      ER_fun=features$ER_fun, deficit_src=features$deficit_src)
-    metab.needs <- environment(dDOdt)$metab.needs
-    metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO?
-  }
-  metab.all <- union(metab.needs, metab.optional)
+  metab.all <- unname(unlist(get_param_names(get_specs(metab_model)$model_name)))
   . <- '.dplyr.var'
   metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.all) %>%
     paste0('^', .) %>%
