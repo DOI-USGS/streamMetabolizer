@@ -6,8 +6,8 @@
 \usage{
 metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time, DO.obs,
   DO.sat, depth, temp.water, light, optional = "DO.obs"),
-  data_daily = mm_data(date, DO.mod.1, GPP.daily, Pmax, alpha, ER.daily, ER20,
-  K600.daily, optional = "all"), info = NULL)
+  data_daily = mm_data(date, K600.daily, GPP.daily, Pmax, alpha, ER.daily,
+  ER20, DO.mod.1, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -56,6 +56,7 @@ mm <- metab_sim(
   specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
+predict_metab(mm)
 predict_DO(mm)[seq(1,50,by=10),]
 predict_DO(mm)[seq(1,50,by=10),]
 
@@ -73,12 +74,13 @@ mm <- metab_sim(
   specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 get_params(mm)
-predict_metab(mm) # metab estimates are for data without errors
+predict_metab(mm) # metab estimates are for data without observation errors
 predict_DO(mm)[seq(1,50,by=10),]
 
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 plot_DO_preds(mm)
+library(ggplot2)
 plot_DO_preds(mm, y_var='conc') + geom_line(aes(y=DO.pure), color='tan', alpha=0.8, size=1)
 }
 }

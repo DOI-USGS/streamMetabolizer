@@ -42,11 +42,11 @@ get_param_names(mm_name('sim'))
 
 # or pass in a metab_model object:
 dat <- data_metab()
-get_param_names(metab(mm_name('mle', ER_fun='q10temp'), data=dat))
-get_param_names(metab(mm_name('mle'), data=dat))
-get_param_names(metab(mm_name('mle'), data=dat))
-get_param_names(metab(mm_name('mle'), data=dat))
-get_param_names(metab(mm_name('mle'), data=dat))
+get_param_names(metab(specs(mm_name('mle', ER_fun='q10temp')), data=dat))
+get_param_names(metab(specs('bayes'), data=dat))
+get_param_names(metab(specs('night'), data=dat))
+get_param_names(metab(specs('Kmodel'), data=dat))
+get_param_names(metab(specs('sim'), data=dat))
 }
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},

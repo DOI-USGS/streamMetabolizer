@@ -81,7 +81,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
     sim={
       opts <- expand.grid(
         type='sim',
-        pool_K600='none',
+        pool_K600=c('none','binned'),
         err_obs_iid=TRUE,
         err_proc_acor=TRUE,
         err_proc_iid=TRUE,

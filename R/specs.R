@@ -206,6 +206,15 @@
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
 #'   
+#' @param K600_lnQ_cnode_meanlog For a sim model with pool_K600='binned'. The
+#'   mean of a lognormal distribution describing the y=K600 value of the middle
+#'   (or just past middle) node in the piecewise lnK ~ lnQ relationship
+#' @param K600_lnQ_cnode_sdlog For a sim model with pool_K600='binned'. The sd
+#'   of a lognormal distribution describing the y=K600 value of the middle (or
+#'   just past middle) node in the piecewise lnK ~ lnQ relationship
+#' @param K600_lnQ_nodediffs_meanlog For a sim model with pool_K600='binned'.
+#'   The average (in log space) difference between ln(K) values of successive
+#'   nodes. A non-zero value introduces a trend in K ~ Q.
 #' @param err_obs_sigma The sd of observation error, or 0 for no observation 
 #'   error. Observation errors are those applied to DO.mod after generating the 
 #'   full time series of modeled values.
@@ -334,7 +343,25 @@ specs <- function(
   
   ## Sim
   
-  # simulation parameters
+  # multi-day simulation parameters. already above for bayes:
+  # K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog
+  K600_lnQ_cnode_meanlog = log(6), # distrib for the y=K600 values of the middle (or just past middle) node
+  K600_lnQ_cnode_sdlog = 1, # distrib for the y=K600 values of the middle (or just past middle) node
+  K600_lnQ_nodediffs_meanlog = 0.2, # non-zero introduces a trend in K ~ Q
+  lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
+  lnK600_daily_predlog = "predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))",
+  
+  # daily simulation parameters
+  discharge_daily = 7,
+  DO_mod_1 = NULL,
+  K600_daily = 10,
+  GPP_daily = 5,
+  Pmax = 10,
+  alpha = 0.0001,
+  ER_daily = -10,
+  ER20 = -10,
+  
+  # sub-daily simulation parameters
   err_obs_sigma = 0.01,
   err_obs_phi = 0,
   err_proc_sigma = 0.2,
@@ -523,8 +550,21 @@ specs <- function(
       # list all needed arguments
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests',
+        switch(
+          features$pool_K600,
+          none=c(),
+          normal=stop("pool_K600='normal' unavailable for now; try 'binned' instead"),
+          linear=stop("pool_K600='linear' unavailable for now; try 'binned' instead"), # 'discharge_daily', etc.
+          binned=c('discharge_daily', 'K600_lnQ_nodes_centers', 'lnK600_lnQ_nodes', 'lnK600_daily_predlog',
+                   'K600_lnQ_cnode_meanlog', 'K600_lnQ_cnode_sdlog', 'K600_lnQ_nodediffs_meanlog', 'K600_lnQ_nodediffs_sdlog')),
+        'DO_mod_1', 'K600_daily', 'GPP_daily', 'ER_daily',
         'err_obs_sigma', 'err_obs_phi', 'err_proc_sigma', 'err_proc_phi', 'err_round',
         'sim_seed')
+      
+      if(features$pool_K600 == 'binned') {
+        if('K600_lnQ_nodes_centers' %in% yes_missing) # override the default, which is for 'bayes' rather than 'sim'
+          all_specs$K600_lnQ_nodes_centers <- "calc_bins(log(discharge.daily), 'width', width=0.2)"
+      }
     }
   )
   

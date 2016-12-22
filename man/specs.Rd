@@ -26,6 +26,12 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   discharge.daily.max = NA, velocity.daily.max = NA),
   predictors = c("discharge.daily"), transforms = c(K600 = "log", date = NA,
   velocity.daily = "log", discharge.daily = "log"), other_args = c(),
+  K600_lnQ_cnode_meanlog = log(6), K600_lnQ_cnode_sdlog = 1,
+  K600_lnQ_nodediffs_meanlog = 0.2,
+  lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
+  lnK600_daily_predlog = "predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))",
+  discharge_daily = 7, DO_mod_1 = NULL, K600_daily = 10, GPP_daily = 5,
+  Pmax = 10, alpha = 1e-04, ER_daily = -10, ER20 = -10,
   err_obs_sigma = 0.01, err_obs_phi = 0, err_proc_sigma = 0.2,
   err_proc_phi = 0, err_round = NA, sim_seed = NA)
 }
@@ -259,6 +265,18 @@ included in \code{transforms}. Recommended transforms include
 \item{other_args}{Other arguments passed to the fitting function given by 
 \code{specs$engine}. \code{na.rm=TRUE} is already passed to 
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
+
+\item{K600_lnQ_cnode_meanlog}{For a sim model with pool_K600='binned'. The
+mean of a lognormal distribution describing the y=K600 value of the middle
+(or just past middle) node in the piecewise lnK ~ lnQ relationship}
+
+\item{K600_lnQ_cnode_sdlog}{For a sim model with pool_K600='binned'. The sd
+of a lognormal distribution describing the y=K600 value of the middle (or
+just past middle) node in the piecewise lnK ~ lnQ relationship}
+
+\item{K600_lnQ_nodediffs_meanlog}{For a sim model with pool_K600='binned'.
+The average (in log space) difference between ln(K) values of successive
+nodes. A non-zero value introduces a trend in K ~ Q.}
 
 \item{err_obs_sigma}{The sd of observation error, or 0 for no observation 
 error. Observation errors are those applied to DO.mod after generating the 
