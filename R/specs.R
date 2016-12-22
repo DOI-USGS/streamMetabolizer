@@ -217,7 +217,7 @@
 #' @param err_proc_phi The autocorrelation coefficient of the process errors, or
 #'   0 for uncorrelated errors.
 #' @param err_round NA for no effect, or an integer as in the \code{digits} 
-#'   argument to \code{\link{round}} if simulated DO.obs should be rounded to
+#'   argument to \code{\link{round}} if simulated DO.obs should be rounded to 
 #'   the given number of digits beyond \code{.}.
 #' @param sim_seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 

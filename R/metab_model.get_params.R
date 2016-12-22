@@ -1,15 +1,8 @@
 #' @include metab_model-class.R
 NULL
 
-#' Collect the daily fitted parameters needed to predict GPP, ER, D, and DO
-#' 
-#' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
-#' 
-#' @inheritParams get_params
-#' @return A data.frame of fitted parameters, as for the generic 
-#'   \code{\link{get_params}}.
+#' @describeIn get_params This implementation is shared by many model types
 #' @export
-#' @family get_params
 get_params.metab_model <- function(
   metab_model, date_start=NA, date_end=NA, 
   uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
@@ -23,9 +16,10 @@ get_params.metab_model <- function(
   sp <- get_specs(metab_model)
   if(!exists('model_name', sp)) return(NULL)
   
-  # build the dDOdt function in order to pull out the metab.needs
+  # build the dDOdt function in order to pull out the param.names
   features <- mm_parse_name(get_specs(metab_model)$model_name)
-  metab.all <- unname(unlist(get_param_names(get_specs(metab_model)$model_name)))
+  param.names <- get_param_names(get_specs(metab_model)$model_name)
+  metab.all <- unname(unlist(param.names))
   . <- '.dplyr.var'
   metab.search <- c(paste0(c('date','warnings','errors'),'$'), metab.all) %>%
     paste0('^', .) %>%
@@ -36,7 +30,7 @@ get_params.metab_model <- function(
   ddat <- get_data_daily(metab_model)
   
   # make sure we've got everything we need
-  if(length(missing.metabs <- metab.needs[!metab.needs %in% union(names(fit), names(ddat))]) > 0) {
+  if(length(missing.metabs <- param.names$required[!param.names$required %in% union(names(fit), names(ddat))]) > 0) {
     stop(paste0("can't find metabolism parameter", if(length(missing.metabs)>1) "s", " ", paste0(missing.metabs, collapse=', ')))
   }
   
@@ -90,8 +84,8 @@ get_params.metab_model <- function(
     }
   }
   
-  # select and order those columns of pars that match metab.needs, 
-  # metab.optional, or other columns we've added. useful to order now because 
+  # select and order those columns of pars that match param.names$required, 
+  # param.names$optional, or other columns we've added. useful to order now because 
   # mm_sd_to_ci will swap columns in place
   params <- pars[c('date', metab.out)]
   

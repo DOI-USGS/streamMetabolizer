@@ -104,19 +104,11 @@ setClass(
 )
 
 
-#' Simulate values for DO.obs (with error) and DO.mod (without)
-#' 
-#' Generate simulated values for DO.obs (including any error specified in the 
-#' call to \code{metab_sim()}) and DO.mod (with no error, just the predictions 
-#' from the specified GPP, ER, and K600). The errors are randomly generated on 
-#' every new call to predict_DO.
-#' 
-#' @inheritParams predict_DO
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_DO}}.
+#' @describeIn predict_DO Simulate values for DO.obs (with process and 
+#'   observation error), DO.mod (with process error only), and DO.pure (with no 
+#'   error). The errors are randomly generated on every new call to predict_DO.
 #' @export
 #' @importFrom stats rnorm
-#' @family predict_DO
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
 
   # simulate errors to add to modeled data

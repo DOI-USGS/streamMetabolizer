@@ -1,20 +1,13 @@
-#' Extract the daily parameter names from a metabolism model.
-#' 
-#' A function in the metab_model_interface. Returns vectors of the required and 
-#' optional daily metabolism parameters for the model.
-#' 
-#' @inheritParams get_param_names
-#' @param metab_model For get_param_names, metab_model may also be a character
-#'   model name such as those created by \code{\link{mm_name}}.
+#' @describeIn get_param_names This implementation is shared by many model types
 #' @export
 #' @examples
+#' 
+#' # pass in a character string:
 #' get_param_names(mm_name('mle', GPP_fun='satlight'))
 #' get_param_names(mm_name('bayes'))
 #' get_param_names(mm_name('Kmodel'))
 #' get_param_names(mm_name('night'))
 #' get_param_names(mm_name('sim'))
-#' @family metab_model_interface
-#' @family get_param_names
 get_param_names.character <- function(metab_model) {
   # parse the model features
   features <- mm_parse_name(metab_model)
@@ -35,22 +28,18 @@ get_param_names.character <- function(metab_model) {
   list(required=metab.needs, optional=metab.optional)
 }
 
-#' Extract the daily parameter names from a metabolism model.
-#' 
-#' A function in the metab_model_interface. Returns vectors of the required and 
-#' optional daily metabolism parameters for the model.
-#' 
-#' @inheritParams get_param_names
+#' @describeIn get_param_names Lets you pass in a model object rather than a
+#'   character string
 #' @export
 #' @examples 
+#' 
+#' # or pass in a metab_model object:
 #' dat <- data_metab()
 #' get_param_names(metab(mm_name('mle', ER_fun='q10temp'), data=dat))
 #' get_param_names(metab(mm_name('mle'), data=dat))
 #' get_param_names(metab(mm_name('mle'), data=dat))
 #' get_param_names(metab(mm_name('mle'), data=dat))
 #' get_param_names(metab(mm_name('mle'), data=dat))
-#' @family metab_model_interface
-#' @family get_param_names
 get_param_names.metab_model <- function(metab_model) {
   get_param_names(get_specs(metab_model)$model_name)
 }

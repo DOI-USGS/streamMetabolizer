@@ -1,4 +1,5 @@
 #' @include specs-class.R
+#' @include metab_model_interface.R
 NULL
 
 #### class definition ####
@@ -114,56 +115,38 @@ metab_model <- function(
 
 # Complex methods have their own files, e.g., metab_model.predict_DO.R
 
-#' Retrieve the user-supplied model metadata
-#' 
-#' @inheritParams get_info
-#' @export 
-#' @family get_info
+#' @describeIn get_info This implementation is shared by many model types
+#' @export
 get_info.metab_model <- function(metab_model) {
   metab_model@info
 }
 
-#' Retrieve the inner fitted model
-#' 
-#' @inheritParams get_fit
+#' @describeIn get_fit This implementation is shared by many model types
 #' @export 
-#' @family get_fit
 get_fit.metab_model <- function(metab_model) {
   metab_model@fit
 }
 
-#' Retrieve the time it took to fit the model
-#' 
-#' @inheritParams get_fitting_time
+#' @describeIn get_fitting_time This implementation is shared by many model types
 #' @export 
-#' @family get_fitting_time
 get_fitting_time.metab_model <- function(metab_model) {
   metab_model@fitting_time
 }
 
-#' Retrieve the specifications that were used to fit the metab_model
-#' 
-#' @inheritParams get_specs
+#' @describeIn get_specs This implementation is shared by many model types
 #' @export 
-#' @family get_specs
 get_specs.metab_model <- function(metab_model) {
   metab_model@specs
 }
 
-#' Retrieve the data that were used to fit the model
-#' 
-#' @inheritParams get_data
+#' @describeIn get_data This implementation is shared by many model types
 #' @export
-#' @family get_data
 get_data.metab_model <- function(metab_model) {
   metab_model@data
 }
 
-#' Retrieve the data_daily that were used to fit the model
-#' 
-#' @inheritParams get_data_daily
+#' @describeIn get_data_daily This implementation is shared by many model types
 #' @export
-#' @family get_data_daily
 get_data_daily.metab_model <- function(metab_model) {
   tryCatch(
     metab_model@data_daily,
@@ -174,11 +157,8 @@ get_data_daily.metab_model <- function(metab_model) {
   )
 }
 
-#' Retrieve the version of streamMetabolizer that was used to fit the model
-#' 
-#' @inheritParams get_version
+#' @describeIn get_version This implementation is shared by many model types
 #' @export
-#' @family get_version
 get_version.metab_model <- function(metab_model) {
   metab_model@pkg_version
 }

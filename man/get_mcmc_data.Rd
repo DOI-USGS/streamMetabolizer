@@ -2,9 +2,12 @@
 % Please edit documentation in R/metab_bayes.R
 \name{get_mcmc_data}
 \alias{get_mcmc_data}
+\alias{get_mcmc_data.metab_bayes}
 \title{Extract any MCMC data list[s] that were stored with the model}
 \usage{
 get_mcmc_data(metab_model)
+
+\method{get_mcmc_data}{metab_bayes}(metab_model)
 }
 \arguments{
 \item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to 
@@ -19,4 +22,9 @@ through the MCMC process or, for nopool models, a list of data lists. These
 lists are not saved by default; see \code{keep_mcmc_data} argument to
 \code{\link{specs}} for options.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{metab_bayes}: Retrieve any MCMC data list[s] that were saved with
+a metab_bayes model
+}}
 

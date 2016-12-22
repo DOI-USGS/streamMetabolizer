@@ -786,11 +786,8 @@ get_mcmc <- function(metab_model) {
   UseMethod("get_mcmc")
 }
 
-#' Retrieve any MCMC model object[s] that were saved with a metab_bayes model
-#' 
-#' @inheritParams get_mcmc
+#' @describeIn get_mcmc Get the Bayesian MCMC model object
 #' @export 
-#' @family get_mcmc
 get_mcmc.metab_bayes <- function(metab_model) {
   metab_model@mcmc
 }
@@ -810,11 +807,9 @@ get_mcmc_data <- function(metab_model) {
   UseMethod("get_mcmc_data")
 }
 
-#' Retrieve any MCMC data list[s] that were saved with a metab_bayes model
-#' 
-#' @inheritParams get_mcmc_data
-#' @export 
-#' @family get_mcmc_data
+#' @describeIn get_mcmc_data Retrieve any MCMC data list[s] that were saved with
+#'   a metab_bayes model
+#' @export
 get_mcmc_data.metab_bayes <- function(metab_model) {
   metab_model@mcmc_data
 }
@@ -831,14 +826,10 @@ get_log <- function(metab_model) {
   UseMethod("get_log")
 }
 
-#' Return the log file[s] from a Bayesian MCMC run
-#' 
-#' If a log file was created during the MCMC run, metab_bayes() attempted to 
-#' capture it. Retrieve what was captured with this function.
-#' 
-#' @inheritParams get_log
+#' @describeIn get_log If a log file was created during the Bayesian MCMC run,
+#'   metab_bayes() attempted to capture it. Retrieve what was captured with this
+#'   function.
 #' @export
-#' @family get_log
 get_log.metab_bayes <- function(metab_model) {
   out <- metab_model@log
   if(!is.null(out) && length(out) > 0) {
@@ -869,17 +860,15 @@ print.logs_metab <- function(x, ...) {
   invisible(x)
 }
 
-#' Make metabolism predictions from a fitted metab_model.
-#' 
-#' Makes daily predictions of GPP, ER, and K600.
-#' 
-#' @inheritParams predict_metab
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_metab}}.
+#' @describeIn predict_metab Pulls daily metabolism estimates out of the Stan 
+#'   model results; looks for \code{GPP} or \code{GPP_daily} and for \code{ER} 
+#'   or \code{ER_daily} among the \code{params_out} (see \code{\link{specs}}), 
+#'   which means you can save just one (or both) of those sets of daily 
+#'   parameters when running the Stan model. Saving fewer parameters can help 
+#'   models run faster and use less RAM.
+#' @export
 #' @import dplyr
 #' @importFrom unitted get_units u
-#' @export
-#' @family predict_metab
 predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {
   # with Bayesian models, the daily mean metabolism values of GPP, ER, and D
   # should have been produced during the model fitting
@@ -946,15 +935,10 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   preds
 }
 
-#' Collect the daily fitted parameters needed to predict GPP, ER, D, and DO
-#' 
-#' Returns a data.frame of parameters needed to predict GPP, ER, D, and DO
-#' 
-#' @inheritParams get_params
-#' @return A data.frame of fitted parameters, as for the generic 
-#'   \code{\link{get_params}}.
+#' @describeIn get_params Does a little formatting to convert from Stan output 
+#'   to streamMetabolizer parameter names; otherwise the same as
+#'   \code{get_params.metab_model}
 #' @export
-#' @family get_params
 get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
   # Stan prohibits '.' in variable names, so we have to convert back from '_' to
   # '.' here to become consistent with the non-Bayesian models

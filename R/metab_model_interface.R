@@ -13,6 +13,8 @@
 #'   
 #'   \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
 #'   
+#'   \item \code{\link{get_param_names}(metab_model, ...) \{ return(list) \}}
+#'   
 #'   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
 #'   \}}
 #'   
@@ -58,7 +60,6 @@ NULL
 #' @return The user-supplied metadata in the original format.
 #' @export
 #' @family metab_model_interface
-#' @family get_info
 get_info <- function(metab_model) {
   UseMethod("get_info")
 }
@@ -73,7 +74,6 @@ get_info <- function(metab_model) {
 #' @return An internal model representation; may have any class
 #' @export
 #' @family metab_model_interface
-#' @family get_fit
 get_fit <- function(metab_model) {
   UseMethod("get_fit")
 }
@@ -88,7 +88,6 @@ get_fit <- function(metab_model) {
 #' @return An proc_time object
 #' @export
 #' @family metab_model_interface
-#' @family get_fitting_time
 get_fitting_time <- function(metab_model) {
   UseMethod("get_fitting_time")
 }
@@ -103,7 +102,6 @@ get_fitting_time <- function(metab_model) {
 #' @return The list of specifications that was passed to \code{\link{metab}()}
 #' @export
 #' @family metab_model_interface
-#' @family get_args
 get_specs <- function(metab_model) {
   UseMethod("get_specs")
 }
@@ -119,7 +117,6 @@ get_specs <- function(metab_model) {
 #' @return A data.frame
 #' @export
 #' @family metab_model_interface
-#' @family get_data
 get_data <- function(metab_model) {
   UseMethod("get_data")
 }
@@ -134,7 +131,6 @@ get_data <- function(metab_model) {
 #' @return A data.frame
 #' @export
 #' @family metab_model_interface
-#' @family get_data_daily
 get_data_daily <- function(metab_model) {
   UseMethod("get_data_daily")
 }
@@ -149,7 +145,6 @@ get_data_daily <- function(metab_model) {
 #' @return character representation of the package version
 #' @export
 #' @family metab_model_interface
-#' @family get_version
 get_version <- function(metab_model) {
   UseMethod("get_version")
 }
@@ -171,13 +166,15 @@ get_version <- function(metab_model) {
 #'   ('ci')?
 #' @param messages logical. Should warning and error messages from the fitting 
 #'   procedure be included in the output?
-#' @param fixed character. Should values pulled from data_daily (i.e., fixed
+#' @param fixed character. Should values pulled from data_daily (i.e., fixed 
 #'   rather that fitted) be treated identically ('none'), paired with a logicals
-#'   column ending in '.fixed' ('columns'), converted to character and marked
+#'   column ending in '.fixed' ('columns'), converted to character and marked 
 #'   with a leading asterisk ('stars')?
 #' @param ... Other arguments passed to class-specific implementations of 
 #'   \code{get_params}
 #' @param attach.units logical. Should units be attached to the output?
+#' @return A data.frame of the parameters needed to predict GPP, ER, D, and DO, 
+#'   one row per date
 #' @examples 
 #' dat <- data_metab('3', day_start=12, day_end=36)
 #' mm <- metab_night(specs(mm_name('night')), data=dat)
@@ -185,7 +182,7 @@ get_version <- function(metab_model) {
 #' get_params(mm, date_start=get_fit(mm)$date[2])
 #' @export
 #' @family metab_model_interface
-#' @family get_params
+#' @seealso \code{\link{predict_metab}} for daily average rates of GPP and ER
 get_params <- function(
   metab_model, date_start=NA, date_end=NA, 
   uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
@@ -196,19 +193,15 @@ get_params <- function(
 
 #' Extract the daily parameter names from a metabolism model.
 #' 
-#' A function in the metab_model_interface. Returns vectors of the required and
+#' A function in the metab_model_interface. Returns vectors of the required and 
 #' optional daily metabolism parameters for the model.
 #' 
-#' @param metab_model A metabolism model, implementing the 
-#'   metab_model_interface, for which to return the list of required and 
-#'   optional metabolism parameters.
+#' @param metab_model A metabolism model object or model name for which to
+#'   return the list of required and optional metabolism parameters.
 #' @return Returns a list of two vectors, the names of the required and optional
 #'   daily metabolism parameters, respectively.
-#' @examples 
-#' get_param_names(mm_name('mle'))
 #' @export
 #' @family metab_model_interface
-#' @family get_param_names
 get_param_names <- function(metab_model, ...) {
   UseMethod("get_param_names")
 }
@@ -261,7 +254,6 @@ get_param_names <- function(metab_model, ...) {
 #' predict_metab(mm, date_start=get_fit(mm)$date[2])
 #' @export
 #' @family metab_model_interface
-#' @family predict_metab
 predict_metab <- function(
   metab_model, date_start=NA, date_end=NA, 
   day_start=get_specs(metab_model)$day_start, day_end=min(day_start+24, get_specs(metab_model)$day_end),
@@ -298,7 +290,6 @@ predict_metab <- function(
 #' head(preds)
 #' @export
 #' @family metab_model_interface
-#' @family predict_DO
 predict_DO <- function(metab_model, date_start=NA, date_end=NA, 
                        ..., attach.units=FALSE, use_saved=TRUE) {
   UseMethod("predict_DO")
