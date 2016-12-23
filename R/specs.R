@@ -351,15 +351,17 @@ specs <- function(
   lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
   lnK600_daily_predlog = "predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))",
   
-  # daily simulation parameters
-  discharge_daily = 7,
+  # daily simulation parameters. can be passed as NULL, numeric, or a string to 
+  # be evaluated in an environment where previous parameters (and num dates, n)
+  # have already been evaluated
+  discharge_daily = NULL, # 7, 5:16, 'rnorm(n, 20, 3)', etc.
   DO_mod_1 = NULL,
-  K600_daily = 10,
-  GPP_daily = 5,
-  Pmax = 10,
-  alpha = 0.0001,
-  ER_daily = -10,
-  ER20 = -10,
+  K600_daily = NULL, # 'pmax(0, rnorm(n, 15, 3))',
+  GPP_daily = NULL, # 'pmax(0, rnorm(n, 5, 2))',
+  Pmax = NULL, # 'pmax(0, rnorm(n, 10, 2))',
+  alpha = NULL, # 'pmax(0, rnorm(n, 0.0001, 0.00002))',
+  ER_daily = NULL, # 'pmin(0, rnorm(n, -10, 4))',
+  ER20 = NULL, # 'pmin(0, rnorm(n, -10, 4))',
   
   # sub-daily simulation parameters
   err_obs_sigma = 0.01,

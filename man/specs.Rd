@@ -30,10 +30,10 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   K600_lnQ_nodediffs_meanlog = 0.2,
   lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
   lnK600_daily_predlog = "predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))",
-  discharge_daily = 7, DO_mod_1 = NULL, K600_daily = 10, GPP_daily = 5,
-  Pmax = 10, alpha = 1e-04, ER_daily = -10, ER20 = -10,
-  err_obs_sigma = 0.01, err_obs_phi = 0, err_proc_sigma = 0.2,
-  err_proc_phi = 0, err_round = NA, sim_seed = NA)
+  discharge_daily = NULL, DO_mod_1 = NULL, K600_daily = NULL,
+  GPP_daily = NULL, Pmax = NULL, alpha = NULL, ER_daily = NULL,
+  ER20 = NULL, err_obs_sigma = 0.01, err_obs_phi = 0,
+  err_proc_sigma = 0.2, err_proc_phi = 0, err_round = NA, sim_seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
