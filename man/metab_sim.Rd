@@ -46,7 +46,8 @@ other values are ignored), or if in \code{data_daily}, this takes the form of
 a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
-# start with non-DO data (DO used only to pick first DO of each day)
+## simulations with variation all at sub-daily scale
+# prepare input data (DO used only to pick first DO of each day)
 dat <- data_metab('3', res='15')
 dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
   GPP.daily=2, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
@@ -56,9 +57,10 @@ mm <- metab_sim(
   specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
+get_params(mm)
 predict_metab(mm)
 predict_DO(mm)[seq(1,50,by=10),]
-predict_DO(mm)[seq(1,50,by=10),]
+predict_DO(mm)[seq(1,50,by=10),]B
 
 # or same each time if seed is set
 mm <- metab_sim(
@@ -74,8 +76,13 @@ mm <- metab_sim(
   specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0.1, err_proc_sigma=2),
   data=dat, data_daily=dat_daily)
 get_params(mm)
-predict_metab(mm) # metab estimates are for data without observation errors
+predict_metab(mm) # metab estimates are for data without errors
 predict_DO(mm)[seq(1,50,by=10),]
+
+## simulations with variation at both sub-daily and multi-day scales
+sp <- specs(mm_name('sim', pool_K600='none'),
+  K600_daily = 'pmax(0, rnorm(n, 10, 3))') # n is available within sim models
+mm <- metab(sp, dat, select(dat_daily, -K600.daily))
 
 \dontrun{
 plot_DO_preds(predict_DO(mm))

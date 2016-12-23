@@ -19,7 +19,8 @@ NULL
 #'   inspected with the functions in the \code{\link{metab_model_interface}}.
 #' @importFrom unitted v
 #' @examples
-#' # start with non-DO data (DO used only to pick first DO of each day)
+#' ## simulations with variation all at sub-daily scale
+#' # prepare input data (DO used only to pick first DO of each day)
 #' dat <- data_metab('3', res='15')
 #' dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
 #'   GPP.daily=2, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
@@ -29,6 +30,7 @@ NULL
 #'   specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2),
 #'   data=dat, data_daily=dat_daily)
 #' # actual simulation happens during prediction - different each time
+#' get_params(mm)
 #' predict_metab(mm)
 #' predict_DO(mm)[seq(1,50,by=10),]
 #' predict_DO(mm)[seq(1,50,by=10),]
@@ -47,8 +49,13 @@ NULL
 #'   specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0.1, err_proc_sigma=2),
 #'   data=dat, data_daily=dat_daily)
 #' get_params(mm)
-#' predict_metab(mm) # metab estimates are for data without observation errors
+#' predict_metab(mm) # metab estimates are for data without errors
 #' predict_DO(mm)[seq(1,50,by=10),]
+#' 
+#' ## simulations with variation at both sub-daily and multi-day scales
+#' sp <- specs(mm_name('sim', pool_K600='none'),
+#'   K600_daily = 'pmax(0, rnorm(n, 10, 3))') # n is available within sim models
+#' mm <- metab(sp, dat, select(dat_daily, -K600.daily))
 #' 
 #' \dontrun{
 #' plot_DO_preds(predict_DO(mm))
@@ -124,43 +131,56 @@ get_params.metab_sim <- function(
       get_data_daily(metab_model)
     } else {
       # data_daily wasn't given; create a data.frame of dates only based on data
+      gimmedates <- function(...) data_frame(ignore=NA) # has to be separate to avoid tripping up deprecation check in convert_date_to_doyhr
       mm_model_by_ply(
-        function(...) data_frame(ignore=NA),
-        data=get_data(metab_model), day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, timestep_days=FALSE)[1]
+        gimmedates, data=get_data(metab_model),
+        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, timestep_days=FALSE)[1]
     }
+  
+  # define a controlled environment for evaluation of text to generate
+  # parameters
+  env <- new.env(parent=emptyenv())
+  for(dd in names(data_daily))
+  assign(dd, data_daily[dd], envir=env)
   
   # function to get a parameter from data_daily or specs according to
   # availability & format
   get_par <- function(par, required=TRUE) { 
-    if(exists(par, data_daily)) {
-      # option 1: data_daily takes precedence and uses period-separated names
-      return(data_daily[[par]])
-    } else {
-      # option 2: specs comes second and uses underscore-separated names
-      par_ <- gsub("\\.", "_", par)
-      if(exists(par_, specs)) {
-        parsp <- specs[[par_]]
-        if(is.null(parsp)) {
-          # option 2a: spec can be NULL; return as-is
+    # option 1: get param from specs, which uses underscore-separated names
+    par_ <- gsub("\\.", "_", par)
+    if(exists(par_, specs)) {
+      parsp <- specs[[par_]]
+      if(is.null(parsp)) {
+        # option 1a: spec can be NULL as long as there are values in data_daily 
+        # instead. keep going to let final check throw an error if it's in
+        # neither place
+      } else if(is.numeric(parsp[1])) {
+        if(length(parsp) == nrow(data_daily)) {
+          # option 1b: spec is already numeric; return as-is
           return(parsp)
-        } else if(is.numeric(parsp[1])) {
-          if(length(parsp) == nrow(data_daily)) {
-            # option 2b: spec is already numeric; return as-is
-            return(parsp)
-          } else if(length(parsp) == 1) {
-            return(rep(parsp, nrow(data_daily)))
-          } else {
-            stop(paste0("if numeric, specs$", par_, " must have length 1 or nrow(data_daily)"))
-          }
-        } else if(is.character(parsp[1]) && length(parsp) == 1) {
-          # option 2c: spec is character; return evaluated version
-          return(eval(parse(text=parsp), envir=data_daily))
+        } else if(length(parsp) == 1) {
+          return(rep(parsp, nrow(data_daily)))
         } else {
-          stop(paste0("specs$", par_, " must be numeric or length-1 character"))
+          stop(paste0("if numeric, specs$", par_, " must have length 1 or nrow(data_daily)"))
         }
+      } else if(is.character(parsp[1]) && length(parsp) == 1) {
+        # option 1c: spec is character; return evaluated version. join assumes
+        # data_daily and fit have no overlap
+        return(eval(parse(text=parsp), envir=env, enclos=emptyenv()))
+      } else {
+        stop(paste0("specs$", par_, " must be numeric or length-1 character"))
       }
     }
-    # if we haven't already returned, give an error or return NULL
+    
+    # option 2: if the parameter isn't available in specs, make sure it's 
+    # present in data_daily (which uses period-separated names). if it exists,
+    # good, and don't add a column to fit (assign NULL instead)
+    if(exists(par, data_daily)) {
+      return(NULL)
+    }
+    
+    # if we get here then the parameter isn't available anywhere. give an error
+    # or return NULL
     if(required) {
       stop(paste0("need column '", par, "' in data_daily or parameter '", par_, "' in specs"))
     } else {
@@ -168,16 +188,22 @@ get_params.metab_sim <- function(
     }
   }
   
+  # create the fit as an empty data.frame of the same nrow as data_daily
+  fit <- select(data_daily, date)
+  
+  # add n, the nrow of fit and data_daily
+  assign('n', nrow(fit), envir=env)
+  
   # add discharge.daily to environment if possible. It's required if pool_K600 
   # uses discharge.daily; otherwise, still try (but with error tolerance) in
   # case GPP_daily, etc. are calculated from it by user function
-  discharge.daily <- get_par('discharge.daily', required=features$pool_K600 %in% c('linear','binned'))
+  assign('discharge.daily', get_par('discharge.daily', required=features$pool_K600 %in% c('linear','binned')), envir=env)
   
   # support hierarchical simulation if requested
   if(features$pool_K600 == 'binned') {
-    K600_lnQ_nodes_centers <- specs@K600_lnQ_nodes_centers <- get_par('K600_lnQ_nodes_centers')
-    lnK600_lnQ_nodes <- get_par('lnK600_lnQ_nodes')
-    lnK600_daily_predlog <- predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))
+    assign('K600_lnQ_nodes_centers', get_par('K600_lnQ_nodes_centers'), envir=env)
+    assign('lnK600_lnQ_nodes', get_par('lnK600_lnQ_nodes'), envir=env)
+    assign('lnK600_daily_predlog', predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily)), envir=env)
   }  
   
   # get daily parameter needs
@@ -190,11 +216,12 @@ get_params.metab_sim <- function(
   # add columns to data_daily for each recognized need
   for(needname in names(needs)) {
     need <- needs[needname]
-    data_daily[need] <- get_par(need, required=grepl('^required', needname))
+    fit[need] <- get_par(need, required=grepl('^required', needname))
+    assign(need, fit[[need]], envir=env)
   }
   
   # package data_daily as the 'fitted' parameters for this simulation run
-  metab_model@fit <- data_daily
+  metab_model@fit <- fit
   
   # use default get_params() to package output more nicely
   NextMethod()
