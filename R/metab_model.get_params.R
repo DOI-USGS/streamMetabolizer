@@ -34,7 +34,7 @@ get_params.metab_model <- function(
     stop(paste0("can't find metabolism parameter", if(length(missing.metabs)>1) "s", " ", paste0(missing.metabs, collapse=', ')))
   }
   
-  # combine all daily values into one data.frame
+  # combine all daily values into one data.frame. fit is .x, data_daily is .y
   if(!is.null(fit) && !is.null(ddat) && nrow(ddat) > 0) {
     pars <- full_join(fit, ddat, by='date', copy=TRUE) 
   } else {
@@ -109,7 +109,8 @@ get_params.metab_model <- function(
   if(fixed == 'stars') {
     params <- bind_cols(select(params, date), format.data.frame(select(params, -date)))
     for(a in metab.either) {
-      params[[a]] <- paste0(params[[a]], ifelse(params[[paste0(a,'.fixed')]], '*', ' '))
+      isfixed <- params[[paste0(a,'.fixed')]]
+      params[[a]] <- paste0(params[[a]], ifelse(is.na(isfixed), '?', ifelse(isfixed, '*', ' ')))
       params[[paste0(a,'.fixed')]] <- NULL
     }
   }
