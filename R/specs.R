@@ -349,14 +349,13 @@ specs <- function(
   K600_lnQ_cnode_sdlog = 1, # distrib for the y=K600 values of the middle (or just past middle) node
   K600_lnQ_nodediffs_meanlog = 0.2, # non-zero introduces a trend in K ~ Q
   lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
-  lnK600_daily_predlog = "predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily))",
   
   # daily simulation parameters. can be passed as NULL, numeric, or a string to 
   # be evaluated in an environment where previous parameters (and num dates, n)
   # have already been evaluated
   discharge_daily = NULL, # 7, 5:16, 'rnorm(n, 20, 3)', etc.
   DO_mod_1 = NULL,
-  K600_daily = NULL, # 'pmax(0, rnorm(n, 15, 3))',
+  K600_daily = NULL, # 'exp(rlnorm(n, lnK600_daily_predlog, 1))',
   GPP_daily = NULL, # 'pmax(0, rnorm(n, 5, 2))',
   Pmax = NULL, # 'pmax(0, rnorm(n, 10, 2))',
   alpha = NULL, # 'pmax(0, rnorm(n, 0.0001, 0.00002))',

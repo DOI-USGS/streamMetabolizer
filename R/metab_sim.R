@@ -12,8 +12,6 @@ NULL
 #' other values are ignored), or if in \code{data_daily}, this takes the form of
 #' a DO.mod.1 column with one starting DO value per day.
 #' 
-#' @author Alison Appling, Bob Hall
-#'   
 #' @inheritParams metab
 #' @return A metab_sim object containing the fitted model. This object can be 
 #'   inspected with the functions in the \code{\link{metab_model_interface}}.
@@ -33,7 +31,7 @@ NULL
 #' get_params(mm)
 #' predict_metab(mm)
 #' predict_DO(mm)[seq(1,50,by=10),]
-#' predict_DO(mm)[seq(1,50,by=10),]
+#' predict_DO(mm)[seq(1,50,by=10),] 
 #' 
 #' # or same each time if seed is set
 #' mm <- metab_sim(
@@ -96,7 +94,73 @@ metab_sim <- function(
 
 #### helpers ####
 
-
+#' Get a parameter from data_daily, specs, or both
+#' 
+#' Used in get_params.metab_sim. Looks in both data_daily and specs for a daily 
+#' paramter, e.g., 'K600.daily'. If it's present in just one place, those values
+#' will be used. If it's present in neither, an error or NULLs will be returned 
+#' depending on whether \code{required=TRUE}.
+#' 
+#' @param par.name The parameter name. Should be period.separated if that's how 
+#'   data_daily is. Periods will be converted to underscores when searching 
+#'   specs for the parameter
+#' @param metab_model
+#' @return list containing up to three vectors (or NULLs) named \code{specs},
+#'   \code{data_daily}, and \code{combo} according to the source of the numbers
+#'   in each vector.
+#' @keywords internal
+sim_get_par <- function(par.name, specs, data_daily, eval_env, required=TRUE) { 
+  # get param from data_daily, which uses period-separated names
+  ddvals <- data_daily[[par.name]]
+  
+  # get param from specs, which uses underscore-separated names
+  par_name <- gsub("\\.", "_", par.name)
+  parsp <- specs[[par_name]]
+  if(is.null(parsp)) {
+    # option a: spec can be NULL iff there are values in data_daily instead
+    fitvals <- NULL
+  } else if(is.numeric(parsp)) {
+    # option b: spec is numeric; return as-is or replicated to length n
+    if(length(parsp) == eval_env$n) {
+      fitvals <- parsp
+    } else if(length(parsp) == 1) {
+      fitvals <- rep(parsp, eval_env$n)
+    } else {
+      stop(paste0("if numeric, specs$", par_name, " must have length 1 or nrow(fit)"))
+    }
+  } else if(length(parsp) == 1 && is.character(parsp)) {
+    # option c: spec is character; return evaluated version
+    warning('not sure this eval(text) thing works well all the time')
+    fitvals <- eval(parse(text=parsp), envir=eval_env)
+  } else if(is.function(parsp)) {
+    # option d: spec is function; return output from call
+    fitvals <- do.call(parsp, as.list(eval_env))
+  } else {
+    stop(paste0("specs$", par_name, " must be numeric, length-1 character, or a function"))
+  }
+  
+  # determine whether data will come from data_daily and/or specs; set combovals
+  # and/or give error about missing result
+  if(!is.null(fitvals) &&  is.null(ddvals)) combovals <- fitvals
+  if( is.null(fitvals) && !is.null(ddvals)) combovals <- ddvals
+  if(!is.null(fitvals) && !is.null(ddvals)) {
+    # competing data coming from both data_daily and specs; tell the user what 
+    # will happen, find the final coalesced values, and set fitvals to only
+    # contain numbers on dates when data_daily doesn't supply a number
+    message(paste0('non-NA values for data_daily$', par.name, ' will override numbers from specs$', par_name))
+    combovals <- coalesce(ddvals, fitvals)
+    fitvals[!is.na(ddvals)] <- NA
+  }
+  if( is.null(fitvals) &&  is.null(ddvals)) {
+    if(required) {
+      stop(paste0("need column '", par.name, "' in data_daily or parameter '", par_name, "' in specs"))
+    } else {
+      combovals <- NULL
+    }    
+  }
+  
+  list(specs=fitvals, data_daily=ddvals, combo=combovals)
+}
 
 #### metab_sim class ####
 
@@ -117,6 +181,7 @@ setClass(
 #'   returns the fixed values for daily parameters if they were set in 
 #'   \code{data_daily}
 #' @importFrom unitted v
+#' @import dplyr
 #' @export
 get_params.metab_sim <- function(
   metab_model, date_start=NA, date_end=NA, 
@@ -137,87 +202,47 @@ get_params.metab_sim <- function(
         day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, timestep_days=FALSE)[1]
     }
   
-  # define a controlled environment for evaluation of text to generate
-  # parameters
-  env <- new.env(parent=emptyenv())
-  for(dd in names(data_daily))
-  assign(dd, data_daily[dd], envir=env)
-  
-  # function to get a parameter from data_daily or specs according to
-  # availability & format
-  get_par <- function(par, required=TRUE) { 
-    # option 1: get param from specs, which uses underscore-separated names
-    par_ <- gsub("\\.", "_", par)
-    if(exists(par_, specs)) {
-      parsp <- specs[[par_]]
-      if(is.null(parsp)) {
-        # option 1a: spec can be NULL as long as there are values in data_daily 
-        # instead. keep going to let final check throw an error if it's in
-        # neither place
-      } else if(is.numeric(parsp[1])) {
-        if(length(parsp) == nrow(data_daily)) {
-          # option 1b: spec is already numeric; return as-is
-          return(parsp)
-        } else if(length(parsp) == 1) {
-          return(rep(parsp, nrow(data_daily)))
-        } else {
-          stop(paste0("if numeric, specs$", par_, " must have length 1 or nrow(data_daily)"))
-        }
-      } else if(is.character(parsp[1]) && length(parsp) == 1) {
-        # option 1c: spec is character; return evaluated version. join assumes
-        # data_daily and fit have no overlap
-        return(eval(parse(text=parsp), envir=env, enclos=emptyenv()))
-      } else {
-        stop(paste0("specs$", par_, " must be numeric or length-1 character"))
-      }
-    }
-    
-    # option 2: if the parameter isn't available in specs, make sure it's 
-    # present in data_daily (which uses period-separated names). if it exists,
-    # good, and don't add a column to fit (assign NULL instead)
-    if(exists(par, data_daily)) {
-      return(NULL)
-    }
-    
-    # if we get here then the parameter isn't available anywhere. give an error
-    # or return NULL
-    if(required) {
-      stop(paste0("need column '", par, "' in data_daily or parameter '", par_, "' in specs"))
-    } else {
-      return(NULL)
-    }
-  }
+  # define a controlled environment for evaluation of text to generate 
+  # parameters. this environment will include the 'combo' results from 
+  # sim_get_par reflecting the final parameter value for each date
+  pars_so_far <- new.env()
   
   # create the fit as an empty data.frame of the same nrow as data_daily
   fit <- select(data_daily, date)
   
   # add n, the nrow of fit and data_daily
-  assign('n', nrow(fit), envir=env)
+  assign('n', nrow(fit), envir=pars_so_far)
   
   # add discharge.daily to environment if possible. It's required if pool_K600 
   # uses discharge.daily; otherwise, still try (but with error tolerance) in
   # case GPP_daily, etc. are calculated from it by user function
-  assign('discharge.daily', get_par('discharge.daily', required=features$pool_K600 %in% c('linear','binned')), envir=env)
+  need_disch <- features$pool_K600 %in% c('linear','binned')
+  discharge.daily <- sim_get_par('discharge.daily', specs, data_daily, pars_so_far, required=need_disch)
+  fit['discharge.daily'] <- discharge.daily$fit
+  if(!is.null(discharge.daily$combo)) assign('discharge.daily', discharge.daily$combo, envir=pars_so_far)
   
   # support hierarchical simulation if requested
   if(features$pool_K600 == 'binned') {
-    assign('K600_lnQ_nodes_centers', get_par('K600_lnQ_nodes_centers'), envir=env)
-    assign('lnK600_lnQ_nodes', get_par('lnK600_lnQ_nodes'), envir=env)
-    assign('lnK600_daily_predlog', predict_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily)), envir=env)
+    assign('K600_lnQ_nodes_centers', envir=pars_so_far,
+           sim_get_par('K600_lnQ_nodes_centers', specs, data_daily, pars_so_far)$combo)
+    assign('lnK600_lnQ_nodes', envir=pars_so_far,
+           sim_get_par('lnK600_lnQ_nodes', specs, data_daily, pars_so_far)$combo)
+    assign('lnK600_daily_predlog', envir=pars_so_far,
+           sim_pred_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily)))
   }  
   
-  # get daily parameter needs
-  needs <- unlist(get_param_names(metab_model)) # keep names to know whether required
-  # sort needs to match data_daily default order, which is the order of
-  # operations we want to support
+  # get daily parameter needs. sort needs to match data_daily default order,
+  # which is the order of operations we want to support
+  needs <- unlist(get_param_names(metab_model)) # element names tell us which are required
   ops.order <- names(eval(formals('metab_sim')$data_daily))
   needs <- needs[na.omit(match(ops.order, needs))]
   
-  # add columns to data_daily for each recognized need
+  # add columns to fit and pars_so_far for each recognized need
   for(needname in names(needs)) {
     need <- needs[needname]
-    fit[need] <- get_par(need, required=grepl('^required', needname))
-    assign(need, fit[[need]], envir=env)
+    parvals <- sim_get_par(need, specs, data_daily, eval_env=pars_so_far, required=grepl('^required', needname))
+    if(!is.null(parvals$specs)) fit[need] <- parvals$specs
+    if(!is.null(parvals$combo)) assign(need, parvals$combo, envir=pars_so_far)
   }
   
   # package data_daily as the 'fitted' parameters for this simulation run
@@ -248,7 +273,7 @@ predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
   # call the generic a few times to get DO with proc and proc+obs error
   preds <- NextMethod(use_saved=FALSE)
-  preds$DO.pure <- preds$DO.mod # DO.mod has the DO implied by the daily metab params (error-free, not predicted by anybody)
+  preds$DO.pure <- preds$DO.mod # DO.mod has the DO implied by the daily metab params (error-free)
   metab_model@data$err.proc <- err.proc
   preds$DO.mod <- NextMethod(use_saved=FALSE)$DO.mod # DO.mod has the 'true' DO (with proc err)
   metab_model@data$err.obs <- err.obs
@@ -306,7 +331,7 @@ sim_Kb <- function(specs, K600_lnQ_nodes_centers) {
 #' @param lnQ.daily vector of daily values of the natural log of discharge, 
 #'   e.g., \code{log(data_daily$discharge.daily)}
 #' @export
-predict_Kb <- function(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, lnQ.daily) {
+sim_pred_Kb <- function(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, lnQ.daily) {
   
   # this function is HIGHLY REDUNDANT with metab_bayes.R. See GH#236
   

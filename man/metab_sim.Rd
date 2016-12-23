@@ -60,7 +60,7 @@ mm <- metab_sim(
 get_params(mm)
 predict_metab(mm)
 predict_DO(mm)[seq(1,50,by=10),]
-predict_DO(mm)[seq(1,50,by=10),]B
+predict_DO(mm)[seq(1,50,by=10),] 
 
 # or same each time if seed is set
 mm <- metab_sim(
@@ -90,9 +90,6 @@ plot_DO_preds(mm)
 library(ggplot2)
 plot_DO_preds(mm, y_var='conc') + geom_line(aes(y=DO.pure), color='tan', alpha=0.8, size=1)
 }
-}
-\author{
-Alison Appling, Bob Hall
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},
