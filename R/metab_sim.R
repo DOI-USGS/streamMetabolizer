@@ -146,15 +146,11 @@ sim_get_par <- function(par.name, specs, data_daily, eval_env, required=TRUE) {
     } else {
       stop(paste0("if numeric, specs$", par_name, " must have length 1 or nrow(fit)"))
     }
-  } else if(length(parsp) == 1 && is.character(parsp)) {
-    # option c: spec is character; return evaluated version
-    warning('not sure this eval(text) thing works well all the time')
-    fitvals <- eval(parse(text=parsp), envir=eval_env)
   } else if(is.function(parsp)) {
     # option d: spec is function; return output from call
     fitvals <- do.call(parsp, as.list(eval_env))
   } else {
-    stop(paste0("specs$", par_name, " must be numeric, length-1 character, or a function"))
+    stop(paste0("specs$", par_name, " must be numeric or a function"))
   }
   
   # determine whether data will come from data_daily and/or specs; set combovals
