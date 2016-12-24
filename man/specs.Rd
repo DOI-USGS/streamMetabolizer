@@ -6,7 +6,7 @@
 \usage{
 specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   day_tests = c("full_day", "even_timesteps", "complete_data"),
-  init.GPP.daily = 5, init.Pmax = 10, init.alpha = 1e-04,
+  init.GPP.daily = 8, init.Pmax = 10, init.alpha = 1e-04,
   init.ER.daily = -10, init.ER20 = -10, init.K600.daily = 10, split_dates,
   keep_mcmcs = TRUE, keep_mcmc_data = TRUE, GPP_daily_mu = 8,
   GPP_daily_sigma = 4, ER_daily_mu = -10, ER_daily_sigma = 5,
@@ -28,11 +28,18 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   velocity.daily = "log", discharge.daily = "log"), other_args = c(),
   K600_lnQ_cnode_meanlog = log(6), K600_lnQ_cnode_sdlog = 1,
   K600_lnQ_nodediffs_meanlog = 0.2,
-  lnK600_lnQ_nodes = "sim_Kb(specs, K600_lnQ_nodes_centers)",
-  discharge_daily = NULL, DO_mod_1 = NULL, K600_daily = NULL,
-  GPP_daily = NULL, Pmax = NULL, alpha = NULL, ER_daily = NULL,
-  ER20 = NULL, err_obs_sigma = 0.01, err_obs_phi = 0,
-  err_proc_sigma = 0.2, err_proc_phi = 0, err_round = NA, sim_seed = NA)
+  lnK600_lnQ_nodes = function(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog,
+  K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog,
+  ...) {     sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog,
+  K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog) },
+  discharge_daily = function(n, ...) rnorm(n, 20, 3), DO_mod_1 = NULL,
+  K600_daily = function(n, lnK600_daily_predlog = log(6), ...) rlnorm(n,
+  lnK600_daily_predlog, 1), GPP_daily = function(n, ...) pmax(0, rnorm(n, 8,
+  4)), Pmax = function(n, ...) pmax(0, rnorm(n, 10, 2)), alpha = function(n,
+  ...) pmax(0, rnorm(n, 1e-04, 2e-05)), ER_daily = function(n, ...) pmin(0,
+  rnorm(n, -10, 5)), ER20 = function(n, ...) pmin(0, rnorm(n, -10, 4)),
+  err_obs_sigma = 0.01, err_obs_phi = 0, err_proc_sigma = 0.2,
+  err_proc_phi = 0, err_round = NA, sim_seed = NA)
 }
 \arguments{
 \item{model_name}{character string identifying the model features. Use 
@@ -265,40 +272,87 @@ included in \code{transforms}. Recommended transforms include
 \code{specs$engine}. \code{na.rm=TRUE} is already passed to 
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 
-\item{K600_lnQ_cnode_meanlog}{For a sim model with pool_K600='binned'. The
-mean of a lognormal distribution describing the y=K600 value of the middle
+\item{K600_lnQ_cnode_meanlog}{For a sim model with pool_K600='binned'. The 
+mean of a lognormal distribution describing the y=K600 value of the middle 
 (or just past middle) node in the piecewise lnK ~ lnQ relationship}
 
-\item{K600_lnQ_cnode_sdlog}{For a sim model with pool_K600='binned'. The sd
-of a lognormal distribution describing the y=K600 value of the middle (or
+\item{K600_lnQ_cnode_sdlog}{For a sim model with pool_K600='binned'. The sd 
+of a lognormal distribution describing the y=K600 value of the middle (or 
 just past middle) node in the piecewise lnK ~ lnQ relationship}
 
-\item{K600_lnQ_nodediffs_meanlog}{For a sim model with pool_K600='binned'.
-The average (in log space) difference between ln(K) values of successive
+\item{K600_lnQ_nodediffs_meanlog}{For a sim model with pool_K600='binned'. 
+The average (in log space) difference between ln(K) values of successive 
 nodes. A non-zero value introduces a trend in K ~ Q.}
 
-\item{err_obs_sigma}{The sd of observation error, or 0 for no observation 
-error. Observation errors are those applied to DO.mod after generating the 
-full time series of modeled values.}
+\item{lnK600_lnQ_nodes}{For a sim model with pool_K600='binned'. The values 
+of lnK600 at each node. The default value of this spec is a function that 
+computes lnK600s based on simulated K~Q relationships.}
 
-\item{err_obs_phi}{The autocorrelation coefficient of the observation errors,
-or 0 for uncorrelated errors.}
+\item{discharge_daily}{Daily values, or a function to generate daily values, 
+of mean daily discharge in m^3 s^-1. Fixed values may alternatively be 
+specified as discharge.daily in the data_daily passed to 
+\code{\link{metab}}.}
 
-\item{err_proc_sigma}{The sd of process error, or 0 for no process error. 
-Process errors are applied at each time step, and therefore propagate into 
-the next timestep.}
+\item{DO_mod_1}{Daily values, or a function to generate daily values, of the 
+first DO.mod value on each date. Fixed values may alternatively be 
+specified as \code{DO.mod.1} in the \code{data_daily} passed to 
+\code{\link{metab}}. Or may be implied by a \code{DO.obs} column in 
+\code{data}, from which the first values on each date will be extracted by 
+\code{metab()}.}
 
-\item{err_proc_phi}{The autocorrelation coefficient of the process errors, or
-0 for uncorrelated errors.}
+\item{K600_daily}{Daily values, or a function to generate daily values, of 
+the reaeration rate constant K600. Fixed values may alternatively be 
+specified as \code{K600.daily} in the data_daily passed to 
+\code{\link{metab}}.}
 
-\item{err_round}{NA for no effect, or an integer as in the \code{digits} 
-argument to \code{\link{round}} if simulated DO.obs should be rounded to 
+\item{GPP_daily}{Daily values, or a function to generate daily values, of the
+photosynthesis parameter GPP_daily. Fixed values may alternatively be 
+specified as \code{GPP.daily} in the data_daily passed to 
+\code{\link{metab}}.}
+
+\item{Pmax}{Daily values, or a function to generate daily values, of the 
+photosynthesis parameter Pmax. Fixed values may alternatively be specified 
+as \code{Pmax} in the data_daily passed to \code{\link{metab}}.}
+
+\item{alpha}{Daily values, or a function to generate daily values, of the 
+photosynthesis parameter alpha. Fixed values may alternatively be specified
+as \code{alpha} in the data_daily passed to \code{\link{metab}}.}
+
+\item{ER_daily}{Daily values, or a function to generate daily values, of the 
+respiration parameter ER_daily. Fixed values may alternatively be specified
+as \code{ER.daily} in the data_daily passed to \code{\link{metab}}.}
+
+\item{ER20}{Daily values, or a function to generate daily values, of the 
+respiration parameter ER20. Fixed values may alternatively be specified as 
+\code{ER20} in the data_daily passed to \code{\link{metab}}.}
+
+\item{err_obs_sigma}{Daily values, or a function to generate daily values, of
+the sd of observation error, or 0 for no observation error. Observation 
+errors are those applied to DO.mod after generating the full time series of
+modeled values.}
+
+\item{err_obs_phi}{Daily values, or a function to generate daily values, of 
+the autocorrelation coefficient of the observation errors, or 0 for 
+uncorrelated errors.}
+
+\item{err_proc_sigma}{Daily values, or a function to generate daily values, 
+of the sd of process error, or 0 for no process error. Process errors are 
+applied at each time step, and therefore propagate into the next timestep.}
+
+\item{err_proc_phi}{Daily values, or a function to generate daily values, of 
+the autocorrelation coefficient of the process errors, or 0 for 
+uncorrelated errors.}
+
+\item{err_round}{A single value indicating whether simulated DO.obs should be
+rounded to simulate the common practice of only reporting a few significant
+figures for DO. Use NA for no effect, or an integer as in the \code{digits}
+argument to \code{\link{round}} if simulated DO.obs should be rounded to
 the given number of digits beyond \code{.}.}
 
 \item{sim_seed}{NA to specify that each call to predict_DO should generate 
 new values, or an integer, as in the \code{seed} argument to 
 \code{\link{set.seed}}, specifying the seed to set before every execution 
-of predict_DO}
+of predict_DO and/or predict_metab.}
 }
 \value{
 an internally consistent list of arguments that may be passed to 
@@ -353,7 +407,15 @@ often should, be overridden to tailor the model to your needs.
   \code{model_name}.
   
   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-  err_obs_sigma, err_obs_phi, err_proc_sigma, err_proc_phi, sim_seed}
+  err_obs_sigma, err_obs_phi, err_proc_sigma, err_proc_phi, sim_seed}. Those 
+  arguments whose period-separated name occurs in the default data_daily 
+  argument to metab(sim) can be specified here as NULL, numeric, or a 
+  function to be called each time \code{predict_DO} or \code{predict_metab} 
+  is called on the model. If given as a function, an argument will be called 
+  with any already-evaluated parameters (including the contents of data_daily
+  and n, the number of dates) passed in as arguments; for example, K600_daily
+  can see n, discharge.daily, and GPP_daily can see n, discharge.daily, and 
+  K600.daily.
 }
 
 \section{MLE Initial Values}{
