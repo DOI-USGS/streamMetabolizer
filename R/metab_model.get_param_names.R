@@ -23,7 +23,14 @@ get_param_names.character <- function(metab_model) {
       egdat, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
       ER_fun=features$ER_fun, deficit_src=features$deficit_src)
     metab.needs <- environment(dDOdt)$metab.needs
-    metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO?
+    if(features$type == 'sim') {
+      metab.needs <- c(metab.needs, 'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi')
+      # sort needs to match data_daily default order, which is the order of 
+      # operations we want to support when generating params
+      ops.order <- names(eval(formals('metab_sim')$data_daily))
+      metab.needs <- metab.needs[na.omit(match(ops.order, metab.needs))]
+    }
+    metab.optional <- c('DO.mod.1') # maybe should embed this in create_calc_DO? also, would need to sort if sim had >1 optional pars
   }
   list(required=metab.needs, optional=metab.optional)
 }

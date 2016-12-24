@@ -231,11 +231,8 @@ get_params.metab_sim <- function(
            sim_pred_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily)))
   }  
   
-  # get daily parameter needs. sort needs to match data_daily default order,
-  # which is the order of operations we want to support
-  needs <- unlist(get_param_names(metab_model)) # element names tell us which are required
-  ops.order <- names(eval(formals('metab_sim')$data_daily))
-  needs <- needs[na.omit(match(ops.order, needs))]
+  # get daily parameter needs
+  needs <- unlist(get_param_names(metab_model)[c('optional','required')]) # element names tell us which are required
   
   # add columns to fit and pars_so_far for each recognized need
   for(needname in names(needs)) {
