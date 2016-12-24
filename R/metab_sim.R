@@ -162,7 +162,7 @@ sim_get_par <- function(par.name, specs, data_daily, eval_env, required=TRUE) {
     # will happen, find the final coalesced values, and set fitvals to only
     # contain numbers on dates when data_daily doesn't supply a number
     message(paste0('non-NA values for data_daily$', par.name, ' will override numbers from specs$', par_name))
-    combovals <- coalesce(ddvals, fitvals)
+    combovals <- coalesce(as.numeric(ddvals), as.numeric(fitvals))
     fitvals[!is.na(ddvals)] <- NA
   }
   if( is.null(fitvals) &&  is.null(ddvals)) {

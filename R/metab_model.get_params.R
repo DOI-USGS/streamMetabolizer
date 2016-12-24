@@ -59,7 +59,7 @@ get_params.metab_model <- function(
     if(a %in% metab.both) {
       a.x <- paste0(a,'.x')
       a.y <- paste0(a,'.y')
-      pars[[a]] <- coalesce(pars[[a.x]], pars[[a.y]])
+      pars[[a]] <- coalesce(as.numeric(pars[[a.x]]), as.numeric(pars[[a.y]]))
       pars[[paste0(a,'.fixed')]] <- coalesce(ifelse(is.na(pars[[a.x]]), NA, FALSE), ifelse(is.na(pars[[a.y]]), NA, TRUE))
     } else {
       pars[[paste0(a,'.fixed')]] <- a %in% metab.ddat
