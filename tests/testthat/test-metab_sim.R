@@ -7,11 +7,12 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   # generate data
   dat <- data_metab('3')
   data_date <- mm_model_by_ply(mm_model_by_ply_prototype, dat, day_start=4, day_end=28)$date
-  dd <- data.frame(date=data_date, DO.mod.1=7.5, GPP.daily=4, ER.daily=-c(NA,2,4), K600.daily=30)
+  dd <- data.frame(date=data_date, DO.mod.1=7.5, GPP.daily=4, ER.daily=-c(NA,2,4), K600.daily=30, discharge.daily=42)
+  sp <- specs('sim', discharge_daily=NULL, K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL)
   
   # should be able to fit by specifying either data$DO.obs[d,1] or data_daily$DO.mod.1 
-  mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd)
-  mm2 <- metab_sim(data=dat, data_daily=select(dd, -DO.mod.1))
+  mm <- metab_sim(sp, data=select(dat, -DO.obs), data_daily=dd)
+  mm2 <- metab_sim(sp, data=dat, data_daily=select(dd, -DO.mod.1))
   
   # get_params
   expect_equal(select(get_params(mm), -DO.mod.1), get_params(mm2))
@@ -21,7 +22,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_equal(select(get_params(mm2)[2:3,], GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm2)[2:3,], GPP, ER))
   
   # should be able to omit day_tests and then get preds for all 3 days
-  mm3 <- metab_sim(data=select(dat, -DO.obs), data_daily=dd, specs=specs('sim', day_tests=c()))
+  mm3 <- metab_sim(revise(sp, day_tests=c()), data=select(dat, -DO.obs), data_daily=dd)
   expect_equal(select(get_params(mm3), GPP=GPP.daily, ER=ER.daily), select(predict_metab(mm3), GPP, ER))
   
   # predict_DO - DO.mod.1 should follow specifications
@@ -40,12 +41,14 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   expect_true(!isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.pure, predict_DO(mm)$DO.pure)))
   mm <- metab_sim(data=dat, data_daily=select(dd, -DO.mod.1), 
-                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', sim_seed=626, day_start=-1, day_end=23))
+                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', 
+                              discharge_daily=NULL, K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL,
+                              sim_seed=626, day_start=-1, day_end=23))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.obs, predict_DO(mm)$DO.obs)))
   expect_true(isTRUE(all.equal(predict_DO(mm)$DO.mod, predict_DO(mm)$DO.mod)))
   
   # predict_DO - using default (just err_obs_sigma), should have basically no autocorrelation in errors
-  mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd)
+  mm <- metab_sim(sp, data=select(dat, -DO.obs), data_daily=dd)
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
   acf_out <- acf(DO_preds$DO.mod - DO_preds$DO.obs, plot=FALSE)
   expect_lt(acf_out$acf[acf_out$lag==1], 0.1)
@@ -53,7 +56,9 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
   # predict_DO - autocorrelation should be bigger when there's process error
   mm <- metab_sim(data=select(dat, -DO.obs), data_daily=dd,
-                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', err_obs_sigma=0, err_proc_sigma=0.5))
+                  specs=specs('s_np_oipcpi_eu_plrckm.rnorm', 
+                              discharge_daily=NULL, K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL,
+                              err_obs_sigma=0, err_proc_sigma=1.5))
   DO_preds <- predict_DO(mm, date_start="2012-09-19")
   acf_out <- acf(DO_preds$DO.pure - DO_preds$DO.mod, plot=FALSE)
   expect_gt(acf_out$acf[acf_out$lag==1], 0.6)
@@ -61,8 +66,9 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   
   # should be able to switch ODE methods in fitting
   dat <- select(data_metab('3', res='30'), -DO.obs)
-  mmE <- metab_sim(specs('s_np_oipcpi_eu_plrckm.rnorm', err_obs_sigma=0, err_proc_sigma=0.05, sim_seed=4), data=dat, data_daily=dd)
-  mmP <- metab_sim(specs('s_np_oipcpi_tr_plrckm.rnorm', err_obs_sigma=0, err_proc_sigma=0.05, sim_seed=4), data=dat, data_daily=dd)
+  sp <- specs('sim', err_obs_sigma=0, err_proc_sigma=0.05, sim_seed=4, discharge_daily=NULL, K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL)
+  mmE <- metab_sim(revise(sp, model_name='s_np_oipcpi_eu_plrckm.rnorm'), data=dat, data_daily=dd)
+  mmP <- metab_sim(revise(sp, model_name='s_np_oipcpi_tr_plrckm.rnorm'), data=dat, data_daily=dd)
   rmseEP <- sqrt(mean((predict_DO(mmE)$DO.obs - predict_DO(mmP)$DO.obs)^2, na.rm=TRUE))
   expect_gt(rmseEP, 0.001)
   expect_lt(rmseEP, 0.1)
