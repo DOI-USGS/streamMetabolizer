@@ -210,6 +210,7 @@ get_params.metab_sim <- function(
         gimmedates, data=get_data(metab_model),
         day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, timestep_days=FALSE)[1]
     }
+  if(!is.na(specs$sim_seed)) set.seed(specs$sim_seed)
   
   # define a controlled environment for evaluation of text to generate 
   # parameters. this environment will include the 'combo' results from 
@@ -262,31 +263,18 @@ get_params.metab_sim <- function(
 #'   observation error), DO.mod (with process error only), and DO.pure (with no 
 #'   error). The errors are randomly generated on every new call to predict_DO.
 #' @export
-#' @importFrom stats rnorm
 predict_DO.metab_sim <- function(metab_model, date_start=NA, date_end=NA, ...) {
   
+  # fix the seed if requested
   specs <- get_specs(metab_model)
-  sim_seed <- specs$sim_seed
-  if(!is.na(sim_seed)) set.seed(sim_seed)
+  if(!is.na(specs$sim_seed)) set.seed(specs$sim_seed)
   
-  # simulate the daily parameters and fix them for the remainder of this function call
-  metab_model@fit <- get_params(metab_model)
-  
-  # simulate errors to add to modeled data
-  n <- nrow(get_data(metab_model))
-  err.obs <- as.numeric(stats::filter(rnorm(n, 0, specs$err_obs_sigma), filter=specs$err_obs_phi, method="recursive"))
-  err.proc <- as.numeric(stats::filter(rnorm(n, 0, specs$err_proc_sigma), filter=specs$err_proc_phi, method="recursive"))
-  
-  # call the generic a few times to get DO with proc and proc+obs error
+  # call the generic, which calls get_params to simulate daily values and then
+  # handles the various combos of err.obs and err.proc within mm_predict_DO_1ply
   preds <- NextMethod(use_saved=FALSE)
-  preds$DO.pure <- preds$DO.mod # DO.mod has the DO implied by the daily metab params (error-free)
-  metab_model@data$err.proc <- err.proc
-  preds$DO.mod <- NextMethod(use_saved=FALSE)$DO.mod # DO.mod has the 'true' DO (with proc err)
-  metab_model@data$err.obs <- err.obs
-  preds$DO.obs <- NextMethod(use_saved=FALSE)$DO.mod # the 'observed' DO (with obs err)
   
   # add additional observation error in the form of DO rounding if requested
-  if(!is.na(specs$err_round)) preds_w_err$DO.obs <- round(preds_w_err$DO.obs, digits=specs$err_round)
+  if(!is.na(specs$err_round)) preds$DO.obs <- round(preds$DO.obs, digits=specs$err_round)
   
   # return
   preds
