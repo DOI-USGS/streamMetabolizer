@@ -8,7 +8,7 @@
 #'   \itemize{
 #'   
 #'   \item{ \code{solar.time} date-time values in mean solar time (see 
-#'   \code{\link{calc_solar_time}} and/or
+#'   \code{\link{calc_solar_time}} and/or 
 #'   \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
 #'   attribute of 'UTC'. May be approximated by local, non-daylight-savings 
 #'   clock time (still with nominal UTC timezone but with clock noons close to 
@@ -33,6 +33,17 @@
 #'   
 #'   \item{ \code{date} dates of interest in Date format}
 #'   
+#'   \item{ \code{err.obs.sigma} SD of observation error to use in simulating 
+#'   data}
+#'   
+#'   \item{ \code{err.obs.phi} autocorrelation of observation error to use in
+#'   simulating data}
+#'   
+#'   \item{ \code{err.proc.sigma} SD of process error to use in simulating data}
+#'   
+#'   \item{ \code{err.proc.phi} autocorrelation of process error to use in
+#'   simulating data}
+#'   
 #'   \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
 #'   O[2] L^{-1}}{mg O2 / L}}
 #'   
@@ -45,10 +56,10 @@
 #'   \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2 
 #'   d^-1}}, for use in maximum likelihood estimation
 #'   
-#'   \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}},
+#'   \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}}, 
 #'   for use in maximum likelihood estimation
 #'   
-#'   \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use
+#'   \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use 
 #'   in maximum likelihood estimation
 #'   
 #'   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
@@ -93,6 +104,10 @@ mm_data <- function(..., optional='none') {
     velocity =   u(2,"m s^-1"),
     date =       u(as.Date("2050-03-14", tz="UTC"), NA),
     DO.mod.1 =   u(7.5,"mgO2 L^-1"),
+    err.obs.sigma = u(0.01,"mgO2 L^-1"),
+    err.obs.phi = u(0, NA),
+    err.proc.sigma = u(5,"gO2 m^-2 d^-1"),
+    err.proc.phi = u(0, NA),
     GPP.daily =  u(5,"gO2 m^-2 d^-1"),
     Pmax =       u(10,"gO2 m^-2 d^-1"),
     alpha =      u(0.0001, "gO2 s d^-1 umol^-1"),

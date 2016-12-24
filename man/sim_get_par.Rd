@@ -10,10 +10,23 @@ sim_get_par(par.name, specs, data_daily, eval_env, required = TRUE)
 \item{par.name}{The parameter name. Should be period.separated if that's how 
 data_daily is. Periods will be converted to underscores when searching 
 specs for the parameter}
+
+\item{specs}{a specifications list from which parameter values/functions will
+be drawn}
+
+\item{data_daily}{a data.frame of daily values from which parameter values
+will be drawn}
+
+\item{eval_env}{an environment containing any parameters that have already
+been finalized, plus the variable \code{n} containing the number of daily
+values required}
+
+\item{required}{logical. If true and the parameter is unavailable, an error
+will be thrown.}
 }
 \value{
-list containing up to three vectors (or NULLs) named \code{specs},
-  \code{data_daily}, and \code{combo} according to the source of the numbers
+list containing up to three vectors (or NULLs) named \code{specs}, 
+  \code{data_daily}, and \code{combo} according to the source of the numbers 
   in each vector.
 }
 \description{

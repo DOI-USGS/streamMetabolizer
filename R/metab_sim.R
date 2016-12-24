@@ -66,7 +66,8 @@ NULL
 metab_sim <- function(
   specs=specs(mm_name('sim')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'),
-  data_daily=mm_data(date, K600.daily, GPP.daily, Pmax, alpha, ER.daily, ER20, DO.mod.1, optional='all'),
+  data_daily=mm_data(date, DO.mod.1, K600.daily, GPP.daily, Pmax, alpha, ER.daily, ER20, 
+                     err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, optional='all'),
   info=NULL
 ) {
   
@@ -104,9 +105,17 @@ metab_sim <- function(
 #' @param par.name The parameter name. Should be period.separated if that's how 
 #'   data_daily is. Periods will be converted to underscores when searching 
 #'   specs for the parameter
-#' @param metab_model
-#' @return list containing up to three vectors (or NULLs) named \code{specs},
-#'   \code{data_daily}, and \code{combo} according to the source of the numbers
+#' @param specs a specifications list from which parameter values/functions will
+#'   be drawn
+#' @param data_daily a data.frame of daily values from which parameter values
+#'   will be drawn
+#' @param eval_env an environment containing any parameters that have already
+#'   been finalized, plus the variable \code{n} containing the number of daily
+#'   values required
+#' @param required logical. If true and the parameter is unavailable, an error
+#'   will be thrown.
+#' @return list containing up to three vectors (or NULLs) named \code{specs}, 
+#'   \code{data_daily}, and \code{combo} according to the source of the numbers 
 #'   in each vector.
 #' @keywords internal
 sim_get_par <- function(par.name, specs, data_daily, eval_env, required=TRUE) { 
