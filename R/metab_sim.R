@@ -249,7 +249,7 @@ get_params.metab_sim <- function(
       }
       assign('lnK600_daily_predlog', envir=pars_so_far,
              sim_pred_Kb(pars_so_far$K600_lnQ_nodes_centers, pars_so_far$lnK600_lnQ_nodes, log(pars_so_far$discharge.daily)))
-      attr(fit, 'KQ') <- as.list(pars_so_far)[kpars] # this is a start but not quite enough to share kpars on each call to get_params
+      assign('K600_eqn', as.list(pars_so_far)[c(kpars, 'lnK600_daily_predlog')], envir=pars_so_far)
     }  
     
   }
@@ -258,7 +258,9 @@ get_params.metab_sim <- function(
   metab_model@fit <- fit
   
   # use default get_params() to package output more nicely
-  NextMethod()
+  pars <- NextMethod()
+  if(exists('K600_eqn', envir=pars_so_far)) attr(pars, 'K600_eqn') <- get('K600_eqn', envir=pars_so_far)
+  pars
 }
 
 #' @describeIn predict_DO Simulate values for DO.obs (with process and 
