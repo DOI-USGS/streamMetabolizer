@@ -274,7 +274,7 @@
 #' @param err_round A single value indicating whether simulated DO.obs should be
 #'   rounded to simulate the common practice of only reporting a few significant
 #'   figures for DO. Use NA for no effect, or an integer as in the \code{digits}
-#'   argument to \code{\link{round}} if simulated DO.obs should be rounded to
+#'   argument to \code{\link{round}} if simulated DO.obs should be rounded to 
 #'   the given number of digits beyond \code{.}.
 #' @param sim_seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 
@@ -284,6 +284,7 @@
 #' @return an internally consistent list of arguments that may be passed to 
 #'   \code{metab} as the \code{specs} argument
 #'   
+#' @importFrom stats rnorm rlnorm
 #' @examples
 #' specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
 #' specs(mm_name(type='bayes', pool_K600='normal'))

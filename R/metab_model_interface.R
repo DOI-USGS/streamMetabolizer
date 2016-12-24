@@ -196,8 +196,9 @@ get_params <- function(
 #' A function in the metab_model_interface. Returns vectors of the required and 
 #' optional daily metabolism parameters for the model.
 #' 
-#' @param metab_model A metabolism model object or model name for which to
+#' @param metab_model A metabolism model object or model name for which to 
 #'   return the list of required and optional metabolism parameters.
+#' @param ... Placeholder for future arguments
 #' @return Returns a list of two vectors, the names of the required and optional
 #'   daily metabolism parameters, respectively.
 #' @export

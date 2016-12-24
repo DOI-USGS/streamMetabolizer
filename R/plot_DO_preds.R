@@ -39,7 +39,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
                 ddodt=c('#4A5869','#05326D','#4282D3'))
   )
   
-  DO.obs <- DO.mod <- DO.sat <- '.dplyr.var'
+  DO.obs <- DO.pure <- DO.mod <- DO.sat <- '.dplyr.var'
   DO_preds_conc <- mutate(
     DO_preds, as='conc', var='DO (mg/L)', lab='DO (mg/L)',
     col.pure=params$colors$conc[1], col.mod=params$colors$conc[2], col.obs=params$colors$conc[3], 
@@ -74,7 +74,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
       
-      . <- solar.time <- mod <- date <- col.mod <- col.obs <- obs <- '.ggplot.var'
+      . <- solar.time <- pure <- mod <- date <- col.pure <- col.mod <- col.obs <- obs <- '.ggplot.var'
       preds_ggplot <- v(DO_preds_all) %>%
         filter(as %in% y_var)
       if('conc' %in% names(y_lim)) {
@@ -118,6 +118,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         ungroup()
       
       prep_dygraph <- function(y_var) { 
+        . <- solar.time <- pure <- mod <- obs <- '.dplyr.var'
         prepped <- preds_xts %>% 
           filter(as==y_var) %>% 
           select(pure,mod,obs,solar.time) %>%

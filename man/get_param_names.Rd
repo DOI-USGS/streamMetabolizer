@@ -8,13 +8,15 @@
 \usage{
 get_param_names(metab_model, ...)
 
-\method{get_param_names}{character}(metab_model)
+\method{get_param_names}{character}(metab_model, ...)
 
-\method{get_param_names}{metab_model}(metab_model)
+\method{get_param_names}{metab_model}(metab_model, ...)
 }
 \arguments{
-\item{metab_model}{A metabolism model object or model name for which to
+\item{metab_model}{A metabolism model object or model name for which to 
 return the list of required and optional metabolism parameters.}
+
+\item{...}{Placeholder for future arguments}
 }
 \value{
 Returns a list of two vectors, the names of the required and optional

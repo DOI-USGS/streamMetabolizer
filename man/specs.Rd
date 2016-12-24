@@ -346,7 +346,7 @@ uncorrelated errors.}
 \item{err_round}{A single value indicating whether simulated DO.obs should be
 rounded to simulate the common practice of only reporting a few significant
 figures for DO. Use NA for no effect, or an integer as in the \code{digits}
-argument to \code{\link{round}} if simulated DO.obs should be rounded to
+argument to \code{\link{round}} if simulated DO.obs should be rounded to 
 the given number of digits beyond \code{.}.}
 
 \item{sim_seed}{NA to specify that each call to predict_DO should generate 

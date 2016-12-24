@@ -80,13 +80,13 @@ test_that('get_params works for each model type, basic GPP & ER equations', {
   
   # metab_sim
   dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)), GPP.daily=2, ER.daily=-3, K600.daily=21)
-  mm <- metab_sim(specs(mm_name('sim')), data=dat, data_daily=dat_daily)
+  mm <- metab_sim(specs(mm_name('sim'), K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL), data=dat, data_daily=dat_daily)
   ps <- get_params(mm)
-  expect_equal(names(ps), c('date','GPP.daily','ER.daily','K600.daily'))
+  expect_equal(names(ps), c('date','K600.daily','GPP.daily','ER.daily','err.obs.sigma','err.obs.phi','err.proc.sigma','err.proc.phi','discharge.daily'))
   ps <- get_params(mm, fixed='stars')
-  expect_equal(grep('\\*', ps), match(c('GPP.daily','ER.daily','K600.daily'), names(ps)))
+  expect_equal(grep('\\*', ps), match(c('K600.daily','GPP.daily','ER.daily'), names(ps)))
   dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)), Pmax=6, alpha=0.001, ER.daily=-3, K600.daily=21)
-  mm <- metab_sim(specs(mm_name('sim', GPP_fun='satlight')), data=dat, data_daily=dat_daily)
+  mm <- metab_sim(specs(mm_name('sim', GPP_fun='satlight'), Pmax=NULL, alpha=NULL, K600_daily=NULL, ER_daily=NULL), data=dat, data_daily=dat_daily)
   ps <- get_params(mm, fixed='columns')
-  expect_equal(names(ps), c('date','Pmax','Pmax.fixed','alpha','alpha.fixed','ER.daily','ER.daily.fixed','K600.daily','K600.daily.fixed'))
+  expect_equal(names(ps)[1:9], c('date','K600.daily','K600.daily.fixed','Pmax','Pmax.fixed','alpha','alpha.fixed','ER.daily','ER.daily.fixed'))
 })

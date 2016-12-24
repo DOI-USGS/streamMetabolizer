@@ -91,14 +91,13 @@ predict_metab(mm)
 dat <- data_metab('10','15')
 sp <- specs(mm_name('sim', pool_K600='binned'))
 mm <- metab(sp, dat)
-get_params(mm)
-predict_metab(mm)
+pars <- get_params(mm)
+attr(pars, 'K600_eqn')
 
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 plot_DO_preds(mm)
 library(ggplot2)
-plot_DO_preds(mm, y_var='conc') + geom_line(aes(y=DO.pure), color='tan', alpha=0.8, size=1)
 }
 }
 \seealso{
