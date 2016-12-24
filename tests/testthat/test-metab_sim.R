@@ -73,4 +73,24 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.mod/DO.sat, color=method)) + geom_line() + theme_bw()
   # ggplot(DO_preds, aes(x=solar.time, y=100*DO.obs/DO.sat, color=method)) + geom_line() + theme_bw()
 
+  # should be possible to adjust DO_mod_1 until the timeseries looks pretty 
+  # nice. turns out to be crazy easy, requiring just one iteration for perfect 
+  # (?!?) matches between the last DO.mod of one day and the first DO.mod of the
+  # next
+  dat <- data_metab('10', res='30')
+  sp <- specs(
+    mm_name('sim'), 
+    K600_daily=function(n, lnK600_daily_predlog=log(16), ...) rnorm(n, exp(lnK600_daily_predlog), 2),
+    GPP_daily=function(n, ...) pmax(0, rnorm(n, 2, 1)),
+    ER_daily=function(n, ...) pmin(0, rnorm(n, -4, 1)),
+    err_proc_sigma=2,
+    sim_seed=9185)
+  msim <- metab(sp, dat)
+  #plot_DO_preds(msim)
+  msim@data_daily <- mm_model_by_ply(function(data_ply, ...) data.frame(DO.mod.n = tail(data_ply$DO.mod, 1)), data=predict_DO(msim), day_start=msim@specs$day_start, day_end=msim@specs$day_end) %>% 
+    mutate(DO.mod.1=DO.mod.n[c(n(),seq_len(n()-1))]) %>% select(date, DO.mod.1)
+  #plot_DO_preds(msim)
+  diffs <- mm_model_by_ply(function(data_ply, ...) data.frame(DO.mod.1 = head(data_ply$DO.mod, 1), DO.mod.n = tail(data_ply$DO.mod, 1)), data=predict_DO(msim), day_start=msim@specs$day_start, day_end=msim@specs$day_end) %>% 
+    mutate(DO.mod.1=DO.mod.n[c(n(),seq_len(n()-1))])
+  expect_equal(diffs$DO.mod.1[c(2:nrow(diffs),1)], diffs$DO.mod.n, tol=0.000000001)
 })
