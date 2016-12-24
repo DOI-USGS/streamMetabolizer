@@ -610,8 +610,7 @@ specs <- function(
           binned=c('K600_lnQ_nodes_centers', 
                    'K600_lnQ_cnode_meanlog', 'K600_lnQ_cnode_sdlog', 'K600_lnQ_nodediffs_meanlog', 'K600_lnQ_nodediffs_sdlog',
                    'lnK600_lnQ_nodes')),
-        'discharge_daily', par_needs, 'err_round',
-        'sim_seed')
+        par_needs, 'err_round', 'sim_seed')
       
       if(features$pool_K600 == 'binned') {
         if('K600_lnQ_nodes_centers' %in% yes_missing) # override the default, which is for 'bayes' rather than 'sim'

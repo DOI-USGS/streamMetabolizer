@@ -66,7 +66,7 @@ NULL
 metab_sim <- function(
   specs=specs(mm_name('sim')),
   data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional='DO.obs'),
-  data_daily=mm_data(date, DO.mod.1, K600.daily, GPP.daily, Pmax, alpha, ER.daily, ER20, 
+  data_daily=mm_data(date, discharge.daily, DO.mod.1, K600.daily, GPP.daily, Pmax, alpha, ER.daily, ER20, 
                      err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, optional='all'),
   info=NULL
 ) {
@@ -223,26 +223,9 @@ get_params.metab_sim <- function(
   # add n, the nrow of fit and data_daily
   assign('n', nrow(fit), envir=pars_so_far)
   
-  # add discharge.daily to environment if possible. It's required if pool_K600 
-  # uses discharge.daily; otherwise, still try (but with error tolerance) in
-  # case GPP_daily, etc. are calculated from it by user function
-  need_disch <- features$pool_K600 %in% c('linear','binned')
-  discharge.daily <- sim_get_par('discharge.daily', specs, data_daily, pars_so_far, required=need_disch)
-  fit['discharge.daily'] <- discharge.daily$fit
-  if(!is.null(discharge.daily$combo)) assign('discharge.daily', discharge.daily$combo, envir=pars_so_far)
-  
-  # support hierarchical simulation if requested
-  if(features$pool_K600 == 'binned') {
-    assign('K600_lnQ_nodes_centers', envir=pars_so_far,
-           sim_get_par('K600_lnQ_nodes_centers', specs, data_daily, pars_so_far)$combo)
-    assign('lnK600_lnQ_nodes', envir=pars_so_far,
-           sim_get_par('lnK600_lnQ_nodes', specs, data_daily, pars_so_far)$combo)
-    assign('lnK600_daily_predlog', envir=pars_so_far,
-           sim_pred_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, log(discharge.daily)))
-  }  
-  
   # get daily parameter needs
   needs <- unlist(get_param_names(metab_model)[c('optional','required')]) # element names tell us which are required
+  names(needs[which(needs=='discharge.daily')]) <- if(features$pool_K600 %in% c('linear','binned')) 'requiredQ' else 'optionalQ'
   
   # add columns to fit and pars_so_far for each recognized need
   for(needname in names(needs)) {
@@ -250,6 +233,20 @@ get_params.metab_sim <- function(
     parvals <- sim_get_par(need, specs, data_daily, eval_env=pars_so_far, required=grepl('^required', needname))
     if(!is.null(parvals$specs)) fit[need] <- parvals$specs
     if(!is.null(parvals$combo)) assign(need, parvals$combo, envir=pars_so_far)
+    
+    # support hierarchical simulation if requested
+    if(need == 'discharge.daily' && features$pool_K600 == 'binned') {
+      kpars <- c('K600_lnQ_nodes_centers', 'K600_lnQ_cnode_meanlog', 'K600_lnQ_cnode_sdlog',
+                 'K600_lnQ_nodediffs_meanlog', 'K600_lnQ_nodediffs_sdlog', 'lnK600_lnQ_nodes')
+      for(kpar in kpars) {
+        parvals <- sim_get_par(kpar, specs, data_daily, eval_env=pars_so_far, required=TRUE)
+        assign(kpar, parvals$combo, envir=pars_so_far)
+      }
+      assign('lnK600_daily_predlog', envir=pars_so_far,
+             sim_pred_Kb(pars_so_far$K600_lnQ_nodes_centers, pars_so_far$lnK600_lnQ_nodes, log(pars_so_far$discharge.daily)))
+      attr(fit, 'KQ') <- as.list(pars_so_far)[kpars] # this is a start but not quite enough to share kpars on each call to get_params
+    }  
+    
   }
   
   # package data_daily as the 'fitted' parameters for this simulation run
