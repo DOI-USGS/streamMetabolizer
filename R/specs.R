@@ -614,7 +614,7 @@ specs <- function(
       
       if(features$pool_K600 == 'binned') {
         if('K600_lnQ_nodes_centers' %in% yes_missing) # override the default, which is for 'bayes' rather than 'sim'
-          all_specs$K600_lnQ_nodes_centers <- "calc_bins(log(discharge.daily), 'width', width=0.2)"
+          all_specs$K600_lnQ_nodes_centers <- function(discharge.daily, ...) calc_bins(log(discharge.daily), 'width', width=0.2)$bounds
       }
     }
   )
