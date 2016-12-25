@@ -20,6 +20,12 @@ setMethod(
     print(get_specs(object), header="Specifications:\n", prefix="  ")
     cat("Fitting time: ", get_fitting_time(object)[['elapsed']], " secs elapsed\n", sep="")
     
+    # set the sim.seed for a sec so the params and metab preds look the same.
+    # setting the seed makes a copy of object, so we won't need to reset the
+    # seed at the end of the function call
+    seed <- get_specs(object)$sim_seed
+    if(!is.null(seed) && is.na(seed)) object@specs$sim_seed <- Sys.time()
+    
     # print parameter fits
     params <- get_params(object, uncertainty='ci', fixed='stars', messages=TRUE)
     if(!is.null(params)) {

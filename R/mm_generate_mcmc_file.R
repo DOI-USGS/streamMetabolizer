@@ -159,6 +159,8 @@ mm_generate_mcmc_file <- function(
       chunk(
         comment('Data dimensions'),
         'int<lower=1> d; # number of dates',
+        'real<lower=0> timestep; # length of each timestep in days',
+        'int<lower=1> n24; # number of observations in first 24 hours per date',
         'int<lower=1> n; # number of observations per date'),
       
       chunk(
@@ -192,27 +194,22 @@ mm_generate_mcmc_file <- function(
     ),
     
     #### transformed data ####
-    c('transformed data {', # transformed data = statements evaluated exactly once
-      indent(
-        # move timestep to data once frac_GPP, frac_ER, and frac_D have been
-        # replaced with timestep and other coefficients in the data prep code
-        'real<lower=0> timestep; # length of each timestep in days',
-        s('timestep = frac_D[1,1]')
-        
-        #   chunk(
-        #     # Coefficient declarations, if any, go here
-        #   ),
-        #   
-        #   indent(
-        #     p('for(i in 1:n) {'),
-        #     indent(
-        #       # Coefficient pre-calculations, if any, go here
-        #     ),
-        #     p('}')
-        #   ),
-      ),
-      '}',''
-    ),
+    # c('transformed data {', # transformed data = statements evaluated exactly once
+    #   indent(
+    #     #   chunk(
+    #     #     # Coefficient declarations, if any, go here
+    #     #   ),
+    #     #   
+    #     #   indent(
+    #     #     p('for(i in 1:n) {'),
+    #     #     indent(
+    #     #       # Coefficient pre-calculations, if any, go here
+    #     #     ),
+    #     #     p('}')
+    #     #   ),
+    #   ),
+    #   '}',''
+    # ),
     
     #### parameters ####
     c('parameters {',
@@ -531,8 +528,8 @@ mm_generate_mcmc_file <- function(
       ),
       'for(j in 1:d) {',
       indent(
-        s('GPP[j] = sum(GPP_inst[1:n,j]) / n'),
-        s('ER[j] = sum(ER_inst[1:n,j]) / n')
+        s('GPP[j] = sum(GPP_inst[1:n24,j]) / n24'),
+        s('ER[j] = sum(ER_inst[1:n24,j]) / n24')
       ),
       p('}')
     ),

@@ -47,7 +47,15 @@
 #'   \code{model_name}.
 #'   
 #'   * metab_sim: \code{model_name, day_start, day_end, day_tests, 
-#'   err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi, sim.seed}
+#'   err_obs_sigma, err_obs_phi, err_proc_sigma, err_proc_phi, sim_seed}. Those 
+#'   arguments whose period-separated name occurs in the default data_daily 
+#'   argument to metab(sim) can be specified here as NULL, numeric, or a 
+#'   function to be called each time \code{predict_DO} or \code{predict_metab} 
+#'   is called on the model. If given as a function, an argument will be called 
+#'   with any already-evaluated parameters (including the contents of data_daily
+#'   and n, the number of dates) passed in as arguments; for example, K600_daily
+#'   can see n, discharge.daily, and GPP_daily can see n, discharge.daily, and 
+#'   K600.daily.
 #'   
 #' @section MLE Initial Values:
 #'   
@@ -135,8 +143,8 @@
 #' @param K600_daily_meanlog Applies when pool_K600 is 'none'. The mean of a 
 #'   dlnorm distribution for K600_daily, the daily rate of reaeration
 #' @param K600_daily_sdlog The lognormal scale parameter (standard deviation) of
-#'   a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog}
-#'   (when pool_K600 is 'none') or \code{K600_daily_pred} (otherwise) for
+#'   a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog} 
+#'   (when pool_K600 is 'none') or \code{K600_daily_pred} (otherwise) for 
 #'   K600_daily, the daily rate of reaeration
 #'   
 #' @param K600_daily_meanlog_meanlog hyperparameter for pool_K600='normal'. The 
@@ -206,24 +214,77 @@
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
 #'   
-#' @param err.obs.sigma The sd of observation error, or 0 for no observation 
-#'   error. Observation errors are those applied to DO.mod after generating the 
-#'   full time series of modeled values.
-#' @param err.obs.phi The autocorrelation coefficient of the observation errors,
-#'   or 0 for uncorrelated errors.
-#' @param err.proc.sigma The sd of process error, or 0 for no process error. 
-#'   Process errors are applied at each time step, and therefore propagate into 
-#'   the next timestep.
-#' @param err.proc.phi The autocorrelation coefficient of the process errors, or
-#'   0 for uncorrelated errors.
-#' @param sim.seed NA to specify that each call to predict_DO should generate 
+#' @param K600_lnQ_cnode_meanlog For a sim model with pool_K600='binned'. The 
+#'   mean of a lognormal distribution describing the y=K600 value of the middle 
+#'   (or just past middle) node in the piecewise lnK ~ lnQ relationship
+#' @param K600_lnQ_cnode_sdlog For a sim model with pool_K600='binned'. The sd 
+#'   of a lognormal distribution describing the y=K600 value of the middle (or 
+#'   just past middle) node in the piecewise lnK ~ lnQ relationship
+#' @param K600_lnQ_nodediffs_meanlog For a sim model with pool_K600='binned'. 
+#'   The average (in log space) difference between ln(K) values of successive 
+#'   nodes. A non-zero value introduces a trend in K ~ Q.
+#' @param lnK600_lnQ_nodes For a sim model with pool_K600='binned'. The values 
+#'   of lnK600 at each node. The default value of this spec is a function that 
+#'   computes lnK600s based on simulated K~Q relationships.
+#'   
+#' @param discharge_daily Daily values, or a function to generate daily values, 
+#'   of mean daily discharge in m^3 s^-1. Fixed values may alternatively be 
+#'   specified as discharge.daily in the data_daily passed to 
+#'   \code{\link{metab}}.
+#' @param DO_mod_1 Daily values, or a function to generate daily values, of the 
+#'   first DO.mod value on each date. Fixed values may alternatively be 
+#'   specified as \code{DO.mod.1} in the \code{data_daily} passed to 
+#'   \code{\link{metab}}. Or may be implied by a \code{DO.obs} column in 
+#'   \code{data}, from which the first values on each date will be extracted by 
+#'   \code{metab()}.
+#' @param K600_daily Daily values, or a function to generate daily values, of 
+#'   the reaeration rate constant K600. Fixed values may alternatively be 
+#'   specified as \code{K600.daily} in the data_daily passed to 
+#'   \code{\link{metab}}.
+#' @param GPP_daily Daily values, or a function to generate daily values, of the
+#'   photosynthesis parameter GPP_daily. Fixed values may alternatively be 
+#'   specified as \code{GPP.daily} in the data_daily passed to 
+#'   \code{\link{metab}}.
+#' @param Pmax Daily values, or a function to generate daily values, of the 
+#'   photosynthesis parameter Pmax. Fixed values may alternatively be specified 
+#'   as \code{Pmax} in the data_daily passed to \code{\link{metab}}.
+#' @param alpha Daily values, or a function to generate daily values, of the 
+#'   photosynthesis parameter alpha. Fixed values may alternatively be specified
+#'   as \code{alpha} in the data_daily passed to \code{\link{metab}}.
+#' @param ER_daily Daily values, or a function to generate daily values, of the 
+#'   respiration parameter ER_daily. Fixed values may alternatively be specified
+#'   as \code{ER.daily} in the data_daily passed to \code{\link{metab}}.
+#' @param ER20 Daily values, or a function to generate daily values, of the 
+#'   respiration parameter ER20. Fixed values may alternatively be specified as 
+#'   \code{ER20} in the data_daily passed to \code{\link{metab}}.
+#'   
+#' @param err_obs_sigma Daily values, or a function to generate daily values, of
+#'   the sd of observation error, or 0 for no observation error. Observation 
+#'   errors are those applied to DO.mod after generating the full time series of
+#'   modeled values.
+#' @param err_obs_phi Daily values, or a function to generate daily values, of 
+#'   the autocorrelation coefficient of the observation errors, or 0 for 
+#'   uncorrelated errors.
+#' @param err_proc_sigma Daily values, or a function to generate daily values, 
+#'   of the sd of process error, or 0 for no process error. Process errors are 
+#'   applied at each time step, and therefore propagate into the next timestep.
+#' @param err_proc_phi Daily values, or a function to generate daily values, of 
+#'   the autocorrelation coefficient of the process errors, or 0 for 
+#'   uncorrelated errors.
+#' @param err_round A single value indicating whether simulated DO.obs should be
+#'   rounded to simulate the common practice of only reporting a few significant
+#'   figures for DO. Use NA for no effect, or an integer as in the \code{digits}
+#'   argument to \code{\link{round}} if simulated DO.obs should be rounded to 
+#'   the given number of digits beyond \code{.}.
+#' @param sim_seed NA to specify that each call to predict_DO should generate 
 #'   new values, or an integer, as in the \code{seed} argument to 
 #'   \code{\link{set.seed}}, specifying the seed to set before every execution 
-#'   of predict_DO
+#'   of predict_DO and/or predict_metab.
 #'   
 #' @return an internally consistent list of arguments that may be passed to 
 #'   \code{metab} as the \code{specs} argument
 #'   
+#' @importFrom stats rnorm rlnorm
 #' @examples
 #' specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
 #' specs(mm_name(type='bayes', pool_K600='normal'))
@@ -246,7 +307,7 @@ specs <- function(
   ## MLE
   
   # initial values
-  init.GPP.daily = 5, 
+  init.GPP.daily = 8, 
   init.Pmax = 10,
   init.alpha = 0.0001,
   init.ER.daily = -10, 
@@ -331,14 +392,34 @@ specs <- function(
   
   ## Sim
   
-  # simulation parameters
-  err.obs.sigma = 0.1,
-  err.obs.phi = 0,
-  err.proc.sigma = 0,
-  err.proc.phi = 0,
+  # multi-day simulation parameters. already above for bayes:
+  # K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog
+  K600_lnQ_cnode_meanlog = log(6), # distrib for the y=K600 values of the middle (or just past middle) node
+  K600_lnQ_cnode_sdlog = 1, # distrib for the y=K600 values of the middle (or just past middle) node
+  K600_lnQ_nodediffs_meanlog = 0.2, # non-zero introduces a trend in K ~ Q
+  lnK600_lnQ_nodes = function(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog, ...) {
+    sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog)
+  },
+  
+  # daily simulation parameters
+  discharge_daily = function(n, ...) rnorm(n, 20, 3),
+  DO_mod_1 = NULL,
+  K600_daily = function(n, lnK600_daily_predlog=log(6), ...) rlnorm(n, lnK600_daily_predlog, 1),
+  GPP_daily = function(n, ...) pmax(0, rnorm(n, 8, 4)),
+  Pmax = function(n, ...) pmax(0, rnorm(n, 10, 2)),
+  alpha = function(n, ...) pmax(0, rnorm(n, 0.0001, 0.00002)),
+  ER_daily = function(n, ...) pmin(0, rnorm(n, -10, 5)),
+  ER20 = function(n, ...) pmin(0, rnorm(n, -10, 4)),
+  
+  # sub-daily simulation parameters
+  err_obs_sigma = 0.01,
+  err_obs_phi = 0,
+  err_proc_sigma = 0.2,
+  err_proc_phi = 0,
+  err_round = NA,
   
   # simulation replicability
-  sim.seed = NA
+  sim_seed = NA
   
 ) {
   
@@ -431,6 +512,7 @@ specs <- function(
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
+          c('GPP','ER'),
           c('GPP_daily','ER_daily','K600_daily'),
           switch(
             features$pool_K600,
@@ -438,9 +520,9 @@ specs <- function(
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
-          if(features$err_obs_iid) 'err_obs_iid_sigma', # add in err_obs_iid later
+          if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c('err_proc_iid_sigma')) # add in err_proc_iid later
+          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
       }
       
       # check for errors/inconsistencies
@@ -456,13 +538,7 @@ specs <- function(
     'mle' = {
       # determine which init values will be needed
       . <- '.dplyr.var'
-      dummy_data <- unitted::v(eval(formals(metab_mle)$data)) %>%
-        bind_rows(.,.)
-      dDOdt <- create_calc_dDOdt(
-        data=dummy_data, 
-        ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
-      init.needs <- paste0('init.', environment(dDOdt)$metab.needs)
+      init.needs <- paste0('init.', get_param_names(model_name)$required)
       
       # list all needed arguments
       included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)
@@ -521,11 +597,26 @@ specs <- function(
       
     },
     'sim' = {
+      # determine which daily parameters will be needed
+      par_needs <- gsub('\\.', '_', unlist(get_param_names(model_name)[c('optional','required')]))
+      
       # list all needed arguments
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests',
-        'err.obs.sigma', 'err.obs.phi', 'err.proc.sigma', 'err.proc.phi',
-        'sim.seed')
+        switch(
+          features$pool_K600,
+          none=c(),
+          normal=stop("pool_K600='normal' unavailable for now; try 'binned' instead"),
+          linear=stop("pool_K600='linear' unavailable for now; try 'binned' instead"), # 'discharge_daily', etc.
+          binned=c('K600_lnQ_nodes_centers', 
+                   'K600_lnQ_cnode_meanlog', 'K600_lnQ_cnode_sdlog', 'K600_lnQ_nodediffs_meanlog', 'K600_lnQ_nodediffs_sdlog',
+                   'lnK600_lnQ_nodes')),
+        par_needs, 'err_round', 'sim_seed')
+      
+      if(features$pool_K600 == 'binned') {
+        if('K600_lnQ_nodes_centers' %in% yes_missing) # override the default, which is for 'bayes' rather than 'sim'
+          all_specs$K600_lnQ_nodes_centers <- function(discharge.daily, ...) calc_bins(log(discharge.daily), 'width', width=0.2)$bounds
+      }
     }
   )
   

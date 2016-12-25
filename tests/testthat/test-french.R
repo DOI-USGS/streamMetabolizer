@@ -56,9 +56,9 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   night.end <- eval(parse(text=format(vfrenchnight$solar.time[nrow(vfrenchnight)], "%H + %M/60")))
   
   # PRK (metab_mle)
-  mm <- metab(
+  expect_message({mm <- metab(
     specs=specs('m_np_oi_eu_plrckm.nlm', day_start=start.numeric, day_end=end.numeric),
-    data=vfrenchshort)
+    data=vfrenchshort)}, "predictions are for the period")
   smest <- dplyr::select(get_fit(mm), GPP=GPP.daily, ER=ER.daily, K600=K600.daily, minimum)
   bobest <- streamMetabolizer:::load_french_creek_std_mle(vfrenchshort, estimate='PRK')
   expect_lt(abs(smest$GPP - bobest$GPP), 0.01) #, info=paste0("GPP by SM: ", smest$GPP, "; by Bob: ", bobest$GPP))

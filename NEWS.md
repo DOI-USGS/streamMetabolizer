@@ -1,3 +1,24 @@
+# 0.9.27
+
+* `sim` models can now generate daily parameters from functions and can even 
+generate binned K~Q relationships with random variation
+
+# 0.9.25
+
+* various improvements to flexibility and speed of `sim` models
+
+# 0.9.22
+
+* renamed `metab_sim` specs for consistency with other model arguments, e.g., 
+`err.obs.sigma` is now `err_obs_sigma`
+
+# 0.9.21
+
+* simplified Bayesian K pooling models to make the pooling more effective (and 
+also faster). Hierarchical bayesian models now fix rather than fit 
+`K600_daily_sdlog`, the standard deviation of `K600_daily` relative to 
+`K600_daily_predlog`
+
 # 0.9.18
 
 * solidified the model feature options, including error types, DO deficit 

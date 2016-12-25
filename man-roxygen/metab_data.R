@@ -135,19 +135,24 @@
 #'     \tabular{llll}{
 #'       \strong{colname} \tab \strong{class} \tab \strong{units}    \tab \strong{need}\cr
 #'       date              \tab Date            \tab                    \tab optional      \cr
+#'       discharge.daily   \tab numeric         \tab m^3 s^-1           \tab optional      \cr
 #'       DO.mod.1          \tab numeric         \tab mgO2 L^-1          \tab optional      \cr
+#'       K600.daily        \tab numeric         \tab d^-1               \tab optional      \cr
 #'       GPP.daily         \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
 #'       Pmax              \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
 #'       alpha             \tab numeric         \tab gO2 s d^-1 umol^-1 \tab optional      \cr
 #'       ER.daily          \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
 #'       ER20              \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
-#'       K600.daily        \tab numeric         \tab d^-1               \tab optional      
+#'       err.obs.sigma     \tab numeric         \tab mgO2 L^-1          \tab optional      \cr
+#'       err.obs.phi       \tab numeric         \tab                    \tab optional      \cr
+#'       err.proc.sigma    \tab numeric         \tab gO2 d^-1 m^-2      \tab optional      \cr
+#'       err.proc.phi      \tab numeric         \tab                    \tab optional      
 #'     }
 #'     
 #'     \strong{Example}:
-#'     \tabular{lrrrrrrr}{
-#'       \code{date      } \tab \code{DO.mod.1} \tab \code{GPP.daily} \tab \code{Pmax} \tab \code{alpha} \tab \code{ER.daily} \tab \code{ER20} \tab \code{K600.daily}\cr
-#'       \code{2050-03-14} \tab \code{7.5     } \tab \code{5        } \tab \code{10  } \tab \code{1e-04} \tab \code{-10     } \tab \code{-10 } \tab \code{10        }
+#'     \tabular{lrrrrrrrrrrrr}{
+#'       \code{date      } \tab \code{discharge.daily} \tab \code{DO.mod.1} \tab \code{K600.daily} \tab \code{GPP.daily} \tab \code{Pmax} \tab \code{alpha} \tab \code{ER.daily} \tab \code{ER20} \tab \code{err.obs.sigma} \tab \code{err.obs.phi} \tab \code{err.proc.sigma} \tab \code{err.proc.phi}\cr
+#'       \code{2050-03-14} \tab \code{9              } \tab \code{7.5     } \tab \code{10        } \tab \code{5        } \tab \code{10  } \tab \code{1e-04} \tab \code{-10     } \tab \code{-10 } \tab \code{0.01         } \tab \code{0          } \tab \code{5             } \tab \code{0           }
 #'     }
 #'   }
 #' }

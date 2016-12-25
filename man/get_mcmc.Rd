@@ -2,9 +2,12 @@
 % Please edit documentation in R/metab_bayes.R
 \name{get_mcmc}
 \alias{get_mcmc}
+\alias{get_mcmc.metab_bayes}
 \title{Extract any MCMC model objects that were stored with the model}
 \usage{
 get_mcmc(metab_model)
+
+\method{get_mcmc}{metab_bayes}(metab_model)
 }
 \arguments{
 \item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to 
@@ -25,4 +28,8 @@ for \code{stanfit} objects include \code{summary},
 and the \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan 
 manual}.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{metab_bayes}: Get the Bayesian MCMC model object
+}}
 

@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Models for Estimating Aquatic Photosynthesis and Respiration
-Version: 0.9.21
-Date: 2016-12-14
+Version: 0.9.27
+Date: 2016-12-24
 Author: Alison P. Appling, Robert O. Hall, Maite Arroita, and Charles B.
     Yackulic
 Authors@R: c(
@@ -82,17 +82,18 @@ Collate:
     'lookup_timezone.R'
     'lookup_usgs_elevation.R'
     'metab.R'
+    'metab_model_interface.R'
     'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'
     'metab_inputs.R'
     'metab_mle.R'
+    'metab_model.get_param_names.R'
     'metab_model.get_params.R'
     'metab_model.predict_DO.R'
     'metab_model.predict_metab.R'
     'metab_model.show.R'
-    'metab_model_interface.R'
     'metab_night.R'
     'metab_sim.R'
     'mm_check_mcmc_file.R'
