@@ -120,30 +120,31 @@ mm_generate_mcmc_file <- function(
           p(''),
           comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
-        if(pool_K600 == 'none') c(
-          'real K600_daily_meanlog;'
-        ) else c(
-          # hierarchical models each do K600_daily_meanlog/K600_daily_predlog
-          # differently, but K600_daily_sdlog they all do the same
-          switch(
-            pool_K600,
-            normal=c(
-              'real K600_daily_meanlog_meanlog;',
-              'real<lower=0> K600_daily_meanlog_sdlog;'),
-            linear=c(
-              'real lnK600_lnQ_intercept_mu;',
-              'real<lower=0> lnK600_lnQ_intercept_sigma;',
-              'real lnK600_lnQ_slope_mu;',
-              'real<lower=0> lnK600_lnQ_slope_sigma;'),
-            binned=c(
-              'int <lower=1> b; # number of K600_lnQ_nodes',
-              'real K600_lnQ_nodediffs_sdlog;',
-              'vector[b] K600_lnQ_nodes_meanlog;',
-              'vector[b] K600_lnQ_nodes_sdlog;')
-          )
-        ),
-        'real<lower=0> K600_daily_sdlog;'
-        ),
+        # [non]hierarchical models each do K600_daily_meanlog / K600_daily_predlog 
+        # / K600_daily_pred / K600_daily_sdlog / K600_daily_sigma differently
+        switch(
+          pool_K600,
+          none=c(
+            'real K600_daily_meanlog;',
+            'real<lower=0> K600_daily_sdlog;'),
+          normal=c(
+            'real K600_daily_meanlog_meanlog;',
+            'real<lower=0> K600_daily_meanlog_sdlog;',
+            'real<lower=0> K600_daily_sdlog;'),
+          linear=c(
+            'real lnK600_lnQ_intercept_mu;',
+            'real<lower=0> lnK600_lnQ_intercept_sigma;',
+            'real lnK600_lnQ_slope_mu;',
+            'real<lower=0> lnK600_lnQ_slope_sigma;',
+            'real<lower=0> K600_daily_sigma;'),
+          binned=c(
+            'int <lower=1> b; # number of K600_lnQ_nodes',
+            'real K600_lnQ_nodediffs_sdlog;',
+            'vector[b] K600_lnQ_nodes_meanlog;',
+            'vector[b] K600_lnQ_nodes_sdlog;',
+            'real<lower=0> K600_daily_sigma;')
+        )
+      ),
       
       chunk(
         comment('Error distributions'),
@@ -263,7 +264,7 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 %in% c('linear','binned')) c(
-        'vector[d] K600_daily_predlog;'
+        'vector[d] K600_daily_pred;'
       ),
       
       # rescaled error distribution parameters
@@ -310,9 +311,9 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily'),
-        binned=s('K600_daily_predlog = lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
-                 '                     lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2]')
+        linear=s('K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily)'),
+        binned=s('K600_daily_pred = exp(lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
+                 '                      lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2])')
       )
     ),
     
@@ -477,10 +478,12 @@ mm_generate_mcmc_file <- function(
       comment('Daily metabolism priors'),
       s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
       s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
-      if(pool_K600 %in% c('none')) s(
+      if(pool_K600 == 'none') s(
         'K600_daily ~ ', f('lognormal', meanlog='K600_daily_meanlog', sdlog='K600_daily_sdlog')
-      ) else if(pool_K600 %in% c('normal','linear','binned')) s(
+      ) else if(pool_K600 == 'normal') s(
         'K600_daily ~ ', f('lognormal', meanlog='K600_daily_predlog', sdlog='K600_daily_sdlog')
+      ) else if(pool_K600 %in% c('linear','binned')) s(
+        'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
       )
     ),
     
