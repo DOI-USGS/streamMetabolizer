@@ -30,6 +30,11 @@ get_params.metab_model <- function(
   ddat <- get_data_daily(metab_model)
   
   # make sure we've got everything we need
+  if(class(metab_model)=='metab_bayes') {
+    warning(paste('required: ', paste(param.names$required, collapse=', ')))
+    warning(paste('found: ', paste(union(names(fit), names(ddat)), collapse=', ')))
+    warning(paste('missing: ', paste(which(!param.names$required %in% union(names(fit), names(ddat))), collapse=', ')))
+  }
   if(length(missing.metabs <- param.names$required[!param.names$required %in% union(names(fit), names(ddat))]) > 0) {
     stop(paste0("can't find metabolism parameter", if(length(missing.metabs)>1) "s", " ", paste0(missing.metabs, collapse=', ')))
   }
