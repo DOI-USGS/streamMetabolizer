@@ -224,7 +224,9 @@ get_params.metab_sim <- function(
   # create the fit as an empty data.frame of the same nrow as data_daily
   fit <- select(data_daily, date)
   
-  # add n, the nrow of fit and data_daily
+  # add self (a reference to the entire metab_model object) and n (the nrow of
+  # fit and data_daily)
+  assign('self', metab_model, envir=pars_so_far)
   assign('n', nrow(fit), envir=pars_so_far)
   
   # get daily parameter needs
@@ -250,7 +252,6 @@ get_params.metab_sim <- function(
              sim_pred_Kb(pars_so_far$K600_lnQ_nodes_centers, pars_so_far$lnK600_lnQ_nodes, log(pars_so_far$discharge.daily)))
       assign('K600_eqn', as.list(pars_so_far)[c(kpars, 'lnK600_daily_predlog')], envir=pars_so_far)
     }  
-    
   }
   
   # package data_daily as the 'fitted' parameters for this simulation run
