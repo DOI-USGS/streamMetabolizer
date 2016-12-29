@@ -32,7 +32,7 @@ get_params.metab_model <- function(
   # make sure we've got everything we need
   if(class(metab_model)=='metab_bayes') {
     warning(paste('required: ', paste(param.names$required, collapse=', ')))
-    stop(paste('found: ', paste(union(names(fit), names(ddat)), collapse=', ')))
+    warning(paste('found: ', paste(union(names(fit), names(ddat)), collapse=', ')))
     warning(paste('missing: ', paste(which(!param.names$required %in% union(names(fit), names(ddat))), collapse=', ')))
   }
   if(length(missing.metabs <- param.names$required[!param.names$required %in% union(names(fit), names(ddat))]) > 0) {
