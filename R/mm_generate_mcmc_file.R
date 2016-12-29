@@ -121,7 +121,7 @@ mm_generate_mcmc_file <- function(
           comment('Parameters of hierarchical priors on K600_daily (', pool_K600, ' model)')
         ),
         # [non]hierarchical models each do K600_daily_meanlog / K600_daily_predlog 
-        # / K600_daily_pred / K600_daily_sdlog / K600_daily_sigma differently
+        # / K600_daily_sdlog / K600_daily_sigma differently
         switch(
           pool_K600,
           none=c(
@@ -264,7 +264,7 @@ mm_generate_mcmc_file <- function(
     chunk(
       # rescaled K600 pooling parameters
       if(pool_K600 %in% c('linear','binned')) c(
-        'vector[d] K600_daily_pred;'
+        'vector[d] K600_daily_predlog;'
       ),
       
       # rescaled error distribution parameters
@@ -311,9 +311,9 @@ mm_generate_mcmc_file <- function(
       comment('Hierarchical, ', pool_K600, ' model of K600_daily'),
       switch(
         pool_K600,
-        linear=s('K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily)'),
-        binned=s('K600_daily_pred = exp(lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
-                 '                      lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2])')
+        linear=s('K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily'),
+        binned=s('K600_daily_predlog = lnK600_lnQ_nodes[lnQ_bins[1]] .* lnQ_bin_weights[1] + \n  ',
+                 '                     lnK600_lnQ_nodes[lnQ_bins[2]] .* lnQ_bin_weights[2]')
       )
     ),
     
@@ -483,7 +483,7 @@ mm_generate_mcmc_file <- function(
       ) else if(pool_K600 == 'normal') s(
         'K600_daily ~ ', f('lognormal', meanlog='K600_daily_predlog', sdlog='K600_daily_sdlog')
       ) else if(pool_K600 %in% c('linear','binned')) s(
-        'K600_daily ~ ', f('normal', mu='K600_daily_pred', sigma='K600_daily_sigma')
+        'K600_daily ~ ', f('normal', mu='exp(K600_daily_predlog)', sigma='K600_daily_sigma') # need a bias correction?
       )
     ),
     

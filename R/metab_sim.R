@@ -248,9 +248,9 @@ get_params.metab_sim <- function(
         parvals <- sim_get_par(kpar, specs, data_daily, eval_env=pars_so_far, required=TRUE)
         assign(kpar, parvals$combo, envir=pars_so_far)
       }
-      assign('lnK600_daily_predlog', envir=pars_so_far,
+      assign('K600_daily_predlog', envir=pars_so_far,
              sim_pred_Kb(pars_so_far$K600_lnQ_nodes_centers, pars_so_far$lnK600_lnQ_nodes, log(pars_so_far$discharge.daily)))
-      assign('K600_eqn', as.list(pars_so_far)[c(kpars, 'lnK600_daily_predlog')], envir=pars_so_far)
+      assign('K600_eqn', as.list(pars_so_far)[c(kpars, 'K600_daily_predlog')], envir=pars_so_far)
     }  
   }
   
@@ -339,7 +339,7 @@ sim_pred_Kb <- function(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, lnQ.daily) {
   lnQ.bin1.weight = weights
   lnQ.bin2.weight = 1-weights
   
-  # Predict lnK600_daily_predlog (lnK600 for each value of discharge.daily)
+  # Predict K600_daily_predlog (ln(K600) for each value of discharge.daily)
   lnK600_lnQ_nodes[lnQ.bin1] * lnQ.bin1.weight + lnK600_lnQ_nodes[lnQ.bin2] * lnQ.bin2.weight
 }
 

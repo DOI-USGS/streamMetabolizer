@@ -410,7 +410,7 @@ specs <- function(
   # daily simulation parameters
   discharge_daily = function(n, ...) rnorm(n, 20, 3),
   DO_mod_1 = NULL,
-  K600_daily = function(n, lnK600_daily_predlog=log(6), ...) rlnorm(n, lnK600_daily_predlog, 1),
+  K600_daily = function(n, K600_daily_predlog=log(10), ...) pmax(0, rnorm(n, K600_daily_predlog, 4)),
   GPP_daily = function(n, ...) pmax(0, rnorm(n, 8, 4)),
   Pmax = function(n, ...) pmax(0, rnorm(n, 10, 2)),
   alpha = function(n, ...) pmax(0, rnorm(n, 0.0001, 0.00002)),
@@ -524,8 +524,8 @@ specs <- function(
             features$pool_K600,
             none=c(),
             normal=c('K600_daily_predlog'),
-            linear=c('K600_daily_pred', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
-            binned=c('K600_daily_pred', 'lnK600_lnQ_nodes')), 
+            linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
+            binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))

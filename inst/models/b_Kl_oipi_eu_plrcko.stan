@@ -52,7 +52,7 @@ parameters {
 }
 
 transformed parameters {
-  vector[d] K600_daily_pred;
+  vector[d] K600_daily_predlog;
   real<lower=0> err_obs_iid_sigma;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_iid_sigma;
@@ -66,7 +66,7 @@ transformed parameters {
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
   
   // Hierarchical, linear model of K600_daily
-  K600_daily_pred = exp(lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily);
+  K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily;
   
   // Model DO time series
   // * euler version
@@ -114,7 +114,7 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ normal(K600_daily_pred, K600_daily_sigma);
+  K600_daily ~ normal(exp(K600_daily_predlog), K600_daily_sigma);
   // Hierarchical constraints on K600_daily (linear model)
   lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);
   lnK600_lnQ_slope ~ normal(lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma);
