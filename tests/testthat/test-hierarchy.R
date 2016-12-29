@@ -43,7 +43,7 @@ manual_tests2 <- function() {
   
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
-    msp <- if(mm_parse_name(sf)$pool_K600 %in% c('none')) specs(sf) else specs(sf, K600_daily_sdlog=0.1)
+    msp <- specs(sf)
     mdat <- if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge)
     metab(revise(msp, burnin_steps=10, saved_steps=10), mdat) # just to compile model
     metab(revise(msp, burnin_steps=200, saved_steps=200), mdat)
@@ -101,17 +101,18 @@ manual_tests2 <- function() {
           pars, 
           lnQold=get_mcmc_data(mm)$lnQ_daily,
           lnQ=log(dischdaily$dischdaily),
-          lnK.pred=fit$daily$K600_daily_predlog_50pct,
+          lnK.pred=log(fit$daily$K600_daily_pred_50pct),
           lnK=log(K600.daily),
           lnK.lower=log(pmax(min.K.lower, K600.daily.lower)),
           lnK.upper=log(K600.daily.upper))
         K <- list(
           icpt=fit$overall$lnK600_lnQ_intercept_50pct,
           slope=fit$overall$lnK600_lnQ_slope_50pct,
-          sd=get_specs(mm)$K600_daily_sdlog)
+          sd=get_specs(mm)$K600_daily_sigma)
         ggplot(parslnQ, aes(x=lnQ, y=lnK, ymin=lnK.lower, ymax=lnK.upper)) +
           geom_abline(intercept=K$icpt, slope=K$slope, col='red') +
-          geom_ribbon(aes(ymin=lnK.pred-K$sd, ymax=lnK.pred+K$sd), color=NA, fill='red', alpha=0.2) +
+          geom_point(aes(y=lnK.pred), color='red') +
+          geom_ribbon(aes(ymin=log(pmax(0.0001,exp(lnK.pred)-K$sd)), ymax=log(exp(lnK.pred)+K$sd)), color=NA, fill='red', alpha=0.2) +
           geom_point() + geom_errorbar() +
           ylab('ln(K600)') + xlab('ln(Q)')
       },
@@ -121,7 +122,7 @@ manual_tests2 <- function() {
           lnKbin=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_50pct,
           lnKbin.lower=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_2.5pct,
           lnKbin.upper=fit[[as.character(length(lnQ))]]$lnK600_lnQ_nodes_97.5pct,
-          sd=get_specs(mm)$K600_daily_sdlog)
+          sd=get_specs(mm)$K600_daily_sigma)
         lnQdat <- 
           data_frame(
             lnQ_bin1=get_mcmc_data(mm)$lnQ_bins[1,],
@@ -134,14 +135,14 @@ manual_tests2 <- function() {
         parslnQ <- mutate(
           pars, 
           lnQ=log(dischdaily$dischdaily), #lnQdat$lnQ_daily truncates at last bins
-          lnK.pred=fit$daily$K600_daily_predlog_50pct,
+          lnK.pred=fit$daily$K600_daily_pred_50pct,
           lnK.eq=lnQdat$lnK_pred,
           lnK=log(K600.daily),
           lnK.lower=log(pmax(min.K.lower, K600.daily.lower)),
           lnK.upper=log(K600.daily.upper))
         ggplot(parslnQ, aes(x=lnQ)) +
           geom_line(data=K, aes(y=lnKbin), col='red') +
-          geom_ribbon(data=K, aes(ymin=lnKbin-K$sd, ymax=lnKbin+K$sd), color=NA, fill='red', alpha=0.2) +
+          geom_ribbon(data=K, aes(ymin=log(pmax(0.0001,exp(lnKbin)-K$sd)), ymax=log(exp(lnKbin)+K$sd)), color=NA, fill='red', alpha=0.2) +
           geom_point(data=K, aes(y=lnKbin), col='red') +
           geom_point(aes(y=lnK)) + geom_errorbar(aes(ymin=lnK.lower, ymax=lnK.upper)) +
           ylab('ln(K600)') + xlab('ln(Q)')

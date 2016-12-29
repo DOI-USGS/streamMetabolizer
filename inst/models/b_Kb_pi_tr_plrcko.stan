@@ -12,7 +12,7 @@ data {
   real K600_lnQ_nodediffs_sdlog;
   vector[b] K600_lnQ_nodes_meanlog;
   vector[b] K600_lnQ_nodes_sdlog;
-  real<lower=0> K600_daily_sdlog;
+  real<lower=0> K600_daily_sigma;
   
   // Error distributions
   real<lower=0> err_proc_iid_sigma_scale;
@@ -106,7 +106,7 @@ model {
   // Daily metabolism priors
   GPP_daily ~ normal(GPP_daily_mu, GPP_daily_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
-  K600_daily ~ lognormal(K600_daily_predlog, K600_daily_sdlog);
+  K600_daily ~ normal(exp(K600_daily_predlog), K600_daily_sigma);
   // Hierarchical constraints on K600_daily (binned model)
   lnK600_lnQ_nodes ~ normal(K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog);
   for(k in 2:b) {

@@ -1,3 +1,11 @@
+# 0.9.29
+
+* functions in the `specs` of `sim` models can now refer to their own metabolism model (and therefore also its `info` or `data_daily` slots)
+
+# 0.9.28
+
+* switched from `rlnorm` to `rnorm` for distribution of `K600_daily` around `K600_daily_pred` in linear and binned models
+
 # 0.9.27
 
 * `sim` models can now generate daily parameters from functions and can even 

@@ -86,7 +86,7 @@ test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
   dat <- data_metab('10', res='30')
   sp <- specs(
     mm_name('sim'), 
-    K600_daily=function(n, lnK600_daily_predlog=log(16), ...) rnorm(n, exp(lnK600_daily_predlog), 2),
+    K600_daily=function(n, K600_daily_predlog=log(16), ...) pmax(1, rnorm(n, exp(K600_daily_predlog), 2)),
     GPP_daily=function(n, ...) pmax(0, rnorm(n, 2, 1)),
     ER_daily=function(n, ...) pmin(0, rnorm(n, -4, 1)),
     err_proc_sigma=2,
