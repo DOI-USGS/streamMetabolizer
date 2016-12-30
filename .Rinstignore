@@ -1,1 +1,2 @@
 ^inst/models/.*\.stanrda$
+^inst/models/.*\.stanrds$

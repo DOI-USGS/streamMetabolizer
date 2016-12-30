@@ -596,9 +596,9 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     stop("the rstan package is required for Stan MCMC models")
   }
   
-  # use auto_write=TRUE to recompile if needed, or load from existing .rda file
+  # use auto_write=TRUE to recompile if needed, or load from existing .rds file
   # without recompiling if possible
-  mobj_path <- gsub('.stan$', '.stanrda', model_path)
+  mobj_path <- gsub('.stan$', '.stanrds', model_path)
   if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
     if(verbose) message("compiling Stan model")
     compile_log <- capture.output({
@@ -606,16 +606,17 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     }, type=c('output'), split=verbose)
     rm(stan_mobj)
     gc() # this humble line saves us from many horrible R crashes
-    autowrite_path <- gsub('.stan$', '.rda', model_path)
+    autowrite_path <- gsub('.stan$', '.rds', model_path)
+    if(!file.exists(autowrite_path)) autowrite_path <- gsub('.stan$', '.rda', model_path) # for backwards compatibility with rstan < 2.13
     if(!file.exists(autowrite_path)) autowrite_path <- file.path(tempdir(), basename(autowrite_path))
     if(!file.exists(autowrite_path)) {
-      warning('could not find saved rda model file')
+      warning('could not find saved rds model file')
     } else {
       tryCatch({
         file.copy(autowrite_path, mobj_path, overwrite=TRUE)
         file.remove(autowrite_path)
       }, error=function(e) {
-        warning('could not copy Stan rda to .stanrda file: ', e$message)
+        warning('could not copy Stan rds to .stanrds file: ', e$message)
         mobj_path <- autowrite_path
       })
     }
