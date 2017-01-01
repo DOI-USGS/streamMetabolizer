@@ -9,9 +9,9 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   init.GPP.daily = 8, init.Pmax = 10, init.alpha = 1e-04,
   init.ER.daily = -10, init.ER20 = -10, init.K600.daily = 10, split_dates,
   keep_mcmcs = TRUE, keep_mcmc_data = TRUE, GPP_daily_mu = 8,
-  GPP_daily_sigma = 4, ER_daily_mu = -10, ER_daily_sigma = 5,
-  K600_daily_meanlog = log(6), K600_daily_meanlog_meanlog = log(6),
-  K600_daily_meanlog_sdlog = 1,
+  GPP_daily_lower = -Inf, GPP_daily_sigma = 4, ER_daily_mu = -10,
+  ER_daily_upper = Inf, ER_daily_sigma = 5, K600_daily_meanlog = log(6),
+  K600_daily_meanlog_meanlog = log(6), K600_daily_meanlog_sdlog = 1,
   K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none = 1,
   normal = 0.2, default = NA),
   K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear = 10,
@@ -143,11 +143,23 @@ default is FALSE because these objects can be very large.}
 \item{GPP_daily_mu}{The mean of a dnorm distribution for GPP_daily, the daily
 rate of gross primary production}
 
+\item{GPP_daily_lower}{The lower bound on every fitted value of GPP_daily, 
+the daily rate of gross primary production. Use values other than -Inf with
+caution, recognizing that sometimes the input data are unmodelable and that
+a negative estimate of GPP_daily (when unconstrained) could be your only
+indication.}
+
 \item{GPP_daily_sigma}{The standard deviation of a dnorm distribution for 
 GPP_daily, the daily rate of gross primary production}
 
 \item{ER_daily_mu}{The mean of a dnorm distribution for ER_daily, the daily 
 rate of ecosystem respiration}
+
+\item{ER_daily_upper}{The upper (less negative) bound on every fitted value 
+of ER_daily, the daily rate of ecosystem respiration. Use values other than
+Inf with caution, recognizing that sometimes the input data are unmodelable
+and that a positive estimate of ER_daily (when unconstrained) could be your
+only indication.}
 
 \item{ER_daily_sigma}{The standard deviation of a dnorm distribution for 
 ER_daily, the daily rate of ecosystem respiration}
@@ -167,12 +179,12 @@ meanlog_sdlog)}
 \item{K600_daily_sdlog}{The lognormal scale parameter (standard deviation) of
 a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog} 
 (when pool_K600 is 'none') or \code{K600_daily_predlog} (when pool_K600 is 
-'normal') for K600_daily, the daily rate of reaeration as corrected for
+'normal') for K600_daily, the daily rate of reaeration as corrected for 
 temperature and the diffusivity of oxygen}
 
 \item{K600_daily_sigma}{The standard deviation of a dnorm distribution having
 mean equal to \code{exp(K600_daily_predlog)} (applicable when pool_K600 is 
-'linear' or 'binned') for K600_daily, the daily rate of reaeration as
+'linear' or 'binned') for K600_daily, the daily rate of reaeration as 
 corrected for temperature and the diffusivity of oxygen}
 
 \item{lnK600_lnQ_intercept_mu}{hyperparameter for pool_K600 == 'linear'. The 

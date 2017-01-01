@@ -42,6 +42,6 @@ Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L.
   Leopold, L.B., and Thomas Maddock Jr. \emph{The Hydraulic Geometry of
   Stream Channels and Some Physiographic Implications}. Report. Professional
   Paper, 1953. USGS Publications Warehouse.
-  http://pubs.er.usgs.gov/publication/pp252.
+  https://pubs.er.usgs.gov/publication/pp252.
 }
 

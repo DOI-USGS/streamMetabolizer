@@ -26,6 +26,6 @@ not already installed, run \code{install.packages(c('RCurl','XML'))} before
 calling \code{lookup_usgs_elevation}.
 }
 \references{
-http://ned.usgs.gov/epqs/
+https://nationalmap.gov/epqs/
 }
 

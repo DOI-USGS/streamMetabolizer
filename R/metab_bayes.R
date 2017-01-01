@@ -538,6 +538,12 @@ prepdata_bayes <- function(
     data_list$K600_lnQ_nodes_sdlog <- array(data_list$K600_lnQ_nodes_sdlog, dim=data_list$b)
   }
   
+  # check that the params_out are unique (non-unique messes up our parsing of
+  # the stanfit output)
+  if(length(specs$params_out) != length(unique(specs$params_out))) {
+    stop('params_out must all be unique')
+  }
+  
   data_list
 }
 
@@ -731,8 +737,9 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcm
     row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1])))
     varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
     
-    as.data.frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
-      rownames_to_column() %>%
+    as_data_frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
+      mutate(rowname=rownames(mcmc_mat[dim_rows,,drop=FALSE])) %>%
+      select(rowname, everything()) %>%
       gather(stat, value=val, 2:ncol(.)) %>%
       mutate(variable=gsub("\\[[[:digit:]|,]+\\]", "", rowname),
              index=if(odim == 1) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),

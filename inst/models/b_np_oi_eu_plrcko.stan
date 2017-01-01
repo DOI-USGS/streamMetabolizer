@@ -3,8 +3,10 @@
 data {
   // Parameters of priors on metabolism
   real GPP_daily_mu;
+  real GPP_daily_lower;
   real<lower=0> GPP_daily_sigma;
   real ER_daily_mu;
+  real ER_daily_upper;
   real<lower=0> ER_daily_sigma;
   real K600_daily_meanlog;
   real<lower=0> K600_daily_sdlog;
@@ -32,8 +34,8 @@ data {
 }
 
 parameters {
-  vector[d] GPP_daily;
-  vector[d] ER_daily;
+  vector<lower=GPP_daily_lower>[d] GPP_daily;
+  vector<upper=ER_daily_upper>[d] ER_daily;
   vector<lower=0>[d] K600_daily;
   
   real<lower=0> err_obs_iid_sigma_scaled;

@@ -93,7 +93,7 @@ test_that("converting between UTC and local time works", {
   expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=0, time.type="standard"), "unitted")
   expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), 'should be one of "standard local", "daylight local"', info="only accept valid time.types")
   #   real time changes
-  # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
+  # "POSIX has positive signs west of Greenwich" - https://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(40, "degN"), longitude=u(105.3, "degE"), time.type="standard")), "Etc/GMT-8", info="go east, be POSIX-negative")
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(37, "degN"), longitude=u(105.3, "degW"), time.type="standard")), "Etc/GMT+7", info="go west, be POSIX-positive")
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(37, "degN"), longitude=u(-105.3, "degE"), time.type="standard")), "Etc/GMT+7", info="go west, be POSIX-positive")

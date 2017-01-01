@@ -54,7 +54,7 @@ create_calc_NLL <- function(
     
     # calculate & return the negative log likelihood of mod values relative to
     # obs values. equivalent to Bob's original code & formula at
-    # http://www.statlect.com/normal_distribution_maximum_likelihood.htm
+    # https://www.statlect.com/fundamentals-of-statistics/normal-distribution-maximum-likelihood
     if(err_obs_iid) {
       diffs <- DO.obs - DO.mod
       sd <- if('err_obs_iid_sigma' %in% all.pars) all.pars$err_obs_iid_sigma else sqrt(mean(diffs^2))

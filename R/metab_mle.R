@@ -191,11 +191,11 @@ mle_1ply <- function(
         mle.1d <- do.call(nlm, nlm.args)
 
         # if we were successful, also compute the confidence interval as in
-        # http://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which
+        # https://www.stat.umn.edu/geyer/5931/mle/mle.pdf section 2.3, which
         # says: 'Inverse Fisher information gives the asymptotic variance matrix
         # of the MLE. From it, we can construct asymptotic confidence
         # intervals.' See also
-        # http://stats.stackexchange.com/questions/27033/in-r-given-an-output-from-optim-with-a-hessian-matrix-how-to-calculate-paramet
+        # https://stats.stackexchange.com/questions/27033/in-r-given-an-output-from-optim-with-a-hessian-matrix-how-to-calculate-paramet
         # This will be a gross underestimate of true uncertainty because the
         # errors are autocorrelated. Still, it's a start.
         inv_fish <- solve(mle.1d$hessian)
