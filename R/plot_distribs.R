@@ -115,7 +115,7 @@ plot_distribs <- function(
       # half-Cauchy and half-normal are similarly shaped except that half-Cauchy
       # has heavier tails and therefore, for large values of scale, can be a 
       # weaker prior than a corresponding half-normal. See 
-      # http://www.stat.columbia.edu/~gelman/research/published/taumain.pdf and 
+      # https://www.stat.columbia.edu/~gelman/research/published/taumain.pdf and 
       # http://web.ipac.caltech.edu/staff/fmasci/home/mystats/CauchyVsGaussian.pdf
       xlim <- qcauchy(c(0.5, 0.95), location=0, scale=hyperpars$scale)
       bind_rows(

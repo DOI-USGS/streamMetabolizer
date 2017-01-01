@@ -16,7 +16,7 @@
 #' @importFrom lubridate with_tz
 #' @importFrom unitted u v
 #' @references 
-#' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
+#' https://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 #' @export
 convert_UTC_to_localtime <- function(date.time, latitude, longitude, time.type=c("standard local", "daylight local")) {
   
@@ -51,7 +51,7 @@ convert_UTC_to_localtime <- function(date.time, latitude, longitude, time.type=c
   if(time.type == "daylight local") {
     lubridate::with_tz(date.time, tz_info$tz)
   } else {
-    # "POSIX has positive signs west of Greenwich" - http://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
+    # "POSIX has positive signs west of Greenwich" - https://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
     std.tz <- sprintf("Etc/GMT%s%d", if(tz_info$std_offset > u(0, "hours")) "-" else "+", abs(as.numeric(v(tz_info$std_offset))))
     if(std.tz %in% c("Etc/GMT+0", "Etc/GMT-0")) std.tz <- "UTC"
     lubridate::with_tz(date.time, std.tz)
@@ -67,7 +67,7 @@ convert_UTC_to_localtime <- function(date.time, latitude, longitude, time.type=c
 #'   specified by the tz attribute
 #' @importFrom lubridate with_tz
 #' @references 
-#' http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
+#' https://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 #' @export
 convert_localtime_to_UTC <- function(local.time) {
   return(with_tz(local.time, "UTC"))

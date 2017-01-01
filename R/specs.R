@@ -594,7 +594,7 @@ specs <- function(
       switch(
         all_specs$engine,
         mean={
-          if('filters' %in% yes_missing) all_specs['filters'] <- list(c()) # need special syntax to assign c(). see http://stackoverflow.com/a/7945259/3203184
+          if('filters' %in% yes_missing) all_specs['filters'] <- list(c()) # need special syntax to assign c(). see https://stackoverflow.com/a/7945259/3203184
           if('predictors' %in% yes_missing) all_specs['predictors'] <- list(c())
           if('transforms' %in% yes_missing) all_specs$transforms <- c(K600='log')
           if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=NULL)

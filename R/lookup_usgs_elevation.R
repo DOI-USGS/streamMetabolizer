@@ -14,7 +14,7 @@
 #'   look up.
 #' @param units character, one of Meters or Feet, specifying the units in which
 #'   to return the elevation
-#' @references http://ned.usgs.gov/epqs/
+#' @references https://nationalmap.gov/epqs/
 #' @importFrom unitted u
 #' @export
 lookup_usgs_elevation <- function(
@@ -32,7 +32,7 @@ lookup_usgs_elevation <- function(
   }
   
   # ask the USGS
-  api.url <- sprintf("http://nationalmap.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
+  api.url <- sprintf("https://nationalmap.gov/epqs/pqs.php?x=%f&y=%f&units=%s&output=xml",
                      longitude, latitude, units)
   api.out <- RCurl::getURL(api.url, .opts = list(ssl.verifypeer = FALSE))           
   out.parsed <- XML::xmlParse(api.out)
