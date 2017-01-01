@@ -134,10 +134,20 @@
 #'   
 #' @param GPP_daily_mu The mean of a dnorm distribution for GPP_daily, the daily
 #'   rate of gross primary production
+#' @param GPP_daily_lower The lower bound on every fitted value of GPP_daily, 
+#'   the daily rate of gross primary production. Use values other than -Inf with
+#'   caution, recognizing that sometimes the input data are unmodelable and that
+#'   a negative estimate of GPP_daily (when unconstrained) could be your only
+#'   indication.
 #' @param GPP_daily_sigma The standard deviation of a dnorm distribution for 
 #'   GPP_daily, the daily rate of gross primary production
 #' @param ER_daily_mu The mean of a dnorm distribution for ER_daily, the daily 
 #'   rate of ecosystem respiration
+#' @param ER_daily_upper The upper (less negative) bound on every fitted value 
+#'   of ER_daily, the daily rate of ecosystem respiration. Use values other than
+#'   Inf with caution, recognizing that sometimes the input data are unmodelable
+#'   and that a positive estimate of ER_daily (when unconstrained) could be your
+#'   only indication.
 #' @param ER_daily_sigma The standard deviation of a dnorm distribution for 
 #'   ER_daily, the daily rate of ecosystem respiration
 #' @param K600_daily_meanlog Applies when pool_K600 is 'none'. The mean of a 
@@ -145,11 +155,11 @@
 #' @param K600_daily_sdlog The lognormal scale parameter (standard deviation) of
 #'   a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog} 
 #'   (when pool_K600 is 'none') or \code{K600_daily_predlog} (when pool_K600 is 
-#'   'normal') for K600_daily, the daily rate of reaeration as corrected for
+#'   'normal') for K600_daily, the daily rate of reaeration as corrected for 
 #'   temperature and the diffusivity of oxygen
 #' @param K600_daily_sigma The standard deviation of a dnorm distribution having
 #'   mean equal to \code{exp(K600_daily_predlog)} (applicable when pool_K600 is 
-#'   'linear' or 'binned') for K600_daily, the daily rate of reaeration as
+#'   'linear' or 'binned') for K600_daily, the daily rate of reaeration as 
 #'   corrected for temperature and the diffusivity of oxygen
 #'   
 #' @param K600_daily_meanlog_meanlog hyperparameter for pool_K600='normal'. The 
@@ -329,8 +339,10 @@ specs <- function(
   
   # hyperparameters for non-hierarchical GPP & ER
   GPP_daily_mu = 8,
+  GPP_daily_lower = -Inf,
   GPP_daily_sigma = 4,
   ER_daily_mu = -10,
+  ER_daily_upper = Inf,
   ER_daily_sigma = 5,
   
   # hyperparameters for non-hierarchical K600
@@ -469,7 +481,7 @@ specs <- function(
       
       # list the specs that will make it all the way to the Stan model as data
       all_specs$params_in <- c(
-        c('GPP_daily_mu','GPP_daily_sigma','ER_daily_mu','ER_daily_sigma'),
+        c('GPP_daily_mu','GPP_daily_lower','GPP_daily_sigma','ER_daily_mu','ER_daily_upper','ER_daily_sigma'),
         switch(
           features$pool_K600,
           none=c('K600_daily_meanlog', 'K600_daily_sdlog'),

@@ -112,8 +112,10 @@ mm_generate_mcmc_file <- function(
       chunk(
         comment('Parameters of priors on metabolism'),
         'real GPP_daily_mu;',
+        'real GPP_daily_lower;',
         'real<lower=0> GPP_daily_sigma;',
         'real ER_daily_mu;',
+        'real ER_daily_upper;',
         'real<lower=0> ER_daily_sigma;',
         
         if(pool_K600 %in% c('normal','linear','binned')) c(
@@ -216,8 +218,8 @@ mm_generate_mcmc_file <- function(
     c('parameters {',
       indent(
         # daily metabolism rate parameters
-        c('vector[d] GPP_daily;',
-          'vector[d] ER_daily;',
+        c('vector<lower=GPP_daily_lower>[d] GPP_daily;',
+          'vector<upper=ER_daily_upper>[d] ER_daily;',
           'vector<lower=0>[d] K600_daily;'),
         
         # K600 pooling parameters
