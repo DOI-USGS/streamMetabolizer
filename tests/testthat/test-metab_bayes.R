@@ -42,7 +42,7 @@ manual_test4 <- function() {
   
   mms <- lapply(setNames(nm=stanfiles[7]), function(sf) {
     message(sf)
-    sp <- revise(specs(sf, burnin_steps=100, saved_steps=50), params_out=c(params_out, 'err_obs_iid','err_proc_iid'))
+    sp <- revise(specs(sf, burnin_steps=100, saved_steps=50), params_out=union(params_out, c('err_obs_iid','err_proc_iid')))
     metab(sp, dat)
   })
   
