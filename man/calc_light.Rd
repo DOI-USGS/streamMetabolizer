@@ -5,7 +5,6 @@
 \title{Calculate modeled light from solar.time}
 \usage{
 calc_light(solar.time, latitude, longitude, max.PAR = 2326,
-  coef.SW.to.PAR = formals(convert_SW_to_PAR)$coef,
   attach.units = is.unitted(solar.time))
 }
 \arguments{
@@ -22,9 +21,6 @@ location of the site}
 
 \item{max.PAR}{numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
 day should reach at peak light}
-
-\item{coef.SW.to.PAR}{conversion coefficient; see \code{code} in 
-\code{\link{convert_SW_to_PAR}}}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
 }

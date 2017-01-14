@@ -5,17 +5,16 @@
 \title{Merge modeled and observed PAR into a single timeseries}
 \usage{
 calc_light_merged(PAR.obs = mm_data(solar.time, light), solar.time, latitude,
-  longitude, max.PAR = 2326,
-  coef.SW.to.PAR = formals(convert_SW_to_PAR)$coef, extrapolate = TRUE,
-  attach.units = is.unitted(PAR.obs))
+  longitude, max.PAR = max(PAR.obs$light), max.gap = as.difftime(3, units =
+  "hours"), attach.units = is.unitted(PAR.obs))
 }
 \arguments{
 \item{PAR.obs}{a 2-column data.frame with columns solar.time and light, as in
 argument default, containing the full time series of observed light (should
 be at a lower temporal resolution than \code{PAR.mod})}
 
-\item{solar.time}{mean solar time, as required for input to metabolism 
-models. See \code{\link{mm_data}} and \code{\link{calc_solar_time}}.}
+\item{solar.time}{a vector of mean solar times for which the light should be 
+modeled and merged with the values in PAR.obs}
 
 \item{latitude}{numeric value or vector indicating the site latitude in 
 decimal degrees (never radians or deg-min-sec, no matter what \code{format}
@@ -28,38 +27,44 @@ location of the site}
 \item{max.PAR}{numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
 day should reach at peak light}
 
-\item{coef.SW.to.PAR}{conversion coefficient; see \code{code} in 
-\code{\link{convert_SW_to_PAR}}}
-
-\item{extrapolate}{logical. Should the output include periods of time where 
-only modeled light is available? Periods where only observed light is
-available (i.e., those not included in solar.time) are always excluded.}
+\item{max.gap}{difftime or NA. If difftime, the maximum gap between a light 
+observation and a time point in solar.time, beyond which no value will be 
+given for light at that solar.time. If NA, all values will be modeled, even
+if they are many days away from a light observation.}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
-
-\item{PAR.mod}{a 2-column data.frame with columns solar.time and light, as in
-argument default, containing the full time series of modeled light}
 }
 \description{
-Merge two time series of photosynthetically active radiation (PAR) for a 
-series of date-times.
+Merge two time series (one observed, one modeled) of photosynthetically 
+active radiation (PAR) for a series of date-times. You can also think about 
+this as a way to smoothly interpolate a time series of observations.
 }
 \examples{
 \dontrun{
 library(mda.streams)
 library(dplyr)
 library(lubridate)
+library(ggplot2)
+library(unitted)
 coords <- get_site_coords('nwis_08062500')
 PAR.obs <- get_ts('par_calcSw', 'nwis_08062500') \%>\%
   mutate(solar.time = convert_UTC_to_solartime(DateTime, coords$lon)) \%>\%
     select(solar.time, light=par) \%>\%
-    subset(solar.time >= as.POSIXct('2007-10-31', tz=tz(solar.time)) &
-           solar.time < as.POSIXct('2007-11-03', tz=tz(solar.time)))
-PAR.mod <- data.frame(solar.time=seq(as.POSIXct('2007-11-01', tz=tz(solar.time)),
-    as.POSIXct('2007-11-04', tz=tz(solar.time)), by=as.difftime(10, units='mins'))) \%>\%
+    subset(solar.time \%within\% interval(ymd("2007-10-31"), ymd("2007-11-03"), tz=tz(solar.time)) &
+          !(solar.time \%within\% interval(as.POSIXct("2007-11-01 10:00", tz=tz(solar.time)), 
+                                         as.POSIXct("2007-11-01 12:00", tz=tz(solar.time)))))
+PAR.mod <- data.frame(solar.time=seq(as.POSIXct('2007-11-01', tz=tz(PAR.obs$solar.time)),
+    as.POSIXct('2007-11-04', tz=tz(PAR.obs$solar.time)), by=as.difftime(10, units='mins'))) \%>\%
   mutate(light=calc_light(solar.time, latitude=coords$lat, longitude=coords$lon))
-PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time, latitude=coords$lat, longitude=coords$lon)
-ggplot(bind_rows(mutate(PAR.obs, type='obs'), mutate(PAR.mod, type='mod'), mutate(PAR.merged, type='merged')), 
+PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time, 
+  latitude=coords$lat, longitude=coords$lon, max.gap=as.difftime(12, units='hours'))
+ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
+                 mutate(v(PAR.merged), type='merged')),
+  aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point()
+ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
+                 mutate(v(PAR.merged), type='merged')) \%>\% 
+       filter(solar.time \%within\% interval(ymd("2007-11-01"), ymd("2007-11-02"), 
+                                           tz=tz(PAR.obs$solar.time))), 
   aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point()
 }
 }
