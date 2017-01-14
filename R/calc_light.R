@@ -20,7 +20,7 @@
 calc_light <- function(solar.time, latitude, longitude, max.PAR=2326, 
                        coef.SW.to.PAR=formals(convert_SW_to_PAR)$coef, attach.units=is.unitted(solar.time)) {
   
-  app.solar.time <- solar.time %>%
+  app.solar.time <- v(solar.time) %>%
     convert_solartime_to_UTC(longitude=longitude, time.type='mean solar') %>%
     convert_UTC_to_solartime(longitude=longitude, time.type='apparent solar')
   sw <- calc_solar_insolation(
