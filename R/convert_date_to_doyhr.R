@@ -15,7 +15,8 @@ convert_date_to_doyhr <- function(date) {
   # by mm_model_by_ply and convert_UTC_to_solartime, but external use should be
   # limited
   called_as_internal <- all(c(':::','streamMetabolizer') %in% as.character(sys.call()[[1]])) ||
-    any(sapply(sys.calls()[-sys.nframe()], function(sc) tail(as.character(sc[[1]], 1))) %in% ls(envir = asNamespace("streamMetabolizer")))
+    any(sapply(sys.calls()[-sys.nframe()], function(sc) if(class(sc[[1]]) == 'name') tail(as.character(sc[[1]]), 1) else NA) %in% 
+          ls(envir = asNamespace("streamMetabolizer")))
   if(!called_as_internal) {
     .Deprecated()
     warning("submit a GitHub issue if you want convert_date_to_doyhr() to stick around", call.=FALSE)
@@ -44,7 +45,8 @@ convert_doyhr_to_date <- function(doyhr, year, tz="UTC", origin=as.POSIXct("1970
   # plan for deprecation is to make this internal (stop exporting) - it's used 
   # to test convert_date_to_doyhr, but external use should be limited
   called_as_internal <- all(c(':::','streamMetabolizer') %in% as.character(sys.call()[[1]])) ||
-    any(sapply(sys.calls()[-sys.nframe()], function(sc) tail(as.character(sc[[1]], 1))) %in% ls(envir = asNamespace("streamMetabolizer")))
+    any(sapply(sys.calls()[-sys.nframe()], function(sc) if(class(sc[[1]]) == 'name') tail(as.character(sc[[1]]), 1) else NA) %in% 
+          ls(envir = asNamespace("streamMetabolizer")))
   if(!called_as_internal) {
     .Deprecated()
     warning("submit a GitHub issue if you want convert_doyhr_to_date() to stick around", call.=FALSE)

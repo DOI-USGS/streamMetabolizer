@@ -2,9 +2,12 @@
 % Please edit documentation in R/metab_bayes.R
 \name{get_log}
 \alias{get_log}
+\alias{get_log.metab_bayes}
 \title{Return the log file[s] from a model run}
 \usage{
 get_log(metab_model)
+
+\method{get_log}{metab_bayes}(metab_model)
 }
 \arguments{
 \item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to 
@@ -16,4 +19,10 @@ The MCMC log file[s] lines
 \description{
 If a log file was created during a model run, this function can retrieve it.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{metab_bayes}: If a log file was created during the Bayesian MCMC run,
+metab_bayes() attempted to capture it. Retrieve what was captured with this
+function.
+}}
 

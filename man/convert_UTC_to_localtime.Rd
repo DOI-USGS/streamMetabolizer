@@ -27,6 +27,6 @@ streamMetabolizer use times in UTC. If you know the timezone code for your
 local site, use \code{\link[lubridate]{with_tz}} instead.
 }
 \references{
-http://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
+https://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 }
 

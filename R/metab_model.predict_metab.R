@@ -1,20 +1,12 @@
 #' @include metab_model-class.R
 NULL
 
-#' Make metabolism predictions from a fitted metab_model.
-#' 
-#' Makes daily predictions of GPP, ER, and K600 with upper and lower bounds
-#' reflecting a 95% CI.
-#' 
-#' @inheritParams predict_metab
-#' @param attach.units logical. Should units be attached to the output?
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_metab}}.
+
+#' @describeIn predict_metab This implementation is shared by many model types
+#' @export
 #' @importFrom stats qnorm setNames
 #' @import dplyr
 #' @importFrom unitted u v get_units
-#' @export
-#' @family predict_metab
 predict_metab.metab_model <- function(
   metab_model, date_start=NA, date_end=NA, 
   day_start=get_specs(metab_model)$day_start, day_end=min(day_start+24, get_specs(metab_model)$day_end),

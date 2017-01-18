@@ -21,6 +21,8 @@ the \code{metab_model_interface} defined here.
   
   \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
   
+  \item \code{\link{get_param_names}(metab_model, ...) \{ return(list) \}}
+  
   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
   \}}
   

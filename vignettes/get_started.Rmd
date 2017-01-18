@@ -54,7 +54,7 @@ devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 
 ## Software dependencies
 
-If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](http://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
+If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
 
 
 # Preparation

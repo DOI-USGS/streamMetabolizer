@@ -4,9 +4,8 @@
 \alias{calc_light}
 \title{Calculate modeled light from solar.time}
 \usage{
-calc_light(solar.time, latitude, longitude, max.PAR = 2326,
-  coef.SW.to.PAR = formals(convert_SW_to_PAR)$coef,
-  attach.units = is.unitted(solar.time))
+calc_light(solar.time, latitude, longitude, max.PAR = u(2326,
+  "umol m^-2 s^-1"), attach.units = is.unitted(solar.time))
 }
 \arguments{
 \item{solar.time}{mean solar time, as required for input to metabolism 
@@ -23,9 +22,6 @@ location of the site}
 \item{max.PAR}{numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
 day should reach at peak light}
 
-\item{coef.SW.to.PAR}{conversion coefficient; see \code{code} in 
-\code{\link{convert_SW_to_PAR}}}
-
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
 }
 \description{
@@ -35,5 +31,8 @@ date-times and site coordinates.
 \examples{
 solar.time <- lubridate::force_tz(as.POSIXct('2016-09-27 12:00'), 'UTC')
 calc_light(solar.time, 40, -120)
+library(unitted)
+calc_light(u(solar.time), u(40, 'degN'), u(-120, 'degE'), u(2315, 'umol m^-2 s^-1'), 
+  attach.units=TRUE)
 }
 

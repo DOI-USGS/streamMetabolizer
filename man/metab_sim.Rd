@@ -6,8 +6,9 @@
 \usage{
 metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time, DO.obs,
   DO.sat, depth, temp.water, light, optional = "DO.obs"),
-  data_daily = mm_data(date, DO.mod.1, GPP.daily, Pmax, alpha, ER.daily, ER20,
-  K600.daily, optional = "all"), info = NULL)
+  data_daily = mm_data(date, discharge.daily, DO.mod.1, K600.daily, GPP.daily,
+  Pmax, alpha, ER.daily, ER20, err.obs.sigma, err.obs.phi, err.proc.sigma,
+  err.proc.phi, optional = "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -46,23 +47,25 @@ other values are ignored), or if in \code{data_daily}, this takes the form of
 a DO.mod.1 column with one starting DO value per day.
 }
 \examples{
-# start with non-DO data (DO used only to pick first DO of each day)
+## simulations with variation all at sub-daily scale
+# prepare input data (DO used only to pick first DO of each day)
 dat <- data_metab('3', res='15')
 dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
   GPP.daily=2, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
 
 # define simulation parameters
 mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2),
+  specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2, 
+    GPP_daily=NULL, ER_daily=NULL, K600_daily=NULL),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
+get_params(mm)
+predict_metab(mm)
 predict_DO(mm)[seq(1,50,by=10),]
-predict_DO(mm)[seq(1,50,by=10),]
+predict_DO(mm)[seq(1,50,by=10),] 
 
 # or same each time if seed is set
-mm <- metab_sim(
-  specs(mm_name('sim'), err.obs.sigma=0.1, err.proc.sigma=2, sim.seed=248),
-  data=dat, data_daily=dat_daily)
+mm@specs$sim_seed <- 236
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 
@@ -70,19 +73,32 @@ predict_DO(mm)$DO.obs[seq(1,50,by=10)]
 dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
   Pmax=8, alpha=0.01, ER.daily=-3, K600.daily=21, stringsAsFactors=FALSE)
 mm <- metab_sim(
-  specs(mm_name('sim', GPP_fun='satlight'), err.obs.sigma=0.1, err.proc.sigma=2),
+  specs(mm_name('sim', GPP_fun='satlight'), err_obs_sigma=0.1, err_proc_sigma=2,
+    Pmax=NULL, alpha=NULL, ER_daily=NULL, K600_daily=NULL),
   data=dat, data_daily=dat_daily)
 get_params(mm)
 predict_metab(mm) # metab estimates are for data without errors
 predict_DO(mm)[seq(1,50,by=10),]
 
+## simulations with variation at both sub-daily and multi-day scales
+sp <- specs(mm_name('sim', pool_K600='none'), 
+  K600_daily = function(n, ...) pmax(0, rnorm(n, 10, 3))) # n is available within sim models
+mm <- metab(sp, dat)
+get_params(mm)
+predict_metab(mm)
+
+## K~Q model
+dat <- data_metab('10','15')
+sp <- specs(mm_name('sim', pool_K600='binned'))
+mm <- metab(sp, dat)
+pars <- get_params(mm)
+attr(pars, 'K600_eqn')
+
 \dontrun{
 plot_DO_preds(predict_DO(mm))
 plot_DO_preds(mm)
+library(ggplot2)
 }
-}
-\author{
-Alison Appling, Bob Hall
 }
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},

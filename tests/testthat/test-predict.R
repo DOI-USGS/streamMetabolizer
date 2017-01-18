@@ -29,7 +29,7 @@ test_that('predict_metab works on allmodel types', {
   expect_equal(nrow(mp), 3)
   
   # metab_bayes
-  mm <- metab_bayes(specs(mm_name('bayes'), burnin_steps=100, saved_steps=100, n_cores=1), data=dat)
+  mm <- metab_bayes(specs("b_np_oi_tr_plrckm.stan", burnin_steps=50, saved_steps=50, n_cores=1), data=dat)
   mp <- predict_metab(mm)
   expect_equal(names(mp), expected_cols)
   expect_equal(nrow(mp), 3)

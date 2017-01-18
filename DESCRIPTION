@@ -1,9 +1,16 @@
 Package: streamMetabolizer
 Type: Package
-Title: Estimate Stream Metabolism from Dissolved Oxygen Data
-Version: 0.9.18
-Date: 2016-11-08
-Author: Alison Appling, Jordan Read, Luke Winslow, Bob Hall
+Title: Models for Estimating Aquatic Photosynthesis and Respiration
+Version: 0.9.33
+Date: 2017-01-17
+Author: Alison P. Appling, Robert O. Hall, Maite Arroita, and Charles B.
+    Yackulic
+Authors@R: c(
+    person("Alison P.", "Appling", , "aappling@usgs.gov", c("aut", "cre")),
+    person("Robert O.", "Hall", , , "aut"),
+    person("Maite", "Arroita", , , "aut"),
+    person("Charles B.", "Yackulic", , , "aut")
+    )
 Maintainer: Alison Appling <aappling@usgs.gov>
 Description: streamMetabolizer uses inverse modeling to estimate aquatic
     photosynthesis and respiration (collectively, metabolism) from time series
@@ -18,7 +25,9 @@ Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of
     the United States Department of Interior. For more information, see the
     official USGS copyright policy at
-    http://www.usgs.gov/visual-id/credit_usgs.html#copyright
+    https://www.usgs.gov/visual-id/credit_usgs.html#copyright
+URL: https://github.com/USGS-R/streamMetabolizer
+BugReports: https://github.com/USGS-R/streamMetabolizer/issues
 VignetteBuilder: knitr
 Depends:
     R (>= 3.0)
@@ -54,6 +63,7 @@ Collate:
     'calc_depth.R'
     'calc_is_daytime.R'
     'calc_light.R'
+    'calc_light_merged.R'
     'calc_solar_insolation.R'
     'calc_solar_time.R'
     'calc_sun_rise_set.R'
@@ -73,17 +83,18 @@ Collate:
     'lookup_timezone.R'
     'lookup_usgs_elevation.R'
     'metab.R'
+    'metab_model_interface.R'
     'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
     'metab_bayes.R'
     'metab_inputs.R'
     'metab_mle.R'
+    'metab_model.get_param_names.R'
     'metab_model.get_params.R'
     'metab_model.predict_DO.R'
     'metab_model.predict_metab.R'
     'metab_model.show.R'
-    'metab_model_interface.R'
     'metab_night.R'
     'metab_sim.R'
     'mm_check_mcmc_file.R'

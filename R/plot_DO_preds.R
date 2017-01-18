@@ -34,24 +34,33 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
   params <- list(
     xlab='Local time',
     ylab='Predictions (lines) and observations (points)',
-    colors=list(conc=c('#A64B00','#FF7400'), pctsat=c('#007929','#23BC47'), ddodt=c('#05326D','#4282D3'))
+    colors=list(conc=c('#CE9C59', '#A64B00','#FF7400'), 
+                pctsat=c('#7CA586','#007929','#23BC47'), 
+                ddodt=c('#4A5869','#05326D','#4282D3'))
   )
   
-  DO.obs <- DO.mod <- DO.sat <- '.dplyr.var'
+  DO.obs <- DO.pure <- DO.mod <- DO.sat <- '.dplyr.var'
   DO_preds_conc <- mutate(
-    DO_preds, as='conc', var='DO (mg/L)', col1=params$colors$conc[1], col2=params$colors$conc[2], lab='DO (mg/L)',
+    DO_preds, as='conc', var='DO (mg/L)', lab='DO (mg/L)',
+    col.pure=params$colors$conc[1], col.mod=params$colors$conc[2], col.obs=params$colors$conc[3], 
+    pure=if(exists('DO.pure', DO_preds)) DO.pure else NA,
     mod=DO.mod, 
     obs=DO.obs)
   DO_preds_pctsat <- mutate(
-    DO_preds, as='pctsat', var='DO (% sat)', col1=params$colors$pctsat[1], col2=params$colors$pctsat[2], lab='DO (% sat)',
+    DO_preds, as='pctsat', var='DO (% sat)', lab='DO (% sat)',
+    col.pure=params$colors$pctsat[1], col.mod=params$colors$pctsat[2], col.obs=params$colors$pctsat[3], 
+    pure=if(exists('DO.pure', DO_preds)) 100*DO.pure/DO.sat else NA, 
     mod=100*DO.mod/DO.sat, 
     obs=100*DO.obs/DO.sat)
   DO_preds_ddodt <- 
     mutate(
-      DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', col1=params$colors$ddodt[1], col2=params$colors$ddodt[2], lab='dDO/dt~(mg~L^-1~d^-1)',
+      DO_preds[-1,], as='ddodt', var='dDO/dt (mg/L/d)', lab='dDO/dt~(mg~L^-1~d^-1)',
+      col.pure=params$colors$ddodt[1], col.mod=params$colors$ddodt[2], col.obs=params$colors$ddodt[3], 
+      pure = if(exists('DO.pure', DO_preds)) diff(DO_preds$DO.pure)/as.numeric(diff(DO_preds$solar.time), units="days") else NA,
       mod = diff(DO_preds$DO.mod)/as.numeric(diff(DO_preds$solar.time), units="days"),
       obs = diff(DO_preds$DO.obs)/as.numeric(diff(DO_preds$solar.time), units="days")) %>%
     mutate(
+      pure = ifelse(diff(DO_preds$date)==0, pure, NA),
       mod = ifelse(diff(DO_preds$date)==0, mod, NA),
       obs = ifelse(diff(DO_preds$date)==0, obs, NA))
   
@@ -65,24 +74,26 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       if(!requireNamespace("ggplot2", quietly=TRUE))
         stop("call install.packages('ggplot2') before plotting with style='ggplot2'")
       
-      . <- solar.time <- mod <- date <- col1 <- col2 <- obs <- '.ggplot.var'
+      . <- solar.time <- pure <- mod <- date <- col.pure <- col.mod <- col.obs <- obs <- '.ggplot.var'
       preds_ggplot <- v(DO_preds_all) %>%
         filter(as %in% y_var)
       if('conc' %in% names(y_lim)) {
-        lim <- y_lim[['conc']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'conc' | (mod >= lim & obs >= lim))
-        lim <- y_lim[['conc']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'conc' | (mod <= lim & obs <= lim))
+        lim <- y_lim[['conc']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'conc' | (pure >= lim & mod >= lim & obs >= lim))
+        lim <- y_lim[['conc']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'conc' | (pure <= lim & mod <= lim & obs <= lim))
       }
       if('pctsat' %in% names(y_lim)) {
-        lim <- y_lim[['pctsat']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'pctsat' | (mod >= lim & obs >= lim))
-        lim <- y_lim[['pctsat']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'pctsat' | (mod <= lim & obs <= lim))
+        lim <- y_lim[['pctsat']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'pctsat' | (pure >= lim & mod >= lim & obs >= lim))
+        lim <- y_lim[['pctsat']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'pctsat' | (pure <= lim & mod <= lim & obs <= lim))
       }
       if('ddodt' %in% names(y_lim)) {
-        lim <- y_lim[['ddodt']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod >= lim & obs >= lim))
-        lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (mod <= lim & obs <= lim))
+        lim <- y_lim[['ddodt']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (pure >= lim & mod >= lim & obs >= lim))
+        lim <- y_lim[['ddodt']][2]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'ddodt' | (pure <= lim & mod <= lim & obs <= lim))
       }
-      ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date)) +
-        ggplot2::geom_point(ggplot2::aes(y=obs, color=col2), alpha=0.6, na.rm=TRUE) +
-        ggplot2::geom_line(ggplot2::aes(y=mod, color=col1), size=0.8, na.rm=TRUE) +
+      g <- ggplot2::ggplot(preds_ggplot, ggplot2::aes(x=solar.time, group=date))
+      # optional (only applies to sim models): 'pure' lines
+      if(any(!is.na(preds_ggplot$pure))) g <- g + ggplot2::geom_line(ggplot2::aes(y=pure, color=col.pure), size=0.8, na.rm=TRUE)
+      g + ggplot2::geom_point(ggplot2::aes(y=obs, color=col.obs), alpha=0.6, na.rm=TRUE) +
+        ggplot2::geom_line(ggplot2::aes(y=mod, color=col.mod), size=0.8, na.rm=TRUE) +
         ggplot2::scale_color_identity(guide='none') +
         ggplot2::theme_bw() + 
         ggplot2::facet_grid(var ~ ., scales="free_y") + 
@@ -101,17 +112,20 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
         group_by(date) %>%
         do(., {
           out <- .[c(seq_len(nrow(.)),nrow(.)),]
-          out[nrow(.)+1,c('mod','obs')] <- NA
+          out[nrow(.)+1,c('pure','mod','obs')] <- NA
           out
         }) %>%
         ungroup()
       
       prep_dygraph <- function(y_var) { 
-        preds_xts %>% 
+        . <- solar.time <- pure <- mod <- obs <- '.dplyr.var'
+        prepped <- preds_xts %>% 
           filter(as==y_var) %>% 
-          select(mod,obs,solar.time) %>%
+          select(pure,mod,obs,solar.time) %>%
           mutate(solar.time=lubridate::force_tz(solar.time, Sys.getenv("TZ"))) %>% # dygraphs makes some funky tz assumptions. this seems to help.
           xts::xts(x=select(., -solar.time), order.by=.$solar.time, unique=FALSE, tzone=Sys.getenv("TZ"))
+        if(all(is.na(prepped[,'pure']))) prepped <- prepped[,c('mod','obs')]
+        prepped
       }
       if(length(y_var) > 1) {
         y_var <- y_var[1]
@@ -120,11 +134,12 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
       y_var_long <- preds_xts %>% filter(as==y_var) %>% slice(1) %>% .[['var']] %>% as.character()
       y_var_col <- params$colors[[y_var]]
       dat <- prep_dygraph(y_var)
-      ymin <- max(c(min(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[y_var]][1]), na.rm=TRUE)
-      ymax <- min(c(max(c(dat[,1], dat[,2]), na.rm=TRUE), y_lim[[y_var]][2]), na.rm=TRUE)
-      dygraphs::dygraph(dat, xlab=params$xlab, ylab=y_var_long, group='plot_DO_preds') %>%
-        dygraphs::dySeries('mod', drawPoints = FALSE, label=paste0("Modeled ", y_var_long), color=y_var_col[1]) %>%
-        dygraphs::dySeries('obs', drawPoints = TRUE, strokeWidth=0, label=paste0("Observed ", y_var_long), color=y_var_col[2]) %>%
+      ymin <- max(c(min(c(unclass(dat)), na.rm=TRUE), y_lim[[y_var]][1]), na.rm=TRUE)
+      ymax <- min(c(max(c(unclass(dat)), na.rm=TRUE), y_lim[[y_var]][2]), na.rm=TRUE)
+      d <- dygraphs::dygraph(dat, xlab=params$xlab, ylab=y_var_long, group='plot_DO_preds')
+      if(ncol(dat) == 3) d <- d %>% dygraphs::dySeries('pure', drawPoints = FALSE, label=paste0("Pure ", y_var_long), color=y_var_col[1])
+      d %>% dygraphs::dySeries('mod', drawPoints = FALSE, label=paste0("Modeled ", y_var_long), color=y_var_col[2]) %>%
+        dygraphs::dySeries('obs', drawPoints = TRUE, strokeWidth=0, label=paste0("Observed ", y_var_long), color=y_var_col[3]) %>%
         dygraphs::dyAxis('y', valueRange=(c(ymin,ymax)+(ymax-ymin)*c(-0.05,0.15))) %>%
         dygraphs::dyOptions(colorSaturation=1) %>%
         dygraphs::dyLegend(labelsSeparateLines = TRUE, width=300) %>%

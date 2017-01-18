@@ -44,7 +44,7 @@ mm_predict_metab_1ply <- function(
   env.dDOdt <- 
     create_calc_dDOdt(
       data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-      ER_fun=features$ER_fun, deficit_src=features$deficit_src, # or maybe 'DO_mod' instead for prediction??
+      ER_fun=features$ER_fun, deficit_src=features$deficit_src,
       err.proc=0) %>%
     environment()
   t <- env.dDOdt$data$t

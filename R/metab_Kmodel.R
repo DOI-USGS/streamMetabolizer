@@ -362,18 +362,19 @@ setClass(
   contains="metab_model"
 )
 
-#' Make daily re-predictions of K600.daily.
+#' @describeIn get_params Make daily re-predictions of K600.daily based on the 
+#'   across-days model of K600.daily versus predictors. Only returns estimates
+#'   for K600.daily, not any of the other daily parameters
+#' @export
 #' 
 #' @inheritParams predict_metab
-#' @inheritParams get_params
-#' @return A data.frame of predictions of K600.daily
-#'   \code{\link{predict_metab}}.
-#' @export
 #' @import dplyr
 #' @importFrom magrittr %<>%
 #' @importFrom stats predict
-#' @family predict_metab get_params
-get_params.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), ..., use_saved=TRUE) {
+get_params.metab_Kmodel <- function(
+  metab_model, date_start=NA, date_end=NA, 
+  uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'), 
+  ..., attach.units=FALSE, use_saved=TRUE) {
   
   # re-predict K600.daily.mod if saved values are disallowed or unavailable; otherwise
   # use previously stored values for K600.daily.mod
@@ -445,12 +446,10 @@ predict_metab.metab_Kmodel <- function(
   stop("can only predict K600.daily, not metabolism, from metab_Kmodel. try get_params() instead")
 }
 
-#' Override generic predict_DO for metab_Kmodel, which can't predict DO
-#' 
-#' metab_Kmodel predicts K at daily timesteps and usually knows nothing about 
-#' GPP or ER. So it's not possible to predict DO from this model. Try passing 
-#' the output to metab_mle and THEN predicting DO.
-#' @inheritParams predict_DO
+#' @describeIn predict_DO Throws an error because models of type 'Kmodel' can't 
+#'   predict DO. \code{metab_Kmodel} predicts K at daily timesteps and usually
+#'   knows nothing about GPP or ER. So it's not possible to predict DO from this
+#'   model. Try passing the output to metab_mle and THEN predicting DO.
 #' @export
 predict_DO.metab_Kmodel <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   stop("can only predict K, not DO, from metab_Kmodel. try get_params() instead")

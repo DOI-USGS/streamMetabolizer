@@ -1,19 +1,11 @@
 #' @include metab_model-class.R
 NULL
 
-#' Make dissolved oxygen predictions from a fitted metab_model.
-#' 
-#' Makes fine-scale predictions of dissolved oxygen using fitted coefficients, 
-#' etc. from the metabolism model.
-#' 
-#' @inheritParams predict_DO
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_DO}}.
+#' @describeIn predict_DO This implementation is shared by many model types
+#' @export
 #' @import dplyr
 #' @importFrom lubridate tz
 #' @importFrom unitted u v get_units
-#' @export
-#' @family predict_DO
 predict_DO.metab_model <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
   
   # pull args from the model

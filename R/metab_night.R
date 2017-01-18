@@ -234,17 +234,11 @@ setClass(
 )
 
 
-#' Nighttime dissolved oxygen predictions from a metab_night.
-#' 
-#' metab_night only fits ER and K, and only for the darkness hours. We will
-#' therefore make predictions just for those hours.
-#' 
-#' @inheritParams predict_DO
-#' @return A data.frame of predictions, as for the generic 
-#'   \code{\link{predict_DO}}.
+#' @describeIn predict_DO Generate nighttime dissolved oxygen predictions from a
+#'   nighttime regression model. \code{metab_night} only fits ER and K, and only
+#'   for the darkness hours, so predictions are only generated for those hours.
 #' @export
 #' @import dplyr
-#' @family predict_DO
 predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
   
   # pull args from the model
