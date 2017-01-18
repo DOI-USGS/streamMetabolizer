@@ -4,8 +4,8 @@
 \alias{calc_light}
 \title{Calculate modeled light from solar.time}
 \usage{
-calc_light(solar.time, latitude, longitude, max.PAR = 2326,
-  attach.units = is.unitted(solar.time))
+calc_light(solar.time, latitude, longitude, max.PAR = u(2326,
+  "umol m^-2 s^-1"), attach.units = is.unitted(solar.time))
 }
 \arguments{
 \item{solar.time}{mean solar time, as required for input to metabolism 
@@ -31,5 +31,8 @@ date-times and site coordinates.
 \examples{
 solar.time <- lubridate::force_tz(as.POSIXct('2016-09-27 12:00'), 'UTC')
 calc_light(solar.time, 40, -120)
+library(unitted)
+calc_light(u(solar.time), u(40, 'degN'), u(-120, 'degE'), u(2315, 'umol m^-2 s^-1'), 
+  attach.units=TRUE)
 }
 

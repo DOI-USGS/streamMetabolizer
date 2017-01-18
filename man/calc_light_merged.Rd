@@ -5,8 +5,8 @@
 \title{Merge modeled and observed PAR into a single timeseries}
 \usage{
 calc_light_merged(PAR.obs = mm_data(solar.time, light), solar.time, latitude,
-  longitude, max.PAR = max(PAR.obs$light), max.gap = as.difftime(3, units =
-  "hours"), attach.units = is.unitted(PAR.obs))
+  longitude, max.PAR = NA, max.gap = as.difftime(3, units = "hours"),
+  attach.units = is.unitted(PAR.obs))
 }
 \arguments{
 \item{PAR.obs}{a 2-column data.frame with columns solar.time and light, as in
@@ -24,8 +24,9 @@ is) between -90 (South Pole) and 90 (North Pole).}
 "degW") or with sign indicating direction (positive = East), describing 
 location of the site}
 
-\item{max.PAR}{numeric or unitted_numeric: the PAR (umol m^-2 s^-1) that each
-day should reach at peak light}
+\item{max.PAR}{the maximum PAR, as in calc_light. if NA, this function does
+its best to guess a max.PAR that will make modeled light pretty similar to
+cloud-free days of observed light}
 
 \item{max.gap}{difftime or NA. If difftime, the maximum gap between a light 
 observation and a time point in solar.time, beyond which no value will be 
@@ -50,22 +51,18 @@ coords <- get_site_coords('nwis_08062500')
 PAR.obs <- get_ts('par_calcSw', 'nwis_08062500') \%>\%
   mutate(solar.time = convert_UTC_to_solartime(DateTime, coords$lon)) \%>\%
     select(solar.time, light=par) \%>\%
-    subset(solar.time \%within\% interval(ymd("2007-10-31"), ymd("2007-11-03"), tz=tz(solar.time)) &
-          !(solar.time \%within\% interval(as.POSIXct("2007-11-01 10:00", tz=tz(solar.time)), 
-                                         as.POSIXct("2007-11-01 12:00", tz=tz(solar.time)))))
-PAR.mod <- data.frame(solar.time=seq(as.POSIXct('2007-11-01', tz=tz(PAR.obs$solar.time)),
-    as.POSIXct('2007-11-04', tz=tz(PAR.obs$solar.time)), by=as.difftime(10, units='mins'))) \%>\%
-  mutate(light=calc_light(solar.time, latitude=coords$lat, longitude=coords$lon))
+    subset(solar.time \%within\% interval(ymd("2008-03-10"), ymd("2008-03-14"), tz=tz(solar.time)) &
+          !(solar.time \%within\% interval(as.POSIXct("2008-03-12 10:00", tz=tz(solar.time)), 
+                                         as.POSIXct("2008-03-12 14:00", tz=tz(solar.time)))))
+PAR.mod <- u(data.frame(solar.time=seq(as.POSIXct('2008-03-11', tz=tz(PAR.obs$solar.time)),
+    as.POSIXct('2008-03-15', tz=tz(PAR.obs$solar.time)), by=as.difftime(10, units='mins'))) \%>\%
+  mutate(light=calc_light(u(solar.time), latitude=coords$lat, longitude=coords$lon)))
 PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time, 
-  latitude=coords$lat, longitude=coords$lon, max.gap=as.difftime(12, units='hours'))
+  latitude=coords$lat, longitude=coords$lon, max.gap=as.difftime(20, units='hours'))
 ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
-                 mutate(v(PAR.merged), type='merged')),
-  aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point()
-ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
-                 mutate(v(PAR.merged), type='merged')) \%>\% 
-       filter(solar.time \%within\% interval(ymd("2007-11-01"), ymd("2007-11-02"), 
-                                           tz=tz(PAR.obs$solar.time))), 
-  aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point()
+                 mutate(v(PAR.merged), type='merged')) \%>\%
+       mutate(type=ordered(type, levels=c('obs','mod','merged'))),
+  aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point() + theme_bw()
 }
 }
 
