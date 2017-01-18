@@ -184,10 +184,10 @@ calc_solar_insolation <- function(
   zenith.angle <- calc_zenith_angle(latitude, declination.angle, hour.angle, format=format)
   if(format=="degrees") zenith.angle <- to_radians(zenith.angle)
   insolation <- max.insolation * cos(zenith.angle)
-  insolation <- pmax(insolation, 0)
+  insolation <- u(pmax(v(insolation), 0), get_units(insolation))
 
   if(attach.units) {
-    u(insolation,"W m^-2")
+    u(insolation, "W m^-2")
   } else {
     v(insolation)
   }
