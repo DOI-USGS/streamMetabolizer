@@ -36,7 +36,12 @@ mm_parse_name <- function(model_name, keep_name=FALSE) {
   parsed <- strsplit(basename(model_name), "_|\\.")
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
   type <- unname(c(b='bayes', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
-  pool_K600 <- unname(c(np='none', Kn='normal', Kl='linear', Kb='binned', Kc='complete')[sapply(parsed, `[`, 2)])
+  pool_K600 <- unname(c(
+    np='none', 
+    Kn='normal', Kn0='normal_sdzero', Knx='normal_sdfixed',
+    Kl='linear', Kl0='linear_sdzero', Klx='linear_sdfixed',
+    Kb='binned', Kb0='binned_sdzero', Kbx='binned_sdfixed',
+    Kc='complete')[sapply(parsed, `[`, 2)])
   err_obs_iid <- grepl('oi', sapply(parsed, `[`, 3))
   err_proc_acor <- grepl('pc', sapply(parsed, `[`, 3))
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
