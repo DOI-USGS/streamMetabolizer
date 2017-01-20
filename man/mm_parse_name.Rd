@@ -4,13 +4,15 @@
 \alias{mm_parse_name}
 \title{Parse a model name into its features}
 \usage{
-mm_parse_name(model_name, keep_name = FALSE)
+mm_parse_name(model_name, expand = FALSE)
 }
 \arguments{
 \item{model_name}{character: the model name}
 
-\item{keep_name}{logical; should the model_name be included as a first column
-in the output data.frame?}
+\item{expand}{logical: should additional columns such as model_name and
+pool_K600_type be added? If expand=TRUE then the result cannot be passed
+directly back into mm_name, but the additional columns may be helpful for 
+interpreting the model structure.}
 }
 \description{
 Returns a data.frame with one column per model structure detail and one row 
@@ -25,7 +27,7 @@ _v2 is ignored by this function.
 }
 \examples{
 mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')))
-mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), keep_name=TRUE)
+mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), expand=TRUE)
 }
 \seealso{
 The converse of this function is \code{\link{mm_name}}.

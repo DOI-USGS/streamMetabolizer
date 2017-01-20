@@ -480,7 +480,7 @@ specs <- function(
  # mm_validate_name(model_name)
   
   # parse the model_name
-  features <- mm_parse_name(model_name)
+  features <- mm_parse_name(model_name, expand=TRUE)
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
@@ -492,26 +492,19 @@ specs <- function(
     'bayes' = {
       
       # list the specs that will make it all the way to the Stan model as data
-      pool_K600_type <- sapply(strsplit(features$pool_K600, '_'), `[[`, 1)
-      pool_K600_sdhandling <- tryCatch({
-        sapply(strsplit(features$pool_K600, '_'), `[[`, 2)
-      }, error=function(e) {
-        if(sapply(strsplit(features$pool_K600, '_'), `[[`, 1) == 'none') 'none' else 'sdfitted'
-      })
       all_specs$params_in <- c(
         c('GPP_daily_mu','GPP_daily_lower','GPP_daily_sigma','ER_daily_mu','ER_daily_upper','ER_daily_sigma'),
         switch(
-          pool_K600_type,
-          none=c('K600_daily_meanlog', 'K600_daily_sdlog'),
+          features$pool_K600_type,
+          none=c('K600_daily_meanlog'),
           normal=c('K600_daily_meanlog_meanlog', 'K600_daily_meanlog_sdlog'),
           linear=c('lnK600_lnQ_intercept_mu', 'lnK600_lnQ_intercept_sigma', 'lnK600_lnQ_slope_mu', 'lnK600_lnQ_slope_sigma'),
           binned=c('K600_lnQ_nodediffs_sdlog', 'K600_lnQ_nodes_meanlog', 'K600_lnQ_nodes_sdlog')),
         switch(
-          pool_K600_sdhandling,
-          none=c(),
-          sdzero=c(),
-          sdfixed=switch(pool_K600_type, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
-          sdfitted=switch(pool_K600_type, normal='K600_daily_sdlog_sigma', linear=, binned='K600_daily_sigma_sigma')
+          features$pool_K600_sd,
+          zero=c(),
+          fixed=switch(features$pool_K600_type, none=, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
+          fitted=switch(features$pool_K600_type, normal='K600_daily_sdlog_sigma', linear=, binned='K600_daily_sigma_sigma')
         ),
         if(features$err_obs_iid) 'err_obs_iid_sigma_scale',
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_scale'),
@@ -528,7 +521,7 @@ specs <- function(
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
-        if(pool_K600_type == 'binned') c('K600_lnQ_nodes_centers'),
+        if(features$pool_K600_type == 'binned') c('K600_lnQ_nodes_centers'),
         
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -544,12 +537,12 @@ specs <- function(
       }
       if('split_dates' %in% yes_missing) {
         all_specs$split_dates <- switch(
-          pool_K600_type,
+          features$pool_K600_type,
           'none' = FALSE, # pretty sure FALSE is faster. also allows hierarchical error terms
           'normal'=, 'linear'=, 'binned' = FALSE, 
           stop("unknown pool_K600; unsure how to set split_dates"))
       }
-      if(pool_K600_type == 'binned') {
+      if(features$pool_K600_type == 'binned') {
         # defaults are for linear pool_K600 & need adjustment for binned method
         all_specs$K600_daily_beta_mu <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
         all_specs$K600_daily_beta_sigma <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
@@ -559,12 +552,12 @@ specs <- function(
           c('GPP','ER'),
           c('GPP_daily','ER_daily','K600_daily'),
           switch(
-            pool_K600_type,
+            features$pool_K600_type,
             none=c(),
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
-          if(pool_K600_sdhandling == 'sdfitted') 'K600_daily_sdlog',
+          if(features$pool_K600_sd == 'sdfitted') 'K600_daily_sdlog',
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
