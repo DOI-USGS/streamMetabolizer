@@ -14,7 +14,7 @@ data {
   real<lower=0> lnK600_lnQ_intercept_sigma;
   real lnK600_lnQ_slope_mu;
   real<lower=0> lnK600_lnQ_slope_sigma;
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sigma_sigma;
   
   // Error distributions
   real<lower=0> err_obs_iid_sigma_scale;
@@ -46,17 +46,22 @@ parameters {
   
   real lnK600_lnQ_intercept;
   real lnK600_lnQ_slope;
+  real<lower=0> K600_daily_sigma_scaled;
   
   real<lower=0> err_obs_iid_sigma_scaled;
 }
 
 transformed parameters {
   vector[d] K600_daily_predlog;
+  real<lower=0> K600_daily_sigma;
   real<lower=0> err_obs_iid_sigma;
   vector[d] GPP_inst[n];
   vector[d] ER_inst[n];
   vector[d] KO2_inst[n];
   vector[d] DO_mod[n];
+  
+  // Rescale pooling distribution parameter
+  K600_daily_sigma = K600_daily_sigma_sigma * K600_daily_sigma_scaled;
   
   // Rescale error distribution parameters
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
@@ -103,6 +108,7 @@ model {
   // Hierarchical constraints on K600_daily (linear model)
   lnK600_lnQ_intercept ~ normal(lnK600_lnQ_intercept_mu, lnK600_lnQ_intercept_sigma);
   lnK600_lnQ_slope ~ normal(lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma);
+  K600_daily_sigma_scaled ~ normal(0, 1);
   
 }
 generated quantities {

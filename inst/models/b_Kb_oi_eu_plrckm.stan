@@ -14,7 +14,7 @@ data {
   real K600_lnQ_nodediffs_sdlog;
   vector[b] K600_lnQ_nodes_meanlog;
   vector[b] K600_lnQ_nodes_sdlog;
-  real<lower=0> K600_daily_sigma;
+  real<lower=0> K600_daily_sigma_sigma;
   
   // Error distributions
   real<lower=0> err_obs_iid_sigma_scale;
@@ -46,17 +46,22 @@ parameters {
   vector<lower=0>[d] K600_daily;
   
   vector[b] lnK600_lnQ_nodes;
+  real<lower=0> K600_daily_sigma_scaled;
   
   real<lower=0> err_obs_iid_sigma_scaled;
 }
 
 transformed parameters {
   vector[d] K600_daily_predlog;
+  real<lower=0> K600_daily_sigma;
   real<lower=0> err_obs_iid_sigma;
   vector[d] GPP_inst[n];
   vector[d] ER_inst[n];
   vector[d] KO2_inst[n];
   vector[d] DO_mod[n];
+  
+  // Rescale pooling distribution parameter
+  K600_daily_sigma = K600_daily_sigma_sigma * K600_daily_sigma_scaled;
   
   // Rescale error distribution parameters
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
@@ -106,6 +111,7 @@ model {
   for(k in 2:b) {
     lnK600_lnQ_nodes[k] ~ normal(lnK600_lnQ_nodes[k-1], K600_lnQ_nodediffs_sdlog);
   }
+  K600_daily_sigma_scaled ~ normal(0, 1);
   
 }
 generated quantities {
