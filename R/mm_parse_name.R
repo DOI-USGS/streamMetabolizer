@@ -12,15 +12,17 @@
 #' @seealso The converse of this function is \code{\link{mm_name}}.
 #'   
 #' @param model_name character: the model name
-#' @param keep_name logical; should the model_name be included as a first column
-#'   in the output data.frame?
+#' @param expand logical: should additional columns such as model_name and
+#'   pool_K600_type be added? If expand=TRUE then the result cannot be passed
+#'   directly back into mm_name, but the additional columns may be helpful for 
+#'   interpreting the model structure.
 #' @import dplyr
 #' @importFrom stats na.omit
 #' @examples
 #' mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')))
-#' mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), keep_name=TRUE)
+#' mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), expand=TRUE)
 #' @export
-mm_parse_name <- function(model_name, keep_name=FALSE) {
+mm_parse_name <- function(model_name, expand=FALSE) {
 
   # define function that gets used to parse prk_terms
   match_or_NA <- function(key, pairs) { 
@@ -36,7 +38,22 @@ mm_parse_name <- function(model_name, keep_name=FALSE) {
   parsed <- strsplit(basename(model_name), "_|\\.")
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
   type <- unname(c(b='bayes', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
-  pool_K600 <- unname(c(np='none', Kn='normal', Kl='linear', Kb='binned', Kc='complete')[sapply(parsed, `[`, 2)])
+  pool_K600 <- unname(c(
+    np='none', 
+    Kn='normal', Kn0='normal_sdzero', Knx='normal_sdfixed',
+    Kl='linear', Kl0='linear_sdzero', Klx='linear_sdfixed',
+    Kb='binned', Kb0='binned_sdzero', Kbx='binned_sdfixed',
+    Kc='complete')[sapply(parsed, `[`, 2)])
+  pool_K600_type <- sapply(strsplit(pool_K600, '_'), `[[`, 1)
+  pool_K600_sd <- sapply(strsplit(pool_K600, '_'), function(pieces) {
+    if(length(pieces) >= 2) {
+      substring(pieces[[2]], 3)
+    } else if (pieces[[1]] == 'none') {
+      'fixed'
+    } else {
+      'fitted'
+    }
+  })
   err_obs_iid <- grepl('oi', sapply(parsed, `[`, 3))
   err_proc_acor <- grepl('pc', sapply(parsed, `[`, 3))
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
@@ -63,6 +80,8 @@ mm_parse_name <- function(model_name, keep_name=FALSE) {
     model_name=model_name,
     type=type,
     pool_K600=pool_K600,
+    pool_K600_type=pool_K600_type,
+    pool_K600_sd=pool_K600_sd,
     err_obs_iid=err_obs_iid,
     err_proc_acor=err_proc_acor,
     err_proc_iid=err_proc_iid,
@@ -73,7 +92,7 @@ mm_parse_name <- function(model_name, keep_name=FALSE) {
     engine=ifelse(is.na(engine), 'NA', engine), 
     stringsAsFactors=FALSE)
   
-  if(!keep_name) df$model_name <- NULL
+  if(!expand) df$model_name <- df$pool_K600_type <- df$pool_K600_sd <- NULL
   
   df
 }

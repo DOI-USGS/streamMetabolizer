@@ -21,11 +21,18 @@ manual_tests2 <- function() {
     site, disch=choose_data_source('disch','nwis_03259757'), model='metab_bayes') %>%
     filter(complete.cases(.))
   dat <- streamMetabolizer:::mm_filter_dates(datall, date_start='2014-04-03', date_end='2014-04-12')
+  dat %>%
+    gather(variable, value, DO.obs, DO.sat, depth, temp.water, light, discharge) %>%
+    ggplot(aes(x=solar.time, y=value, color=variable)) + geom_line() + facet_grid(variable ~ ., scales='free_y') +
+    guides(color=FALSE)
   
   # create a list of all models to run
   opts <- expand.grid(
     type='bayes',
-    pool_K600=c('none','normal','linear','binned'),
+    pool_K600=c('none',
+                'normal','normal_sdzero','normal_sdfixed',
+                'linear','linear_sdzero','linear_sdfixed',
+                'binned','binned_sdzero','binned_sdfixed'),
     err_obs_iid=T,#c(TRUE, FALSE),
     err_proc_acor=F,#c(FALSE, TRUE),
     err_proc_iid=F,#c(FALSE, TRUE),
@@ -44,9 +51,11 @@ manual_tests2 <- function() {
   mms <- lapply(setNames(nm=stanfiles), function(sf) {
     message(sf)
     msp <- specs(sf)
-    mdat <- if(mm_parse_name(sf)$pool_K600 %in% c('linear','binned')) dat else select(dat, -discharge)
-    metab(revise(msp, burnin_steps=10, saved_steps=10), mdat) # just to compile model
-    metab(revise(msp, burnin_steps=200, saved_steps=200), mdat)
+    mdat <- if(mm_parse_name(sf, expand=TRUE)$pool_K600_type %in% c('linear','binned')) dat else select(dat, -discharge)
+    mm_pre <- metab(revise(msp, burnin_steps=10, saved_steps=10), mdat) # just to compile model
+    plot_metab_preds(mm_pre)
+    mm <- metab(revise(msp, burnin_steps=200, saved_steps=100), mdat)
+    mm
   })
   
   # see issue #291 for periodic output reports
@@ -66,7 +75,7 @@ manual_tests2 <- function() {
     dischdaily <- mm_model_by_ply(model_fun=dailymean, data=dat, day_start=mms[[1]]@specs$day_start, day_end=mms[[1]]@specs$day_end)
     
     switch(
-      mm_parse_name(mname)$pool_K600,
+      mm_parse_name(mname, expand=TRUE)$pool_K600_type,
       'none'={
         # ggplot(pars, aes(x=date, y=K600.daily)) + 
         #   geom_abline(intercept=0, color='darkgrey') +
@@ -92,8 +101,8 @@ manual_tests2 <- function() {
           geom_density(fill='lightgrey') +
           geom_rug(sides='t') +
           geom_point(x=K$mean, y=0, color='red') +
-          geom_errorbarh(aes(x=K$mean, y=0, xmin=K$mean-K$sd, xmax=K$mean+K$sd), color='red', height=0.05) + 
-          stat_function(fun=dnorm, args=list(mean=K$mean, sd=K$sd), color="red") +
+          geom_errorbarh(aes(x=K$mean, y=0, xmin=K$mean-1.96*K$sd, xmax=K$mean+1.96*K$sd), color='red', height=0.05) + 
+          stat_function(fun=dnorm, args=list(mean=K$mean, sd=1.96*K$sd), color="red") +
           xlab('ln(K600)') + ylab('density')
       },
       'linear'={
@@ -112,7 +121,7 @@ manual_tests2 <- function() {
         ggplot(parslnQ, aes(x=lnQ, y=lnK, ymin=lnK.lower, ymax=lnK.upper)) +
           geom_abline(intercept=K$icpt, slope=K$slope, col='red') +
           geom_point(aes(y=lnK.pred), color='red') +
-          geom_ribbon(aes(ymin=log(pmax(0.0001,exp(lnK.pred)-K$sd)), ymax=log(exp(lnK.pred)+K$sd)), color=NA, fill='red', alpha=0.2) +
+          geom_ribbon(aes(ymin=log(pmax(0.0001,exp(lnK.pred)-1.96*K$sd)), ymax=log(exp(lnK.pred)+1.96*K$sd)), color=NA, fill='red', alpha=0.2) +
           geom_point() + geom_errorbar() +
           ylab('ln(K600)') + xlab('ln(Q)')
       },
@@ -135,14 +144,14 @@ manual_tests2 <- function() {
         parslnQ <- mutate(
           pars, 
           lnQ=log(dischdaily$dischdaily), #lnQdat$lnQ_daily truncates at last bins
-          lnK.pred=fit$daily$K600_daily_pred_50pct,
+          lnK.pred=fit$daily$K600_daily_predlog_50pct,
           lnK.eq=lnQdat$lnK_pred,
           lnK=log(K600.daily),
           lnK.lower=log(pmax(min.K.lower, K600.daily.lower)),
           lnK.upper=log(K600.daily.upper))
         ggplot(parslnQ, aes(x=lnQ)) +
           geom_line(data=K, aes(y=lnKbin), col='red') +
-          geom_ribbon(data=K, aes(ymin=log(pmax(0.0001,exp(lnKbin)-K$sd)), ymax=log(exp(lnKbin)+K$sd)), color=NA, fill='red', alpha=0.2) +
+          geom_ribbon(data=K, aes(ymin=log(pmax(0.0001,exp(lnKbin)-1.96*K$sd)), ymax=log(exp(lnKbin)+1.96*K$sd)), color=NA, fill='red', alpha=0.2) +
           geom_point(data=K, aes(y=lnKbin), col='red') +
           geom_point(aes(y=lnK)) + geom_errorbar(aes(ymin=lnK.lower, ymax=lnK.upper)) +
           ylab('ln(K600)') + xlab('ln(Q)')
@@ -154,8 +163,9 @@ manual_tests2 <- function() {
   # daily parameter estimates
   pars <- 
     bind_rows(lapply(mms, function(mm) {
+      modname <- get_specs(mm)$model_name
       get_params(mm) %>%
-        mutate(model=get_specs(mm)$model_name) %>%
+        mutate(model=modname) %>%
         select(model, everything()) %>%
         bind_cols(select(get_fit(mm)$daily, ends_with('Rhat')))
     })) %>%

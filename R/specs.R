@@ -21,15 +21,15 @@
 #'   n_chains, n_cores, burnin_steps, saved_steps, thin_steps, verbose}. The 
 #'   need for other arguments depends on features of the model structure, as 
 #'   from \code{mm_parse_name(model_name)}: \itemize{ \item If 
-#'   \code{$pool_K600=='none'} then \code{K600_daily_meanlog, K600_daily_sdlog}.
-#'   \item If \code{$pool_K600=='normal'} then \code{K600_daily_meanlog_meanlog,
-#'   K600_daily_meanlog_sdlog, K600_daily_sdlog}. \item If 
+#'   \code{pool_K600=='none'} then \code{K600_daily_meanlog, K600_daily_sdlog}. 
+#'   \item If \code{pool_K600=='normal'} then \code{K600_daily_meanlog_meanlog, 
+#'   K600_daily_meanlog_sdlog, K600_daily_sdlog_sigma}. \item If 
 #'   \code{pool_K600=='linear'} then \code{lnK600_lnQ_intercept_mu, 
 #'   lnK600_lnQ_intercept_sigma, lnK600_lnQ_slope_mu, lnK600_lnQ_slope_sigma, 
-#'   K600_daily_sigma}. \item If \code{pool_K600=='binned'} then 
+#'   K600_daily_sigma_sigma}. \item If \code{pool_K600=='binned'} then 
 #'   \code{K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog, 
-#'   K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sigma}. \item If 
-#'   \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
+#'   K600_lnQ_nodes_meanlog, K600_lnQ_nodes_sdlog, K600_daily_sigma_sigma}. 
+#'   \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If 
 #'   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha, 
 #'   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If 
 #'   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
@@ -137,7 +137,7 @@
 #' @param GPP_daily_lower The lower bound on every fitted value of GPP_daily, 
 #'   the daily rate of gross primary production. Use values other than -Inf with
 #'   caution, recognizing that sometimes the input data are unmodelable and that
-#'   a negative estimate of GPP_daily (when unconstrained) could be your only
+#'   a negative estimate of GPP_daily (when unconstrained) could be your only 
 #'   indication.
 #' @param GPP_daily_sigma The standard deviation of a dnorm distribution for 
 #'   GPP_daily, the daily rate of gross primary production
@@ -155,12 +155,21 @@
 #' @param K600_daily_sdlog The lognormal scale parameter (standard deviation) of
 #'   a dlnorm distribution having meanlog equal to \code{K600_daily_meanlog} 
 #'   (when pool_K600 is 'none') or \code{K600_daily_predlog} (when pool_K600 is 
-#'   'normal') for K600_daily, the daily rate of reaeration as corrected for 
-#'   temperature and the diffusivity of oxygen
+#'   'normal_sdfixed') for K600_daily, the daily rate of reaeration as corrected
+#'   for temperature and the diffusivity of oxygen
 #' @param K600_daily_sigma The standard deviation of a dnorm distribution having
 #'   mean equal to \code{exp(K600_daily_predlog)} (applicable when pool_K600 is 
-#'   'linear' or 'binned') for K600_daily, the daily rate of reaeration as 
-#'   corrected for temperature and the diffusivity of oxygen
+#'   'linear_sdfixed' or 'binned_sdfixed') for K600_daily, the daily rate of 
+#'   reaeration as corrected for temperature and the diffusivity of oxygen
+#' @param K600_daily_sdlog_sigma hyperparameter for pool_K600 in c('normal'). 
+#'   The scale (= sigma) parameter of a half-normal distribution of sdlog in K ~
+#'   lN(meanlog, sdlog), sdlog ~ halfnormal(0, sigma=sdlog_sigma). Visualize the
+#'   PDF of K600_daily_sdlog with \code{\link{plot_distribs}}.
+#' @param K600_daily_sigma_sigma hyperparameter for pool_K600 in 
+#'   c('linear','binned'). The scale (= sigma) parameter of a half-normal 
+#'   distribution of sigma in K ~ lN(meanlog, sigma), sigma ~ halfnormal(0, 
+#'   sigma=sigma_sigma). Visualize the PDF of K600_daily_sdlog with 
+#'   \code{\link{plot_distribs}}.
 #'   
 #' @param K600_daily_meanlog_meanlog hyperparameter for pool_K600='normal'. The 
 #'   mean parameter (meanlog_meanlog) of a lognormal distribution of meanlog in 
@@ -352,10 +361,6 @@ specs <- function(
   K600_daily_meanlog_meanlog = log(6),
   K600_daily_meanlog_sdlog = 1,
   
-  # hyperparameters for any K pooling or non-pooling strategy
-  K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, normal=0.2, default=NA),
-  K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=10, binned=5, default=NA),
-  
   # hyperparameters for hierarchical K600 - linear. defaults should be
   # reasonably constrained, not too wide
   lnK600_lnQ_intercept_mu = 2,
@@ -375,6 +380,13 @@ specs <- function(
   K600_lnQ_nodediffs_sdlog = 0.05, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
   K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
   K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
+  
+  # hyperparameters for any K pooling or non-pooling strategy
+  K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, normal_sdfixed=0.05, NA),
+  K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear_sdfixed=10, binned_sdfixed=5, NA),
+  K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal=0.05, NA),
+  K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=5, binned=2, NA),
+  # normal_sdzero, linear_sdzero, and binned_sdzero all have no parameters for this
   
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.1,
@@ -465,10 +477,10 @@ specs <- function(
     model_name <- mm_name(type=model_name)
   
   # check the validity of the model_name against the list of officially accepted model names
-  mm_validate_name(model_name)
+ # mm_validate_name(model_name)
   
   # parse the model_name
-  features <- mm_parse_name(model_name)
+  features <- mm_parse_name(model_name, expand=TRUE)
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
@@ -483,11 +495,17 @@ specs <- function(
       all_specs$params_in <- c(
         c('GPP_daily_mu','GPP_daily_lower','GPP_daily_sigma','ER_daily_mu','ER_daily_upper','ER_daily_sigma'),
         switch(
-          features$pool_K600,
-          none=c('K600_daily_meanlog', 'K600_daily_sdlog'),
-          normal=c('K600_daily_meanlog_meanlog', 'K600_daily_meanlog_sdlog', 'K600_daily_sdlog'),
-          linear=c('lnK600_lnQ_intercept_mu', 'lnK600_lnQ_intercept_sigma', 'lnK600_lnQ_slope_mu', 'lnK600_lnQ_slope_sigma', 'K600_daily_sigma'),
-          binned=c('K600_lnQ_nodediffs_sdlog', 'K600_lnQ_nodes_meanlog', 'K600_lnQ_nodes_sdlog', 'K600_daily_sigma')),
+          features$pool_K600_type,
+          none=c('K600_daily_meanlog'),
+          normal=c('K600_daily_meanlog_meanlog', 'K600_daily_meanlog_sdlog'),
+          linear=c('lnK600_lnQ_intercept_mu', 'lnK600_lnQ_intercept_sigma', 'lnK600_lnQ_slope_mu', 'lnK600_lnQ_slope_sigma'),
+          binned=c('K600_lnQ_nodediffs_sdlog', 'K600_lnQ_nodes_meanlog', 'K600_lnQ_nodes_sdlog')),
+        switch(
+          features$pool_K600_sd,
+          zero=c(),
+          fixed=switch(features$pool_K600_type, none=, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
+          fitted=switch(features$pool_K600_type, normal='K600_daily_sdlog_sigma', linear=, binned='K600_daily_sigma_sigma')
+        ),
         if(features$err_obs_iid) 'err_obs_iid_sigma_scale',
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_scale'),
         if(features$err_proc_iid) 'err_proc_iid_sigma_scale'
@@ -503,7 +521,7 @@ specs <- function(
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
-        if(features$pool_K600 == 'binned') c('K600_lnQ_nodes_centers'),
+        if(features$pool_K600_type == 'binned') c('K600_lnQ_nodes_centers'),
         
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -518,12 +536,13 @@ specs <- function(
         all_specs$engine <- features$engine
       }
       if('split_dates' %in% yes_missing) {
-        all_specs$split_dates <- ifelse(
-          features$pool_K600 %in% 'none', FALSE, # pretty sure FALSE is faster. also allows hierarchical error terms
-          ifelse(features$pool_K600 %in% c('normal','linear','binned'), FALSE, 
-                 stop("unknown pool_K600; unsure how to set split_dates")))
+        all_specs$split_dates <- switch(
+          features$pool_K600_type,
+          'none' = FALSE, # pretty sure FALSE is faster. also allows hierarchical error terms
+          'normal'=, 'linear'=, 'binned' = FALSE, 
+          stop("unknown pool_K600; unsure how to set split_dates"))
       }
-      if(features$pool_K600 == 'binned') {
+      if(features$pool_K600_type == 'binned') {
         # defaults are for linear pool_K600 & need adjustment for binned method
         all_specs$K600_daily_beta_mu <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
         all_specs$K600_daily_beta_sigma <- rep(10, length(all_specs$K600_daily_lnQ_nodes))
@@ -533,11 +552,12 @@ specs <- function(
           c('GPP','ER'),
           c('GPP_daily','ER_daily','K600_daily'),
           switch(
-            features$pool_K600,
+            features$pool_K600_type,
             none=c(),
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
+          if(features$pool_K600_sd == 'sdfitted') 'K600_daily_sdlog',
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))

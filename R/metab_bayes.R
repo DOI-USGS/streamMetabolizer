@@ -63,16 +63,16 @@ metab_bayes <- function(
     # Check data for correct column names & units
     dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
     num_discharge_cols <- length(grep('discharge', c(names(dat_list$data), names(dat_list$data_daily))))
-    pool_K600 <- mm_parse_name(specs$model_name)$pool_K600
-    if(xor(num_discharge_cols > 0, pool_K600 %in% c('linear','binned'))) 
-      stop('discharge data should be included if & only if pool_K600 indicates hierarchy')
+    pool_K600_type <- mm_parse_name(specs$model_name, expand = TRUE)$pool_K600_type
+    if(xor(num_discharge_cols > 0, pool_K600_type %in% c('linear','binned'))) 
+      stop('discharge data should be included if & only if pool_K600_type indicates hierarchy')
     if(num_discharge_cols > 1)
       stop('either discharge or discharge.daily may be specified, but not both')
     
     # Handle discharge. If K600 is a hierarchical function of discharge and 
     # data$discharge was given, compute daily discharge and store in data.daily 
     # where it'll be accessible for the user to inspect it after model fitting
-    if((pool_K600 %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
+    if((pool_K600_type %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
       # calculate daily discharge
       dailymean <- function(data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, timestep_days, ...) {
         data.frame(discharge.daily = if(isTRUE(ply_validity[1])) mean(data_ply$discharge) else NA)
@@ -111,7 +111,7 @@ metab_bayes <- function(
       dat_list$data_daily$lnQ.daily <- log(v(dat_list$data_daily$discharge.daily))
     }
     # If we need discharge bins, compute & store those now, as well
-    if(pool_K600 %in% c('binned')) {
+    if(pool_K600_type %in% c('binned')) {
       # linear interpolation from node to node, horizontal at the edges
       bounds <- c(-Inf, specs$K600_lnQ_nodes_centers, Inf)
       cuts <- cut(dat_list$data_daily$lnQ.daily, breaks=bounds, ordered_result=TRUE)
@@ -483,7 +483,7 @@ prepdata_bayes <- function(
   if(n24 > num_daily_obs) stop("day_end - day_start < 24 hours; aborting because daily metabolism could be wrong")
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(model_name)
+  features <- mm_parse_name(model_name, expand=TRUE)
   
   # Format the data for Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -501,7 +501,7 @@ prepdata_bayes <- function(
     ),
       
     switch(
-      features$pool_K600,
+      features$pool_K600_type,
       linear = list(lnQ_daily = data_daily$lnQ.daily),
       binned = list(
           b = length(specs$K600_lnQ_nodes_centers),
@@ -533,7 +533,7 @@ prepdata_bayes <- function(
     
     specs[specs$params_in]
   )
-  if(features$pool_K600 == 'binned') {
+  if(features$pool_K600_type == 'binned') {
     data_list$K600_lnQ_nodes_meanlog <- array(data_list$K600_lnQ_nodes_meanlog, dim=data_list$b)
     data_list$K600_lnQ_nodes_sdlog <- array(data_list$K600_lnQ_nodes_sdlog, dim=data_list$b)
   }

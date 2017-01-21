@@ -42,21 +42,18 @@ this as a way to smoothly interpolate a time series of observations.
 }
 \examples{
 \dontrun{
-library(mda.streams)
 library(dplyr)
-library(lubridate)
 library(ggplot2)
-library(unitted)
-coords <- get_site_coords('nwis_08062500')
-PAR.obs <- get_ts('par_calcSw', 'nwis_08062500') \%>\%
-  mutate(solar.time = convert_UTC_to_solartime(DateTime, coords$lon)) \%>\%
-    select(solar.time, light=par) \%>\%
-    subset(solar.time \%within\% interval(ymd("2008-03-10"), ymd("2008-03-14"), tz=tz(solar.time)) &
-          !(solar.time \%within\% interval(as.POSIXct("2008-03-12 10:00", tz=tz(solar.time)), 
-                                         as.POSIXct("2008-03-12 14:00", tz=tz(solar.time)))))
-PAR.mod <- u(data.frame(solar.time=seq(as.POSIXct('2008-03-11', tz=tz(PAR.obs$solar.time)),
-    as.POSIXct('2008-03-15', tz=tz(PAR.obs$solar.time)), by=as.difftime(10, units='mins'))) \%>\%
-  mutate(light=calc_light(u(solar.time), latitude=coords$lat, longitude=coords$lon)))
+timebounds <- as.POSIXct(c('2008-03-12 00:00', '2008-03-12 23:59'), tz='UTC')
+coords <- list(lat=32.4, lon=-96.5)
+PAR.obs <- data_frame(
+  solar.time=seq(timebounds[1], timebounds[2], by=as.difftime(3, units='hours')),
+  light=c(0, 0, 85.9, 1160.5, 1539.0, 933.9, 0, 0)
+) \%>\% as.data.frame()
+PAR.mod <- data_frame(
+  solar.time=seq(timebounds[1], timebounds[2], by=as.difftime(0.25, units='hours')),
+  light=calc_light(solar.time, latitude=coords$lat, longitude=coords$lon)
+) \%>\% as.data.frame()
 PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time, 
   latitude=coords$lat, longitude=coords$lon, max.gap=as.difftime(20, units='hours'))
 ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
