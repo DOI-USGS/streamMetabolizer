@@ -6,7 +6,7 @@
 \usage{
 plot_distribs(dist_data, parname = c("GPP_daily", "ER_daily", "K600_daily",
   "K600_daily_meanlog", "lnK600_lnQ_intercept", "lnK600_lnQ_slope",
-  "K600_lnQ_nodes", "K600_daily_sdlog", "err_obs_iid_sigma",
+  "K600_lnQ_nodes", "K600_daily_sdlog", "K600_daily_sigma", "err_obs_iid_sigma",
   "err_proc_acor_phi", "err_proc_acor_sigma", "err_proc_iid_sigma"),
   index = TRUE, style = c("dygraphs", "ggplot2"))
 }
