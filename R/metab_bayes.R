@@ -176,6 +176,7 @@ metab_bayes <- function(
       {if(!is.null(.)) setNames(., 'Compilation') else .}
       log <- extract_object_list('log') %>% { setNames(., paste0('MCMC_', names(.))) }
       bayes_log <- c(compile_log, log)
+      bayes_compile_time <- bayes_all_list[['compile_time']]
       bayes_mcmc <- extract_object_list('mcmcfit')
       bayes_mcmc_data <- extract_object_list('mcmc_data')
       bayes_all <- list(daily=bayes_daily)
@@ -195,10 +196,11 @@ metab_bayes <- function(
       . <- '.dplyr.var'
       bayes_log <- bayes_all_list[c('compile_log', 'log')] %>% 
         setNames(c('Compilation','MCMC_All_Days')) %>% { .[!sapply(., is.null)] }
+      bayes_compile_time <- bayes_all_list[['compile_time']]
       bayes_mcmc <- bayes_all_list$mcmcfit
       bayes_mcmc_data <- bayes_all_list$mcmc_data
       # now a list of dfs, log, warnings, and errors
-      bayes_all <- bayes_all_list[!(names(bayes_all_list) %in% c('compile_log','log','mcmcfit','mcmc_data'))]
+      bayes_all <- bayes_all_list[!(names(bayes_all_list) %in% c('compile_log','compile_time','log','mcmcfit','mcmc_data'))]
     }
   })
   
@@ -210,7 +212,8 @@ metab_bayes <- function(
     log=bayes_log,
     mcmc=bayes_mcmc,
     mcmc_data=bayes_mcmc_data,
-    fitting_time=fitting_time,
+    fitting_time=fitting_time - bayes_compile_time,
+    compile_time=bayes_compile_time,
     specs=specs,
     data=dat_list$data, # keep the units if given
     data_daily=dat_list$data_daily)
@@ -604,12 +607,15 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   
   # use auto_write=TRUE to recompile if needed, or load from existing .rds file
   # without recompiling if possible
+  compile_time <- system.time({})
   mobj_path <- gsub('.stan$', '.stanrds', model_path)
   if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
     if(verbose) message("compiling Stan model")
-    compile_log <- capture.output({
-      stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
-    }, type=c('output'), split=verbose)
+    compile_time <- system.time({
+      compile_log <- capture.output({
+        stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
+      }, type=c('output'), split=verbose)
+    })
     rm(stan_mobj)
     gc() # this humble line saves us from many horrible R crashes
     autowrite_path <- gsub('.stan$', '.rds', model_path)
@@ -681,7 +687,10 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   newlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
   logfile <- setdiff(newlogfiles, oldlogfiles)
   log <- if(length(logfile) > 0) readLines(logfile) else consolelog
-  stan_out <- c(stan_out, c(list(log=log), if(exists('compile_log')) list(compile_log=compile_log)))
+  stan_out <- c(stan_out, c(
+    list(log=log), 
+    if(exists('compile_log')) list(compile_log=compile_log), 
+    list(compile_time=compile_time)))
   
   return(stan_out)
 }
@@ -770,7 +779,7 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcm
 setClass(
   "metab_bayes", 
   contains="metab_model",
-  slots=c(log="ANY", mcmc="ANY", mcmc_data="ANY")
+  slots=c(log="ANY", mcmc="ANY", mcmc_data="ANY", compile_time="ANY")
 )
 
 #' Extract any MCMC model objects that were stored with the model
