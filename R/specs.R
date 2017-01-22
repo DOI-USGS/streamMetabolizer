@@ -557,7 +557,7 @@ specs <- function(
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
-          if(features$pool_K600_sd == 'sdfitted') 'K600_daily_sdlog',
+          if(features$pool_K600_sd == 'fitted') switch(features$pool_K600_type, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
