@@ -1,3 +1,9 @@
+# 0.9.35
+
+* Bayesian models now distinguish between compilation time and fitting time
+
+* Updates to `plot_distribs` for recent changes to Bayesian models
+
 # 0.9.34
 
 * Bayesian models with `pool_K600 != 'none'` can how have their 
