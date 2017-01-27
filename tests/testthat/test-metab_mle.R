@@ -11,6 +11,9 @@ test_that("metab_mle models can be created", {
   expect_is(slot(mm, "data"), "data.frame")
   expect_is(slot(mm, "pkg_version"), "character")
   
+  # should work when data is a tibble, too
+  mmt <- metab_mle(data=tibble::as_data_frame(data_metab('1', res='30')))
+  expect_equal(get_params(mmt), get_params(mmt))
 })
 
 test_that("metab_mle works with fancy GPP, ER functions", {
