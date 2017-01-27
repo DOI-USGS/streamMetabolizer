@@ -203,7 +203,7 @@ plot_distribs <- function(
     # from matrix into vector
     draws <- rstan::extract(mc, pars=parname)[[parname]]
     indexed_posterior <- is.matrix(draws)
-    if(indexed_posterior) draws <- c(draws[,index])
+    if(indexed_posterior) draws <- c(draws[[index]])
     # generate density w/ 1000 points along the line
     post <- density(draws, n=1000)[c('x','y')] %>% 
       as_data_frame() %>%

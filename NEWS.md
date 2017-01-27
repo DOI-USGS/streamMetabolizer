@@ -1,3 +1,8 @@
+# 0.9.36
+
+* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the
+`data` and `data_daily` arguments to `metab()`
+
 # 0.9.35
 
 * Bayesian models now distinguish between compilation time and fitting time
