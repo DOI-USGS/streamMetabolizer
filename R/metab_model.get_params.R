@@ -72,7 +72,8 @@ get_params.metab_model <- function(
   # add uncertainty columns if requested
   if(uncertainty != 'none') {
     metab.vars <- metab.out
-    metab.uncert <- matrix(paste0(rep(metab.out, each=3), rep(c('.sd','.lower','.upper'), times=length(metab.out))), nrow=3, byrow=FALSE)
+    suffixes <- c('.sd','.median','.lower','.upper')
+    metab.uncert <- matrix(paste0(rep(metab.out, each=length(suffixes)), rep(suffixes, times=length(metab.out))), nrow=length(suffixes), byrow=FALSE)
     metab.out <- c(rbind(metab.out, metab.uncert)) %>% { .[. %in% names(pars)]}
   }
   
@@ -91,7 +92,7 @@ get_params.metab_model <- function(
   
   # convert sds to CIs if requested
   if(uncertainty == 'sd') {
-    extra.cols <- grep('\\.lower$|\\.upper$', names(params))
+    extra.cols <- grep('\\.median$|\\.lower$|\\.upper$', names(params))
     if(length(extra.cols) > 0) params <- params[-extra.cols]
   } else if(uncertainty == 'ci') {
     # use existing .lower and .upper cols if available
@@ -99,8 +100,16 @@ get_params.metab_model <- function(
       if(all(paste0(mv,c('.lower','.upper')) %in% names(params))) {
         extra.cols <- grep(paste0(mv,'\\.sd$'), names(params))
         if(length(extra.cols) > 0) params <- params[-extra.cols]
+        # if we're using existing .lower and .upper cols, also try to use existing .median col
+        if(paste0(mv,'.median') %in% names(params)) {
+          params[[mv]] <- params[[paste0(mv,'.median')]] # copy .median over/into un-suffixed name
+        }
       }
     }
+    # remove any '.median' columns; by now we've either used them or have no
+    # use for them
+    extra.cols <- grep(paste0('\\.median$'), names(params))
+    if(length(extra.cols) > 0) params <- params[-extra.cols]
     # convert any remaining .sd cols to .lower and .upper parametrically
     params <- mm_sd_to_ci(params)
   }
