@@ -47,8 +47,37 @@ devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 
 ### Software dependencies
 
-If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for R packages and might become a stronger dependency of `streamMetabolizer` in the future.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
+If you plan to use Bayesian models, you will need an up-to-date installation of
+[Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run
+`devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly
+useful for R packages and might become a stronger dependency of
+`streamMetabolizer` in the future.) Having Rtools installed will allow you to
+install `rstan`, the package that `streamMetabolizer` relies on to run MCMC
+models.
 
+Bayesian models require the [`rstan`](http://mc-stan.org/interfaces/rstan.html) 
+interface to [Stan](http://mc-stan.org/). Sometimes this is as simple as
+installing Rtools and calling the above `install.packages` command, but other
+times everything seems fine until you try to run a Bayesian model in
+`streamMetabolizer`. Symptoms of an imperfect `rstan` installation are probably
+diverse. Here's one we've seen:
+```r
+> bayes_fit <- metab(specs('bayes'), data=mydat)
+Warning message:
+In metab_fun(specs = specs, data = data, data_daily = data_daily,  :
+  Modeling failed: argument is of length zero
+
+> get_fit(bayes_fit)
+...
+$warnings
+[1] "running command ''/Library/Frameworks/R.framework/Resources/bin/R' CMD config CXX 2>/dev/null' had status 1"
+
+$errors
+[1] "argument is of length zero"
+```
+In such cases you should refer to the detailed instructions on the `rstan` website for 
+[Mac and Linux](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux) 
+or [Windows](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows).
 
 ## Disclaimer
 
