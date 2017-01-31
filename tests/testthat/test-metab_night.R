@@ -105,7 +105,7 @@ test_that("metab_night predictions match Bob's", {
   
   dat <- data_metab('1', day_start=12, day_end=36)
   mms <- metab_night(
-    specs('n_np_pi_eu_rckf.lm', day_start=18, day_end=29, day_tests=c('full_day','even_timesteps','complete_data')), data=dat)
+    specs('n_np_pi_eu_rckf.lm', day_start=18, day_end=29, day_tests=c('full_day','even_timesteps','complete_data','pos_discharge')), data=dat)
   mmb <- streamMetabolizer:::load_french_creek_std_mle(
     dat, estimate='K', start=c(dates="09/18/12", times="18:00:00"), end=c(dates="09/19/12", times="05:00:00"))
   expect_equal(get_params(mms)$K600.daily, mmb$K)

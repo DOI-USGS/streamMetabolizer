@@ -68,7 +68,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   
   # K (metab_night)
   mm <- metab(
-    specs=specs(mm_name('night'), day_start=night.start, day_end=night.end, day_tests=c('full_day', 'even_timesteps', 'complete_data')),
+    specs=specs(mm_name('night'), day_start=night.start, day_end=night.end, day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge')),
     data=vfrenchnight)
   #smest <- predict_metab(mm)[c("GPP","ER","K600")]
   smest <- get_params(mm)
