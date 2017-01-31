@@ -10,9 +10,15 @@
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_model_by_ply
-#' @param day_tests list of tests to conduct to determine whether each date
-#'   worth of data is valid for modeling
-#' @param ply_date the Date this data_ply is intended to match. May be NA 
+#' @param day_tests list of tests to conduct to determine whether each date 
+#'   worth of data is valid for modeling. \code{full_day}: Do the data span the 
+#'   full expected period (e.g., from 10:30pm on preceding day to 6am on 
+#'   following day)? \code{even_timesteps}: are all of the timesteps within the 
+#'   day the same length, to within a tolerance of 0.2% of the timestep length? 
+#'   \code{complete_data}: are all columns of input data available at every 
+#'   timestep? \code{pos_discharge}: is discharge greater than 0 at every
+#'   timestep?
+#' @param ply_date the Date this data_ply is intended to match. May be NA
 #' @param timestep_days the expected timestep length in fraction of a day; for 
 #'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
 #'   the function if timestep_days is NA. May be supplied as an argument to (1) 
@@ -30,7 +36,7 @@
 mm_is_valid_day <- function(
   data_ply, # inheritParams mm_model_by_ply_prototype
   day_start=4, day_end=27.99, # inheritParams mm_model_by_ply
-  day_tests=c('full_day', 'even_timesteps', 'complete_data'), 
+  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), 
   ply_date=as.Date(format(data_ply[nrow(data_ply)/2,'solar.time'], "%Y-%m-%d")),
   timestep_days=NA
 ) {
@@ -92,6 +98,14 @@ mm_is_valid_day <- function(
     for(col in names(data_ply)) {
       if(any(is.na(data_ply[col]))) 
         stop_strs <- c(stop_strs, paste0("NAs in ", col))
+    }
+  }
+  
+  if('pos_discharge' %in% day_tests) {
+    # require discharge (if present) to be positive at all times
+    if('discharge' %in% names(data_ply)) {
+      if(any(data_ply[['discharge']] <= 0)) 
+        stop_strs <- c(stop_strs, paste0(col, " < 0"))
     }
   }
   

@@ -92,6 +92,13 @@ test_that("mm_is_valid_day works", {
   
   # test column completeness
   expect_equal(mm_is_valid_day(bad_day, day_start=-1.5, day_end=30), c("NAs in DO.obs","NAs in DO.sat","NAs in temp.water"))
+  
+  # test for positive discharge
+  good_day$discharge <- seq(1,3,length.out=nrow(good_day))
+  expect_true(mm_is_valid_day(good_day, day_start=-1.5, day_end=30))
+  pretty_good_day <- good_day
+  pretty_good_day$discharge <- seq(-1,1,length.out=nrow(pretty_good_day))
+  expect_equal(mm_is_valid_day(pretty_good_day, day_start=-1.5, day_end=30), "discharge < 0")
 
 })
 
