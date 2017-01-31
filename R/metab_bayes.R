@@ -966,6 +966,7 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
   }
   names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_50pct$', '.median', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_2.5pct$', '.lower', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_97.5pct$', '.upper', names(metab_model@fit$daily))
   # code duplicated in get_params.metab_Kmodel:
@@ -979,6 +980,6 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
     dmsg <- metab_model@fit$daily$errors
     metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
   }
-  metab_model@fit <- metab_model@fit$daily # SUPER-TEMPORARY we're still converting fit$daily to fit until #247, #229
+  metab_model@fit <- metab_model@fit$daily # TEMPORARY we're still converting fit$daily to fit until #247, #229
   NextMethod()
 }
