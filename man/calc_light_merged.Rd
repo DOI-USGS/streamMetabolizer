@@ -44,6 +44,7 @@ this as a way to smoothly interpolate a time series of observations.
 \dontrun{
 library(dplyr)
 library(ggplot2)
+library(unitted)
 timebounds <- as.POSIXct(c('2008-03-12 00:00', '2008-03-12 23:59'), tz='UTC')
 coords <- list(lat=32.4, lon=-96.5)
 PAR.obs <- data_frame(
