@@ -127,7 +127,7 @@ calc_light_merged <- function(
   # do the correction from mod scale to obs scale
   PAR.merged <- PAR.merged %>%
     mutate(
-      merged = u(ifelse(resid.prop.int <= 1, mod * resid.prop.int, v(mod) + resid.abs.int), get_units(mod)))
+      merged = u(ifelse(resid.prop.int <= 1, mod * resid.prop.int, pmax(0, v(mod) + resid.abs.int)), get_units(mod)))
   
   # collect just the rows and cols we want
   PAR.merged <- PAR.merged %>%
