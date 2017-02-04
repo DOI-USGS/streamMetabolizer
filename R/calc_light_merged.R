@@ -25,6 +25,7 @@
 #' \dontrun{
 #' library(dplyr)
 #' library(ggplot2)
+#' library(unitted)
 #' timebounds <- as.POSIXct(c('2008-03-12 00:00', '2008-03-12 23:59'), tz='UTC')
 #' coords <- list(lat=32.4, lon=-96.5)
 #' PAR.obs <- data_frame(
@@ -107,28 +108,29 @@ calc_light_merged <- function(
   }
   
   # create a 'merged' time series where modeled values are adjusted to flow
-  # through observed values
+  # through observed values.
+  
+  # compute the modeled values and then the residuals as both differences and 
+  # proportions, dealing with 0 specially
   PAR.merged <- PAR.merged %>%
     mutate(
-      # model light
       mod = calc_light(solar.time, latitude, longitude, max.PAR),
-      # compute the residuals as both differences and proportions, dealing with NA and 0 specially
-      resid.abs = ifelse(is.na(obs), 0, obs-mod),
-      resid.prop = ifelse(mod==u(0, 'umol m^-2 s^-1') | (is.na(obs) & mod==u(0, 'umol m^-2 s^-1')), 1, obs/mod))
-  # interpolate the residuals to match up with every modeled light value. pipes fail with this approx call, so use boring notation
-  PAR.merged$resid.abs.int <- approx(
-    x=PAR.merged$solar.time[!is.na(PAR.merged$obs)], y=v(PAR.merged$resid.abs)[!is.na(PAR.merged$obs)], 
-    xout=v(PAR.merged$solar.time), rule=2)$y
-  if(is.unitted(PAR.merged)) PAR.merged$resid.abs.int <- u(PAR.merged$resid.abs.int, get_units(PAR.merged$obs))
-  PAR.merged$resid.prop.int <- approx(
-    x=PAR.merged$solar.time[!is.na(PAR.merged$obs)], y=PAR.merged$resid.prop[!is.na(PAR.merged$obs)], 
-    xout=PAR.merged$solar.time, rule=2)$y
-  PAR.merged <- PAR.merged %>%
-    # do the correction from mod scale to obs scale. purely absolute or purely proportional can give some funky values, so use the 
-    mutate(merged = u(ifelse(resid.prop.int <= 1, mod * resid.prop.int, mod + resid.abs.int), get_units(mod)))
+      resid.abs = obs - mod,
+      resid.prop = ifelse(mod==u(0, 'umol m^-2 s^-1'), NA, obs / mod))
   
+  # interpolate the residuals to match up with every modeled light value. pipes 
+  # fail with this approx call, so use boring notation
+  PAR.obsonly <- PAR.merged[!is.na(PAR.merged$obs), ]
+  PAR.merged$resid.abs.int <- approx(x=PAR.obsonly$solar.time, y=v(PAR.obsonly$resid.abs), xout=v(PAR.merged$solar.time), rule=2)$y
+  PAR.merged$resid.prop.int <- approx(x=PAR.obsonly$solar.time, y=PAR.obsonly$resid.prop, xout=PAR.merged$solar.time, rule=2)$y
+  
+  # do the correction from mod scale to obs scale
   PAR.merged <- PAR.merged %>%
-    # collect just the rows and cols we want
+    mutate(
+      merged = u(ifelse(resid.prop.int <= 1, mod * resid.prop.int, pmax(0, v(mod) + resid.abs.int)), get_units(mod)))
+  
+  # collect just the rows and cols we want
+  PAR.merged <- PAR.merged %>%
     subset(is.mod) %>%
     select(solar.time, light=merged)
   
