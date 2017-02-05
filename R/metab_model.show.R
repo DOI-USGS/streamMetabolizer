@@ -18,7 +18,7 @@ setMethod(
     }
     cat("streamMetabolizer version", object@pkg_version, "\n")
     print(get_specs(object), header="Specifications:\n", prefix="  ")
-    cat("Fitting time: ", get_fitting_time(object)[['elapsed']], " secs elapsed\n", sep="")
+    cat("Fitting time: ", tryCatch(get_fitting_time(object)[['elapsed']], error=function(e) "NA"), " secs elapsed\n", sep="")
     
     # set the sim.seed for a sec so the params and metab preds look the same.
     # setting the seed makes a copy of object, so we won't need to reset the

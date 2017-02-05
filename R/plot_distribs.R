@@ -37,14 +37,15 @@
 plot_distribs <- function(
   dist_data, 
   parname=c('GPP_daily','ER_daily','K600_daily',
-            'K600_daily_meanlog','lnK600_lnQ_intercept','lnK600_lnQ_slope','K600_lnQ_nodes','K600_daily_sdlog',
+            'K600_daily_meanlog','lnK600_lnQ_intercept','lnK600_lnQ_slope','K600_lnQ_nodes',
+            'K600_daily_sdlog','K600_daily_sigma',
             'err_obs_iid_sigma','err_proc_acor_phi','err_proc_acor_sigma','err_proc_iid_sigma'), 
   index=TRUE,
   style=c('dygraphs','ggplot2')) {
   
   # choosing not to expose this as an arg because most people shouldn't need it,
   # but want it up top to ease manual exploration of parameter scaling
-  plot_prior_rescaled <- TRUE
+  plot_prior_rescaled <- FALSE
   
   style <- match.arg(style)
   if(!class(dist_data)[1] %in% c('specs','metab_bayes')) {
@@ -84,7 +85,8 @@ plot_distribs <- function(
     # Kb
     K600_lnQ_nodes='lognormal', # K600_lnQ_nodediffs='lognormal', # means are [k-1]th values so are hard to represent here
     # Kn, Kl, and Kb
-    K600_daily_sdlog='halfcauchy',
+    K600_daily_sdlog='halfnormal',
+    K600_daily_sigma='halfnormal',
     # errors
     err_obs_iid_sigma='halfcauchy',
     err_proc_acor_phi='beta',
@@ -128,6 +130,13 @@ plot_distribs <- function(
           .[c('x','y')] %>%
           as.data.frame() %>%
           mutate(dist = 'prior_rescaled'))
+    },
+    halfnormal={
+      xlim <- qnorm(c(0.5, 0.999), mean=0, sd=hyperpars$sigma)
+      data_frame(
+        dist = 'prior',
+        x = seq(xlim[1], xlim[2], length.out=1000),
+        y = dnorm(x, mean=0, sd=hyperpars$sigma))
     },
     lognormal={
       # prior_rescaled and prior diverge from one another as sdlog goes > 1. 
@@ -194,7 +203,7 @@ plot_distribs <- function(
     # from matrix into vector
     draws <- rstan::extract(mc, pars=parname)[[parname]]
     indexed_posterior <- is.matrix(draws)
-    if(indexed_posterior) draws <- c(draws[,index])
+    if(indexed_posterior) draws <- c(draws[[index]])
     # generate density w/ 1000 points along the line
     post <- density(draws, n=1000)[c('x','y')] %>% 
       as_data_frame() %>%

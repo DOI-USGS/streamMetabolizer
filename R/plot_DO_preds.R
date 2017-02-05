@@ -124,7 +124,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
           select(pure,mod,obs,solar.time) %>%
           mutate(solar.time=lubridate::force_tz(solar.time, Sys.getenv("TZ"))) %>% # dygraphs makes some funky tz assumptions. this seems to help.
           xts::xts(x=select(., -solar.time), order.by=.$solar.time, unique=FALSE, tzone=Sys.getenv("TZ"))
-        if(all(is.na(prepped[,'pure']))) prepped <- prepped[,c('mod','obs')]
+        if(all(is.na(prepped[['pure']]))) prepped <- prepped[,c('mod','obs')]
         prepped
       }
       if(length(y_var) > 1) {

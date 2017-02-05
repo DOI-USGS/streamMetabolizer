@@ -180,7 +180,11 @@
 mm_name <- function(
   type=c('mle','bayes','night','Kmodel','sim'), 
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
-  pool_K600=c('none','normal','linear','binned','complete'),
+  pool_K600=c('none',
+              'normal','normal_sdzero','normal_sdfixed',
+              'linear','linear_sdzero','linear_sdfixed',
+              'binned','binned_sdzero','binned_sdfixed',
+              'complete'),
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
@@ -249,7 +253,8 @@ mm_name <- function(
   # make the name
   mmname <- paste0(
     c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
-    c(none='', normal='Kn', linear='Kl', binned='Kb', complete='Kc')[[pool_K600]],
+    c(none='', normal='Kn', linear='Kl', binned='Kb', complete='Kc')[[strsplit(pool_K600, '_')[[1]][[1]]]],
+    c(none_or_fitted='', sdzero='0', sdfixed='x')[[tryCatch(strsplit(pool_K600, '_')[[1]][[2]], error=function(e) 'none_or_fitted')]],
     c(none='np', partial='', complete='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', '_',
     c(Euler='Eu', pairmeans='pm', trapezoid='tr', rk2='r2', 

@@ -5,9 +5,9 @@
 \title{Validate one day of data, returning a vector of error strings if needed}
 \usage{
 mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
-  day_tests = c("full_day", "even_timesteps", "complete_data"),
-  ply_date = as.Date(format(data_ply[nrow(data_ply)/2, "solar.time"],
-  "\%Y-\%m-\%d")), timestep_days = NA)
+  day_tests = c("full_day", "even_timesteps", "complete_data",
+  "pos_discharge"), ply_date = as.Date(format(data_ply[nrow(data_ply)/2,
+  "solar.time"], "\%Y-\%m-\%d")), timestep_days = NA)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -25,8 +25,14 @@ the midnight that begins the date. For example, day_end=30 indicates that
 data describing 2006-06-26 end at the last observation time that occurs 
 before 2006-06-27 06:00.}
 
-\item{day_tests}{list of tests to conduct to determine whether each date
-worth of data is valid for modeling}
+\item{day_tests}{list of tests to conduct to determine whether each date 
+worth of data is valid for modeling. \code{full_day}: Do the data span the 
+full expected period (e.g., from 10:30pm on preceding day to 6am on 
+following day)? \code{even_timesteps}: are all of the timesteps within the 
+day the same length, to within a tolerance of 0.2% of the timestep length? 
+\code{complete_data}: are all columns of input data available at every 
+timestep? \code{pos_discharge}: is discharge greater than 0 at every
+timestep?}
 
 \item{ply_date}{the Date this data_ply is intended to match. May be NA}
 

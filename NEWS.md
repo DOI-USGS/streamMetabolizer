@@ -1,6 +1,23 @@
+# 0.9.36
+
+* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the
+`data` and `data_daily` arguments to `metab()`
+
+# 0.9.35
+
+* Bayesian models now distinguish between compilation time and fitting time
+
+* Updates to `plot_distribs` for recent changes to Bayesian models
+
+# 0.9.34
+
+* Bayesian models with `pool_K600 != 'none'` can how have their 
+`K600_daily_sigma` (or `K600_daily_sdlog`) be a fitted value, a fixed value, or 
+a value fixed at 0
+
 # 0.9.33
 
-* new function: `calc_light_merged`, which merges modeled and observed light
+* new function: `calc_light_merged`, which merges modeled and observed light 
 into a smooth curve
 
 # 0.9.29
@@ -10,7 +27,7 @@ model (and therefore also its `info` or `data_daily` slots)
 
 # 0.9.28
 
-* switched from `rlnorm` to `rnorm` for distribution of `K600_daily` around
+* switched from `rlnorm` to `rnorm` for distribution of `K600_daily` around 
 `K600_daily_pred` in linear and binned models
 
 # 0.9.27

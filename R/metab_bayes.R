@@ -63,16 +63,16 @@ metab_bayes <- function(
     # Check data for correct column names & units
     dat_list <- mm_validate_data(if(missing(data)) NULL else data, if(missing(data_daily)) NULL else data_daily, "metab_bayes")
     num_discharge_cols <- length(grep('discharge', c(names(dat_list$data), names(dat_list$data_daily))))
-    pool_K600 <- mm_parse_name(specs$model_name)$pool_K600
-    if(xor(num_discharge_cols > 0, pool_K600 %in% c('linear','binned'))) 
-      stop('discharge data should be included if & only if pool_K600 indicates hierarchy')
+    pool_K600_type <- mm_parse_name(specs$model_name, expand = TRUE)$pool_K600_type
+    if(xor(num_discharge_cols > 0, pool_K600_type %in% c('linear','binned'))) 
+      stop('discharge data should be included if & only if pool_K600_type indicates hierarchy')
     if(num_discharge_cols > 1)
       stop('either discharge or discharge.daily may be specified, but not both')
     
     # Handle discharge. If K600 is a hierarchical function of discharge and 
     # data$discharge was given, compute daily discharge and store in data.daily 
     # where it'll be accessible for the user to inspect it after model fitting
-    if((pool_K600 %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
+    if((pool_K600_type %in% c('linear','binned')) && ('discharge' %in% names(dat_list$data))) {
       # calculate daily discharge
       dailymean <- function(data_ply, data_daily_ply, day_start, day_end, ply_date, ply_validity, timestep_days, ...) {
         data.frame(discharge.daily = if(isTRUE(ply_validity[1])) mean(data_ply$discharge) else NA)
@@ -111,7 +111,7 @@ metab_bayes <- function(
       dat_list$data_daily$lnQ.daily <- log(v(dat_list$data_daily$discharge.daily))
     }
     # If we need discharge bins, compute & store those now, as well
-    if(pool_K600 %in% c('binned')) {
+    if(pool_K600_type %in% c('binned')) {
       # linear interpolation from node to node, horizontal at the edges
       bounds <- c(-Inf, specs$K600_lnQ_nodes_centers, Inf)
       cuts <- cut(dat_list$data_daily$lnQ.daily, breaks=bounds, ordered_result=TRUE)
@@ -176,6 +176,7 @@ metab_bayes <- function(
       {if(!is.null(.)) setNames(., 'Compilation') else .}
       log <- extract_object_list('log') %>% { setNames(., paste0('MCMC_', names(.))) }
       bayes_log <- c(compile_log, log)
+      bayes_compile_time <- bayes_all_list[['compile_time']]
       bayes_mcmc <- extract_object_list('mcmcfit')
       bayes_mcmc_data <- extract_object_list('mcmc_data')
       bayes_all <- list(daily=bayes_daily)
@@ -195,10 +196,11 @@ metab_bayes <- function(
       . <- '.dplyr.var'
       bayes_log <- bayes_all_list[c('compile_log', 'log')] %>% 
         setNames(c('Compilation','MCMC_All_Days')) %>% { .[!sapply(., is.null)] }
+      bayes_compile_time <- bayes_all_list[['compile_time']]
       bayes_mcmc <- bayes_all_list$mcmcfit
       bayes_mcmc_data <- bayes_all_list$mcmc_data
       # now a list of dfs, log, warnings, and errors
-      bayes_all <- bayes_all_list[!(names(bayes_all_list) %in% c('compile_log','log','mcmcfit','mcmc_data'))]
+      bayes_all <- bayes_all_list[!(names(bayes_all_list) %in% c('compile_log','compile_time','log','mcmcfit','mcmc_data'))]
     }
   })
   
@@ -210,7 +212,8 @@ metab_bayes <- function(
     log=bayes_log,
     mcmc=bayes_mcmc,
     mcmc_data=bayes_mcmc_data,
-    fitting_time=fitting_time,
+    fitting_time=fitting_time - bayes_compile_time,
+    compile_time=bayes_compile_time,
     specs=specs,
     data=dat_list$data, # keep the units if given
     data_daily=dat_list$data_daily)
@@ -483,7 +486,7 @@ prepdata_bayes <- function(
   if(n24 > num_daily_obs) stop("day_end - day_start < 24 hours; aborting because daily metabolism could be wrong")
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(model_name)
+  features <- mm_parse_name(model_name, expand=TRUE)
   
   # Format the data for Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -501,7 +504,7 @@ prepdata_bayes <- function(
     ),
       
     switch(
-      features$pool_K600,
+      features$pool_K600_type,
       linear = list(lnQ_daily = data_daily$lnQ.daily),
       binned = list(
           b = length(specs$K600_lnQ_nodes_centers),
@@ -533,7 +536,7 @@ prepdata_bayes <- function(
     
     specs[specs$params_in]
   )
-  if(features$pool_K600 == 'binned') {
+  if(features$pool_K600_type == 'binned') {
     data_list$K600_lnQ_nodes_meanlog <- array(data_list$K600_lnQ_nodes_meanlog, dim=data_list$b)
     data_list$K600_lnQ_nodes_sdlog <- array(data_list$K600_lnQ_nodes_sdlog, dim=data_list$b)
   }
@@ -604,12 +607,15 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   
   # use auto_write=TRUE to recompile if needed, or load from existing .rds file
   # without recompiling if possible
+  compile_time <- system.time({})
   mobj_path <- gsub('.stan$', '.stanrds', model_path)
   if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
     if(verbose) message("compiling Stan model")
-    compile_log <- capture.output({
-      stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
-    }, type=c('output'), split=verbose)
+    compile_time <- system.time({
+      compile_log <- capture.output({
+        stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
+      }, type=c('output'), split=verbose)
+    })
     rm(stan_mobj)
     gc() # this humble line saves us from many horrible R crashes
     autowrite_path <- gsub('.stan$', '.rds', model_path)
@@ -681,7 +687,10 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
   newlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
   logfile <- setdiff(newlogfiles, oldlogfiles)
   log <- if(length(logfile) > 0) readLines(logfile) else consolelog
-  stan_out <- c(stan_out, c(list(log=log), if(exists('compile_log')) list(compile_log=compile_log)))
+  stan_out <- c(stan_out, c(
+    list(log=log), 
+    if(exists('compile_log')) list(compile_log=compile_log), 
+    list(compile_time=compile_time)))
   
   return(stan_out)
 }
@@ -770,7 +779,7 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcm
 setClass(
   "metab_bayes", 
   contains="metab_model",
-  slots=c(log="ANY", mcmc="ANY", mcmc_data="ANY")
+  slots=c(log="ANY", mcmc="ANY", mcmc_data="ANY", compile_time="ANY")
 )
 
 #' Extract any MCMC model objects that were stored with the model
@@ -957,6 +966,7 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
   }
   names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
+  names(metab_model@fit$daily) <- gsub('_50pct$', '.median', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_2.5pct$', '.lower', names(metab_model@fit$daily))
   names(metab_model@fit$daily) <- gsub('_97.5pct$', '.upper', names(metab_model@fit$daily))
   # code duplicated in get_params.metab_Kmodel:
@@ -970,6 +980,6 @@ get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, unce
     dmsg <- metab_model@fit$daily$errors
     metab_model@fit$daily$errors <- ifelse(dmsg == '', omsg, paste(omsg, dmsg, sep=';'))
   }
-  metab_model@fit <- metab_model@fit$daily # SUPER-TEMPORARY we're still converting fit$daily to fit until #247, #229
+  metab_model@fit <- metab_model@fit$daily # TEMPORARY we're still converting fit$daily to fit until #247, #229
   NextMethod()
 }

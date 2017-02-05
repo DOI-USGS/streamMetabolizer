@@ -19,7 +19,7 @@
 #' @export
 mm_filter_valid_days <- function(
   data, data_daily=NULL, # redefine from metab
-  day_start=4, day_end=27.99, day_tests=c('full_day', 'even_timesteps', 'complete_data'), timestep_days=TRUE # inheritParams mm_model_by_ply
+  day_start=4, day_end=27.99, day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), timestep_days=TRUE # inheritParams mm_model_by_ply
 ) {
   
   # function to filter the instantaneous data using validity, record dates that

@@ -398,13 +398,14 @@ get_params.metab_Kmodel <- function(
           K600.daily.sd = fit[['se']])
       },
       lm = {
-        preds <- predict(fit, newdata=data_daily, interval='confidence', level=0.95)
+        preds <- predict(fit, newdata=data_daily, interval='confidence', level=0.95) %>% 
+          as.data.frame()
         params %<>% mutate(
-          K600.daily = preds[,'fit'], # only the approx mean if ktrans=='log'
+          K600.daily = preds[['fit']], # only the approx mean if ktrans=='log'
           K600.daily.sd = NA, # this shouldn't be necessary after resolving #238
-          K600_daily_50pct = preds[,'fit'],
-          K600_daily_2.5pct = preds[,'lwr'],
-          K600_daily_97.5pct = preds[,'upr'])
+          K600_daily_50pct = preds[['fit']],
+          K600_daily_2.5pct = preds[['lwr']],
+          K600_daily_97.5pct = preds[['upr']])
       },
       loess = {
         preds <- predict(fit, newdata=data_daily, se=TRUE)

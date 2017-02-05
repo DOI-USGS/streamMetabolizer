@@ -163,7 +163,10 @@ get_version <- function(metab_model) {
 #' @param uncertainty character. Should columns for the uncertainty of parameter
 #'   estimates be excluded ('none'), reported as standard deviations ('sd'), or 
 #'   reported as lower and upper bounds of a 95 percent confidence interval 
-#'   ('ci')?
+#'   ('ci')? When available (e.g., for Bayesian models), if 'ci' then the 
+#'   central value will be the median (50th quantile) and the ranges will be the
+#'   2.5th and 97.5th quantiles. If 'sd' then the central value will always be 
+#'   the mean.
 #' @param messages logical. Should warning and error messages from the fitting 
 #'   procedure be included in the output?
 #' @param fixed character. Should values pulled from data_daily (i.e., fixed 
