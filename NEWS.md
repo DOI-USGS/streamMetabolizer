@@ -1,6 +1,11 @@
+# 0.9.39
+
+* Bayesian, MLE, and nighttime regression models can now all test for and
+exclude days with non-positive discharge
+
 # 0.9.36
 
-* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the
+* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the 
 `data` and `data_daily` arguments to `metab()`
 
 # 0.9.35

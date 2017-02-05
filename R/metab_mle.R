@@ -4,12 +4,13 @@ NULL
 #' Maximum likelihood metabolism model fitting function
 #' 
 #' Uses maximum likelihood to fit a model to estimate GPP and ER from input data
-#' on DO, temperature, light, etc.
+#' on DO, temperature, light, etc. Discharge is only used, if at all, to
+#' identify and exclude days with any negative discharge.
 #' 
 #' @inheritParams metab
 #' @return A metab_mle object containing the fitted model. This object can be 
 #'   inspected with the functions in the \code{\link{metab_model_interface}}. 
-#'   The \code{code} column in \code{get_fit(mm)} is defined in the Value
+#'   The \code{code} column in \code{get_fit(mm)} is defined in the Value 
 #'   subsection of \code{?nlm}.
 #' @examples
 #' dat <- data_metab('3','30')
@@ -36,7 +37,7 @@ NULL
 #' @family metab_model
 metab_mle <- function(
   specs=specs(mm_name('mle')),
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge, optional='discharge'),
   data_daily=mm_data(
     date, K600.daily, init.GPP.daily, init.Pmax, init.alpha, 
     init.ER.daily, init.ER20, init.K600.daily, optional='all'),

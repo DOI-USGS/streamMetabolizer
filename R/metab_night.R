@@ -6,7 +6,8 @@ NULL
 #' Fits a model to estimate K from nighttime input data on DO, temperature, 
 #' light, etc. The default day start & end are 12 noon on the preceding to 
 #' present day; the algorithm then filters the data to just those time points 
-#' for which light is very low.
+#' for which light is very low. Discharge is only used, if at all, to identify
+#' and exclude days with any negative discharge.
 #' 
 #' @author Alison Appling, Maite Arroita, Bob Hall
 #'   
@@ -25,7 +26,7 @@ NULL
 #' @family metab_model
 metab_night <- function(
   specs=specs(mm_name('night')),
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge, optional='discharge'), 
   data_daily=mm_data(NULL),
   info=NULL
 ) {

@@ -54,13 +54,14 @@ depend on the model \code{type}, as follows.
       DO.sat            \tab numeric         \tab mgO2 L^-1       \tab required      \cr
       depth             \tab numeric         \tab m               \tab required      \cr
       temp.water        \tab numeric         \tab degC            \tab required      \cr
-      light             \tab numeric         \tab umol m^-2 s^-1  \tab required      
+      light             \tab numeric         \tab umol m^-2 s^-1  \tab required      \cr
+      discharge         \tab numeric         \tab m^3 s^-1        \tab optional      
     }
     
     \strong{Example}:
-    \tabular{lrrrrr}{
-      \code{solar.time         } \tab \code{DO.obs} \tab \code{DO.sat} \tab \code{depth} \tab \code{temp.water} \tab \code{light}\cr
-      \code{2050-03-14 15:10:00} \tab \code{10.1  } \tab \code{14.2  } \tab \code{0.5  } \tab \code{21.8      } \tab \code{300.9}
+    \tabular{lrrrrrr}{
+      \code{solar.time         } \tab \code{DO.obs} \tab \code{DO.sat} \tab \code{depth} \tab \code{temp.water} \tab \code{light} \tab \code{discharge}\cr
+      \code{2050-03-14 15:10:00} \tab \code{10.1  } \tab \code{14.2  } \tab \code{0.5  } \tab \code{21.8      } \tab \code{300.9} \tab \code{9        }
     }
   }
   \item{\code{bayes}}{
