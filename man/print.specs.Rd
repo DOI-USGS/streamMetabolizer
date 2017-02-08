@@ -14,4 +14,3 @@
 \description{
 Print a specs object to the console.
 }
-

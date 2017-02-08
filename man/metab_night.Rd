@@ -49,12 +49,11 @@ predict_metab(mm)
 plot_DO_preds(predict_DO(mm))
 }
 }
-\author{
-Alison Appling, Maite Arroita, Bob Hall
-}
 \seealso{
 Other metab_model: \code{\link{metab_Kmodel}},
   \code{\link{metab_bayes}}, \code{\link{metab_mle}},
   \code{\link{metab_sim}}
 }
-
+\author{
+Alison Appling, Maite Arroita, Bob Hall
+}

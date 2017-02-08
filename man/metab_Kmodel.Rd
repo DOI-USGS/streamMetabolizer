@@ -128,12 +128,11 @@ predict_metab(mm3)
 plot_metab_preds(mm3)
 }
 }
-\author{
-Alison Appling
-}
 \seealso{
 Other metab_model: \code{\link{metab_bayes}},
   \code{\link{metab_mle}}, \code{\link{metab_night}},
   \code{\link{metab_sim}}
 }
-
+\author{
+Alison Appling
+}

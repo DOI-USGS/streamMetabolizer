@@ -11,4 +11,3 @@ Split ;-separated warning/error messages and condense into counts of each
 unique message
 }
 \keyword{internal}
-

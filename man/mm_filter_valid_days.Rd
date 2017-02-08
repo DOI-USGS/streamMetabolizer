@@ -58,4 +58,3 @@ datfilt <- mm_filter_valid_days(dat)
 datfilt$removed
 c(nrow(dat), nrow(datfilt$data))
 }
-

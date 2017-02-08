@@ -27,4 +27,3 @@ mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 For use in predicting K
 }
 \keyword{internal}
-

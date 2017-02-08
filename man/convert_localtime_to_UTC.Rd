@@ -17,4 +17,3 @@ UTC.
 \references{
 https://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 }
-

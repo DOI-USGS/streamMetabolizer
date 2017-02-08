@@ -62,4 +62,3 @@ mm_is_valid_day(data_metab('1', flaws='duplicated'))
 mm_is_valid_day(data_metab('1', flaws=c('duplicated','missing end')))
 mm_is_valid_day(data_metab('3'))
 }
-

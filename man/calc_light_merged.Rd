@@ -63,4 +63,3 @@ ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'),
   aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point() + theme_bw()
 }
 }
-

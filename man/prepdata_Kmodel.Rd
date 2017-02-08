@@ -50,4 +50,3 @@ function.}
 Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
 & setting data_daily$weight to reflect user weights & filters
 }
-

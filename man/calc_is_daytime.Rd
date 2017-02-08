@@ -25,10 +25,9 @@ Returns T/F indicating whether a datetime occurs during the daytime (sunlight ho
 calc_is_daytime(datetimes=as.POSIXct(paste('2013-03-31', c('1:00','11:00'))), lat=40.75)
 }
 }
-\author{
-Luke A. Winslow
-}
 \seealso{
 \link{calc_sun_rise_set}
 }
-
+\author{
+Luke A. Winslow
+}

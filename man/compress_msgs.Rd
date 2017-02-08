@@ -22,4 +22,3 @@ in the summary}
 Compress two columns of warning and error messages into one short-hand column
 }
 \keyword{internal}
-

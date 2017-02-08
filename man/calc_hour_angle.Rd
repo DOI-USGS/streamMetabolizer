@@ -31,4 +31,3 @@ ggplot(hourdf, aes(x=hour, y=hragl)) +
   geom_hline(yintercept=0, color="gold") + geom_line()
 }
 }
-

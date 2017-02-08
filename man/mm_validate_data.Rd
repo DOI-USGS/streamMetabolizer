@@ -32,4 +32,3 @@ Will most often be called from within a metab_model constructor.
 mm_validate_data(dplyr::select(mm_data(),-temp.water), metab_class="metab_mle")
 }
 }
-

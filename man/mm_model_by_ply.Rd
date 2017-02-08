@@ -71,4 +71,3 @@ mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$da
 mm_model_by_ply(function(...) { data.frame(text='hi')}, 
   data=dat, day_start=2, day_end=28)
 }
-

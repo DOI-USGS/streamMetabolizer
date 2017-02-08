@@ -49,4 +49,3 @@ nlm(NLL, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25))
 nlm(NLL2, p=c(GPP.daily=2, ER.daily=-2), K600.daily=31.265)
 nlm(NLL3, p=c(GPP.daily=2, ER.daily=-2, K600.daily=25, DO.mod.1=9))
 }
-

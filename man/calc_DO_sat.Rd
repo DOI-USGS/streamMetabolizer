@@ -38,4 +38,3 @@ calc_DO_sat(temp=21, press=1000.1, sal=0) # no units checking if no units provid
 library(unitted)
 calc_DO_sat(temp=u(21,"degC"), press=u(1000.1,"mb"), sal=u(0,"PSU")) # units are checked
 }
-

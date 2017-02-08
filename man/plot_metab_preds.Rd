@@ -31,4 +31,3 @@ mm <- metab_night(specs(mm_name('night')), data=data_metab('10', day_start=12, d
 plot_metab_preds(mm)
 }
 }
-

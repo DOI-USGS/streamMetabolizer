@@ -13,4 +13,3 @@ exception of the one pair of incompatible arguments (err_obs_iid=F &&
 deficit_src='DO_mod')
 }
 \keyword{internal}
-

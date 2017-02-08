@@ -36,4 +36,3 @@ will be used. If it's present in neither, an error or NULLs will be returned
 depending on whether \code{required=TRUE}.
 }
 \keyword{internal}
-

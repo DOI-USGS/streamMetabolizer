@@ -32,4 +32,3 @@ mm_parse_name(c(mm_name('mle'), mm_name('night'), mm_name('bayes')), expand=TRUE
 \seealso{
 The converse of this function is \code{\link{mm_name}}.
 }
-

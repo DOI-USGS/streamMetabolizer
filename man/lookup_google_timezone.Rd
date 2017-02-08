@@ -32,4 +32,3 @@ Some parameter definitions below are copied directly from the API webpage.
 \references{
 https://developers.google.com/maps/documentation/timezone/
 }
-

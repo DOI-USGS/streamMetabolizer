@@ -33,4 +33,3 @@ Yard, Bennett, Mietz, Coggins, Stevens, Hueftle, and Blinn. 2005.
   Influence of topographic complexity on solar insolation estimates for the 
   Colorado River, Grand Canyon, AZ. Ecological Modelling.
 }
-

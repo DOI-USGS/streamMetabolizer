@@ -465,8 +465,8 @@ often should, be overridden to tailor the model to your needs.
   value=TRUE)} once for your model name \code{mname} before supplying any 
   arguments.
 }
+
 \examples{
 specs(mm_name(type='mle', err_obs_iid=FALSE, err_proc_iid=TRUE))
 specs(mm_name(type='bayes', pool_K600='normal'))
 }
-

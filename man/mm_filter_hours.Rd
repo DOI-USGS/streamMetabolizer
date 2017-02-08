@@ -21,4 +21,3 @@ overlap starting from a continuous time series, see
 \code{\link{mm_model_by_ply}}.
 }
 \keyword{internal}
-

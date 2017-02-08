@@ -202,6 +202,7 @@ depend on the model \code{type}, as follows.
   }
 }
 }
+
 \examples{
 dat <- data_metab(num_days='3')
 
@@ -225,4 +226,3 @@ plot_DO_preds(predict_DO(mm), y_var='pctsat', style='dygraphs')
 \author{
 Alison Appling
 }
-

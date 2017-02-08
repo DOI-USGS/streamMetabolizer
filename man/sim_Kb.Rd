@@ -32,4 +32,3 @@ lnQ_nodes (bins), where the means of those differences are always zero}
 Uses linear interpolation among "nodes" (lnQ, lnK points) to describe the lnK
 ~ lnQ relationship
 }
-

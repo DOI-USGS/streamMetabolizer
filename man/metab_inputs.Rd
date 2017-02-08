@@ -21,4 +21,3 @@ metab_inputs('bayes','data')
 metab_inputs('Kmodel','data_daily')
 metab_inputs('mle','info')
 }
-
