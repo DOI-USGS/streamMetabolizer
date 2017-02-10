@@ -104,7 +104,7 @@ mm_is_valid_day <- function(
   if('pos_discharge' %in% day_tests) {
     # require discharge (if present) to be positive at all times
     if('discharge' %in% names(data_ply) && any(!is.na(data_ply$discharge))) {
-      if(any(data_ply$discharge <= 0)) 
+      if(any(data_ply$discharge[which(!is.na(data_ply$discharge))] <= 0)) 
         stop_strs <- c(stop_strs, "discharge <= 0")
     }
   }
