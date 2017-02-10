@@ -96,7 +96,7 @@ mm_is_valid_day <- function(
   if('complete_data' %in% day_tests) {
     # Require complete data in all columns
     for(col in names(data_ply)) {
-      if(any(is.na(data_ply[col]))) 
+      if(any(is.na(data_ply[[col]]))) 
         stop_strs <- c(stop_strs, paste0("NAs in ", col))
     }
   }
@@ -104,8 +104,8 @@ mm_is_valid_day <- function(
   if('pos_discharge' %in% day_tests) {
     # require discharge (if present) to be positive at all times
     if('discharge' %in% names(data_ply)) {
-      if(any(data_ply[['discharge']] <= 0)) 
-        stop_strs <- c(stop_strs, paste0(col, " < 0"))
+      if(any(data_ply$discharge <= 0)) 
+        stop_strs <- c(stop_strs, "discharge <= 0")
     }
   }
   
