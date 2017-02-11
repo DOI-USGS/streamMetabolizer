@@ -107,12 +107,12 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
-  init.vals <- unlist(specs[grepl('^init.', names(specs))]) # goes outside in case stop_strs is already non-empty
   if(length(stop_strs) == 0) {
     # Collect K600 and date-specific initial values if they're available. If a
     # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
     # value==NA), use the default: for xx_init values this is specs$xx_init, for
     # K600 this is NULL (fit by MLE)
+    init.vals <- unlist(specs[grepl('^init.', names(specs))])
     K600 <- NULL
     . <- '.dplyr.var'
     if(!is.null(data_daily_ply)) {
@@ -219,7 +219,7 @@ mle_1ply <- function(
   
   # Return, reporting any results, warnings, and errors. if the model fitting
   # failed, use dummy data to fill in the output with NAs.
-  val.names <- names(init.vals) # trust nlm to return the parameters in the same order we passed them in
+  val.names <- substring(grep('^init.', names(specs), value=TRUE), 6) # trust nlm to return the parameters in the same order we passed them in
   stat.names <- c('estimate','sd','gradient')
   valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names)))
   goodness.names <- c('minimum','iterations','code')
