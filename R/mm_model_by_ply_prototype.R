@@ -46,8 +46,11 @@ mm_model_by_ply_prototype <- function(
          data_ply_end=if(!is.null(v(data_ply))) data_ply[nrow(data_ply),'solar.time'] else NA,
          data_ply_nrow=if(!is.null(v(data_ply))) nrow(data_ply) else 0, 
          data_daily_ply_date=paste0(if(!is.null(v(data_daily_ply))) unique(data_daily_ply$date), collapse=';'), 
-         day_start=day_start, day_end=day_end, ply_date=ply_date, 
-         ply_validity=paste0(ply_validity,collapse=';'), timestep_days=timestep_days),
+         day_start=day_start, 
+         day_end=day_end, 
+         ply_date=ply_date, 
+         ply_validity=paste0(ply_validity,collapse=';'), 
+         timestep_days=timestep_days),
     lapply(list(...), function(arg) if(is.atomic(arg)) arg[1] else paste0('len=',length(arg)))) %>%
   as_tibble()
 }

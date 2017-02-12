@@ -72,7 +72,7 @@ mm_model_by_ply <- function(
   if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
   min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]
-  if(length(min_timestep) == 1 && min_timestep <= 0) {
+  if(length(min_timestep) == 1 && !is.na(min_timestep)[1] && min_timestep <= 0) {
     timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
     timegoof <- which.min(timesteps) + c(0,1)
     stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
@@ -82,7 +82,7 @@ mm_model_by_ply <- function(
   if(!is.null(data_daily)) {
     if(!('date' %in% names(data_daily))) stop("data_daily must contain a 'date' column")
     min_datestep <- mm_get_timestep(data_daily$date, format='unique')
-    if(length(min_datestep) > 0 && min_datestep[1] <= 0) {
+    if(length(min_datestep) > 0 && !is.na(min_datestep)[1] && min_datestep[1] <= 0) {
       timesteps <- as.numeric(diff(v(data_daily$date)), units="days")
       timegoof <- which.min(timesteps) + c(0,1)
       stop("min datestep is <= 0: ", min_datestep, " days from ",
@@ -188,7 +188,7 @@ mm_model_by_ply <- function(
       if(length(timestep_days) > 1) stop("expecting no more than 1 value in timestep_days")
       timestep_days <- if(isTRUE(timestep_days)) {
         mm_get_timestep(data_ply$solar.time, format='mean') 
-      } else if(is.na(timestep_days) || timestep_days==FALSE) {
+      } else if(is.na(timestep_days) || is.null(timestep_days) || timestep_days==FALSE) {
         NA
       } else timestep_days
       ply_validity <- mm_is_valid_day(
