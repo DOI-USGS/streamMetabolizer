@@ -61,7 +61,7 @@ metab_mle <- function(
     # model the data, splitting into overlapping 31.5-hr 'plys' for each date
     mle_all <- mm_model_by_ply(
       mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep, # for mm_model_by_ply
       specs=specs) # for mle_1ply and create_calc_dDOdt
   })
   
@@ -215,13 +215,15 @@ mle_1ply <- function(
         invokeRestart("muffleWarning")
       })
     
+    val.names <- names(init.vals)
+  } else {
+    val.names <- substring(grep('^init.', names(specs), value=TRUE), 6)
   }
   
   # Return, reporting any results, warnings, and errors. if the model fitting
   # failed, use dummy data to fill in the output with NAs.
-  val.names <- substring(grep('^init.', names(specs), value=TRUE), 6) # trust nlm to return the parameters in the same order we passed them in
   stat.names <- c('estimate','sd','gradient')
-  valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names)))
+  valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names))) # trust nlm to return the parameters in the same order we passed them in
   goodness.names <- c('minimum','iterations','code')
   if(length(stop_strs) > 0) {
     valstat.cols <- as.list(rep(as.numeric(NA), length(valstat.names))) %>%

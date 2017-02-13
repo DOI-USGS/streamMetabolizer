@@ -6,9 +6,9 @@
 \usage{
 specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   day_tests = c("full_day", "even_timesteps", "complete_data",
-  "pos_discharge"), init.GPP.daily = 8, init.Pmax = 10,
-  init.alpha = 1e-04, init.ER.daily = -10, init.ER20 = -10,
-  init.K600.daily = 10, split_dates, keep_mcmcs = TRUE,
+  "pos_discharge"), required_timestep = NA, init.GPP.daily = 8,
+  init.Pmax = 10, init.alpha = 1e-04, init.ER.daily = -10,
+  init.ER20 = -10, init.K600.daily = 10, split_dates, keep_mcmcs = TRUE,
   keep_mcmc_data = TRUE, GPP_daily_mu = 8, GPP_daily_lower = -Inf,
   GPP_daily_sigma = 4, ER_daily_mu = -10, ER_daily_upper = Inf,
   ER_daily_sigma = 5, K600_daily_meanlog = log(6),
@@ -95,9 +95,17 @@ data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
 \item{day_tests}{list of tests to conduct to determine whether each date 
-worth of data is valid for modeling. the results of these tests will be 
-passed to \code{model_fun} as the \code{ply_validity} argument to that 
-function.}
+worth of data is valid for modeling. The results of these tests will be
+combined with the result of the test implied if \code{required_timestep} is
+numeric and then will be passed to \code{model_fun} as the
+\code{ply_validity} argument to that function.}
+
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
+length in days that a date must have to pass the validity check (to within 
+a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
+of this test will be combined with the results of the tests listed in 
+\code{day_tests} and reported to \code{model_fun} as the 
+\code{ply_validity} argument to that function.}
 
 \item{init.GPP.daily}{the inital value of daily mean GPP (gO2 d^-1 m^-2) to 
 use in the NLM fitting process. See the MLE Initial Values section under 

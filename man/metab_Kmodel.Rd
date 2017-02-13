@@ -125,6 +125,7 @@ mm3 <- metab_mle(mle_specs, data=dat, data_daily=K600_mm2)
 get_params(mm3, fixed='stars')
 predict_metab(mm3)
 \dontrun{
+plot_metab_preds(mm1)
 plot_metab_preds(mm3)
 }
 }

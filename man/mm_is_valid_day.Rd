@@ -6,8 +6,9 @@
 \usage{
 mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
   day_tests = c("full_day", "even_timesteps", "complete_data",
-  "pos_discharge"), ply_date = as.Date(format(data_ply[nrow(data_ply)/2,
-  "solar.time"], "\%Y-\%m-\%d")), timestep_days = NA)
+  "pos_discharge"), required_timestep = NA,
+  ply_date = as.Date(format(data_ply[nrow(data_ply)/2, "solar.time"],
+  "\%Y-\%m-\%d")), timestep_days = NA)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data
@@ -29,10 +30,15 @@ before 2006-06-27 06:00.}
 worth of data is valid for modeling. \code{full_day}: Do the data span the 
 full expected period (e.g., from 10:30pm on preceding day to 6am on 
 following day)? \code{even_timesteps}: are all of the timesteps within the 
-day the same length, to within a tolerance of 0.2% of the timestep length? 
+day the same length, to within a tolerance of 0.2\% of the timestep length? 
 \code{complete_data}: are all columns of input data available at every 
-timestep? \code{pos_discharge}: is discharge greater than 0 at every
-timestep?}
+timestep? \code{pos_discharge}: is discharge greater than 0 at every 
+timestep? A further test is implied if \code{required_timestep} is a non-NA
+numeric.}
+
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
+length in days that a date must have to pass the validity check (to within 
+a tolerance of 0.2\% of the value of \code{required_timestep})}
 
 \item{ply_date}{the Date this data_ply is intended to match. May be NA}
 

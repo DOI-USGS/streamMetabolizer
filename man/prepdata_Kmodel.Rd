@@ -6,7 +6,7 @@
 & setting data_daily$weight to reflect user weights & filters}
 \usage{
 prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end,
-  day_tests)
+  day_tests, required_timestep)
 }
 \arguments{
 \item{data}{unit data to aggregate to daily_data. may be NULL.}
@@ -42,9 +42,17 @@ data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
 \item{day_tests}{list of tests to conduct to determine whether each date 
-worth of data is valid for modeling. the results of these tests will be 
-passed to \code{model_fun} as the \code{ply_validity} argument to that 
-function.}
+worth of data is valid for modeling. The results of these tests will be
+combined with the result of the test implied if \code{required_timestep} is
+numeric and then will be passed to \code{model_fun} as the
+\code{ply_validity} argument to that function.}
+
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
+length in days that a date must have to pass the validity check (to within 
+a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
+of this test will be combined with the results of the tests listed in 
+\code{day_tests} and reported to \code{model_fun} as the 
+\code{ply_validity} argument to that function.}
 }
 \description{
 Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 

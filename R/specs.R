@@ -326,6 +326,7 @@ specs <- function(
   
   # inheritParams mm_is_valid_day
   day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'),
+  required_timestep=NA,
   
   
   ## MLE
@@ -517,7 +518,7 @@ specs <- function(
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
         
         # date ply day_tests
-        'day_start', 'day_end', 'day_tests',
+        'day_start', 'day_end', 'day_tests', 'required_timestep',
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
@@ -579,12 +580,12 @@ specs <- function(
       init.needs <- paste0('init.', get_param_names(model_name)$required)
       
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep', init.needs)
 
     }, 
     'night' = {
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests')
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep')
       
       # some different defaults for night relative to other models
       if('day_start' %in% yes_missing) {
@@ -601,7 +602,7 @@ specs <- function(
     'Kmodel' = {
       # list all needed arguments
       included <- c(
-        'model_name', 'engine', 'day_start', 'day_end', 'day_tests',
+        'model_name', 'engine', 'day_start', 'day_end', 'day_tests', 'required_timestep',
         'weights', 'filters', 'predictors', 'transforms', 'other_args')
       
       if('engine' %in% yes_missing) {
@@ -640,7 +641,7 @@ specs <- function(
       
       # list all needed arguments
       included <- c(
-        'model_name', 'day_start', 'day_end', 'day_tests',
+        'model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep',
         switch(
           features$pool_K600,
           none=c(),
