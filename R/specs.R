@@ -459,7 +459,7 @@ specs <- function(
   all_possible <- names(formals(specs))
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
-  prefer_missing <- all_possible[sapply(formals(specs), is.symbol)] # the arguments w/o defaults
+  prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
   
   # argument checks
   if(any(required %in% yes_missing))
@@ -470,7 +470,7 @@ specs <- function(
     redundant <- redundant[redundant != 'engine']
   }
   if(length(redundant) > 0) {
-    warning("argument[s] that should usually not be specified in specs(): ", paste(redundant, collapse=", "))
+    warning("argument[s] that should usually be specified in revise() rather than specs(): ", paste(redundant, collapse=", "))
   }
   
   # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.

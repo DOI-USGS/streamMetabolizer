@@ -1,3 +1,12 @@
+# 0.9.46
+
+* Removed the warning discouraging setting params_out within specs()
+
+# 0.9.45
+
+* Bayesian specs defaults now reflect a little more of the literature and our
+experience modeling metabolism
+
 # 0.9.44
 
 * New specs element `required_timestep` allows you to require that each date has
