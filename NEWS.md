@@ -1,6 +1,33 @@
+# 0.9.46
+
+* Removed the warning discouraging setting params_out within specs()
+
+# 0.9.45
+
+* Bayesian specs defaults now reflect a little more of the literature and our
+experience modeling metabolism
+
+# 0.9.44
+
+* New specs element `required_timestep` allows you to require that each date has
+the specified numeric timestep in days
+
+# 0.9.42-0.9.43
+
+* Bugfixes for new test that excludes days with non-positive discharge
+
+# 0.9.40
+
+* Update to roxygen2 6.0.1
+
+# 0.9.39
+
+* Bayesian, MLE, and nighttime regression models can now all test for and 
+exclude days with non-positive discharge
+
 # 0.9.36
 
-* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the
+* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the 
 `data` and `data_daily` arguments to `metab()`
 
 # 0.9.35

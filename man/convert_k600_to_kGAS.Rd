@@ -19,4 +19,3 @@ Numeric value of gas exchange velocity for gas
 \description{
 Returns the gas exchange velocity for gas of interest w/ no unit conversions
 }
-

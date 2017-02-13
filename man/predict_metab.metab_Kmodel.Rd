@@ -48,4 +48,3 @@ metab_Kmodel predicts K (only) at daily timesteps and usually knows nothing
 about GPP or ER. So it's not possible to predict metabolism from this model.
 Try get_params() to retrieve the predicted values of K600.daily.
 }
-

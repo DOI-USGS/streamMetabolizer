@@ -93,7 +93,7 @@
 #' # columns typical of daily data
 #' mm_data(date, K600.daily, discharge.daily, velocity.daily)
 mm_data <- function(..., optional='none') {
-  dat <- u(data.frame(
+  dat <- list(
     solar.time = u(as.POSIXct("2050-03-14 15:10:00", tz="UTC"), NA),
     DO.obs =     u(10.1,"mgO2 L^-1"),
     DO.sat =     u(14.2,"mgO2 L^-1"),
@@ -133,7 +133,8 @@ mm_data <- function(..., optional='none') {
     D =         u(5,"gO2 m^-3 d^-1"),
     D.lower =   u(5,"gO2 m^-3 d^-1"),
     D.upper =   u(5,"gO2 m^-3 d^-1")
-  ))
+  )
+  dat <- u(as.data.frame(lapply(dat, v)), sapply(dat, get_units))
   .dots <- lazy_dots(...)
   .nulldot <- length(.dots) == 1 && is.null(.dots[[1]]$expr)
   dat <- if(isTRUE(.nulldot)) {

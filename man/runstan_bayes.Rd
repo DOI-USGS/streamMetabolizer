@@ -40,4 +40,3 @@ means save all steps.}
 Run Stan on a formatted data ply
 }
 \keyword{internal}
-

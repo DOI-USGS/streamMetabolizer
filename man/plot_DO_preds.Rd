@@ -34,4 +34,3 @@ plot_DO_preds(predict_DO(mm))
 plot_DO_preds(predict_DO(mm), style='dygraphs', y_var='pctsat')
 }
 }
-

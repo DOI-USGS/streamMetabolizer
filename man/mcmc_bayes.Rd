@@ -45,4 +45,3 @@ a data.frame of outputs
 Run an MCMC simulation on a formatted data ply
 }
 \keyword{internal}
-

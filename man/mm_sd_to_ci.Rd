@@ -18,4 +18,3 @@ Convert data with var and var.sd columns into data with var, var.lower, and
 var.upper columns
 }
 \keyword{internal}
-

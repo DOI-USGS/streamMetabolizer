@@ -41,4 +41,3 @@ data.frame of estimates and MCMC model diagnostics
 Called from metab_bayes().
 }
 \keyword{internal}
-

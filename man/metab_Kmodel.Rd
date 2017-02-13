@@ -125,15 +125,15 @@ mm3 <- metab_mle(mle_specs, data=dat, data_daily=K600_mm2)
 get_params(mm3, fixed='stars')
 predict_metab(mm3)
 \dontrun{
+plot_metab_preds(mm1)
 plot_metab_preds(mm3)
 }
-}
-\author{
-Alison Appling
 }
 \seealso{
 Other metab_model: \code{\link{metab_bayes}},
   \code{\link{metab_mle}}, \code{\link{metab_night}},
   \code{\link{metab_sim}}
 }
-
+\author{
+Alison Appling
+}

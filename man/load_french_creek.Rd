@@ -15,4 +15,3 @@ a data.frame, unitted if attach.units==TRUE
 \description{
 Load a short dataset from French Creek
 }
-

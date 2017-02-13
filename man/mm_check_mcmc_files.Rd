@@ -24,4 +24,3 @@ cat(checks[[7]])
 }
 }
 \keyword{internal}
-

@@ -15,11 +15,11 @@ pooling of K600 values.}
 \item{method}{a single character string indicating the automated bin
 selection method to use}
 
-\item{bounds}{if method=='bounds', a numeric vector of bin boundaries}
-
 \item{\dots}{other arguments (e.g. \code{n}, \code{width}) passed to the 
 ggplot function corresponding to the value of cuts, if cuts is a character 
 (otherwise ignored)}
+
+\item{bounds}{if method=='bounds', a numeric vector of bin boundaries}
 }
 \description{
 Assigns each value in \code{vec} a new, discrete value corresponding to a 
@@ -67,4 +67,3 @@ ggplot(df_arb, aes(x=t, y=vec, color=bin)) + geom_point() +
   geom_hline(data=as.data.frame(bins_arb['bounds']), aes(yintercept=bounds))
 }
 }
-

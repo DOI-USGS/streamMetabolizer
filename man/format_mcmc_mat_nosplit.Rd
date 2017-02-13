@@ -15,4 +15,3 @@ For multi-day or unsplit models. Formats output into a list of data.frames,
 one per unique number of nodes sharing a variable name
 }
 \keyword{internal}
-

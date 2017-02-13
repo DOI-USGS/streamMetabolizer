@@ -42,4 +42,3 @@ ggplot(unitted::v(zendf), aes(x=hour, y=zen, color=jday, group=jday)) +
   ggtitle('zenith angles by latitude (panels) and day of year (colors)')
 }
 }
-

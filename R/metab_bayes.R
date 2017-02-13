@@ -78,7 +78,8 @@ metab_bayes <- function(
         data.frame(discharge.daily = if(isTRUE(ply_validity[1])) mean(data_ply$discharge) else NA)
       }
       dischdaily <- mm_model_by_ply(
-        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end)
+        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end,
+        day_tests=specs$day_tests, required_timestep=specs$required_timestep)
       
       # add units if either of the input dfs were unitted
       if(is.unitted(dat_list$data) || is.unitted(dat_list$data_daily)) {
@@ -151,14 +152,15 @@ metab_bayes <- function(
       stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
     }
     
-    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from tan)
+    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an
+    # MCMC object from Stan)
     if(specs$split_dates == TRUE) {
       if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
       if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       # one day at a time, splitting into overlapping ~24-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
+        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep, # for mm_model_by_ply
         specs=specs) # for bayes_1ply
       # if we saved the modeling object[s] in the df, pull them out now
       extract_object_list <- function(col) {
@@ -475,11 +477,14 @@ prepdata_bayes <- function(
   unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
   if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
   
-  # confirm that every day has the same modal timestep and put a value on that timestep
+  # confirm that every day has the same modal timestep and put a value on that 
+  # timestep. the tolerance for uniqueness within each day is set by the default
+  # for mm_get_timestep. the tolerance for uniqueness across days is 10 digits
+  # is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
   obs_times <- time_by_date_matrix(as.numeric(data$solar.time - data$solar.time[1], units='days'))
-  unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
-  if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
-  timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(timevec) mean(diff(timevec))))
+  timestep_eachday <- apply(obs_times, MARGIN=2, FUN=mm_get_timestep, format='mean', require_unique=TRUE)
+  if(length(unique(round(timestep_eachday, digits=10))) != 1) stop("could not determine a single timestep for all observations")
+  timestep_days <- mean(timestep_eachday)
   n24 <- round(1/timestep_days)
   
   # give message if day length is too short

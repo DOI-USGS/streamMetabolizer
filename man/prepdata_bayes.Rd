@@ -63,4 +63,3 @@ be 24 hrs or 31.5 or so), which should already be validated. It prepares the
 data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
 }
 \keyword{internal}
-

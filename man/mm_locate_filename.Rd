@@ -19,4 +19,3 @@ Looks first in the models folder of the streamMetabolizer package, second
 along the relative or absolute file path given by model_name
 }
 \keyword{internal}
-

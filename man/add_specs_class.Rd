@@ -10,4 +10,3 @@ add_specs_class(specs_list)
 Add the metabolism model specifications class to a list
 }
 \keyword{internal}
-

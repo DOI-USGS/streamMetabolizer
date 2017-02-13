@@ -24,6 +24,7 @@ fit the model; see \code{\link{proc.time}} for details.
 \itemize{
 \item \code{metab_model}: This implementation is shared by many model types
 }}
+
 \seealso{
 Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_data}}, \code{\link{get_fit}},
@@ -32,4 +33,3 @@ Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_version}}, \code{\link{predict_DO}},
   \code{\link{predict_metab}}
 }
-

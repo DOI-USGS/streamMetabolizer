@@ -37,4 +37,3 @@ ddat2 <- streamMetabolizer:::mm_filter_dates(ddat, date_start=dt+10, date_end=dt
 c(nrow(ddat), nrow(ddat1), nrow(ddat2))
 }
 \keyword{internal}
-

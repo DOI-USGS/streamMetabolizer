@@ -29,6 +29,7 @@ function.}
 
 \item{\code{data_daily}}{The daily data, if any, that were used to fit the model.}
 }}
+
 \seealso{
 Other metab.model.classes: \code{\link{metab_Kmodel-class}},
   \code{\link{metab_bayes-class}},
@@ -36,4 +37,3 @@ Other metab.model.classes: \code{\link{metab_Kmodel-class}},
   \code{\link{metab_night-class}},
   \code{\link{metab_sim-class}}
 }
-

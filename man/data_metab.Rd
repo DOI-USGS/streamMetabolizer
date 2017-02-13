@@ -47,4 +47,3 @@ These test data were provided by Bob Hall.
 head(data_metab())
 head(data_metab(res='30'))
 }
-

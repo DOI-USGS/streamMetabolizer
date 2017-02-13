@@ -52,4 +52,3 @@ call inheritParams to use the parameter definitions given here.
 mm_model_by_ply_prototype()
 mm_model_by_ply_prototype(extra_arg=7:12)
 }
-

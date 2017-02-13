@@ -28,4 +28,3 @@ calling \code{lookup_usgs_elevation}.
 \references{
 https://nationalmap.gov/epqs/
 }
-

@@ -37,4 +37,3 @@ rather than required for the \code{streamMetabolizer} package. If you wish to
 run this function, ensure that \code{chron} is installed or install it with 
 \code{install.packages('chron')}.
 }
-

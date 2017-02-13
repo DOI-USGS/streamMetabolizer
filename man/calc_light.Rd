@@ -35,4 +35,3 @@ library(unitted)
 calc_light(u(solar.time), u(40, 'degN'), u(-120, 'degE'), u(2315, 'umol m^-2 s^-1'), 
   attach.units=TRUE)
 }
-

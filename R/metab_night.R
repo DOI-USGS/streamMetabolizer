@@ -6,7 +6,8 @@ NULL
 #' Fits a model to estimate K from nighttime input data on DO, temperature, 
 #' light, etc. The default day start & end are 12 noon on the preceding to 
 #' present day; the algorithm then filters the data to just those time points 
-#' for which light is very low.
+#' for which light is very low. Discharge is only used, if at all, to identify
+#' and exclude days with any negative discharge.
 #' 
 #' @author Alison Appling, Maite Arroita, Bob Hall
 #'   
@@ -25,7 +26,7 @@ NULL
 #' @family metab_model
 metab_night <- function(
   specs=specs(mm_name('night')),
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light), 
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge, optional='discharge'), 
   data_daily=mm_data(NULL),
   info=NULL
 ) {
@@ -45,7 +46,7 @@ metab_night <- function(
     night_all <- mm_model_by_ply(
       nightreg_1ply, 
       data=data, data_daily=data_daily, day_start=specs$day_start, day_end=specs$day_end, # for mm_model_by_ply
-      day_tests=c(), timestep_days=FALSE, # for mm_model_by_ply - bypass the regular timestep calc & validity check on the full day ply
+      day_tests=c(), required_timestep=NA, timestep_days=FALSE, # for mm_model_by_ply - bypass the regular timestep calc & validity check on the full day ply
       night_tests=specs$day_tests, specs=specs) # for nightreg_1ply
   })
   
@@ -131,7 +132,7 @@ nightreg_1ply <- function(
       # run the validity tests (except include_sunset, handled above)
       validity <- mm_is_valid_day(
         night_dat, # data split by mm_model_by_ply and subsetted here
-        day_start=night_start, day_end=night_end, day_tests=night_tests,
+        day_start=night_start, day_end=night_end, day_tests=night_tests, required_timestep=specs$required_timestep,
         ply_date=ply_date) # args passed from metab_night (after modifying the tests)
       if(!isTRUE(validity)) stop_strs <- c(stop_strs, validity)
       
@@ -268,7 +269,7 @@ predict_DO.metab_night <- function(metab_model, date_start=NA, date_end=NA, ...,
   # our special nighttime regression prediction function
   mm_model_by_ply(
     model_fun=metab_night_predict_1ply, data=data, data_daily=metab_ests, # for mm_model_by_ply
-    day_start=day_start, day_end=day_end, day_tests=c(), # for mm_model_by_ply
+    day_start=day_start, day_end=day_end, day_tests=c(), required_timestep=NA, # for mm_model_by_ply
     model_name=specs$model_name) %>% # for mm_predict_DO_1ply
     mm_filter_dates(date_start=date_start, date_end=date_end)
 }

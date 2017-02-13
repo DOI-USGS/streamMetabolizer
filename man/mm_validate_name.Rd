@@ -32,4 +32,3 @@ mm_validate_name("b_np_oipi_tr_plrckm.stan")
 mm_validate_name("b_np_oipn") # throws error
 }
 }
-

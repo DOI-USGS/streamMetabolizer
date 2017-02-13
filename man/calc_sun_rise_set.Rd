@@ -26,4 +26,3 @@ calc_sun_rise_set(latitude=40.75,
 \link{calc_is_daytime}
 }
 \keyword{internal}
-

@@ -23,4 +23,3 @@ much as possible with raw code from Bob Hall, for comparison to functions
 written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to 
 those in 'stream_metab_usa/starter_files/One station metab code.R'
 }
-

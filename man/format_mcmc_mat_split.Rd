@@ -19,4 +19,3 @@ For split_dates models. Formats output into a one-row data.frame for
 row-binding with other such data.frames
 }
 \keyword{internal}
-

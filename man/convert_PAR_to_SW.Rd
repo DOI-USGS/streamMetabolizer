@@ -25,4 +25,3 @@ changes in this ratio (see Britton and Dodd (1976)).
 convert_PAR_to_SW(par=400, coef=0.47)
 convert_PAR_to_SW(unitted::u(1000, "umol m^-2 s^-1"))
 }
-
