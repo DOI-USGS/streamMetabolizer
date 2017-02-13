@@ -348,19 +348,19 @@ specs <- function(
   keep_mcmc_data = TRUE,
   
   # hyperparameters for non-hierarchical GPP & ER
-  GPP_daily_mu = 8,
+  GPP_daily_mu = 3.1,
   GPP_daily_lower = -Inf,
-  GPP_daily_sigma = 4,
-  ER_daily_mu = -10,
+  GPP_daily_sigma = 6.0,
+  ER_daily_mu = -7.1,
   ER_daily_upper = Inf,
-  ER_daily_sigma = 5,
+  ER_daily_sigma = 7.1,
   
   # hyperparameters for non-hierarchical K600
-  K600_daily_meanlog = log(6),
+  K600_daily_meanlog = log(12),
   
   # hyperparameters for hierarchical K600 - normal
-  K600_daily_meanlog_meanlog = log(6),
-  K600_daily_meanlog_sdlog = 1,
+  K600_daily_meanlog_meanlog = log(12),
+  K600_daily_meanlog_sdlog = 1.32,
   
   # hyperparameters for hierarchical K600 - linear. defaults should be
   # reasonably constrained, not too wide
@@ -375,26 +375,26 @@ specs <- function(
   # exponentiating. nodes_meanlog and nodes_sdlog may be length b = 
   # length(K600_daily_lnQ_nodes) or length 1 (to be replicated to length b). 
   # -8:6 covers almost all points in Raymond et al. 2012 and will therefore 
-  # always be too broad a range for a single stream. -3:3 will catch most
+  # always be too broad a range for a single stream. -3:3 will catch some
   # streams to rivers as a first cut, though users should still modify
   K600_lnQ_nodes_centers = -3:3, # the x=lnQ values for the nodes
-  K600_lnQ_nodediffs_sdlog = 0.05, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
-  K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
-  K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
+  K600_lnQ_nodediffs_sdlog = 0.5, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
+  K600_lnQ_nodes_meanlog = rep(log(12), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
+  K600_lnQ_nodes_sdlog = rep(1.32, length(K600_lnQ_nodes_centers)),
   
   # hyperparameters for any K pooling or non-pooling strategy
   K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, normal_sdfixed=0.05, NA),
   K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear_sdfixed=10, binned_sdfixed=5, NA),
   K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal=0.05, NA),
-  K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=5, binned=2, NA),
+  K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=1.2, binned=0.24, NA),
   # normal_sdzero, linear_sdzero, and binned_sdzero all have no parameters for this
   
   # hyperparameters for error terms
-  err_obs_iid_sigma_scale = 0.1,
+  err_obs_iid_sigma_scale = 0.03,
+  err_proc_iid_sigma_scale = 5,
   err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
-  err_proc_acor_sigma_scale = 0.1,
-  err_proc_iid_sigma_scale = 0.1,
+  err_proc_acor_sigma_scale = 1,
   
   # vector of hyperparameters to include as MCMC data
   params_in,
