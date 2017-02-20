@@ -1,10 +1,18 @@
+# 0.9.48
+
+* Extend filtering with `required_timestep` to metab_bayes
+
+# 0.9.47
+
+* Bug fix in use of `required_timestep` in `mm_is_valid_day`
+
 # 0.9.46
 
 * Removed the warning discouraging setting params_out within specs()
 
 # 0.9.45
 
-* Bayesian specs defaults now reflect a little more of the literature and our
+* Bayesian specs defaults now reflect a little more of the literature and our 
 experience modeling metabolism
 
 # 0.9.44

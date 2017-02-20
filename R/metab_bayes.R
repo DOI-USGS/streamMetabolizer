@@ -188,7 +188,8 @@ metab_bayes <- function(
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
       filtered <- mm_filter_valid_days(
-        data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+        data, data_daily, day_start=specs$day_start, day_end=specs$day_end,
+        day_tests=specs$day_tests, required_timestep=specs$required_timestep)
       if(length(unique(filtered$data$date)) > 1 && (specs$day_end - specs$day_start) > 24) 
         warning("multi-day models should probably have day_end - day_start <= 24 hours")
       bayes_all_list <- bayes_allply(
