@@ -104,7 +104,7 @@ mm_is_valid_day <- function(
     if(length(required_timestep) != 1 || !is.numeric(required_timestep)) {
       stop('expecting required_timestep as single numeric value (or NA)')
     }
-    if(!isTRUE(all.equal(timestep.days - required_timestep, tolerance=0.002*required_timestep))) {
+    if(!isTRUE(all.equal(timestep.days, required_timestep, tolerance=0.002*required_timestep))) {
       stop_strs <- c(stop_strs, sprintf("timestep != %0.08f d", required_timestep))
     }
   }
