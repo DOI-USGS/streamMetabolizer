@@ -380,7 +380,7 @@ bayes_allply <- function(
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
   } else {
-    # match dates back to daily estiamtes, datetimes back to inst
+    # match dates back to daily estimates, datetimes back to inst
     index <- '.dplyr.var'
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
       stop_strs <- c(stop_strs, "couldn't match dates to date indices")
