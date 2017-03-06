@@ -188,7 +188,8 @@ metab_bayes <- function(
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
       filtered <- mm_filter_valid_days(
-        data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+        data, data_daily, day_start=specs$day_start, day_end=specs$day_end,
+        day_tests=specs$day_tests, required_timestep=specs$required_timestep)
       if(length(unique(filtered$data$date)) > 1 && (specs$day_end - specs$day_start) > 24) 
         warning("multi-day models should probably have day_end - day_start <= 24 hours")
       bayes_all_list <- bayes_allply(
@@ -379,7 +380,7 @@ bayes_allply <- function(
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
   } else {
-    # match dates back to daily estiamtes, datetimes back to inst
+    # match dates back to daily estimates, datetimes back to inst
     index <- '.dplyr.var'
     if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
       stop_strs <- c(stop_strs, "couldn't match dates to date indices")
