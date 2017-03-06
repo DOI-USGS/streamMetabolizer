@@ -274,7 +274,7 @@ bayes_1ply <- function(
         data_list <- prepdata_bayes(
           data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
           specs=specs, engine=specs$engine, model_name=specs$model_name)
-        do.call(mcmc_bayes, c(list(data_list=data_list), specs))
+        do.call(runstan_bayes, c(list(data_list=data_list), specs))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -286,7 +286,7 @@ bayes_1ply <- function(
       })
   } 
 
-  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
     bayes_1day <- data.frame(GPP_daily_2.5pct=NA, GPP_daily_50pct=NA, GPP_daily_97.5pct=NA,
@@ -353,7 +353,7 @@ bayes_allply <- function(
         data=data_all, data_daily=data_daily_all, ply_date=NA,
         specs=specs, engine=specs$engine, model_name=specs$model_name)
       specs$keep_mcmc <- specs$keep_mcmcs
-      do.call(mcmc_bayes, c(list(data_list=data_list), specs))
+      do.call(runstan_bayes, c(list(data_list=data_list), specs))
     }, error=function(err) {
       # on error: give up, remembering error. dummy values provided below
       stop_strs <<- c(stop_strs, err$message)
@@ -368,7 +368,7 @@ bayes_allply <- function(
   date_vec <- unique(data_all$date)
   datetime_vec <- data_all$solar.time
   
-  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
     na_vec <- rep(as.numeric(NA), length(date_vec))
@@ -556,10 +556,9 @@ prepdata_bayes <- function(
   data_list
 }
 
-#' Run an MCMC simulation on a formatted data ply
+#' Run Stan on a formatted data ply
 #' 
 #' @param data_list a formatted list of inputs to the Stan model
-#' @param engine character string indicating which software to use
 #' @param model_path the Stan model file to use, as a full file path
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
@@ -575,33 +574,21 @@ prepdata_bayes <- function(
 #'   means save all steps.
 #' @param verbose logical. give status messages?
 #' @param ... ignored arguments
-#' @return a data.frame of outputs
-#' @import parallel
-#' @keywords internal
-mcmc_bayes <- function(data_list, engine='stan', model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
-  engine <- match.arg(engine)
-  bayes_function <- switch(engine, stan = runstan_bayes)
-  
-  tot_cores <- detectCores()
-  if (!is.finite(tot_cores)) { tot_cores <- 1 } 
-  n_cores <- min(tot_cores, n_cores)
-  if(verbose) message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
-  
-  bayes_function(
-    data_list=data_list, model_path=model_path, params_out=params_out, split_dates=split_dates, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
-    burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
-}
-
-#' Run Stan on a formatted data ply
-#' 
-#' @inheritParams mcmc_bayes
-#' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import parallel
 #' @import dplyr
 #' @import tibble
 #' @importFrom tidyr gather spread
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(
+  data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, 
+  n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, 
+  verbose=FALSE, ...) {
+  
+  # determine how many cores to use
+  tot_cores <- detectCores()
+  if (!is.finite(tot_cores)) { tot_cores <- 1 } 
+  n_cores <- min(tot_cores, n_cores)
+  if(verbose) message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
   
   # stan() can't find its own function cpp_object_initializer() unless the 
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
@@ -686,7 +673,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # for multi-day or unsplit models, format output into a list of data.frames,
     # one per unique number of nodes sharing a variable name
     stan_mat <- rstan::summary(runstan_out)$summary
-    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, keep_mcmc, runstan_out)
+    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, model_name, keep_mcmc, runstan_out)
   } 
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model

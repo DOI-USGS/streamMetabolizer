@@ -34,7 +34,7 @@ means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
-\item{...}{args passed to other runxx_bayes functions but ignored here}
+\item{...}{ignored arguments}
 }
 \description{
 Run Stan on a formatted data ply
