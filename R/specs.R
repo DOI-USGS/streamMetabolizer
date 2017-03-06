@@ -565,11 +565,12 @@ specs <- function(
       }
       
       # check for errors/inconsistencies
-      model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
-      if(!file.exists(model_path)) 
-        model_path <- model_name
-      if(!file.exists(model_path)) 
-        warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
+      model_path <- tryCatch(
+        mm_locate_filename(model_name), 
+        error=function(e) {
+          warning(e)
+          return(model_name)
+        })
       if(features$engine == "NA") 
         stop('engine must be specified for Bayesian models')
       
