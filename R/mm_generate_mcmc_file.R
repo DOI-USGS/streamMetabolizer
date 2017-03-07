@@ -581,19 +581,19 @@ mm_generate_mcmc_file <- function(
     'generated quantities {',
     
     chunk(
-      if(err_obs_iid) 'vector[d] err_obs_iid[n-1];',
-      if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
+      if(err_obs_iid) 'vector[d] err_obs_iid[n];',
+      if(err_proc_iid) 'vector[d] err_proc_iid[n];',
       'vector[d] GPP;',
       'vector[d] ER;',
       '',
       if(err_obs_iid || err_proc_iid) c(
-        'for(i in 1:(n-1)) {',
+        'for(i in 1:n) {',
         indent(
           if(err_obs_iid) 
-            s('err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1]'),
+            s('err_obs_iid[i] = DO_mod[i] - DO_obs[i]'),
           if(err_proc_iid) 
-            s('err_proc_iid[i] = (DO_mod_partial[i+1] - ', if(!err_obs_iid) 'DO_obs[i+1]' else 'DO_mod[i+1]', 
-              ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i+1])')
+            s('err_proc_iid[i] = (DO_mod_partial[i] - ', if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', 
+              ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i])')
         ),
         p('}')
       ),
