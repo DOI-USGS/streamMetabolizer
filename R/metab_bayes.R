@@ -369,15 +369,20 @@ bayes_allply <- function(
     })
 
   # match date and time info to indices
-  date_vec <- data_frame(date=as.Date(unique(data_all$date)), date_index=seq_len(data_list$d))
-  datetime_vec <- data_frame(solar.time=data_all$solar.time, time_index=rep(seq_len(data_list$n), each=data_list$d))
+  date_df <- data_frame(
+    date=as.Date(unique(data_all$date)),
+    date_index=seq_len(data_list$d))
+  datetime_df <- data_frame(
+    solar.time=data_all$solar.time,
+    date_index=rep(seq_len(data_list$d), each=data_list$n),
+    time_index=rep(seq_len(data_list$n), times=data_list$d))
   
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
-    na_vec <- rep(as.numeric(NA), nrow(date_vec))
+    na_vec <- rep(as.numeric(NA), nrow(date_df))
     bayes_allday <- c(
-      list(daily=data.frame(date=date_vec$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
+      list(daily=data.frame(date=date_df$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
                             ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
                             K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) {
@@ -386,9 +391,15 @@ bayes_allply <- function(
   } else {
     # match dates back to daily estimates, datetimes back to inst
     index <- '.dplyr.var'
-    bayes_allday$daily <- bayes_allday$daily %>% left_join(date_vec, by='date_index') %>% select(-date_index, -time_index, -index) %>% select(date, everything())
+    bayes_allday$daily <- bayes_allday$daily %>% 
+      left_join(date_df, by='date_index') %>% 
+      select(-date_index, -time_index, -index) %>% 
+      select(date, everything())
     if(!is.null(bayes_allday$inst)) {
-      bayes_allday$inst <- bayes_allday$inst %>% left_join(datetime_vec, by='time_index') %>% select(-date_index, -time_index, -index) %>% select(solar.time, everything())
+      bayes_allday$inst <- bayes_allday$inst %>% 
+        left_join(datetime_df, by=c('date_index','time_index')) %>% 
+        select(-date_index, -time_index, -index) %>% 
+        select(solar.time, everything())
     }
   }
 
