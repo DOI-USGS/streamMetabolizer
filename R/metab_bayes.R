@@ -364,16 +364,16 @@ bayes_allply <- function(
       invokeRestart("muffleWarning")
     })
 
-  # match dates back to daily estimates, datetimes back to inst
-  date_vec <- unique(data_all$date)
-  datetime_vec <- data_all$solar.time
+  # match date and time info to indices
+  date_vec <- data_frame(date=as.Date(unique(data_all$date)), date_index=seq_len(data_list$d))
+  datetime_vec <- data_frame(solar.time=data_all$solar.time, time_index=rep(seq_len(data_list$n), each=data_list$d))
   
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
-    na_vec <- rep(as.numeric(NA), length(date_vec))
+    na_vec <- rep(as.numeric(NA), nrow(date_vec))
     bayes_allday <- c(
-      list(daily=data.frame(date=date_vec, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
+      list(daily=data.frame(date=date_vec$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
                             ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
                             K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) {
@@ -382,13 +382,9 @@ bayes_allply <- function(
   } else {
     # match dates back to daily estimates, datetimes back to inst
     index <- '.dplyr.var'
-    if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
-      stop_strs <- c(stop_strs, "couldn't match dates to date indices")
-    bayes_allday$daily <- bayes_allday$daily %>% rename(date=index) %>% mutate(date=date_vec)
+    bayes_allday$daily <- bayes_allday$daily %>% left_join(date_vec, by='date_index') %>% select(-date_index, -time_index, -index) %>% select(date, everything())
     if(!is.null(bayes_allday$inst)) {
-      if(length(datetime_vec) != data_list$n || length(datetime_vec) != nrow(bayes_allday$inst))
-        stop_strs <- c(stop_strs, "couldn't match solar.times to datetime indices")
-      bayes_allday$inst <- bayes_allday$inst %>% rename(solar.time=index) %>% mutate(solar.time=datetime_vec)
+      bayes_allday$inst <- bayes_allday$inst %>% left_join(datetime_vec, by='time_index') %>% select(-date_index, -time_index, -index) %>% select(solar.time, everything())
     }
   }
 
@@ -560,6 +556,8 @@ prepdata_bayes <- function(
 #' 
 #' @param data_list a formatted list of inputs to the Stan model
 #' @param model_path the Stan model file to use, as a full file path
+#' @param model_name the coded model name, as from mm_name, giving the model
+#'   structure
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
 #' @param keep_mcmc logical. If TRUE, the Stan output object will be saved. Be 
@@ -580,7 +578,7 @@ prepdata_bayes <- function(
 #' @importFrom tidyr gather spread
 #' @keywords internal
 runstan_bayes <- function(
-  data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, 
+  data_list, model_path, model_name, params_out, split_dates, keep_mcmc=FALSE, 
   n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, 
   verbose=FALSE, ...) {
   
@@ -720,34 +718,97 @@ format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc
 #' @param mcmc_mat matrix as extracted from Stan
 #' @import dplyr
 #' @keywords internal
-format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcmc, runmcmc_out) {
+format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_name, keep_mcmc, runmcmc_out) {
   stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
   
-  colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
+  # assign parameters to appropriately sized data.frames. list every anticipated
+  # parameter here, but also catch other parameters below (for custom models, or
+  # unusual parameters like err_proc_iid_sigma_scaled). pull the list (manually)
+  # from the parameters block of mm_generate_mcmc_file. it's only important to
+  # distinguish among model types when the resulting dimensions differ between
+  # types and would imply conflicting ideas for nrows of the named data.frame
+  features <- mm_parse_name(model_name, expand=TRUE)
+  par_homes <- list(
+    overall = c(
+      'err_obs_iid_sigma', 'err_obs_iid_sigma_scaled',
+      'err_proc_iid_sigma', 'err_proc_iid_sigma_scaled',
+      'err_proc_acor_phi', 'err_proc_acor_sigma_scaled',
+      'lp__'),
+    KQ_overall = c( # n=1
+      switch(
+        features$pool_K600_type,
+        none=c(),
+        normal=c('K600_daily_predlog'),
+        linear=c('lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
+        binned=c()),
+      'K600_daily_sdlog', 'K600_daily_sdlog_scaled', 'K600_daily_sigma', 'K600_daily_sigma_scaled'),
+    KQ_binned = c( # n=few to many
+      'lnK600_lnQ_nodes'),
+    daily = c(
+      'GPP', 'ER',
+      'GPP_daily', 'ER_daily', 'K600_daily', 
+      if(features$pool_K600_type %in% c('linear','binned')) 'K600_daily_predlog'),
+    inst = c(
+      'DO_mod', 'DO_mod_partial', # d*n
+      'DO_mod_partial_sigma', # d*n
+      'GPP_inst', 'ER_inst', 'KO2_inst', # d*n
+      'err_proc_acor_inc', 'err_proc_acor', # can be d*n (trapezoid) or d*(n-1) (euler), same timestamp indexing as GPP_inst
+      'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i]
+    )
+  )
   
-  # determine how many unique nrows, & therefore data.frames, there should be
+  # determine which data.frames to create and which params to include in each
   var_table <- table(gsub("\\[[[:digit:]|,]+\\]", "", rownames(mcmc_mat)))
-  all_dims <- unique(var_table) %>% setNames(., .)
-  names(all_dims)[all_dims == 1] <- "overall"
-  names(all_dims)[all_dims == data_list_n] <- "inst" # overrides 'overall' if d==1. that's OK
-  names(all_dims)[all_dims == data_list_d] <- "daily" # overrides 'overall' if d==1. that's OK
+  par_dfs <- sapply(names(var_table), function(parname) {
+    home <- names(par_homes)[which(sapply(par_homes, function(vd) parname %in% vd))]
+    if(length(home) == 0) home <- var_table[[parname]]
+    return(home)
+  })
+  all_dims <- lapply(setNames(nm=unique(par_dfs)), function(upd) names(par_dfs)[which(par_dfs == upd)])
   
   # for each unique nrows, create the data.frame with vars in columns and indices in rows
-  mcmc_out <- lapply(all_dims, function(odim) {
-    dim_params <- names(var_table[which(var_table == odim)])
-    dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat)))))
-    row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1])))
+  colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
+  mcmc_out <- lapply(setNames(nm=names(all_dims)), function(dfname) {
+    df_params <- all_dims[[dfname]]
+    dim_rows <- sort(do.call(c, lapply(df_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat)))))
+    row_order <- names(sort(sapply(df_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1]))) # use the same order as mcmc_mat
     varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
+    par_dims <- sapply(df_params, function(dp) length(grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))))
+    index_level_rows <- grep(paste0("^", names(par_dims)[match(max(par_dims), par_dims)], "(\\[|$)"), rownames(mcmc_mat))
     
     as_data_frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
       mutate(rowname=rownames(mcmc_mat[dim_rows,,drop=FALSE])) %>%
       select(rowname, everything()) %>%
       gather(stat, value=val, 2:ncol(.)) %>%
       mutate(variable=gsub("\\[[[:digit:]|,]+\\]", "", rowname),
-             index=if(odim == 1) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
-             index=ordered(index, levels=index[seq_len(odim)]),
+             indexstr=if(1 %in% par_dims) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+             # parse/factorify the index for ordering
+             index=
+               if(dfname %in% c('daily','inst')) {
+                 NA 
+               } else if(any(grepl(',', indexstr))) {
+                 ordered(indexstr, levels=indexstr[index_level_rows])
+               } else {
+                 as.numeric(indexstr)
+               },
+             date_index=
+               if(dfname=='daily') {
+                 as.numeric(indexstr)
+               } else if(dfname=='inst') {
+                 sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[2]))
+               } else {
+                 NA
+               },
+             time_index=
+               if(dfname=='inst') {
+                 sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[1]))
+               } else {
+                 NA
+               },
+             # determine the order of statistics for each variable (mean, se_mean, etc.)
              varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
-      select(index, varstat, val) %>%
+      select(date_index, time_index, index, varstat, val) %>%
+      arrange(date_index, time_index, index) %>%
       spread(varstat, val)
   })
   
