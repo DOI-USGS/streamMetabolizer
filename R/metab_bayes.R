@@ -229,7 +229,11 @@ metab_bayes <- function(
   if(success) {
     mm@data <- predict_DO(mm)
   } else {
-    warning(paste0('Modeling failed: ', paste0(bayes_all$errors, collapse='\n')))
+      warntxt <- paste0(
+        'Modeling failed\n',
+        if(length(bayes_all$warnings) > 0) paste0('  Warnings:\n', paste0('    ', bayes_all$warnings, collapse='\n')),
+        if(length(bayes_all$errors) > 0) paste0('  Errors:\n', paste0('    ', bayes_all$errors, collapse='\n')))
+      warning(warntxt)
   }
   
   # Return
