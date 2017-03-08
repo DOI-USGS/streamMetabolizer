@@ -276,8 +276,7 @@ bayes_1ply <- function(
       tryCatch({
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
-          data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
-          specs=specs, engine=specs$engine, model_name=specs$model_name)
+          data=data_ply, data_daily=data_daily_ply, ply_date=ply_date, specs=specs)
         do.call(runstan_bayes, c(list(data_list=data_list), specs))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
@@ -293,9 +292,10 @@ bayes_1ply <- function(
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
-    bayes_1day <- data.frame(GPP_daily_2.5pct=NA, GPP_daily_50pct=NA, GPP_daily_97.5pct=NA,
-                             ER_daily_2.5pct=NA, ER_daily_50pct=NA, ER_daily_97.5pct=NA, 
-                             K600_daily_2.5pct=NA, K600_daily_50pct=NA, K600_daily_97.5pct=NA)
+    bayes_1day <- data.frame(
+      GPP_daily_2.5pct=NA, GPP_daily_50pct=NA, GPP_daily_97.5pct=NA,
+      ER_daily_2.5pct=NA, ER_daily_50pct=NA, ER_daily_97.5pct=NA, 
+      K600_daily_2.5pct=NA, K600_daily_50pct=NA, K600_daily_97.5pct=NA)
   }
   
   # package the results, data, warnings, and errors
@@ -354,8 +354,7 @@ bayes_allply <- function(
       if(is.null(data_all) || nrow(data_all) == 0) stop("no valid days of data")
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
-        data=data_all, data_daily=data_daily_all, ply_date=NA,
-        specs=specs, engine=specs$engine, model_name=specs$model_name)
+        data=data_all, data_daily=data_daily_all, ply_date=NA, specs=specs)
       specs$keep_mcmc <- specs$keep_mcmcs
       do.call(runstan_bayes, c(list(data_list=data_list), specs))
     }, error=function(err) {
@@ -382,15 +381,16 @@ bayes_allply <- function(
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
     na_vec <- rep(as.numeric(NA), nrow(date_df))
     bayes_allday <- c(
-      list(daily=data.frame(date=date_df$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
-                            ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
-                            K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
+      list(daily=data.frame(
+        date=date_df$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
+        ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
+        K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) {
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
   } else {
     # match dates back to daily estimates, datetimes back to inst
-    index <- '.dplyr.var'
+    date_index <- time_index <- index <- '.dplyr.var'
     bayes_allday$daily <- bayes_allday$daily %>% 
       left_join(date_df, by='date_index') %>% 
       select(-date_index, -time_index, -index) %>% 
@@ -448,14 +448,12 @@ bayes_allply <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams metab
-#' @inheritParams specs
 #' @return list of data for input to runstan_bayes
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
   data, data_daily, ply_date=NA, # inheritParams mm_model_by_ply_prototype
-  specs, # inheritParams metab (for hierarchical priors)
-  engine, model_name #inheritParams specs
+  specs # inheritParams metab (for hierarchical priors, model_name)
 ) {
   
   # remove units if present
@@ -503,7 +501,7 @@ prepdata_bayes <- function(
   if(n24 > num_daily_obs) stop("day_end - day_start < 24 hours; aborting because daily metabolism could be wrong")
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(model_name, expand=TRUE)
+  features <- mm_parse_name(specs$model_name, expand=TRUE)
   
   # Format the data for Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -535,7 +533,7 @@ prepdata_bayes <- function(
       # Every timestep
       frac_GPP = {
         mat_light <- time_by_date_matrix(data$light)
-        if(isTRUE(mm_parse_name(model_name)$GPP_fun == 'linlight')) {
+        if(isTRUE(features$GPP_fun == 'linlight')) {
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
           sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
@@ -601,7 +599,7 @@ runstan_bayes <- function(
   tot_cores <- detectCores()
   if (!is.finite(tot_cores)) { tot_cores <- 1 } 
   n_cores <- min(tot_cores, n_cores)
-  if(verbose) message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
+  if(verbose) message(paste0("MCMC (","Stan","): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
   
   # stan() can't find its own function cpp_object_initializer() unless the 
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
@@ -734,7 +732,6 @@ format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc
 #' @import dplyr
 #' @keywords internal
 format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_name, keep_mcmc, runmcmc_out) {
-  stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
   
   # assign parameters to appropriately sized data.frames. list every anticipated
   # parameter here, but also catch other parameters below (for custom models, or
@@ -771,6 +768,10 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
       'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i]
     )
   )
+  
+  # declare dplyr variables
+  stat <- val <- . <- rowname <- variable <- varstat <- 
+    indexstr <- date_index <- time_index <- index <- '.dplyr_var'
   
   # determine which data.frames to create and which params to include in each
   var_table <- table(gsub("\\[[[:digit:]|,]+\\]", "", rownames(mcmc_mat)))
