@@ -314,7 +314,7 @@ mm_generate_mcmc_file <- function(
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
-
+      
       # instantaneous GPP, ER, and KO2. the nth value isn't used to calculate DO
       # when ode_method=euler, but it's always used to calculate GPP and ER
       c('vector[d] GPP_inst[n];',
@@ -329,7 +329,7 @@ mm_generate_mcmc_file <- function(
       if(err_proc_acor)
         sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
     ),
-
+    
     # pooling parameters
     if(pool_K600_sd == 'fitted') chunk(
       comment('Rescale pooling distribution parameter'),
@@ -393,7 +393,7 @@ mm_generate_mcmc_file <- function(
         s('  err_proc_acor[i] = err_proc_acor_phi * err_proc_acor[i-1] + err_proc_acor_inc[i]'),
         p('}')
       ),
-
+      
       # individual processes
       c(
         p(''),
@@ -412,11 +412,18 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("DO model"),
-        if(!err_proc_iid)
+        if(err_obs_iid && !err_proc_iid) c(
+          # applies to oi models. pi models don't have DO_mod, and oipi models 
+          # have DO_mod as a parameter rather than a transformed parameter. not
+          # sure about models that include pc
           s('DO_mod[1] = DO_obs_1')
-        else if(err_proc_iid && !err_obs_iid && deficit_src=='DO_mod') c(
-          # pi_km and pcpi_km models are the only ones where we need
-          # DO_mod_partial[1]; others start with [2] or don't use DO_mod_partial
+        ),
+        if(err_proc_iid) c(
+          # DO_mod_partial[1] is only strictly needed if(err_proc_iid && 
+          # !err_obs_iid && deficit_src=='DO_mod'). oipi_anything, pi_ko, and 
+          # pcpi_ko models start with DO_mod_partial[2], and !pi models don't 
+          # use DO_mod_partial at all. But if you request it in params_out then 
+          # DO_mod_partial[1] must be defined, so we'll define it for all pis
           s('DO_mod_partial[1] = DO_obs_1'),
           s('DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1]')
         ),
@@ -498,21 +505,26 @@ mm_generate_mcmc_file <- function(
     'model {',
     
     if(err_proc_iid || err_proc_acor) chunk(
-      comment('Process error'),
-      p('for(i in 2:n) {'),
-      indent(
-        if(err_proc_iid) c(
-          comment('Independent, identically distributed process error'),
+      if(err_proc_iid) c(
+        comment('Independent, identically distributed process error'),
+        # using 1:n rather than 2:n for all pi or pc models because sometimes this
+        # is the only direct constraint on DO_mod[1] (e.g., for oipi_plrcko)
+        p('for(i in 1:n) {'),
+        indent(
           s(if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', ' ~ ', 
             f('normal', mu='DO_mod_partial[i]', sigma='DO_mod_partial_sigma[i]')
           )
         ),
-        if(err_proc_acor) c(
-          comment('Autocorrelated process error'),
-          s('err_proc_acor_inc[i-1] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
-        )
+        p('}')
       ),
-      p('}'),
+      if(err_proc_acor) c(
+        comment('Autocorrelated process error'),
+        p('for(i in 1:n) {'),
+        indent(
+          s('err_proc_acor_inc[i-1] ~ ', f('normal', mu='0', sigma='err_proc_acor_sigma'))
+        ),
+        p('}')
+      ),
       if(err_proc_iid) c(
         comment('SD (sigma) of the IID process errors'),
         s('err_proc_iid_sigma_scaled ~ ', f('halfcauchy', scale='1'))),
@@ -524,8 +536,10 @@ mm_generate_mcmc_file <- function(
     
     if(err_obs_iid) chunk(
       comment('Independent, identically distributed observation error'),
-      #s('DO_mod[1] ~ normal(DO_obs_1, err_obs_iid_sigma)'),
-      p('for(i in 2:n) {'),
+      if(err_obs_iid && err_proc_iid)
+        p('for(i in 1:n) {') # only works for state-space models because these have DO_mod as param, not trans param
+      else
+        p('for(i in 2:n) {'),
       indent(
         s('DO_obs[i] ~ ', f('normal', mu=p('DO_mod[i]'), sigma='err_obs_iid_sigma'))
       ),
@@ -581,21 +595,30 @@ mm_generate_mcmc_file <- function(
     'generated quantities {',
     
     chunk(
-      if(err_obs_iid) 'vector[d] err_obs_iid[n-1];',
+      if(err_obs_iid) 'vector[d] err_obs_iid[n];',
       if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
       'vector[d] GPP;',
       'vector[d] ER;',
       '',
       if(err_obs_iid || err_proc_iid) c(
-        'for(i in 1:(n-1)) {',
-        indent(
-          if(err_obs_iid) 
-            s('err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1]'),
-          if(err_proc_iid) 
-            s('err_proc_iid[i] = (DO_mod_partial[i+1] - ', if(!err_obs_iid) 'DO_obs[i+1]' else 'DO_mod[i+1]', 
-              ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i+1])')
+        if(err_obs_iid) c(
+          'for(i in 1:n) {',
+          indent(
+            s('err_obs_iid[i] = DO_mod[i] - DO_obs[i]')
+          ),
+          p('}')
         ),
-        p('}')
+        if(err_proc_iid) c(
+          # err_proc_iid[t] describes errors in estimates of GPP_inst[t], 
+          # ER_inst[t], etc. (and also GPP_inst[t+1], etc. if trapezoid).
+          # Process error at time t is reflected in DO_mod_partial[t+1]
+          'for(i in 2:n) {',
+          indent(
+            s('err_proc_iid[i-1] = (DO_mod_partial[i] - ', if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', 
+              ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i])')
+          ),
+          p('}')
+        )
       ),
       'for(j in 1:d) {',
       indent(

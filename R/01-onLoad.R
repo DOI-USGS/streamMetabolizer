@@ -58,6 +58,7 @@ library(methods)
 #' Define a package environment for storing data specific to a project during an
 #' R session
 #' 
+#' @importFrom unitted u
 #' @return the package environment
 #' @keywords internal
 define_pkg_env <- function() {

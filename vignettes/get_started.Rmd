@@ -62,13 +62,11 @@ If you plan to use Bayesian models, you will need an up-to-date installation of 
 ## Load the input data
 
 Load the R libraries that will be used.
-```{r libs, warning=FALSE}
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(tidyr)
-  library(ggplot2)
-  library(streamMetabolizer)
-})
+```{r libs, warning=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(streamMetabolizer)
 ```
 
 Load a moderately-sized example dataset from the package (data are from French

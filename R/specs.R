@@ -233,7 +233,7 @@
 #'   model that requires different hyperparameters.
 #'   
 #' @inheritParams prepdata_bayes
-#' @inheritParams mcmc_bayes
+#' @inheritParams runstan_bayes
 #'   
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
@@ -399,7 +399,7 @@ specs <- function(
   # vector of hyperparameters to include as MCMC data
   params_in,
   
-  # inheritParams mcmc_bayes
+  # inheritParams runstan_bayes
   params_out,
   n_chains = 4,
   n_cores = 4,
@@ -527,7 +527,7 @@ specs <- function(
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
         
-        # inheritParams mcmc_bayes
+        # inheritParams runstan_bayes
         'params_out', 'n_chains', 'n_cores', 
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
@@ -565,11 +565,12 @@ specs <- function(
       }
       
       # check for errors/inconsistencies
-      model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
-      if(!file.exists(model_path)) 
-        model_path <- model_name
-      if(!file.exists(model_path)) 
-        warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
+      model_path <- tryCatch(
+        mm_locate_filename(model_name), 
+        error=function(e) {
+          warning(e)
+          return(model_name)
+        })
       if(features$engine == "NA") 
         stop('engine must be specified for Bayesian models')
       

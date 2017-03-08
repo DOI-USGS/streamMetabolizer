@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alison Appling and Bob Hall" />
 
-<meta name="date" content="2016-10-03" />
+<meta name="date" content="2017-03-07" />
 
 <title>Data Preparation</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Data Preparation</h1>
 <h4 class="author"><em>Alison Appling and Bob Hall</em></h4>
-<h4 class="date"><em>2016-10-03</em></h4>
+<h4 class="date"><em>2017-03-07</em></h4>
 
 
 
@@ -95,11 +95,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="starting-with-text-timestamps" class="section level3">
 <h3>Starting with text timestamps</h3>
-<p>If you have datetimes stored as text timestamps in UTC:</p>
+<p>If you have datetimes stored as text timestamps in UTC, you can bypass the conversion to local time and back to UTC:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">text.time &lt;-<span class="st"> '2016-08-22 12:00:00'</span>
 (posix.time.utc &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(text.time, <span class="dt">tz=</span><span class="st">'UTC'</span>))</code></pre></div>
 <pre><code>## [1] &quot;2016-08-22 12:00:00 UTC&quot;</code></pre>
-<p>If you have datetimes stored as text timestamps in EST/EDT (no daylight savings):</p>
+<p>If you have datetimes stored as text timestamps in EST/EDT (with daylight savings):</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">text.time &lt;-<span class="st"> '2016-08-22 12:00:00'</span>
 (posix.time.localtz &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(text.time, <span class="dt">format=</span><span class="st">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, <span class="dt">tz=</span><span class="st">'America/New_York'</span>))</code></pre></div>
 <pre><code>## [1] &quot;2016-08-22 12:00:00 EDT&quot;</code></pre>
@@ -108,6 +108,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 (posix.time.localtz &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(text.time, <span class="dt">format=</span><span class="st">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, <span class="dt">tz=</span><span class="st">'Etc/GMT+5'</span>))</code></pre></div>
 <pre><code>## [1] &quot;2016-08-22 12:00:00 GMT+5&quot;</code></pre>
 <p>See <a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones" class="uri">https://en.wikipedia.org/wiki/List_of_tz_database_time_zones</a> for a list of timezone names.</p>
+</div>
+<div id="starting-with-chron-datetimes" class="section level3">
+<h3>Starting with <code>chron</code> datetimes</h3>
+<p>If you have datetimes stored in the <code>chron</code> time format in EST (no daylight savings):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">chron.time &lt;-<span class="st"> </span>chron::<span class="kw">chron</span>(<span class="st">'08/22/16'</span>, <span class="st">'12:00:00'</span>)
+time.format &lt;-<span class="st"> &quot;%Y-%m-%d %H:%M:%S&quot;</span>
+text.time &lt;-<span class="st"> </span><span class="kw">format</span>(chron.time, time.format) <span class="co"># direct as.POSIXct time works poorly</span>
+(posix.time.localtz &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(text.time, <span class="dt">format=</span>time.format, <span class="dt">tz=</span><span class="st">'Etc/GMT+5'</span>))</code></pre></div>
+<pre><code>## [1] &quot;2016-08-22 12:00:00 GMT+5&quot;</code></pre>
 </div>
 </div>
 <div id="step-2-solar-time" class="section level2">

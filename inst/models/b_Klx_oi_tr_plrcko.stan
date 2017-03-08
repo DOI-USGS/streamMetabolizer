@@ -108,12 +108,12 @@ model {
   
 }
 generated quantities {
-  vector[d] err_obs_iid[n-1];
+  vector[d] err_obs_iid[n];
   vector[d] GPP;
   vector[d] ER;
   
-  for(i in 1:(n-1)) {
-    err_obs_iid[i] = DO_mod[i+1] - DO_obs[i+1];
+  for(i in 1:n) {
+    err_obs_iid[i] = DO_mod[i] - DO_obs[i];
   }
   for(j in 1:d) {
     GPP[j] = sum(GPP_inst[1:n24,j]) / n24;

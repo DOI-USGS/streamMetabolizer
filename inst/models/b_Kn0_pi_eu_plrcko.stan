@@ -75,6 +75,8 @@ transformed parameters {
   }
   
   // DO model
+  DO_mod_partial[1] = DO_obs_1;
+  DO_mod_partial_sigma[1] = err_proc_iid_sigma * timestep ./ depth[1];
   for(i in 1:(n-1)) {
     DO_mod_partial[i+1] =
       DO_obs[i] + (
@@ -89,9 +91,8 @@ transformed parameters {
 }
 
 model {
-  // Process error
-  for(i in 2:n) {
-    // Independent, identically distributed process error
+  // Independent, identically distributed process error
+  for(i in 1:n) {
     DO_obs[i] ~ normal(DO_mod_partial[i], DO_mod_partial_sigma[i]);
   }
   // SD (sigma) of the IID process errors
@@ -109,8 +110,8 @@ generated quantities {
   vector[d] GPP;
   vector[d] ER;
   
-  for(i in 1:(n-1)) {
-    err_proc_iid[i] = (DO_mod_partial[i+1] - DO_obs[i+1]) .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i+1]);
+  for(i in 2:n) {
+    err_proc_iid[i-1] = (DO_mod_partial[i] - DO_obs[i]) .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i]);
   }
   for(j in 1:d) {
     GPP[j] = sum(GPP_inst[1:n24,j]) / n24;

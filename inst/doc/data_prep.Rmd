@@ -42,13 +42,13 @@ num.time <- 1471867200
 
 ### Starting with text timestamps
 
-If you have datetimes stored as text timestamps in UTC:
+If you have datetimes stored as text timestamps in UTC, you can bypass the conversion to local time and back to UTC:
 ```{r}
 text.time <- '2016-08-22 12:00:00'
 (posix.time.utc <- as.POSIXct(text.time, tz='UTC'))
 ```
 
-If you have datetimes stored as text timestamps in EST/EDT (no daylight savings):
+If you have datetimes stored as text timestamps in EST/EDT (with daylight savings):
 ```{r}
 text.time <- '2016-08-22 12:00:00'
 (posix.time.localtz <- as.POSIXct(text.time, format="%Y-%m-%d %H:%M:%S", tz='America/New_York'))
@@ -62,6 +62,16 @@ text.time <- '2016-08-22 12:00:00'
 
 See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for a list of timezone names.
 
+
+### Starting with `chron` datetimes
+
+If you have datetimes stored in the `chron` time format in EST (no daylight savings):
+```{r}
+chron.time <- chron::chron('08/22/16', '12:00:00')
+time.format <- "%Y-%m-%d %H:%M:%S"
+text.time <- format(chron.time, time.format) # direct as.POSIXct time works poorly
+(posix.time.localtz <- as.POSIXct(text.time, format=time.format, tz='Etc/GMT+5'))
+```
 ## Step 2: Solar time
 
 Now convert from local time to solar time. In `streamMetabolizer` vocabulary, 
