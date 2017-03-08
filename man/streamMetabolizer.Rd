@@ -4,6 +4,7 @@
 \name{streamMetabolizer}
 \alias{streamMetabolizer}
 \alias{streamMetabolizer-package}
+\alias{streamMetabolizer-package}
 \title{Functions for calculating ecosystem metabolism in streams}
 \description{
 This package uses inverse modeling to estimate aquatic photosynthesis and 

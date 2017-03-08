@@ -20,4 +20,3 @@ timezone name, offset, and DST offset of a site
 \examples{
 lookup_timezone(41.33, -106.3)
 }
-

@@ -15,4 +15,3 @@ angle in degrees
 \description{
 Convert radians to degrees
 }
-

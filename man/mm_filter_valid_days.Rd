@@ -6,7 +6,8 @@
 \usage{
 mm_filter_valid_days(data, data_daily = NULL, day_start = 4,
   day_end = 27.99, day_tests = c("full_day", "even_timesteps",
-  "complete_data", "pos_discharge"), timestep_days = TRUE)
+  "complete_data", "pos_discharge"), required_timestep = NA,
+  timestep_days = TRUE)
 }
 \arguments{
 \item{data}{data.frame of instantaneous observations, to be filtered to only 
@@ -34,14 +35,22 @@ data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
 \item{day_tests}{list of tests to conduct to determine whether each date 
-worth of data is valid for modeling. the results of these tests will be 
-passed to \code{model_fun} as the \code{ply_validity} argument to that 
-function.}
+worth of data is valid for modeling. The results of these tests will be
+combined with the result of the test implied if \code{required_timestep} is
+numeric and then will be passed to \code{model_fun} as the
+\code{ply_validity} argument to that function.}
+
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
+length in days that a date must have to pass the validity check (to within 
+a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
+of this test will be combined with the results of the tests listed in 
+\code{day_tests} and reported to \code{model_fun} as the 
+\code{ply_validity} argument to that function.}
 
 \item{timestep_days}{TRUE if you would like the mean timestep length to be 
-calculated for each data ply and passed to \code{model_fun} as the
-\code{timestep_days} argument to that function. Alternatively, this may be
-numeric as a specifically expected timestep length in days; for example, a
+calculated for each data ply and passed to \code{model_fun} as the 
+\code{timestep_days} argument to that function. Alternatively, this may be 
+numeric as a specifically expected timestep length in days; for example, a 
 1-hour timestep is 1/24 is 0.0416667.}
 }
 \value{
@@ -58,4 +67,3 @@ datfilt <- mm_filter_valid_days(dat)
 datfilt$removed
 c(nrow(dat), nrow(datfilt$data))
 }
-

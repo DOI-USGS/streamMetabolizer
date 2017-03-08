@@ -29,4 +29,3 @@ local site, use \code{\link[lubridate]{with_tz}} instead.
 \references{
 https://stackoverflow.com/questions/23414340/convert-to-local-time-zone-using-latitude-and-longitude
 }
-

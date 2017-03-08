@@ -36,4 +36,3 @@ Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G.
   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2-3
   (April 25, 2005): 157-72. doi:10.1016/j.ecolmodel.2004.07.027.
 }
-

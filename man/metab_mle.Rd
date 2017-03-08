@@ -5,9 +5,10 @@
 \title{Maximum likelihood metabolism model fitting function}
 \usage{
 metab_mle(specs = specs(mm_name("mle")), data = mm_data(solar.time, DO.obs,
-  DO.sat, depth, temp.water, light), data_daily = mm_data(date, K600.daily,
-  init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
-  init.K600.daily, optional = "all"), info = NULL)
+  DO.sat, depth, temp.water, light, discharge, optional = "discharge"),
+  data_daily = mm_data(date, K600.daily, init.GPP.daily, init.Pmax,
+  init.alpha, init.ER.daily, init.ER20, init.K600.daily, optional = "all"),
+  info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -34,12 +35,13 @@ within the metab_model object}
 \value{
 A metab_mle object containing the fitted model. This object can be 
   inspected with the functions in the \code{\link{metab_model_interface}}. 
-  The \code{code} column in \code{get_fit(mm)} is defined in the Value
+  The \code{code} column in \code{get_fit(mm)} is defined in the Value 
   subsection of \code{?nlm}.
 }
 \description{
 Uses maximum likelihood to fit a model to estimate GPP and ER from input data
-on DO, temperature, light, etc.
+on DO, temperature, light, etc. Discharge is only used, if at all, to
+identify and exclude days with any negative discharge.
 }
 \examples{
 dat <- data_metab('3','30')
@@ -68,4 +70,3 @@ Other metab_model: \code{\link{metab_Kmodel}},
   \code{\link{metab_bayes}}, \code{\link{metab_night}},
   \code{\link{metab_sim}}
 }
-

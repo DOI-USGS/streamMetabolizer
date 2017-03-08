@@ -48,4 +48,3 @@ Generates a new model of class metab_model (\code{\link{metab_model-class}}).
 metab_model() 
 metab_model("metab_mle", fit=1:5, specs=list(length=5))
 }
-

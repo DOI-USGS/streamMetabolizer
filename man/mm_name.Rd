@@ -208,4 +208,3 @@ mm_name('bayes', pool_K600='binned')
 \seealso{
 The converse of this function is \code{\link{mm_parse_name}}.
 }
-

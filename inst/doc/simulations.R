@@ -110,7 +110,7 @@ get_params(mm)
 sp <- specs(mm_name('sim', pool_K600='binned', ER_fun='q10temp'), sim_seed=6332)
 
 ## -------------------------------------------------------------------------------------------------
-mm <- metab(revise(sp, K600_daily=function(n, lnK600_daily_predlog, ...) pmax(0, rnorm(n, exp(lnK600_daily_predlog), 0.4))), dat20)
+mm <- metab(revise(sp, K600_daily=function(n, K600_daily_predlog, ...) pmax(0, rnorm(n, exp(K600_daily_predlog), 0.4))), dat20)
 pars <- get_params(mm)
 pars
 
@@ -120,8 +120,8 @@ attr(pars, 'K600_eqn')
 ## -------------------------------------------------------------------------------------------------
 library(ggplot2)
 KQ <- as.data.frame(attr(pars, 'K600_eqn')[c('K600_lnQ_nodes_centers', 'lnK600_lnQ_nodes')])
-Kpred <- mutate(select(pars, date, discharge.daily, K600.daily), lnK600_daily_predlog=attr(pars, 'K600_eqn')$lnK600_daily_predlog)
+Kpred <- mutate(select(pars, date, discharge.daily, K600.daily), K600_daily_predlog=attr(pars, 'K600_eqn')$K600_daily_predlog)
 ggplot(KQ, aes(x=K600_lnQ_nodes_centers, y=lnK600_lnQ_nodes)) + geom_line(color='blue') + geom_point(color='blue') + 
-  geom_point(data=Kpred, aes(x=log(discharge.daily), y=lnK600_daily_predlog), color='purple') +
+  geom_point(data=Kpred, aes(x=log(discharge.daily), y=K600_daily_predlog), color='purple') +
   geom_point(data=Kpred, aes(x=log(discharge.daily), y=log(K600.daily)), color='red')
 

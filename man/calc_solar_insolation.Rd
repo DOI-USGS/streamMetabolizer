@@ -47,4 +47,3 @@ ggplot(insdf, aes(color=date, y=ins, x=hour)) +
   ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 }
 }
-

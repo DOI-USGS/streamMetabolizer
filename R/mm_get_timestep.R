@@ -37,14 +37,15 @@
 #' }
 #' @export
 mm_get_timestep <- function(datetimes, format=c('mean','unique','modal'), require_unique=FALSE, tol=60/(24*60*60)) {
+  if(length(datetimes) < 2) {
+    if(require_unique) stop('!=1 unique timestep') else return(NA)
+  }
   timesteps <- as.numeric(diff(v(datetimes)), units="days")
   timestep <- switch(
     match.arg(format),
     mean = {
       if(require_unique == TRUE)
         mm_get_timestep(datetimes, format='unique', require_unique=TRUE, tol=tol)
-      if(length(timesteps) == 0) 
-        c() 
       else 
         mean(timesteps, na.rm=TRUE)
     },

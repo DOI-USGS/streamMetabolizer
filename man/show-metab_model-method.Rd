@@ -13,4 +13,3 @@
 \description{
 Print a metab_model object to the console.
 }
-

@@ -1,6 +1,54 @@
+# 0.10.0
+
+* more comprehensive assignment of parameters from Stan output into model fit 
+data.frames in Bayesian models
+
+* `daily` and `inst` data.frames in Bayesian model fit now get date/timestamps
+
+* structural changes in Bayesian models: fitted `DO_mod[1]` for state space 
+models, probability constraints on `DO_mod[1]` and `DO_mod_partial[1]`
+
+* structural change in Bayesian models: reindexing `err_obs_iid` and 
+`err_proc_iid` to match other `inst` variables
+
+# 0.9.48
+
+* Extend filtering with `required_timestep` to metab_bayes
+
+# 0.9.47
+
+* Bug fix in use of `required_timestep` in `mm_is_valid_day`
+
+# 0.9.46
+
+* Removed the warning discouraging setting params_out within specs()
+
+# 0.9.45
+
+* Bayesian specs defaults now reflect a little more of the literature and our 
+experience modeling metabolism
+
+# 0.9.44
+
+* New specs element `required_timestep` allows you to require that each date has
+the specified numeric timestep in days
+
+# 0.9.42-0.9.43
+
+* Bugfixes for new test that excludes days with non-positive discharge
+
+# 0.9.40
+
+* Update to roxygen2 6.0.1
+
+# 0.9.39
+
+* Bayesian, MLE, and nighttime regression models can now all test for and 
+exclude days with non-positive discharge
+
 # 0.9.36
 
-* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the
+* Models should now be able to accept `tbl_df`s (dplyr/tibble format) for the 
 `data` and `data_daily` arguments to `metab()`
 
 # 0.9.35

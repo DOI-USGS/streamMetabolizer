@@ -22,6 +22,9 @@ model fitting). For type='Kmodel', the name of an interpolation or
 regression method relating K to the predictor[s] of choice. One of 
 \code{c("mean", "lm", "loess")}.}
 
+\item{weights}{For Kmodel, character vector indicating the type of weighting 
+to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
+
 \item{predictors}{For Kmodel, character vector of variables (column names in 
 data or data_daily) to use in predicting K. Leave blank or set to c() for 
 no predictors. Otherwise, one or more of these may be included: c("date", 
@@ -43,4 +46,3 @@ The model will predict daily K estimates from preliminary daily K estimates.
 Called from metab_Kmodel().
 }
 \keyword{internal}
-

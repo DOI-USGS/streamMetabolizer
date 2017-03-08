@@ -27,4 +27,3 @@ Estimates air pressure from air temperature and elevation
 calc_air_pressure(15, 762)
 calc_air_pressure(15, 100)
 }
-

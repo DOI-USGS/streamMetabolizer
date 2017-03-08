@@ -64,7 +64,7 @@ mm_predict_metab_1ply <- function(
               switch(
                 met,
                 GPP=, ER=env.dDOdt[[met]](t=t, metab.pars=data_daily_ply),
-                D=env.dDOdt[[met]](t=t, metab.pars=data_daily_ply, DO.mod.t=DO.mod.t) * env.dDOdt$data$depth
+                D=env.dDOdt[[met]](t=t, metab.pars=data_daily_ply, DO.mod.t=DO.mod.t) * env.dDOdt$data$depth[t]
               )
             }, t=t, DO.mod.t=data_ply$DO.mod)),
           lower = NA, # could use delta method to derive CIs here

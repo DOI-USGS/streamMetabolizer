@@ -98,7 +98,7 @@ test_that("mm_is_valid_day works", {
   expect_true(mm_is_valid_day(good_day, day_start=-1.5, day_end=30))
   pretty_good_day <- good_day
   pretty_good_day$discharge <- seq(-1,1,length.out=nrow(pretty_good_day))
-  expect_equal(mm_is_valid_day(pretty_good_day, day_start=-1.5, day_end=30), "discharge < 0")
+  expect_equal(mm_is_valid_day(pretty_good_day, day_start=-1.5, day_end=30), "discharge <= 0")
 
 })
 

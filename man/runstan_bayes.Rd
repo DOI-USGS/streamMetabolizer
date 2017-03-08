@@ -4,7 +4,7 @@
 \alias{runstan_bayes}
 \title{Run Stan on a formatted data ply}
 \usage{
-runstan_bayes(data_list, model_path, params_out, split_dates,
+runstan_bayes(data_list, model_path, model_name, params_out, split_dates,
   keep_mcmc = FALSE, n_chains = 4, n_cores = 4, burnin_steps = 1000,
   saved_steps = 1000, thin_steps = 1, verbose = FALSE, ...)
 }
@@ -12,6 +12,9 @@ runstan_bayes(data_list, model_path, params_out, split_dates,
 \item{data_list}{a formatted list of inputs to the Stan model}
 
 \item{model_path}{the Stan model file to use, as a full file path}
+
+\item{model_name}{the coded model name, as from mm_name, giving the model
+structure}
 
 \item{params_out}{a character vector of parameters whose values in the MCMC 
 runs should be recorded and summarized}
@@ -34,10 +37,9 @@ means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
-\item{...}{args passed to other runxx_bayes functions but ignored here}
+\item{...}{ignored arguments}
 }
 \description{
 Run Stan on a formatted data ply
 }
 \keyword{internal}
-

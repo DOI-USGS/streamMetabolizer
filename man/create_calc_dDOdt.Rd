@@ -137,6 +137,7 @@ DO.mod[t+1] - DO.mod[t] =
 where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
 err.proc=0 for model fitting.
 }
+
 \examples{
 \dontrun{
 data <- data_metab('1','30')[seq(1,48,by=2),]
@@ -252,4 +253,3 @@ DO.mod.err2 <- deSolve::ode(
 lines(x=data$solar.time, y=DO.mod.err2, type='l', col='black', lty=2)
 }
 }
-

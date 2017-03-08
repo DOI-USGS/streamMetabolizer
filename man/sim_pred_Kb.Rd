@@ -23,4 +23,3 @@ Uses linear interpolation among "nodes" (lnQ, lnK points) to predict daily
 values of the natural log of K600, based on the lnK ~ lnQ relationship 
 specified by \code{K600_lnQ_nodes_centers} and \code{lnK600_lnQ_nodes}
 }
-

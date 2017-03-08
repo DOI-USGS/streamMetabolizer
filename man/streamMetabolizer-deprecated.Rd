@@ -25,4 +25,3 @@ You are encouraged not to use these.
   \item \code{\link{lookup_google_timezone}} - use \code{\link{lookup_timezone}} instead
 }
 }
-

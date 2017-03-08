@@ -19,4 +19,3 @@ Numeric value of gas exchange velocity for gas
 \description{
 Returns the gas exchange velocity as k600 for gas of interest w/ no unit conversions
 }
-

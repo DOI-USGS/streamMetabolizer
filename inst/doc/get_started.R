@@ -19,13 +19,11 @@ options(width=100)
 ## ---- eval=FALSE----------------------------------------------------------------------------------
 #  devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
 
-## ----libs, warning=FALSE--------------------------------------------------------------------------
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(tidyr)
-  library(ggplot2)
-  library(streamMetabolizer)
-})
+## ----libs, warning=FALSE, message=FALSE-----------------------------------------------------------
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(streamMetabolizer)
 
 ## ----data-----------------------------------------------------------------------------------------
 dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28, attach.units=TRUE)

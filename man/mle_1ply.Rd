@@ -47,4 +47,3 @@ data.frame of estimates and \code{\link[stats]{nlm}} model
 Called from metab_mle().
 }
 \keyword{internal}
-

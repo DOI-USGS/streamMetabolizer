@@ -23,4 +23,3 @@ sp <- revise(sp,
   model_name='b_np_oipi_tr_plrckm_mynewmodel.stan',
   params_in=c(params_in,'my_new_param'), my_new_param=4)
 }
-

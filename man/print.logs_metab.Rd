@@ -14,4 +14,3 @@
 \description{
 Print metab model compilation and/or fitting logs
 }
-

@@ -98,6 +98,7 @@ NULL
 #' get_params(mm3, fixed='stars')
 #' predict_metab(mm3)
 #' \dontrun{
+#' plot_metab_preds(mm1)
 #' plot_metab_preds(mm3)
 #' }
 #' @export
@@ -137,7 +138,7 @@ metab_Kmodel <- function(
     # K600.daily.obs, & setting data_daily$weight to reflect user weights & filters
     data_list <- prepdata_Kmodel(
       data=data, data_daily=data_daily, weights=specs$weights, filters=specs$filters, 
-      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep)
     
     # Fit the model
     Kmodel_all <- do.call(Kmodel_allply, c(
@@ -181,14 +182,14 @@ metab_Kmodel <- function(
 #'   velocity.daily.max
 #' @inheritParams metab
 #' @inheritParams mm_model_by_ply
-prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, day_tests) {
+prepdata_Kmodel <- function(data, data_daily, weights, filters, day_start, day_end, day_tests, required_timestep) {
   # Aggregate unit data to daily timesteps if needed
   if(!is.null(data) && nrow(data) > 0) {
     columns <- c('discharge', 'velocity')[c('discharge', 'velocity') %in% names(data)]
     if(length(columns) == 0) stop("data arg is pointless without at least one of c('discharge', 'velocity')")
     aggs_daily <- mm_model_by_ply(
       Kmodel_aggregate_day, 
-      data=data, data_daily=NULL, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+      data=data, data_daily=NULL, day_start=day_start, day_end=day_end, day_tests=day_tests, required_timestep=required_timestep, 
       columns=columns)
     names(aggs_daily)[match(columns, names(aggs_daily))] <- paste0(columns, '.daily')
     data_daily <- left_join(data_daily, aggs_daily, by="date")

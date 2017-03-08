@@ -29,4 +29,3 @@ slightly more readable with \code{\link{mm_parse_name}} if desired.
 \examples{
 mm_valid_names('mle')
 }
-

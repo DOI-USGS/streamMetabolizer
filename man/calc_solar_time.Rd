@@ -22,6 +22,5 @@ apparent; see \code{convert_UTC_to_solaritme}).
 }
 \examples{
 local.time <- as.POSIXct('2016-05-27 12:00:00', tz='America/New_York')
-solar.time <- calc_solar_time(local.time, longitude=3)
+solar.time <- calc_solar_time(local.time, longitude=-74)
 }
-

@@ -146,4 +146,3 @@ fitting be done?
 Generate the models in inst/models/bayes
 }
 \keyword{internal}
-

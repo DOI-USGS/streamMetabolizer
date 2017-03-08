@@ -15,4 +15,3 @@ Other metab.model.classes: \code{\link{metab_Kmodel-class}},
   \code{\link{metab_model-class}},
   \code{\link{metab_night-class}}
 }
-

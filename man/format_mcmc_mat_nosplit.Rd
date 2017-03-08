@@ -4,8 +4,8 @@
 \alias{format_mcmc_mat_nosplit}
 \title{Format MCMC output into a list of data.frames}
 \usage{
-format_mcmc_mat_nosplit(mcmc_mat, data_list_d, data_list_n, keep_mcmc,
-  runmcmc_out)
+format_mcmc_mat_nosplit(mcmc_mat, data_list_d, data_list_n, model_name,
+  keep_mcmc, runmcmc_out)
 }
 \arguments{
 \item{mcmc_mat}{matrix as extracted from Stan}
@@ -15,4 +15,3 @@ For multi-day or unsplit models. Formats output into a list of data.frames,
 one per unique number of nodes sharing a variable name
 }
 \keyword{internal}
-

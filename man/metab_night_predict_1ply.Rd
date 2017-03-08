@@ -45,4 +45,3 @@ a data.frame of predictions
 \description{
 Usually assigned to model_fun within mm_model_by_ply, called from there
 }
-

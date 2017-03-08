@@ -10,4 +10,3 @@ zz_tabular(df, bold_headers = TRUE, code = FALSE, ...)
 Modified from Hadley Wickham's function at http://r-pkgs.had.co.nz/man.html
 }
 \keyword{internal}
-

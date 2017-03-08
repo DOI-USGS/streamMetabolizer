@@ -4,12 +4,13 @@ NULL
 #' Maximum likelihood metabolism model fitting function
 #' 
 #' Uses maximum likelihood to fit a model to estimate GPP and ER from input data
-#' on DO, temperature, light, etc.
+#' on DO, temperature, light, etc. Discharge is only used, if at all, to
+#' identify and exclude days with any negative discharge.
 #' 
 #' @inheritParams metab
 #' @return A metab_mle object containing the fitted model. This object can be 
 #'   inspected with the functions in the \code{\link{metab_model_interface}}. 
-#'   The \code{code} column in \code{get_fit(mm)} is defined in the Value
+#'   The \code{code} column in \code{get_fit(mm)} is defined in the Value 
 #'   subsection of \code{?nlm}.
 #' @examples
 #' dat <- data_metab('3','30')
@@ -36,7 +37,7 @@ NULL
 #' @family metab_model
 metab_mle <- function(
   specs=specs(mm_name('mle')),
-  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
+  data=mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge, optional='discharge'),
   data_daily=mm_data(
     date, K600.daily, init.GPP.daily, init.Pmax, init.alpha, 
     init.ER.daily, init.ER20, init.K600.daily, optional='all'),
@@ -60,7 +61,7 @@ metab_mle <- function(
     # model the data, splitting into overlapping 31.5-hr 'plys' for each date
     mle_all <- mm_model_by_ply(
       mle_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
+      day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep, # for mm_model_by_ply
       specs=specs) # for mle_1ply and create_calc_dDOdt
   })
   
@@ -106,12 +107,12 @@ mle_1ply <- function(
   stop_strs <- if(isTRUE(ply_validity)) character(0) else ply_validity
   warn_strs <- character(0)
   
-  init.vals <- unlist(specs[grepl('^init.', names(specs))]) # goes outside in case stop_strs is already non-empty
   if(length(stop_strs) == 0) {
     # Collect K600 and date-specific initial values if they're available. If a
     # value is named in data_daily_ply but not available (nrow(data_daily)==0 ||
     # value==NA), use the default: for xx_init values this is specs$xx_init, for
     # K600 this is NULL (fit by MLE)
+    init.vals <- unlist(specs[grepl('^init.', names(specs))])
     K600 <- NULL
     . <- '.dplyr.var'
     if(!is.null(data_daily_ply)) {
@@ -214,13 +215,15 @@ mle_1ply <- function(
         invokeRestart("muffleWarning")
       })
     
+    val.names <- names(init.vals)
+  } else {
+    val.names <- substring(grep('^init.', names(specs), value=TRUE), 6)
   }
   
   # Return, reporting any results, warnings, and errors. if the model fitting
   # failed, use dummy data to fill in the output with NAs.
-  val.names <- names(init.vals) # trust nlm to return the parameters in the same order we passed them in
   stat.names <- c('estimate','sd','gradient')
-  valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names)))
+  valstat.names <- paste0(rep(val.names, each=length(stat.names)), rep(c('','.sd','.grad'), times=length(val.names))) # trust nlm to return the parameters in the same order we passed them in
   goodness.names <- c('minimum','iterations','code')
   if(length(stop_strs) > 0) {
     valstat.cols <- as.list(rep(as.numeric(NA), length(valstat.names))) %>%

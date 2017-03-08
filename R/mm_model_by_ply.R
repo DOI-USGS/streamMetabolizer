@@ -35,13 +35,20 @@
 #'   data describing 2006-06-26 end at the last observation time that occurs 
 #'   before 2006-06-27 06:00. See day_start for recommended start and end times.
 #' @param day_tests list of tests to conduct to determine whether each date 
-#'   worth of data is valid for modeling. the results of these tests will be 
-#'   passed to \code{model_fun} as the \code{ply_validity} argument to that 
-#'   function.
+#'   worth of data is valid for modeling. The results of these tests will be
+#'   combined with the result of the test implied if \code{required_timestep} is
+#'   numeric and then will be passed to \code{model_fun} as the
+#'   \code{ply_validity} argument to that function.
+#' @param required_timestep NA or numeric (length 1). If numeric, the timestep 
+#'   length in days that a date must have to pass the validity check (to within 
+#'   a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
+#'   of this test will be combined with the results of the tests listed in 
+#'   \code{day_tests} and reported to \code{model_fun} as the 
+#'   \code{ply_validity} argument to that function.
 #' @param timestep_days TRUE if you would like the mean timestep length to be 
-#'   calculated for each data ply and passed to \code{model_fun} as the
-#'   \code{timestep_days} argument to that function. Alternatively, this may be
-#'   numeric as a specifically expected timestep length in days; for example, a
+#'   calculated for each data ply and passed to \code{model_fun} as the 
+#'   \code{timestep_days} argument to that function. Alternatively, this may be 
+#'   numeric as a specifically expected timestep length in days; for example, a 
 #'   1-hour timestep is 1/24 is 0.0416667.
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
@@ -55,7 +62,8 @@
 #' @export
 mm_model_by_ply <- function(
   model_fun, data, data_daily=NULL, day_start, day_end, 
-  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), timestep_days=TRUE, ...
+  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), required_timestep=NA,
+  timestep_days=TRUE, ...
 ) {
   
   # avoid some ugly edge cases
@@ -72,7 +80,7 @@ mm_model_by_ply <- function(
   if(!('solar.time' %in% names(data.plys))) stop("data must contain a 'solar.time' column")
   if(any(is.na(data.plys$solar.time))) stop("no values in solar.time may be NA")
   min_timestep <- mm_get_timestep(data$solar.time, format='unique')[1]
-  if(length(min_timestep) == 1 && min_timestep <= 0) {
+  if(length(min_timestep) == 1 && !is.na(min_timestep)[1] && min_timestep <= 0) {
     timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
     timegoof <- which.min(timesteps) + c(0,1)
     stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
@@ -82,7 +90,7 @@ mm_model_by_ply <- function(
   if(!is.null(data_daily)) {
     if(!('date' %in% names(data_daily))) stop("data_daily must contain a 'date' column")
     min_datestep <- mm_get_timestep(data_daily$date, format='unique')
-    if(length(min_datestep) > 0 && min_datestep[1] <= 0) {
+    if(length(min_datestep) > 0 && !is.na(min_datestep)[1] && min_datestep[1] <= 0) {
       timesteps <- as.numeric(diff(v(data_daily$date)), units="days")
       timegoof <- which.min(timesteps) + c(0,1)
       stop("min datestep is <= 0: ", min_datestep, " days from ",
@@ -188,11 +196,11 @@ mm_model_by_ply <- function(
       if(length(timestep_days) > 1) stop("expecting no more than 1 value in timestep_days")
       timestep_days <- if(isTRUE(timestep_days)) {
         mm_get_timestep(data_ply$solar.time, format='mean') 
-      } else if(is.na(timestep_days) || timestep_days==FALSE) {
+      } else if(is.na(timestep_days) || is.null(timestep_days) || timestep_days==FALSE) {
         NA
       } else timestep_days
       ply_validity <- mm_is_valid_day(
-        data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, 
+        data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, required_timestep=required_timestep,
         ply_date=ply_date, timestep_days=timestep_days)
       
       # run the user's model_fun

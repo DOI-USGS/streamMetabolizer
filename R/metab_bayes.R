@@ -78,7 +78,8 @@ metab_bayes <- function(
         data.frame(discharge.daily = if(isTRUE(ply_validity[1])) mean(data_ply$discharge) else NA)
       }
       dischdaily <- mm_model_by_ply(
-        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end)
+        model_fun=dailymean, data=v(dat_list$data), day_start=specs$day_start, day_end=specs$day_end,
+        day_tests=specs$day_tests, required_timestep=specs$required_timestep)
       
       # add units if either of the input dfs were unitted
       if(is.unitted(dat_list$data) || is.unitted(dat_list$data_daily)) {
@@ -151,14 +152,15 @@ metab_bayes <- function(
       stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
     }
     
-    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an MCMC object from tan)
+    # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an
+    # MCMC object from Stan)
     if(specs$split_dates == TRUE) {
       if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
       if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       # one day at a time, splitting into overlapping ~24-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
-        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, # for mm_model_by_ply
+        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep, # for mm_model_by_ply
         specs=specs) # for bayes_1ply
       # if we saved the modeling object[s] in the df, pull them out now
       extract_object_list <- function(col) {
@@ -186,7 +188,8 @@ metab_bayes <- function(
     } else if(specs$split_dates == FALSE) {
       # all days at a time, after first filtering out bad days
       filtered <- mm_filter_valid_days(
-        data, data_daily, day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests)
+        data, data_daily, day_start=specs$day_start, day_end=specs$day_end,
+        day_tests=specs$day_tests, required_timestep=specs$required_timestep)
       if(length(unique(filtered$data$date)) > 1 && (specs$day_end - specs$day_start) > 24) 
         warning("multi-day models should probably have day_end - day_start <= 24 hours")
       bayes_all_list <- bayes_allply(
@@ -226,7 +229,11 @@ metab_bayes <- function(
   if(success) {
     mm@data <- predict_DO(mm)
   } else {
-    warning(paste0('Modeling failed: ', paste0(bayes_all$errors, collapse='\n')))
+      warntxt <- paste0(
+        'Modeling failed\n',
+        if(length(bayes_all$warnings) > 0) paste0('  Warnings:\n', paste0('    ', bayes_all$warnings, collapse='\n')),
+        if(length(bayes_all$errors) > 0) paste0('  Errors:\n', paste0('    ', bayes_all$errors, collapse='\n')))
+      warning(warntxt)
   }
   
   # Return
@@ -269,9 +276,8 @@ bayes_1ply <- function(
       tryCatch({
         # first: try to run the bayes fitting function
         data_list <- prepdata_bayes(
-          data=data_ply, data_daily=data_daily_ply, ply_date=ply_date,
-          specs=specs, engine=specs$engine, model_name=specs$model_name)
-        do.call(mcmc_bayes, c(list(data_list=data_list), specs))
+          data=data_ply, data_daily=data_daily_ply, ply_date=ply_date, specs=specs)
+        do.call(runstan_bayes, c(list(data_list=data_list), specs))
       }, error=function(err) {
         # on error: give up, remembering error. dummy values provided below
         stop_strs <<- c(stop_strs, err$message)
@@ -283,12 +289,13 @@ bayes_1ply <- function(
       })
   } 
 
-  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0) {
-    bayes_1day <- data.frame(GPP_daily_2.5pct=NA, GPP_daily_50pct=NA, GPP_daily_97.5pct=NA,
-                             ER_daily_2.5pct=NA, ER_daily_50pct=NA, ER_daily_97.5pct=NA, 
-                             K600_daily_2.5pct=NA, K600_daily_50pct=NA, K600_daily_97.5pct=NA)
+    bayes_1day <- data.frame(
+      GPP_daily_2.5pct=NA, GPP_daily_50pct=NA, GPP_daily_97.5pct=NA,
+      ER_daily_2.5pct=NA, ER_daily_50pct=NA, ER_daily_97.5pct=NA, 
+      K600_daily_2.5pct=NA, K600_daily_50pct=NA, K600_daily_97.5pct=NA)
   }
   
   # package the results, data, warnings, and errors
@@ -347,10 +354,9 @@ bayes_allply <- function(
       if(is.null(data_all) || nrow(data_all) == 0) stop("no valid days of data")
       # first: try to run the bayes fitting function
       data_list <- prepdata_bayes(
-        data=data_all, data_daily=data_daily_all, ply_date=NA,
-        specs=specs, engine=specs$engine, model_name=specs$model_name)
+        data=data_all, data_daily=data_daily_all, ply_date=NA, specs=specs)
       specs$keep_mcmc <- specs$keep_mcmcs
-      do.call(mcmc_bayes, c(list(data_list=data_list), specs))
+      do.call(runstan_bayes, c(list(data_list=data_list), specs))
     }, error=function(err) {
       # on error: give up, remembering error. dummy values provided below
       stop_strs <<- c(stop_strs, err$message)
@@ -361,31 +367,39 @@ bayes_allply <- function(
       invokeRestart("muffleWarning")
     })
 
-  # match dates back to daily estimates, datetimes back to inst
-  date_vec <- unique(data_all$date)
-  datetime_vec <- data_all$solar.time
+  # match date and time info to indices
+  date_df <- data_frame(
+    date=as.Date(unique(data_all$date)),
+    date_index=seq_len(data_list$d))
+  datetime_df <- data_frame(
+    solar.time=data_all$solar.time,
+    date_index=rep(seq_len(data_list$d), each=data_list$n),
+    time_index=rep(seq_len(data_list$n), times=data_list$d))
   
-  # stop_strs may have accumulated during prepdata_bayes() or mcmc_bayes()
+  # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
-    na_vec <- rep(as.numeric(NA), length(date_vec))
+    na_vec <- rep(as.numeric(NA), nrow(date_df))
     bayes_allday <- c(
-      list(daily=data.frame(date=date_vec, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
-                            ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
-                            K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
+      list(daily=data.frame(
+        date=date_df$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
+        ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec, 
+        K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) {
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
   } else {
-    # match dates back to daily estiamtes, datetimes back to inst
-    index <- '.dplyr.var'
-    if(length(date_vec) != data_list$d || length(date_vec) != nrow(bayes_allday$daily))
-      stop_strs <- c(stop_strs, "couldn't match dates to date indices")
-    bayes_allday$daily <- bayes_allday$daily %>% rename(date=index) %>% mutate(date=date_vec)
+    # match dates back to daily estimates, datetimes back to inst
+    date_index <- time_index <- index <- '.dplyr.var'
+    bayes_allday$daily <- bayes_allday$daily %>% 
+      left_join(date_df, by='date_index') %>% 
+      select(-date_index, -time_index, -index) %>% 
+      select(date, everything())
     if(!is.null(bayes_allday$inst)) {
-      if(length(datetime_vec) != data_list$n || length(datetime_vec) != nrow(bayes_allday$inst))
-        stop_strs <- c(stop_strs, "couldn't match solar.times to datetime indices")
-      bayes_allday$inst <- bayes_allday$inst %>% rename(solar.time=index) %>% mutate(solar.time=datetime_vec)
+      bayes_allday$inst <- bayes_allday$inst %>% 
+        left_join(datetime_df, by=c('date_index','time_index')) %>% 
+        select(-date_index, -time_index, -index) %>% 
+        select(solar.time, everything())
     }
   }
 
@@ -434,14 +448,12 @@ bayes_allply <- function(
 #' 
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams metab
-#' @inheritParams specs
 #' @return list of data for input to runstan_bayes
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes <- function(
   data, data_daily, ply_date=NA, # inheritParams mm_model_by_ply_prototype
-  specs, # inheritParams metab (for hierarchical priors)
-  engine, model_name #inheritParams specs
+  specs # inheritParams metab (for hierarchical priors, model_name)
 ) {
   
   # remove units if present
@@ -475,18 +487,21 @@ prepdata_bayes <- function(
   unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
   if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
   
-  # confirm that every day has the same modal timestep and put a value on that timestep
+  # confirm that every day has the same modal timestep and put a value on that 
+  # timestep. the tolerance for uniqueness within each day is set by the default
+  # for mm_get_timestep. the tolerance for uniqueness across days is 10 digits
+  # is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
   obs_times <- time_by_date_matrix(as.numeric(data$solar.time - data$solar.time[1], units='days'))
-  unique_timesteps <- unique(apply(obs_times, MARGIN=2, FUN=function(timevec) unique(round(diff(timevec), digits=12)))) # 10 digits is 8/1000000 of a second. 14 digits exceeds machine precision for datetimes
-  if(length(unique_timesteps) != 1) stop("could not determine a single timestep for all observations")
-  timestep_days <- mean(apply(obs_times, MARGIN=2, FUN=function(timevec) mean(diff(timevec))))
+  timestep_eachday <- apply(obs_times, MARGIN=2, FUN=mm_get_timestep, format='mean', require_unique=TRUE)
+  if(length(unique(round(timestep_eachday, digits=10))) != 1) stop("could not determine a single timestep for all observations")
+  timestep_days <- mean(timestep_eachday)
   n24 <- round(1/timestep_days)
   
   # give message if day length is too short
   if(n24 > num_daily_obs) stop("day_end - day_start < 24 hours; aborting because daily metabolism could be wrong")
   
   # parse model name into features for deciding what data to include
-  features <- mm_parse_name(model_name, expand=TRUE)
+  features <- mm_parse_name(specs$model_name, expand=TRUE)
   
   # Format the data for Stan. Stan disallows period-separated names, so
   # change all the input data to underscore-separated. parameters given in
@@ -518,7 +533,7 @@ prepdata_bayes <- function(
       # Every timestep
       frac_GPP = {
         mat_light <- time_by_date_matrix(data$light)
-        if(isTRUE(mm_parse_name(model_name)$GPP_fun == 'linlight')) {
+        if(isTRUE(features$GPP_fun == 'linlight')) {
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
           sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
@@ -550,11 +565,12 @@ prepdata_bayes <- function(
   data_list
 }
 
-#' Run an MCMC simulation on a formatted data ply
+#' Run Stan on a formatted data ply
 #' 
 #' @param data_list a formatted list of inputs to the Stan model
-#' @param engine character string indicating which software to use
 #' @param model_path the Stan model file to use, as a full file path
+#' @param model_name the coded model name, as from mm_name, giving the model
+#'   structure
 #' @param params_out a character vector of parameters whose values in the MCMC 
 #'   runs should be recorded and summarized
 #' @param keep_mcmc logical. If TRUE, the Stan output object will be saved. Be 
@@ -569,33 +585,21 @@ prepdata_bayes <- function(
 #'   means save all steps.
 #' @param verbose logical. give status messages?
 #' @param ... ignored arguments
-#' @return a data.frame of outputs
-#' @import parallel
-#' @keywords internal
-mcmc_bayes <- function(data_list, engine='stan', model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=4000, saved_steps=40000, thin_steps=1, verbose=FALSE, ...) {
-  engine <- match.arg(engine)
-  bayes_function <- switch(engine, stan = runstan_bayes)
-  
-  tot_cores <- detectCores()
-  if (!is.finite(tot_cores)) { tot_cores <- 1 } 
-  n_cores <- min(tot_cores, n_cores)
-  if(verbose) message(paste0("MCMC (",engine,"): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
-  
-  bayes_function(
-    data_list=data_list, model_path=model_path, params_out=params_out, split_dates=split_dates, keep_mcmc=keep_mcmc, n_chains=n_chains, n_cores=n_cores, 
-    burnin_steps=burnin_steps, saved_steps=saved_steps, thin_steps=thin_steps, verbose=verbose)
-}
-
-#' Run Stan on a formatted data ply
-#' 
-#' @inheritParams mcmc_bayes
-#' @param ... args passed to other runxx_bayes functions but ignored here
 #' @import parallel
 #' @import dplyr
 #' @import tibble
 #' @importFrom tidyr gather spread
 #' @keywords internal
-runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_mcmc=FALSE, n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, verbose=FALSE, ...) {
+runstan_bayes <- function(
+  data_list, model_path, model_name, params_out, split_dates, keep_mcmc=FALSE, 
+  n_chains=4, n_cores=4, burnin_steps=1000, saved_steps=1000, thin_steps=1, 
+  verbose=FALSE, ...) {
+  
+  # determine how many cores to use
+  tot_cores <- detectCores()
+  if (!is.finite(tot_cores)) { tot_cores <- 1 } 
+  n_cores <- min(tot_cores, n_cores)
+  if(verbose) message(paste0("MCMC (","Stan","): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
   
   # stan() can't find its own function cpp_object_initializer() unless the 
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
@@ -680,7 +684,7 @@ runstan_bayes <- function(data_list, model_path, params_out, split_dates, keep_m
     # for multi-day or unsplit models, format output into a list of data.frames,
     # one per unique number of nodes sharing a variable name
     stan_mat <- rstan::summary(runstan_out)$summary
-    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, keep_mcmc, runstan_out)
+    stan_out <- format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, model_name, keep_mcmc, runstan_out)
   } 
   
   # attach the contents of the most recent logfile in tempdir(), which should be for this model
@@ -727,34 +731,100 @@ format_mcmc_mat_split <- function(mcmc_mat, names_params, names_stats, keep_mcmc
 #' @param mcmc_mat matrix as extracted from Stan
 #' @import dplyr
 #' @keywords internal
-format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, keep_mcmc, runmcmc_out) {
-  stat <- val <- . <- rowname <- variable <- index <- varstat <- '.dplyr_var'
+format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_name, keep_mcmc, runmcmc_out) {
   
-  colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
+  # assign parameters to appropriately sized data.frames. list every anticipated
+  # parameter here, but also catch other parameters below (for custom models, or
+  # unusual parameters like err_proc_iid_sigma_scaled). pull the list (manually)
+  # from the parameters block of mm_generate_mcmc_file. it's only important to
+  # distinguish among model types when the resulting dimensions differ between
+  # types and would imply conflicting ideas for nrows of the named data.frame
+  features <- mm_parse_name(model_name, expand=TRUE)
+  par_homes <- list(
+    overall = c(
+      'err_obs_iid_sigma', 'err_obs_iid_sigma_scaled',
+      'err_proc_iid_sigma', 'err_proc_iid_sigma_scaled',
+      'err_proc_acor_phi', 'err_proc_acor_sigma_scaled',
+      'lp__'),
+    KQ_overall = c( # n=1
+      switch(
+        features$pool_K600_type,
+        none=c(),
+        normal=c('K600_daily_predlog'),
+        linear=c('lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
+        binned=c()),
+      'K600_daily_sdlog', 'K600_daily_sdlog_scaled', 'K600_daily_sigma', 'K600_daily_sigma_scaled'),
+    KQ_binned = c( # n=few to many
+      'lnK600_lnQ_nodes'),
+    daily = c(
+      'GPP', 'ER',
+      'GPP_daily', 'ER_daily', 'K600_daily', 
+      if(features$pool_K600_type %in% c('linear','binned')) 'K600_daily_predlog'),
+    inst = c(
+      'DO_mod', 'DO_mod_partial', # d*n
+      'DO_mod_partial_sigma', # d*n
+      'GPP_inst', 'ER_inst', 'KO2_inst', # d*n
+      'err_proc_acor_inc', 'err_proc_acor', # can be d*n (trapezoid) or d*(n-1) (euler), same timestamp indexing as GPP_inst
+      'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i]
+    )
+  )
   
-  # determine how many unique nrows, & therefore data.frames, there should be
+  # declare dplyr variables
+  stat <- val <- . <- rowname <- variable <- varstat <- 
+    indexstr <- date_index <- time_index <- index <- '.dplyr_var'
+  
+  # determine which data.frames to create and which params to include in each
   var_table <- table(gsub("\\[[[:digit:]|,]+\\]", "", rownames(mcmc_mat)))
-  all_dims <- unique(var_table) %>% setNames(., .)
-  names(all_dims)[all_dims == 1] <- "overall"
-  names(all_dims)[all_dims == data_list_n] <- "inst" # overrides 'overall' if d==1. that's OK
-  names(all_dims)[all_dims == data_list_d] <- "daily" # overrides 'overall' if d==1. that's OK
+  par_dfs <- sapply(names(var_table), function(parname) {
+    home <- names(par_homes)[which(sapply(par_homes, function(vd) parname %in% vd))]
+    if(length(home) == 0) home <- var_table[[parname]]
+    return(home)
+  })
+  all_dims <- lapply(setNames(nm=unique(par_dfs)), function(upd) names(par_dfs)[which(par_dfs == upd)])
   
   # for each unique nrows, create the data.frame with vars in columns and indices in rows
-  mcmc_out <- lapply(all_dims, function(odim) {
-    dim_params <- names(var_table[which(var_table == odim)])
-    dim_rows <- sort(do.call(c, lapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat)))))
-    row_order <- names(sort(sapply(dim_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1])))
+  colnames(mcmc_mat) <- gsub("%", "pct", colnames(mcmc_mat))
+  mcmc_out <- lapply(setNames(nm=names(all_dims)), function(dfname) {
+    df_params <- all_dims[[dfname]]
+    dim_rows <- sort(do.call(c, lapply(df_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat)))))
+    row_order <- names(sort(sapply(df_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1]))) # use the same order as mcmc_mat
     varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
+    par_dims <- sapply(df_params, function(dp) length(grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))))
+    index_level_rows <- grep(paste0("^", names(par_dims)[match(max(par_dims), par_dims)], "(\\[|$)"), rownames(mcmc_mat))
     
     as_data_frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
       mutate(rowname=rownames(mcmc_mat[dim_rows,,drop=FALSE])) %>%
       select(rowname, everything()) %>%
       gather(stat, value=val, 2:ncol(.)) %>%
       mutate(variable=gsub("\\[[[:digit:]|,]+\\]", "", rowname),
-             index=if(odim == 1) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
-             index=ordered(index, levels=index[seq_len(odim)]),
+             indexstr=if(1 %in% par_dims) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
+             # parse/factorify the index for ordering
+             index=
+               if(dfname %in% c('daily','inst')) {
+                 NA 
+               } else if(any(grepl(',', indexstr))) {
+                 ordered(indexstr, levels=indexstr[index_level_rows])
+               } else {
+                 as.numeric(indexstr)
+               },
+             date_index=
+               if(dfname=='daily') {
+                 as.numeric(indexstr)
+               } else if(dfname=='inst') {
+                 sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[2]))
+               } else {
+                 NA
+               },
+             time_index=
+               if(dfname=='inst') {
+                 sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[1]))
+               } else {
+                 NA
+               },
+             # determine the order of statistics for each variable (mean, se_mean, etc.)
              varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
-      select(index, varstat, val) %>%
+      select(date_index, time_index, index, varstat, val) %>%
+      arrange(date_index, time_index, index) %>%
       spread(varstat, val)
   })
   

@@ -212,7 +212,8 @@ get_params.metab_sim <- function(
       gimmedates <- function(...) data_frame(ignore=NA) # has to be separate to avoid tripping up deprecation check in convert_date_to_doyhr
       mm_model_by_ply(
         gimmedates, data=get_data(metab_model),
-        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, timestep_days=FALSE)[1]
+        day_start=specs$day_start, day_end=specs$day_end, day_tests=specs$day_tests, required_timestep=specs$required_timestep,
+        timestep_days=FALSE)[1]
     }
   if(!is.na(specs$sim_seed)) set.seed(specs$sim_seed)
   

@@ -233,7 +233,7 @@
 #'   model that requires different hyperparameters.
 #'   
 #' @inheritParams prepdata_bayes
-#' @inheritParams mcmc_bayes
+#' @inheritParams runstan_bayes
 #'   
 #' @inheritParams prepdata_Kmodel
 #' @inheritParams Kmodel_allply
@@ -326,6 +326,7 @@ specs <- function(
   
   # inheritParams mm_is_valid_day
   day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'),
+  required_timestep=NA,
   
   
   ## MLE
@@ -347,19 +348,19 @@ specs <- function(
   keep_mcmc_data = TRUE,
   
   # hyperparameters for non-hierarchical GPP & ER
-  GPP_daily_mu = 8,
+  GPP_daily_mu = 3.1,
   GPP_daily_lower = -Inf,
-  GPP_daily_sigma = 4,
-  ER_daily_mu = -10,
+  GPP_daily_sigma = 6.0,
+  ER_daily_mu = -7.1,
   ER_daily_upper = Inf,
-  ER_daily_sigma = 5,
+  ER_daily_sigma = 7.1,
   
   # hyperparameters for non-hierarchical K600
-  K600_daily_meanlog = log(6),
+  K600_daily_meanlog = log(12),
   
   # hyperparameters for hierarchical K600 - normal
-  K600_daily_meanlog_meanlog = log(6),
-  K600_daily_meanlog_sdlog = 1,
+  K600_daily_meanlog_meanlog = log(12),
+  K600_daily_meanlog_sdlog = 1.32,
   
   # hyperparameters for hierarchical K600 - linear. defaults should be
   # reasonably constrained, not too wide
@@ -374,31 +375,31 @@ specs <- function(
   # exponentiating. nodes_meanlog and nodes_sdlog may be length b = 
   # length(K600_daily_lnQ_nodes) or length 1 (to be replicated to length b). 
   # -8:6 covers almost all points in Raymond et al. 2012 and will therefore 
-  # always be too broad a range for a single stream. -3:3 will catch most
+  # always be too broad a range for a single stream. -3:3 will catch some
   # streams to rivers as a first cut, though users should still modify
   K600_lnQ_nodes_centers = -3:3, # the x=lnQ values for the nodes
-  K600_lnQ_nodediffs_sdlog = 0.05, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
-  K600_lnQ_nodes_meanlog = rep(log(6), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
-  K600_lnQ_nodes_sdlog = rep(1, length(K600_lnQ_nodes_centers)),
+  K600_lnQ_nodediffs_sdlog = 0.5, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
+  K600_lnQ_nodes_meanlog = rep(log(12), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
+  K600_lnQ_nodes_sdlog = rep(1.32, length(K600_lnQ_nodes_centers)),
   
   # hyperparameters for any K pooling or non-pooling strategy
   K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, normal_sdfixed=0.05, NA),
   K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear_sdfixed=10, binned_sdfixed=5, NA),
   K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal=0.05, NA),
-  K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=5, binned=2, NA),
+  K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=1.2, binned=0.24, NA),
   # normal_sdzero, linear_sdzero, and binned_sdzero all have no parameters for this
   
   # hyperparameters for error terms
-  err_obs_iid_sigma_scale = 0.1,
+  err_obs_iid_sigma_scale = 0.03,
+  err_proc_iid_sigma_scale = 5,
   err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
-  err_proc_acor_sigma_scale = 0.1,
-  err_proc_iid_sigma_scale = 0.1,
+  err_proc_acor_sigma_scale = 1,
   
   # vector of hyperparameters to include as MCMC data
   params_in,
   
-  # inheritParams mcmc_bayes
+  # inheritParams runstan_bayes
   params_out,
   n_chains = 4,
   n_cores = 4,
@@ -458,7 +459,7 @@ specs <- function(
   all_possible <- names(formals(specs))
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
-  prefer_missing <- all_possible[sapply(formals(specs), is.symbol)] # the arguments w/o defaults
+  prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
   
   # argument checks
   if(any(required %in% yes_missing))
@@ -469,7 +470,7 @@ specs <- function(
     redundant <- redundant[redundant != 'engine']
   }
   if(length(redundant) > 0) {
-    warning("argument[s] that should usually not be specified in specs(): ", paste(redundant, collapse=", "))
+    warning("argument[s] that should usually be specified in revise() rather than specs(): ", paste(redundant, collapse=", "))
   }
   
   # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
@@ -517,7 +518,7 @@ specs <- function(
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
         
         # date ply day_tests
-        'day_start', 'day_end', 'day_tests',
+        'day_start', 'day_end', 'day_tests', 'required_timestep',
         
         # discharge binning parameters are not params_in, though they're 
         # conceptually related and therefore colocated in formals(specs)
@@ -526,7 +527,7 @@ specs <- function(
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
         
-        # inheritParams mcmc_bayes
+        # inheritParams runstan_bayes
         'params_out', 'n_chains', 'n_cores', 
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
@@ -564,11 +565,12 @@ specs <- function(
       }
       
       # check for errors/inconsistencies
-      model_path <- system.file(paste0("models/", model_name), package="streamMetabolizer")
-      if(!file.exists(model_path)) 
-        model_path <- model_name
-      if(!file.exists(model_path)) 
-        warning(suppressWarnings(paste0("could not locate the model file at ", model_path)))
+      model_path <- tryCatch(
+        mm_locate_filename(model_name), 
+        error=function(e) {
+          warning(e)
+          return(model_name)
+        })
       if(features$engine == "NA") 
         stop('engine must be specified for Bayesian models')
       
@@ -579,12 +581,12 @@ specs <- function(
       init.needs <- paste0('init.', get_param_names(model_name)$required)
       
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests', init.needs)
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep', init.needs)
 
     }, 
     'night' = {
       # list all needed arguments
-      included <- c('model_name', 'day_start', 'day_end', 'day_tests')
+      included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep')
       
       # some different defaults for night relative to other models
       if('day_start' %in% yes_missing) {
@@ -601,7 +603,7 @@ specs <- function(
     'Kmodel' = {
       # list all needed arguments
       included <- c(
-        'model_name', 'engine', 'day_start', 'day_end', 'day_tests',
+        'model_name', 'engine', 'day_start', 'day_end', 'day_tests', 'required_timestep',
         'weights', 'filters', 'predictors', 'transforms', 'other_args')
       
       if('engine' %in% yes_missing) {
@@ -640,7 +642,7 @@ specs <- function(
       
       # list all needed arguments
       included <- c(
-        'model_name', 'day_start', 'day_end', 'day_tests',
+        'model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep',
         switch(
           features$pool_K600,
           none=c(),

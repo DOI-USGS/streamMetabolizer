@@ -46,4 +46,3 @@ plot_distribs(mm, 'err_proc_iid_sigma') \%>\%
   dygraphs::dyAxis(name='y', valueRange=c(0,15))
 }
 }
-
