@@ -1,3 +1,16 @@
+# 0.10.0
+
+* more comprehensive assignment of parameters from Stan output into model fit 
+data.frames in Bayesian models
+
+* `daily` and `inst` data.frames in Bayesian model fit now get date/timestamps
+
+* structural changes in Bayesian models: fitted `DO_mod[1]` for state space 
+models, probability constraints on `DO_mod[1]` and `DO_mod_partial[1]`
+
+* structural change in Bayesian models: reindexing `err_obs_iid` and 
+`err_proc_iid` to match other `inst` variables
+
 # 0.9.48
 
 * Extend filtering with `required_timestep` to metab_bayes
