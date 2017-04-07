@@ -370,11 +370,11 @@ bayes_allply <- function(
   # match date and time info to indices
   date_df <- data_frame(
     date=as.Date(unique(data_all$date)),
-    date_index=seq_len(data_list$d))
+    date_index=seq_along(data_list$d))
   datetime_df <- data_frame(
     solar.time=data_all$solar.time,
-    date_index=rep(seq_len(data_list$d), each=data_list$n),
-    time_index=rep(seq_len(data_list$n), times=data_list$d))
+    date_index=rep(seq_along(data_list$d), each=data_list$n),
+    time_index=rep(seq_along(data_list$n), times=data_list$d))
   
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
