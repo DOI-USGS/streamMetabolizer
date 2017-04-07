@@ -42,12 +42,12 @@ mm_is_valid_day <- function(
   day_start=4, day_end=27.99, # inheritParams mm_model_by_ply
   day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), 
   required_timestep=NA,
-  ply_date=as.Date(format(data_ply[nrow(data_ply)/2,'solar.time'], "%Y-%m-%d")),
+  ply_date=as.Date(format(data_ply[max(1,nrow(data_ply)/2),'solar.time'], "%Y-%m-%d")),
   timestep_days=NA
 ) {
   
   # check input
-  if(!missing(day_tests) && length(day_tests) == 0) return(TRUE)
+  if(!missing(day_tests) && length(day_tests) == 0 && is.na(required_timestep[1])) return(TRUE)
   day_tests <- match.arg(day_tests, several.ok = TRUE)
   day_start <- as.difftime(day_start, units="hours")
   day_end <- as.difftime(day_end, units="hours")
@@ -67,7 +67,7 @@ mm_is_valid_day <- function(
     } else {
       timestep_days
     }
-    if(length(timestep.days) == 0) {
+    if(length(timestep.days) == 0 || !is.finite(timestep.days)) {
       stop_strs <- c(stop_strs, "no timesteps")
       timestep.days <- NA
     }
