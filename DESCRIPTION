@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Models for Estimating Aquatic Photosynthesis and Respiration
-Version: 0.10.0
-Date: 2017-03-07
+Version: 0.10.1
+Date: 2017-04-10
 Author: Alison P. Appling, Robert O. Hall, Maite Arroita, and Charles B.
     Yackulic
 Authors@R: c(
@@ -41,7 +41,7 @@ Imports:
     methods,
     tibble (>= 1.1.0),
     tidyr,
-    unitted (>= 0.2.6)
+    unitted (>= 0.2.8)
 Suggests:
     chron,
     devtools,
