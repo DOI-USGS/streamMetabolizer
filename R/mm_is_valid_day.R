@@ -99,8 +99,8 @@ mm_is_valid_day <- function(
   }
   
   # Require the actual average timestep to match the value specified in
-  # required_timestep (within tolerance of 0.2% of required_timestep length)
-  if(!isTRUE(is.na(required_timestep)) & is.finite(timestep.days)) {
+  # required_timestep (within tolerance ocf 0.2% of required_timestep length)
+  if(!isTRUE(is.na(required_timestep)) && is.finite(timestep.days)) {
     if(length(required_timestep) != 1 || !is.numeric(required_timestep)) {
       stop('expecting required_timestep as single numeric value (or NA)')
     }
