@@ -65,6 +65,7 @@ define_pkg_env <- function() {
   pkg.env <- new.env()
   pkg.env$tz_lookups <- list(
     # populate with values that are used in test-convert.R and load_french_creek.R
+    "51.5000000000,-120.0000000000"=list(tz="America/Vancouver", dst_offset=u(0,"hours"), std_offset=u(8,"hours"), retry=0),
     "51.4800000000,-0.0000000000"=list(tz="Europe/London", dst_offset=u(0,"hours"), std_offset=u(0,"hours"), retry=0),
     "41.0000000000,105.3000000000"=list(tz="Asia/Shanghai", dst_offset=u(0,"hours"), std_offset=u(8,"hours"), retry=0),
     "37.0000000000,-105.3000000000"=list(tz="America/Denver", dst_offset=u(0,"hours"), std_offset=u(-7,"hours"), retry=0),
