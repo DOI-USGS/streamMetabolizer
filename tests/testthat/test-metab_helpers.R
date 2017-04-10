@@ -78,7 +78,7 @@ test_that("mm_is_valid_day works", {
   
   # test faulty timestep
   dateless_day <- good_day; dateless_day$solar.time <- replace(dateless_day$solar.time, 2:(nrow(dateless_day)-1), NA)
-  expect_equal(mm_is_valid_day(dateless_day), c("NAs in solar.time"))
+  expect_equal(mm_is_valid_day(dateless_day), c("no timesteps", "NAs in solar.time"))
   
   # test full_day
   expect_equal(mm_is_valid_day(good_day, day_start=-10, day_end=30), "data don't start when expected")
