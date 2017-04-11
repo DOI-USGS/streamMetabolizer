@@ -7,7 +7,7 @@
 mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
   day_tests = c("full_day", "even_timesteps", "complete_data",
   "pos_discharge"), required_timestep = NA,
-  ply_date = as.Date(format(data_ply[nrow(data_ply)/2, "solar.time"],
+  ply_date = as.Date(format(data_ply[max(1, nrow(data_ply)/2), "solar.time"],
   "\%Y-\%m-\%d")), timestep_days = NA)
 }
 \arguments{
