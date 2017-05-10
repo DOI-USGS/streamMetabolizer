@@ -25,6 +25,10 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   expect_error(lm(log(K600.daily.obs) ~ log(discharge.daily), data=data.frame(date=as.Date('2012-08-24'), K600.daily.obs=20, discharge.daily=NA, weights=1)), "0 (non-NA) cases", fixed=TRUE)
   expect_error(loess(log(K600.daily.obs) ~ as.numeric(date) + log(discharge.daily), data=data.frame(date=as.Date('2012-08-24'), K600.daily.obs=20, discharge.daily=NA, weights=1)), "invalid 'x'", fixed=TRUE)
   # show that Kmodel(lm) and Kmodel(loess) do break, on model-specific errors
+  metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm')))
+  metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess')))
+  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE)
+  expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE)
   expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE), "Timing stopped")
   expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE), "Timing stopped")
   
