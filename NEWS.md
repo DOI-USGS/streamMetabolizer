@@ -1,5 +1,7 @@
 # 0.10.2
 
+* test for day lengths < 0 in `mm_model_by_ply`, thanks to @weisoon
+
 * bugfix for `get_params` for sim models with fixed vector of Q and/or K values
 
 # 0.10.1
