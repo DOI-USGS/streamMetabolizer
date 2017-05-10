@@ -69,6 +69,7 @@ mm_model_by_ply <- function(
   # avoid some ugly edge cases
   if(missing(day_start) || is.null(day_start)) stop('day_start must be specified')
   if(missing(day_end) || is.null(day_end)) stop('day_end must be specified')
+  if(day_end < day_start) stop("day_end must be greater than or equal to day_start")
   if(day_end - day_start > 48) stop("day_end - day_start must not be > 48") # would break our odd/even algorithm
   if(-24 >= day_start || day_start >= 24) stop("day_start must be in (-24,24)")
   if(0 >= day_end || day_end >= 48) stop("day_end must be in (0,48)")
