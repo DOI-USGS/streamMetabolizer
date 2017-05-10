@@ -1,3 +1,16 @@
+# 0.10.2
+
+* test for day lengths < 0 in `mm_model_by_ply`, thanks to @weisoon
+
+* bugfix for `get_params` for sim models with fixed vector of Q and/or K values
+
+# 0.10.1
+
+* upgrade `unitted` dependency to v0.2.8 to accommodate recent change in 
+function exporting requirements in R 3.3
+
+* increase robustness of `mm_is_valid_day` for dates with 1 observation
+
 # 0.10.0
 
 * more comprehensive assignment of parameters from Stan output into model fit 

@@ -138,12 +138,10 @@ sim_get_par <- function(par.name, specs, data_daily, eval_env, required=TRUE) {
     fitvals <- NULL
   } else if(is.numeric(parsp)) {
     # option b: spec is numeric; return as-is or replicated to length n
-    if(length(parsp) == eval_env$n) {
-      fitvals <- parsp
-    } else if(length(parsp) == 1) {
+    if(length(parsp) == 1) {
       fitvals <- rep(parsp, eval_env$n)
     } else {
-      stop(paste0("if numeric, specs$", par_name, " must have length 1 or nrow(fit)"))
+      fitvals <- parsp
     }
   } else if(is.function(parsp)) {
     # option d: spec is function; return output from call
