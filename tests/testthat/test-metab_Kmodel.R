@@ -27,9 +27,6 @@ test_that("metab_Kmodel predictions (predict_metab, predict_DO) make sense", {
   # show that Kmodel(lm) and Kmodel(loess) do break, on model-specific errors
   expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE)
   expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE)
-  expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='lm'))), "0 (non-NA) cases", fixed=TRUE), "Timing stopped")
-  expect_output(expect_error(metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess'))), "invalid 'x'", fixed=TRUE), "Timing stopped")
-  metab_Kmodel(data=dat, data_daily=ddat1, specs=specs(mm_name("Kmodel", engine='loess')))
   
   # mean
   mm_mean <- metab_Kmodel(data_daily=ddat, specs=specs(mm_name('Kmodel', engine='mean')))
