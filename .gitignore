@@ -18,3 +18,4 @@ temp
 # Machine-specific files
 inst/models/*.stanrda
 inst/models/*.stanrds
+inst/doc
