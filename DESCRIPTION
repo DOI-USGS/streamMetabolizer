@@ -53,7 +53,8 @@ Suggests:
     rstan,
     testthat,
     XML,
-    xts
+    xts,
+    rmarkdown
 Collate:
     '01-onLoad.R'
     'calc_DO_deficit.R'
