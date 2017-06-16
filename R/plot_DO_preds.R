@@ -13,20 +13,27 @@
 #'   indicates that the data range should be used. for ggplot2, y_lim is only
 #'   used to exclude values outside that range and is ignored if the data span a
 #'   narrower range
+#' @inheritParams predict_DO
 #' @examples 
 #' \dontrun{
 #' mm <- metab_night(specs(mm_name('night')), data=data_metab('3', day_start=12, day_end=36))
-#' plot_DO_preds(predict_DO(mm))
-#' plot_DO_preds(predict_DO(mm), style='dygraphs', y_var='pctsat')
+#' plot_DO_preds(mm)
+#' plot_DO_preds(mm, date_start='2012-09-19', date_end='2012-09-19')
+#' plot_DO_preds(mm, style='dygraphs', y_var='pctsat')
 #' }
 #' @import dplyr
 #' @importFrom unitted v
 #' @export
-plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'), 
-                          style=c('ggplot2','dygraphs'),
-                          y_lim=list(conc=c(NA,NA), pctsat=c(NA,NA), ddodt=c(NA,NA))) {
+plot_DO_preds <- function(
+  DO_preds, y_var=c('conc','pctsat','ddodt'), 
+  style=c('ggplot2','dygraphs'),
+  y_lim=list(conc=c(NA,NA), pctsat=c(NA,NA), ddodt=c(NA,NA)),
+  date_start = NA, date_end = NA, use_saved = TRUE # these inherited from predict_DO
+) {
   
-  if(is(DO_preds, 'metab_model')) DO_preds <- predict_DO(DO_preds)
+  if(is(DO_preds, 'metab_model')) {
+    DO_preds <- predict_DO(DO_preds, date_start = date_start, date_end = date_end, use_saved = use_saved)
+  }
   
   style <- match.arg(style)
   y_var <- match.arg(y_var, several.ok=TRUE)
@@ -124,7 +131,7 @@ plot_DO_preds <- function(DO_preds, y_var=c('conc','pctsat','ddodt'),
           select(pure,mod,obs,solar.time) %>%
           mutate(solar.time=lubridate::force_tz(solar.time, Sys.getenv("TZ"))) %>% # dygraphs makes some funky tz assumptions. this seems to help.
           xts::xts(x=select(., -solar.time), order.by=.$solar.time, unique=FALSE, tzone=Sys.getenv("TZ"))
-        if(all(is.na(prepped[['pure']]))) prepped <- prepped[,c('mod','obs')]
+        if(all(is.na(prepped[,'pure']))) prepped <- prepped[,c('mod','obs')]
         prepped
       }
       if(length(y_var) > 1) {
