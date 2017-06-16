@@ -6,7 +6,8 @@
 \usage{
 plot_DO_preds(DO_preds, y_var = c("conc", "pctsat", "ddodt"),
   style = c("ggplot2", "dygraphs"), y_lim = list(conc = c(NA, NA), pctsat =
-  c(NA, NA), ddodt = c(NA, NA)))
+  c(NA, NA), ddodt = c(NA, NA)), date_start = NA, date_end = NA,
+  use_saved = TRUE)
 }
 \arguments{
 \item{DO_preds}{a data.frame of predictions such as that returned by 
@@ -23,6 +24,17 @@ and has a name in the possible values of y_var. NA within a vector
 indicates that the data range should be used. for ggplot2, y_lim is only
 used to exclude values outside that range and is ignored if the data span a
 narrower range}
+
+\item{date_start}{Date or a class convertible with as.Date. The first date 
+(inclusive) for which to report DO predictions. If NA, no filtering is 
+done.}
+
+\item{date_end}{Date or a class convertible with as.Date. The last date 
+(inclusive) for which to report DO predictions. If NA, no filtering is 
+done.}
+
+\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+the model?}
 }
 \description{
 Plots modeled values as lines, observed values as points
@@ -30,7 +42,8 @@ Plots modeled values as lines, observed values as points
 \examples{
 \dontrun{
 mm <- metab_night(specs(mm_name('night')), data=data_metab('3', day_start=12, day_end=36))
-plot_DO_preds(predict_DO(mm))
-plot_DO_preds(predict_DO(mm), style='dygraphs', y_var='pctsat')
+plot_DO_preds(mm)
+plot_DO_preds(mm, date_start='2012-09-19', date_end='2012-09-19')
+plot_DO_preds(mm, style='dygraphs', y_var='pctsat')
 }
 }

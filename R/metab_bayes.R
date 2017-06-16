@@ -758,7 +758,7 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
       'lnK600_lnQ_nodes'),
     daily = c(
       'GPP', 'ER',
-      'GPP_daily', 'ER_daily', 'K600_daily', 
+      'GPP_daily', 'Pmax', 'alpha', 'ER_daily', 'K600_daily', 
       if(features$pool_K600_type %in% c('linear','binned')) 'K600_daily_predlog'),
     inst = c(
       'DO_mod', 'DO_mod_partial', # d*n

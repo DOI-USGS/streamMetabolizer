@@ -5,7 +5,9 @@
 
 environment:
   R_VERSION: 'patched'
-  USE_RTOOLS: true
+  global:
+    WARNINGS_ARE_ERRORS: 1
+    USE_RTOOLS: true
   R_CHECK_ARGS: --no-build-vignettes --no-manual --no-multiarch
   R_BUILD_ARGS: --no-build-vignettes --no-manual
   R_INSTALL_ARGS: --no-multiarch
