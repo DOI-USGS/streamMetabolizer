@@ -1,3 +1,13 @@
+# 0.10.4
+
+* `plot_DO_preds` with dygraphs works again, and now you can subset dates using
+args `date_start` and `date_end` directly in `plot_DO_preds`
+
+# 0.10.3
+
+* adding a tiny bit of support toward bringing in new light-saturation models in
+the future
+
 # 0.10.2
 
 * test for day lengths < 0 in `mm_model_by_ply`, thanks to @weisoon
