@@ -374,7 +374,8 @@ bayes_allply <- function(
   datetime_df <- data_frame(
     solar.time=data_all$solar.time,
     date_index=rep(seq_len(data_list$d), each=data_list$n),
-    time_index=rep(seq_len(data_list$n), times=data_list$d))
+    time_index=rep(seq_len(data_list$n), times=data_list$d)) %>%
+    left_join(date_df, by='date_index')
   
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
@@ -399,7 +400,7 @@ bayes_allply <- function(
       bayes_allday$inst <- bayes_allday$inst %>% 
         left_join(datetime_df, by=c('date_index','time_index')) %>% 
         select(-date_index, -time_index, -index) %>% 
-        select(solar.time, everything())
+        select(date, solar.time, everything())
     }
   }
 
