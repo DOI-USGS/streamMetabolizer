@@ -20,10 +20,10 @@ data {
   real<lower=0> err_proc_iid_sigma_scale;
   
   // Data dimensions
-  int<lower=1> d; # number of dates
-  real<lower=0> timestep; # length of each timestep in days
-  int<lower=1> n24; # number of observations in first 24 hours per date
-  int<lower=1> n; # number of observations per date
+  int<lower=1> d; // number of dates
+  real<lower=0> timestep; // length of each timestep in days
+  int<lower=1> n24; // number of observations in first 24 hours per date
+  int<lower=1> n; // number of observations per date
   
   // Daily data
   vector[d] DO_obs_1;

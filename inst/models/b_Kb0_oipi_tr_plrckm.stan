@@ -10,7 +10,7 @@ data {
   real<lower=0> ER_daily_sigma;
   
   // Parameters of hierarchical priors on K600_daily (binned_sdzero model)
-  int <lower=1> b; # number of K600_lnQ_nodes
+  int <lower=1> b; // number of K600_lnQ_nodes
   real K600_lnQ_nodediffs_sdlog;
   vector[b] K600_lnQ_nodes_meanlog;
   vector[b] K600_lnQ_nodes_sdlog;
@@ -20,10 +20,10 @@ data {
   real<lower=0> err_proc_iid_sigma_scale;
   
   // Data dimensions
-  int<lower=1> d; # number of dates
-  real<lower=0> timestep; # length of each timestep in days
-  int<lower=1> n24; # number of observations in first 24 hours per date
-  int<lower=1> n; # number of observations per date
+  int<lower=1> d; // number of dates
+  real<lower=0> timestep; // length of each timestep in days
+  int<lower=1> n24; // number of observations in first 24 hours per date
+  int<lower=1> n; // number of observations per date
   
   // Daily data
   vector[d] DO_obs_1;
