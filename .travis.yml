@@ -20,11 +20,11 @@ before_script:
 r_packages:
  - modeest
  - deSolve
+ - rstan
 
 r_github_packages:
  - jimhester/covr
  - GLEON/LakeMetabolizer
- - appling/unitted
 
 after_success:
   - if [[ "${R_CODECOV}" ]]; then travis_wait 20 R -e 'covr::coveralls()'; fi
