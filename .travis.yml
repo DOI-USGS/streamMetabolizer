@@ -9,7 +9,7 @@ warnings_are_errors: true
 
 env:
    global:
-     - R_BUILD_ARGS="--no-build-vignettes --no-manual --no-multiarch"
+     - R_BUILD_ARGS="--no-build-vignettes --no-manual"
      - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
