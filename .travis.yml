@@ -7,8 +7,13 @@ sudo: required
 dist: trusty
 warnings_are_errors: true
 
-r_build_args: --no-build-vignettes --no-manual --no-multiarch
-r_check_args: --no-build-vignettes --no-manual
+env:
+   global:
+     - R_BUILD_ARGS="--no-build-vignettes --no-manual --no-multiarch"
+     - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
+     - NOT_CRAN="true"
+     - _R_CHECK_FORCE_SUGGESTS_=false
+   
 
 repos:
   CRAN: https://cran.rstudio.com
@@ -26,6 +31,12 @@ r_packages:
 r_github_packages:
  - jimhester/covr
  - GLEON/LakeMetabolizer
+
+script:
+  - |
+    R CMD build ${R_BUILD_ARGS} .
+    PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
+    travis_wait 20 R CMD check ${R_CHECK_ARGS} "${PKG_FILE_NAME}"
 
 after_success:
   - if [[ "${R_CODECOV}" ]]; then travis_wait 20 R -e 'covr::coveralls()'; fi
