@@ -4,10 +4,9 @@ Uses inverse modeling to estimate aquatic metabolism (photosynthesis and respira
 
 ## Status
 
-| Branch | Linux | Windows | Test Coverage | USGS Status |
-|--------|-------|---------|---------------|-------------|
-| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) |
-| develop| [![develop Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![develop Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/develop?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/develop) | [![develop Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=develop)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=develop) | |
+| Branch | Linux | Windows | Test Coverage | USGS Status | DOI |
+|--------|-------|---------|---------------|-------------|-----|
+| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) | |
 
 ## Questions and bug reports
 
