@@ -4,19 +4,25 @@ Uses inverse modeling to estimate aquatic metabolism (photosynthesis and respira
 
 ## Status
 
-| Branch | Linux | Windows | Test Coverage | USGS Status |
-|--------|-------|---------|---------------|-------------|
-| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) |
-| develop| [![develop Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![develop Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/develop?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/develop) | [![develop Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=develop)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=develop) | |
+| Branch | Linux | Windows | Test Coverage | USGS Status | DOI |
+|--------|-------|---------|---------------|-------------|-----|
+| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) | |
 
-## Reporting bugs
+## Questions and bug reports
 
-Please consider reporting bugs and asking questions on the Issues page:
+Please report bugs and ask questions on the Issues page:
 [https://github.com/USGS-R/streamMetabolizer/issues](https://github.com/USGS-R/streamMetabolizer/issues)
 
-Follow `@USGS_R` on Twitter for updates on USGS R packages:
+We can address your issues fastest if they are:
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/USGS_R.svg?style=social&label=Follow%20USGS_R)](https://twitter.com/USGS_R)
+* New - search past issues first to see if your question has already been answered. Reopen an old issue if your question was almost but not quite answered.
+
+* Complete - share all relevant code and console output/errors/warnings, in the order they were run and produced on your computer. Also include the output from a call to `devtools::session_info()` to tell us about your computer's configuration.
+
+* Reproducible - include all the data and code necessary for us/others to recreate the problem locally. It's fine to make up data if you can't share yours, as long as the problem still comes through.
+
+* Minimal - what is the smallest amount of data and code you can use to demonstrate the problem? This is less essential than the others but improves communication and our response time.
+
 
 ### Code of Conduct
 
@@ -27,6 +33,10 @@ We want to encourage a warm, welcoming, and safe environment for contributing to
 `streamMetabolizer` was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited, though still enthusiastic.
 
 ![USGS](http://usgs-r.github.io/images/usgs.png)
+
+Follow `@USGS_R` on Twitter for updates on USGS R packages:
+
+[![Twitter Follow](https://img.shields.io/twitter/follow/USGS_R.svg?style=social&label=Follow%20USGS_R)](https://twitter.com/USGS_R)
 
 ## Installation
 
