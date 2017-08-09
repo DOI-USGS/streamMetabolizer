@@ -32,7 +32,7 @@ We want to encourage a warm, welcoming, and safe environment for contributing to
 
 `streamMetabolizer` was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited, though still enthusiastic.
 
-![USGS](http://usgs-r.github.io/images/usgs.png)
+[![USGS](http://usgs-r.github.io/images/usgs.png)](https://www.usgs.gov/)
 
 Follow `@USGS_R` on Twitter for updates on USGS R packages:
 
