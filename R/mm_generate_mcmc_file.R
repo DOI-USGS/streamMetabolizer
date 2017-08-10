@@ -147,7 +147,7 @@ mm_generate_mcmc_file <- function(
             'real lnK600_lnQ_slope_mu;',
             'real<lower=0> lnK600_lnQ_slope_sigma;'),
           binned=c(
-            'int <lower=1> b; # number of K600_lnQ_nodes',
+            'int <lower=1> b; // number of K600_lnQ_nodes',
             'real K600_lnQ_nodediffs_sdlog;',
             'vector[b] K600_lnQ_nodes_meanlog;',
             'vector[b] K600_lnQ_nodes_sdlog;')
@@ -179,10 +179,10 @@ mm_generate_mcmc_file <- function(
       
       chunk(
         comment('Data dimensions'),
-        'int<lower=1> d; # number of dates',
-        'real<lower=0> timestep; # length of each timestep in days',
-        'int<lower=1> n24; # number of observations in first 24 hours per date',
-        'int<lower=1> n; # number of observations per date'),
+        'int<lower=1> d; // number of dates',
+        'real<lower=0> timestep; // length of each timestep in days',
+        'int<lower=1> n24; // number of observations in first 24 hours per date',
+        'int<lower=1> n; // number of observations per date'),
       
       chunk(
         comment('Daily data'),

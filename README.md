@@ -1,31 +1,49 @@
 # streamMetabolizer
-stream metabolism R package
 
+Uses inverse modeling to estimate aquatic metabolism (photosynthesis and respiration) from time series data on dissolved oxygen, water temperature, depth, and light.
 
 ## Status
 
-This package is in development. We are using it for our own early applications and welcome bold, flexible, resilient new users who can help us make the package better. Please contact us if you might be one of those.
+| Branch | Linux | Windows | Test Coverage | USGS Status | DOI |
+|--------|-------|---------|---------------|-------------|-----|
+| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) | |
 
-| Name       | Status (develop branch)   |  Status (master branch) |
-| :------------ |:-------------|:-------------| 
-| Linux Build: | [![develop Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=develop)](https://travis-ci.org/USGS-R/streamMetabolizer/branches)  | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) |
-| Windows Build: | [![develop Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/develop?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/develop) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) |  
-| Package Tests: | [![develop Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=develop)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=develop) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) |  
+## Questions and bug reports
 
+Please report bugs and ask questions on the Issues page:
+[https://github.com/USGS-R/streamMetabolizer/issues](https://github.com/USGS-R/streamMetabolizer/issues)
+
+We can address your issues fastest if they are:
+
+* New - search past issues first to see if your question has already been answered. Reopen an old issue if your question was almost but not quite answered.
+
+* Complete - share all relevant code and console output/errors/warnings, in the order they were run and produced on your computer. Also include the output from a call to `devtools::session_info()` to tell us about your computer's configuration.
+
+* Reproducible - include all the data and code necessary for us/others to recreate the problem locally. It's fine to make up data if you can't share yours, as long as the problem still comes through.
+
+* Minimal - what is the smallest amount of data and code you can use to demonstrate the problem? This is less essential than the others but improves communication and our response time.
+
+
+### Code of Conduct
+
+We want to encourage a warm, welcoming, and safe environment for contributing to this project. See the [code of conduct](https://github.com/USGS-R/streamMetabolizer/blob/develop/CONDUCT.md) for more information.
+
+### Package Support
+
+`streamMetabolizer` was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited, though still enthusiastic.
+
+[![USGS](http://usgs-r.github.io/images/usgs.png)](https://www.usgs.gov/)
+
+Follow `@USGS_R` on Twitter for updates on USGS R packages:
+
+[![Twitter Follow](https://img.shields.io/twitter/follow/USGS_R.svg?style=social&label=Follow%20USGS_R)](https://twitter.com/USGS_R)
 
 ## Installation
 
-### Recommended
-
-The most stable+current version of this package can be installed with this R command:
+The most stable and current version of this package can be installed with this R command:
 ```r
 install.packages("streamMetabolizer", dependencies=TRUE, 
   repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
-```
-and updated with this command:
-```r
-update.packages(oldPkgs=c("streamMetabolizer","unitted"),
-  dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
 ```
 
 ### For the adventurous
@@ -33,13 +51,7 @@ update.packages(oldPkgs=c("streamMetabolizer","unitted"),
 The in-development version of the package can be installed with the `devtools` package. 
 We can make no guarantees about the stability of this version, 
 but it might have new features that you'll like.
-If you go this route, you will need to install the package dependencies separately, like this:
-```r
-install.packages(
-  c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
-  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
-```
+If you go this route, first install as above to install all the package dependencies.
 You can then install the most cutting edge version of streamMetabolizer with this command:
 ```r
 devtools::install_github("USGS-R/streamMetabolizer", ref="develop")
@@ -81,12 +93,11 @@ or [Windows](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows)
 
 ## Disclaimer
 
-This software is in the public domain because it contains materials that originally came from the U.S. Geological Survey, an agency of the United States Department of Interior. For more information, see the official USGS copyright policy at [https://www.usgs.gov/visual-id/credit_usgs.html#copyright](https://www.usgs.gov/visual-id/credit_usgs.html#copyright)
+This software is in the public domain because it contains materials that originally came from the U.S. Geological Survey  (USGS), an agency of the United States Department of Interior. For more information, see the official USGS copyright policy at [https://www.usgs.gov/visual-id/credit_usgs.html#copyright](https://www.usgs.gov/visual-id/credit_usgs.html#copyright)
 
-This information is preliminary or provisional and is subject to revision. It is being provided to meet the need for timely best science. The information has not received final approval by the U.S. Geological Survey (USGS) and is provided on the condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from the authorized or unauthorized use of the information. Although this software program has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.
+Although this software program has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.
 
 This software is provided "AS IS."
-
 
  [
     ![CC0](https://i.creativecommons.org/p/zero/1.0/88x31.png)
