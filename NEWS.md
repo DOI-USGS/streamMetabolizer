@@ -1,3 +1,8 @@
+# 0.10.7
+
+* non-standard parameters from custom Bayesian models are now sorted in a less
+bewildering order in the model fit (as from `get_fit()`)
+
 # 0.10.4
 
 * `plot_DO_preds` with dygraphs works again, and now you can subset dates using

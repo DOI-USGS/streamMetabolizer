@@ -766,7 +766,8 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
       'DO_mod_partial_sigma', # d*n
       'GPP_inst', 'ER_inst', 'KO2_inst', # d*n
       'err_proc_acor_inc', 'err_proc_acor', # can be d*n (trapezoid) or d*(n-1) (euler), same timestamp indexing as GPP_inst
-      'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i]
+      'err_obs_iid', 'err_proc_iid', # d*(n-1), timestamp[i+1] relates to var[i:i+1]
+      'coef_GPP'
     )
   )
   
@@ -791,7 +792,6 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
     row_order <- names(sort(sapply(df_params, function(dp) grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))[1]))) # use the same order as mcmc_mat
     varstat_order <- paste0(rep(row_order, each=ncol(mcmc_mat)), '_', rep(colnames(mcmc_mat), times=length(row_order)))
     par_dims <- sapply(df_params, function(dp) length(grep(paste0("^", dp, "(\\[|$)"), rownames(mcmc_mat))))
-    index_level_rows <- grep(paste0("^", names(par_dims)[match(max(par_dims), par_dims)], "(\\[|$)"), rownames(mcmc_mat))
     
     as_data_frame(mcmc_mat[dim_rows,,drop=FALSE]) %>%
       mutate(rowname=rownames(mcmc_mat[dim_rows,,drop=FALSE])) %>%
@@ -801,23 +801,21 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
              indexstr=if(1 %in% par_dims) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
              # parse/factorify the index for ordering
              index=
-               if(dfname %in% c('daily','inst')) {
-                 NA 
-               } else if(any(grepl(',', indexstr))) {
-                 ordered(indexstr, levels=indexstr[index_level_rows])
+               if(dfname %in% c('daily','inst') || any(grepl(',', indexstr))) {
+                 indexstr
                } else {
                  as.numeric(indexstr)
                },
              date_index=
                if(dfname=='daily') {
                  as.numeric(indexstr)
-               } else if(dfname=='inst') {
+               } else if(dfname=='inst' || any(grepl(',', indexstr))) {
                  sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[2]))
                } else {
                  NA
                },
              time_index=
-               if(dfname=='inst') {
+               if(dfname=='inst' || any(grepl(',', indexstr))) {
                  sapply(strsplit(indexstr, ','), function(ind) as.numeric(ind[1]))
                } else {
                  NA
