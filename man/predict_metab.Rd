@@ -60,10 +60,10 @@ A data.frame of daily metabolism estimates. Columns include:
   \describe{
   
   \item{GPP}{numeric estimate of Gross Primary Production, positive when 
-  realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+  realistic, \eqn{g O_2 m^{-2} d^{-1}}{g O2 / m^2 / d}}
   
   \item{ER}{numeric estimate of Ecosystem Respiration, negative when 
-  realistic, \eqn{mg O_2 L^{-1} d^{-1}}{mg O2 / L / d}}
+  realistic, \eqn{g O_2 m^{-2} d^{-1}}{g O2 / m^2 / d}}
   
   \item{K600}{numeric estimate of the reaeration rate \eqn{d^{-1}}{1 / d}} }
 }
