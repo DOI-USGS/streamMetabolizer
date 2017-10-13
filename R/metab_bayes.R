@@ -348,7 +348,7 @@ bayes_allply <- function(
   stop_strs <- warn_strs <- character(0)
   
   # Calculate metabolism by Bayesian MCMC
-  data_list <- NULL # (in case it doesn't get assigned in the tryCatch)
+  data_list <- list(d=1, n=1) # (in case it doesn't get assigned in the tryCatch)
   bayes_allday <- withCallingHandlers(
     tryCatch({
       if(is.null(data_all) || nrow(data_all) == 0) stop("no valid days of data")
@@ -442,11 +442,11 @@ bayes_allply <- function(
 #### helpers to the helper ####
 
 #' Prepare data for passing to Stan
-#' 
-#' This function accepts exactly one day's worth of data, (one ply, which might 
-#' be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
-#' data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
-#' 
+#'
+#' This function accepts pre-validated data (though more problems may be
+#' discovered here). It prepares the data needed to run a Bayesian MCMC method
+#' to estimate GPP, ER, and K600.
+#'
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams metab
 #' @return list of data for input to runstan_bayes
@@ -537,7 +537,11 @@ prepdata_bayes <- function(
         if(isTRUE(features$GPP_fun == 'linlight')) {
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
-          sweep(mat_light, MARGIN=2, STATS=colSums(mat_light*in_solar_day), FUN=`/`)
+          daily_totals <- colSums(mat_light*in_solar_day)
+          if(any(daily_totals <= 0)) {
+            stop('daily light total is <= 0 on ', paste(names(date_table)[which(daily_totals <= 0)], collapse=', '))
+          } 
+          sweep(mat_light, MARGIN=2, STATS=daily_totals, FUN=`/`)
         } else {
           mat_light
         }

@@ -32,8 +32,8 @@ detail, and gives default values.}
 list of data for input to runstan_bayes
 }
 \description{
-This function accepts exactly one day's worth of data, (one ply, which might 
-be 24 hrs or 31.5 or so), which should already be validated. It prepares the 
-data needed to run a Bayesian MCMC method to estimate GPP, ER, and K600.
+This function accepts pre-validated data (though more problems may be
+discovered here). It prepares the data needed to run a Bayesian MCMC method
+to estimate GPP, ER, and K600.
 }
 \keyword{internal}
