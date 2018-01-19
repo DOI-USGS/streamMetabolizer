@@ -10,23 +10,21 @@ get_mcmc(metab_model)
 \method{get_mcmc}{metab_bayes}(metab_model)
 }
 \arguments{
-\item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to 
-return the MCMC model object[s]}
+\item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to
+return the MCMC model object\link{s}}
 }
 \value{
-The MCMC model object[s]
+The MCMC model object\link{s}
 }
 \description{
-A function specific to metab_bayes models. Returns an MCMC object of class 
-\code{\link[rstan]{stanfit}}, which is saved in the metab_model by default 
-because you should almost always inspect it; see \code{keep_mcmcs} argument 
-to \code{\link{specs}} for options for saving space. The \code{rstan} methods
-for \code{stanfit} objects include \code{summary}, 
-\code{\link[rstan]{get_stancode}}, \code{\link[rstan]{stan_dens}}, 
-\code{\link[rstan]{stan_diag}}, and many more. See 
-\code{\link[rstan]{rstan-plotting-functions}}, \code{\link[rstan]{stanfit}}, 
-and the \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan 
-manual}.
+A function specific to metab_bayes models. Returns an MCMC object of class
+\link[rstan:stanfit]{rstan::stanfit}, which is saved in the metab_model by default because you
+should almost always inspect it; see \code{keep_mcmcs} argument to \code{\link[=specs]{specs()}} for
+options for saving space. The \code{rstan} methods for \link[rstan:stanfit]{rstan::stanfit}
+objects include \code{summary()}, \code{get_stancode()}, \code{stan_dens()}, \code{stan_diag()},
+and many more. See \code{\link[rstan]{rstan-plotting-functions}},
+\link[rstan:stanfit]{rstan::stanfit} and the
+\href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan manual}.
 }
 \section{Methods (by class)}{
 \itemize{

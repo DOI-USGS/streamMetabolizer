@@ -2,8 +2,7 @@
 #' 
 #' Assigns each value in \code{vec} a new, discrete value corresponding to a 
 #' bin. This function provides one interface to the functions 
-#' \code{\link[base]{cut}}, \code{\link[ggplot2]{cut_interval}}, and 
-#' \code{\link[ggplot2]{cut_number}}.
+#' `base::cut`, `ggplot2::cut_interval`, and `ggplot2::cut_number`.
 #' 
 #' @param vec the numeric vector whose values should be binned. 
 #'   log(discharge.daily) is a good candidate when using this function for 

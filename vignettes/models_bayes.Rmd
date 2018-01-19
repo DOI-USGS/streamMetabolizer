@@ -1,0 +1,55 @@
+---
+title: "Bayesian Models"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bayesian Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This page provides details on how to get the best results from a Bayesian metabolism model. See [Quickstart](get_started.html) for an example of preparing and fitting a Bayesian model.
+
+## Why Bayesian models?
+
+Bayesian models are slower than the alternatives, but they offer several advantages:
+* They can be state-space models, including both observation error and process error.
+* They can be hierarchically structured, allowing you to use information from many days of data to inform estimates on each individual day.
+* They produce more accurate and nuanced uncertainty estimates.
+
+## Configuring Bayesian models
+
+The structure and specifications of Bayesian models require special attention. We'll add more to this section later, but for now, please spend lots of time reading the help file at `?specs`, especially the `Relevant arguments` section and the parameter definitions.
+
+## Inspecting Bayesian models
+
+### Stan MCMC information
+
+After fitting a `streamMetabolizer` model, you can pull out the original Stan model object using `get_mcmc(mm)` where `mm` is your fitted metabolism model. You'll need the `rstan` package to inspect the outputs from there, so run `library(rstan)` before proceeding.
+
+See `?stanfit` for some ideas on how to inspect the Stan model object. My go-to first method is `traceplot()` (and the `inc_warmup=TRUE` arg to `traceplot()` can be handy). `plot()`, `print()`, and `summary()` are also useful. 
+
+### Model warnings and errors
+
+Unlike other model types in streamMetabolizer, Bayesian models sometimes have
+overall warnings and errors not specific to any one day. If there are any, you
+will see a note in the 'warnings' or 'errors' columns of the model printout, and you can
+see the full message[s] as elements in the list returned by `get_fit()`. There's
+also a [smaller] possibility of errors or warnings directly associated with
+metabolism prediction rather than fitting, inspectable in the 'warnings' and
+'errors' columns of the data.frame returned by `predict_metab()`.
+
+```{r bayes_warning, eval=FALSE}
+# here's where you'd find fitting messages:
+select(get_params(mm), warnings, errors)
+get_fit(mm)$warnings
+get_fit(mm)$errors
+
+# and prediction messages
+select(predict_metab(mm), warnings, errors)
+```

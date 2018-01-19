@@ -1,6 +1,7 @@
 #' Calculates the equilibrium saturation concentration of oxygen in water at the
 #' supplied conditions
 #' 
+#' @md
 #' @param temp.water a numeric vector of water temperature in degrees Celsius, 
 #'   or a \linkS4class{unitted} object of water temperatures.
 #' @param pressure.air barometric pressure in millibars, or a 
@@ -10,7 +11,7 @@
 #' @param model character. One of 'garcia-benson', 'garcia', 'weiss', or
 #'   'benson', but 'garcia-benson' is recommended.
 #' @param ... additional parameters passed to 
-#'   \code{\link[LakeMetabolizer]{o2.at.sat.base}}
+#'   `LakeMetabolizer::o2.at.sat.base`
 #' @return a numeric vector of dissolved oxygen equilibrium saturation 
 #'   concentrations, in mg/L, with units attached if any of the input vectors 
 #'   are unitted.

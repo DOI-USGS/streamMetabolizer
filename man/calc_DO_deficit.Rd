@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc_DO_deficit.R
 \name{calc_DO_deficit}
 \alias{calc_DO_deficit}
-\title{calculate a vector of dissolved oxygen deficit}
+\title{Deprecated: Calculate a vector of dissolved oxygen deficits}
 \usage{
 calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0, ...)
 }
@@ -11,7 +11,7 @@ calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0, ...)
 observations, mgO2 L^-1, or a \linkS4class{unitted} object of dissolved
 oxygen concentrations.}
 
-\item{temp.water}{a numeric vector of water temperature in degrees Celsius, 
+\item{temp.water}{a numeric vector of water temperature in degrees Celsius,
 or a \linkS4class{unitted} object of water temperatures.}
 
 \item{pressure.air}{barometric pressure in millibars, or a
@@ -22,14 +22,14 @@ or a \linkS4class{unitted} object of water temperatures.}
 one or equal to length of \code{temp.water}.}
 
 \item{...}{additional parameters passed to
-\code{\link[LakeMetabolizer]{o2.at.sat.base}}}
+\code{LakeMetabolizer::o2.at.sat.base}}
 }
 \value{
 a vector of DO.deficit values
 }
 \description{
-Creates a DO.deficit vector for input into various metabolism
-  models (see...)
+Deprecated: Submit a GitHub issue if you want calc_DO_deficit() to stick
+around. Creates a DO.deficit vector for input into metabolism models.
 }
 \examples{
 \dontrun{

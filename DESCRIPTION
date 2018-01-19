@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Models for Estimating Aquatic Photosynthesis and Respiration
-Version: 0.10.7
-Date: 2017-09-01
+Version: 0.10.8
+Date: 2017-10-13
 Author: Alison P. Appling, Robert O. Hall, Maite Arroita, and Charles B.
     Yackulic
 Authors@R: c(
@@ -17,9 +17,8 @@ Description: streamMetabolizer uses inverse modeling to estimate aquatic
     data on dissolved oxygen, water temperature, depth, and light. The package
     assists with data preparation, handles data gaps during modeling, and
     provides tabular and graphical reports of model outputs. Several
-    time-honored methods are implemented along with many promising new variants,
-    still under development, that produce more accurate and precise metabolism
-    estimates.
+    time-honored methods are implemented along with many promising new variants
+    that produce more accurate and precise metabolism estimates.
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of
