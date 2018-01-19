@@ -18,8 +18,36 @@ and precise metabolism estimates.
 \details{
 See http://usgs-r.github.io/streamMetabolizer for vignettes on the web.
 }
-\section{Prepare model inputs}{
+\section{Calculate new input variables}{
 
+
+  \itemize{
+
+  \item \code{\link{calc_depth}}
+
+  \item \code{\link{calc_DO_sat}}
+
+  \item \code{\link{calc_light}}
+
+  }
+}
+
+\section{Convert existing input variables}{
+
+
+  \itemize{
+
+  \item \code{\link{convert_date_to_doyhr}}
+
+  \item \code{\link{convert_localtime_to_UTC}}
+
+  \item \code{\link{convert_UTC_to_solartime}}
+
+  \item \code{\link{convert_k600_to_kGAS}}
+
+  \item \code{\link{convert_PAR_to_SW}}
+
+  }
 }
 
 \section{Model metabolism}{

@@ -10,9 +10,7 @@
 #' 
 #' See http://usgs-r.github.io/streamMetabolizer for vignettes on the web.
 #'
-#' @section Prepare model inputs:
-#'
-#' @subsection Calculate new variables:
+#' @section Calculate new input variables:
 #'
 #'   \itemize{
 #'
@@ -24,7 +22,7 @@
 #'
 #'   }
 #'
-#' @subsection Convert existing variables:
+#' @section Convert existing input variables:
 #'
 #'   \itemize{
 #'

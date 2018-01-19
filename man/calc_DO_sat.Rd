@@ -9,25 +9,25 @@ calc_DO_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"),
   model = "garcia-benson", ...)
 }
 \arguments{
-\item{temp.water}{a numeric vector of water temperature in degrees Celsius, 
+\item{temp.water}{a numeric vector of water temperature in degrees Celsius,
 or a \linkS4class{unitted} object of water temperatures.}
 
-\item{pressure.air}{barometric pressure in millibars, or a 
+\item{pressure.air}{barometric pressure in millibars, or a
 \linkS4class{unitted} object of barometric pressure.}
 
-\item{salinity.water}{a numeric vector of salinity in PSU, or a 
+\item{salinity.water}{a numeric vector of salinity in PSU, or a
 \linkS4class{unitted} object of salinity. Defaults to zero.}
 
 \item{model}{character. One of 'garcia-benson', 'garcia', 'weiss', or
 'benson', but 'garcia-benson' is recommended.}
 
-\item{...}{additional parameters passed to 
-\code{\link[LakeMetabolizer]{o2.at.sat.base}}}
+\item{...}{additional parameters passed to
+\code{LakeMetabolizer::o2.at.sat.base}}
 }
 \value{
-a numeric vector of dissolved oxygen equilibrium saturation 
-  concentrations, in mg/L, with units attached if any of the input vectors 
-  are unitted.
+a numeric vector of dissolved oxygen equilibrium saturation
+concentrations, in mg/L, with units attached if any of the input vectors
+are unitted.
 }
 \description{
 Calculates the equilibrium saturation concentration of oxygen in water at the

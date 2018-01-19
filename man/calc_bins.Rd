@@ -24,8 +24,7 @@ ggplot function corresponding to the value of cuts, if cuts is a character
 \description{
 Assigns each value in \code{vec} a new, discrete value corresponding to a 
 bin. This function provides one interface to the functions 
-\code{\link[base]{cut}}, \code{\link[ggplot2]{cut_interval}}, and 
-\code{\link[ggplot2]{cut_number}}.
+`base::cut`, `ggplot2::cut_interval`, and `ggplot2::cut_number`.
 }
 \examples{
 ln.disch <- log(rlnorm(100))
