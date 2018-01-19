@@ -2,11 +2,9 @@
 knitr::opts_chunk$set(echo = TRUE)
 options(width=100)
 
-## ---- messages=TRUE, warnings=TRUE, errors=TRUE---------------------------------------------------
+## ---- message=FALSE-------------------------------------------------------------------------------
 library(streamMetabolizer)
-
-## -------------------------------------------------------------------------------------------------
-suppressPackageStartupMessages(library(dplyr))
+library(dplyr)
 
 ## -------------------------------------------------------------------------------------------------
 dat <- data_metab('3', '15')

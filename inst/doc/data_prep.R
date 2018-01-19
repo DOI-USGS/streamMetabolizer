@@ -1,6 +1,44 @@
 ## ----setup, include=FALSE------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
+## ----data, message=FALSE-------------------------------------------------
+library(streamMetabolizer)
+dat <- data_metab(num_days='3', res='15', attach.units=TRUE)
+
+## ----data_check----------------------------------------------------------
+dim(dat)
+dat[c(1,48,96,240,288),] # some example rows
+
+## ---- message=FALSE------------------------------------------------------
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+## ----viz_inputs_DO, fig.width=7, fig.height=3----------------------------
+dat %>% unitted::v() %>%
+  mutate(DO.pctsat = 100 * (DO.obs / DO.sat)) %>%
+  select(solar.time, starts_with('DO')) %>%
+  gather(type, DO.value, starts_with('DO')) %>%
+  mutate(units=ifelse(type == 'DO.pctsat', 'DO\n(% sat)', 'DO\n(mg/L)')) %>%
+  ggplot(aes(x=solar.time, y=DO.value, color=type)) + geom_line() + 
+  facet_grid(units ~ ., scale='free_y') + theme_bw() +
+  scale_color_discrete('variable')
+
+## ----viz_inputs_other, fig.width=7, fig.height=4-------------------------
+labels <- c(depth='depth\n(m)', temp.water='water temp\n(deg C)', light='PAR\n(umol m^-2 s^-1)')
+dat %>% unitted::v() %>%
+  select(solar.time, depth, temp.water, light) %>%
+  gather(type, value, depth, temp.water, light) %>%
+  mutate(
+    type=ordered(type, levels=c('depth','temp.water','light')),
+    units=ordered(labels[type], unname(labels))) %>%
+  ggplot(aes(x=solar.time, y=value, color=type)) + geom_line() + 
+  facet_grid(units ~ ., scale='free_y') + theme_bw() +
+  scale_color_discrete('variable')
+
+## ----data_needs----------------------------------------------------------
+metab_inputs('mle', 'data')
+
 ## ------------------------------------------------------------------------
 num.time <- 1471867200
 (posix.time.localtz <- as.POSIXct(num.time, origin='1970-01-01', tz='UTC'))
