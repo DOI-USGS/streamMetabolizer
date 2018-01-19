@@ -22,16 +22,12 @@ purpose of exploring and testing metabolism models.
 
 # Setup
 
-Load streamMetabolizer.
+Load streamMetabolizer and some helper packages.
 
-```{r, messages=TRUE, warnings=TRUE, errors=TRUE}
+```{r, message=FALSE}
 library(streamMetabolizer)
-```
-
-Load dplyr.
-
-```{r}
-suppressPackageStartupMessages(library(dplyr))
+library(dplyr)
+library(ggplot2)
 ```
 
 Get some data to work with: here we're requesting three days of data at
@@ -284,7 +280,6 @@ attr(pars, 'K600_eqn')
 ```
 The centers and nodes are the essential pieces of the final piecewise relationship (blue points and line). We can also identify the predictions for specific dates and discharges along that line (purple points) and the K600 params that result from adding noise to those predictions (red points):
 ```{r}
-library(ggplot2)
 KQ <- as.data.frame(attr(pars, 'K600_eqn')[c('K600_lnQ_nodes_centers', 'lnK600_lnQ_nodes')])
 Kpred <- mutate(select(pars, date, discharge.daily, K600.daily), K600_daily_predlog=attr(pars, 'K600_eqn')$K600_daily_predlog)
 ggplot(KQ, aes(x=K600_lnQ_nodes_centers, y=lnK600_lnQ_nodes)) + geom_line(color='blue') + geom_point(color='blue') + 

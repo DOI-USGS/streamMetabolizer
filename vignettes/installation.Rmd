@@ -1,0 +1,79 @@
+---
+title: "Installation"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output:
+  # rmarkdown::github_document
+  rmarkdown::html_vignette:
+      keep_md: true
+vignette: >
+  %\VignetteIndexEntry{Installation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=100)
+```
+
+# Installing streamMetabolizer
+
+## Recommended
+
+The most stable+current version of this package can be installed with this R command:
+```{r, eval=FALSE}
+install.packages("streamMetabolizer", dependencies=TRUE, 
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
+```
+and updated with this command:
+```{r, eval=FALSE}
+update.packages(oldPkgs=c("streamMetabolizer","unitted"), dependencies=TRUE,
+  repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
+```
+
+## For the adventurous
+
+The in-development version of the package can be installed with the `devtools` package. 
+We can make no guarantees about the stability of this version, 
+but it might have new features that you'll like.
+If you go this route, you will need to install the package dependencies separately, like this:
+```{r, eval=FALSE}
+install.packages(
+  c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
+    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
+```
+You can then install the most cutting edge version of streamMetabolizer with this command:
+```{r, eval=FALSE}
+devtools::install_github("USGS-R/streamMetabolizer")
+```
+
+## Software dependencies
+
+If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for many R packages.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
+
+Bayesian models require the [`rstan`](http://mc-stan.org/interfaces/rstan.html) 
+interface to [Stan](http://mc-stan.org/). Sometimes this is as simple as
+installing Rtools and calling the above `install.packages` or `install_github` command, but other
+times everything seems fine until you try to run a Bayesian model in
+`streamMetabolizer`. Symptoms of an imperfect `rstan` installation are probably
+diverse. Here's one we've seen:
+```{r, eval=FALSE}
+> bayes_fit <- metab(specs('bayes'), data=mydat)
+Warning message:
+In metab_fun(specs = specs, data = data, data_daily = data_daily,  :
+  Modeling failed: argument is of length zero
+
+> get_fit(bayes_fit)
+...
+$warnings
+[1] "running command ''/Library/Frameworks/R.framework/Resources/bin/R' CMD config CXX 2>/dev/null' had status 1"
+
+$errors
+[1] "argument is of length zero"
+```
+In such cases you should refer to the detailed instructions on the `rstan` website for 
+[Mac and Linux](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux) 
+or [Windows](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows).
+

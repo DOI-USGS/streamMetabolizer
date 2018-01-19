@@ -1,0 +1,134 @@
+---
+title: "MLE Models"
+author: "Alison Appling"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MLE Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file provides an example of fitting an MLE (maximum likelihood estimation) model, following the general outline in the [Quickstart](get_started.html) tutorial.
+
+As a reminder, there are four steps to fitting a metabolism model in `streamMetabolizer`.
+
+1. Prepare and inspect the input data.
+2. Choose a model configuration appropriate to your data.
+3. Fit the model.
+4. Inspect the output.
+
+# Preliminaries
+
+If you haven't already installed the package, see the [Installation](installation.html) tutorial.
+
+Next load the R libraries. Only `streamMetabolizer` is required to run models, but we'll also be using `dplyr` to inspect the results.
+```{r libs, warning=FALSE, message=FALSE}
+library(streamMetabolizer)
+library(dplyr)
+```
+
+# 1. Preparing the input data
+
+Load a small example dataset from the package (data are from French
+Creek in Laramie, WY, courtesy of Bob Hall). Explicitly attached units are
+optional but useful for confirming that the data are in the expected format.
+We'll use the `streamMetabolizer` standard in defining our day to run from 4 am
+(`day_start=4`) to 4 am (`day_end=28`).
+```{r data}
+dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28, attach.units=TRUE)
+```
+
+# 2. Configuring the model
+
+There are two steps to configuring a metabolism model in `streamMetabolizer`.
+ 
+a. Identify the name of the model structure you want using `mm_name()`.
+b. Set the specifications for the model using defaults from`specs()` as a starting point.
+
+## 2a. Choose a model structure
+
+Call `mm_name` to choose a specific MLE model name/structure. Here we will fit
+the default MLE model. Many others are available (see [Model Structures](model_structures.html)
+and [GPP and ER equations](gpp_er_eqs.html)), but this one is common and fast.
+```{r mle_name}
+mle_name <- mm_name(type='mle')
+mle_name
+```
+
+## 2b. Set the specifications
+
+Having chosen a model, we next need to define a list of specifications for that
+model. The `specs` function creates a list appropriate to the model we chose.
+```{r mle_specs}
+mle_specs <- specs(mle_name)
+mle_specs
+```
+
+See `?specs` for definitions of all specifications. Note that most of the 
+specifications in that help file are omitted from the output of
+`specs(mle_name)` above - this is because MLE models are simple and don't have
+many parameters to set. Any of those parameters that are included in
+`mle_specs` can be modified, either by calling `specs()` again or by replacing
+that value in the `mle_specs` list. Here is a command that sets the the inital
+values of GPP, ER, and K600 for the likelihood maximization. (I've done this
+just for illustration; the model results aren't affected by these particular
+changes for this particular dataset, and you will seldom need to edit these values.)
+```{r specs_details}
+mle_specs <- specs(mle_name, init.GPP.daily=2, init.ER.daily=-1, init.K600.daily=3)
+```
+
+# 3. Fitting the model
+
+Now actually fit the model using the `metab` function.
+```{r mle_fit, warning=FALSE}
+mm <- metab(mle_specs, data=dat, info=c(site='French Creek, WY', source='Bob Hall'))
+```
+
+It's optional, but sometimes helpful, to include some sort of metadata in the
+`info`, as I've done above. I've chosen to put the metadata in a character
+vector, but metadata can take any format you like.
+
+## 4. Inspecting the model
+
+Models show lots of relevant information if you simply print them at the command line.
+```{r show}
+mm
+```
+
+You can also extract specific pieces of information using designated accessor
+functions. For example, the `info` and `data` are saved in the fitted model
+object and can be pulled out with `get_info` and `get_data`, respectively.
+```{r info}
+get_info(mm)
+head(get_data(mm))
+```
+
+We can also get information about the model fitting process.
+```{r info2}
+get_fitting_time(mm) # the time it took to fit the model
+get_version(mm) # the streamMetabolizer version used to fit the model
+get_specs(mm) # the specifications we passed in
+```
+
+There is a function to plot the daily metabolism estimates.
+```{r plot_metab1, fig.width=7, fig.height=4.5}
+plot_metab_preds(mm)
+```
+
+There is also a function to plot the dissolved oxygen predictions (lines) along
+with the original observations (points).
+```{r plot_metab2, fig.width=7, fig.height=6}
+plot_DO_preds(mm)
+```
+
+You can output the daily and instantaneous predictions to data.frames for
+further inspection.
+```{r pred_dfs}
+predict_metab(mm)
+head(predict_DO(mm))
+```
