@@ -36,7 +36,7 @@ script:
   - |
     R CMD build ${R_BUILD_ARGS} .
     PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
-    travis_wait 20 R CMD check ${R_CHECK_ARGS} "${PKG_FILE_NAME}"
+    travis_wait 40 R CMD check ${R_CHECK_ARGS} "${PKG_FILE_NAME}"
 
 after_success:
   - if [[ "${R_CODECOV}" ]]; then travis_wait 20 R -e 'covr::coveralls()'; fi
