@@ -2,11 +2,10 @@
 knitr::opts_chunk$set(echo = TRUE)
 options(width=100)
 
-## ---- messages=TRUE, warnings=TRUE, errors=TRUE---------------------------------------------------
+## ---- message=FALSE-------------------------------------------------------------------------------
 library(streamMetabolizer)
-
-## -------------------------------------------------------------------------------------------------
-suppressPackageStartupMessages(library(dplyr))
+library(dplyr)
+library(ggplot2)
 
 ## -------------------------------------------------------------------------------------------------
 dat <- data_metab('3', '15')
@@ -118,7 +117,6 @@ pars
 attr(pars, 'K600_eqn')
 
 ## -------------------------------------------------------------------------------------------------
-library(ggplot2)
 KQ <- as.data.frame(attr(pars, 'K600_eqn')[c('K600_lnQ_nodes_centers', 'lnK600_lnQ_nodes')])
 Kpred <- mutate(select(pars, date, discharge.daily, K600.daily), K600_daily_predlog=attr(pars, 'K600_eqn')$K600_daily_predlog)
 ggplot(KQ, aes(x=K600_lnQ_nodes_centers, y=lnK600_lnQ_nodes)) + geom_line(color='blue') + geom_point(color='blue') + 

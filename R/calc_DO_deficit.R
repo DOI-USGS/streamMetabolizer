@@ -1,10 +1,13 @@
-#' @title calculate a vector of dissolved oxygen deficit
-#' @description Creates a DO.deficit vector for input into various metabolism
-#'   models (see...)
+#' Deprecated: Calculate a vector of dissolved oxygen deficits
+#'
+#' Deprecated: Submit a GitHub issue if you want calc_DO_deficit() to stick
+#' around. Creates a DO.deficit vector for input into metabolism models.
+#'
+#' @md
 #' @param DO.obs a numeric vector of dissolved oxygen concentration
 #'   observations, mgO2 L^-1, or a \linkS4class{unitted} object of dissolved
 #'   oxygen concentrations.
-#' @param temp.water a numeric vector of water temperature in degrees Celsius, 
+#' @param temp.water a numeric vector of water temperature in degrees Celsius,
 #'   or a \linkS4class{unitted} object of water temperatures.
 #' @param pressure.air barometric pressure in millibars, or a
 #'   \linkS4class{unitted} object of barometric pressure.
@@ -12,7 +15,7 @@
 #'   \linkS4class{unitted} object of salinity. Defaults to zero. Length must be
 #'   one or equal to length of \code{temp.water}.
 #' @param ... additional parameters passed to
-#'   \code{\link[LakeMetabolizer]{o2.at.sat.base}}
+#'   `LakeMetabolizer::o2.at.sat.base`
 #' @return a vector of DO.deficit values
 #' @examples
 #' \dontrun{

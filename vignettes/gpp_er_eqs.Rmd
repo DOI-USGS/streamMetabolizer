@@ -1,10 +1,10 @@
 ---
-title: "Options for GPP and ER functions"
+title: "GPP and ER equations"
 author: "Alison Appling"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{get_started}
+  %\VignetteIndexEntry{GPP and ER equations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,16 +22,11 @@ and/or temperature.
 
 # Setup
 
-Load streamMetabolizer.
+Load streamMetabolizer and dplyr.
 
-```{r, messages=TRUE, warnings=TRUE, errors=TRUE}
+```{r, message=FALSE}
 library(streamMetabolizer)
-```
-
-Load dplyr.
-
-```{r}
-suppressPackageStartupMessages(library(dplyr))
+library(dplyr)
 ```
 
 Get some data to work with: here we're requesting three days of data at
