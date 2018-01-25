@@ -173,7 +173,19 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # define the forcing (temp.water, light, DO.sat, etc.) interpolations and 
   # other inputs to include in the dDOdt() closure. 
   integer.t <- isTRUE(ode_method %in% c('euler','trapezoid','Euler','pairmeans'))
-  data$KO2.conv <- convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas='O2')
+  data$KO2.conv <- suppressWarnings(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas='O2'))
+  if(any(is.nan(data$KO2.conv))) {
+    bad_rows <- which(is.nan(data$KO2.conv))
+    show_rows <- bad_rows[seq_len(min(length(bad_rows), 3))]
+    more_rows <- if(length(bad_rows) > 3) length(bad_rows) - 3 else NA
+    bad_times <- data$solar.time[show_rows]
+    bad_temps <- data$temp.water[show_rows]
+    warning(sprintf(
+      'NaNs in KO2-K600 conversion at %s%s',
+      paste0(sprintf('%s (temp.water=%0.2f)', format(bad_times, '%Y-%m-%d %H:%M:%S'), bad_temps), collapse=', '),
+      if(!is.na(more_rows)) sprintf(', and %d more rows', more_rows) else ''
+    ))
+  }
   data$err.proc <- err.proc # get replication if needed
   if(integer.t) {
     # for indexing, converting df columns to vectors speeds things up by 40x
