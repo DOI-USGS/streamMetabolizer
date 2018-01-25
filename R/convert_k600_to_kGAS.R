@@ -20,6 +20,12 @@ convert_k600_to_kGAS = function(k600, temperature, gas="O2") {
   # suppressing "In getSchmidt(temperature, gas) : temperature out of range" b/c it's way too common
   out <- suppressWarnings(LakeMetabolizer::k600.2.kGAS.base(v(k600), v(temperature), v(gas)))
   
+  # catch extreme values of temperature or kGAS that are so wild they're making NaNs
+  bad_nans <- which(!is.na(k600) & !is.na(temperature) & is.nan(out))
+  if(length(bad_nans) > 0) {
+    warning('one or more k600 or temperature values are extreme, causing NaNs in the k600-kGAS conversion')
+  }
+  
   if(with_units) u(out, get_units(k600)) else out
 }
 
@@ -44,5 +50,12 @@ convert_kGAS_to_k600 = function(kGAS, temperature, gas="O2") {
   
   # suppressing "In getSchmidt(temperature, gas) : temperature out of range" b/c it's way too common
   conversion <- 1/suppressWarnings(LakeMetabolizer::k600.2.kGAS.base(1, v(temperature), v(gas)))
+  
+  # catch extreme values of temperature or kGAS that are so wild they're making NaNs
+  bad_nans <- which(!is.na(temperature) & is.nan(conversion))
+  if(length(bad_nans) > 0) {
+    warning('one or more temperature values are extreme, causing NaNs in the kGAS-k600 conversion')
+  }
+  
   kGAS * conversion # do the conversion and adopt the units of kGAS, if any
 }

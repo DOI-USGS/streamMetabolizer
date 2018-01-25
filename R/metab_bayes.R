@@ -548,7 +548,22 @@ prepdata_bayes <- function(
       } / timestep_days,
       frac_ER  = time_by_date_matrix(1),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
-      KO2_conv = time_by_date_matrix(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2")),
+      KO2_conv = {
+        KO2_conv_vec <- suppressWarnings(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"))
+        if(any(is.nan(KO2_conv_vec))) {
+          bad_rows <- which(is.nan(KO2_conv_vec))
+          show_rows <- bad_rows[seq_len(min(length(bad_rows), 3))]
+          more_rows <- if(length(bad_rows) > 3) length(bad_rows) - 3 else NA
+          bad_times <- data$solar.time[show_rows]
+          bad_temps <- data$temp.water[show_rows]
+          stop(sprintf(
+            'NaNs in KO2-K600 conversion at %s%s',
+            paste0(sprintf('%s (temp.water=%0.2f)', format(bad_times, '%Y-%m-%d %H:%M:%S'), bad_temps), collapse=', '),
+            if(!is.na(more_rows)) sprintf(', and %d more rows', more_rows) else ''
+          ))
+        }
+        time_by_date_matrix(KO2_conv_vec)
+      },
       depth    = time_by_date_matrix(data$depth),
       DO_sat   = time_by_date_matrix(data$DO.sat),
       DO_obs   = time_by_date_matrix(data$DO.obs)
