@@ -1,3 +1,7 @@
+# 0.10.9
+
+* added `GPP_fun='satlight'` option for Bayesian models
+
 # 0.10.7
 
 * non-standard parameters from custom Bayesian models are now sorted in a less
