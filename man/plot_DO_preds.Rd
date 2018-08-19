@@ -5,9 +5,9 @@
 \title{Plot predictions produced with predict_DO}
 \usage{
 plot_DO_preds(DO_preds, y_var = c("conc", "pctsat", "ddodt"),
-  style = c("ggplot2", "dygraphs"), y_lim = list(conc = c(NA, NA), pctsat =
-  c(NA, NA), ddodt = c(NA, NA)), date_start = NA, date_end = NA,
-  use_saved = TRUE)
+  style = c("ggplot2", "dygraphs"), y_lim = list(conc = c(NA, NA),
+  pctsat = c(NA, NA), ddodt = c(NA, NA)), date_start = NA,
+  date_end = NA, use_saved = TRUE)
 }
 \arguments{
 \item{DO_preds}{a data.frame of predictions such as that returned by 

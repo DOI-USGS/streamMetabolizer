@@ -21,8 +21,8 @@ predict_DO(metab_model, date_start = NA, date_end = NA, ...,
 \method{predict_DO}{metab_night}(metab_model, date_start = NA,
   date_end = NA, ..., use_saved = TRUE)
 
-\method{predict_DO}{metab_sim}(metab_model, date_start = NA, date_end = NA,
-  ...)
+\method{predict_DO}{metab_sim}(metab_model, date_start = NA,
+  date_end = NA, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -84,3 +84,4 @@ Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_specs}}, \code{\link{get_version}},
   \code{\link{predict_metab}}
 }
+\concept{metab_model_interface}

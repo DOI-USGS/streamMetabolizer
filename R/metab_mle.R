@@ -154,9 +154,15 @@ mle_1ply <- function(
     # create the series of nested functions to compute the negative log 
     # likelihood (NLL) for a trio of values for GPP.daily, ER.daily, and
     # K600.daily
-    dDOdt <- create_calc_dDOdt(
-      data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
-      ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+    dDOdt <- withCallingHandlers({
+      create_calc_dDOdt(
+        data_ply, ode_method=features$ode_method, GPP_fun=features$GPP_fun,
+        ER_fun=features$ER_fun, deficit_src=features$deficit_src)
+    }, warning=function(war) {
+      # on warning: record the warning and run nlm again
+      warn_strs <<- c(warn_strs, war$message)
+      invokeRestart("muffleWarning")
+    })
     DO <- create_calc_DO(dDOdt)
     # to fit DO.mod.1, err_obs_iid_sigma, and/or err_proc_iid_sigma, add these
     # to par.names in create_calc_NLL and nlm.args$p. to fix them, pass them as
