@@ -8,8 +8,8 @@
 \title{Predict metabolism from a fitted model.}
 \usage{
 predict_metab(metab_model, date_start = NA, date_end = NA,
-  day_start = get_specs(metab_model)$day_start, day_end = min(day_start +
-  24, get_specs(metab_model)$day_end), ..., attach.units = FALSE,
+  day_start = get_specs(metab_model)$day_start, day_end = min(day_start
+  + 24, get_specs(metab_model)$day_end), ..., attach.units = FALSE,
   use_saved = TRUE)
 
 \method{predict_metab}{metab_bayes}(metab_model, date_start = NA,
@@ -97,3 +97,4 @@ Other metab_model_interface: \code{\link{get_data_daily}},
   \code{\link{get_specs}}, \code{\link{get_version}},
   \code{\link{predict_DO}}
 }
+\concept{metab_model_interface}

@@ -5,9 +5,9 @@
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
 metab_bayes(specs = specs(mm_name("bayes")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, discharge, optional = "discharge"),
-  data_daily = mm_data(date, discharge.daily, optional = "all"),
-  info = NULL)
+  DO.obs, DO.sat, depth, temp.water, light, discharge, optional =
+  "discharge"), data_daily = mm_data(date, discharge.daily, optional =
+  "all"), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -82,3 +82,4 @@ Other metab_model: \code{\link{metab_Kmodel}},
 \author{
 Alison Appling, Bob Hall
 }
+\concept{metab_model}

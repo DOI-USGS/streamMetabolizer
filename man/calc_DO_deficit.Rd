@@ -4,7 +4,8 @@
 \alias{calc_DO_deficit}
 \title{Deprecated: Calculate a vector of dissolved oxygen deficits}
 \usage{
-calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0, ...)
+calc_DO_deficit(DO.obs, temp.water, pressure.air, salinity.water = 0,
+  ...)
 }
 \arguments{
 \item{DO.obs}{a numeric vector of dissolved oxygen concentration

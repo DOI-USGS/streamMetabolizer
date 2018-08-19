@@ -4,8 +4,8 @@
 \alias{plot_metab_preds}
 \title{Plot predictions produced with predict_DO}
 \usage{
-plot_metab_preds(metab_preds, y_var = c("GPP", "ER"), style = c("ggplot2"),
-  y_lim = list(GPP = c(NA, NA), ER = c(NA, NA)))
+plot_metab_preds(metab_preds, y_var = c("GPP", "ER"),
+  style = c("ggplot2"), y_lim = list(GPP = c(NA, NA), ER = c(NA, NA)))
 }
 \arguments{
 \item{metab_preds}{a data.frame of predictions such as that returned by 

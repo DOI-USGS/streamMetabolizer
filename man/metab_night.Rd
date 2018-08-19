@@ -5,8 +5,8 @@
 \title{Nighttime regression for K estimation}
 \usage{
 metab_night(specs = specs(mm_name("night")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, discharge, optional = "discharge"),
-  data_daily = mm_data(NULL), info = NULL)
+  DO.obs, DO.sat, depth, temp.water, light, discharge, optional =
+  "discharge"), data_daily = mm_data(NULL), info = NULL)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -57,3 +57,4 @@ Other metab_model: \code{\link{metab_Kmodel}},
 \author{
 Alison Appling, Maite Arroita, Bob Hall
 }
+\concept{metab_model}
