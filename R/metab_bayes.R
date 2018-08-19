@@ -529,23 +529,28 @@ prepdata_bayes <- function(
     ),
     
     list(
-      DO_obs_1 = array(time_by_date_matrix(data$DO.obs)[1,], dim=num_dates), # duplication of effort below should be small compared to MCMC time
-      
-      # Every timestep
-      frac_GPP = {
-        mat_light <- time_by_date_matrix(data$light)
-        if(isTRUE(features$GPP_fun == 'linlight')) {
+      DO_obs_1 = array(time_by_date_matrix(data$DO.obs)[1,], dim=num_dates)), # duplication of effort below should be small compared to MCMC time
+    
+    # Every timestep
+    switch(
+      features$GPP_fun,
+      linlight = list(
+        frac_GPP = {
+          mat_light <- time_by_date_matrix(data$light)
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
           daily_totals <- colSums(mat_light*in_solar_day)
           if(any(daily_totals <= 0)) {
             stop('daily light total is <= 0 on ', paste(names(date_table)[which(daily_totals <= 0)], collapse=', '))
           } 
-          sweep(mat_light, MARGIN=2, STATS=daily_totals, FUN=`/`)
-        } else {
-          mat_light
-        }
-      } / timestep_days,
+          sweep(mat_light, MARGIN=2, STATS=daily_totals, FUN=`/`) / timestep_days
+        }),
+      satlight = list(
+        light = time_by_date_matrix(data$light) / timestep_days # why are we dividing by timestep_days??
+      )
+    ),
+      
+    list(
       frac_ER  = time_by_date_matrix(1),
       frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
       KO2_conv = time_by_date_matrix(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2")),
@@ -858,12 +863,12 @@ setClass(
 #' Extract any MCMC model objects that were stored with the model
 #'
 #' A function specific to metab_bayes models. Returns an MCMC object of class
-#' [rstan::stanfit], which is saved in the metab_model by default because you
-#' should almost always inspect it; see `keep_mcmcs` argument to [specs()] for
-#' options for saving space. The \code{rstan} methods for [rstan::stanfit]
-#' objects include `summary()`, `get_stancode()`, `stan_dens()`, `stan_diag()`,
-#' and many more. See \code{\link[rstan]{rstan-plotting-functions}},
-#' [rstan::stanfit] and the
+#' `stanfit` ([rstan::stanfit-class]), which is saved in the metab_model by
+#' default because you should almost always inspect it; see `keep_mcmcs`
+#' argument to [specs()] for options for saving space. The \code{rstan} methods
+#' for [rstan::stanfit-class] objects include `summary()`, `get_stancode()`,
+#' `stan_dens()`, `stan_diag()`, and many more. See
+#' `?'rstan-plotting-functions'`, [rstan::stanfit-class] and the
 #' \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan manual}.
 #'
 #' @md
