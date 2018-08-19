@@ -16,3 +16,4 @@ Other metab.model.classes: \code{\link{metab_bayes-class}},
   \code{\link{metab_night-class}},
   \code{\link{metab_sim-class}}
 }
+\concept{metab.model.classes}

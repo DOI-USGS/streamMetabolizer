@@ -4,8 +4,9 @@
 \alias{metab_model}
 \title{Create a metab_model object.}
 \usage{
-metab_model(model_class = "metab_model", info = "user metadata goes here",
-  metab_daily = NULL, fit = "generic metab_model class; no actual fit",
+metab_model(model_class = "metab_model",
+  info = "user metadata goes here", metab_daily = NULL,
+  fit = "generic metab_model class; no actual fit",
   fitting_time = system.time({ }), specs = list(),
   data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light),
   data_daily = mm_data(date, optional = "all"),

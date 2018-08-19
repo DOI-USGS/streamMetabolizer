@@ -4,9 +4,9 @@
 \alias{calc_light_merged}
 \title{Merge modeled and observed PAR into a single timeseries}
 \usage{
-calc_light_merged(PAR.obs = mm_data(solar.time, light), solar.time, latitude,
-  longitude, max.PAR = NA, max.gap = as.difftime(3, units = "hours"),
-  attach.units = is.unitted(PAR.obs))
+calc_light_merged(PAR.obs = mm_data(solar.time, light), solar.time,
+  latitude, longitude, max.PAR = NA, max.gap = as.difftime(3, units =
+  "hours"), attach.units = is.unitted(PAR.obs))
 }
 \arguments{
 \item{PAR.obs}{a 2-column data.frame with columns solar.time and light, as in
