@@ -213,7 +213,11 @@ mm_generate_mcmc_file <- function(
         # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
         # than fractions (i.e., must yield per-day rather than per-timestep
         # rates)
-        'vector[d] frac_GPP[n];', 
+        switch(
+          features$GPP_fun,
+          linlight='vector[d] frac_GPP[n];',
+          satlight='vector[d] light[n];'
+        ),
         'vector[d] frac_ER[n];',
         'vector[d] frac_D[n];',
         'vector[d] depth[n];',
@@ -416,7 +420,7 @@ mm_generate_mcmc_file <- function(
           switch(
             features$GPP_fun,
             'linlight'=s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
-            'satlight'=s('GPP_inst[i] = Pmax .* tanh(frac_GPP[i] .* alpha ./ Pmax)')),
+            'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')), # divide by timestep to get per-tstep rate?
           s('ER_inst[i] = ER_daily .* frac_ER[i]'),
           s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),
