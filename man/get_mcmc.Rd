@@ -18,12 +18,12 @@ The MCMC model object\link{s}
 }
 \description{
 A function specific to metab_bayes models. Returns an MCMC object of class
-\link[rstan:stanfit]{rstan::stanfit}, which is saved in the metab_model by default because you
-should almost always inspect it; see \code{keep_mcmcs} argument to \code{\link[=specs]{specs()}} for
-options for saving space. The \code{rstan} methods for \link[rstan:stanfit]{rstan::stanfit}
-objects include \code{summary()}, \code{get_stancode()}, \code{stan_dens()}, \code{stan_diag()},
-and many more. See \code{\link[rstan]{rstan-plotting-functions}},
-\link[rstan:stanfit]{rstan::stanfit} and the
+\code{stanfit} (\link[rstan:stanfit-class]{rstan::stanfit}), which is saved in the metab_model by
+default because you should almost always inspect it; see \code{keep_mcmcs}
+argument to \code{\link[=specs]{specs()}} for options for saving space. The \code{rstan} methods
+for \link[rstan:stanfit-class]{rstan::stanfit} objects include \code{summary()}, \code{get_stancode()},
+\code{stan_dens()}, \code{stan_diag()}, and many more. See
+\code{?'rstan-plotting-functions'}, \link[rstan:stanfit-class]{rstan::stanfit} and the
 \href{https://cran.r-project.org/web/packages/rstan/rstan.pdf}{rstan manual}.
 }
 \section{Methods (by class)}{
