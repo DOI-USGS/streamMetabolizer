@@ -99,12 +99,13 @@ Also read through the help page at `?mm_data` for more detailed variable definit
 
 To prepare your timestamps for metabolism modeling, you need to convert from the
 initial number or text format into POSIXct with the correct timezone (tz), then
-convert to UTC, then convert to solar mean time.
+to solar mean time.
 
 ## Step 1: POSIXct
 
 Convert your logger-format data to POSIXct in a local timezone (with or without
-daylight savings). Here are a few examples of specific scenarios and solutions.
+daylight savings, as long as you have that timezone scheme specified). Here are
+a few examples of specific scenarios and solutions.
 
 ### Starting with numeric datetimes, e.g., from PMEs
 
@@ -124,7 +125,7 @@ num.time <- 1471867200
 
 ### Starting with text timestamps
 
-If you have datetimes stored as text timestamps in UTC, you can bypass the conversion to local time and back to UTC:
+If you have datetimes stored as text timestamps in UTC, you can bypass the conversion to local time and just start with UTC. Then rather than using `calc_solar_time()` in Step 2, you'll use `convert_UTC_to_solartime()`.
 ```{r}
 text.time <- '2016-08-22 12:00:00'
 (posix.time.utc <- as.POSIXct(text.time, tz='UTC'))
