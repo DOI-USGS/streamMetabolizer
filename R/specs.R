@@ -366,10 +366,10 @@ specs <- function(
   GPP_daily_mu = 3.1,
   GPP_daily_lower = -Inf,
   GPP_daily_sigma = 6.0,
-  alpha_meanlog = -9,
-  alpha_sdlog = 1,
-  Pmax_mu = 5,
-  Pmax_sigma = 7,
+  alpha_meanlog = -10,
+  alpha_sdlog = 0.9,
+  Pmax_mu = 0.1,
+  Pmax_sigma = 0.3,
   ER_daily_mu = -7.1,
   ER_daily_upper = Inf,
   ER_daily_sigma = 7.1,
@@ -473,16 +473,27 @@ specs <- function(
   
 ) {
   
+  # check the validity of the model_name against the list of officially accepted model names
+  # mm_validate_name(model_name)
+  
+  # parse the model_name
+  features <- mm_parse_name(model_name, expand=TRUE)
+  
   # collect info about the arguments
   required <- 'model_name'
   all_possible <- names(formals(specs))
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
   prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
+  prefer_not_missing <- if(features$GPP_fun == 'satlight') c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma') else c() # could be made more extensive
   
   # argument checks
   if(any(required %in% yes_missing))
     stop("missing and required argument: ", paste(required[required %in% yes_missing], collapse=", "))
+  if(any(prefer_not_missing %in% yes_missing)) {
+    warn_about <- prefer_not_missing[prefer_not_missing %in% yes_missing]
+    warning("you should specify site-appropriate values for all parameters and especially ", paste(warn_about, collapse=", "))
+  }
   redundant <- not_missing[not_missing %in% prefer_missing]
   if('engine' %in% redundant) {
     warning("'engine' should be specified in mm_name() rather than specs()")
@@ -495,12 +506,6 @@ specs <- function(
   # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
   if(model_name %in% eval(formals(mm_name)$type))
     model_name <- mm_name(type=model_name)
-  
-  # check the validity of the model_name against the list of officially accepted model names
- # mm_validate_name(model_name)
-  
-  # parse the model_name
-  features <- mm_parse_name(model_name, expand=TRUE)
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
