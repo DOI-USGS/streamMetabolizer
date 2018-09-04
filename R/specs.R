@@ -579,7 +579,11 @@ specs <- function(
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
           c('GPP','ER'),
-          c('GPP_daily','ER_daily','K600_daily'),
+          switch(
+            features$GPP_fun,
+            linlight=c('GPP_daily'),
+            satlight=c('alpha','Pmax')),
+          c('ER_daily','K600_daily'),
           switch(
             features$pool_K600_type,
             none=c(),
