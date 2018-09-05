@@ -251,7 +251,7 @@ mm_generate_mcmc_file <- function(
         switch(
           features$GPP_fun,
           linlight=c('vector<lower=GPP_daily_lower>[d] GPP_daily;'),
-          satlight=c('vector<lower=0>[d] alpha;', #<lower=alpha_lower>
+          satlight=c('vector[d] alpha_scaled;',
                      'vector[d] Pmax;') #<lower=0>
         ),
         c('vector<upper=ER_daily_upper>[d] ER_daily;',
@@ -332,6 +332,10 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
       
+      if(features$GPP_fun == 'satlight') c(
+        'vector<lower=0>[d] alpha;'
+      ),
+      
       # instantaneous GPP, ER, and KO2. the nth value isn't used to calculate DO
       # when ode_method=euler, but it's always used to calculate GPP and ER
       c('vector[d] GPP_inst[n];',
@@ -368,6 +372,15 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         s(fs('halfcauchy', 'err_proc_iid_sigma')))
     ),
+    
+    # daily parameters
+    if(features$GPP_fun == 'satlight') {
+      chunk(
+        comment('Rescale select daily parameters'),
+        c(
+          s(fs('lognormal', 'alpha')))
+      )
+    },
     
     # K600_daily model
     if(pool_K600_type %in% c('linear','binned') || pool_K600_sd == 'zero') chunk(
@@ -573,7 +586,7 @@ mm_generate_mcmc_file <- function(
         features$GPP_fun,
         linlight = s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
         satlight = c(
-          s('alpha ~ ', f('lognormal', meanlog='alpha_meanlog', sdlog='alpha_sdlog')),
+          s('alpha_scaled ~ ', f('normal', mu='0', sigma='1')),
           s('Pmax ~ ', f('normal', mu='Pmax_mu', sigma='Pmax_sigma'))
         )
       ),

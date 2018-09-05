@@ -41,7 +41,7 @@ data {
 }
 
 parameters {
-  vector<lower=0>[d] alpha;
+  vector[d] alpha_scaled;
   vector[d] Pmax;
   vector<upper=ER_daily_upper>[d] ER_daily;
   vector<lower=0>[d] K600_daily;
@@ -58,6 +58,7 @@ transformed parameters {
   real<lower=0> K600_daily_sigma;
   vector[d] DO_mod_partial_sigma[n];
   real<lower=0> err_proc_iid_sigma;
+  vector<lower=0>[d] alpha;
   vector[d] GPP_inst[n];
   vector[d] ER_inst[n];
   vector[d] KO2_inst[n];
@@ -68,6 +69,9 @@ transformed parameters {
   
   // Rescale error distribution parameters
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
+  
+  // Rescale select daily parameters
+  alpha = exp(alpha_meanlog + alpha_sdlog * alpha_scaled);
   
   // Hierarchical, linear model of K600_daily
   K600_daily_predlog = lnK600_lnQ_intercept + lnK600_lnQ_slope * lnQ_daily;
@@ -110,7 +114,7 @@ model {
   err_proc_iid_sigma_scaled ~ cauchy(0, 1);
   
   // Daily metabolism priors
-  alpha ~ lognormal(alpha_meanlog, alpha_sdlog);
+  alpha_scaled ~ normal(0, 1);
   Pmax ~ normal(Pmax_mu, Pmax_sigma);
   ER_daily ~ normal(ER_daily_mu, ER_daily_sigma);
   K600_daily ~ normal(exp(K600_daily_predlog), K600_daily_sigma);
