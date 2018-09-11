@@ -433,7 +433,7 @@ mm_generate_mcmc_file <- function(
           switch(
             features$GPP_fun,
             'linlight'=s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
-            'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')), # divide by timestep to get per-tstep rate?
+            'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')),
           s('ER_inst[i] = ER_daily .* frac_ER[i]'),
           s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),

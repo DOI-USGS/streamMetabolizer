@@ -546,7 +546,7 @@ prepdata_bayes <- function(
           sweep(mat_light, MARGIN=2, STATS=daily_totals, FUN=`/`) / timestep_days
         }),
       satlight = list(
-        light = time_by_date_matrix(data$light) # / timestep_days # why are we dividing by timestep_days??
+        light = time_by_date_matrix(data$light)
       )
     ),
       
