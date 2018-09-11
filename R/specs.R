@@ -485,7 +485,11 @@ specs <- function(
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
   prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
-  prefer_not_missing <- if(features$GPP_fun == 'satlight') c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma') else c() # could be made more extensive
+  prefer_not_missing <- if(features$type == 'bayes' && features$GPP_fun == 'satlight') {
+    c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma') 
+  } else {
+    c() # could be made more extensive
+  }
   
   # argument checks
   if(any(required %in% yes_missing))
