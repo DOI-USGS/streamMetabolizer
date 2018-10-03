@@ -11,6 +11,7 @@ mm_generate_mcmc_file <- function(
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
+  err_proc_dayiid=c(FALSE, TRUE),
   ode_method=c('trapezoid','euler'),
   GPP_fun=c('linlight', 'satlight'),
   ER_fun=c('constant'), #'q10temp'
@@ -29,7 +30,7 @@ mm_generate_mcmc_file <- function(
   model_name <- mm_name(
     type='bayes',
     pool_K600=pool_K600,
-    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid,
+    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, err_proc_dayiid=err_proc_dayiid,
     ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   features <- mm_parse_name(model_name, expand=TRUE)
@@ -697,6 +698,7 @@ mm_generate_mcmc_files <- function() {
     err_obs_iid=c(TRUE, FALSE),
     err_proc_acor=FALSE,
     err_proc_iid=c(FALSE, TRUE),
+    err_proc_dayiid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun=c('linlight','satlight'),
     ER_fun='constant',
@@ -706,7 +708,7 @@ mm_generate_mcmc_files <- function() {
   attr(opts, 'out.attrs') <- NULL
   
   incompatible <- 
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid) # need at least 1 kind of error
+    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid & !opts$err_proc_dayiid) # need at least 1 kind of error
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {

@@ -16,7 +16,7 @@ create_calc_NLL(calc_DO,
 to the function created by this one (the calc_NLL function)}
 
 \item{err_obs_iid}{logical. Should IID observation error be included? If not,
-the model will be fit to the differences in successive DO measurements, 
+the model will be fit to the differences in successive DO measurements,
 rather than to the DO measurements themselves.}
 
 \item{err_proc_iid}{logical. Should IID process error be included?}
