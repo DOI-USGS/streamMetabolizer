@@ -7,8 +7,8 @@ roundtrip <- function(dat, con_fun, reps=10, ...) {
   con <- con_fun(test, ...)
   on.exit(close(con))
   
-  save <- summary(microbenchmark(saveRDS(dat, con), times=reps), unit='ms')$mean
-  load <- summary(microbenchmark(x <- readRDS(test)), unit='ms')$mean
+  save <- summary(microbenchmark::microbenchmark(saveRDS(dat, con), times=reps), unit='ms')$mean
+  load <- summary(microbenchmark::microbenchmark(x <- readRDS(test)), unit='ms')$mean
   size <- file.info(test)$size / (1024) ^ 2
   
   file.remove(test)
