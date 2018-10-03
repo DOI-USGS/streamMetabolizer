@@ -1,7 +1,4 @@
 # saveRDS test script from http://rpubs.com/hadley/saveRDS
-library(dplyr)
-library(tibble)
-library(microbenchmark)
 roundtrip <- function(dat, con_fun, reps=10, ...) {
   test <- tempfile()
   con <- con_fun(test, ...)
@@ -12,7 +9,7 @@ roundtrip <- function(dat, con_fun, reps=10, ...) {
   size <- file.info(test)$size / (1024) ^ 2
   
   file.remove(test)
-  tibble(save, load, size)
+  dplyr::tibble(save, load, size)
 }
 save_load_timing <- function(dat, reps=10, ...) {
   dplyr::bind_rows(
