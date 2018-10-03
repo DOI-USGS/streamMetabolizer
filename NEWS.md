@@ -1,3 +1,16 @@
+# 0.10.11
+
+* added `err_proc_dayiid` option for Bayesian models
+
+# 0.10.10
+
+* added a test to mm_is_valid_day that checks for depths <= 0, which would break
+or seriously confuse a model
+
+* fixed a bug where a single day of data passed to a b_Kl or b_Kb model would
+cause Stan to fail because the log(discharge) values were being formatted
+improperly for Stan.
+
 # 0.10.9
 
 * added `GPP_fun='satlight'` option for Bayesian models

@@ -19,6 +19,7 @@ lookup_timezone <- function(latitude, longitude) {
   # if it's not in the cache, go to Google. give lookup another chance if it
   # didn't come out right and we haven't tried too many times already
   if(is.null(tz_info) || tz_info$retry > 0) {
+    warning("Google timezone lookup now requires an API key; see http://g.co/dev/maps-no-account or provide the timezone")
     retry <- if(is.null(tz_info)) 3 else tz_info$retry # set/extract the retry info
     tz_info <- tryCatch(
       lookup_google_timezone(latitude, longitude),
@@ -50,7 +51,7 @@ lookup_timezone <- function(latitude, longitude) {
 #' @export
 lookup_google_timezone <- function(
   latitude, longitude, 
-  timestamp=if(latitude >= 0) as.POSIXct("2015-01-01 00:00:00", tz="UTC") else as.POSIXct("2015-07-01 00:00:00", tz="UTC")) {
+  timestamp=if(unitted::v(latitude) >= 0) as.POSIXct("2015-01-01 00:00:00", tz="UTC") else as.POSIXct("2015-07-01 00:00:00", tz="UTC")) {
   
   called_as_internal <- all(c(':::','streamMetabolizer') %in% as.character(sys.call()[[1]])) ||
     any(sapply(sys.calls()[-sys.nframe()], function(sc) if(class(sc[[1]]) == 'name') tail(as.character(sc[[1]]), 1) else NA) %in% 

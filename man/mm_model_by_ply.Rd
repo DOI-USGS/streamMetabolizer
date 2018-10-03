@@ -6,7 +6,8 @@
 \usage{
 mm_model_by_ply(model_fun, data, data_daily = NULL, day_start, day_end,
   day_tests = c("full_day", "even_timesteps", "complete_data",
-  "pos_discharge"), required_timestep = NA, timestep_days = TRUE, ...)
+  "pos_discharge", "pos_depth"), required_timestep = NA,
+  timestep_days = TRUE, ...)
 }
 \arguments{
 \item{model_fun}{the function to apply to each data ply. This function should

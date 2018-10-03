@@ -1,21 +1,18 @@
 # saveRDS test script from http://rpubs.com/hadley/saveRDS
-library(dplyr)
-library(tibble)
-library(microbenchmark)
 roundtrip <- function(dat, con_fun, reps=10, ...) {
   test <- tempfile()
   con <- con_fun(test, ...)
   on.exit(close(con))
   
-  save <- summary(microbenchmark(saveRDS(dat, con), times=reps), unit='ms')$mean
-  load <- summary(microbenchmark(x <- readRDS(test)), unit='ms')$mean
+  save <- summary(microbenchmark::microbenchmark(saveRDS(dat, con), times=reps), unit='ms')$mean
+  load <- summary(microbenchmark::microbenchmark(x <- readRDS(test)), unit='ms')$mean
   size <- file.info(test)$size / (1024) ^ 2
   
   file.remove(test)
-  tibble(save, load, size)
+  dplyr::tibble(save, load, size)
 }
 save_load_timing <- function(dat, reps=10, ...) {
-  bind_rows(
+  dplyr::bind_rows(
     data.frame(type='raw', level=0, roundtrip(dat, file), stringsAsFactors=FALSE),
     data.frame(type='gz', level=1, roundtrip(dat, gzfile, reps=reps, compression = 1), stringsAsFactors=FALSE),
     data.frame(type='gz', level=6, roundtrip(dat, gzfile, reps=reps, compression = 6), stringsAsFactors=FALSE),
@@ -27,14 +24,15 @@ save_load_timing <- function(dat, reps=10, ...) {
     data.frame(type='xz', level=6, roundtrip(dat, xzfile, reps=reps, compression = 6), stringsAsFactors=FALSE),
     data.frame(type='xz', level=9, roundtrip(dat, xzfile, reps=reps, compression = 9), stringsAsFactors=FALSE)
   ) %>% 
-    mutate(
+    dplyr::mutate(
       total=save+load, 
       typelevel=paste0(type, level),
       timesize=(total/max(total)) + (size/max(size))) %>%
-    arrange(timesize) %>%
-    mutate(typelevel=ordered(typelevel,typelevel))
+    dplyr::arrange(timesize) %>%
+    dplyr::mutate(typelevel=ordered(typelevel,typelevel))
 }
 plot_save_load_timing <- function(times) {
+  library(ggplot2)
   ggplot(times, aes(x=typelevel, group=1)) + 
     geom_line(aes(y=timesize), color='purple', size=2) + 
     geom_line(aes(y=total*max(timesize)/max(total)), color='red') + 
