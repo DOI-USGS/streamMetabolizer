@@ -91,7 +91,7 @@ test_that("converting between UTC and local time works", {
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="daylight local")), "Europe/London", info="different tz name")
   #   error checking
   expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=0, time.type="standard"), "unitted")
-  expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), 'should be one of "standard local", "daylight local"', info="only accept valid time.types")
+  expect_error(convert_UTC_to_localtime(adate, latitude=u(51.48, "degN"), longitude=u(0, "degW"), time.type="not a type"), 'should be one of .standard local., .daylight local.', info="only accept valid time.types")
   #   real time changes
   # "POSIX has positive signs west of Greenwich" - https://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(40, "degN"), longitude=u(105.3, "degE"), time.type="standard")), "Etc/GMT-8", info="go east, be POSIX-negative")
@@ -111,7 +111,7 @@ test_that("converting between UTC and local time works", {
   expect_equal(convert_UTC_to_localtime(convert_localtime_to_UTC(lubridate::with_tz(adate, "America/Denver")), latitude=40, longitude=-105.3, time.type="daylight"), lubridate::with_tz(adate, "America/Denver"))
   expect_equal(convert_localtime_to_UTC(convert_UTC_to_localtime(adate, latitude=40, longitude=-105.3, time.type="daylight")), adate)
   # not sure why only this next line would fail on Travis-CI, but it does. It works on my machine.
-  expect_equal(convert_localtime_to_UTC(convert_UTC_to_localtime(adate, latitude=40, longitude=-103.8, time.type="standard")), adate)
+  expect_equal(convert_localtime_to_UTC(convert_UTC_to_localtime(adate, latitude=40, longitude=-105.3, time.type="standard")), adate)
   
 })
 
@@ -126,7 +126,7 @@ test_that("common use-case conversions (calc_solar_time) works", {
   # of user confusion between solar time and local time
   expect_warning(calc_solar_time(lubridate::with_tz(adate, 'UTC'), -120), "Are you sure")
   expect_equal(calc_solar_time(adate, -120), calc_solar_time(lubridate::with_tz(adate, 'America/Chicago'), -120))
-  expect_equal(calc_solar_time(adate, -120), calc_solar_time(lubridate::with_tz(adate, 'America/Fairbanks'), -120))
+  expect_equal(calc_solar_time(adate, -120), calc_solar_time(lubridate::with_tz(adate, 'America/Anchorage'), -120))
   expect_equal(lubridate::force_tz(asummerdate, 'UTC'), calc_solar_time(asummerdate, -60), tol=as.difftime(10, units='mins'))
   expect_equal(lubridate::force_tz(somedates, 'UTC'), calc_solar_time(somedates, -120), tol=as.difftime(10, units='mins'))
 })

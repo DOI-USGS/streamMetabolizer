@@ -15,7 +15,7 @@ roundtrip <- function(dat, con_fun, reps=10, ...) {
   tibble(save, load, size)
 }
 save_load_timing <- function(dat, reps=10, ...) {
-  bind_rows(
+  dplyr::bind_rows(
     data.frame(type='raw', level=0, roundtrip(dat, file), stringsAsFactors=FALSE),
     data.frame(type='gz', level=1, roundtrip(dat, gzfile, reps=reps, compression = 1), stringsAsFactors=FALSE),
     data.frame(type='gz', level=6, roundtrip(dat, gzfile, reps=reps, compression = 6), stringsAsFactors=FALSE),
