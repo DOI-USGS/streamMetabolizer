@@ -1,31 +1,31 @@
 #' Validate one day of data, returning a vector of error strings if needed
-#' 
-#' Provides ability to skip a poorly-formatted day for calculating metabolism, 
-#' without breaking the whole loop. Rather than producing errors, quietly 
-#' collects problems/errors as a list of strings for the calling function to 
+#'
+#' Provides ability to skip a poorly-formatted day for calculating metabolism,
+#' without breaking the whole loop. Rather than producing errors, quietly
+#' collects problems/errors as a list of strings for the calling function to
 #' handle.
-#' 
-#' Assumes that the data have already been validated as in 
+#'
+#' Assumes that the data have already been validated as in
 #' \code{\link{mm_validate_data}}
-#' 
+#'
 #' @inheritParams mm_model_by_ply_prototype
 #' @inheritParams mm_model_by_ply
-#' @param day_tests list of tests to conduct to determine whether each date 
-#'   worth of data is valid for modeling. \code{full_day}: Do the data span the 
-#'   full expected period (e.g., from 10:30pm on preceding day to 6am on 
-#'   following day)? \code{even_timesteps}: are all of the timesteps within the 
-#'   day the same length, to within a tolerance of 0.2\% of the timestep length? 
-#'   \code{complete_data}: are all columns of input data available at every 
-#'   timestep? \code{pos_discharge}: is discharge greater than 0 at every 
-#'   timestep? A further test is implied if \code{required_timestep} is a non-NA
-#'   numeric.
-#' @param required_timestep NA or numeric (length 1). If numeric, the timestep 
-#'   length in days that a date must have to pass the validity check (to within 
+#' @param day_tests list of tests to conduct to determine whether each date
+#'   worth of data is valid for modeling. \code{full_day}: Do the data span the
+#'   full expected period (e.g., from 10:30pm on preceding day to 6am on
+#'   following day)? \code{even_timesteps}: are all of the timesteps within the
+#'   day the same length, to within a tolerance of 0.2\% of the timestep length?
+#'   \code{complete_data}: are all columns of input data available at every
+#'   timestep? \code{pos_discharge}: is discharge greater than 0 at every
+#'   timestep? \code{pos_depth}: is depth greater than 0 at every timestep? A
+#'   further test is implied if \code{required_timestep} is a non-NA numeric.
+#' @param required_timestep NA or numeric (length 1). If numeric, the timestep
+#'   length in days that a date must have to pass the validity check (to within
 #'   a tolerance of 0.2\% of the value of \code{required_timestep})
 #' @param ply_date the Date this data_ply is intended to match. May be NA
-#' @param timestep_days the expected timestep length in fraction of a day; for 
-#'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
-#'   the function if timestep_days is NA. May be supplied as an argument to (1) 
+#' @param timestep_days the expected timestep length in fraction of a day; for
+#'   example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within
+#'   the function if timestep_days is NA. May be supplied as an argument to (1)
 #'   pre-calculate the value for efficiency, or (2) require a specific timestep.
 #' @return character vector of errors if day is invalid, or TRUE if it's valid
 #' @importFrom lubridate tz
@@ -40,7 +40,7 @@
 mm_is_valid_day <- function(
   data_ply, # inheritParams mm_model_by_ply_prototype
   day_start=4, day_end=27.99, # inheritParams mm_model_by_ply
-  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), 
+  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge', 'pos_depth'), 
   required_timestep=NA,
   ply_date=as.Date(format(data_ply[max(1,nrow(data_ply)/2),'solar.time'], "%Y-%m-%d")),
   timestep_days=NA
@@ -120,9 +120,15 @@ mm_is_valid_day <- function(
   # Require discharge (if present) to be positive at all times
   if('pos_discharge' %in% day_tests) {
     if('discharge' %in% names(data_ply) && any(!is.na(data_ply$discharge))) {
-      if(any(data_ply$discharge[which(!is.na(data_ply$discharge))] <= 0)) 
+      if(any(unitted::v(data_ply$discharge[which(!is.na(data_ply$discharge))]) <= 0)) 
         stop_strs <- c(stop_strs, "discharge <= 0")
     }
+  }
+  
+  # Require depth to be positive at all times. Models break on 0 depth and misbehave on negative depth
+  if('pos_depth' %in% day_tests) {
+    if(any(unitted::v(data_ply$depth[which(!is.na(data_ply$depth))]) <= 0)) 
+      stop_strs <- c(stop_strs, "depth <= 0")
   }
   
   # Return the stop strings if there was a problem; otherwise, return TRUE
