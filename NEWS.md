@@ -1,3 +1,12 @@
+# 0.10.10
+
+* added a test to mm_is_valid_day that checks for depths <= 0, which would break
+or seriously confuse a model
+
+* fixed a bug where a single day of data passed to a b_Kl or b_Kb model would
+cause Stan to fail because the log(discharge) values were being formatted
+improperly for Stan.
+
 # 0.10.7
 
 * non-standard parameters from custom Bayesian models are now sorted in a less
