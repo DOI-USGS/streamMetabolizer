@@ -62,7 +62,7 @@
 #' @export
 mm_model_by_ply <- function(
   model_fun, data, data_daily=NULL, day_start, day_end, 
-  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), required_timestep=NA,
+  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge', 'pos_depth'), required_timestep=NA,
   timestep_days=TRUE, ...
 ) {
   

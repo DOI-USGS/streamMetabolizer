@@ -6,7 +6,7 @@
 \usage{
 mm_is_valid_day(data_ply, day_start = 4, day_end = 27.99,
   day_tests = c("full_day", "even_timesteps", "complete_data",
-  "pos_discharge"), required_timestep = NA,
+  "pos_discharge", "pos_depth"), required_timestep = NA,
   ply_date = as.Date(format(data_ply[max(1, nrow(data_ply)/2),
   "solar.time"], "\%Y-\%m-\%d")), timestep_days = NA)
 }
@@ -26,38 +26,38 @@ the midnight that begins the date. For example, day_end=30 indicates that
 data describing 2006-06-26 end at the last observation time that occurs 
 before 2006-06-27 06:00.}
 
-\item{day_tests}{list of tests to conduct to determine whether each date 
-worth of data is valid for modeling. \code{full_day}: Do the data span the 
-full expected period (e.g., from 10:30pm on preceding day to 6am on 
-following day)? \code{even_timesteps}: are all of the timesteps within the 
-day the same length, to within a tolerance of 0.2\% of the timestep length? 
-\code{complete_data}: are all columns of input data available at every 
-timestep? \code{pos_discharge}: is discharge greater than 0 at every 
-timestep? A further test is implied if \code{required_timestep} is a non-NA
-numeric.}
+\item{day_tests}{list of tests to conduct to determine whether each date
+worth of data is valid for modeling. \code{full_day}: Do the data span the
+full expected period (e.g., from 10:30pm on preceding day to 6am on
+following day)? \code{even_timesteps}: are all of the timesteps within the
+day the same length, to within a tolerance of 0.2\% of the timestep length?
+\code{complete_data}: are all columns of input data available at every
+timestep? \code{pos_discharge}: is discharge greater than 0 at every
+timestep? \code{pos_depth}: is depth greater than 0 at every timestep? A
+further test is implied if \code{required_timestep} is a non-NA numeric.}
 
-\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
-length in days that a date must have to pass the validity check (to within 
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep
+length in days that a date must have to pass the validity check (to within
 a tolerance of 0.2\% of the value of \code{required_timestep})}
 
 \item{ply_date}{the Date this data_ply is intended to match. May be NA}
 
-\item{timestep_days}{the expected timestep length in fraction of a day; for 
-example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within 
-the function if timestep_days is NA. May be supplied as an argument to (1) 
+\item{timestep_days}{the expected timestep length in fraction of a day; for
+example, a 1-hour timestep is 1/24 is 0.0416667. This is calculated within
+the function if timestep_days is NA. May be supplied as an argument to (1)
 pre-calculate the value for efficiency, or (2) require a specific timestep.}
 }
 \value{
 character vector of errors if day is invalid, or TRUE if it's valid
 }
 \description{
-Provides ability to skip a poorly-formatted day for calculating metabolism, 
-without breaking the whole loop. Rather than producing errors, quietly 
-collects problems/errors as a list of strings for the calling function to 
+Provides ability to skip a poorly-formatted day for calculating metabolism,
+without breaking the whole loop. Rather than producing errors, quietly
+collects problems/errors as a list of strings for the calling function to
 handle.
 }
 \details{
-Assumes that the data have already been validated as in 
+Assumes that the data have already been validated as in
 \code{\link{mm_validate_data}}
 }
 \examples{

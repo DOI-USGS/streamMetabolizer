@@ -325,7 +325,7 @@ specs <- function(
   day_end = 28,
   
   # inheritParams mm_is_valid_day
-  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'),
+  day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge', 'pos_depth'),
   required_timestep=NA,
   
   
