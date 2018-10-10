@@ -521,7 +521,7 @@ prepdata_bayes <- function(
       
     switch(
       features$pool_K600_type,
-      linear = list(lnQ_daily = data_daily$lnQ.daily),
+      linear = list(lnQ_daily = array(time_by_date_matrix(data_daily$lnQ.daily), dim=num_dates)),
       binned = list(
           b = length(specs$K600_lnQ_nodes_centers),
           lnQ_bins = rbind(data_daily$lnQ.bin1, data_daily$lnQ.bin2),
