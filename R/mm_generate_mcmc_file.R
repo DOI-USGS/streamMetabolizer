@@ -184,7 +184,9 @@ mm_generate_mcmc_file <- function(
           'real err_proc_acor_phi_beta;',
           'real<lower=0> err_proc_acor_sigma_scale;'),
         if(err_proc_iid) c(
-          'real<lower=0> err_proc_iid_sigma_scale;')),
+          'real<lower=0> err_proc_iid_sigma_scale;'),
+        if(err_proc_dayiid) c(
+          'real<lower=0> err_proc_dayiid_sdlog_sigma;')),
       
       chunk(
         comment('Data dimensions'),
@@ -285,15 +287,15 @@ mm_generate_mcmc_file <- function(
         if(err_obs_iid) c(
           'real<lower=0> err_obs_iid_sigma_scaled;'),
         if(err_proc_acor) c(
-          'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-          'real<lower=0> err_proc_acor_sigma_scaled;'),
+          # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+          'real<lower=0, upper=1> err_proc_acor_phi;',
+          'real<lower=0> err_proc_acor_sigma_scaled;',
+          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
         if(err_proc_iid) c(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
-        
-        # instantaneous process error values
-        if(err_proc_acor) c(
-          '',
-          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
+        if(err_proc_dayiid) c(
+          'real<lower=0> err_proc_dayiid_sdlog_scaled;',
+          'vector<lower=0>[d] mult_GPP[n];'),
         
         # DO_mod if it's a fitted parameter (oipi models)
         if(err_obs_iid && err_proc_iid) c(
@@ -332,6 +334,8 @@ mm_generate_mcmc_file <- function(
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
+      if(err_proc_dayiid) c(
+        'real<lower=0> err_proc_dayiid_sdlog;'),
       
       if(features$GPP_fun == 'satlight') c(
         'vector<lower=0>[d] alpha;'
@@ -349,7 +353,9 @@ mm_generate_mcmc_file <- function(
       else # err_obs_iid and/or err_proc_acor without err_proc_iid
         'vector[d] DO_mod[n];',
       if(err_proc_acor)
-        sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
+        sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n')),
+      if(err_proc_dayiid)
+        'vector[d] err_proc_dayiid[n];'
     ),
     
     # pooling parameters
@@ -371,7 +377,9 @@ mm_generate_mcmc_file <- function(
         # s(fs('beta', 'err_proc_acor_phi'?)), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
-        s(fs('halfcauchy', 'err_proc_iid_sigma')))
+        s(fs('halfcauchy', 'err_proc_iid_sigma'))),
+      if(err_proc_dayiid) c(
+        s(fs('halfnormal', 'err_proc_dayiid_sdlog')))
     ),
     
     # daily parameters
@@ -435,6 +443,8 @@ mm_generate_mcmc_file <- function(
             features$GPP_fun,
             'linlight'=s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
             'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')),
+          if(err_proc_dayiid) s(
+            'err_proc_dayiid[i] = GPP_inst[i] .* (mult_GPP[i] - 1)'),
           s('ER_inst[i] = ER_daily .* frac_ER[i]'),
           s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),
@@ -486,7 +496,10 @@ mm_generate_mcmc_file <- function(
                 )
               )
             ),
-            p('  (GPP_inst[i] + ER_inst[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
+            p('  (GPP_inst[i] + ER_inst[i]',
+              if(err_proc_acor) ' + err_proc_acor[i]',
+              if(err_proc_dayiid) ' + err_proc_dayiid[i]',
+              ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
@@ -496,7 +509,10 @@ mm_generate_mcmc_file <- function(
                 s(') * timestep')
               ),
               'trapezoid' = c(
-                p('  (GPP_inst[i+1] + ER_inst[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                p('  (GPP_inst[i+1] + ER_inst[i+1]',
+                  if(err_proc_acor) ' + err_proc_acor[i+1]',
+                  if(err_proc_dayiid) ' + err_proc_dayiid[i+1]',
+                  ') ./ depth[i+1] +'),
                 p('  KO2_inst[i] .* DO_sat[i] + KO2_inst[i+1] .* DO_sat[i+1]'),
                 switch(
                   deficit_src,
@@ -566,6 +582,16 @@ mm_generate_mcmc_file <- function(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
         s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
+    ),
+    
+    if(err_proc_dayiid) chunk(
+      comment('Daytime-only independent, identically distributed process error'),
+      p('for(i in 1:n) {'),
+      indent(
+        s('mult_GPP[i] ~ lognormal(0, err_proc_dayiid_sdlog)')),
+      p('}'),
+      comment('SD (sigma) of the daytime IID process errors'),
+      s('err_proc_dayiid_sdlog_scaled ~ ', f('normal', mu=0, sigma=1))
     ),
     
     if(err_obs_iid) chunk(
@@ -707,8 +733,8 @@ mm_generate_mcmc_files <- function() {
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   
-  incompatible <- 
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid & !opts$err_proc_dayiid) # need at least 1 kind of error
+  # need at least 1 kind of error
+  incompatible <- (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid & !opts$err_proc_dayiid) 
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {

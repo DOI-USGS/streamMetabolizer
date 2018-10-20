@@ -414,6 +414,7 @@ specs <- function(
   err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
+  err_proc_dayiid_sdlog_sigma = 0.05,
   
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -541,7 +542,8 @@ specs <- function(
         ),
         if(features$err_obs_iid) 'err_obs_iid_sigma_scale',
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_scale'),
-        if(features$err_proc_iid) 'err_proc_iid_sigma_scale'
+        if(features$err_proc_iid) 'err_proc_iid_sigma_scale',
+        if(features$err_proc_dayiid) 'err_proc_dayiid_sdlog_sigma'
       )
       
       # list all needed arguments
@@ -597,7 +599,8 @@ specs <- function(
           if(features$pool_K600_sd == 'fitted') switch(features$pool_K600_type, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
+          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'),
+          if(features$err_proc_dayiid) c('err_proc_dayiid'))
       }
       
       # check for errors/inconsistencies
