@@ -57,7 +57,7 @@ test_that('get_params options are honored (for MLE models): units', {
 })
 
 test_that('get_params works for each model type, basic GPP & ER equations', {
-  dat <- data_metab('3','15')
+  dat <- data_metab('1','30')
   
   # empty model
   mm <- metab_model()
