@@ -366,10 +366,10 @@ specs <- function(
   GPP_daily_mu = 3.1,
   GPP_daily_lower = -Inf,
   GPP_daily_sigma = 6.0,
-  alpha_meanlog = -10,
-  alpha_sdlog = 0.9,
-  Pmax_mu = 0.1,
-  Pmax_sigma = 0.3,
+  alpha_meanlog = -4.6,
+  alpha_sdlog = 0.5,
+  Pmax_mu = 10,
+  Pmax_sigma = 7,
   ER_daily_mu = -7.1,
   ER_daily_upper = Inf,
   ER_daily_sigma = 7.1,
@@ -473,8 +473,12 @@ specs <- function(
   
 ) {
   
+  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
+  if(model_name %in% eval(formals(mm_name)$type))
+    model_name <- mm_name(type=model_name)
+  
   # check the validity of the model_name against the list of officially accepted model names
-  # mm_validate_name(model_name)
+  mm_validate_name(model_name)
   
   # parse the model_name
   features <- mm_parse_name(model_name, expand=TRUE)
@@ -506,10 +510,6 @@ specs <- function(
   if(length(redundant) > 0) {
     warning("argument[s] that should usually be specified in revise() rather than specs(): ", paste(redundant, collapse=", "))
   }
-  
-  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
-  if(model_name %in% eval(formals(mm_name)$type))
-    model_name <- mm_name(type=model_name)
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())

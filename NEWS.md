@@ -1,6 +1,10 @@
-# 0.10.11
+# 0.11.1
 
 * added `err_proc_dayiid` option for Bayesian models
+
+# 0.11.0
+
+* added `GPP_fun='satlight'` option for Bayesian models
 
 # 0.10.10
 
@@ -10,10 +14,6 @@ or seriously confuse a model
 * fixed a bug where a single day of data passed to a b_Kl or b_Kb model would
 cause Stan to fail because the log(discharge) values were being formatted
 improperly for Stan.
-
-# 0.10.9
-
-* added `GPP_fun='satlight'` option for Bayesian models
 
 # 0.10.7
 
