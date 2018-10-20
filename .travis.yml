@@ -16,9 +16,8 @@ env:
 
 # from http://dirk.eddelbuettel.com/blog/2017/06/13/, to fix C++14 x R3.4.0 issue
 before_install:
-  - |
-    CXX14 = /software/gcc/8.2.0/bin/g++
-    CXX14FLAGS = -fPIC
+  - CXX14 = /software/gcc/8.2.0/bin/g++
+  - CXX14FLAGS = -fPIC
 
 repos:
   CRAN: https://cran.rstudio.com
