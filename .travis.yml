@@ -13,7 +13,16 @@ env:
      - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
-   
+
+# from http://dirk.eddelbuettel.com/blog/2017/06/13/, to fix C++14 x R3.4.0 issue
+before_install:
+  - |
+    if [[ "${CI}" == "true" ]]; then
+      if [[ "${TRAVIS}" == "true" ]]; then 
+        echo "** Overriding src/Makevars and removing C++14 on Travis only"
+        sed -i 's|CXX_STD = CXX14||' src/Makevars
+      fi
+    fi 
 
 repos:
   CRAN: https://cran.rstudio.com
