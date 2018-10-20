@@ -12,7 +12,7 @@ mm_generate_mcmc_file <- function(
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
   ode_method=c('trapezoid','euler'),
-  GPP_fun=c('linlight'), #'satlight'
+  GPP_fun=c('linlight', 'satlight'),
   ER_fun=c('constant'), #'q10temp'
   deficit_src=c('DO_mod','DO_obs'),
   engine='stan') {
@@ -121,9 +121,17 @@ mm_generate_mcmc_file <- function(
     c('data {',
       chunk(
         comment('Parameters of priors on metabolism'),
-        'real GPP_daily_mu;',
-        'real GPP_daily_lower;',
-        'real<lower=0> GPP_daily_sigma;',
+        if(features$GPP_fun == 'linlight') c(
+          'real GPP_daily_mu;',
+          'real GPP_daily_lower;',
+          'real<lower=0> GPP_daily_sigma;'
+        ) else c(
+          'real alpha_meanlog;',
+          'real<lower=0> alpha_sdlog;',
+          'real<lower=0> Pmax_mu;',
+          'real<lower=0> Pmax_sigma;'
+        ),
+        
         'real ER_daily_mu;',
         'real ER_daily_upper;',
         'real<lower=0> ER_daily_sigma;',
@@ -205,7 +213,11 @@ mm_generate_mcmc_file <- function(
         # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
         # than fractions (i.e., must yield per-day rather than per-timestep
         # rates)
-        'vector[d] frac_GPP[n];', 
+        switch(
+          features$GPP_fun,
+          linlight='vector[d] frac_GPP[n];',
+          satlight='vector[d] light[n];'
+        ),
         'vector[d] frac_ER[n];',
         'vector[d] frac_D[n];',
         'vector[d] depth[n];',
@@ -236,8 +248,13 @@ mm_generate_mcmc_file <- function(
     c('parameters {',
       indent(
         # daily metabolism rate parameters
-        c('vector<lower=GPP_daily_lower>[d] GPP_daily;',
-          'vector<upper=ER_daily_upper>[d] ER_daily;',
+        switch(
+          features$GPP_fun,
+          linlight=c('vector<lower=GPP_daily_lower>[d] GPP_daily;'),
+          satlight=c('vector[d] alpha_scaled;',
+                     'vector[d] Pmax;') #<lower=0>
+        ),
+        c('vector<upper=ER_daily_upper>[d] ER_daily;',
           if(pool_K600_sd %in% c('fixed','fitted')) c(
             'vector<lower=0>[d] K600_daily;')
         ),
@@ -315,6 +332,10 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
       
+      if(features$GPP_fun == 'satlight') c(
+        'vector<lower=0>[d] alpha;'
+      ),
+      
       # instantaneous GPP, ER, and KO2. the nth value isn't used to calculate DO
       # when ode_method=euler, but it's always used to calculate GPP and ER
       c('vector[d] GPP_inst[n];',
@@ -351,6 +372,15 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) c(
         s(fs('halfcauchy', 'err_proc_iid_sigma')))
     ),
+    
+    # daily parameters
+    if(features$GPP_fun == 'satlight') {
+      chunk(
+        comment('Rescale select daily parameters'),
+        c(
+          s(fs('lognormal', 'alpha')))
+      )
+    },
     
     # K600_daily model
     if(pool_K600_type %in% c('linear','binned') || pool_K600_sd == 'zero') chunk(
@@ -400,7 +430,10 @@ mm_generate_mcmc_file <- function(
         comment("Calculate individual process rates"),
         p('for(i in 1:n) {'),
         indent(
-          s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
+          switch(
+            features$GPP_fun,
+            'linlight'=s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
+            'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')),
           s('ER_inst[i] = ER_daily .* frac_ER[i]'),
           s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),
@@ -549,7 +582,14 @@ mm_generate_mcmc_file <- function(
     
     indent(
       comment('Daily metabolism priors'),
-      s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
+      switch(
+        features$GPP_fun,
+        linlight = s('GPP_daily ~ ', f('normal', mu='GPP_daily_mu', sigma='GPP_daily_sigma')),
+        satlight = c(
+          s('alpha_scaled ~ ', f('normal', mu='0', sigma='1')),
+          s('Pmax ~ ', f('normal', mu='Pmax_mu', sigma='Pmax_sigma'))
+        )
+      ),
       s('ER_daily ~ ', f('normal', mu='ER_daily_mu', sigma='ER_daily_sigma')),
       if(pool_K600_sd %in% c('fixed','fitted')) c(
         switch(
@@ -658,7 +698,7 @@ mm_generate_mcmc_files <- function() {
     err_proc_acor=FALSE,
     err_proc_iid=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
-    GPP_fun='linlight',
+    GPP_fun=c('linlight','satlight'),
     ER_fun='constant',
     deficit_src=c('DO_mod','DO_obs'),
     engine='stan',

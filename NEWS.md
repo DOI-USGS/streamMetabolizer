@@ -1,3 +1,7 @@
+# 0.11.0
+
+* added `GPP_fun='satlight'` option for Bayesian models
+
 # 0.10.10
 
 * added a test to mm_is_valid_day that checks for depths <= 0, which would break

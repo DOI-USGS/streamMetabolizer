@@ -13,7 +13,6 @@ env:
      - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
-   
 
 repos:
   CRAN: https://cran.rstudio.com

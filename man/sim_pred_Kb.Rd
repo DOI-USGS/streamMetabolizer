@@ -7,12 +7,12 @@
 sim_pred_Kb(K600_lnQ_nodes_centers, lnK600_lnQ_nodes, lnQ.daily)
 }
 \arguments{
-\item{K600_lnQ_nodes_centers}{data configuration argument for 
-pool_K600='binned'. numeric vector giving the natural-log-space centers of 
+\item{K600_lnQ_nodes_centers}{data configuration argument for
+pool_K600='binned'. numeric vector giving the natural-log-space centers of
 the discharge bins. See also \code{\link{calc_bins}}}
 
-\item{lnK600_lnQ_nodes}{For a sim model with pool_K600='binned'. The values 
-of lnK600 at each node. The default value of this spec is a function that 
+\item{lnK600_lnQ_nodes}{For a sim model with pool_K600='binned'. The values
+of lnK600 at each node. The default value of this spec is a function that
 computes lnK600s based on simulated K~Q relationships.}
 
 \item{lnQ.daily}{vector of daily values of the natural log of discharge, 

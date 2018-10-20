@@ -36,7 +36,7 @@
 #' }
 plot_distribs <- function(
   dist_data, 
-  parname=c('GPP_daily','ER_daily','K600_daily',
+  parname=c('GPP_daily','alpha','Pmax','ER_daily','K600_daily',
             'K600_daily_meanlog','lnK600_lnQ_intercept','lnK600_lnQ_slope','K600_lnQ_nodes',
             'K600_daily_sdlog','K600_daily_sigma',
             'err_obs_iid_sigma','err_proc_acor_phi','err_proc_acor_sigma','err_proc_iid_sigma'), 
@@ -75,6 +75,8 @@ plot_distribs <- function(
   # determine the appropriate distribution
   distrib <- c(
     GPP_daily='normal', 
+    alpha='lognormal',
+    Pmax='normal',
     ER_daily='normal',
     K600_daily='lognormal',
     # Kn
@@ -203,7 +205,7 @@ plot_distribs <- function(
     # from matrix into vector
     draws <- rstan::extract(mc, pars=parname)[[parname]]
     indexed_posterior <- is.matrix(draws)
-    if(indexed_posterior) draws <- c(draws[[index]])
+    if(indexed_posterior) draws <- c(draws[,index])
     # generate density w/ 1000 points along the line
     post <- density(draws, n=1000)[c('x','y')] %>% 
       as_data_frame() %>%
