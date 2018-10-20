@@ -473,8 +473,12 @@ specs <- function(
   
 ) {
   
+  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
+  if(model_name %in% eval(formals(mm_name)$type))
+    model_name <- mm_name(type=model_name)
+  
   # check the validity of the model_name against the list of officially accepted model names
-  # mm_validate_name(model_name)
+  mm_validate_name(model_name)
   
   # parse the model_name
   features <- mm_parse_name(model_name, expand=TRUE)
@@ -506,10 +510,6 @@ specs <- function(
   if(length(redundant) > 0) {
     warning("argument[s] that should usually be specified in revise() rather than specs(): ", paste(redundant, collapse=", "))
   }
-  
-  # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
-  if(model_name %in% eval(formals(mm_name)$type))
-    model_name <- mm_name(type=model_name)
   
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
