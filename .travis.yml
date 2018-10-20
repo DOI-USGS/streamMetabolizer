@@ -15,12 +15,14 @@ env:
      - _R_CHECK_FORCE_SUGGESTS_=false
 
 # from http://dirk.eddelbuettel.com/blog/2017/06/13/, to fix C++14 x R3.4.0 issue
+# sed -i 's|CXX_STD = CXX14||' src/Makevars
 before_install:
   - |
     if [[ "${CI}" == "true" ]]; then
       if [[ "${TRAVIS}" == "true" ]]; then 
         echo "** Overriding src/Makevars and removing C++14 on Travis only"
-        sed -i 's|CXX_STD = CXX14||' src/Makevars
+        CXX14 = /software/gcc/8.2.0/bin/g++
+        CXX14FLAGS = -fPIC
       fi
     fi 
 
