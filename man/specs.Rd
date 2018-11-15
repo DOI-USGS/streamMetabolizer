@@ -31,8 +31,8 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   linear = 1.2, binned = 0.24, NA), err_obs_iid_sigma_scale = 0.03,
   err_proc_iid_sigma_scale = 5, err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1, err_proc_acor_sigma_scale = 1,
-  err_proc_dayiid_sdlog_sigma = 0.05, params_in, params_out,
-  n_chains = 4, n_cores = 4, burnin_steps = 500, saved_steps = 500,
+  err_mult_GPP_sdlog_sigma = 0.05, params_in, params_out, n_chains = 4,
+  n_cores = 4, burnin_steps = 500, saved_steps = 500,
   thin_steps = 1, verbose = FALSE, weights = c("K600/CI"),
   filters = c(CI.max = NA, discharge.daily.max = NA, velocity.daily.max =
   NA), predictors = c("discharge.daily"), transforms = c(K600 = "log",
@@ -289,6 +289,14 @@ half-Cauchy distribution for err_proc_acor_sigma, the standard deviation of
 the autocorrelated component of process [& sometimes observation] error.
 Visualize the PDF of err_proc_acor_sigma with \code{\link{plot_distribs}}.}
 
+\item{err_mult_GPP_sdlog_sigma}{The scale parameter of a half-normal
+distribution for err_mult_GPP_sdlog, the scale parameter of the lognormal
+distribution of err_mult_GPP. err_mult_GPP is multiplied by light and then
+normalized to a daily mean of 1 before being multiplied by GPP_daily to
+estimate GPP_inst. The effect is a special kind of process error that is
+proportional to light (with noise) and is applied to GPP rather than to
+dDO/dt.}
+
 \item{params_in}{Character vector of hyperparameters to pass from the specs
 list into the data list for the MCMC run. Will be automatically generated
 during the specs() call; need only be revised if you're using a custom
@@ -459,7 +467,8 @@ often should, be overridden to tailor the model to your needs.
   \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If
   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha,
   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If
-  \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
+  \code{err_proc_iid} then \code{err_proc_iid_sigma_scale}. \item If
+  \code{err_proc_GPP} then \code{err_mult_GPP_sdlog_sigma}.}
 
   * metab_mle: \code{model_name, day_start, day_end, day_tests,
   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,

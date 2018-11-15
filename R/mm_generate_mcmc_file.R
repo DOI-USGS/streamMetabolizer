@@ -353,7 +353,6 @@ mm_generate_mcmc_file <- function(
       # will be implicitly calculated in the GPP_inst equation
       if(err_proc_GPP) c(
         'vector<lower=0>[d] combo_mult_GPP[n];',
-        #'vector<lower=0>[d] sum_combo_mult_GPP;'),
         'vector<lower=0>[d] mean_combo_mult_GPP;'),
       
       # instantaneous DO and possibly process error values
@@ -446,13 +445,11 @@ mm_generate_mcmc_file <- function(
         comment("Calculate individual process rates"),
         
         if(err_proc_GPP) c(
-          # s('sum_combo_mult_GPP = rep_vector(0, d)'),
           p('for(i in 1:n) {'),
           indent(
             # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
             # modified by multiplier.
             s('combo_mult_GPP[i] = err_mult_GPP[i] .* light_mult_GPP[i]')#,
-            # s('sum_combo_mult_GPP += combo_mult_GPP[i]')
           ),
           p('}'),
           p('for(j in 1:d) {'),
@@ -465,8 +462,7 @@ mm_generate_mcmc_file <- function(
         p('for(i in 1:n) {'),
         indent(
           if(err_proc_GPP) {c(
-            # s('mult_GPP[i] = combo_mult_GPP[i] * n ./ sum_combo_mult_GPP'), # added to next line to save variables
-            # s('GPP_inst[i] = GPP_daily .* combo_mult_GPP[i] * n ./ sum_combo_mult_GPP') #[1:d]
+            # s('mult_GPP[i] = combo_mult_GPP[i] ./ mean_combo_mult_GPP'), # added to next line to save variables
             s('GPP_inst[i] = GPP_daily .* combo_mult_GPP[i] ./ mean_combo_mult_GPP') #[1:d]
           )} else {
             switch(

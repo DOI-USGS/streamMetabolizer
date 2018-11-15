@@ -535,7 +535,9 @@ prepdata_bayes <- function(
     switch(
       features$GPP_fun,
       linlight = list(
-        frac_GPP = {
+        # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
+        # modified by multiplier
+        light_mult_GPP = {
           mat_light <- time_by_date_matrix(data$light)
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
@@ -551,8 +553,9 @@ prepdata_bayes <- function(
     ),
       
     list(
-      frac_ER  = time_by_date_matrix(1),
-      frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
+      # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
+      # modified by multiplier
+      const_mult_ER  = time_by_date_matrix(1),
       KO2_conv = {
         KO2_conv_vec <- suppressWarnings(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"))
         if(any(is.nan(KO2_conv_vec))) {

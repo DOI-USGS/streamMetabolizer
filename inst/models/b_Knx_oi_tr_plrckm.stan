@@ -29,9 +29,8 @@ data {
   // Data
   vector[d] DO_obs[n];
   vector[d] DO_sat[n];
-  vector[d] frac_GPP[n];
-  vector[d] frac_ER[n];
-  vector[d] frac_D[n];
+  vector[d] light_mult_GPP[n];
+  vector[d] const_mult_ER[n];
   vector[d] depth[n];
   vector[d] KO2_conv[n];
 }
@@ -64,8 +63,8 @@ transformed parameters {
   
   // Calculate individual process rates
   for(i in 1:n) {
-    GPP_inst[i] = GPP_daily .* frac_GPP[i];
-    ER_inst[i] = ER_daily .* frac_ER[i];
+    GPP_inst[i] = GPP_daily .* light_mult_GPP[i];
+    ER_inst[i] = ER_daily .* const_mult_ER[i];
     KO2_inst[i] = K600_daily .* KO2_conv[i];
   }
   

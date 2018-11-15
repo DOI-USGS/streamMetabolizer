@@ -9,9 +9,9 @@ mm_name(type = c("mle", "bayes", "night", "Kmodel", "sim"),
   "linear", "linear_sdzero", "linear_sdfixed", "binned", "binned_sdzero",
   "binned_sdfixed", "complete"), err_obs_iid = c(TRUE, FALSE),
   err_proc_acor = c(FALSE, TRUE), err_proc_iid = c(FALSE, TRUE),
-  err_proc_dayiid = c(FALSE, TRUE), ode_method = c("trapezoid",
-  "euler", "rk2", "lsoda", "lsode", "lsodes", "lsodar", "vode", "daspk",
-  "rk4", "ode23", "ode45", "radau", "bdf", "bdf_d", "adams", "impAdams",
+  err_proc_GPP = c(FALSE, TRUE), ode_method = c("trapezoid", "euler",
+  "rk2", "lsoda", "lsode", "lsodes", "lsodar", "vode", "daspk", "rk4",
+  "ode23", "ode45", "radau", "bdf", "bdf_d", "adams", "impAdams",
   "impAdams_d", "Euler", "pairmeans", "NA"), GPP_fun = c("linlight",
   "satlight", "satlightq10temp", "NA"), ER_fun = c("constant", "q10temp",
   "NA"), deficit_src = c("DO_mod", "DO_obs", "DO_obs_filter", "NA"),
@@ -51,8 +51,11 @@ autocorrelation term phi fitted) be included?}
 
 \item{err_proc_iid}{logical. Should IID process error be included?}
 
-\item{err_proc_dayiid}{logical. Should daytime-only IID process error be
-included?}
+\item{err_proc_GPP}{logical. Should IID process error in GPP be included?
+This kind of error occurs only during the day and is used to adjust GPP
+before passing that adjusted GPP into the dDO/dt equation. The GPP_inst
+variable is the corrected GPP, and a new variable, GPP_inst_partial,
+contains the pre-adjustment GPP estimates}
 
 \item{ode_method}{character. The method to use in solving the ordinary
 differential equation for DO. Options: \itemize{ \item \code{euler},
