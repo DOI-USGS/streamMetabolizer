@@ -352,7 +352,6 @@ mm_generate_mcmc_file <- function(
       # (sum_combo_mult_GPP), from which the final GPP multiplier (mult_GPP)
       # will be implicitly calculated in the GPP_inst equation
       if(err_proc_GPP) c(
-        'vector<lower=0>[d] pp_mult_GPP[n];', # may be useful for pseudo R2 calculation?
         'vector<lower=0>[d] combo_mult_GPP[n];',
         'vector<lower=0>[d] mean_combo_mult_GPP;'),
       
@@ -463,7 +462,7 @@ mm_generate_mcmc_file <- function(
         p('for(i in 1:n) {'),
         indent(
           if(err_proc_GPP) {c(
-            s('pp_mult_GPP[i] = combo_mult_GPP[i] ./ mean_combo_mult_GPP'), # added to next line to save variables
+            # s('pp_mult_GPP[i] = combo_mult_GPP[i] ./ mean_combo_mult_GPP'), # added to next line to save variables
             s('GPP_inst[i] = GPP_daily .* combo_mult_GPP[i] ./ mean_combo_mult_GPP') #[1:d]
           )} else {
             switch(
