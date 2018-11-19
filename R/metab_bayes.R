@@ -792,9 +792,9 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
       'DO_mod', 'DO_mod_partial', # d*n
       'DO_mod_partial_sigma', # d*n
       'GPP_inst', 'ER_inst', 'KO2_inst', # d*n
+      'GPP_inst_partial', 'err_proc_GPP', 'pp_mult_GPP', # d*n for GPP process error
       'err_proc_acor_inc', 'err_proc_acor', # can be d*n (trapezoid) or d*(n-1) (euler), same timestamp indexing as GPP_inst
-      'err_obs_iid', 'err_proc_iid', # d*(n-1), timestamp[i+1] relates to var[i:i+1]
-      'coef_GPP'
+      'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i:i+1]
     )
   )
   
