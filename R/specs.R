@@ -422,7 +422,7 @@ specs <- function(
   err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
-  err_mult_GPP_sdlog_sigma = 0.05,
+  err_mult_GPP_sdlog_sigma = 1,
   
   # vector of hyperparameters to include as MCMC data
   params_in,
