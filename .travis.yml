@@ -23,7 +23,6 @@ before_script:
   - Rscript -e "install.packages('rmarkdown')"
 
 r_packages:
- - modeest
  - deSolve
  - rstan
 
