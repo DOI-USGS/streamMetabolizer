@@ -4,14 +4,15 @@
 
 language: r
 sudo: required
-dist: trusty
 warnings_are_errors: true
 
 matrix:
   include:
-    # works on Precise and Trusty
     - os: linux
-      compiler: gcc
+      dist: trusty
+      r: release
+      r_binary_packages:
+        - devtools
       addons:
         apt:
           sources:
@@ -19,14 +20,13 @@ matrix:
           packages:
             - g++-7
       env:
-        - CC=gcc-7
-        - CXX=g++-7
-        - CXX14FLAGS=-O3 -march=native -mtune=native -fPIC
-        - CXX14=g++-7 -std=c++1y
-#       - MATRIX_EVAL='CC=gcc-7 && CXX=g++-7 && CXX14=g++-7 && CXX14FLAGS="-O3 -march=native"'
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-#before_install:
-#    - eval "${MATRIX_EVAL}"
+before_install:
+  - eval "${MATRIX_EVAL}"
+  - mkdir -p ~/.R/
+  - echo "CXX14 = g++-7 -fPIC" >> ~/.R/Makevars
+  - echo "CXX14FLAGS = -mtune=native -march=native -Wno-unused-variable -Wno-unused-function -Wno-unused-local-typedefs -Wno-ignored-attributes -Wno-deprecated-declarations -Wno-attributes -O3" >> ~/.R/Makevars
 
 env:
    global:
