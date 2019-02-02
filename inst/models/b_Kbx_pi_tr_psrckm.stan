@@ -127,6 +127,7 @@ generated quantities {
   vector[d] err_proc_iid[n-1];
   vector[d] GPP;
   vector[d] ER;
+  vector[d] DO_R2;
   
   for(i in 2:n) {
     err_proc_iid[i-1] = (DO_mod_partial[i] - DO_obs[i]) .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i]);
@@ -134,6 +135,9 @@ generated quantities {
   for(j in 1:d) {
     GPP[j] = sum(GPP_inst[1:n24,j]) / n24;
     ER[j] = sum(ER_inst[1:n24,j]) / n24;
+    
+    // R2 for DO observations is always 1 for process-error-only models
+    DO_R2[j] = 1;
   }
   
 }

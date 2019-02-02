@@ -689,10 +689,19 @@ mm_generate_mcmc_file <- function(
       if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
       if(err_proc_GPP) c(
         'vector[d] GPP_inst_partial[n];',
-        'vector[d] err_proc_GPP[n];'
+        'vector[d] err_proc_GPP[n];',
+        'int n_light_day; // temporary',
+        'vector[n] GPP_inst_day; // temporary',
+        'vector[n] GPP_inst_diff_day; // temporary',
+        'vector[d] GPP_pseudo_R2;'
       ),
       'vector[d] GPP;',
       'vector[d] ER;',
+      if(err_obs_iid) c(
+        'vector[n] DO_obs_vec; // temporary',
+        'vector[n] DO_mod_vec; // temporary'
+      ),
+      'vector[d] DO_R2;',
       '',
       if(err_obs_iid || err_proc_iid) c(
         if(err_obs_iid) c(
@@ -724,12 +733,51 @@ mm_generate_mcmc_file <- function(
         '}'
       ),
       
+      if(err_proc_GPP) c(
+        s('GPP_inst_day = rep_vector(0, n)'),
+        s('GPP_inst_diff_day = rep_vector(0, n)')
+      ),
       'for(j in 1:d) {',
       indent(
         s('GPP[j] = sum(GPP_inst[1:n24,j]) / n24'),
-        s('ER[j] = sum(ER_inst[1:n24,j]) / n24')
+        s('ER[j] = sum(ER_inst[1:n24,j]) / n24'),
+        if(err_obs_iid) c(
+          p(''),
+          p('// Compute R2 for DO observations relative to the modeled, process-error-corrected state (DO_mod)'),
+          p('for(i in 1:n) {'),
+          indent(
+            s('DO_mod_vec[i] = DO_mod[i,j]'),
+            s('DO_obs_vec[i] = DO_obs[i,j]')),
+          p('}'),
+          s('DO_R2[j] = 1 - ',
+            'sum((DO_mod_vec - DO_obs_vec) .* (DO_mod_vec - DO_obs_vec)) / ', # sum((y_hat - y)^2)
+            'sum((DO_obs_vec - mean(DO_obs_vec)) .* (DO_obs_vec - mean(DO_obs_vec)))') # sum((y - y_bar)^2)
+        ) else c(
+          p(''),
+          p('// R2 for DO observations is always 1 for process-error-only models'),
+          s('DO_R2[j] = 1')
+        ),
+        # compute GPP_pseudo_R2
+        if(err_proc_GPP) c(
+          p(''),
+          p('// Compute GPP_pseudo_R2 (because model has GPP process error)'),
+          s('n_light_day = 0'),
+          p('for(i in 1:n) {'),
+          indent(
+            # only store and use those values for which light_mult_GPP[i] > 0
+            p('if(light_mult_GPP[i,j] > 0) {'),
+            indent(
+              s('n_light_day += 1'),
+              s('GPP_inst_day[n_light_day] = GPP_inst[i,j]'),
+              s('GPP_inst_diff_day[n_light_day] = GPP_inst[i,j] - GPP_inst_partial[i,j]')
+            ),
+            p('}')
+          ),
+          p('}'),
+          s('GPP_pseudo_R2[j] = 1 - variance(GPP_inst_diff_day[1:n_light_day]) / variance(GPP_inst_day[1:n_light_day])')
+        )
       ),
-      p('}')
+      '}'
     ),
     
     '}'

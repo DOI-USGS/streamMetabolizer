@@ -31,7 +31,7 @@ specs(model_name = mm_name(), engine, day_start = 4, day_end = 28,
   linear = 1.2, binned = 0.24, NA), err_obs_iid_sigma_scale = 0.03,
   err_proc_iid_sigma_scale = 5, err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1, err_proc_acor_sigma_scale = 1,
-  err_mult_GPP_sdlog_sigma = 0.05, params_in, params_out, n_chains = 4,
+  err_mult_GPP_sdlog_sigma = 1, params_in, params_out, n_chains = 4,
   n_cores = 4, burnin_steps = 500, saved_steps = 500,
   thin_steps = 1, verbose = FALSE, weights = c("K600/CI"),
   filters = c(CI.max = NA, discharge.daily.max = NA, velocity.daily.max =
