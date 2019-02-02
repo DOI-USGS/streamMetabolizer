@@ -12,14 +12,14 @@
 
 <meta name="author" content="Alison Appling" />
 
-<meta name="date" content="2018-08-19" />
+<meta name="date" content="2019-02-02" />
 
 <title>GPP and ER equations</title>
 
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
+<style type="text/css" data-origin="pandoc">
 div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
@@ -55,7 +55,29 @@ code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
 code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
 </style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -70,7 +92,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">GPP and ER equations</h1>
 <h4 class="author"><em>Alison Appling</em></h4>
-<h4 class="date"><em>2018-08-19</em></h4>
+<h4 class="date"><em>2019-02-02</em></h4>
 
 
 
@@ -96,17 +118,17 @@ mm_classic &lt;-<span class="st"> </span>
 <span class="st">  </span><span class="kw">metab</span>(dat)
 mm_classic</code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.10.9 
+## streamMetabolizer version 0.11.2 
 ## Specifications:
-##   model_name        m_np_oi_tr_plrckm.nlm                                 
-##   day_start         4                                                     
-##   day_end           28                                                    
-##   day_tests         full_day, even_timesteps, complete_data, pos_discharge
-##   required_timestep NA                                                    
-##   init.GPP.daily    8                                                     
-##   init.ER.daily     -10                                                   
-##   init.K600.daily   10                                                    
-## Fitting time: 1.4 secs elapsed
+##   model_name        m_np_oi_tr_plrckm.nlm                                            
+##   day_start         4                                                                
+##   day_end           28                                                               
+##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, pos_depth
+##   required_timestep NA                                                               
+##   init.GPP.daily    8                                                                
+##   init.ER.daily     -10                                                              
+##   init.K600.daily   10                                                               
+## Fitting time: 1.48 secs elapsed
 ## Parameters (3 dates):
 ##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily ER.daily.lower ER.daily.upper
 ## 1 2012-09-18 2.814873         2.158411        3.471335 -2.113937       -2.647968      -1.579906
@@ -129,18 +151,18 @@ mm_saturator &lt;-<span class="st"> </span>
 <span class="st">  </span><span class="kw">metab</span>(dat)
 mm_saturator</code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.10.9 
+## streamMetabolizer version 0.11.2 
 ## Specifications:
-##   model_name        m_np_oi_tr_psrckm.nlm                                 
-##   day_start         4                                                     
-##   day_end           28                                                    
-##   day_tests         full_day, even_timesteps, complete_data, pos_discharge
-##   required_timestep NA                                                    
-##   init.Pmax         10                                                    
-##   init.alpha        1e-04                                                 
-##   init.ER.daily     -10                                                   
-##   init.K600.daily   10                                                    
-## Fitting time: 2.46 secs elapsed
+##   model_name        m_np_oi_tr_psrckm.nlm                                            
+##   day_start         4                                                                
+##   day_end           28                                                               
+##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, pos_depth
+##   required_timestep NA                                                               
+##   init.Pmax         10                                                               
+##   init.alpha        1e-04                                                            
+##   init.ER.daily     -10                                                              
+##   init.K600.daily   10                                                               
+## Fitting time: 2.56 secs elapsed
 ## Parameters (3 dates):
 ##         date       Pmax Pmax.lower Pmax.upper         alpha   alpha.lower alpha.upper   ER.daily
 ## 1 2012-09-18  6.033017    5.715922   6.350112 0.0083269282   0.0078855247 0.008768332 -1.934454 
