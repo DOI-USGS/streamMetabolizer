@@ -614,7 +614,7 @@ specs <- function(
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'),
-          if(features$err_proc_GPP) c('err_proc_GPP'))
+          if(features$err_proc_GPP) c('err_proc_GPP', 'GPP_pseudo_R2'))
       }
       
       # check for errors/inconsistencies
