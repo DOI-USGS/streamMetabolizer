@@ -34,7 +34,8 @@
 #'   \item If \code{err_obs_iid} then \code{err_obs_iid_sigma_scale}. \item If
 #'   \code{err_proc_acor} then \code{err_proc_acor_phi_alpha,
 #'   err_proc_acor_phi_beta, err_proc_acor_sigma_scale}. \item If
-#'   \code{err_proc_iid} then \code{ err_proc_iid_sigma_scale}.}
+#'   \code{err_proc_iid} then \code{err_proc_iid_sigma_scale}. \item If
+#'   \code{err_proc_GPP} then \code{err_mult_GPP_sdlog_sigma}.}
 #'
 #'   * metab_mle: \code{model_name, day_start, day_end, day_tests,
 #'   init.GPP.daily, init.Pmax, init.alpha, init.ER.daily, init.ER20,
@@ -241,6 +242,13 @@
 #'   the uncorrelated (IID) component of process [& sometimes observation]
 #'   error. Visualize the PDF of err_proc_iid_sigma with
 #'   \code{\link{plot_distribs}}.
+#' @param err_mult_GPP_sdlog_sigma The scale parameter of a half-normal
+#'   distribution for err_mult_GPP_sdlog, the scale parameter of the lognormal
+#'   distribution of err_mult_GPP. err_mult_GPP is multiplied by light and then
+#'   normalized to a daily mean of 1 before being multiplied by GPP_daily to
+#'   estimate GPP_inst. The effect is a special kind of process error that is
+#'   proportional to light (with noise) and is applied to GPP rather than to
+#'   dDO/dt.
 #'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
@@ -414,6 +422,7 @@ specs <- function(
   err_proc_acor_phi_alpha = 1,
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
+  err_mult_GPP_sdlog_sigma = 1,
   
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -447,8 +456,10 @@ specs <- function(
   K600_lnQ_cnode_meanlog = log(6), # distrib for the y=K600 values of the middle (or just past middle) node
   K600_lnQ_cnode_sdlog = 1, # distrib for the y=K600 values of the middle (or just past middle) node
   K600_lnQ_nodediffs_meanlog = 0.2, # non-zero introduces a trend in K ~ Q
-  lnK600_lnQ_nodes = function(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog, ...) {
-    sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog)
+  lnK600_lnQ_nodes = function(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog,
+                              K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog, ...) {
+    sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog,
+           K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog)
   },
   
   # daily simulation parameters
@@ -541,7 +552,8 @@ specs <- function(
         ),
         if(features$err_obs_iid) 'err_obs_iid_sigma_scale',
         if(features$err_proc_acor) c('err_proc_acor_phi_alpha', 'err_proc_acor_phi_beta', 'err_proc_acor_sigma_scale'),
-        if(features$err_proc_iid) 'err_proc_iid_sigma_scale'
+        if(features$err_proc_iid) 'err_proc_iid_sigma_scale',
+        if(features$err_proc_GPP) 'err_mult_GPP_sdlog_sigma'
       )
       
       # list all needed arguments
@@ -582,22 +594,27 @@ specs <- function(
       }
       if('params_out' %in% yes_missing) {
         all_specs$params_out <- c(
-          c('GPP','ER'),
+          c('GPP', 'ER', 'DO_R2'),
           switch(
             features$GPP_fun,
             linlight=c('GPP_daily'),
-            satlight=c('alpha','Pmax')),
-          c('ER_daily','K600_daily'),
+            satlight=c('alpha', 'Pmax')),
+          c('ER_daily', 'K600_daily'),
           switch(
             features$pool_K600_type,
             none=c(),
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
             binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
-          if(features$pool_K600_sd == 'fitted') switch(features$pool_K600_type, normal='K600_daily_sdlog', linear=, binned='K600_daily_sigma'),
+          if(features$pool_K600_sd == 'fitted')
+            switch(
+              features$pool_K600_type,
+              normal='K600_daily_sdlog',
+              linear=, binned='K600_daily_sigma'),
           if(features$err_obs_iid) c('err_obs_iid_sigma', 'err_obs_iid'),
           if(features$err_proc_acor) c('err_proc_acor', 'err_proc_acor_phi', 'err_proc_acor_sigma'),
-          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'))
+          if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'),
+          if(features$err_proc_GPP) c('err_proc_GPP', 'GPP_pseudo_R2'))
       }
       
       # check for errors/inconsistencies

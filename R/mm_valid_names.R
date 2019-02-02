@@ -37,7 +37,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
       # line is why mm_generate_mcmc_file can't call this function (via
       # mm_names(check_validity=TRUE))
       mnames <- grep('^b_', dir(system.file('models', package='streamMetabolizer')), value=TRUE)
-      favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oi_tr_plrckm.stan','b_np_pi_tr_plrckm.stan')
+      favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oi_tr_plrckm.stan','b_np_pi_tr_plrckm.stan','b_np_oipp_tr_plrckm.stan')
     },
     mle={
       opts <- expand.grid(
@@ -46,6 +46,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         err_obs_iid=c(TRUE, FALSE),
         err_proc_acor=FALSE,
         err_proc_iid=c(FALSE, TRUE),
+        err_proc_GPP=FALSE,
         ode_method=all_ode_methods,
         GPP_fun=all_GPP_funs,
         ER_fun=all_ER_funs,
@@ -54,7 +55,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         stringsAsFactors=FALSE)
       incompatible <- (opts$err_obs_iid == opts$err_proc_iid)
       opts <- opts[!incompatible, ]
-      favorites <- c("m_np_oi_tr_plrckm.nlm")
+      favorites <- c('m_np_oi_tr_plrckm.nlm')
     },
     night={
       opts <- expand.grid(
@@ -63,6 +64,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         err_obs_iid=FALSE, 
         err_proc_acor=FALSE, 
         err_proc_iid=TRUE, 
+        err_proc_GPP=FALSE,
         ode_method='Euler', 
         GPP_fun='NA', 
         ER_fun='constant', 
@@ -85,6 +87,7 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
         err_obs_iid=TRUE,
         err_proc_acor=TRUE,
         err_proc_iid=TRUE,
+        err_proc_GPP=FALSE,
         ode_method=all_ode_methods,
         GPP_fun=all_GPP_funs,
         ER_fun=all_ER_funs,
@@ -99,7 +102,11 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
   # create names list if not already done. requires finite recursion because all
   # args are specified and check_validity=FALSE, so mm_name doesn't call
   # mm_valid_names
-  if(all(is.na(mnames))) mnames <- sapply(seq_len(nrow(opts)), function(i) suppressWarnings(do.call(mm_name, c(opts[i,], list(check_validity=FALSE)))))
+  if(all(is.na(mnames))) {
+    mnames <- sapply(seq_len(nrow(opts)), function(i) {
+      suppressWarnings(do.call(mm_name, c(opts[i,], list(check_validity=FALSE))))
+    })
+  }
   
   # reorder so our favorite is first
   c(favorites, mnames[-which(mnames %in% favorites)])

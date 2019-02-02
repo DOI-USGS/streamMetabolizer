@@ -11,21 +11,18 @@ create_calc_DO(calc_dDOdt,
 \item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}
 
 \item{ode_method}{character. The method to use in solving the ordinary
-differential equation for DO. Options:
-\itemize{
-  \item \code{euler}, formerly \code{Euler}: the final change in DO from
-  t=1 to t=2 is solely a function of GPP, ER, DO, etc. at t=1
-  \item \code{trapezoid}, formerly \code{pairmeans}: the final change in DO
-  from t=1 to t=2 is a function of the mean values of GPP, ER, etc. across
-  t=1 and t=2.
-  \item for \code{type='mle'}, options also include \code{rk2} and any 
-  character method accepted by \code{\link[deSolve]{ode}} in the 
-  \code{deSolve} package (\code{lsoda}, \code{lsode}, \code{lsodes},
-  \code{lsodar}, \code{vode}, \code{daspk}, \code{rk4}, \code{ode23},
-  \code{ode45}, \code{radau}, \code{bdf}, \code{bdf_d}, \code{adams},
-  \code{impAdams}, and \code{impAdams_d}; note that many of these have not
-  been well tested in the context of \code{streamMetabolizer} models)
-}}
+differential equation for DO. Options: \itemize{ \item \code{euler},
+formerly \code{Euler}: the final change in DO from t=1 to t=2 is solely a
+function of GPP, ER, DO, etc. at t=1 \item \code{trapezoid}, formerly
+\code{pairmeans}: the final change in DO from t=1 to t=2 is a function of
+the mean values of GPP, ER, etc. across t=1 and t=2. \item for
+\code{type='mle'}, options also include \code{rk2} and any character method
+accepted by \code{\link[deSolve]{ode}} in the \code{deSolve} package
+(\code{lsoda}, \code{lsode}, \code{lsodes}, \code{lsodar}, \code{vode},
+\code{daspk}, \code{rk4}, \code{ode23}, \code{ode45}, \code{radau},
+\code{bdf}, \code{bdf_d}, \code{adams}, \code{impAdams}, and
+\code{impAdams_d}; note that many of these have not been well tested in the
+context of \code{streamMetabolizer} models) }}
 
 \item{err.obs}{optional numerical vector of length nrow(data) in units of gO2
 m^3. Appropriate for simulation, when this vector of observation errors 

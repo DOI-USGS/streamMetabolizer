@@ -11,6 +11,7 @@ mm_generate_mcmc_file <- function(
   err_obs_iid=c(TRUE, FALSE),
   err_proc_acor=c(FALSE, TRUE),
   err_proc_iid=c(FALSE, TRUE),
+  err_proc_GPP=c(FALSE, TRUE),
   ode_method=c('trapezoid','euler'),
   GPP_fun=c('linlight', 'satlight'),
   ER_fun=c('constant'), #'q10temp'
@@ -29,7 +30,7 @@ mm_generate_mcmc_file <- function(
   model_name <- mm_name(
     type='bayes',
     pool_K600=pool_K600,
-    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid,
+    err_obs_iid=err_obs_iid, err_proc_acor=err_proc_acor, err_proc_iid=err_proc_iid, err_proc_GPP=err_proc_GPP,
     ode_method=ode_method, GPP_fun=GPP_fun, ER_fun=ER_fun, deficit_src=deficit_src, engine=engine,
     check_validity=FALSE)
   features <- mm_parse_name(model_name, expand=TRUE)
@@ -183,7 +184,9 @@ mm_generate_mcmc_file <- function(
           'real err_proc_acor_phi_beta;',
           'real<lower=0> err_proc_acor_sigma_scale;'),
         if(err_proc_iid) c(
-          'real<lower=0> err_proc_iid_sigma_scale;')),
+          'real<lower=0> err_proc_iid_sigma_scale;'),
+        if(err_proc_GPP) c(
+          'real<lower=0> err_mult_GPP_sdlog_sigma;')),
       
       chunk(
         comment('Data dimensions'),
@@ -210,16 +213,16 @@ mm_generate_mcmc_file <- function(
         comment('Data'),
         'vector[d] DO_obs[n];',
         'vector[d] DO_sat[n];',
-        # as of 10/13/2016 frac_GPP and frac_ER need to be multipliers rather
-        # than fractions (i.e., must yield per-day rather than per-timestep
-        # rates)
+        # light_mult_GPP and const_mult_ER are multipliers that reflect light
+        # and a constant, respectively, and produce estimates of GPP and ER,
+        # respectively. The resulting GPP and ER estimates are in per-day units
+        # (not per-timestep units)
         switch(
           features$GPP_fun,
-          linlight='vector[d] frac_GPP[n];',
+          linlight='vector[d] light_mult_GPP[n];',
           satlight='vector[d] light[n];'
         ),
-        'vector[d] frac_ER[n];',
-        'vector[d] frac_D[n];',
+        'vector[d] const_mult_ER[n];',
         'vector[d] depth[n];',
         'vector[d] KO2_conv[n];'),
       
@@ -284,15 +287,15 @@ mm_generate_mcmc_file <- function(
         if(err_obs_iid) c(
           'real<lower=0> err_obs_iid_sigma_scaled;'),
         if(err_proc_acor) c(
-          'real<lower=0, upper=1> err_proc_acor_phi;', # need to figure out how to scale phi (which might be 0-1 or very close to 0)
-          'real<lower=0> err_proc_acor_sigma_scaled;'),
+          # need to figure out how to scale phi (which might be 0-1 or very close to 0)
+          'real<lower=0, upper=1> err_proc_acor_phi;',
+          'real<lower=0> err_proc_acor_sigma_scaled;',
+          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
         if(err_proc_iid) c(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
-        
-        # instantaneous process error values
-        if(err_proc_acor) c(
-          '',
-          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
+        if(err_proc_GPP) c(
+          'real<lower=0> err_mult_GPP_sdlog_scaled;',
+          'vector<lower=0>[d] err_mult_GPP[n];'),
         
         # DO_mod if it's a fitted parameter (oipi models)
         if(err_obs_iid && err_proc_iid) c(
@@ -331,6 +334,8 @@ mm_generate_mcmc_file <- function(
         'real<lower=0> err_proc_acor_sigma;'),
       if(err_proc_iid) c(
         'real<lower=0> err_proc_iid_sigma;'),
+      if(err_proc_GPP) c(
+        'real<lower=0> err_mult_GPP_sdlog;'),
       
       if(features$GPP_fun == 'satlight') c(
         'vector<lower=0>[d] alpha;'
@@ -341,6 +346,14 @@ mm_generate_mcmc_file <- function(
       c('vector[d] GPP_inst[n];',
         'vector[d] ER_inst[n];',
         'vector[d] KO2_inst[n];'),
+      
+      # these variables contain the combined, unnormalized GPP-producing
+      # multiplier (combo_mult_GPP) and the sum of those multipliers on each day
+      # (sum_combo_mult_GPP), from which the final GPP multiplier (mult_GPP)
+      # will be implicitly calculated in the GPP_inst equation
+      if(err_proc_GPP) c(
+        'vector<lower=0>[d] combo_mult_GPP[n];',
+        'vector<lower=0>[d] mean_combo_mult_GPP;'),
       
       # instantaneous DO and possibly process error values
       if(err_proc_iid)
@@ -370,7 +383,9 @@ mm_generate_mcmc_file <- function(
         # s(fs('beta', 'err_proc_acor_phi'?)), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s(fs('halfcauchy', 'err_proc_acor_sigma'))),
       if(err_proc_iid) c(
-        s(fs('halfcauchy', 'err_proc_iid_sigma')))
+        s(fs('halfcauchy', 'err_proc_iid_sigma'))),
+      if(err_proc_GPP) c(
+        s(fs('halfnormal', 'err_mult_GPP_sdlog')))
     ),
     
     # daily parameters
@@ -428,13 +443,34 @@ mm_generate_mcmc_file <- function(
       c(
         p(''),
         comment("Calculate individual process rates"),
+        
+        if(err_proc_GPP) c(
+          p('for(i in 1:n) {'),
+          indent(
+            # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
+            # modified by multiplier.
+            s('combo_mult_GPP[i] = err_mult_GPP[i] .* light_mult_GPP[i]')#,
+          ),
+          p('}'),
+          p('for(j in 1:d) {'),
+          indent(
+            s('mean_combo_mult_GPP[j] = sum(combo_mult_GPP[,j]) / n') #[1:n,j]
+          ),
+          p('}')
+        ),
+        
         p('for(i in 1:n) {'),
         indent(
-          switch(
-            features$GPP_fun,
-            'linlight'=s('GPP_inst[i] = GPP_daily .* frac_GPP[i]'),
-            'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)')),
-          s('ER_inst[i] = ER_daily .* frac_ER[i]'),
+          if(err_proc_GPP) {c(
+            # s('pp_mult_GPP[i] = combo_mult_GPP[i] ./ mean_combo_mult_GPP'), # added to next line to save variables
+            s('GPP_inst[i] = GPP_daily .* combo_mult_GPP[i] ./ mean_combo_mult_GPP') #[1:d]
+          )} else {
+            switch(
+              features$GPP_fun,
+              'linlight'=s('GPP_inst[i] = GPP_daily .* light_mult_GPP[i]'),
+              'satlight'=s('GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax)'))
+          },
+          s('ER_inst[i] = ER_daily .* const_mult_ER[i]'),
           s('KO2_inst[i] = K600_daily .* KO2_conv[i]')
         ),
         p('}')
@@ -485,7 +521,9 @@ mm_generate_mcmc_file <- function(
                 )
               )
             ),
-            p('  (GPP_inst[i] + ER_inst[i]', if(err_proc_acor) ' + err_proc_acor[i]', ') ./ depth[i] +'),
+            p('  (GPP_inst[i] + ER_inst[i]',
+              if(err_proc_acor) ' + err_proc_acor[i]',
+              ') ./ depth[i] +'),
             switch(
               ode_method,
               'euler' = c(
@@ -495,7 +533,9 @@ mm_generate_mcmc_file <- function(
                 s(') * timestep')
               ),
               'trapezoid' = c(
-                p('  (GPP_inst[i+1] + ER_inst[i+1]', if(err_proc_acor) ' + err_proc_acor[i+1]', ') ./ depth[i+1] +'),
+                p('  (GPP_inst[i+1] + ER_inst[i+1]',
+                  if(err_proc_acor) ' + err_proc_acor[i+1]',
+                  ') ./ depth[i+1] +'),
                 p('  KO2_inst[i] .* DO_sat[i] + KO2_inst[i+1] .* DO_sat[i+1]'),
                 switch(
                   deficit_src,
@@ -565,6 +605,16 @@ mm_generate_mcmc_file <- function(
         comment('Autocorrelation (phi) & SD (sigma) of the process errors'),
         s('err_proc_acor_phi ~ ', f('beta', alpha='err_proc_acor_phi_alpha', beta='err_proc_acor_phi_beta')), # currently opting not to scale phi (which might be 0-1 or very close to 0)
         s('err_proc_acor_sigma_scaled ~ ', f('halfcauchy', scale='1')))
+    ),
+    
+    if(err_proc_GPP) chunk(
+      comment('GPP-only independent, identically distributed process error'),
+      p('for(i in 1:n) {'),
+      indent(
+        s('err_mult_GPP[i] ~ ', f('lognormal', meanlog=0, sdlog='err_mult_GPP_sdlog'))),
+      p('}'),
+      comment('SD (sigma) of the GPP IID process error multipliers'),
+      s('err_mult_GPP_sdlog_scaled ~ ', f('normal', mu=0, sigma=1))
     ),
     
     if(err_obs_iid) chunk(
@@ -637,8 +687,21 @@ mm_generate_mcmc_file <- function(
     chunk(
       if(err_obs_iid) 'vector[d] err_obs_iid[n];',
       if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
+      if(err_proc_GPP) c(
+        'vector[d] GPP_inst_partial[n];',
+        'vector[d] err_proc_GPP[n];',
+        'int n_light_day; // temporary',
+        'vector[n] GPP_inst_day; // temporary',
+        'vector[n] GPP_inst_diff_day; // temporary',
+        'vector[d] GPP_pseudo_R2;'
+      ),
       'vector[d] GPP;',
       'vector[d] ER;',
+      if(err_obs_iid) c(
+        'vector[n] DO_obs_vec; // temporary',
+        'vector[n] DO_mod_vec; // temporary'
+      ),
+      'vector[d] DO_R2;',
       '',
       if(err_obs_iid || err_proc_iid) c(
         if(err_obs_iid) c(
@@ -646,7 +709,7 @@ mm_generate_mcmc_file <- function(
           indent(
             s('err_obs_iid[i] = DO_mod[i] - DO_obs[i]')
           ),
-          p('}')
+          '}'
         ),
         if(err_proc_iid) c(
           # err_proc_iid[t] describes errors in estimates of GPP_inst[t], 
@@ -657,15 +720,64 @@ mm_generate_mcmc_file <- function(
             s('err_proc_iid[i-1] = (DO_mod_partial[i] - ', if(!err_obs_iid) 'DO_obs[i]' else 'DO_mod[i]', 
               ') .* (err_proc_iid_sigma ./ DO_mod_partial_sigma[i])')
           ),
-          p('}')
+          '}'
         )
+      ),
+      
+      if(err_proc_GPP) c(
+        'for(i in 1:n) {',
+        indent(
+          s('GPP_inst_partial[i] = GPP_daily .* light_mult_GPP[i]'),
+          s('err_proc_GPP[i] = GPP_inst[i] - GPP_inst_partial[i]') 
+        ),
+        '}'
+      ),
+      
+      if(err_proc_GPP) c(
+        s('GPP_inst_day = rep_vector(0, n)'),
+        s('GPP_inst_diff_day = rep_vector(0, n)')
       ),
       'for(j in 1:d) {',
       indent(
         s('GPP[j] = sum(GPP_inst[1:n24,j]) / n24'),
-        s('ER[j] = sum(ER_inst[1:n24,j]) / n24')
+        s('ER[j] = sum(ER_inst[1:n24,j]) / n24'),
+        if(err_obs_iid) c(
+          p(''),
+          p('// Compute R2 for DO observations relative to the modeled, process-error-corrected state (DO_mod)'),
+          p('for(i in 1:n) {'),
+          indent(
+            s('DO_mod_vec[i] = DO_mod[i,j]'),
+            s('DO_obs_vec[i] = DO_obs[i,j]')),
+          p('}'),
+          s('DO_R2[j] = 1 - ',
+            'sum((DO_mod_vec - DO_obs_vec) .* (DO_mod_vec - DO_obs_vec)) / ', # sum((y_hat - y)^2)
+            'sum((DO_obs_vec - mean(DO_obs_vec)) .* (DO_obs_vec - mean(DO_obs_vec)))') # sum((y - y_bar)^2)
+        ) else c(
+          p(''),
+          p('// R2 for DO observations is always 1 for process-error-only models'),
+          s('DO_R2[j] = 1')
+        ),
+        # compute GPP_pseudo_R2
+        if(err_proc_GPP) c(
+          p(''),
+          p('// Compute GPP_pseudo_R2 (because model has GPP process error)'),
+          s('n_light_day = 0'),
+          p('for(i in 1:n) {'),
+          indent(
+            # only store and use those values for which light_mult_GPP[i] > 0
+            p('if(light_mult_GPP[i,j] > 0) {'),
+            indent(
+              s('n_light_day += 1'),
+              s('GPP_inst_day[n_light_day] = GPP_inst[i,j]'),
+              s('GPP_inst_diff_day[n_light_day] = GPP_inst[i,j] - GPP_inst_partial[i,j]')
+            ),
+            p('}')
+          ),
+          p('}'),
+          s('GPP_pseudo_R2[j] = 1 - variance(GPP_inst_diff_day[1:n_light_day]) / variance(GPP_inst_day[1:n_light_day])')
+        )
       ),
-      p('}')
+      '}'
     ),
     
     '}'
@@ -697,6 +809,7 @@ mm_generate_mcmc_files <- function() {
     err_obs_iid=c(TRUE, FALSE),
     err_proc_acor=FALSE,
     err_proc_iid=c(FALSE, TRUE),
+    err_proc_GPP=c(FALSE, TRUE),
     ode_method=c('trapezoid','euler'),
     GPP_fun=c('linlight','satlight'),
     ER_fun='constant',
@@ -705,8 +818,9 @@ mm_generate_mcmc_files <- function() {
     stringsAsFactors=FALSE)
   attr(opts, 'out.attrs') <- NULL
   
-  incompatible <- 
-    (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid) # need at least 1 kind of error
+  # need at least 1 kind of error, and GPP process error doesn't mix with light-saturating GPP
+  incompatible <- (!opts$err_obs_iid & !opts$err_proc_acor & !opts$err_proc_iid & !opts$err_proc_GPP)  |
+    (opts$err_proc_GPP & (opts$GPP_fun != 'linlight'))
   opts <- opts[!incompatible, ]
   
   for(i in 1:nrow(opts)) {

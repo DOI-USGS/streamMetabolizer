@@ -20,7 +20,7 @@ test_that("mm_name can generate names", {
 test_that("mm_parse_name can parse names", {
   # parse a name
   expect_is(mm_parse_name("m_np_oi_tr_km.nlm"), "data.frame")
-  expect_equal(dim(mm_parse_name("m_np_oi_tr_km.nlm")), c(1,10))
+  expect_equal(dim(mm_parse_name("m_np_oi_tr_km.nlm")), c(1,11))
   expect_equal(mm_parse_name("n_np_pi_eu_rckf.lm")$ode_method, "euler")
   expect_equal(mm_parse_name("s_np_oipcpi_eu_plrckm.rnorm")$pool_K600, "none")
   expect_equal(mm_parse_name("b_Kl_oipcpi_eu_plrcko.rnorm")$pool_K600, "linear")

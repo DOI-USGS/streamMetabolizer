@@ -57,6 +57,7 @@ mm_parse_name <- function(model_name, expand=FALSE) {
   err_obs_iid <- grepl('oi', sapply(parsed, `[`, 3))
   err_proc_acor <- grepl('pc', sapply(parsed, `[`, 3))
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
+  err_proc_GPP <-  grepl('pp', sapply(parsed, `[`, 3))
   ode_method <- unname(
     c(Eu='Euler', pm='pairmeans', tr='trapezoid', r2='rk2', o1='lsoda', o2='lsode', o3='lsodes', 
       o4='lsodar', o5='vode', o6='daspk', o7='euler', eu='euler', o8='rk4', o9='ode23', o10='ode45', o11='radau', 
@@ -85,6 +86,7 @@ mm_parse_name <- function(model_name, expand=FALSE) {
     err_obs_iid=err_obs_iid,
     err_proc_acor=err_proc_acor,
     err_proc_iid=err_proc_iid,
+    err_proc_GPP=err_proc_GPP,
     ode_method=ifelse(is.na(ode_method), 'NA', ode_method),
     GPP_fun=ifelse(is.na(GPP_fun), 'NA', GPP_fun),
     ER_fun=ifelse(is.na(ER_fun), 'NA', ER_fun),

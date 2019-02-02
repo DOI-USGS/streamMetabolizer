@@ -29,8 +29,7 @@ data {
   vector[d] DO_obs[n];
   vector[d] DO_sat[n];
   vector[d] light[n];
-  vector[d] frac_ER[n];
-  vector[d] frac_D[n];
+  vector[d] const_mult_ER[n];
   vector[d] depth[n];
   vector[d] KO2_conv[n];
 }
@@ -72,7 +71,7 @@ transformed parameters {
   // Calculate individual process rates
   for(i in 1:n) {
     GPP_inst[i] = Pmax .* tanh(light[i] .* alpha ./ Pmax);
-    ER_inst[i] = ER_daily .* frac_ER[i];
+    ER_inst[i] = ER_daily .* const_mult_ER[i];
     KO2_inst[i] = K600_daily .* KO2_conv[i];
   }
   
@@ -121,6 +120,9 @@ generated quantities {
   vector[d] err_proc_iid[n-1];
   vector[d] GPP;
   vector[d] ER;
+  vector[n] DO_obs_vec; // temporary
+  vector[n] DO_mod_vec; // temporary
+  vector[d] DO_R2;
   
   for(i in 1:n) {
     err_obs_iid[i] = DO_mod[i] - DO_obs[i];
@@ -131,6 +133,13 @@ generated quantities {
   for(j in 1:d) {
     GPP[j] = sum(GPP_inst[1:n24,j]) / n24;
     ER[j] = sum(ER_inst[1:n24,j]) / n24;
+    
+    // Compute R2 for DO observations relative to the modeled, process-error-corrected state (DO_mod)
+    for(i in 1:n) {
+      DO_mod_vec[i] = DO_mod[i,j];
+      DO_obs_vec[i] = DO_obs[i,j];
+    }
+    DO_R2[j] = 1 - sum((DO_mod_vec - DO_obs_vec) .* (DO_mod_vec - DO_obs_vec)) / sum((DO_obs_vec - mean(DO_obs_vec)) .* (DO_obs_vec - mean(DO_obs_vec)));
   }
   
 }

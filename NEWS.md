@@ -1,3 +1,12 @@
+# 0.11.2
+
+* changed `err_proc_dayiid` to `err_proc_GPP` and switched to a more GPP-oriented
+process error for those models
+
+# 0.11.1
+
+* added `err_proc_dayiid` option for Bayesian models
+
 # 0.11.0
 
 * added `GPP_fun='satlight'` option for Bayesian models

@@ -535,7 +535,9 @@ prepdata_bayes <- function(
     switch(
       features$GPP_fun,
       linlight = list(
-        frac_GPP = {
+        # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
+        # modified by multiplier
+        light_mult_GPP = {
           mat_light <- time_by_date_matrix(data$light)
           # normalize light by the sum of light in the first 24 hours of the time window
           in_solar_day <- apply(obs_times, MARGIN=2, FUN=function(timevec) {timevec - timevec[1] <= 1} )
@@ -551,8 +553,9 @@ prepdata_bayes <- function(
     ),
       
     list(
-      frac_ER  = time_by_date_matrix(1),
-      frac_D   = time_by_date_matrix(timestep_days), # the yackulic shortcut models rely on this being constant over time
+      # X_mult_Y syntax: X = process reflected by multiplier, Y = quantity
+      # modified by multiplier
+      const_mult_ER  = time_by_date_matrix(1),
       KO2_conv = {
         KO2_conv_vec <- suppressWarnings(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas="O2"))
         if(any(is.nan(KO2_conv_vec))) {
@@ -783,15 +786,16 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
       'lnK600_lnQ_nodes'),
     daily = c(
       'GPP', 'ER',
-      'GPP_daily', 'Pmax', 'alpha', 'ER_daily', 'K600_daily', 
-      if(features$pool_K600_type %in% c('linear','binned')) 'K600_daily_predlog'),
+      'GPP_daily', 'Pmax', 'alpha', 'ER_daily', 'K600_daily', 'DO_R2',
+      if(features$pool_K600_type %in% c('linear','binned')) 'K600_daily_predlog',
+      if(features$err_proc_GPP) 'GPP_pseudo_R2'),
     inst = c(
       'DO_mod', 'DO_mod_partial', # d*n
       'DO_mod_partial_sigma', # d*n
       'GPP_inst', 'ER_inst', 'KO2_inst', # d*n
+      'GPP_inst_partial', 'err_proc_GPP', # d*n for GPP process error
       'err_proc_acor_inc', 'err_proc_acor', # can be d*n (trapezoid) or d*(n-1) (euler), same timestamp indexing as GPP_inst
-      'err_obs_iid', 'err_proc_iid', # d*(n-1), timestamp[i+1] relates to var[i:i+1]
-      'coef_GPP'
+      'err_obs_iid', 'err_proc_iid' # d*(n-1), timestamp[i+1] relates to var[i:i+1]
     )
   )
   
