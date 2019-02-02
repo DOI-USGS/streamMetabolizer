@@ -4,15 +4,29 @@
 
 language: r
 sudo: required
-os: linux
 dist: trusty
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-7
 warnings_are_errors: true
+
+matrix:
+  include:
+    # works on Precise and Trusty
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - CC=gcc-7
+        - CXX=g++-7
+        - CXX14FLAGS=-O3 -march=native -mtune=native -fPIC
+        - CXX14=g++-7 -std=c++1y
+#       - MATRIX_EVAL='CC=gcc-7 && CXX=g++-7 && CXX14=g++-7 && CXX14FLAGS="-O3 -march=native"'
+
+#before_install:
+#    - eval "${MATRIX_EVAL}"
 
 env:
    global:
@@ -20,30 +34,10 @@ env:
      - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
-     - CC=gcc-7
-     - CXX=g++-7
-     - CXX14=g++-7
-     - CXX14FLAGS=-O3
 
 repos:
   CRAN: https://cran.rstudio.com
   GRAN: https://owi.usgs.gov/R
-
-#matrix:
-#  include:
-#    # works on Precise and Trusty
-#    - os: linux
-#      addons:
-#        apt:
-#          sources:
-#            - ubuntu-toolchain-r-test
-#          packages:
-#            - g++-7
-#      env:
-#        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && CXX14=g++-7 && CXX14FLAGS=-O3"
-#
-#before_install:
-#    - eval "${MATRIX_EVAL}"
 
 before_script:
   - Rscript -e "install.packages('knitr')"
