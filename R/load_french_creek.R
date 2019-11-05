@@ -15,7 +15,8 @@ load_french_creek <- function(attach.units=TRUE) {
   french <- unitted::u(french, french_creek_units)
   
   # remove NA oxys (1658) and remaining duplicates (n=1)
-  french <- distinct(french[!is.na(french$oxy),])
+  french <- french[!is.na(french$oxy),]
+  french <- french[-which(duplicated(french)),] # distinct() stopped working on unitted dfs ~9/1/2019
   
   # rename DO.obs, temp.water
   oxy <- temp <- '.dplyr.var'
