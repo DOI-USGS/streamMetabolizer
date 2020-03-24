@@ -1,3 +1,14 @@
+# 0.11.4
+
+* fixed issue with `data_metab` that arises with newer versions of `tidyverse`
+
+# 0.11.3
+
+* new options to compute and report GPP_pseudo_R2 and DO_R2 for Bayesian models
+
+* smarter default for err_mult_GPP_sdlog_sigma (changed from 0.05 to 1, which
+seems to be better for more streams)
+
 # 0.11.2
 
 * changed `err_proc_dayiid` to `err_proc_GPP` and switched to a more GPP-oriented
