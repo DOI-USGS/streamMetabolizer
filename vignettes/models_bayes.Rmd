@@ -24,7 +24,7 @@ Bayesian models are slower than the alternatives, but they offer several advanta
 
 ## Configuring Bayesian models
 
-The structure and specifications of Bayesian models require special attention. We'll add more to this section later, but for now, please spend lots of time reading the help file at `?specs`, especially the `Relevant arguments` section and the parameter definitions.
+The structure and specifications of Bayesian models require special attention. For more information, see the help file at `?specs`, especially the `Relevant arguments` section and the parameter definitions. Also see the vignette called 'fit_fix_k'.
 
 ## Inspecting Bayesian models
 
