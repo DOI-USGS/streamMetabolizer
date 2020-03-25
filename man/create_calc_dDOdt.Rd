@@ -4,8 +4,7 @@
 \alias{create_calc_dDOdt}
 \title{Create a function that generates a 1-day timeseries of DO.mod}
 \usage{
-create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src,
-  err.proc = 0)
+create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src, err.proc = 0)
 }
 \arguments{
 \item{data}{data.frame as in \code{\link{metab}}, except that data must 

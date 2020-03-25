@@ -5,8 +5,12 @@
 \title{Calculate zenith angle as in 
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
 \usage{
-calc_zenith_angle(latitude, declination.angle, hour.angle,
-  format = c("degrees", "radians"))
+calc_zenith_angle(
+  latitude,
+  declination.angle,
+  hour.angle,
+  format = c("degrees", "radians")
+)
 }
 \arguments{
 \item{latitude}{numeric value or vector indicating the site latitude in 

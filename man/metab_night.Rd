@@ -4,9 +4,13 @@
 \alias{metab_night}
 \title{Nighttime regression for K estimation}
 \usage{
-metab_night(specs = specs(mm_name("night")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, discharge, optional =
-  "discharge"), data_daily = mm_data(NULL), info = NULL)
+metab_night(
+  specs = specs(mm_name("night")),
+  data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge,
+    optional = "discharge"),
+  data_daily = mm_data(NULL),
+  info = NULL
+)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -50,9 +54,11 @@ plot_DO_preds(predict_DO(mm))
 }
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kmodel}},
-  \code{\link{metab_bayes}}, \code{\link{metab_mle}},
-  \code{\link{metab_sim}}
+Other metab_model: 
+\code{\link{metab_Kmodel}},
+\code{\link{metab_bayes}},
+\code{\link{metab_mle}},
+\code{\link{metab_sim}}
 }
 \author{
 Alison Appling, Maite Arroita, Bob Hall

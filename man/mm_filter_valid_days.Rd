@@ -4,10 +4,15 @@
 \alias{mm_filter_valid_days}
 \title{Remove entries in data}
 \usage{
-mm_filter_valid_days(data, data_daily = NULL, day_start = 4,
-  day_end = 27.99, day_tests = c("full_day", "even_timesteps",
-  "complete_data", "pos_discharge"), required_timestep = NA,
-  timestep_days = TRUE)
+mm_filter_valid_days(
+  data,
+  data_daily = NULL,
+  day_start = 4,
+  day_end = 27.99,
+  day_tests = c("full_day", "even_timesteps", "complete_data", "pos_discharge"),
+  required_timestep = NA,
+  timestep_days = TRUE
+)
 }
 \arguments{
 \item{data}{data.frame of instantaneous observations, to be filtered to only 

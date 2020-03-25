@@ -4,8 +4,12 @@
 \alias{Kmodel_aggregate_day}
 \title{Aggregate unit values to daily values}
 \usage{
-Kmodel_aggregate_day(data_ply, ply_validity, ...,
-  columns = c("discharge", "velocity"))
+Kmodel_aggregate_day(
+  data_ply,
+  ply_validity,
+  ...,
+  columns = c("discharge", "velocity")
+)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

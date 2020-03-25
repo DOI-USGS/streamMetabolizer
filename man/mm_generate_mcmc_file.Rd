@@ -4,14 +4,20 @@
 \alias{mm_generate_mcmc_file}
 \title{Generate the models in inst/models/bayes}
 \usage{
-mm_generate_mcmc_file(type = "bayes", pool_K600 = c("none", "normal",
-  "normal_sdzero", "normal_sdfixed", "linear", "linear_sdzero",
-  "linear_sdfixed", "binned", "binned_sdzero", "binned_sdfixed"),
-  err_obs_iid = c(TRUE, FALSE), err_proc_acor = c(FALSE, TRUE),
-  err_proc_iid = c(FALSE, TRUE), err_proc_GPP = c(FALSE, TRUE),
-  ode_method = c("trapezoid", "euler"), GPP_fun = c("linlight",
-  "satlight"), ER_fun = c("constant"), deficit_src = c("DO_mod",
-  "DO_obs"), engine = "stan")
+mm_generate_mcmc_file(
+  type = "bayes",
+  pool_K600 = c("none", "normal", "normal_sdzero", "normal_sdfixed", "linear",
+    "linear_sdzero", "linear_sdfixed", "binned", "binned_sdzero", "binned_sdfixed"),
+  err_obs_iid = c(TRUE, FALSE),
+  err_proc_acor = c(FALSE, TRUE),
+  err_proc_iid = c(FALSE, TRUE),
+  err_proc_GPP = c(FALSE, TRUE),
+  ode_method = c("trapezoid", "euler"),
+  GPP_fun = c("linlight", "satlight"),
+  ER_fun = c("constant"),
+  deficit_src = c("DO_mod", "DO_obs"),
+  engine = "stan"
+)
 }
 \arguments{
 \item{type}{character. The model type. Options: \itemize{ \item \code{mle}:

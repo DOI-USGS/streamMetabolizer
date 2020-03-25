@@ -5,8 +5,10 @@
 \alias{metab_model_interface}
 \title{Functions implemented by any \code{streamMetabolizer}-compatible metabolism 
 model.}
-\format{A collection of functions which any metabolism model in 
-  \code{streamMetabolizer} should implement.}
+\format{
+A collection of functions which any metabolism model in 
+  \code{streamMetabolizer} should implement.
+}
 \description{
 Metabolism models in the \code{streamMetabolizer} package all implement a 
 common set of core functions. These functions are conceptually packaged as 

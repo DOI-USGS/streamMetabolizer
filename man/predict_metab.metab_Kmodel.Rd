@@ -4,9 +4,16 @@
 \alias{predict_metab.metab_Kmodel}
 \title{Override generic predict_metab for metab_Kmodel, which can't predict metab}
 \usage{
-\method{predict_metab}{metab_Kmodel}(metab_model, date_start = NA,
-  date_end = NA, day_start = NA, day_end = NA, ...,
-  attach.units = FALSE, use_saved = TRUE)
+\method{predict_metab}{metab_Kmodel}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  day_start = NA,
+  day_end = NA,
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 

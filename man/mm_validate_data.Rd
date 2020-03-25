@@ -4,9 +4,12 @@
 \alias{mm_validate_data}
 \title{Evaluate whether the data argument is properly formatted.}
 \usage{
-mm_validate_data(data = mm_data(NULL), data_daily = mm_data(NULL),
-  metab_class, data_tests = c("missing_cols", "extra_cols", "na_times",
-  "units"))
+mm_validate_data(
+  data = mm_data(NULL),
+  data_daily = mm_data(NULL),
+  metab_class,
+  data_tests = c("missing_cols", "extra_cols", "na_times", "units")
+)
 }
 \arguments{
 \item{data}{data.frame (not a tbl_df) of input data at the temporal

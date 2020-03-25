@@ -5,8 +5,16 @@
 \title{Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
 & setting data_daily$weight to reflect user weights & filters}
 \usage{
-prepdata_Kmodel(data, data_daily, weights, filters, day_start, day_end,
-  day_tests, required_timestep)
+prepdata_Kmodel(
+  data,
+  data_daily,
+  weights,
+  filters,
+  day_start,
+  day_end,
+  day_tests,
+  required_timestep
+)
 }
 \arguments{
 \item{data}{unit data to aggregate to daily_data. may be NULL.}

@@ -124,5 +124,5 @@ Collate:
     'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 Encoding: UTF-8

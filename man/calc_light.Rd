@@ -4,8 +4,13 @@
 \alias{calc_light}
 \title{Calculate modeled light from solar.time}
 \usage{
-calc_light(solar.time, latitude, longitude, max.PAR = u(2326,
-  "umol m^-2 s^-1"), attach.units = is.unitted(solar.time))
+calc_light(
+  solar.time,
+  latitude,
+  longitude,
+  max.PAR = u(2326, "umol m^-2 s^-1"),
+  attach.units = is.unitted(solar.time)
+)
 }
 \arguments{
 \item{solar.time}{mean solar time, as required for input to metabolism 

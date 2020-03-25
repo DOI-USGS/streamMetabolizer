@@ -5,9 +5,12 @@
 \title{Create a function to compute the negative log likelihood of a set of 
 metabolism parameter values}
 \usage{
-create_calc_NLL(calc_DO,
+create_calc_NLL(
+  calc_DO,
   par.names = environment(environment(calc_DO)$calc_dDOdt)$metab.needs,
-  err_obs_iid = FALSE, err_proc_iid = FALSE)
+  err_obs_iid = FALSE,
+  err_proc_iid = FALSE
+)
 }
 \arguments{
 \item{calc_DO}{a function as from \code{create_calc_DO}}

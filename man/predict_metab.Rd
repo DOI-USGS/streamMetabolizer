@@ -7,18 +7,35 @@
 \alias{predict_metab.metab_model}
 \title{Predict metabolism from a fitted model.}
 \usage{
-predict_metab(metab_model, date_start = NA, date_end = NA,
-  day_start = get_specs(metab_model)$day_start, day_end = min(day_start
-  + 24, get_specs(metab_model)$day_end), ..., attach.units = FALSE,
-  use_saved = TRUE)
+predict_metab(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  day_start = get_specs(metab_model)$day_start,
+  day_end = min(day_start + 24, get_specs(metab_model)$day_end),
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 
-\method{predict_metab}{metab_bayes}(metab_model, date_start = NA,
-  date_end = NA, ..., attach.units = FALSE)
+\method{predict_metab}{metab_bayes}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  ...,
+  attach.units = FALSE
+)
 
-\method{predict_metab}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, day_start = get_specs(metab_model)$day_start,
-  day_end = min(day_start + 24, get_specs(metab_model)$day_end), ...,
-  attach.units = FALSE, use_saved = TRUE)
+\method{predict_metab}{metab_model}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  day_start = get_specs(metab_model)$day_start,
+  day_end = min(day_start + 24, get_specs(metab_model)$day_end),
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -90,11 +107,16 @@ predict_metab(mm)
 predict_metab(mm, date_start=get_fit(mm)$date[2])
 }
 \seealso{
-Other metab_model_interface: \code{\link{get_data_daily}},
-  \code{\link{get_data}}, \code{\link{get_fitting_time}},
-  \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_param_names}}, \code{\link{get_params}},
-  \code{\link{get_specs}}, \code{\link{get_version}},
-  \code{\link{predict_DO}}
+Other metab_model_interface: 
+\code{\link{get_data_daily}()},
+\code{\link{get_data}()},
+\code{\link{get_fitting_time}()},
+\code{\link{get_fit}()},
+\code{\link{get_info}()},
+\code{\link{get_param_names}()},
+\code{\link{get_params}()},
+\code{\link{get_specs}()},
+\code{\link{get_version}()},
+\code{\link{predict_DO}()}
 }
 \concept{metab_model_interface}

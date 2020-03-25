@@ -4,8 +4,12 @@
 \alias{mm_get_timestep}
 \title{Return the average timestep in days}
 \usage{
-mm_get_timestep(datetimes, format = c("mean", "unique", "modal"),
-  require_unique = FALSE, tol = 60/(24 * 60 * 60))
+mm_get_timestep(
+  datetimes,
+  format = c("mean", "unique", "modal"),
+  require_unique = FALSE,
+  tol = 60/(24 * 60 * 60)
+)
 }
 \arguments{
 \item{datetimes}{a vector of date-times in POSIXct format from which to 

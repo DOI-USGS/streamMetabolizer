@@ -4,8 +4,11 @@
 \alias{create_calc_DO}
 \title{Create a function to compute the numerical integration of a dDOdt function}
 \usage{
-create_calc_DO(calc_dDOdt,
-  ode_method = environment(calc_dDOdt)$ode_method, err.obs = 0)
+create_calc_DO(
+  calc_dDOdt,
+  ode_method = environment(calc_dDOdt)$ode_method,
+  err.obs = 0
+)
 }
 \arguments{
 \item{calc_dDOdt}{a function as from \code{create_calc_dDOdt}}

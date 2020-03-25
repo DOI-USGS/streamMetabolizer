@@ -4,8 +4,12 @@
 \alias{metab}
 \title{Fit a metabolism model to data}
 \usage{
-metab(specs = specs(mm_name()), data = v(mm_data(NULL)),
-  data_daily = v(mm_data(NULL)), info = NULL)
+metab(
+  specs = specs(mm_name()),
+  data = v(mm_data(NULL)),
+  data_daily = v(mm_data(NULL)),
+  info = NULL
+)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
