@@ -12,8 +12,10 @@ provides tabular and graphical reports of model outputs. Several
 time-honored methods are implemented along with many promising new variants
 that produce more accurate and precise metabolism estimates.
 
+This package has been described, with special focus on the Bayesian model options, by
+[Appling et al. 2018](https://doi.org/10.1002/2017JG004140).
+
 Recommended citation: To see the recommended citation for this package, please run `citation('streamMetabolizer')` at the R prompt.
-A corresponding manuscript is in review, and the publication citation will be added when it becomes available.
 
 ## Getting started
 
@@ -49,7 +51,7 @@ We want to encourage a warm, welcoming, and safe environment for contributing to
 
 ### Package Support
 
-`streamMetabolizer` was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited, though still enthusiastic.
+`streamMetabolizer` was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited.
 
 [![USGS](http://usgs-r.github.io/images/usgs.png)](https://www.usgs.gov/)
 
