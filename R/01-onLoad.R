@@ -4,8 +4,11 @@
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(paste(strwrap(
     "USGS Active Research Package: https://owi.usgs.gov/R/packages.html#research"), collapse='\n'))
-  packageStartupMessage(paste(strwrap(
-    "This package is in development. We are using it for our own applications and welcome flexible, resilient users who can help us make the package better. Details of the user interface and model implementations will change. Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n"), collapse='\n'))
+  packageStartupMessage(paste(strwrap(paste(
+    "This package was developed for research purposes.",
+    "We used it for our own applications and welcome flexible, resilient users who can help us test and improve the package.",
+    "Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")), collapse='\n'
+    ))
   
   # Load deSolve because otherwise after a few model runs we're likely to get 
   # the following error. (It's possible this has been resolved by moving deSolve
@@ -15,45 +18,6 @@
   ##   "call_rkFixed" not resolved from current namespace (deSolve)
   ## Error in .C("unlock_solver") :
   ##   "unlock_solver" not resolved from current namespace (deSolve)
-  
-  # Check whether this package is up to date on GRAN
-  GRAN_update_code <- paste0(
-    '  update.packages(oldPkgs=c("streamMetabolizer","unitted"),\n',
-    '    dependencies=TRUE, repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))')
-  tryCatch({
-    GRAN_pkg <- available.packages(contrib.url("https://owi.usgs.gov/R"))
-    GRAN_version <- package_version(GRAN_pkg[[pkgname, 'Version']])
-    local_version <- packageVersion(pkgname)
-    if(local_version < GRAN_version) {
-      packageStartupMessage(
-        'Time to update to ', pkgname, ' version ', GRAN_version, '! You have ', local_version, '. Get stable updates with\n',
-        GRAN_update_code)
-    }
-  }, error=function(e) {
-    packageStartupMessage("Can't check GRAN for new package versions just now. We'll try again next time.")
-  })
-  
-  # Check whether this package is up to date on GitHub
-  github_owner <- 'USGS-R'
-  github_branch <- 'develop'
-  github_pkg_ref <- paste0(github_owner,'/',pkgname,'@',github_branch)
-  github_update_code <- paste0(
-    '  devtools::install_github("',github_pkg_ref,'")')
-  if(requireNamespace('devtools', quietly=TRUE)) {
-    tryCatch({
-      github_ref <- devtools:::github_resolve_ref(
-        devtools::github_release(), 
-        devtools:::parse_git_repo(github_pkg_ref))$ref
-      github_version <- package_version(gsub('v', '', github_ref))
-      if(local_version < github_version) {
-        packageStartupMessage(
-          'New development version of ', pkgname, ' (', github_version, ') is ready! You have ', local_version, '. Get dev updates with\n',
-          github_update_code)
-      }
-    }, error=function(e) {
-      packageStartupMessage("Can't check GitHub for new package versions just now. We'll try again next time.")
-    })
-  }
 }
 library(methods)
 
