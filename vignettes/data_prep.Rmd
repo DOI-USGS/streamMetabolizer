@@ -4,7 +4,7 @@ author: "Alison Appling and Bob Hall"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{get_started}
+  %\VignetteIndexEntry{Data Preparation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -4,3 +4,5 @@
 ^appveyor\.yml$
 man-roxygen
 temp
+^doc$
+^Meta$
