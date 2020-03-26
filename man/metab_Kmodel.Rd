@@ -4,12 +4,14 @@
 \alias{metab_Kmodel}
 \title{Combine a time series of K estimates to predict consistent values}
 \usage{
-metab_Kmodel(specs = specs(mm_name("Kmodel")),
+metab_Kmodel(
+  specs = specs(mm_name("Kmodel")),
   data = mm_data(solar.time, discharge, velocity, optional = c("all")),
-  data_daily = mm_data(date, K600.daily, K600.daily.lower,
-  K600.daily.upper, discharge.daily, velocity.daily, optional =
-  c("K600.daily.lower", "K600.daily.upper", "discharge.daily",
-  "velocity.daily")), info = NULL)
+  data_daily = mm_data(date, K600.daily, K600.daily.lower, K600.daily.upper,
+    discharge.daily, velocity.daily, optional = c("K600.daily.lower", "K600.daily.upper",
+    "discharge.daily", "velocity.daily")),
+  info = NULL
+)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -131,9 +133,11 @@ plot_metab_preds(mm3)
 }
 }
 \seealso{
-Other metab_model: \code{\link{metab_bayes}},
-  \code{\link{metab_mle}}, \code{\link{metab_night}},
-  \code{\link{metab_sim}}
+Other metab_model: 
+\code{\link{metab_bayes}},
+\code{\link{metab_mle}},
+\code{\link{metab_night}},
+\code{\link{metab_sim}}
 }
 \author{
 Alison Appling

@@ -4,11 +4,15 @@
 \alias{metab_sim}
 \title{Simulate dissolved oxygen data from input data}
 \usage{
-metab_sim(specs = specs(mm_name("sim")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, optional = "DO.obs"),
-  data_daily = mm_data(date, discharge.daily, DO.mod.1, K600.daily,
-  GPP.daily, Pmax, alpha, ER.daily, ER20, err.obs.sigma, err.obs.phi,
-  err.proc.sigma, err.proc.phi, optional = "all"), info = NULL)
+metab_sim(
+  specs = specs(mm_name("sim")),
+  data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, optional =
+    "DO.obs"),
+  data_daily = mm_data(date, discharge.daily, DO.mod.1, K600.daily, GPP.daily, Pmax,
+    alpha, ER.daily, ER20, err.obs.sigma, err.obs.phi, err.proc.sigma, err.proc.phi,
+    optional = "all"),
+  info = NULL
+)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -101,8 +105,10 @@ library(ggplot2)
 }
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kmodel}},
-  \code{\link{metab_bayes}}, \code{\link{metab_mle}},
-  \code{\link{metab_night}}
+Other metab_model: 
+\code{\link{metab_Kmodel}},
+\code{\link{metab_bayes}},
+\code{\link{metab_mle}},
+\code{\link{metab_night}}
 }
 \concept{metab_model}

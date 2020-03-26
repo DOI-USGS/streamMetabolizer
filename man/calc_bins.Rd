@@ -4,8 +4,12 @@
 \alias{calc_bins}
 \title{Assign continuous values in a vector to discrete bins}
 \usage{
-calc_bins(vec, method = c("bounds", "interval", "number", "width"), ...,
-  bounds)
+calc_bins(
+  vec,
+  method = c("bounds", "interval", "number", "width"),
+  ...,
+  bounds
+)
 }
 \arguments{
 \item{vec}{the numeric vector whose values should be binned. 

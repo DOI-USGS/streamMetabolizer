@@ -1,10 +1,10 @@
 ---
-title: "Quickstart for streamMetabolizer"
+title: "Quickstart"
 author: "Alison Appling"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{get_started}
+  %\VignetteIndexEntry{Quickstart}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,10 +1,10 @@
 ---
-title: "GPP and ER equations"
+title: "GPP and ER Equations"
 author: "Alison Appling"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{GPP and ER equations}
+  %\VignetteIndexEntry{GPP and ER Equations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

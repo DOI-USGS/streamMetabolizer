@@ -4,12 +4,15 @@
 \alias{plot_distribs}
 \title{Plot the prior/posterior distributions of a parameter}
 \usage{
-plot_distribs(dist_data, parname = c("GPP_daily", "alpha", "Pmax",
-  "ER_daily", "K600_daily", "K600_daily_meanlog", "lnK600_lnQ_intercept",
-  "lnK600_lnQ_slope", "K600_lnQ_nodes", "K600_daily_sdlog",
-  "K600_daily_sigma", "err_obs_iid_sigma", "err_proc_acor_phi",
-  "err_proc_acor_sigma", "err_proc_iid_sigma", "err_mult_GPP_sdlog"),
-  index = TRUE, style = c("dygraphs", "ggplot2"))
+plot_distribs(
+  dist_data,
+  parname = c("GPP_daily", "alpha", "Pmax", "ER_daily", "K600_daily",
+    "K600_daily_meanlog", "lnK600_lnQ_intercept", "lnK600_lnQ_slope", "K600_lnQ_nodes",
+    "K600_daily_sdlog", "K600_daily_sigma", "err_obs_iid_sigma", "err_proc_acor_phi",
+    "err_proc_acor_sigma", "err_proc_iid_sigma", "err_mult_GPP_sdlog"),
+  index = TRUE,
+  style = c("dygraphs", "ggplot2")
+)
 }
 \arguments{
 \item{dist_data}{Either a specs list (for priors only) or a metab_model 

@@ -10,10 +10,11 @@ predictors such as Q (discharge.daily) or U (velocity.daily) or T (time) to leve
 available data to reach better, less variable daily estimates of K
 }
 \seealso{
-Other metab.model.classes: \code{\link{metab_bayes-class}},
-  \code{\link{metab_mle-class}},
-  \code{\link{metab_model-class}},
-  \code{\link{metab_night-class}},
-  \code{\link{metab_sim-class}}
+Other metab.model.classes: 
+\code{\link{metab_bayes-class}},
+\code{\link{metab_mle-class}},
+\code{\link{metab_model-class}},
+\code{\link{metab_night-class}},
+\code{\link{metab_sim-class}}
 }
 \concept{metab.model.classes}

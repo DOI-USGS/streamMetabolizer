@@ -4,10 +4,18 @@
 \alias{mm_model_by_ply}
 \title{Split and label data into >=24-hr days for fitting daily metabolism}
 \usage{
-mm_model_by_ply(model_fun, data, data_daily = NULL, day_start, day_end,
-  day_tests = c("full_day", "even_timesteps", "complete_data",
-  "pos_discharge", "pos_depth"), required_timestep = NA,
-  timestep_days = TRUE, ...)
+mm_model_by_ply(
+  model_fun,
+  data,
+  data_daily = NULL,
+  day_start,
+  day_end,
+  day_tests = c("full_day", "even_timesteps", "complete_data", "pos_discharge",
+    "pos_depth"),
+  required_timestep = NA,
+  timestep_days = TRUE,
+  ...
+)
 }
 \arguments{
 \item{model_fun}{the function to apply to each data ply. This function should

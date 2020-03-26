@@ -4,8 +4,12 @@
 \alias{compress_msgs}
 \title{Compress warnings and errors in to a single column}
 \usage{
-compress_msgs(ddat, colname = "messages", warnings.overall = c(),
-  errors.overall = c())
+compress_msgs(
+  ddat,
+  colname = "messages",
+  warnings.overall = c(),
+  errors.overall = c()
+)
 }
 \arguments{
 \item{ddat}{a data.frame including warnings and errors columns}

@@ -19,3 +19,5 @@ temp
 inst/models/*.stanrda
 inst/models/*.stanrds
 inst/doc
+doc
+Meta

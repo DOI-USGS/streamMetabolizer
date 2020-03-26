@@ -4,9 +4,16 @@
 \alias{mm_model_by_ply_prototype}
 \title{A prototype for the model_fun argument to mm_model_by_ply}
 \usage{
-mm_model_by_ply_prototype(data_ply = v(mm_data(NULL)),
-  data_daily_ply = v(mm_data(NULL)), day_start = NA, day_end = NA,
-  ply_date = NA, ply_validity = NA, timestep_days = NA, ...)
+mm_model_by_ply_prototype(
+  data_ply = v(mm_data(NULL)),
+  data_daily_ply = v(mm_data(NULL)),
+  day_start = NA,
+  day_end = NA,
+  ply_date = NA,
+  ply_validity = NA,
+  timestep_days = NA,
+  ...
+)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

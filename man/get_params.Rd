@@ -9,28 +9,60 @@
 \alias{get_params.metab_sim}
 \title{Extract the metabolism parameters (fitted and/or fixed) from a model.}
 \usage{
-get_params(metab_model, date_start = NA, date_end = NA,
-  uncertainty = c("sd", "ci", "none"), messages = TRUE,
-  fixed = c("none", "columns", "stars"), ..., attach.units = FALSE)
+get_params(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  uncertainty = c("sd", "ci", "none"),
+  messages = TRUE,
+  fixed = c("none", "columns", "stars"),
+  ...,
+  attach.units = FALSE
+)
 
-\method{get_params}{metab_Kmodel}(metab_model, date_start = NA,
-  date_end = NA, uncertainty = c("sd", "ci", "none"),
-  messages = TRUE, fixed = c("none", "columns", "stars"), ...,
-  attach.units = FALSE, use_saved = TRUE)
+\method{get_params}{metab_Kmodel}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  uncertainty = c("sd", "ci", "none"),
+  messages = TRUE,
+  fixed = c("none", "columns", "stars"),
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 
-\method{get_params}{metab_bayes}(metab_model, date_start = NA,
-  date_end = NA, uncertainty = "ci", messages = TRUE, ...,
-  attach.units = FALSE)
+\method{get_params}{metab_bayes}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  uncertainty = "ci",
+  messages = TRUE,
+  ...,
+  attach.units = FALSE
+)
 
-\method{get_params}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, uncertainty = c("sd", "ci", "none"),
-  messages = TRUE, fixed = c("none", "columns", "stars"), ...,
-  attach.units = FALSE)
+\method{get_params}{metab_model}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  uncertainty = c("sd", "ci", "none"),
+  messages = TRUE,
+  fixed = c("none", "columns", "stars"),
+  ...,
+  attach.units = FALSE
+)
 
-\method{get_params}{metab_sim}(metab_model, date_start = NA,
-  date_end = NA, uncertainty = c("sd", "ci", "none"),
-  messages = TRUE, fixed = c("none", "columns", "stars"), ...,
-  attach.units = FALSE)
+\method{get_params}{metab_sim}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  uncertainty = c("sd", "ci", "none"),
+  messages = TRUE,
+  fixed = c("none", "columns", "stars"),
+  ...,
+  attach.units = FALSE
+)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -101,11 +133,16 @@ get_params(mm, date_start=get_fit(mm)$date[2])
 \seealso{
 \code{\link{predict_metab}} for daily average rates of GPP and ER
 
-Other metab_model_interface: \code{\link{get_data_daily}},
-  \code{\link{get_data}}, \code{\link{get_fitting_time}},
-  \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_param_names}}, \code{\link{get_specs}},
-  \code{\link{get_version}}, \code{\link{predict_DO}},
-  \code{\link{predict_metab}}
+Other metab_model_interface: 
+\code{\link{get_data_daily}()},
+\code{\link{get_data}()},
+\code{\link{get_fitting_time}()},
+\code{\link{get_fit}()},
+\code{\link{get_info}()},
+\code{\link{get_param_names}()},
+\code{\link{get_specs}()},
+\code{\link{get_version}()},
+\code{\link{predict_DO}()},
+\code{\link{predict_metab}()}
 }
 \concept{metab_model_interface}

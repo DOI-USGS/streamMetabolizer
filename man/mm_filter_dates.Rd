@@ -4,8 +4,14 @@
 \alias{mm_filter_dates}
 \title{Filter unit or daily data by inclusive start & end dates}
 \usage{
-mm_filter_dates(data, date_start = NA, date_end = NA, day_start = 4,
-  day_end = 28, date_format = "\%Y-\%m-\%d")
+mm_filter_dates(
+  data,
+  date_start = NA,
+  date_end = NA,
+  day_start = 4,
+  day_end = 28,
+  date_format = "\%Y-\%m-\%d"
+)
 }
 \arguments{
 \item{data}{either instantaneous/unit or daily data, having columns for

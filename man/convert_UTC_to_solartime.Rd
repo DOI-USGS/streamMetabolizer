@@ -4,8 +4,11 @@
 \alias{convert_UTC_to_solartime}
 \title{Convert DateTime from UTC to local solar time}
 \usage{
-convert_UTC_to_solartime(date.time, longitude,
-  time.type = c("apparent solar", "mean solar"))
+convert_UTC_to_solartime(
+  date.time,
+  longitude,
+  time.type = c("apparent solar", "mean solar")
+)
 }
 \arguments{
 \item{date.time}{date-time values in POSIXct format and UTC timezone.}

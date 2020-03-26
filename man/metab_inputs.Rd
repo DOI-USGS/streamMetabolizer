@@ -4,8 +4,10 @@
 \alias{metab_inputs}
 \title{Describe the requirements for an argument to metab()}
 \usage{
-metab_inputs(type = c("bayes", "mle", "night", "Kmodel", "sim"),
-  input = c("specs", "data", "data_daily", "info"))
+metab_inputs(
+  type = c("bayes", "mle", "night", "Kmodel", "sim"),
+  input = c("specs", "data", "data_daily", "info")
+)
 }
 \arguments{
 \item{type}{the type of model you want to fit}

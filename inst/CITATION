@@ -1,0 +1,19 @@
+citHeader("To cite streamMetabolizer in publications, please use:")
+
+bibentry(
+  bibtype = "Article",
+  author = personList(
+    as.person("Alison P. Appling"),
+    as.person("Robert O. Hall Jr."),
+    as.person("Charles B. Yackulic"),
+    as.person("Maite Arroita")
+  ),
+  title = "Overcoming Equifinality: Leveraging Long Time Series for Stream Metabolism Estimation",
+  journal = "Journal of Geophysical Research: Biogeosciences",
+  year = 2018,
+  volume = 123,
+  number = 2,
+  doi = "10.1002/2017JG004140",
+  url = "https://github.com/USGS-R/streamMetabolizer",
+  textVersion = "Appling, Alison P., Robert O. Hall, Charles B. Yackulic, and Maite Arroita. “Overcoming Equifinality: Leveraging Long Time Series for Stream Metabolism Estimation.” Journal of Geophysical Research: Biogeosciences 123, no. 2 (February 2018): 624–45. https://doi.org/10.1002/2017JG004140."
+)

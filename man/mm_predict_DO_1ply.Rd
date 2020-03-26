@@ -4,8 +4,15 @@
 \alias{mm_predict_DO_1ply}
 \title{Helper to predict_DO.metab_model}
 \usage{
-mm_predict_DO_1ply(data_ply, data_daily_ply, day_start, day_end, ply_date,
-  ..., model_name)
+mm_predict_DO_1ply(
+  data_ply,
+  data_daily_ply,
+  day_start,
+  day_end,
+  ply_date,
+  ...,
+  model_name
+)
 }
 \arguments{
 \item{data_ply}{a data.frame containing all relevant, validated modeling data

@@ -9,20 +9,29 @@
 \alias{predict_DO.metab_sim}
 \title{Predict DO from a fitted model.}
 \usage{
-predict_DO(metab_model, date_start = NA, date_end = NA, ...,
-  attach.units = FALSE, use_saved = TRUE)
+predict_DO(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 
-\method{predict_DO}{metab_Kmodel}(metab_model, date_start = NA,
-  date_end = NA, ..., use_saved = TRUE)
+\method{predict_DO}{metab_Kmodel}(metab_model, date_start = NA, date_end = NA, ..., use_saved = TRUE)
 
-\method{predict_DO}{metab_model}(metab_model, date_start = NA,
-  date_end = NA, ..., attach.units = FALSE, use_saved = TRUE)
+\method{predict_DO}{metab_model}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  ...,
+  attach.units = FALSE,
+  use_saved = TRUE
+)
 
-\method{predict_DO}{metab_night}(metab_model, date_start = NA,
-  date_end = NA, ..., use_saved = TRUE)
+\method{predict_DO}{metab_night}(metab_model, date_start = NA, date_end = NA, ..., use_saved = TRUE)
 
-\method{predict_DO}{metab_sim}(metab_model, date_start = NA,
-  date_end = NA, ...)
+\method{predict_DO}{metab_sim}(metab_model, date_start = NA, date_end = NA, ...)
 }
 \arguments{
 \item{metab_model}{A metabolism model, implementing the 
@@ -77,11 +86,16 @@ preds <- predict_DO(mm, date_start=get_fit(mm)$date[3])
 head(preds)
 }
 \seealso{
-Other metab_model_interface: \code{\link{get_data_daily}},
-  \code{\link{get_data}}, \code{\link{get_fitting_time}},
-  \code{\link{get_fit}}, \code{\link{get_info}},
-  \code{\link{get_param_names}}, \code{\link{get_params}},
-  \code{\link{get_specs}}, \code{\link{get_version}},
-  \code{\link{predict_metab}}
+Other metab_model_interface: 
+\code{\link{get_data_daily}()},
+\code{\link{get_data}()},
+\code{\link{get_fitting_time}()},
+\code{\link{get_fit}()},
+\code{\link{get_info}()},
+\code{\link{get_param_names}()},
+\code{\link{get_params}()},
+\code{\link{get_specs}()},
+\code{\link{get_version}()},
+\code{\link{predict_metab}()}
 }
 \concept{metab_model_interface}

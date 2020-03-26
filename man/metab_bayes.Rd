@@ -4,10 +4,13 @@
 \alias{metab_bayes}
 \title{Basic Bayesian metabolism model fitting function}
 \usage{
-metab_bayes(specs = specs(mm_name("bayes")), data = mm_data(solar.time,
-  DO.obs, DO.sat, depth, temp.water, light, discharge, optional =
-  "discharge"), data_daily = mm_data(date, discharge.daily, optional =
-  "all"), info = NULL)
+metab_bayes(
+  specs = specs(mm_name("bayes")),
+  data = mm_data(solar.time, DO.obs, DO.sat, depth, temp.water, light, discharge,
+    optional = "discharge"),
+  data_daily = mm_data(date, discharge.daily, optional = "all"),
+  info = NULL
+)
 }
 \arguments{
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -75,9 +78,11 @@ file.edit(get_specs(mm)$model_path)
 }
 }
 \seealso{
-Other metab_model: \code{\link{metab_Kmodel}},
-  \code{\link{metab_mle}}, \code{\link{metab_night}},
-  \code{\link{metab_sim}}
+Other metab_model: 
+\code{\link{metab_Kmodel}},
+\code{\link{metab_mle}},
+\code{\link{metab_night}},
+\code{\link{metab_sim}}
 }
 \author{
 Alison Appling, Bob Hall

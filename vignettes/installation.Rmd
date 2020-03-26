@@ -19,43 +19,25 @@ options(width=100)
 
 # Installing streamMetabolizer
 
-## Recommended
+Use the `remotes` package to install `streamMetabolizer` from source.
 
-The most stable+current version of this package can be installed with this R command:
+You may first need to install the `unitted` dependency:
 ```{r, eval=FALSE}
-install.packages("streamMetabolizer", dependencies=TRUE, 
-  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
-```
-and updated with this command:
-```{r, eval=FALSE}
-update.packages(oldPkgs=c("streamMetabolizer","unitted"), dependencies=TRUE,
-  repos=c("https://owi.usgs.gov/R", "https://cran.rstudio.com"))
+remotes::install_github('USGS-R/unitted')
 ```
 
-## For the adventurous
-
-The in-development version of the package can be installed with the `devtools` package. 
-We can make no guarantees about the stability of this version, 
-but it might have new features that you'll like.
-If you go this route, you will need to install the package dependencies separately, like this:
-```{r, eval=FALSE}
-install.packages(
-  c("LakeMetabolizer","unitted","dplyr","lazyeval","lubridate","magrittr",
-    "tidyr","chron","dygraphs","ggplot2","RCurl","rstan","XML","xts"),
-  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
-```
 You can then install the most cutting edge version of streamMetabolizer with this command:
 ```{r, eval=FALSE}
-devtools::install_github("USGS-R/streamMetabolizer")
+remotes::install_github("USGS-R/streamMetabolizer")
 ```
 
 ## Software dependencies
 
-If you plan to use Bayesian models, you will need an up-to-date installation of [Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for many R packages.) Having Rtools installed will allow you to install rstan, the package that `streamMetabolizer` relies on to run MCMC models.
+If you plan to use Bayesian models on a Windows machine, you will need an up-to-date installation of [Rtools](https://cran.r-project.org/bin/windows/Rtools/). Run `devtools::find_rtools()` to make sure Rtools is ready to go. (Rtools is broadly useful for many R packages.) Having Rtools installed will allow you to install `rstan`, the package that `streamMetabolizer` relies on to run MCMC models.
 
 Bayesian models require the [`rstan`](http://mc-stan.org/interfaces/rstan.html) 
 interface to [Stan](http://mc-stan.org/). Sometimes this is as simple as
-installing Rtools and calling the above `install.packages` or `install_github` command, but other
+installing Rtools and calling the above `remotes::install_github` command, but other
 times everything seems fine until you try to run a Bayesian model in
 `streamMetabolizer`. Symptoms of an imperfect `rstan` installation are probably
 diverse. Here's one we've seen:

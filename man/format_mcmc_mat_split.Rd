@@ -4,8 +4,13 @@
 \alias{format_mcmc_mat_split}
 \title{Format MCMC output into a one-row data.frame}
 \usage{
-format_mcmc_mat_split(mcmc_mat, names_params, names_stats, keep_mcmc,
-  runmcmc_out)
+format_mcmc_mat_split(
+  mcmc_mat,
+  names_params,
+  names_stats,
+  keep_mcmc,
+  runmcmc_out
+)
 }
 \arguments{
 \item{mcmc_mat}{matrix as extracted from Stan}

@@ -4,3 +4,8 @@
 ^appveyor\.yml$
 man-roxygen
 temp
+^doc$
+^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

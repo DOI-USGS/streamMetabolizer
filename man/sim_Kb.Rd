@@ -4,9 +4,13 @@
 \alias{sim_Kb}
 \title{Simulate a lnK ~ lnQ relationship in the Kb format}
 \usage{
-sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog,
-  K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog,
-  K600_lnQ_nodediffs_sdlog)
+sim_Kb(
+  K600_lnQ_nodes_centers,
+  K600_lnQ_cnode_meanlog,
+  K600_lnQ_cnode_sdlog,
+  K600_lnQ_nodediffs_meanlog,
+  K600_lnQ_nodediffs_sdlog
+)
 }
 \arguments{
 \item{K600_lnQ_nodes_centers}{data configuration argument for

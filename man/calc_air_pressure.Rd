@@ -4,8 +4,11 @@
 \alias{calc_air_pressure}
 \title{Calculates the average air pressure for a site}
 \usage{
-calc_air_pressure(temp.air = u(15, "degC"), elevation = u(762, "m"),
-  attach.units = FALSE)
+calc_air_pressure(
+  temp.air = u(15, "degC"),
+  elevation = u(762, "m"),
+  attach.units = FALSE
+)
 }
 \arguments{
 \item{temp.air}{air temperature in degrees C. Default is 15 degC.}

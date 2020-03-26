@@ -4,9 +4,14 @@
 \alias{load_french_creek_std_mle}
 \title{Generate outputs using Bob's code for comparison}
 \usage{
-load_french_creek_std_mle(french, K = 35, estimate = c("PRK", "K",
-  "PR"), start = c(dates = "08/23/12", times = "22:00:00"),
-  end = c(dates = "08/25/12", times = "06:00:00"), plot = FALSE)
+load_french_creek_std_mle(
+  french,
+  K = 35,
+  estimate = c("PRK", "K", "PR"),
+  start = c(dates = "08/23/12", times = "22:00:00"),
+  end = c(dates = "08/25/12", times = "06:00:00"),
+  plot = FALSE
+)
 }
 \arguments{
 \item{french}{the French Creek dataset}

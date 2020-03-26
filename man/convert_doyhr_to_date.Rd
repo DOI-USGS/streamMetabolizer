@@ -4,8 +4,13 @@
 \alias{convert_doyhr_to_date}
 \title{Convert a a day of year (1-366) with decimal hours to a date}
 \usage{
-convert_doyhr_to_date(doyhr, year, tz = "UTC",
-  origin = as.POSIXct("1970-01-01 00:00:00", tz = "UTC"), ...)
+convert_doyhr_to_date(
+  doyhr,
+  year,
+  tz = "UTC",
+  origin = as.POSIXct("1970-01-01 00:00:00", tz = "UTC"),
+  ...
+)
 }
 \arguments{
 \item{doyhr}{Numeric value expressing the date as the number of days, with

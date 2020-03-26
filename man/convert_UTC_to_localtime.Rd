@@ -4,8 +4,12 @@
 \alias{convert_UTC_to_localtime}
 \title{Convert time from UTC to local time.}
 \usage{
-convert_UTC_to_localtime(date.time, latitude, longitude,
-  time.type = c("standard local", "daylight local"))
+convert_UTC_to_localtime(
+  date.time,
+  latitude,
+  longitude,
+  time.type = c("standard local", "daylight local")
+)
 }
 \arguments{
 \item{date.time}{POSIXct object the date and time in UTC}

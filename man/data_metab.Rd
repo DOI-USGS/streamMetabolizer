@@ -4,10 +4,15 @@
 \alias{data_metab}
 \title{Get a demo dataset for modeling metabolism}
 \usage{
-data_metab(num_days = c("1", "3", "10"), res = c("5", "10", "15",
-  "30"), flaws = c("missing middle", "missing start", "missing end",
-  "missorted", "duplicated"), day_start = 4, day_end = 28,
-  attach.units = FALSE)
+data_metab(
+  num_days = c("1", "3", "10"),
+  res = c("5", "10", "15", "30"),
+  flaws = c("missing middle", "missing start", "missing end", "missorted",
+    "duplicated"),
+  day_start = 4,
+  day_end = 28,
+  attach.units = FALSE
+)
 }
 \arguments{
 \item{num_days}{the number of days to include in the data. character format 

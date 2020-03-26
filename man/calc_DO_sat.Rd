@@ -5,8 +5,13 @@
 \title{Calculates the equilibrium saturation concentration of oxygen in water at the
 supplied conditions}
 \usage{
-calc_DO_sat(temp.water, pressure.air, salinity.water = u(0, "PSU"),
-  model = "garcia-benson", ...)
+calc_DO_sat(
+  temp.water,
+  pressure.air,
+  salinity.water = u(0, "PSU"),
+  model = "garcia-benson",
+  ...
+)
 }
 \arguments{
 \item{temp.water}{a numeric vector of water temperature in degrees Celsius,
