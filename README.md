@@ -55,9 +55,7 @@ We want to encourage a warm, welcoming, and safe environment for contributing to
 
 [![USGS](http://usgs-r.github.io/images/usgs.png)](https://www.usgs.gov/)
 
-Follow `@USGS_R` on Twitter for updates on USGS R packages:
-
-[![Twitter Follow](https://img.shields.io/twitter/follow/USGS_R.svg?style=social&label=Follow%20USGS_R)](https://twitter.com/USGS_R)
+Follow [`@USGS_R` on Twitter](https://twitter.com/USGS_R) for updates on USGS R packages.
 
 ## Disclaimer
 
