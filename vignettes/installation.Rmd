@@ -23,7 +23,7 @@ Use the `remotes` package to install `streamMetabolizer` from source.
 
 You may first need to install the `unitted` dependency:
 ```{r, eval=FALSE}
-remotes::install_github('USGS-R/unitted')
+remotes::install_github('appling/unitted')
 ```
 
 You can then install the most cutting edge version of streamMetabolizer with this command:
