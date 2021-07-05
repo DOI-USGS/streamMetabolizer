@@ -13,7 +13,7 @@
 #' @inheritParams mm_model_by_ply
 #' @inheritParams load_french_creek
 #' @importFrom unitted u v get_units
-#' @importFrom lifecycle deprecated deprecate_warn
+#' @importFrom lifecycle deprecated is_present
 #' @examples
 #' head(data_metab())
 #' head(data_metab(res='30'))
@@ -29,21 +29,19 @@ data_metab <- function(
   res <- as.numeric(match.arg(res))
   flaws <- if(missing(flaws)) c() else match.arg(flaws, several.ok=TRUE)
   if (lifecycle::is_present(attach.units)) {
-    # Signal the deprecation to the user
-    deprecate_warn(
-      "0.12.0", "streamMetabolizer::data_metab(attach.units)",
-      details = "In the future, streamMetabolizer will stop using the unitted package entirely.")
-
-    # load the unitted data
-    french <- load_french_creek(attach.units=attach.units)
-
-    # take off units temporarily to make it easier to manipulate datetimes
-    if(attach.units) {
-      french_units <- unitted::get_units(french)
-      french <- unitted::v(french)
-    }
+    # only warn if it's TRUE
+    if(isTRUE(attach.units)) unitted_deprecate_warn("data_metab(attach.units)")
   } else {
-    french <- load_french_creek()
+    attach.units <- FALSE
+  }
+
+  # load the french creek data
+  french <- load_french_creek(attach.units = attach.units)
+
+  # take off units temporarily, if present, to make it easier to manipulate datetimes
+  if(attach.units) {
+    french_units <- unitted::get_units(french)
+    french <- unitted::v(french)
   }
 
   # fill in holes in the part of the data we'll be using
@@ -120,7 +118,7 @@ data_metab <- function(
   french <- french[french$solar.time %in% sub_times, ]
 
   # add back units if requested
-  if(lifecycle::is_present(attach.units) && isTRUE(attach.units)) {
+  if(attach.units) {
     french <- unitted::u(french, french_units)
   }
 

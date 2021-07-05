@@ -1,22 +1,30 @@
 #' Calculates the average air pressure for a site
-#' 
+#'
 #' Estimates air pressure from air temperature and elevation
-#' 
+#'
 #' @param temp.air air temperature in degrees C. Default is 15 degC.
 #' @param elevation the site elevation above sea level in m. Default is the
 #'   rough mean elevation of the USA at 2500 ft (from
 #'   http://www.infoplease.com/ipa/A0001792.html)
-#' @param attach.units logical. Should the returned vector be a unitted object?
-#' @return a numeric vector of barometric pressures in mb, with units attached 
+#' @param attach.units (deprecated, effectively FALSE in future) logical. Should
+#'   the returned vector be a unitted object?
+#' @return a numeric vector of barometric pressures in mb, with units attached
 #'   if requested.
-#'   
+#' @importFrom lifecycle deprecated is_present
 #' @importFrom unitted u v get_units verify_units is.unitted
 #' @examples
 #' calc_air_pressure(15, 762)
 #' calc_air_pressure(15, 100)
 #' @export
-calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), attach.units=FALSE) {
-  
+calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), attach.units=deprecated()) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("calc_air_pressure(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
+
   # Bob's code:
   #   ###Estimate barometric pressure as a function of altitude and standard BP
   #   # since we will not correct for dail change in BP use 29.92 (=760 mm)
@@ -27,7 +35,7 @@ calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), att
   #   }
   #   ##call as
   #   bpcalc(bpst=760,alt=2400,temp=15)
-  
+
   # assume units if not provided
   if(!is.unitted(temp.air)) temp.air <- u(temp.air, "degC")
   if(!is.unitted(elevation)) elevation <- u(elevation, "m")
@@ -35,7 +43,7 @@ calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), att
   # check units
   verify_units(temp.air, "degC")
   verify_units(elevation, "m")
-  
+
   # compute pressure. eqn also at https://en.wikipedia.org/wiki/Barometric_formula
   Pb <- u(760, "mmHg") # standard pressure
   g0 <- u(9.80665, "m s^-2") # gravitational acceleration
@@ -43,7 +51,7 @@ calc_air_pressure <- function(temp.air=u(15, "degC"), elevation=u(762, "m"), att
   Rst <- u(8.31447, "N m mol^-1 K^-1") * u(1, "kg m s^-2 N^-1") # universal gas constant for air: 8.31432 N*m /(mol*K)
   Ta <- u(273.15, "K") + temp.air*u(1, "K degC^-1") # actual temperature in Kelvins
   baro <- Pb * exp((-1 * g0 * M * elevation)/(Rst * Ta)) * u(1.33322368, "mb mmHg^-1")
-  
+
   # return
   if(attach.units) baro else v(baro)
 }

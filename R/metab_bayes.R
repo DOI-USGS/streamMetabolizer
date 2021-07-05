@@ -983,9 +983,17 @@ print.logs_metab <- function(x, ...) {
 #' @export
 #' @import dplyr
 #' @importFrom unitted get_units u
-predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=FALSE) {
+#' @importFrom lifecycle deprecated is_present
+predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=deprecated()) {
   # with Bayesian models, the daily mean metabolism values of GPP, ER, and D
   # should have been produced during the model fitting
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("predict_metab(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
 
   # decide on the column names to pull and their new values. fit.names and metab.names should be parallel
   Var1 <- Var2 <- '.dplyr.var'
@@ -1052,8 +1060,19 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
 #' @describeIn get_params Does a little formatting to convert from Stan output
 #'   to streamMetabolizer parameter names; otherwise the same as
 #'   \code{get_params.metab_model}
+#' @importFrom lifecycle deprecated is_present
 #' @export
-get_params.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE, ..., attach.units=FALSE) {
+get_params.metab_bayes <- function(
+  metab_model, date_start=NA, date_end=NA, uncertainty='ci', messages=TRUE,
+  ..., attach.units=deprecated()) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("get_params(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
+
   # Stan prohibits '.' in variable names, so we have to convert back from '_' to
   # '.' here to become consistent with the non-Bayesian models
   parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)

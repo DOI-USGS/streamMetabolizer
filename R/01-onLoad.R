@@ -9,8 +9,8 @@
     "We used it for our own applications and welcome flexible, resilient users who can help us test and improve the package.",
     "Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")), collapse='\n'
     ))
-  
-  # Load deSolve because otherwise after a few model runs we're likely to get 
+
+  # Load deSolve because otherwise after a few model runs we're likely to get
   # the following error. (It's possible this has been resolved by moving deSolve
   # from Suggests to Imports)
   requireNamespace('deSolve', quietly=TRUE)
@@ -23,8 +23,9 @@ library(methods)
 
 #' Define a package environment for storing data specific to a project during an
 #' R session
-#' 
+#'
 #' @importFrom unitted u
+#' @importFrom lifecycle deprecate_warn
 #' @return the package environment
 #' @keywords internal
 define_pkg_env <- function() {

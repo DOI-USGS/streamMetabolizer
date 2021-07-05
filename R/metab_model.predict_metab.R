@@ -7,10 +7,18 @@ NULL
 #' @importFrom stats qnorm setNames
 #' @import dplyr
 #' @importFrom unitted u v get_units
+#' @importFrom lifecycle deprecated is_present
 predict_metab.metab_model <- function(
   metab_model, date_start=NA, date_end=NA,
   day_start=get_specs(metab_model)$day_start, day_end=min(day_start+24, get_specs(metab_model)$day_end),
-  ..., attach.units=FALSE, use_saved=TRUE) {
+  ..., attach.units=deprecated(), use_saved=TRUE) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("predict_metab(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
 
   if(isTRUE(use_saved) && !is.null(metab_model@metab_daily)) {
     # if allowed and available, use previously stored values rather than
@@ -69,7 +77,7 @@ predict_metab.metab_model <- function(
 
     # get the instantaneous data, including DO.mod (which we need for predicting
     # D); filter to a 24-hour period
-    data <- predict_DO(metab_model, date_start=date_start, date_end=date_end, attach.units=FALSE, use_saved=TRUE) %>%
+    data <- predict_DO(metab_model, date_start=date_start, date_end=date_end, use_saved=TRUE) %>%
       mm_filter_hours(day_start=day_start, day_end=day_end)
 
     # re-process the input data with the metabolism estimates to predict daily

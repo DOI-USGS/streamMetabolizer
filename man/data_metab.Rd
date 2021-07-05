@@ -43,7 +43,9 @@ the midnight that begins the date. For example, day_end=30 indicates that
 data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
-\item{attach.units}{logical. Should units be attached to the data.frame?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical,
+default TRUE for backward compatibility. Should units be attached to the
+data.frame?}
 }
 \description{
 Get a formatted data.frame of inputs from which metabolism can be modeled.

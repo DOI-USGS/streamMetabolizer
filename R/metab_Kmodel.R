@@ -369,11 +369,19 @@ setClass(
 #'
 #' @inheritParams predict_metab
 #' @import dplyr
+#' @importFrom lifecycle deprecated is_present
 #' @importFrom stats predict
 get_params.metab_Kmodel <- function(
   metab_model, date_start=NA, date_end=NA,
   uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'),
-  ..., attach.units=FALSE, use_saved=TRUE) {
+  ..., attach.units=deprecated(), use_saved=TRUE) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("get_params(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
 
   # re-predict K600.daily.mod if saved values are disallowed or unavailable; otherwise
   # use previously stored values for K600.daily.mod
@@ -442,7 +450,8 @@ get_params.metab_Kmodel <- function(
 #' @inheritParams predict_metab
 #' @export
 predict_metab.metab_Kmodel <- function(
-  metab_model, date_start=NA, date_end=NA, day_start=NA, day_end=NA, ..., attach.units=FALSE, use_saved=TRUE) {
+  metab_model, date_start=NA, date_end=NA, day_start=NA, day_end=NA,
+  ..., attach.units=deprecated(), use_saved=TRUE) {
   stop("can only predict K600.daily, not metabolism, from metab_Kmodel. try get_params() instead")
 }
 

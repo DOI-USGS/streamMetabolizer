@@ -7,8 +7,8 @@ library(ggplot2)
 # variable description convention in notes:
 # stan.and.SM.arg = symbol = r.arg
 
-test_that("scaling from standard normal to lognormal", {
-  skip('tests are for developer understanding, not code performance')
+explore_scaling <- function() {
+  #skip('tests are for developer understanding, not code performance')
 
   # location = mu = meanlog; scale = sigma = sdlog
   location <- 0
@@ -38,4 +38,4 @@ test_that("scaling from standard normal to lognormal", {
     tibble::tibble(value=final, type='final'))
   ggplot(comp) + geom_histogram(aes(x=log(value), fill=type), alpha=0.5, binwidth=1, position='identity')
   ggplot(dplyr::filter(comp, type != 'scaled')) + geom_histogram(aes(x=value, fill=type), alpha=0.5, binwidth=1, position='identity') + xlim(-5, 100)
-})
+}

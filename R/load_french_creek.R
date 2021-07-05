@@ -2,18 +2,20 @@
 #'
 #' @import dplyr
 #' @importFrom unitted u
-#' @importFrom lifecycle deprecated
+#' @importFrom lifecycle deprecated is_present
 #' @importFrom utils read.csv
 #' @importFrom lubridate with_tz
-#' @param attach.units logical. Should units be attached to the data.frame?
+#' @param attach.units (deprecated, effectively FALSE in future) logical,
+#'   default TRUE for backward compatibility. Should units be attached to the
+#'   data.frame?
 #' @return a data.frame, unitted if attach.units==TRUE
 load_french_creek <- function(attach.units=deprecated()) {
   # check arguments
   if (lifecycle::is_present(attach.units)) {
-    # Signal the deprecation to the user
-    deprecate_warn(
-      "0.12.0", "streamMetabolizer::load_french_creek(attach.units)",
-      details = "In the future, streamMetabolizer will stop using the unitted package entirely.")
+    # only warn if it's TRUE
+    if(isTRUE(attach.units)) unitted_deprecate_warn("load_french_creek(attach.units)")
+  } else {
+    attach.units <- TRUE
   }
 
   # load the file
@@ -56,7 +58,7 @@ load_french_creek <- function(attach.units=deprecated()) {
     select(c(solar.time, DO.obs, DO.sat, depth, temp.water, light))
 
   # add units if requested
-  if (lifecycle::is_present(attach.units) && isTRUE(attach.units)) {
+  if (attach.units) {
     french <- unitted::u(
       french,
       c(solar.time="", DO.obs="mgO2 L^-1", DO.sat="mgO2 L^-1", depth="m", temp.water="degC", light="umol m^-2 s^-1"))

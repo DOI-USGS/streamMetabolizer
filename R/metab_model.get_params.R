@@ -2,11 +2,19 @@
 NULL
 
 #' @describeIn get_params This implementation is shared by many model types
+#' @importFrom lifecycle deprecated is_present
 #' @export
 get_params.metab_model <- function(
   metab_model, date_start=NA, date_end=NA,
   uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'),
-  ..., attach.units=FALSE) {
+  ..., attach.units=deprecated()) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("get_params(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
 
   # process arguments
   uncertainty <- match.arg(uncertainty)

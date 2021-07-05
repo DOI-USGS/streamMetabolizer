@@ -14,7 +14,7 @@ predict_DO(
   date_start = NA,
   date_end = NA,
   ...,
-  attach.units = FALSE,
+  attach.units = deprecated(),
   use_saved = TRUE
 )
 
@@ -25,7 +25,7 @@ predict_DO(
   date_start = NA,
   date_end = NA,
   ...,
-  attach.units = FALSE,
+  attach.units = deprecated(),
   use_saved = TRUE
 )
 
@@ -34,31 +34,32 @@ predict_DO(
 \method{predict_DO}{metab_sim}(metab_model, date_start = NA, date_end = NA, ...)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the 
+\item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_start}{Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{date_end}{Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_end}{Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{...}{Other arguments passed to class-specific implementations of 
+\item{...}{Other arguments passed to class-specific implementations of
 \code{predict_DO}}
 
-\item{attach.units}{logical. Should units be attached to the output?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
 the model?}
 }
 \value{
-A data.frame of dissolved oxygen predictions at the temporal 
+A data.frame of dissolved oxygen predictions at the temporal
   resolution of the input data
 }
 \description{
-A function in the metab_model_interface. Returns predictions of dissolved 
+A function in the metab_model_interface. Returns predictions of dissolved
 oxygen.
 }
 \section{Methods (by class)}{

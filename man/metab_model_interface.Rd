@@ -3,47 +3,47 @@
 \docType{data}
 \name{metab_model_interface}
 \alias{metab_model_interface}
-\title{Functions implemented by any \code{streamMetabolizer}-compatible metabolism 
+\title{Functions implemented by any \code{streamMetabolizer}-compatible metabolism
 model.}
 \format{
-A collection of functions which any metabolism model in 
+A collection of functions which any metabolism model in
   \code{streamMetabolizer} should implement.
 }
 \description{
-Metabolism models in the \code{streamMetabolizer} package all implement a 
-common set of core functions. These functions are conceptually packaged as 
+Metabolism models in the \code{streamMetabolizer} package all implement a
+common set of core functions. These functions are conceptually packaged as
 the \code{metab_model_interface} defined here.
 }
 \section{Functions in the interface}{
 
-  
+
   \itemize{
-  
+
   \item \code{\link{show}(metab_model) \{ display(metab_model) \}}
-  
+
   \item \code{\link{get_params}(metab_model, ...) \{ return(data.frame) \}}
-  
+
   \item \code{\link{get_param_names}(metab_model, ...) \{ return(list) \}}
-  
+
   \item \code{\link{predict_metab}(metab_model, ...) \{ return(data.frame)
   \}}
-  
+
   \item \code{\link{predict_DO}(metab_model, ...) \{ return(data.frame) \}}
-  
+
   \item \code{\link{get_fit}(metab_model) \{ return(fitted.model) \}}
-  
+
   \item \code{\link{get_fitting_time}(metab_model) \{ return(proc_time) \}}
-  
+
   \item \code{\link{get_info}(metab_model) \{ return(info) \}}
-  
+
   \item \code{\link{get_specs}(metab_model) \{ return(specs.list) \}}
-  
+
   \item \code{\link{get_data}(metab_model) \{ return(data.frame) \}}
-  
+
   \item \code{\link{get_data_daily}(metab_model) \{ return(data.frame) \}}
-  
+
   \item \code{\link{get_version}(metab_model) \{ return(version.string) \}}
-  
+
   }
 }
 

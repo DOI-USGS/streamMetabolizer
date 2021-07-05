@@ -192,12 +192,20 @@ setClass(
 #'   returns the fixed values for daily parameters if they were set in
 #'   \code{data_daily}
 #' @importFrom unitted v
+#' @importFrom lifecycle deprecated is_present
 #' @import dplyr
 #' @export
 get_params.metab_sim <- function(
   metab_model, date_start=NA, date_end=NA,
   uncertainty=c('sd','ci','none'), messages=TRUE, fixed=c('none','columns','stars'),
-  ..., attach.units=FALSE) {
+  ..., attach.units=deprecated()) {
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("get_params(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
 
   # get model specs, features, and data_daily
   specs <- get_specs(metab_model)

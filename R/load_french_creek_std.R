@@ -13,9 +13,20 @@
 #' @importFrom unitted u
 #' @importFrom utils read.csv
 #' @importFrom lubridate with_tz
-#' @param attach.units logical. Should units be attached to the data.frame?
+#' @importFrom lifecycle deprecated is_present
+#' @param attach.units (deprecated, effectively FALSE in future) logical,
+#'   default TRUE for backward compatibility. Should units be attached to the
+#'   data.frame?
 #' @return a data.frame, unitted if attach.units==TRUE
-load_french_creek_std <- function(attach.units=TRUE) {
+load_french_creek_std <- function(attach.units=deprecated()) {
+  # check units arguments
+  if (lifecycle::is_present(attach.units)) {
+    # only warn if it's TRUE
+    if(isTRUE(attach.units)) unitted_deprecate_warn("load_french_creek_std(attach.units)")
+  } else {
+    attach.units <- TRUE
+  }
+
   # load the file
   file.name <- system.file("extdata", "french.csv", package="streamMetabolizer") # L10 data from French Creek, Hotchkiss and Hall, In press, Ecology
   french <- read.csv(file.name)

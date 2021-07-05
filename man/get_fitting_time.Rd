@@ -10,7 +10,7 @@ get_fitting_time(metab_model)
 \method{get_fitting_time}{metab_model}(metab_model)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the 
+\item{metab_model}{A metabolism model, implementing the
 metab_model_interface, for which to return the time}
 }
 \value{

@@ -11,7 +11,7 @@ calc_light_merged(
   longitude,
   max.PAR = NA,
   max.gap = as.difftime(3, units = "hours"),
-  attach.units = is.unitted(PAR.obs)
+  attach.units = deprecated()
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ be at a lower temporal resolution than \code{PAR.mod})}
 \item{solar.time}{a vector of mean solar times for which the light should be
 modeled and merged with the values in PAR.obs}
 
-\item{latitude}{numeric value or vector indicating the site latitude in 
+\item{latitude}{numeric value or vector indicating the site latitude in
 decimal degrees (never radians or deg-min-sec, no matter what \code{format}
 is) between -90 (South Pole) and 90 (North Pole).}
 
@@ -39,7 +39,8 @@ observation and a time point in solar.time, beyond which no value will be
 given for light at that solar.time. If NA, all values will be modeled, even
 if they are many days away from a light observation.}
 
-\item{attach.units}{logical. Should the returned vector be a unitted object?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?}
 }
 \description{
 Merge two time series (one observed, one modeled) of photosynthetically

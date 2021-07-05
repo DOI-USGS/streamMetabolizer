@@ -42,6 +42,8 @@ test_that("metab_mle treats data flaws correctly", {
   # missing end
   dat <- data_metab('3','15',flaws='missing end')
   mm <- metab_mle(data=dat)
+  expect_true(is.na(get_params(mm)$GPP.daily[3]))
+  expect_equal(get_params(mm)$errors[3], "data don't start when expected")
 
 })
 

@@ -14,7 +14,7 @@ get_param_names(metab_model, ...)
 \method{get_param_names}{metab_model}(metab_model, ...)
 }
 \arguments{
-\item{metab_model}{A metabolism model object or model name for which to 
+\item{metab_model}{A metabolism model object or model name for which to
 return the list of required and optional metabolism parameters.}
 
 \item{...}{Placeholder for future arguments}
@@ -24,7 +24,7 @@ Returns a list of two vectors, the names of the required and optional
   daily metabolism parameters, respectively.
 }
 \description{
-A function in the metab_model_interface. Returns vectors of the required and 
+A function in the metab_model_interface. Returns vectors of the required and
 optional daily metabolism parameters for the model.
 }
 \section{Methods (by class)}{

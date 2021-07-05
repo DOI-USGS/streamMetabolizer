@@ -45,7 +45,7 @@ test_that("French Creek predictions are similar for streamMetabolizer & Bob Hall
   end.numeric <- as.numeric(end.posix - as.POSIXct(format(mid.date, "%Y-%m-%d 00:00:00"), tz="UTC"), units='hours')
 
   # get, format, & subset data
-  vfrench <- streamMetabolizer:::load_french_creek()
+  vfrench <- streamMetabolizer:::load_french_creek(attach.units = FALSE)
   vfrenchshort <- vfrench[vfrench$solar.time >= start.posix & vfrench$solar.time <= end.posix, ]
 
   # dates & subsetting specific to nighttime regression

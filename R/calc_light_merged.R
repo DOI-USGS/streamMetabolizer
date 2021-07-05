@@ -17,9 +17,11 @@
 #'   observation and a time point in solar.time, beyond which no value will be
 #'   given for light at that solar.time. If NA, all values will be modeled, even
 #'   if they are many days away from a light observation.
-#' @param attach.units logical. Should the returned vector be a unitted object?
+#' @param attach.units (deprecated, effectively FALSE in future) logical. Should
+#'   the returned vector be a unitted object?
 #' @import dplyr
 #' @importFrom unitted u v
+#' @importFrom lifecycle deprecated is_present
 #' @export
 #' @examples
 #' \dontrun{
@@ -47,7 +49,18 @@
 calc_light_merged <- function(
   PAR.obs=mm_data(solar.time, light),
   solar.time, latitude, longitude, max.PAR=NA,
-  max.gap=as.difftime(3, units="hours"), attach.units=is.unitted(PAR.obs)) {
+  max.gap=as.difftime(3, units="hours"), attach.units=deprecated()) {
+
+  # check units-related arguments. old default was attach.units=is.unitted(PAR.obs)
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("calc_light_merged(attach.units)")
+  } else if (is.unitted(PAR.obs)) {
+    unitted_deprecate_warn("calc_light_merged(PAR.obs.unitted)")
+    message('in calc_light_merged, setting attach.units=TRUE because is.unitted(PAR.obs)')
+    attach.units <- TRUE
+  } else {
+    attach.units <- FALSE
+  }
 
   # ensure units are correct and present within this function
   arg_units <- list(
@@ -139,4 +152,3 @@ calc_light_merged <- function(
   # return
   PAR.merged
 }
-
