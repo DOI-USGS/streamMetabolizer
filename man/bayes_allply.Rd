@@ -2,15 +2,15 @@
 % Please edit documentation in R/metab_bayes.R
 \name{bayes_allply}
 \alias{bayes_allply}
-\title{Make daily metabolism estimates from input parameters using a hierarchical 
+\title{Make daily metabolism estimates from input parameters using a hierarchical
 approach.}
 \usage{
 bayes_allply(data_all, data_daily_all, removed, specs)
 }
 \arguments{
-\item{data_all}{data.frame of the form \code{mm_data(solar.time, DO.obs, 
-DO.sat, depth, temp.water, light)} and containing data for just one 
-estimation-day (this may be >24 hours but only yields estimates for one 
+\item{data_all}{data.frame of the form \code{mm_data(solar.time, DO.obs,
+DO.sat, depth, temp.water, light)} and containing data for just one
+estimation-day (this may be >24 hours but only yields estimates for one
 24-hour period)}
 
 \item{data_daily_all}{data.frame of daily priors, if appropriate to the given

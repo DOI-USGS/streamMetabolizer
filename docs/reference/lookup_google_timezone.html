@@ -75,7 +75,7 @@ calling lookup_google_timezone." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ calling lookup_google_timezone." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ calling lookup_google_timezone." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -162,12 +162,12 @@ not already installed, run <code><a href='https://rdrr.io/r/utils/install.packag
 calling <code>lookup_google_timezone</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>lookup_google_timezone</span>(
-  <span class='no'>latitude</span>,
-  <span class='no'>longitude</span>,
-  <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='kw pkg'>unitted</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span>(<span class='no'>latitude</span>) <span class='kw'>&gt;=</span> <span class='fl'>0</span>) <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span>(<span class='st'>"2015-01-01 00:00:00"</span>, <span class='kw'>tz</span> <span class='kw'>=</span>
-    <span class='st'>"UTC"</span>) <span class='kw'>else</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span>(<span class='st'>"2015-07-01 00:00:00"</span>, <span class='kw'>tz</span> <span class='kw'>=</span> <span class='st'>"UTC"</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>lookup_google_timezone</span><span class='op'>(</span>
+  <span class='va'>latitude</span>,
+  <span class='va'>longitude</span>,
+  timestamp <span class='op'>=</span> <span class='kw'>if</span> <span class='op'>(</span><span class='fu'>unitted</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='va'>latitude</span><span class='op'>)</span> <span class='op'>&gt;=</span> <span class='fl'>0</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span><span class='op'>(</span><span class='st'>"2015-01-01 00:00:00"</span>, tz <span class='op'>=</span>
+    <span class='st'>"UTC"</span><span class='op'>)</span> <span class='kw'>else</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span><span class='op'>(</span><span class='st'>"2015-07-01 00:00:00"</span>, tz <span class='op'>=</span> <span class='st'>"UTC"</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -179,14 +179,14 @@ up.</p></td>
     </tr>
     <tr>
       <th>longitude</th>
-      <td><p>degrees longitude (positive for east) of the location to 
+      <td><p>degrees longitude (positive for east) of the location to
 look up.</p></td>
     </tr>
     <tr>
       <th>timestamp</th>
-      <td><p>POSIXct representation of a time - determines daylight 
-savings offset, if any. the default is Jan 1 for northern latitudes and 
-July 1 for southern latitudes, i.e., a time surely not during daylight 
+      <td><p>POSIXct representation of a time - determines daylight
+savings offset, if any. the default is Jan 1 for northern latitudes and
+July 1 for southern latitudes, i.e., a time surely not during daylight
 savings time.</p></td>
     </tr>
     </table>
@@ -213,7 +213,7 @@ savings time.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -2,57 +2,58 @@
 NULL
 
 #' Format a data.frame for inclusion in a roxygen header
-#' 
+#'
 #' Modified from Hadley Wickham's function at http://r-pkgs.had.co.nz/man.html
-#' 
+#'
 #' @import tibble
 #' @keywords internal
 zz_tabular <- function(df, bold_headers=TRUE, code=FALSE, ...) {
   align <- function(x) if (is.numeric(x)) "r" else "l"
   col_align <- vapply(df, align, character(1))
-  
-  cols <- 
+
+  cols <-
     mapply(
       function(colname, colvec) {
         c(if(bold_headers) paste0("\\strong{", colname, "}") else colname,
-          #paste(rep('-', nchar(colname)), collapse=''), 
-          as.character(colvec)) 
+          #paste(rep('-', nchar(colname)), collapse=''),
+          as.character(colvec))
       }, colname=as.list(names(df)), colvec=df) %>%
     as.data.frame() %>%
     lapply(format, ...)
-  
+
   if(code) {
-    cols <- lapply(cols, function(col) 
+    cols <- lapply(cols, function(col)
       paste0("\\code{", col, "}"))
   }
-  
+
   cols <- as_tibble(cols)
-  
+
   contents <- do.call(
-    "paste", 
+    "paste",
     c(cols, list(sep = " \\tab ", collapse = "\\cr\n  ")))
-  
+
   . <- 'dplyr.var'
   paste(
-    "\\tabular{", 
-    paste(col_align, collapse = ""), 
-    "}{\n  ", 
-    contents, 
-    "\n}\n", 
+    "\\tabular{",
+    paste(col_align, collapse = ""),
+    "}{\n  ",
+    contents,
+    "\n}\n",
     sep = "") %>%
     strsplit('\n') %>%
     .[[1]]
 }
 
 #' Generate doc text for the `metab()` documentation
-#' 
+#'
 #' Results get written to man-roxygen/metab_data.R
-#' 
+#'
+#' @importFrom unitted v
 #' @keywords internal
 zz_build_docs <- function() {
-  
+
   if(!dir.exists('man-roxygen')) dir.create('man-roxygen')
-  
+
   . <- 'dplyr.var'
   c("@section Formatting \\code{data}:",
     "Unit-value model inputs passed via the \\code{data} argument should",
@@ -80,7 +81,7 @@ zz_build_docs <- function() {
         "  }")
     })),
     "}",
-    
+
     "@section Formatting \\code{data_daily}:",
     "Daily-value model inputs passed via the \\code{data_daily} argument should",
     "be formatted as a data.frame with column names and values that",
@@ -89,7 +90,7 @@ zz_build_docs <- function() {
     "",
     "\\describe{",
     c(paste0("  \\item{\\code{night}}{"),
-      paste0("    ", "\\code{", 
+      paste0("    ", "\\code{",
              metab_inputs('night', 'data_daily'),
              "}"),
       "  }"),
@@ -104,10 +105,10 @@ zz_build_docs <- function() {
         "  }")
     })),
     "}"
-  ) %>% 
+  ) %>%
     paste0("#' ", .) %>%
     writeLines('man-roxygen/metab_data.R')
-  
+
   invisible()
 }
 zz_build_docs()

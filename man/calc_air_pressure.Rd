@@ -7,7 +7,7 @@
 calc_air_pressure(
   temp.air = u(15, "degC"),
   elevation = u(762, "m"),
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 }
 \arguments{
@@ -17,10 +17,11 @@ calc_air_pressure(
 rough mean elevation of the USA at 2500 ft (from
 http://www.infoplease.com/ipa/A0001792.html)}
 
-\item{attach.units}{logical. Should the returned vector be a unitted object?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?}
 }
 \value{
-a numeric vector of barometric pressures in mb, with units attached 
+a numeric vector of barometric pressures in mb, with units attached
   if requested.
 }
 \description{

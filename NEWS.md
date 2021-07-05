@@ -1,3 +1,10 @@
+# 0.12.0
+
+* fixed compatibility issues with R 4.1.0 and recent (OK, not super recent)
+changes to dplyr
+
+* beginning to deprecate the use of `attach.units` arguments
+
 # 0.11.4
 
 * fixed issue with `data_metab` that arises with newer versions of `tidyverse`

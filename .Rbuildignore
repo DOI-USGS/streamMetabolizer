@@ -1,3 +1,5 @@
+^.git$
+^.github$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$
@@ -9,3 +11,4 @@ temp
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^CONDUCT\.md$

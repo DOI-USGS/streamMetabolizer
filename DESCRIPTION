@@ -1,8 +1,8 @@
 Package: streamMetabolizer
 Type: Package
 Title: Models for Estimating Aquatic Photosynthesis and Respiration
-Version: 0.11.4
-Date: 2020-03-23
+Version: 0.12.0
+Date: 2021-07-05
 Author: Alison P. Appling, Robert O. Hall, Jr., Maite Arroita, and Charles B.
     Yackulic
 Authors@R: c(
@@ -35,6 +35,7 @@ Imports:
     dplyr (>= 0.5.0),
     LakeMetabolizer (>= 1.4.1),
     lazyeval,
+    lifecycle,
     lubridate,
     magrittr,
     methods,
@@ -46,6 +47,7 @@ Suggests:
     devtools,
     dygraphs,
     ggplot2,
+    gridExtra,
     knitr,
     microbenchmark,
     RCurl,
@@ -77,6 +79,7 @@ Collate:
     'create_calc_NLL.R'
     'create_calc_dDOdt.R'
     'data_metab.R'
+    'deprecated.R'
     'load_french_creek.R'
     'load_french_creek_std.R'
     'load_spring_creek.R'
@@ -124,5 +127,5 @@ Collate:
     'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Encoding: UTF-8

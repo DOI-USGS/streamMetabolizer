@@ -40,9 +40,9 @@
 
 
 <meta property="og:title" content="Get a parameter from data_daily, specs, or both — sim_get_par" />
-<meta property="og:description" content="Used in get_params.metab_sim. Looks in both data_daily and specs for a daily 
+<meta property="og:description" content="Used in get_params.metab_sim. Looks in both data_daily and specs for a daily
 paramter, e.g., 'K600.daily'. If it's present in just one place, those values
-will be used. If it's present in neither, an error or NULLs will be returned 
+will be used. If it's present in neither, an error or NULLs will be returned
 depending on whether required=TRUE." />
 
 
@@ -75,7 +75,7 @@ depending on whether required=TRUE." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ depending on whether required=TRUE." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ depending on whether required=TRUE." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,21 +156,21 @@ depending on whether required=TRUE." />
     </div>
 
     <div class="ref-description">
-    <p>Used in get_params.metab_sim. Looks in both data_daily and specs for a daily 
+    <p>Used in get_params.metab_sim. Looks in both data_daily and specs for a daily
 paramter, e.g., 'K600.daily'. If it's present in just one place, those values
-will be used. If it's present in neither, an error or NULLs will be returned 
+will be used. If it's present in neither, an error or NULLs will be returned
 depending on whether <code>required=TRUE</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sim_get_par</span>(<span class='no'>par.name</span>, <span class='no'>specs</span>, <span class='no'>data_daily</span>, <span class='no'>eval_env</span>, <span class='kw'>required</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>sim_get_par</span><span class='op'>(</span><span class='va'>par.name</span>, <span class='va'>specs</span>, <span class='va'>data_daily</span>, <span class='va'>eval_env</span>, required <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>par.name</th>
-      <td><p>The parameter name. Should be period.separated if that's how 
-data_daily is. Periods will be converted to underscores when searching 
+      <td><p>The parameter name. Should be period.separated if that's how
+data_daily is. Periods will be converted to underscores when searching
 specs for the parameter</p></td>
     </tr>
     <tr>
@@ -198,8 +198,8 @@ will be thrown.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>list containing up to three vectors (or NULLs) named <code>specs</code>, 
-  <code>data_daily</code>, and <code>combo</code> according to the source of the numbers 
+    <p>list containing up to three vectors (or NULLs) named <code>specs</code>,
+  <code>data_daily</code>, and <code>combo</code> according to the source of the numbers
   in each vector.</p>
 
   </div>
@@ -217,7 +217,7 @@ will be thrown.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

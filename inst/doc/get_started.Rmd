@@ -45,15 +45,14 @@ library(dplyr)
 # 1. Preparing the input data
 
 Load a small example dataset from the package (data are from French
-Creek in Laramie, WY, courtesy of Bob Hall). Explicitly attached units are
-optional but useful for confirming that the data are in the expected format.
+Creek in Laramie, WY, courtesy of Bob Hall).
 We'll use the `streamMetabolizer` standard in defining our day to run from 4 am
 (`day_start=4`) to 4 am (`day_end=28`).
 ```{r data}
-dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28, attach.units=TRUE)
+dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28)
 ```
 
-See the [Data Preparation](data_prep.html) tutorial for more on how to properly format and inspect a dataset.
+See the `?metab` help document and the [Data Preparation](data_prep.html) tutorial for more on how to properly format and inspect a dataset.
 
 
 # 2. Configuring the model

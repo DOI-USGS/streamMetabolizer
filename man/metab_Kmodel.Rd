@@ -36,11 +36,11 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_Kmodel object containing the fitted model. This object can be 
+A metab_Kmodel object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
-Takes daily estimates of K, usually from nighttime regression, and regresses 
+Takes daily estimates of K, usually from nighttime regression, and regresses
 against predictors such as discharge.daily. Returns a metab_Kmodel object
 that only predicts daily K, nothing else.
 }
@@ -54,19 +54,19 @@ Possible approaches:
 \item{"weighted mean"}{Predict K as the mean of all K values, weighted by the
 inverse of the confidence intervals in the input K values}
 
-\item{"KvQ"}{Regress K versus Q, tending toward overall mean in ranges of Q 
+\item{"KvQ"}{Regress K versus Q, tending toward overall mean in ranges of Q
 with sparse data}
 
-\item{"weighted KvQ"}{Regress K versus Q, tending toward overall mean in 
-ranges of Q with sparse data, weighting high-confidence K values more 
+\item{"weighted KvQ"}{Regress K versus Q, tending toward overall mean in
+ranges of Q with sparse data, weighting high-confidence K values more
 heavily}
 
 \item{"T smoother"}{Predict K using a loess or spline smoother over time}
 
-\item{"Q smoother"}{Predict K using a loess or spline smoother over 
+\item{"Q smoother"}{Predict K using a loess or spline smoother over
 discharge.daily}
 
-\item{"TQ smoother"}{Predict K using a loess or spline smoother over both 
+\item{"TQ smoother"}{Predict K using a loess or spline smoother over both
 time and discharge.daily}
 
 }
@@ -81,7 +81,7 @@ example_Ks <- data.frame(date=seq(as.Date("2012-08-15"),as.Date("2012-09-15"),
 
 # mean
 mm <- metab_Kmodel(
-  specs(mm_name('Kmodel', engine='mean')), 
+  specs(mm_name('Kmodel', engine='mean')),
   data_daily=example_Ks) # two warnings expected for engine='mean'
 get_params(mm)
 \dontrun{
@@ -106,7 +106,7 @@ get_params(mm)
 plot(get_params(mm)$date, get_params(mm)$K600.daily)
 }
 
-## 3-phase workflow (sort of like complete pooling) for estimating K within 
+## 3-phase workflow (sort of like complete pooling) for estimating K within
 ## days, then K across days, then GPP and ER within days
 
 # 1. data and specifications for both of the MLE models
@@ -115,11 +115,11 @@ mle_specs <- specs(mm_name('mle'))
 
 # fit a first-round MLE and extract the K estimates
 mm1 <- metab_mle(mle_specs, data=dat)
-K600_mm1 <- get_params(mm1, uncertainty='ci') \%>\% 
+K600_mm1 <- get_params(mm1, uncertainty='ci') \%>\%
   select(date, K600.daily, K600.daily.lower, K600.daily.upper)
 
 # smooth the K600s
-mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'), 
+mm2 <- metab_Kmodel(specs(mm_name('Kmodel', engine='mean'),
   day_start=-1, day_end=23), data_daily=K600_mm1)
 K600_mm2 <- get_params(mm2) \%>\% select(date, K600.daily)
 

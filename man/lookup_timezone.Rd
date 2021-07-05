@@ -10,7 +10,7 @@ lookup_timezone(latitude, longitude)
 \item{latitude}{degrees latitude (positive for north) of the location to look
 up.}
 
-\item{longitude}{degrees longitude (positive for east) of the location to 
+\item{longitude}{degrees longitude (positive for east) of the location to
 look up.}
 }
 \description{

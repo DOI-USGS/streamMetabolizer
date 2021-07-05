@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate zenith angle as in 
+<title>Calculate zenith angle as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html — calc_zenith_angle • streamMetabolizer</title>
 
 
@@ -40,9 +40,9 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
 
 
 
-<meta property="og:title" content="Calculate zenith angle as in 
+<meta property="og:title" content="Calculate zenith angle as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html — calc_zenith_angle" />
-<meta property="og:description" content="Calculate zenith angle as in 
+<meta property="og:description" content="Calculate zenith angle as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html" />
 
 
@@ -75,7 +75,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -150,41 +150,41 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate zenith angle as in 
+    <h1>Calculate zenith angle as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html</h1>
     <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/calc_solar_insolation.R'><code>R/calc_solar_insolation.R</code></a></small>
     <div class="hidden name"><code>calc_zenith_angle.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Calculate zenith angle as in 
+    <p>Calculate zenith angle as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_zenith_angle</span>(
-  <span class='no'>latitude</span>,
-  <span class='no'>declination.angle</span>,
-  <span class='no'>hour.angle</span>,
-  <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"degrees"</span>, <span class='st'>"radians"</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>calc_zenith_angle</span><span class='op'>(</span>
+  <span class='va'>latitude</span>,
+  <span class='va'>declination.angle</span>,
+  <span class='va'>hour.angle</span>,
+  format <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"degrees"</span>, <span class='st'>"radians"</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>latitude</th>
-      <td><p>numeric value or vector indicating the site latitude in 
+      <td><p>numeric value or vector indicating the site latitude in
 decimal degrees (never radians or deg-min-sec, no matter what <code>format</code>
 is) between -90 (South Pole) and 90 (North Pole).</p></td>
     </tr>
     <tr>
       <th>declination.angle</th>
-      <td><p>numeric value or vector, in the units specified by 
+      <td><p>numeric value or vector, in the units specified by
 <code>format</code>, indicating the declination angle.</p></td>
     </tr>
     <tr>
       <th>hour.angle</th>
-      <td><p>numeric value or vector, in the units specified by 
+      <td><p>numeric value or vector, in the units specified by
 <code>format</code>, indicating the angle.</p></td>
     </tr>
     <tr>
@@ -195,21 +195,22 @@ is) between -90 (South Pole) and 90 (North Pole).</p></td>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>zendf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(
-  <span class='kw'>lat</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>20</span>,<span class='fl'>40</span>,<span class='fl'>60</span>), <span class='kw'>each</span><span class='kw'>=</span><span class='fl'>24</span>*<span class='fl'>4</span>),
-  <span class='kw'>jday</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>101</span>,<span class='fl'>201</span>,<span class='fl'>301</span>), <span class='kw'>each</span><span class='kw'>=</span><span class='fl'>24</span>), <span class='kw'>times</span><span class='kw'>=</span><span class='fl'>4</span>),
-  <span class='kw'>hour</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>:<span class='fl'>12</span>,<span class='fl'>13.5</span>:<span class='fl'>23.5</span>), <span class='kw'>times</span><span class='kw'>=</span><span class='fl'>4</span>*<span class='fl'>4</span>))
-<span class='no'>zendf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span>(<span class='no'>zendf</span>,
-  <span class='kw'>dec</span><span class='kw'>=</span><span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'><a href='calc_declination_angle.html'>calc_declination_angle</a></span>(<span class='no'>jday</span>),
-  <span class='kw'>hragl</span><span class='kw'>=</span><span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'><a href='calc_hour_angle.html'>calc_hour_angle</a></span>(<span class='no'>hour</span>))
-<span class='no'>zendf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span>(<span class='no'>zendf</span>,
-  <span class='kw'>zen</span><span class='kw'>=</span><span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>calc_zenith_angle</span>(<span class='no'>lat</span>, <span class='no'>dec</span>, <span class='no'>hragl</span>))
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span>(<span class='kw pkg'>unitted</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span>(<span class='no'>zendf</span>), <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>hour</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>zen</span>, <span class='kw'>color</span><span class='kw'>=</span><span class='no'>jday</span>, <span class='kw'>group</span><span class='kw'>=</span><span class='no'>jday</span>)) +
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span>() + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/facet_wrap.html'>facet_wrap</a></span>(~<span class='no'>lat</span>) +
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>'zenith angles by latitude (panels) and day of year (colors)'</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>zendf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>
+  lat<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='fl'>20</span>,<span class='fl'>40</span>,<span class='fl'>60</span><span class='op'>)</span>, each<span class='op'>=</span><span class='fl'>24</span><span class='op'>*</span><span class='fl'>4</span><span class='op'>)</span>,
+  jday<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>101</span>,<span class='fl'>201</span>,<span class='fl'>301</span><span class='op'>)</span>, each<span class='op'>=</span><span class='fl'>24</span><span class='op'>)</span>, times<span class='op'>=</span><span class='fl'>4</span><span class='op'>)</span>,
+  hour<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>:</span><span class='fl'>12</span>,<span class='fl'>13.5</span><span class='op'>:</span><span class='fl'>23.5</span><span class='op'>)</span>, times<span class='op'>=</span><span class='fl'>4</span><span class='op'>*</span><span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>zendf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span><span class='op'>(</span><span class='va'>zendf</span>,
+  dec<span class='op'>=</span><span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'><a href='calc_declination_angle.html'>calc_declination_angle</a></span><span class='op'>(</span><span class='va'>jday</span><span class='op'>)</span>,
+  hragl<span class='op'>=</span><span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'><a href='calc_hour_angle.html'>calc_hour_angle</a></span><span class='op'>(</span><span class='va'>hour</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>zendf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span><span class='op'>(</span><span class='va'>zendf</span>,
+  zen<span class='op'>=</span><span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>calc_zenith_angle</span><span class='op'>(</span><span class='va'>lat</span>, <span class='va'>dec</span>, <span class='va'>hragl</span><span class='op'>)</span><span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='fu'>unitted</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='va'>zendf</span><span class='op'>)</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>hour</span>, y<span class='op'>=</span><span class='va'>zen</span>, color<span class='op'>=</span><span class='va'>jday</span>, group<span class='op'>=</span><span class='va'>jday</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/facet_wrap.html'>facet_wrap</a></span><span class='op'>(</span><span class='op'>~</span><span class='va'>lat</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span><span class='op'>(</span><span class='st'>'zenith angles by latitude (panels) and day of year (colors)'</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -225,7 +226,7 @@ is) between -90 (South Pole) and 90 (North Pole).</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

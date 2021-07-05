@@ -16,29 +16,29 @@ load_french_creek_std_mle(
 \arguments{
 \item{french}{the French Creek dataset}
 
-\item{K}{optional. If specified, a number for the K600 to assume (units of 
+\item{K}{optional. If specified, a number for the K600 to assume (units of
 1/d)}
 
 \item{estimate}{character indicating the type of model to fit}
 
-\item{start}{a character vector specifying the time at which the 'day' (the 
-time period to use in producing an estimate for a single date) begins. The 
+\item{start}{a character vector specifying the time at which the 'day' (the
+time period to use in producing an estimate for a single date) begins. The
 vector should have 2 elements, dates and times, to pass to chron()}
 
-\item{end}{a character vector specifying the time at which the 'day' ends. 
+\item{end}{a character vector specifying the time at which the 'day' ends.
 The vector should have 2 elements, dates and times, to pass to chron()}
 
 \item{plot}{logical - should plots be produced?}
 }
 \description{
-Bob's code includes MLE and nighttime regression models. This function 
-generates the output from those models, keeping the code as much intact as 
-possible. The exception is that we're using solar.time rather than 
+Bob's code includes MLE and nighttime regression models. This function
+generates the output from those models, keeping the code as much intact as
+possible. The exception is that we're using solar.time rather than
 local.time, for consistency with streamMetabolizer's recommendations
 }
 \details{
-This function requires the \code{chron} package, which is only suggested 
+This function requires the \code{chron} package, which is only suggested
 rather than required for the \code{streamMetabolizer} package. If you wish to
-run this function, ensure that \code{chron} is installed or install it with 
+run this function, ensure that \code{chron} is installed or install it with
 \code{install.packages('chron')}.
 }

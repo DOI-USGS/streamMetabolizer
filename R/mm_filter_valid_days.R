@@ -1,14 +1,14 @@
 #' Remove entries in data
-#' 
+#'
 #' Filter out any data rows that don't pass the specified tests for completeness
 #' and regularity
-#' 
-#' @param data data.frame of instantaneous observations, to be filtered to only 
+#'
+#' @param data data.frame of instantaneous observations, to be filtered to only
 #'   those points on days that pass the specified tests in mm_is_valid_day
 #' @param data_daily data.frame of daily estimates/statistics, to be filtered in
 #'   accordance with the filtering of data
 #' @inheritParams mm_model_by_ply
-#' @return list of data and data_daily with same structure as inputs but with 
+#' @return list of data and data_daily with same structure as inputs but with
 #'   invalid days removed, plus a third data.frame of dates that were removed
 #' @import dplyr
 #' @examples
@@ -22,7 +22,7 @@ mm_filter_valid_days <- function(
   day_start=4, day_end=27.99, day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge'), required_timestep=NA, # inheritParams mm_model_by_ply
   timestep_days=TRUE
 ) {
-  
+
   # function to filter the instantaneous data using validity, record dates that
   # are removed and the reasons for removal in a parent variable named removed
   filter_fun <- function(data_ply, ply_date, ply_validity, ...) {
@@ -37,18 +37,18 @@ mm_filter_valid_days <- function(
   # run the filtering function over all days, recording days that were removed
   removed <- list()
   data_filtered <- mm_model_by_ply(
-    model_fun=filter_fun, data=data, data_daily=data_daily, 
+    model_fun=filter_fun, data=data, data_daily=data_daily,
     day_start=day_start, day_end=day_end, day_tests=day_tests, required_timestep=required_timestep)
   # removed has now been populated by <<- calls within filter_fun
-  removed <- if(length(removed) > 0) bind_rows(removed) else data_frame(date=as.Date(NA), errors='')[c(),]
-  
+  removed <- if(length(removed) > 0) bind_rows(removed) else tibble::tibble(date=as.Date(NA), errors='')[c(),]
+
   # filter the daily data to match & return
   if(!is.null(data_daily)) {
     daily_unmatched <- as.Date(setdiff(
-      as.character(data_daily$date), 
+      as.character(data_daily$date),
       c(unique(format(data$solar.time, "%Y-%m-%d")), as.character(removed$date))))
     daily_removed <- data.frame(
-      date=daily_unmatched, 
+      date=daily_unmatched,
       errors=rep("date in data_daily but not data", length(daily_unmatched)),
       stringsAsFactors=FALSE)
     removed <- bind_rows(removed, daily_removed) %>%
@@ -58,7 +58,7 @@ mm_filter_valid_days <- function(
   } else {
     data_daily_filtered <- NULL
   }
-  
+
   # return
   list(data=data_filtered, data_daily=data_daily_filtered, removed=removed)
 }

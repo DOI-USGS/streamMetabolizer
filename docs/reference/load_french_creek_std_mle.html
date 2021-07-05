@@ -40,9 +40,9 @@
 
 
 <meta property="og:title" content="Generate outputs using Bob's code for comparison — load_french_creek_std_mle" />
-<meta property="og:description" content="Bob's code includes MLE and nighttime regression models. This function 
-generates the output from those models, keeping the code as much intact as 
-possible. The exception is that we're using solar.time rather than 
+<meta property="og:description" content="Bob's code includes MLE and nighttime regression models. This function
+generates the output from those models, keeping the code as much intact as
+possible. The exception is that we're using solar.time rather than
 local.time, for consistency with streamMetabolizer's recommendations" />
 
 
@@ -75,7 +75,7 @@ local.time, for consistency with streamMetabolizer's recommendations" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ local.time, for consistency with streamMetabolizer's recommendations" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ local.time, for consistency with streamMetabolizer's recommendations" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,20 +156,20 @@ local.time, for consistency with streamMetabolizer's recommendations" />
     </div>
 
     <div class="ref-description">
-    <p>Bob's code includes MLE and nighttime regression models. This function 
-generates the output from those models, keeping the code as much intact as 
-possible. The exception is that we're using solar.time rather than 
+    <p>Bob's code includes MLE and nighttime regression models. This function
+generates the output from those models, keeping the code as much intact as
+possible. The exception is that we're using solar.time rather than
 local.time, for consistency with streamMetabolizer's recommendations</p>
     </div>
 
-    <pre class="usage"><span class='fu'>load_french_creek_std_mle</span>(
-  <span class='no'>french</span>,
-  <span class='kw'>K</span> <span class='kw'>=</span> <span class='fl'>35</span>,
-  <span class='kw'>estimate</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"PRK"</span>, <span class='st'>"K"</span>, <span class='st'>"PR"</span>),
-  <span class='kw'>start</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='kw'>dates</span> <span class='kw'>=</span> <span class='st'>"08/23/12"</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='st'>"22:00:00"</span>),
-  <span class='kw'>end</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='kw'>dates</span> <span class='kw'>=</span> <span class='st'>"08/25/12"</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='st'>"06:00:00"</span>),
-  <span class='kw'>plot</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>load_french_creek_std_mle</span><span class='op'>(</span>
+  <span class='va'>french</span>,
+  K <span class='op'>=</span> <span class='fl'>35</span>,
+  estimate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"PRK"</span>, <span class='st'>"K"</span>, <span class='st'>"PR"</span><span class='op'>)</span>,
+  start <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>dates <span class='op'>=</span> <span class='st'>"08/23/12"</span>, times <span class='op'>=</span> <span class='st'>"22:00:00"</span><span class='op'>)</span>,
+  end <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>dates <span class='op'>=</span> <span class='st'>"08/25/12"</span>, times <span class='op'>=</span> <span class='st'>"06:00:00"</span><span class='op'>)</span>,
+  plot <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -180,7 +180,7 @@ local.time, for consistency with streamMetabolizer's recommendations</p>
     </tr>
     <tr>
       <th>K</th>
-      <td><p>optional. If specified, a number for the K600 to assume (units of 
+      <td><p>optional. If specified, a number for the K600 to assume (units of
 1/d)</p></td>
     </tr>
     <tr>
@@ -189,13 +189,13 @@ local.time, for consistency with streamMetabolizer's recommendations</p>
     </tr>
     <tr>
       <th>start</th>
-      <td><p>a character vector specifying the time at which the 'day' (the 
-time period to use in producing an estimate for a single date) begins. The 
+      <td><p>a character vector specifying the time at which the 'day' (the
+time period to use in producing an estimate for a single date) begins. The
 vector should have 2 elements, dates and times, to pass to chron()</p></td>
     </tr>
     <tr>
       <th>end</th>
-      <td><p>a character vector specifying the time at which the 'day' ends. 
+      <td><p>a character vector specifying the time at which the 'day' ends.
 The vector should have 2 elements, dates and times, to pass to chron()</p></td>
     </tr>
     <tr>
@@ -206,9 +206,9 @@ The vector should have 2 elements, dates and times, to pass to chron()</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function requires the <code>chron</code> package, which is only suggested 
+    <p>This function requires the <code>chron</code> package, which is only suggested
 rather than required for the <code>streamMetabolizer</code> package. If you wish to
-run this function, ensure that <code>chron</code> is installed or install it with 
+run this function, ensure that <code>chron</code> is installed or install it with
 <code><a href='https://rdrr.io/r/utils/install.packages.html'>install.packages('chron')</a></code>.</p>
 
   </div>
@@ -226,7 +226,7 @@ run this function, ensure that <code>chron</code> is installed or install it wit
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

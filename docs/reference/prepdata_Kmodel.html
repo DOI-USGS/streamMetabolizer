@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
+<title>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs,
 &amp; setting data_daily$weight to reflect user weights &amp; filters — prepdata_Kmodel • streamMetabolizer</title>
 
 
@@ -40,9 +40,9 @@
 
 
 
-<meta property="og:title" content="Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
+<meta property="og:title" content="Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs,
 &amp; setting data_daily$weight to reflect user weights &amp; filters — prepdata_Kmodel" />
-<meta property="og:description" content="Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
+<meta property="og:description" content="Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs,
 &amp;amp; setting data_daily$weight to reflect user weights &amp;amp; filters" />
 
 
@@ -75,7 +75,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -150,27 +150,27 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
+    <h1>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs,
 &amp; setting data_daily$weight to reflect user weights &amp; filters</h1>
     <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/metab_Kmodel.R'><code>R/metab_Kmodel.R</code></a></small>
     <div class="hidden name"><code>prepdata_Kmodel.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs, 
+    <p>Prepare data_daily by aggregating any daily data, renaming K600.daily to K600.daily.obs,
 &amp; setting data_daily$weight to reflect user weights &amp; filters</p>
     </div>
 
-    <pre class="usage"><span class='fu'>prepdata_Kmodel</span>(
-  <span class='no'>data</span>,
-  <span class='no'>data_daily</span>,
-  <span class='no'>weights</span>,
-  <span class='no'>filters</span>,
-  <span class='no'>day_start</span>,
-  <span class='no'>day_end</span>,
-  <span class='no'>day_tests</span>,
-  <span class='no'>required_timestep</span>
-)</pre>
+    <pre class="usage"><span class='fu'>prepdata_Kmodel</span><span class='op'>(</span>
+  <span class='va'>data</span>,
+  <span class='va'>data_daily</span>,
+  <span class='va'>weights</span>,
+  <span class='va'>filters</span>,
+  <span class='va'>day_start</span>,
+  <span class='va'>day_end</span>,
+  <span class='va'>day_tests</span>,
+  <span class='va'>required_timestep</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -185,7 +185,7 @@
     </tr>
     <tr>
       <th>weights</th>
-      <td><p>For Kmodel, character vector indicating the type of weighting 
+      <td><p>For Kmodel, character vector indicating the type of weighting
 to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).</p></td>
     </tr>
     <tr>
@@ -194,34 +194,34 @@ to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).</p></td>
 data_daily. Elements may include
 c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
 given, the corresponding filter is applied: K600.daily.upper-K600.daily.lower &lt;=
-CI.max, discharge.daily &lt;= discharge.daily.max, velocity.daily &lt;= 
+CI.max, discharge.daily &lt;= discharge.daily.max, velocity.daily &lt;=
 velocity.daily.max</p></td>
     </tr>
     <tr>
       <th>day_start</th>
-      <td><p>start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+      <td><p>start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.</p></td>
     </tr>
     <tr>
       <th>day_end</th>
-      <td><p>end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+      <td><p>end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.</p></td>
     </tr>
     <tr>
       <th>day_tests</th>
-      <td><p>list of tests to conduct to determine whether each date 
+      <td><p>list of tests to conduct to determine whether each date
 worth of data is valid for modeling. The results of these tests will be
 combined with the result of the test implied if <code>required_timestep</code> is
 numeric and then will be passed to <code>model_fun</code> as the
@@ -229,11 +229,11 @@ numeric and then will be passed to <code>model_fun</code> as the
     </tr>
     <tr>
       <th>required_timestep</th>
-      <td><p>NA or numeric (length 1). If numeric, the timestep 
-length in days that a date must have to pass the validity check (to within 
-a tolerance of 0.2% of the value of <code>required_timestep</code>). The result 
-of this test will be combined with the results of the tests listed in 
-<code>day_tests</code> and reported to <code>model_fun</code> as the 
+      <td><p>NA or numeric (length 1). If numeric, the timestep
+length in days that a date must have to pass the validity check (to within
+a tolerance of 0.2% of the value of <code>required_timestep</code>). The result
+of this test will be combined with the results of the tests listed in
+<code>day_tests</code> and reported to <code>model_fun</code> as the
 <code>ply_validity</code> argument to that function.</p></td>
     </tr>
     </table>
@@ -254,7 +254,7 @@ of this test will be combined with the results of the tests listed in
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

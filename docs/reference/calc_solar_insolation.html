@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+<title>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html — calc_solar_insolation • streamMetabolizer</title>
 
 
@@ -40,9 +40,9 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
 
 
 
-<meta property="og:title" content="Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+<meta property="og:title" content="Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html — calc_solar_insolation" />
-<meta property="og:description" content="Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+<meta property="og:description" content="Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html" />
 
 
@@ -75,7 +75,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -150,37 +150,37 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+    <h1>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html</h1>
     <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/calc_solar_insolation.R'><code>R/calc_solar_insolation.R</code></a></small>
     <div class="hidden name"><code>calc_solar_insolation.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+    <p>Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_solar_insolation</span>(
-  <span class='no'>app.solar.time</span>,
-  <span class='no'>latitude</span>,
-  <span class='kw'>max.insolation</span> <span class='kw'>=</span> <span class='fu'><a href='convert_PAR_to_SW.html'>convert_PAR_to_SW</a></span>(<span class='fl'>2326</span>),
-  <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"degrees"</span>, <span class='st'>"radians"</span>),
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fu'>is.unitted</span>(<span class='no'>app.solar.time</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>calc_solar_insolation</span><span class='op'>(</span>
+  <span class='va'>app.solar.time</span>,
+  <span class='va'>latitude</span>,
+  max.insolation <span class='op'>=</span> <span class='fu'><a href='convert_PAR_to_SW.html'>convert_PAR_to_SW</a></span><span class='op'>(</span><span class='fl'>2326</span><span class='op'>)</span>,
+  format <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"degrees"</span>, <span class='st'>"radians"</span><span class='op'>)</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>app.solar.time</th>
-      <td><p>POSIXct vector of date-time values in apparent solar time,
-e.g., as returned by <code><a href='convert_UTC_to_solartime.html'>convert_UTC_to_solartime(...,
+      <td><p>POSIXct vector of date-time values in apparent solar
+time, e.g., as returned by <code><a href='convert_UTC_to_solartime.html'>convert_UTC_to_solartime(...,
 time.type="apparent solar")</a></code></p></td>
     </tr>
     <tr>
       <th>latitude</th>
-      <td><p>numeric value or vector indicating the site latitude in 
+      <td><p>numeric value or vector indicating the site latitude in
 decimal degrees (never radians or deg-min-sec, no matter what <code>format</code>
 is) between -90 (South Pole) and 90 (North Pole).</p></td>
     </tr>
@@ -191,32 +191,34 @@ greatly with atmospheric conditions</p></td>
     </tr>
     <tr>
       <th>format</th>
-      <td><p>The format of both the input and the output. May be "degrees" 
+      <td><p>The format of both the input and the output. May be "degrees"
 or "radians".</p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should the returned vector be a unitted object?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?</p></td>
     </tr>
     </table>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>insdf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(
-  <span class='kw'>lat</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>20</span>,<span class='fl'>40</span>,<span class='fl'>60</span>), <span class='kw'>each</span><span class='kw'>=</span><span class='fl'>48</span>*<span class='fl'>4</span>),
-  <span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'2004-%d-15'</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>,<span class='fl'>4</span>,<span class='fl'>7</span>,<span class='fl'>10</span>), <span class='kw'>each</span><span class='kw'>=</span><span class='fl'>48</span>)), <span class='kw'>tz</span><span class='kw'>=</span><span class='st'>'UTC'</span>), <span class='kw'>times</span><span class='kw'>=</span><span class='fl'>4</span>),
-  <span class='kw'>hour</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>0</span>,<span class='fl'>23.5</span>,<span class='fl'>0.5</span>), <span class='kw'>times</span><span class='kw'>=</span><span class='fl'>4</span>*<span class='fl'>4</span>)
-)
-<span class='no'>insdf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span>(<span class='no'>insdf</span>, <span class='kw'>datetime</span><span class='kw'>=</span><span class='kw pkg'>lubridate</span><span class='kw ns'>::</span><span class='fu'><a href='http://lubridate.tidyverse.org/reference/with_tz.html'>with_tz</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span>(<span class='no'>date</span>), <span class='st'>'UTC'</span>) +
-  <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='no'>hour</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'hours'</span>))
-<span class='no'>insdf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span>(<span class='no'>insdf</span>, <span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span>(<span class='no'>date</span>))
-<span class='no'>insdf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span>(<span class='no'>insdf</span>, <span class='kw'>ins</span><span class='kw'>=</span><span class='fu'>calc_solar_insolation</span>(<span class='no'>datetime</span>, <span class='no'>lat</span>))
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span>(<span class='no'>insdf</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span>(<span class='kw'>color</span><span class='kw'>=</span><span class='no'>date</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>ins</span>, <span class='kw'>x</span><span class='kw'>=</span><span class='no'>hour</span>)) +
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span>() + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/facet_wrap.html'>facet_wrap</a></span>(~<span class='no'>lat</span>) +
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>'solar insolation by latitude (panels) and day of year (colors)'</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>insdf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>
+  lat<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='fl'>20</span>,<span class='fl'>40</span>,<span class='fl'>60</span><span class='op'>)</span>, each<span class='op'>=</span><span class='fl'>48</span><span class='op'>*</span><span class='fl'>4</span><span class='op'>)</span>,
+  date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'2004-%d-15'</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>4</span>,<span class='fl'>7</span>,<span class='fl'>10</span><span class='op'>)</span>, each<span class='op'>=</span><span class='fl'>48</span><span class='op'>)</span><span class='op'>)</span>, tz<span class='op'>=</span><span class='st'>'UTC'</span><span class='op'>)</span>, times<span class='op'>=</span><span class='fl'>4</span><span class='op'>)</span>,
+  hour<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='fl'>23.5</span>,<span class='fl'>0.5</span><span class='op'>)</span>, times<span class='op'>=</span><span class='fl'>4</span><span class='op'>*</span><span class='fl'>4</span><span class='op'>)</span>
+<span class='op'>)</span>
+<span class='va'>insdf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span><span class='op'>(</span><span class='va'>insdf</span>, datetime<span class='op'>=</span><span class='fu'>lubridate</span><span class='fu'>::</span><span class='fu'><a href='http://lubridate.tidyverse.org/reference/with_tz.html'>with_tz</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span><span class='op'>(</span><span class='va'>date</span><span class='op'>)</span>, <span class='st'>'UTC'</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='va'>hour</span>, units<span class='op'>=</span><span class='st'>'hours'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>insdf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span><span class='op'>(</span><span class='va'>insdf</span>, date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/character.html'>as.character</a></span><span class='op'>(</span><span class='va'>date</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>insdf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/transform.html'>transform</a></span><span class='op'>(</span><span class='va'>insdf</span>, ins<span class='op'>=</span><span class='fu'>calc_solar_insolation</span><span class='op'>(</span><span class='va'>datetime</span>, <span class='va'>lat</span><span class='op'>)</span><span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='va'>insdf</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>color<span class='op'>=</span><span class='va'>date</span>, y<span class='op'>=</span><span class='va'>ins</span>, x<span class='op'>=</span><span class='va'>hour</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/facet_wrap.html'>facet_wrap</a></span><span class='op'>(</span><span class='op'>~</span><span class='va'>lat</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span><span class='op'>(</span><span class='st'>'solar insolation by latitude (panels) and day of year (colors)'</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -232,7 +234,7 @@ or "radians".</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

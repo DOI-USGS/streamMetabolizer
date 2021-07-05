@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Functions implemented by any <code>streamMetabolizer</code>-compatible metabolism 
+<title>Functions implemented by any streamMetabolizer-compatible metabolism
 model. — metab_model_interface • streamMetabolizer</title>
 
 
@@ -40,10 +40,10 @@ model. — metab_model_interface • streamMetabolizer</title>
 
 
 
-<meta property="og:title" content="Functions implemented by any <code>streamMetabolizer</code>-compatible metabolism 
+<meta property="og:title" content="Functions implemented by any streamMetabolizer-compatible metabolism
 model. — metab_model_interface" />
-<meta property="og:description" content="Metabolism models in the streamMetabolizer package all implement a 
-common set of core functions. These functions are conceptually packaged as 
+<meta property="og:description" content="Metabolism models in the streamMetabolizer package all implement a
+common set of core functions. These functions are conceptually packaged as
 the metab_model_interface defined here." />
 
 
@@ -76,7 +76,7 @@ the metab_model_interface defined here." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -84,7 +84,7 @@ the metab_model_interface defined here." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -134,7 +134,7 @@ the metab_model_interface defined here." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -151,15 +151,15 @@ the metab_model_interface defined here." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Functions implemented by any <code>streamMetabolizer</code>-compatible metabolism 
+    <h1>Functions implemented by any <code>streamMetabolizer</code>-compatible metabolism
 model.</h1>
     <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/metab_model_interface.R'><code>R/metab_model_interface.R</code></a></small>
     <div class="hidden name"><code>metab_model_interface.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Metabolism models in the <code>streamMetabolizer</code> package all implement a 
-common set of core functions. These functions are conceptually packaged as 
+    <p>Metabolism models in the <code>streamMetabolizer</code> package all implement a
+common set of core functions. These functions are conceptually packaged as
 the <code>metab_model_interface</code> defined here.</p>
     </div>
 
@@ -167,13 +167,13 @@ the <code>metab_model_interface</code> defined here.</p>
 
     <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
 
-    <p>A collection of functions which any metabolism model in 
+    <p>A collection of functions which any metabolism model in
   <code>streamMetabolizer</code> should implement.</p>
     <h2 class="hasAnchor" id="functions-in-the-interface"><a class="anchor" href="#functions-in-the-interface"></a>Functions in the interface</h2>
 
     
 
-  
+
 <p></p><ul>
 <li><p><code>show(metab_model) { display(metab_model) }</code></p></li>
 <li><p><code><a href='get_params.html'>get_params</a>(metab_model, ...) { return(data.frame) }</code></p></li>
@@ -192,7 +192,8 @@ the <code>metab_model_interface</code> defined here.</p>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/methods.html'>methods</a></span>(<span class='kw'>class</span><span class='kw'>=</span><span class='st'>"metab_model"</span>)</div><div class='output co'>#&gt;  [1] get_data_daily   get_data         get_fit          get_fitting_time
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/methods.html'>methods</a></span><span class='op'>(</span>class<span class='op'>=</span><span class='st'>"metab_model"</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;  [1] get_data_daily   get_data         get_fit          get_fitting_time
 #&gt;  [5] get_info         get_param_names  get_params       get_specs       
 #&gt;  [9] get_version      predict_DO       predict_metab    show            
 #&gt; see '?methods' for accessing help and source code</div></pre>
@@ -211,7 +212,7 @@ the <code>metab_model_interface</code> defined here.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

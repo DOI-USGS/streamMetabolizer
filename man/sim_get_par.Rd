@@ -7,8 +7,8 @@
 sim_get_par(par.name, specs, data_daily, eval_env, required = TRUE)
 }
 \arguments{
-\item{par.name}{The parameter name. Should be period.separated if that's how 
-data_daily is. Periods will be converted to underscores when searching 
+\item{par.name}{The parameter name. Should be period.separated if that's how
+data_daily is. Periods will be converted to underscores when searching
 specs for the parameter}
 
 \item{specs}{a specifications list from which parameter values/functions will
@@ -25,14 +25,14 @@ values required}
 will be thrown.}
 }
 \value{
-list containing up to three vectors (or NULLs) named \code{specs}, 
-  \code{data_daily}, and \code{combo} according to the source of the numbers 
+list containing up to three vectors (or NULLs) named \code{specs},
+  \code{data_daily}, and \code{combo} according to the source of the numbers
   in each vector.
 }
 \description{
-Used in get_params.metab_sim. Looks in both data_daily and specs for a daily 
+Used in get_params.metab_sim. Looks in both data_daily and specs for a daily
 paramter, e.g., 'K600.daily'. If it's present in just one place, those values
-will be used. If it's present in neither, an error or NULLs will be returned 
+will be used. If it's present in neither, an error or NULLs will be returned
 depending on whether \code{required=TRUE}.
 }
 \keyword{internal}

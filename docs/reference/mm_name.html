@@ -76,7 +76,7 @@ metab." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -84,7 +84,7 @@ metab." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -134,7 +134,7 @@ metab." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -164,24 +164,24 @@ From a complete <code>specs</code> list, a metabolism model can be run with
 <code><a href='metab.html'>metab</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mm_name</span>(
-  <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"mle"</span>, <span class='st'>"bayes"</span>, <span class='st'>"night"</span>, <span class='st'>"Kmodel"</span>, <span class='st'>"sim"</span>),
-  <span class='kw'>pool_K600</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"none"</span>, <span class='st'>"normal"</span>, <span class='st'>"normal_sdzero"</span>, <span class='st'>"normal_sdfixed"</span>, <span class='st'>"linear"</span>,
+    <pre class="usage"><span class='fu'>mm_name</span><span class='op'>(</span>
+  type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"mle"</span>, <span class='st'>"bayes"</span>, <span class='st'>"night"</span>, <span class='st'>"Kmodel"</span>, <span class='st'>"sim"</span><span class='op'>)</span>,
+  pool_K600 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"normal"</span>, <span class='st'>"normal_sdzero"</span>, <span class='st'>"normal_sdfixed"</span>, <span class='st'>"linear"</span>,
     <span class='st'>"linear_sdzero"</span>, <span class='st'>"linear_sdfixed"</span>, <span class='st'>"binned"</span>, <span class='st'>"binned_sdzero"</span>, <span class='st'>"binned_sdfixed"</span>,
-    <span class='st'>"complete"</span>),
-  <span class='kw'>err_obs_iid</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>TRUE</span>, <span class='fl'>FALSE</span>),
-  <span class='kw'>err_proc_acor</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>err_proc_iid</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>err_proc_GPP</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>ode_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trapezoid"</span>, <span class='st'>"euler"</span>, <span class='st'>"rk2"</span>, <span class='st'>"lsoda"</span>, <span class='st'>"lsode"</span>, <span class='st'>"lsodes"</span>, <span class='st'>"lsodar"</span>,
+    <span class='st'>"complete"</span><span class='op'>)</span>,
+  err_obs_iid <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>TRUE</span>, <span class='cn'>FALSE</span><span class='op'>)</span>,
+  err_proc_acor <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  err_proc_iid <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  err_proc_GPP <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  ode_method <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"trapezoid"</span>, <span class='st'>"euler"</span>, <span class='st'>"rk2"</span>, <span class='st'>"lsoda"</span>, <span class='st'>"lsode"</span>, <span class='st'>"lsodes"</span>, <span class='st'>"lsodar"</span>,
     <span class='st'>"vode"</span>, <span class='st'>"daspk"</span>, <span class='st'>"rk4"</span>, <span class='st'>"ode23"</span>, <span class='st'>"ode45"</span>, <span class='st'>"radau"</span>, <span class='st'>"bdf"</span>, <span class='st'>"bdf_d"</span>, <span class='st'>"adams"</span>,
-    <span class='st'>"impAdams"</span>, <span class='st'>"impAdams_d"</span>, <span class='st'>"Euler"</span>, <span class='st'>"pairmeans"</span>, <span class='st'>"NA"</span>),
-  <span class='kw'>GPP_fun</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"linlight"</span>, <span class='st'>"satlight"</span>, <span class='st'>"satlightq10temp"</span>, <span class='st'>"NA"</span>),
-  <span class='kw'>ER_fun</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"constant"</span>, <span class='st'>"q10temp"</span>, <span class='st'>"NA"</span>),
-  <span class='kw'>deficit_src</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"DO_mod"</span>, <span class='st'>"DO_obs"</span>, <span class='st'>"DO_obs_filter"</span>, <span class='st'>"NA"</span>),
-  <span class='kw'>engine</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"stan"</span>, <span class='st'>"nlm"</span>, <span class='st'>"lm"</span>, <span class='st'>"mean"</span>, <span class='st'>"loess"</span>, <span class='st'>"rnorm"</span>),
-  <span class='kw'>check_validity</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+    <span class='st'>"impAdams"</span>, <span class='st'>"impAdams_d"</span>, <span class='st'>"Euler"</span>, <span class='st'>"pairmeans"</span>, <span class='st'>"NA"</span><span class='op'>)</span>,
+  GPP_fun <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"linlight"</span>, <span class='st'>"satlight"</span>, <span class='st'>"satlightq10temp"</span>, <span class='st'>"NA"</span><span class='op'>)</span>,
+  ER_fun <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"constant"</span>, <span class='st'>"q10temp"</span>, <span class='st'>"NA"</span><span class='op'>)</span>,
+  deficit_src <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"DO_mod"</span>, <span class='st'>"DO_obs"</span>, <span class='st'>"DO_obs_filter"</span>, <span class='st'>"NA"</span><span class='op'>)</span>,
+  engine <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"stan"</span>, <span class='st'>"nlm"</span>, <span class='st'>"lm"</span>, <span class='st'>"mean"</span>, <span class='st'>"loess"</span>, <span class='st'>"rnorm"</span><span class='op'>)</span>,
+  check_validity <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -369,7 +369,7 @@ supplied (besides <code>type</code> and <code>check_validity</code>) will defaul
 values indicated by <code><a href='mm_parse_name.html'>mm_parse_name(mm_valid_names(type)[1])</a></code>.</p>
 
 
-<h3>pool_K600</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>pool_K600</h3>
 
 
 <p>Here are the essential model lines (in Stan language) that distinguish the K
@@ -411,7 +411,12 @@ specified)]</td></tr>
     <div class='dont-index'><p>The converse of this function is <code><a href='mm_parse_name.html'>mm_parse_name</a></code>.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>mm_name</span>(<span class='st'>'mle'</span>)</div><div class='output co'>#&gt; [1] "m_np_oi_tr_plrckm.nlm"</div><div class='input'><span class='fu'>mm_name</span>(<span class='st'>'mle'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'satlight'</span>, <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'q10temp'</span>)</div><div class='output co'>#&gt; [1] "m_np_oi_tr_psrqkm.nlm"</div><div class='input'><span class='fu'>mm_name</span>(<span class='st'>'night'</span>)</div><div class='output co'>#&gt; [1] "n_np_pi_eu_rckf.lm"</div><div class='input'><span class='fu'>mm_name</span>(<span class='st'>'sim'</span>, <span class='kw'>err_proc_acor</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] "s_np_oipcpi_tr_plrckm.rnorm"</div><div class='input'><span class='fu'>mm_name</span>(<span class='st'>'bayes'</span>, <span class='kw'>pool_K600</span><span class='kw'>=</span><span class='st'>'binned'</span>)</div><div class='output co'>#&gt; [1] "b_Kb_oipi_tr_plrckm.stan"</div></pre>
+    <pre class="examples"><div class='input'><span class='fu'>mm_name</span><span class='op'>(</span><span class='st'>'mle'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "m_np_oi_tr_plrckm.nlm"</div><div class='input'><span class='fu'>mm_name</span><span class='op'>(</span><span class='st'>'mle'</span>, GPP_fun<span class='op'>=</span><span class='st'>'satlight'</span>, ER_fun<span class='op'>=</span><span class='st'>'q10temp'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "m_np_oi_tr_psrqkm.nlm"</div><div class='input'><span class='fu'>mm_name</span><span class='op'>(</span><span class='st'>'night'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "n_np_pi_eu_rckf.lm"</div><div class='input'><span class='fu'>mm_name</span><span class='op'>(</span><span class='st'>'sim'</span>, err_proc_acor<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "s_np_oipcpi_tr_plrckm.rnorm"</div><div class='input'><span class='fu'>mm_name</span><span class='op'>(</span><span class='st'>'bayes'</span>, pool_K600<span class='op'>=</span><span class='st'>'binned'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "b_Kb_oipi_tr_plrckm.stan"</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -427,7 +432,7 @@ specified)]</td></tr>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

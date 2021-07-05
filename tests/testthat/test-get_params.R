@@ -50,36 +50,30 @@ test_that('get_params options are honored (for MLE models): messages', {
   expect_true(!any(c('warnings','errors') %in% names(get_params(mm, messages=FALSE))))
 })
 
-test_that('get_params options are honored (for MLE models): units', {
-  # units
-  expect_s3_class(get_params(mm, attach.units=FALSE), 'data.frame')
-  expect_s4_class(get_params(mm, attach.units=TRUE), 'unitted')
-})
-
 test_that('get_params works for each model type, basic GPP & ER equations', {
   dat <- data_metab('1','30')
-  
+
   # empty model
   mm <- metab_model()
   expect_null(get_params(mm))
-  
+
   # metab_mle
   mm <- metab_mle(data=dat)
   ps <- get_params(mm, uncertainty='none', messages=FALSE)
   expect_equal(names(ps), c('date','GPP.daily','ER.daily','K600.daily'))
-  
+
   # metab_night
   mm <- metab_night(data=dat)
   ps <- get_params(mm, uncertainty='none', messages=FALSE)
   expect_equal(names(ps), c('date','ER.daily','K600.daily'))
-  
+
   # metab_bayes
   mm <- metab_bayes(specs("b_np_oi_tr_plrckm.stan", burnin_steps=50, saved_steps=50, n_chains=1, n_cores=1), data=dat)
   pn <- get_param_names(mm)
   expect_equal(pn$required, c('GPP.daily','ER.daily','K600.daily'))
   ps <- get_params(mm, uncertainty='none', messages=FALSE)
   expect_equal(names(ps), c('date','GPP.daily','ER.daily','K600.daily'))
-  
+
   # metab_sim
   dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)), GPP.daily=2, ER.daily=-3, K600.daily=21)
   mm <- metab_sim(specs(mm_name('sim'), K600_daily=NULL, GPP_daily=NULL, ER_daily=NULL), data=dat, data_daily=dat_daily)

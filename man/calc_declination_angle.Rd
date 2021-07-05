@@ -7,22 +7,22 @@
 calc_declination_angle(jday, format = c("degrees", "radians"))
 }
 \arguments{
-\item{jday}{The day of year as a number between 0 (Jan 1) and 364 (365 also 
+\item{jday}{The day of year as a number between 0 (Jan 1) and 364 (365 also
 OK for leap year)}
 
-\item{format}{The format of both the input and the output. May be "degrees" 
+\item{format}{The format of both the input and the output. May be "degrees"
 or "radians".}
 }
 \value{
-numeric value or vector, in the units specified by \code{format}, 
-  indicating the declination angle corresponding to each value supplied in 
+numeric value or vector, in the units specified by \code{format},
+  indicating the declination angle corresponding to each value supplied in
   \code{jday}.
 }
 \description{
 Calculate declination angle as in Yard et al. (2005)
 }
 \examples{
-decdf <- data.frame(jday=1:366, 
+decdf <- data.frame(jday=1:366,
   dec=streamMetabolizer:::calc_declination_angle(1:366))
 \dontrun{
 library(ggplot2)
@@ -30,8 +30,8 @@ ggplot(unitted::v(decdf), aes(x=jday, y=dec)) + geom_line()
 }
 }
 \references{
-Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G. 
-  Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn. 
+Yard, Michael D., Glenn E. Bennett, Steve N. Mietz, Lewis G.
+  Coggins Jr., Lawrence E. Stevens, Susan Hueftle, and Dean W. Blinn.
   \emph{Influence of Topographic Complexity on Solar Insolation Estimates for
   the Colorado River, Grand Canyon, AZ.} Ecological Modelling 183, no. 2-3
   (April 25, 2005): 157-72. doi:10.1016/j.ecolmodel.2004.07.027.

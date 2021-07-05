@@ -79,7 +79,7 @@ rstan manual." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@ rstan manual." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,7 @@ rstan manual." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -161,19 +161,19 @@ rstan manual." />
 
     <div class="ref-description">
     <p>A function specific to metab_bayes models. Returns an MCMC object of class
-<code>stanfit</code> (<a href='https://rdrr.io/pkg/rstan/man/stanfit-class.html'>rstan::stanfit</a>), which is saved in the metab_model by
+<code>stanfit</code> (<a href='https://mc-stan.org/rstan/reference/stanfit-class.html'>rstan::stanfit</a>), which is saved in the metab_model by
 default because you should almost always inspect it; see <code>keep_mcmcs</code>
 argument to <code><a href='specs.html'>specs()</a></code> for options for saving space. The <code>rstan</code> methods
-for <a href='https://rdrr.io/pkg/rstan/man/stanfit-class.html'>rstan::stanfit</a> objects include <code><a href='https://rdrr.io/r/base/summary.html'>summary()</a></code>, <code>get_stancode()</code>,
+for <a href='https://mc-stan.org/rstan/reference/stanfit-class.html'>rstan::stanfit</a> objects include <code><a href='https://rdrr.io/r/base/summary.html'>summary()</a></code>, <code>get_stancode()</code>,
 <code>stan_dens()</code>, <code>stan_diag()</code>, and many more. See
-<code>?'rstan-plotting-functions'</code>, <a href='https://rdrr.io/pkg/rstan/man/stanfit-class.html'>rstan::stanfit</a> and the
+<code>?'rstan-plotting-functions'</code>, <a href='https://mc-stan.org/rstan/reference/stanfit-class.html'>rstan::stanfit</a> and the
 <a href='https://cran.r-project.org/web/packages/rstan/rstan.pdf'>rstan manual</a>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_mcmc</span>(<span class='no'>metab_model</span>)
+    <pre class="usage"><span class='fu'>get_mcmc</span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span>
 
 <span class='co'># S3 method for metab_bayes</span>
-<span class='fu'>get_mcmc</span>(<span class='no'>metab_model</span>)</pre>
+<span class='fu'>get_mcmc</span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -210,7 +210,7 @@ return the MCMC model objects</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -29,22 +29,20 @@ An input dataset may optionally include:
 
 An example of a properly formatted input dataset is available in the
 streamMetabolizer package - data are from French Creek in Laramie, WY, courtesy
-of Bob Hall. Explicitly attached units are optional but useful for confirming
-that the data are in the expected format.
+of Bob Hall.
 ```{r data, message=FALSE}
 library(streamMetabolizer)
-dat <- data_metab(num_days='3', res='15', attach.units=TRUE)
+dat <- data_metab(num_days='3', res='15')
 ```
 
-Inspect the dimensions, column names, and units of the data. Note that `unitted`
-data.frames, such as the one returned by `data_metab(..., attach.units=TRUE)`,
-prints out with a second row called 'U' giving the units for each column. Again,
-you can use a regular old data.frame for your data, but make sure the units of
-your data are the same as in this example.
+Inspect the dimensions and column names of the data.
 ```{r data_check}
 dim(dat)
 dat[c(1,48,96,240,288),] # some example rows
 ```
+
+You can get additional information about the expected format of the data in the `?metab` help document.
+When preparing your own data, make sure the class and units of your data match those specified in that document.
 
 # Exploring input data
 
@@ -57,7 +55,7 @@ library(ggplot2)
 ```
 
 ```{r viz_inputs_DO, fig.width=7, fig.height=3}
-dat %>% unitted::v() %>%
+dat %>% 
   mutate(DO.pctsat = 100 * (DO.obs / DO.sat)) %>%
   select(solar.time, starts_with('DO')) %>%
   gather(type, DO.value, starts_with('DO')) %>%
@@ -69,7 +67,7 @@ dat %>% unitted::v() %>%
 
 ```{r viz_inputs_other, fig.width=7, fig.height=4}
 labels <- c(depth='depth\n(m)', temp.water='water temp\n(deg C)', light='PAR\n(umol m^-2 s^-1)')
-dat %>% unitted::v() %>%
+dat %>% 
   select(solar.time, depth, temp.water, light) %>%
   gather(type, value, depth, temp.water, light) %>%
   mutate(
@@ -93,7 +91,7 @@ requriements for 'mle'.
 metab_inputs('mle', 'data')
 ```
 
-Also read through the help page at `?mm_data` for more detailed variable definitions and requirements.
+Also read through the help pages at `?metab` and `?mm_data` for more detailed variable definitions and requirements.
 
 # Prepare the timestamps
 

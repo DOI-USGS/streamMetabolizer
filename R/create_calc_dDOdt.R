@@ -1,19 +1,19 @@
 #' Create a function that generates a 1-day timeseries of DO.mod
-#' 
-#' Creates a closure that bundles data and helper functions into a single 
+#'
+#' Creates a closure that bundles data and helper functions into a single
 #' function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
-#' 
+#'
 #' @section ode_method 'trapezoid':
-#' 
+#'
 #' 'pairmeans' and 'trapezoid' are identical. They are the analytical
 #' solution to a trapezoid rule with this starting point:
 #' \code{
-#'  DO.mod[t+1] = 
+#'  DO.mod[t+1] =
 #'   DO.mod[t] +
 #'    (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-#'    + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+#'    + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2
 #'    + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
-#'    + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2 
+#'    + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2
 #'    ) * timestep
 #' }
 #' and this solution:
@@ -24,27 +24,27 @@
 #'       ER[t]+ER[t+1] +
 #'       err.proc[t]+err.proc[t+1]
 #'      ) / (depth[t]+depth[t+1])
-#'    + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2 
+#'    + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2
 #'  ) * timestep / (1 + timestep*k.O2[t+1]/2)
 #' }
 #' where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
 #' err.proc=0 for model fitting.
-#' 
-#' @param data data.frame as in \code{\link{metab}}, except that data must 
-#'   contain exactly one date worth of inputs (~24 hours according to 
+#'
+#' @param data data.frame as in \code{\link{metab}}, except that data must
+#'   contain exactly one date worth of inputs (~24 hours according to
 #'   \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).
 #' @inheritParams mm_name
 #' @param err.proc optional numerical vector of length nrow(data). Process error
-#'   in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
-#'   Appropriate for simulation, when this vector of process errors will be 
+#'   in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!).
+#'   Appropriate for simulation, when this vector of process errors will be
 #'   added to the calculated values of GPP and ER (then divided by depth and
 #'   multiplied by timestep duration) to simulate process error. But usually
 #'   (for MLE or prediction from a fitted MLE/Bayesian/nighttime regression
 #'   model) \code{err.proc} should be missing or 0
 #' @return a function that accepts args \code{t} (the time in 0:(n-1) where n is
 #'   the number of timesteps), \code{DO.mod.t} (the value of DO.mod at time t in
-#'   gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which 
-#'   parameters should be included in this list, create \code{dDOdt} with this 
+#'   gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which
+#'   parameters should be included in this list, create \code{dDOdt} with this
 #'   function and then call \code{environment(dDOdt)$metab.needs})
 #' @import dplyr
 #' @importFrom unitted v
@@ -59,7 +59,7 @@
 #'   GPP.daily=GPP, ER.daily=ER, K600.daily=K600))
 #' DOtime <- data$solar.time
 #' dDOtime <- data$solar.time[-nrow(data)] + (data$solar.time[2] - data$solar.time[1])/2
-#' 
+#'
 #' # args to create_calc_dDOdt determine which values are needed in metab.pars
 #' dDOdt <- create_calc_dDOdt(data, ode_method='trapezoid', GPP_fun='satlight',
 #'   ER_fun='q10temp', deficit_src='DO_mod')
@@ -67,7 +67,7 @@
 #' environment(dDOdt)$metab.needs # get the names to be included in metab.pars
 #' dDOdt(t=23, state=c(DO.mod=data$DO.obs[1]),
 #'   metab.pars=list(Pmax=0.2, alpha=0.01, ER20=-0.05, K600.daily=3))$dDOdt
-#' 
+#'
 #' # different required args; try in a timeseries
 #' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
@@ -86,7 +86,7 @@
 #' plot(x=dDOtime, y=dDOdt.obs)
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 #' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
-#' 
+#'
 #' # compute & plot a full timeseries with ode() integration
 #' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
 #'   ER_fun='constant', deficit_src='DO_mod')
@@ -103,7 +103,7 @@
 #' lines(x=dDOtime, y=dDOdt.mod.m, type='l', col='blue')
 #' lines(x=dDOtime, y=dDOdt.mod.o, type='l', col='green', lty=2)
 #' par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
-#' 
+#'
 #' # see how values of metab.pars affect the dDOdt predictions
 #' library(dplyr); library(ggplot2); library(tidyr)
 #' dDOdt <- create_calc_dDOdt(data, ode_method='euler', GPP_fun='linlight',
@@ -118,7 +118,7 @@
 #'   }
 #'   dDOdt.mod.m
 #' }
-#' dDO.preds <- data_frame(
+#' dDO.preds <- tibble::tibble(
 #'   solar.time = dDOtime,
 #'   dDO.preds.base = apply_dDOdt(3, -5, 15),
 #'   dDO.preds.dblGPP = apply_dDOdt(6, -5, 15),
@@ -127,7 +127,7 @@
 #' dDO.preds %>%
 #'   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) %>%
 #'   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
-#' 
+#'
 #' # try simulating process eror
 #' data <- data_metab('1','30')[seq(1,48,by=2),]
 #' plot(x=data$solar.time, y=data$DO.obs)
@@ -170,8 +170,8 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
   # timesteps are regular
   data$t <- seq_len(nrow(data))
 
-  # define the forcing (temp.water, light, DO.sat, etc.) interpolations and 
-  # other inputs to include in the dDOdt() closure. 
+  # define the forcing (temp.water, light, DO.sat, etc.) interpolations and
+  # other inputs to include in the dDOdt() closure.
   integer.t <- isTRUE(ode_method %in% c('euler','trapezoid','Euler','pairmeans'))
   data$KO2.conv <- suppressWarnings(convert_k600_to_kGAS(k600=1, temperature=data$temp.water, gas='O2'))
   if(any(is.nan(data$KO2.conv))) {
@@ -196,8 +196,8 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     light <- data$light
     KO2.conv <- data$KO2.conv
     err.proc <- data$err.proc
-  } else { 
-    # other methods require functions that can be applied at non-integer 
+  } else {
+    # other methods require functions that can be applied at non-integer
     # values of t. approxfun is pretty darn fast and ever-so-slightly faster
     # with data$x than with independent vectors of t and a variable
     DO.obs <- approxfun(data$t, data$DO.obs, rule=2)
@@ -218,7 +218,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     GPP_fun,
     'NA'=(function(){
       function(t, metab.pars) 0
-    })(), 
+    })(),
     linlight=(function(){
       # normalize light by the sum of light in the first 24 hours of the time window
       mean.light <- with(
@@ -226,7 +226,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
         mean(data$light[in.solar.day]))
       if(mean.light == 0) mean.light <- 1
       metab.needs <<- c(metab.needs, 'GPP.daily')
-      if(integer.t) function(t, metab.pars) { 
+      if(integer.t) function(t, metab.pars) {
         metab.pars[['GPP.daily']] * light[t] / mean.light
       } else function(t, metab.pars) {
         metab.pars[['GPP.daily']] * light(t) / mean.light
@@ -236,7 +236,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
       metab.needs <<- c(metab.needs, c('Pmax','alpha'))
       if(integer.t) function(t, metab.pars) {
         Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light[t] / Pmax)
-      } else function(t, metab.pars) { 
+      } else function(t, metab.pars) {
         Pmax <- metab.pars[['Pmax']]; Pmax * tanh(metab.pars[['alpha']] * light(t) / Pmax)
       }
     })(),
@@ -283,7 +283,7 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
         metab.pars[['K600.daily']] * KO2.conv(t) * (DO.sat(t) - DO.obs(t))
       }
     })(),
-    DO_obs_filter=, 
+    DO_obs_filter=,
     DO_mod=(function(){
       metab.needs <<- c(metab.needs, 'K600.daily')
       if(integer.t) function(t, metab.pars, DO.mod.t) {
@@ -294,14 +294,14 @@ create_calc_dDOdt <- function(data, ode_method, GPP_fun, ER_fun, deficit_src, er
     })(),
     stop('unrecognized deficit_src')
   )
-  
+
   # dDOdt: instantaneous rate of change in DO at time t in gO2 m^-3 timestep^-1
   dDOdt <- switch(
     ode_method,
-    # 'pairmeans' and 'trapezoid' are identical and are the analytical solution 
-    # to a trapezoid rule. for the derivations, see 
-    # https://github.com/USGS-R/streamMetabolizer/issues/252. remember we're 
-    # treating err.proc as a rate in gO2/m2/d, just like GPP & ER. no need to 
+    # 'pairmeans' and 'trapezoid' are identical and are the analytical solution
+    # to a trapezoid rule. for the derivations, see
+    # https://github.com/USGS-R/streamMetabolizer/issues/252. remember we're
+    # treating err.proc as a rate in gO2/m2/d, just like GPP & ER. no need to
     # switch on integer.t because trapezoid and pairmeans are always integer.t
     trapezoid=, pairmeans={
       if(deficit_src == 'DO_obs') function(t, state, metab.pars) {

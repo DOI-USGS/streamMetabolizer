@@ -14,7 +14,7 @@ predict_DO(
   date_start = NA,
   date_end = NA,
   ...,
-  attach.units = FALSE,
+  attach.units = deprecated(),
   use_saved = TRUE
 )
 
@@ -25,7 +25,7 @@ predict_DO(
   date_start = NA,
   date_end = NA,
   ...,
-  attach.units = FALSE,
+  attach.units = deprecated(),
   use_saved = TRUE
 )
 
@@ -34,36 +34,37 @@ predict_DO(
 \method{predict_DO}{metab_sim}(metab_model, date_start = NA, date_end = NA, ...)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the 
+\item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_start}{Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{date_end}{Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_end}{Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{...}{Other arguments passed to class-specific implementations of 
+\item{...}{Other arguments passed to class-specific implementations of
 \code{predict_DO}}
 
-\item{attach.units}{logical. Should units be attached to the output?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
 the model?}
 }
 \value{
-A data.frame of dissolved oxygen predictions at the temporal 
+A data.frame of dissolved oxygen predictions at the temporal
   resolution of the input data
 }
 \description{
-A function in the metab_model_interface. Returns predictions of dissolved 
+A function in the metab_model_interface. Returns predictions of dissolved
 oxygen.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{metab_Kmodel}: Throws an error because models of type 'Kmodel' can't 
+\item \code{metab_Kmodel}: Throws an error because models of type 'Kmodel' can't
 predict DO. \code{metab_Kmodel} predicts K at daily timesteps and usually
 knows nothing about GPP or ER. So it's not possible to predict DO from this
 model. Try passing the output to metab_mle and THEN predicting DO.
@@ -74,8 +75,8 @@ model. Try passing the output to metab_mle and THEN predicting DO.
 nighttime regression model. \code{metab_night} only fits ER and K, and only
 for the darkness hours, so predictions are only generated for those hours.
 
-\item \code{metab_sim}: Simulate values for DO.obs (with process and 
-observation error), DO.mod (with process error only), and DO.pure (with no 
+\item \code{metab_sim}: Simulate values for DO.obs (with process and
+observation error), DO.mod (with process error only), and DO.pure (with no
 error). The errors are randomly generated on every new call to predict_DO.
 }}
 

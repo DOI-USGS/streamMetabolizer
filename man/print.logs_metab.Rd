@@ -7,9 +7,9 @@
 \method{print}{logs_metab}(x, ...)
 }
 \arguments{
-\item{x}{an object used to select a method.}
+\item{x}{an object to print}
 
-\item{...}{further arguments passed to or from other methods.}
+\item{...}{ignored; included only for compatibility with `base::print`}
 }
 \description{
 Print metab model compilation and/or fitting logs

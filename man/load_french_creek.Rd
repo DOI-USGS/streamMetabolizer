@@ -4,10 +4,12 @@
 \alias{load_french_creek}
 \title{Load a short dataset from French Creek}
 \usage{
-load_french_creek(attach.units = TRUE)
+load_french_creek(attach.units = deprecated())
 }
 \arguments{
-\item{attach.units}{logical. Should units be attached to the data.frame?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical,
+default TRUE for backward compatibility. Should units be attached to the
+data.frame?}
 }
 \value{
 a data.frame, unitted if attach.units==TRUE

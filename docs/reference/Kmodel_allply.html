@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Fit a K model — Kmodel_allply" />
-<meta property="og:description" content="The model will predict daily K estimates from preliminary daily K estimates. 
+<meta property="og:description" content="The model will predict daily K estimates from preliminary daily K estimates.
 Called from metab_Kmodel()." />
 
 
@@ -73,7 +73,7 @@ Called from metab_Kmodel()." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ Called from metab_Kmodel()." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ Called from metab_Kmodel()." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -154,25 +154,25 @@ Called from metab_Kmodel()." />
     </div>
 
     <div class="ref-description">
-    <p>The model will predict daily K estimates from preliminary daily K estimates. 
+    <p>The model will predict daily K estimates from preliminary daily K estimates.
 Called from metab_Kmodel().</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Kmodel_allply</span>(
-  <span class='no'>data_daily_all</span>,
-  <span class='no'>engine</span>,
-  <span class='no'>weights</span>,
-  <span class='no'>predictors</span>,
-  <span class='no'>transforms</span>,
-  <span class='no'>other_args</span>
-)</pre>
+    <pre class="usage"><span class='fu'>Kmodel_allply</span><span class='op'>(</span>
+  <span class='va'>data_daily_all</span>,
+  <span class='va'>engine</span>,
+  <span class='va'>weights</span>,
+  <span class='va'>predictors</span>,
+  <span class='va'>transforms</span>,
+  <span class='va'>other_args</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data_daily_all</th>
-      <td><p>data to use as input, with columns including K600.daily.obs, 
+      <td><p>data to use as input, with columns including K600.daily.obs,
 weight, and any predictors</p></td>
     </tr>
     <tr>
@@ -190,29 +190,29 @@ regression method relating K to the predictor[s] of choice. One of
     </tr>
     <tr>
       <th>weights</th>
-      <td><p>For Kmodel, character vector indicating the type of weighting 
+      <td><p>For Kmodel, character vector indicating the type of weighting
 to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).</p></td>
     </tr>
     <tr>
       <th>predictors</th>
-      <td><p>For Kmodel, character vector of variables (column names in 
-data or data_daily) to use in predicting K. Leave blank or set to c() for 
-no predictors. Otherwise, one or more of these may be included: c("date", 
+      <td><p>For Kmodel, character vector of variables (column names in
+data or data_daily) to use in predicting K. Leave blank or set to c() for
+no predictors. Otherwise, one or more of these may be included: c("date",
 "velocity.daily", "discharge.daily").</p></td>
     </tr>
     <tr>
       <th>transforms</th>
-      <td><p>For Kmodel, a named character vector of names of functions 
-(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should 
-probably be logged. The vector names must match the values of 
-<code>predictors</code>, although not all elements of <code>predictors</code> must be 
-included in <code>transforms</code>. Recommended transforms include 
+      <td><p>For Kmodel, a named character vector of names of functions
+(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should
+probably be logged. The vector names must match the values of
+<code>predictors</code>, although not all elements of <code>predictors</code> must be
+included in <code>transforms</code>. Recommended transforms include
 <code><a href='https://rdrr.io/r/base/c.html'>c(K600.daily='log', date=NA, velocity.daily="log", discharge.daily="log")</a></code></p></td>
     </tr>
     <tr>
       <th>other_args</th>
-      <td><p>Other arguments passed to the fitting function given by 
-<code>specs$engine</code>. <code>na.rm=TRUE</code> is already passed to 
+      <td><p>Other arguments passed to the fitting function given by
+<code>specs$engine</code>. <code>na.rm=TRUE</code> is already passed to
 <code>mean</code> (which is actually implemented as <code>sum</code>, anyway).</p></td>
     </tr>
     </table>
@@ -233,7 +233,7 @@ included in <code>transforms</code>. Recommended transforms include
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

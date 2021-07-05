@@ -14,12 +14,12 @@ revise(specs, ..., delete)
 \item{delete}{a vector of names of elements to remove from the specs list}
 }
 \description{
-Primary use case is for revising a list of specifications as originally 
+Primary use case is for revising a list of specifications as originally
 created by specs()
 }
 \examples{
 sp <- specs(mm_name('bayes'))
-sp <- revise(sp, 
+sp <- revise(sp,
   model_name='b_np_oipi_tr_plrckm_mynewmodel.stan',
   params_in=c(params_in,'my_new_param'), my_new_param=4)
 }

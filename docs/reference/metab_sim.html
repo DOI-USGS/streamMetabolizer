@@ -40,10 +40,10 @@
 
 
 <meta property="og:title" content="Simulate dissolved oxygen data from input data — metab_sim" />
-<meta property="og:description" content="Takes input data in the form of a sub-daily time series (data) of 
-DO.sat, depth, temperature, and light, and a daily time series 
-(data_daily) of GPP, ER, and K600 values, and turns these into 
-simulated DO.obs. Either data or data_daily should specify a 
+<meta property="og:description" content="Takes input data in the form of a sub-daily time series (data) of
+DO.sat, depth, temperature, and light, and a daily time series
+(data_daily) of GPP, ER, and K600 values, and turns these into
+simulated DO.obs. Either data or data_daily should specify a
 starting DO.obs value for each day; if in data, this takes the form of
 a DO.obs column with values on at least the first time point of each day (all
 other values are ignored), or if in data_daily, this takes the form of
@@ -79,7 +79,7 @@ a DO.mod.1 column with one starting DO value per day." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@ a DO.mod.1 column with one starting DO value per day." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,7 @@ a DO.mod.1 column with one starting DO value per day." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -160,25 +160,25 @@ a DO.mod.1 column with one starting DO value per day." />
     </div>
 
     <div class="ref-description">
-    <p>Takes input data in the form of a sub-daily time series (<code>data</code>) of 
-DO.sat, depth, temperature, and light, and a daily time series 
-(<code>data_daily</code>) of GPP, ER, and K600 values, and turns these into 
-simulated DO.obs. Either <code>data</code> or <code>data_daily</code> should specify a 
+    <p>Takes input data in the form of a sub-daily time series (<code>data</code>) of
+DO.sat, depth, temperature, and light, and a daily time series
+(<code>data_daily</code>) of GPP, ER, and K600 values, and turns these into
+simulated DO.obs. Either <code>data</code> or <code>data_daily</code> should specify a
 starting DO.obs value for each day; if in <code>data</code>, this takes the form of
 a DO.obs column with values on at least the first time point of each day (all
 other values are ignored), or if in <code>data_daily</code>, this takes the form of
 a DO.mod.1 column with one starting DO value per day.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>metab_sim</span>(
-  <span class='kw'>specs</span> <span class='kw'>=</span> <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>"sim"</span>)),
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='no'>solar.time</span>, <span class='no'>DO.obs</span>, <span class='no'>DO.sat</span>, <span class='no'>depth</span>, <span class='no'>temp.water</span>, <span class='no'>light</span>, <span class='kw'>optional</span> <span class='kw'>=</span>
-    <span class='st'>"DO.obs"</span>),
-  <span class='kw'>data_daily</span> <span class='kw'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='no'>date</span>, <span class='no'>discharge.daily</span>, <span class='no'>DO.mod.1</span>, <span class='no'>K600.daily</span>, <span class='no'>GPP.daily</span>, <span class='no'>Pmax</span>,
-    <span class='no'>alpha</span>, <span class='no'>ER.daily</span>, <span class='no'>ER20</span>, <span class='no'>err.obs.sigma</span>, <span class='no'>err.obs.phi</span>, <span class='no'>err.proc.sigma</span>, <span class='no'>err.proc.phi</span>,
-    <span class='kw'>optional</span> <span class='kw'>=</span> <span class='st'>"all"</span>),
-  <span class='kw'>info</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>metab_sim</span><span class='op'>(</span>
+  specs <span class='op'>=</span> <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>"sim"</span><span class='op'>)</span><span class='op'>)</span>,
+  data <span class='op'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='va'>solar.time</span>, <span class='va'>DO.obs</span>, <span class='va'>DO.sat</span>, <span class='va'>depth</span>, <span class='va'>temp.water</span>, <span class='va'>light</span>, optional <span class='op'>=</span>
+    <span class='st'>"DO.obs"</span><span class='op'>)</span>,
+  data_daily <span class='op'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='va'>date</span>, <span class='va'>discharge.daily</span>, <span class='va'>DO.mod.1</span>, <span class='va'>K600.daily</span>, <span class='va'>GPP.daily</span>, <span class='va'>Pmax</span>,
+    <span class='va'>alpha</span>, <span class='va'>ER.daily</span>, <span class='va'>ER20</span>, <span class='va'>err.obs.sigma</span>, <span class='va'>err.obs.phi</span>, <span class='va'>err.proc.sigma</span>, <span class='va'>err.proc.phi</span>,
+    optional <span class='op'>=</span> <span class='st'>"all"</span><span class='op'>)</span>,
+  info <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -216,7 +216,7 @@ within the metab_model object</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A metab_sim object containing the fitted model. This object can be 
+    <p>A metab_sim object containing the fitted model. This object can be
   inspected with the functions in the <code><a href='metab_model_interface.html'>metab_model_interface</a></code>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -229,31 +229,34 @@ within the metab_model object</p></td>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>## simulations with variation all at sub-daily scale</span>
 <span class='co'># prepare input data (DO used only to pick first DO of each day)</span>
-<span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'3'</span>, <span class='kw'>res</span><span class='kw'>=</span><span class='st'>'15'</span>)
-<span class='no'>dat_daily</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='st'>"2012-09-"</span>, <span class='fl'>18</span>:<span class='fl'>20</span>)),
-  <span class='kw'>GPP.daily</span><span class='kw'>=</span><span class='fl'>2</span>, <span class='kw'>ER.daily</span><span class='kw'>=</span>-<span class='fl'>3</span>, <span class='kw'>K600.daily</span><span class='kw'>=</span><span class='fl'>21</span>, <span class='kw'>stringsAsFactors</span><span class='kw'>=</span><span class='fl'>FALSE</span>)
+<span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'3'</span>, res<span class='op'>=</span><span class='st'>'15'</span><span class='op'>)</span>
+<span class='va'>dat_daily</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"2012-09-"</span>, <span class='fl'>18</span><span class='op'>:</span><span class='fl'>20</span><span class='op'>)</span><span class='op'>)</span>,
+  GPP.daily<span class='op'>=</span><span class='fl'>2</span>, ER.daily<span class='op'>=</span><span class='op'>-</span><span class='fl'>3</span>, K600.daily<span class='op'>=</span><span class='fl'>21</span>, stringsAsFactors<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
 
 <span class='co'># define simulation parameters</span>
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'>metab_sim</span>(
-  <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'sim'</span>), <span class='kw'>err_obs_sigma</span><span class='kw'>=</span><span class='fl'>0.1</span>, <span class='kw'>err_proc_sigma</span><span class='kw'>=</span><span class='fl'>2</span>,
-    <span class='kw'>GPP_daily</span><span class='kw'>=</span><span class='kw'>NULL</span>, <span class='kw'>ER_daily</span><span class='kw'>=</span><span class='kw'>NULL</span>, <span class='kw'>K600_daily</span><span class='kw'>=</span><span class='kw'>NULL</span>),
-  <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>, <span class='kw'>data_daily</span><span class='kw'>=</span><span class='no'>dat_daily</span>)
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'>metab_sim</span><span class='op'>(</span>
+  <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'sim'</span><span class='op'>)</span>, err_obs_sigma<span class='op'>=</span><span class='fl'>0.1</span>, err_proc_sigma<span class='op'>=</span><span class='fl'>2</span>,
+    GPP_daily<span class='op'>=</span><span class='cn'>NULL</span>, ER_daily<span class='op'>=</span><span class='cn'>NULL</span>, K600_daily<span class='op'>=</span><span class='cn'>NULL</span><span class='op'>)</span>,
+  data<span class='op'>=</span><span class='va'>dat</span>, data_daily<span class='op'>=</span><span class='va'>dat_daily</span><span class='op'>)</span>
 <span class='co'># actual simulation happens during prediction - different each time</span>
-<span class='fu'><a href='get_params.html'>get_params</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date K600.daily GPP.daily ER.daily err.obs.sigma err.obs.phi
+<span class='fu'><a href='get_params.html'>get_params</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date K600.daily GPP.daily ER.daily err.obs.sigma err.obs.phi
 #&gt; 1 2012-09-18         21         2       -3           0.1           0
 #&gt; 2 2012-09-19         21         2       -3           0.1           0
 #&gt; 3 2012-09-20         21         2       -3           0.1           0
 #&gt;   err.proc.sigma err.proc.phi discharge.daily
 #&gt; 1              2            0        19.13472
 #&gt; 2              2            0        22.90962
-#&gt; 3              2            0        20.21814</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date GPP GPP.lower GPP.upper ER ER.lower ER.upper msgs.fit warnings
+#&gt; 3              2            0        20.21814</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date GPP GPP.lower GPP.upper ER ER.lower ER.upper msgs.fit warnings
 #&gt; 1 2012-09-18   2        NA        NA -3       NA       NA       NA         
 #&gt; 2 2012-09-19   2        NA        NA -3       NA       NA       NA         
 #&gt; 3 2012-09-20   2        NA        NA -3       NA       NA       NA         
 #&gt;   errors
 #&gt; 1       
 #&gt; 2       
-#&gt; 3       </div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>)[<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>50</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>10</span>),]</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
+#&gt; 3       </div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>50</span>,by<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span>,<span class='op'>]</span>
+</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
 #&gt; 1  2012-09-18 2012-09-18 04:05:58 9.083329  0.16       3.60    0.0000 8.410000
 #&gt; 11 2012-09-18 2012-09-18 06:35:58 9.174032  0.16       3.23  361.1082 8.074219
 #&gt; 21 2012-09-18 2012-09-18 09:05:58 8.638056  0.16       5.51 1339.0007 8.873394
@@ -264,7 +267,8 @@ within the metab_model object</p></td>
 #&gt; 11 8.120033 8.108756
 #&gt; 21 9.088803 8.966921
 #&gt; 31 9.373993 9.310303
-#&gt; 41 8.645758 8.474404</div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>)[<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>50</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>10</span>),]</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
+#&gt; 41 8.645758 8.474404</div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>50</span>,by<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span>,<span class='op'>]</span>
+</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
 #&gt; 1  2012-09-18 2012-09-18 04:05:58 9.083329  0.16       3.60    0.0000 8.410000
 #&gt; 11 2012-09-18 2012-09-18 06:35:58 9.174032  0.16       3.23  361.1082 8.074219
 #&gt; 21 2012-09-18 2012-09-18 09:05:58 8.638056  0.16       5.51 1339.0007 8.873394
@@ -277,30 +281,35 @@ within the metab_model object</p></td>
 #&gt; 31 8.808968 8.773604
 #&gt; 41 8.486494 8.380405</div><div class='input'>
 <span class='co'># or same each time if seed is set</span>
-<span class='no'>mm</span>@<span class='kw'>specs</span>$<span class='no'>sim_seed</span> <span class='kw'>&lt;-</span> <span class='fl'>236</span>
-<span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>)$<span class='no'>DO.obs</span>[<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>50</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>10</span>)]</div><div class='output co'>#&gt; [1] 8.514605 8.226884 9.242439 9.682286 8.660459</div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>)$<span class='no'>DO.obs</span>[<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>50</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>10</span>)]</div><div class='output co'>#&gt; [1] 8.514605 8.226884 9.242439 9.682286 8.660459</div><div class='input'>
+<span class='va'>mm</span><span class='op'>@</span><span class='va'>specs</span><span class='op'>$</span><span class='va'>sim_seed</span> <span class='op'>&lt;-</span> <span class='fl'>236</span>
+<span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>$</span><span class='va'>DO.obs</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>50</span>,by<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span><span class='op'>]</span>
+</div><div class='output co'>#&gt; [1] 8.514605 8.226884 9.242439 9.682286 8.660459</div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>$</span><span class='va'>DO.obs</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>50</span>,by<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span><span class='op'>]</span>
+</div><div class='output co'>#&gt; [1] 8.514605 8.226884 9.242439 9.682286 8.660459</div><div class='input'>
 <span class='co'># fancy GPP equation</span>
-<span class='no'>dat_daily</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='st'>"2012-09-"</span>, <span class='fl'>18</span>:<span class='fl'>20</span>)),
-  <span class='kw'>Pmax</span><span class='kw'>=</span><span class='fl'>8</span>, <span class='kw'>alpha</span><span class='kw'>=</span><span class='fl'>0.01</span>, <span class='kw'>ER.daily</span><span class='kw'>=</span>-<span class='fl'>3</span>, <span class='kw'>K600.daily</span><span class='kw'>=</span><span class='fl'>21</span>, <span class='kw'>stringsAsFactors</span><span class='kw'>=</span><span class='fl'>FALSE</span>)
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'>metab_sim</span>(
-  <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'sim'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'satlight'</span>), <span class='kw'>err_obs_sigma</span><span class='kw'>=</span><span class='fl'>0.1</span>, <span class='kw'>err_proc_sigma</span><span class='kw'>=</span><span class='fl'>2</span>,
-    <span class='kw'>Pmax</span><span class='kw'>=</span><span class='kw'>NULL</span>, <span class='kw'>alpha</span><span class='kw'>=</span><span class='kw'>NULL</span>, <span class='kw'>ER_daily</span><span class='kw'>=</span><span class='kw'>NULL</span>, <span class='kw'>K600_daily</span><span class='kw'>=</span><span class='kw'>NULL</span>),
-  <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>, <span class='kw'>data_daily</span><span class='kw'>=</span><span class='no'>dat_daily</span>)
-<span class='fu'><a href='get_params.html'>get_params</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date K600.daily Pmax alpha ER.daily err.obs.sigma err.obs.phi
+<span class='va'>dat_daily</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"2012-09-"</span>, <span class='fl'>18</span><span class='op'>:</span><span class='fl'>20</span><span class='op'>)</span><span class='op'>)</span>,
+  Pmax<span class='op'>=</span><span class='fl'>8</span>, alpha<span class='op'>=</span><span class='fl'>0.01</span>, ER.daily<span class='op'>=</span><span class='op'>-</span><span class='fl'>3</span>, K600.daily<span class='op'>=</span><span class='fl'>21</span>, stringsAsFactors<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'>metab_sim</span><span class='op'>(</span>
+  <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'sim'</span>, GPP_fun<span class='op'>=</span><span class='st'>'satlight'</span><span class='op'>)</span>, err_obs_sigma<span class='op'>=</span><span class='fl'>0.1</span>, err_proc_sigma<span class='op'>=</span><span class='fl'>2</span>,
+    Pmax<span class='op'>=</span><span class='cn'>NULL</span>, alpha<span class='op'>=</span><span class='cn'>NULL</span>, ER_daily<span class='op'>=</span><span class='cn'>NULL</span>, K600_daily<span class='op'>=</span><span class='cn'>NULL</span><span class='op'>)</span>,
+  data<span class='op'>=</span><span class='va'>dat</span>, data_daily<span class='op'>=</span><span class='va'>dat_daily</span><span class='op'>)</span>
+<span class='fu'><a href='get_params.html'>get_params</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date K600.daily Pmax alpha ER.daily err.obs.sigma err.obs.phi
 #&gt; 1 2012-09-18         21    8  0.01       -3           0.1           0
 #&gt; 2 2012-09-19         21    8  0.01       -3           0.1           0
 #&gt; 3 2012-09-20         21    8  0.01       -3           0.1           0
 #&gt;   err.proc.sigma err.proc.phi discharge.daily
 #&gt; 1              2            0        19.36654
 #&gt; 2              2            0        19.95024
-#&gt; 3              2            0        21.22849</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>) <span class='co'># metab estimates are for data without errors</span></div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper ER ER.lower ER.upper msgs.fit
+#&gt; 3              2            0        21.22849</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span> <span class='co'># metab estimates are for data without errors</span>
+</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper ER ER.lower ER.upper msgs.fit
 #&gt; 1 2012-09-18 3.182805        NA        NA -3       NA       NA       NA
 #&gt; 2 2012-09-19 3.165193        NA        NA -3       NA       NA       NA
 #&gt; 3 2012-09-20 3.147224        NA        NA -3       NA       NA       NA
 #&gt;   warnings errors
 #&gt; 1                
 #&gt; 2                
-#&gt; 3                </div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>)[<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>50</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>10</span>),]</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
+#&gt; 3                </div><div class='input'><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>50</span>,by<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span>,<span class='op'>]</span>
+</div><div class='output co'>#&gt;          date          solar.time   DO.sat depth temp.water     light  DO.pure
 #&gt; 1  2012-09-18 2012-09-18 04:05:58 9.083329  0.16       3.60    0.0000 8.410000
 #&gt; 11 2012-09-18 2012-09-18 06:35:58 9.174032  0.16       3.23  361.1082 8.273214
 #&gt; 21 2012-09-18 2012-09-18 09:05:58 8.638056  0.16       5.51 1339.0007 9.939735
@@ -313,17 +322,19 @@ within the metab_model object</p></td>
 #&gt; 31 10.134104 10.111424
 #&gt; 41  9.394355  9.253832</div><div class='input'>
 <span class='co'>## simulations with variation at both sub-daily and multi-day scales</span>
-<span class='no'>sp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'sim'</span>, <span class='kw'>pool_K600</span><span class='kw'>=</span><span class='st'>'none'</span>),
-  <span class='kw'>K600_daily</span> <span class='kw'>=</span> <span class='kw'>function</span>(<span class='no'>n</span>, <span class='no'>...</span>) <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmax</a></span>(<span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='no'>n</span>, <span class='fl'>10</span>, <span class='fl'>3</span>))) <span class='co'># n is available within sim models</span>
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span>(<span class='no'>sp</span>, <span class='no'>dat</span>)
-<span class='fu'><a href='get_params.html'>get_params</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date K600.daily GPP.daily  ER.daily err.obs.sigma err.obs.phi
+<span class='va'>sp</span> <span class='op'>&lt;-</span> <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'sim'</span>, pool_K600<span class='op'>=</span><span class='st'>'none'</span><span class='op'>)</span>,
+  K600_daily <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>n</span>, <span class='va'>...</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmax</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='va'>n</span>, <span class='fl'>10</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='co'># n is available within sim models</span>
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span><span class='op'>(</span><span class='va'>sp</span>, <span class='va'>dat</span><span class='op'>)</span>
+<span class='fu'><a href='get_params.html'>get_params</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date K600.daily GPP.daily  ER.daily err.obs.sigma err.obs.phi
 #&gt; 1 2012-09-18  10.973189  0.872383 -7.136814          0.01           0
 #&gt; 2 2012-09-19   8.874616  6.162460 -6.991966          0.01           0
 #&gt; 3 2012-09-20   9.813784  6.693289  0.000000          0.01           0
 #&gt;   err.proc.sigma err.proc.phi discharge.daily
 #&gt; 1            0.2            0        19.37273
 #&gt; 2            0.2            0        20.94919
-#&gt; 3            0.2            0        20.99108</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date       GPP GPP.lower GPP.upper         ER ER.lower ER.upper
+#&gt; 3            0.2            0        20.99108</div><div class='input'><span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date       GPP GPP.lower GPP.upper         ER ER.lower ER.upper
 #&gt; 1 2012-09-18  5.755216        NA        NA  -1.801561       NA       NA
 #&gt; 2 2012-09-19  5.479744        NA        NA -10.943692       NA       NA
 #&gt; 3 2012-09-20 17.948548        NA        NA  -4.696068       NA       NA
@@ -332,11 +343,12 @@ within the metab_model object</p></td>
 #&gt; 2       NA                
 #&gt; 3       NA                </div><div class='input'>
 <span class='co'>## K~Q model</span>
-<span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'10'</span>,<span class='st'>'15'</span>)
-<span class='no'>sp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'sim'</span>, <span class='kw'>pool_K600</span><span class='kw'>=</span><span class='st'>'binned'</span>))
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span>(<span class='no'>sp</span>, <span class='no'>dat</span>)
-<span class='no'>pars</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_params.html'>get_params</a></span>(<span class='no'>mm</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span>(<span class='no'>pars</span>, <span class='st'>'K600_eqn'</span>)</div><div class='output co'>#&gt; $K600_lnQ_nodes_centers
+<span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'10'</span>,<span class='st'>'15'</span><span class='op'>)</span>
+<span class='va'>sp</span> <span class='op'>&lt;-</span> <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'sim'</span>, pool_K600<span class='op'>=</span><span class='st'>'binned'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span><span class='op'>(</span><span class='va'>sp</span>, <span class='va'>dat</span><span class='op'>)</span>
+<span class='va'>pars</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_params.html'>get_params</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>pars</span>, <span class='st'>'K600_eqn'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; $K600_lnQ_nodes_centers
 #&gt; [1] 2.7 2.9 3.1 3.3
 #&gt; 
 #&gt; $K600_lnQ_cnode_meanlog
@@ -359,11 +371,12 @@ within the metab_model object</p></td>
 #&gt;  [1] 1.2645783 1.6185911 0.9744718 1.7094699 1.3963858 1.7913175 0.9430280
 #&gt;  [8] 1.4406586 0.9215569 1.4184119
 #&gt; </div><div class='input'>
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span>(<span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>))
-<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span>(<span class='no'>mm</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-}</div></pre>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span><span class='op'>(</span><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -379,7 +392,7 @@ within the metab_model object</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

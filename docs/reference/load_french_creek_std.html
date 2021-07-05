@@ -74,7 +74,7 @@ chron installed or install it with install.packages('chron')." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@ chron installed or install it with install.packages('chron')." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +132,7 @@ chron installed or install it with install.packages('chron')." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -160,14 +160,16 @@ by the <code>streamMetabolizer</code> package overall. Ensure that you have
 <code>chron</code> installed or install it with <code><a href='https://rdrr.io/r/utils/install.packages.html'>install.packages('chron')</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>load_french_creek_std</span>(<span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>load_french_creek_std</span><span class='op'>(</span>attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the data.frame?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical,
+default TRUE for backward compatibility. Should units be attached to the
+data.frame?</p></td>
     </tr>
     </table>
 
@@ -176,9 +178,9 @@ by the <code>streamMetabolizer</code> package overall. Ensure that you have
     <p>a data.frame, unitted if attach.units==TRUE</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function produces a version of the French Creek dataset that agrees as 
-much as possible with raw code from Bob Hall, for comparison to functions 
-written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to 
+    <p>This function produces a version of the French Creek dataset that agrees as
+much as possible with raw code from Bob Hall, for comparison to functions
+written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to
 those in 'stream_metab_usa/starter_files/One station metab code.R'</p>
 
   </div>
@@ -196,7 +198,7 @@ those in 'stream_metab_usa/starter_files/One station metab code.R'</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

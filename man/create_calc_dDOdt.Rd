@@ -7,8 +7,8 @@
 create_calc_dDOdt(data, ode_method, GPP_fun, ER_fun, deficit_src, err.proc = 0)
 }
 \arguments{
-\item{data}{data.frame as in \code{\link{metab}}, except that data must 
-contain exactly one date worth of inputs (~24 hours according to 
+\item{data}{data.frame as in \code{\link{metab}}, except that data must
+contain exactly one date worth of inputs (~24 hours according to
 \code{\link{specs}$day_start} and \code{\link{specs}$day_end}).}
 
 \item{ode_method}{character. The method to use in solving the ordinary
@@ -68,8 +68,8 @@ nighttime regression \item \code{NA}: applicable only to
 \code{type='Kmodel'}, for which DO deficit is not estimated }}
 
 \item{err.proc}{optional numerical vector of length nrow(data). Process error
-in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!). 
-Appropriate for simulation, when this vector of process errors will be 
+in units of gO2 m^-2 d^-1 (THIS MAY DIFFER FROM WHAT YOU'RE USED TO!).
+Appropriate for simulation, when this vector of process errors will be
 added to the calculated values of GPP and ER (then divided by depth and
 multiplied by timestep duration) to simulate process error. But usually
 (for MLE or prediction from a fitted MLE/Bayesian/nighttime regression
@@ -78,12 +78,12 @@ model) \code{err.proc} should be missing or 0}
 \value{
 a function that accepts args \code{t} (the time in 0:(n-1) where n is
   the number of timesteps), \code{DO.mod.t} (the value of DO.mod at time t in
-  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which 
-  parameters should be included in this list, create \code{dDOdt} with this 
+  gO2 m^-3), and \code{metab} (a list of metabolism parameters; to see which
+  parameters should be included in this list, create \code{dDOdt} with this
   function and then call \code{environment(dDOdt)$metab.needs})
 }
 \description{
-Creates a closure that bundles data and helper functions into a single 
+Creates a closure that bundles data and helper functions into a single
 function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
 }
 \section{ode_method 'trapezoid'}{
@@ -92,12 +92,12 @@ function that returns dDOdt in gO2 m^-3 timestep^-1 for any given time t.
 'pairmeans' and 'trapezoid' are identical. They are the analytical
 solution to a trapezoid rule with this starting point:
 \code{
- DO.mod[t+1] = 
+ DO.mod[t+1] =
   DO.mod[t] +
    (((GPP[t]+GPP[t+1])/2) / (depth[t]+depth[t+1])/2
-   + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2 
+   + ((ER[t]+ER[t+1])/2) / (depth[t]+depth[t+1])/2
    + (k.O2[t](DO.sat[t] - DO.mod[t]) + k.O2[t+1](DO.sat[t+1] - DO.mod[t+1]))/2
-   + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2 
+   + ((err.proc[t]+err.proc[t+1])/2) / (depth[t]+depth[t+1])/2
    ) * timestep
 }
 and this solution:
@@ -108,7 +108,7 @@ DO.mod[t+1] - DO.mod[t] =
       ER[t]+ER[t+1] +
       err.proc[t]+err.proc[t+1]
      ) / (depth[t]+depth[t+1])
-   + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2 
+   + (k.O2[t]*DO.sat[t] + k.O2[t+1]*DO.sat[t+1])/2
  ) * timestep / (1 + timestep*k.O2[t+1]/2)
 }
 where we're treating err.proc as a rate in gO2/m2/d, just like GPP & ER, and
@@ -183,7 +183,7 @@ apply_dDOdt <- function(GPP.daily, ER.daily, K600.daily) {
   }
   dDOdt.mod.m
 }
-dDO.preds <- data_frame(
+dDO.preds <- tibble::tibble(
   solar.time = dDOtime,
   dDO.preds.base = apply_dDOdt(3, -5, 15),
   dDO.preds.dblGPP = apply_dDOdt(6, -5, 15),

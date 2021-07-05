@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc_solar_insolation.R
 \name{calc_solar_insolation}
 \alias{calc_solar_insolation}
-\title{Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+\title{Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html}
 \usage{
 calc_solar_insolation(
@@ -10,28 +10,29 @@ calc_solar_insolation(
   latitude,
   max.insolation = convert_PAR_to_SW(2326),
   format = c("degrees", "radians"),
-  attach.units = is.unitted(app.solar.time)
+  attach.units = deprecated()
 )
 }
 \arguments{
-\item{app.solar.time}{POSIXct vector of date-time values in apparent solar time,
-e.g., as returned by \code{convert_UTC_to_solartime(...,
+\item{app.solar.time}{POSIXct vector of date-time values in apparent solar
+time, e.g., as returned by \code{convert_UTC_to_solartime(...,
 time.type="apparent solar")}}
 
-\item{latitude}{numeric value or vector indicating the site latitude in 
+\item{latitude}{numeric value or vector indicating the site latitude in
 decimal degrees (never radians or deg-min-sec, no matter what \code{format}
 is) between -90 (South Pole) and 90 (North Pole).}
 
 \item{max.insolation}{insolation rate at solar noon, W/m2 == J/s/m2. varies
 greatly with atmospheric conditions}
 
-\item{format}{The format of both the input and the output. May be "degrees" 
+\item{format}{The format of both the input and the output. May be "degrees"
 or "radians".}
 
-\item{attach.units}{logical. Should the returned vector be a unitted object?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?}
 }
 \description{
-Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in 
+Model solar insolation on a horizontal surface (W/m2 == J/s/m2) as in
 http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Site/Pages/solar.insolation.html
 }
 \examples{
@@ -40,14 +41,14 @@ insdf <- data.frame(
   date=rep(as.Date(sprintf('2004-\%d-15', rep(c(1,4,7,10), each=48)), tz='UTC'), times=4),
   hour=rep(seq(0,23.5,0.5), times=4*4)
 )
-insdf <- transform(insdf, datetime=lubridate::with_tz(as.POSIXct(date), 'UTC') + 
+insdf <- transform(insdf, datetime=lubridate::with_tz(as.POSIXct(date), 'UTC') +
   as.difftime(hour, units='hours'))
 insdf <- transform(insdf, date=as.character(date))
 insdf <- transform(insdf, ins=calc_solar_insolation(datetime, lat))
 \dontrun{
 library(ggplot2)
-ggplot(insdf, aes(color=date, y=ins, x=hour)) + 
-  geom_line() + facet_wrap(~lat) + 
+ggplot(insdf, aes(color=date, y=ins, x=hour)) +
+  geom_line() + facet_wrap(~lat) +
   ggtitle('solar insolation by latitude (panels) and day of year (colors)')
 }
 }

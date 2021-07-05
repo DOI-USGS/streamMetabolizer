@@ -17,7 +17,7 @@ get_params(
   messages = TRUE,
   fixed = c("none", "columns", "stars"),
   ...,
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 
 \method{get_params}{metab_Kmodel}(
@@ -28,7 +28,7 @@ get_params(
   messages = TRUE,
   fixed = c("none", "columns", "stars"),
   ...,
-  attach.units = FALSE,
+  attach.units = deprecated(),
   use_saved = TRUE
 )
 
@@ -39,7 +39,7 @@ get_params(
   uncertainty = "ci",
   messages = TRUE,
   ...,
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 
 \method{get_params}{metab_model}(
@@ -50,7 +50,7 @@ get_params(
   messages = TRUE,
   fixed = c("none", "columns", "stars"),
   ...,
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 
 \method{get_params}{metab_sim}(
@@ -61,58 +61,59 @@ get_params(
   messages = TRUE,
   fixed = c("none", "columns", "stars"),
   ...,
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the 
+\item{metab_model}{A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date 
+\item{date_start}{Date or a class convertible with as.Date. The first date
 (inclusive) for which to report parameters. If NA, no filtering is done.}
 
-\item{date_end}{Date or a class convertible with as.Date. The last date 
+\item{date_end}{Date or a class convertible with as.Date. The last date
 (inclusive) for which to report parameters.. If NA, no filtering is done.}
 
 \item{uncertainty}{character. Should columns for the uncertainty of parameter
-estimates be excluded ('none'), reported as standard deviations ('sd'), or 
-reported as lower and upper bounds of a 95 percent confidence interval 
-('ci')? When available (e.g., for Bayesian models), if 'ci' then the 
+estimates be excluded ('none'), reported as standard deviations ('sd'), or
+reported as lower and upper bounds of a 95 percent confidence interval
+('ci')? When available (e.g., for Bayesian models), if 'ci' then the
 central value will be the median (50th quantile) and the ranges will be the
-2.5th and 97.5th quantiles. If 'sd' then the central value will always be 
+2.5th and 97.5th quantiles. If 'sd' then the central value will always be
 the mean.}
 
-\item{messages}{logical. Should warning and error messages from the fitting 
+\item{messages}{logical. Should warning and error messages from the fitting
 procedure be included in the output?}
 
-\item{fixed}{character. Should values pulled from data_daily (i.e., fixed 
+\item{fixed}{character. Should values pulled from data_daily (i.e., fixed
 rather that fitted) be treated identically ('none'), paired with a logicals
-column ending in '.fixed' ('columns'), converted to character and marked 
+column ending in '.fixed' ('columns'), converted to character and marked
 with a leading asterisk ('stars')?}
 
-\item{...}{Other arguments passed to class-specific implementations of 
+\item{...}{Other arguments passed to class-specific implementations of
 \code{get_params}}
 
-\item{attach.units}{logical. Should units be attached to the output?}
+\item{attach.units}{(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
 the model?}
 }
 \value{
-A data.frame of the parameters needed to predict GPP, ER, D, and DO, 
+A data.frame of the parameters needed to predict GPP, ER, D, and DO,
   one row per date
 }
 \description{
-A function in the metab_model_interface. Returns estimates of those 
+A function in the metab_model_interface. Returns estimates of those
 parameters describing the rates and/or shapes of GPP, ER, or reaeration.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{metab_Kmodel}: Make daily re-predictions of K600.daily based on the 
+\item \code{metab_Kmodel}: Make daily re-predictions of K600.daily based on the
 across-days model of K600.daily versus predictors. Only returns estimates
 for K600.daily, not any of the other daily parameters
 
-\item \code{metab_bayes}: Does a little formatting to convert from Stan output 
+\item \code{metab_bayes}: Does a little formatting to convert from Stan output
 to streamMetabolizer parameter names; otherwise the same as
 \code{get_params.metab_model}
 
@@ -120,7 +121,7 @@ to streamMetabolizer parameter names; otherwise the same as
 
 \item \code{metab_sim}: Generates new simulated values for daily parameters if
 they were described with evaluatable expressions in \code{\link{specs}}, or
-returns the fixed values for daily parameters if they were set in 
+returns the fixed values for daily parameters if they were set in
 \code{data_daily}
 }}
 

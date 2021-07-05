@@ -28,23 +28,23 @@ runstan_bayes(
 \item{model_name}{the coded model name, as from mm_name, giving the model
 structure}
 
-\item{params_out}{a character vector of parameters whose values in the MCMC 
+\item{params_out}{a character vector of parameters whose values in the MCMC
 runs should be recorded and summarized}
 
-\item{keep_mcmc}{logical. If TRUE, the Stan output object will be saved. Be 
-careful; these can be big, and a run with many models might overwhelm R's 
+\item{keep_mcmc}{logical. If TRUE, the Stan output object will be saved. Be
+careful; these can be big, and a run with many models might overwhelm R's
 memory.}
 
 \item{n_chains}{the number of chains to run}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{burnin_steps}{the number of steps per chain to run and ignore before 
+\item{burnin_steps}{the number of steps per chain to run and ignore before
 starting to collect MCMC 'data'}
 
 \item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step. 1 
+\item{thin_steps}{the number of steps to move before saving another step. 1
 means save all steps.}
 
 \item{verbose}{logical. give status messages?}

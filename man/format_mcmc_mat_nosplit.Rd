@@ -17,7 +17,7 @@ format_mcmc_mat_nosplit(
 \item{mcmc_mat}{matrix as extracted from Stan}
 }
 \description{
-For multi-day or unsplit models. Formats output into a list of data.frames, 
+For multi-day or unsplit models. Formats output into a list of data.frames,
 one per unique number of nodes sharing a variable name
 }
 \keyword{internal}

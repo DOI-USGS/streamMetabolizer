@@ -10,14 +10,14 @@ get_fit(metab_model)
 \method{get_fit}{metab_model}(metab_model)
 }
 \arguments{
-\item{metab_model}{A metabolism model, implementing the 
+\item{metab_model}{A metabolism model, implementing the
 metab_model_interface, for which to return the data}
 }
 \value{
 An internal model representation; may have any class
 }
 \description{
-A function in the metab_model_interface. Returns the internal model 
+A function in the metab_model_interface. Returns the internal model
 representation as fitted to the supplied data and arguments.
 }
 \section{Methods (by class)}{

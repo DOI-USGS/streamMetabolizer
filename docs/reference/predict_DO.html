@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Predict DO from a fitted model. — predict_DO" />
-<meta property="og:description" content="A function in the metab_model_interface. Returns predictions of dissolved 
+<meta property="og:description" content="A function in the metab_model_interface. Returns predictions of dissolved
 oxygen." />
 
 
@@ -73,7 +73,7 @@ oxygen." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ oxygen." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ oxygen." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -154,83 +154,84 @@ oxygen." />
     </div>
 
     <div class="ref-description">
-    <p>A function in the metab_model_interface. Returns predictions of dissolved 
+    <p>A function in the metab_model_interface. Returns predictions of dissolved
 oxygen.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>predict_DO</span>(
-  <span class='no'>metab_model</span>,
-  <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='no'>...</span>,
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>use_saved</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)
+    <pre class="usage"><span class='fu'>predict_DO</span><span class='op'>(</span>
+  <span class='va'>metab_model</span>,
+  date_start <span class='op'>=</span> <span class='cn'>NA</span>,
+  date_end <span class='op'>=</span> <span class='cn'>NA</span>,
+  <span class='va'>...</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
+  use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
 <span class='co'># S3 method for metab_Kmodel</span>
-<span class='fu'>predict_DO</span>(<span class='no'>metab_model</span>, <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='no'>...</span>, <span class='kw'>use_saved</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'>predict_DO</span><span class='op'>(</span><span class='va'>metab_model</span>, date_start <span class='op'>=</span> <span class='cn'>NA</span>, date_end <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span>, use_saved <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
 <span class='co'># S3 method for metab_model</span>
-<span class='fu'>predict_DO</span>(
-  <span class='no'>metab_model</span>,
-  <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='no'>...</span>,
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>use_saved</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)
+<span class='fu'>predict_DO</span><span class='op'>(</span>
+  <span class='va'>metab_model</span>,
+  date_start <span class='op'>=</span> <span class='cn'>NA</span>,
+  date_end <span class='op'>=</span> <span class='cn'>NA</span>,
+  <span class='va'>...</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
+  use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
 
 <span class='co'># S3 method for metab_night</span>
-<span class='fu'>predict_DO</span>(<span class='no'>metab_model</span>, <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='no'>...</span>, <span class='kw'>use_saved</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'>predict_DO</span><span class='op'>(</span><span class='va'>metab_model</span>, date_start <span class='op'>=</span> <span class='cn'>NA</span>, date_end <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span>, use_saved <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
 <span class='co'># S3 method for metab_sim</span>
-<span class='fu'>predict_DO</span>(<span class='no'>metab_model</span>, <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>predict_DO</span><span class='op'>(</span><span class='va'>metab_model</span>, date_start <span class='op'>=</span> <span class='cn'>NA</span>, date_end <span class='op'>=</span> <span class='cn'>NA</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>metab_model</th>
-      <td><p>A metabolism model, implementing the 
+      <td><p>A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism</p></td>
     </tr>
     <tr>
       <th>date_start</th>
-      <td><p>Date or a class convertible with as.Date. The first date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+      <td><p>Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.</p></td>
     </tr>
     <tr>
       <th>date_end</th>
-      <td><p>Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+      <td><p>Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Other arguments passed to class-specific implementations of 
+      <td><p>Other arguments passed to class-specific implementations of
 <code>predict_DO</code></p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the output?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?</p></td>
     </tr>
     <tr>
       <th>use_saved</th>
-      <td><p>logical. Is it OK to use predictions that were saved with 
+      <td><p>logical. Is it OK to use predictions that were saved with
 the model?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A data.frame of dissolved oxygen predictions at the temporal 
+    <p>A data.frame of dissolved oxygen predictions at the temporal
   resolution of the input data</p>
     <h2 class="hasAnchor" id="methods-by-class-"><a class="anchor" href="#methods-by-class-"></a>Methods (by class)</h2>
 
     
 <ul>
-<li><p><code>metab_Kmodel</code>: Throws an error because models of type 'Kmodel' can't 
+<li><p><code>metab_Kmodel</code>: Throws an error because models of type 'Kmodel' can't
 predict DO. <code>metab_Kmodel</code> predicts K at daily timesteps and usually
 knows nothing about GPP or ER. So it's not possible to predict DO from this
 model. Try passing the output to metab_mle and THEN predicting DO.</p></li>
@@ -238,8 +239,8 @@ model. Try passing the output to metab_mle and THEN predicting DO.</p></li>
 <li><p><code>metab_night</code>: Generate nighttime dissolved oxygen predictions from a
 nighttime regression model. <code>metab_night</code> only fits ER and K, and only
 for the darkness hours, so predictions are only generated for those hours.</p></li>
-<li><p><code>metab_sim</code>: Simulate values for DO.obs (with process and 
-observation error), DO.mod (with process error only), and DO.pure (with no 
+<li><p><code>metab_sim</code>: Simulate values for DO.obs (with process and
+observation error), DO.mod (with process error only), and DO.pure (with no
 error). The errors are randomly generated on every new call to predict_DO.</p></li>
 </ul>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
@@ -257,10 +258,11 @@ error). The errors are randomly generated on every new call to predict_DO.</p></
 <code><a href='predict_metab.html'>predict_metab</a>()</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'3'</span>, <span class='kw'>day_start</span><span class='kw'>=</span><span class='fl'>12</span>, <span class='kw'>day_end</span><span class='kw'>=</span><span class='fl'>36</span>)
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='metab_night.html'>metab_night</a></span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'night'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>)
-<span class='no'>preds</span> <span class='kw'>&lt;-</span> <span class='fu'>predict_DO</span>(<span class='no'>mm</span>, <span class='kw'>date_start</span><span class='kw'>=</span><span class='fu'><a href='get_fit.html'>get_fit</a></span>(<span class='no'>mm</span>)$<span class='no'>date</span>[<span class='fl'>3</span>])
-<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='no'>preds</span>)</div><div class='output co'>#&gt;         date          solar.time DO.obs   DO.sat depth temp.water light
+    <pre class="examples"><div class='input'><span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'3'</span>, day_start<span class='op'>=</span><span class='fl'>12</span>, day_end<span class='op'>=</span><span class='fl'>36</span><span class='op'>)</span>
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='metab_night.html'>metab_night</a></span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'night'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='va'>dat</span><span class='op'>)</span>
+<span class='va'>preds</span> <span class='op'>&lt;-</span> <span class='fu'>predict_DO</span><span class='op'>(</span><span class='va'>mm</span>, date_start<span class='op'>=</span><span class='fu'><a href='get_fit.html'>get_fit</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>$</span><span class='va'>date</span><span class='op'>[</span><span class='fl'>3</span><span class='op'>]</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>preds</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date          solar.time DO.obs   DO.sat depth temp.water light
 #&gt; 1 2012-09-20 2012-09-20 17:55:58   8.07 7.769228  0.16       9.76     0
 #&gt; 2 2012-09-20 2012-09-20 18:00:58   8.06 7.782325  0.16       9.69     0
 #&gt; 3 2012-09-20 2012-09-20 18:05:58   8.00 7.797340  0.16       9.61     0
@@ -289,7 +291,7 @@ error). The errors are randomly generated on every new call to predict_DO.</p></
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

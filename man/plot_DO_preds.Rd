@@ -30,15 +30,15 @@ indicates that the data range should be used. for ggplot2, y_lim is only
 used to exclude values outside that range and is ignored if the data span a
 narrower range}
 
-\item{date_start}{Date or a class convertible with as.Date. The first date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_start}{Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{date_end}{Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+\item{date_end}{Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.}
 
-\item{use_saved}{logical. Is it OK to use predictions that were saved with 
+\item{use_saved}{logical. Is it OK to use predictions that were saved with
 the model?}
 }
 \description{

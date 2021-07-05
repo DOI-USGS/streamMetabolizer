@@ -1,5 +1,5 @@
 #' Use an engine-specific function to check the model syntax
-#' 
+#'
 #' @param model_file the file path of the model file to check; the extension
 #'   will be used to determine which engine to use for checking.
 #' @keywords internal
@@ -7,6 +7,11 @@ mm_check_mcmc_file <- function(model_file) {
   engine <- mm_parse_name(model_file)$engine
   if(!file.exists(model_file)) model_file <- paste0('inst/models/', model_file)
   if(engine != 'stan') stop('need to add handling for engines other than stan')
+
+  # stan() can't find its own function cpp_object_initializer() unless the
+  # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
+  # (not solution):
+  # https://stat.ethz.ch/pipermail/r-devel/2014-September/069803.html
   if(!suppressPackageStartupMessages(require(rstan))) {
     stop("the rstan package is required to check Stan MCMC models")
   }
@@ -20,7 +25,7 @@ mm_check_mcmc_file <- function(model_file) {
 }
 
 #' Check the syntax of all Bayesian model files in the package
-#' 
+#'
 #' @param grep_pattern string on which to filter the names if only some should
 #'   be checked. fixed=FALSE.
 #' @examples

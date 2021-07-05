@@ -1,2 +1,2 @@
-library(dplyr)
+suppressPackageStartupMessages(library(dplyr))
 library(ggplot2)

@@ -40,8 +40,8 @@
 
 
 <meta property="og:title" content="Merge modeled and observed PAR into a single timeseries — calc_light_merged" />
-<meta property="og:description" content="Merge two time series (one observed, one modeled) of photosynthetically 
-active radiation (PAR) for a series of date-times. You can also think about 
+<meta property="og:description" content="Merge two time series (one observed, one modeled) of photosynthetically
+active radiation (PAR) for a series of date-times. You can also think about
 this as a way to smoothly interpolate a time series of observations." />
 
 
@@ -74,7 +74,7 @@ this as a way to smoothly interpolate a time series of observations." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@ this as a way to smoothly interpolate a time series of observations." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +132,7 @@ this as a way to smoothly interpolate a time series of observations." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -155,20 +155,20 @@ this as a way to smoothly interpolate a time series of observations." />
     </div>
 
     <div class="ref-description">
-    <p>Merge two time series (one observed, one modeled) of photosynthetically 
-active radiation (PAR) for a series of date-times. You can also think about 
+    <p>Merge two time series (one observed, one modeled) of photosynthetically
+active radiation (PAR) for a series of date-times. You can also think about
 this as a way to smoothly interpolate a time series of observations.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_light_merged</span>(
-  <span class='kw'>PAR.obs</span> <span class='kw'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='no'>solar.time</span>, <span class='no'>light</span>),
-  <span class='no'>solar.time</span>,
-  <span class='no'>latitude</span>,
-  <span class='no'>longitude</span>,
-  <span class='kw'>max.PAR</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>max.gap</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>3</span>, <span class='kw'>units</span> <span class='kw'>=</span> <span class='st'>"hours"</span>),
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fu'>is.unitted</span>(<span class='no'>PAR.obs</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>calc_light_merged</span><span class='op'>(</span>
+  PAR.obs <span class='op'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='va'>solar.time</span>, <span class='va'>light</span><span class='op'>)</span>,
+  <span class='va'>solar.time</span>,
+  <span class='va'>latitude</span>,
+  <span class='va'>longitude</span>,
+  max.PAR <span class='op'>=</span> <span class='cn'>NA</span>,
+  max.gap <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>3</span>, units <span class='op'>=</span> <span class='st'>"hours"</span><span class='op'>)</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -181,12 +181,12 @@ be at a lower temporal resolution than <code>PAR.mod</code>)</p></td>
     </tr>
     <tr>
       <th>solar.time</th>
-      <td><p>a vector of mean solar times for which the light should be 
+      <td><p>a vector of mean solar times for which the light should be
 modeled and merged with the values in PAR.obs</p></td>
     </tr>
     <tr>
       <th>latitude</th>
-      <td><p>numeric value or vector indicating the site latitude in 
+      <td><p>numeric value or vector indicating the site latitude in
 decimal degrees (never radians or deg-min-sec, no matter what <code>format</code>
 is) between -90 (South Pole) and 90 (North Pole).</p></td>
     </tr>
@@ -204,40 +204,42 @@ cloud-free days of observed light</p></td>
     </tr>
     <tr>
       <th>max.gap</th>
-      <td><p>difftime or NA. If difftime, the maximum gap between a light 
-observation and a time point in solar.time, beyond which no value will be 
+      <td><p>difftime or NA. If difftime, the maximum gap between a light
+observation and a time point in solar.time, beyond which no value will be
 given for light at that solar.time. If NA, all values will be modeled, even
 if they are many days away from a light observation.</p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should the returned vector be a unitted object?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?</p></td>
     </tr>
     </table>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>dplyr</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>unitted</span>)
-<span class='no'>timebounds</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'2008-03-12 00:00'</span>, <span class='st'>'2008-03-12 23:59'</span>), <span class='kw'>tz</span><span class='kw'>=</span><span class='st'>'UTC'</span>)
-<span class='no'>coords</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>lat</span><span class='kw'>=</span><span class='fl'>32.4</span>, <span class='kw'>lon</span><span class='kw'>=</span>-<span class='fl'>96.5</span>)
-<span class='no'>PAR.obs</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/reexports.html'>data_frame</a></span>(
-  <span class='kw'>solar.time</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='no'>timebounds</span>[<span class='fl'>1</span>], <span class='no'>timebounds</span>[<span class='fl'>2</span>], <span class='kw'>by</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>3</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'hours'</span>)),
-  <span class='kw'>light</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>85.9</span>, <span class='fl'>1160.5</span>, <span class='fl'>1539.0</span>, <span class='fl'>933.9</span>, <span class='fl'>0</span>, <span class='fl'>0</span>)
-) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/as.data.frame.html'>as.data.frame</a></span>()
-<span class='no'>PAR.mod</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/reexports.html'>data_frame</a></span>(
-  <span class='kw'>solar.time</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='no'>timebounds</span>[<span class='fl'>1</span>], <span class='no'>timebounds</span>[<span class='fl'>2</span>], <span class='kw'>by</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>0.25</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'hours'</span>)),
-  <span class='kw'>light</span><span class='kw'>=</span><span class='fu'><a href='calc_light.html'>calc_light</a></span>(<span class='no'>solar.time</span>, <span class='kw'>latitude</span><span class='kw'>=</span><span class='no'>coords</span>$<span class='no'>lat</span>, <span class='kw'>longitude</span><span class='kw'>=</span><span class='no'>coords</span>$<span class='no'>lon</span>)
-) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/as.data.frame.html'>as.data.frame</a></span>()
-<span class='no'>PAR.merged</span> <span class='kw'>&lt;-</span> <span class='fu'>calc_light_merged</span>(<span class='no'>PAR.obs</span>, <span class='no'>PAR.mod</span>$<span class='no'>solar.time</span>,
-  <span class='kw'>latitude</span><span class='kw'>=</span><span class='no'>coords</span>$<span class='no'>lat</span>, <span class='kw'>longitude</span><span class='kw'>=</span><span class='no'>coords</span>$<span class='no'>lon</span>, <span class='kw'>max.gap</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>20</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'hours'</span>))
-<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span>(<span class='fu'><a href='https://dplyr.tidyverse.org/reference/bind.html'>bind_rows</a></span>(<span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span>(<span class='no'>PAR.obs</span>), <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'obs'</span>), <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span>(<span class='no'>PAR.mod</span>), <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'mod'</span>),
-                 <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span>(<span class='no'>PAR.merged</span>), <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'merged'</span>)) <span class='kw'>%&gt;%</span>
-       <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>type</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>ordered</a></span>(<span class='no'>type</span>, <span class='kw'>levels</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'obs'</span>,<span class='st'>'mod'</span>,<span class='st'>'merged'</span>))),
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>solar.time</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>light</span>, <span class='kw'>color</span><span class='kw'>=</span><span class='no'>type</span>)) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span>() + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span>() + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>()
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://dplyr.tidyverse.org'>dplyr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/appling/unitted'>unitted</a></span><span class='op'>)</span>
+<span class='va'>timebounds</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'2008-03-12 00:00'</span>, <span class='st'>'2008-03-12 23:59'</span><span class='op'>)</span>, tz<span class='op'>=</span><span class='st'>'UTC'</span><span class='op'>)</span>
+<span class='va'>coords</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>lat<span class='op'>=</span><span class='fl'>32.4</span>, lon<span class='op'>=</span><span class='op'>-</span><span class='fl'>96.5</span><span class='op'>)</span>
+<span class='va'>PAR.obs</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span><span class='op'>(</span>
+  solar.time<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='va'>timebounds</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span>, <span class='va'>timebounds</span><span class='op'>[</span><span class='fl'>2</span><span class='op'>]</span>, by<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>3</span>, units<span class='op'>=</span><span class='st'>'hours'</span><span class='op'>)</span><span class='op'>)</span>,
+  light<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>85.9</span>, <span class='fl'>1160.5</span>, <span class='fl'>1539.0</span>, <span class='fl'>933.9</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>
+<span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/as.data.frame.html'>as.data.frame</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>PAR.mod</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span><span class='op'>(</span>
+  solar.time<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='va'>timebounds</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span>, <span class='va'>timebounds</span><span class='op'>[</span><span class='fl'>2</span><span class='op'>]</span>, by<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>0.25</span>, units<span class='op'>=</span><span class='st'>'hours'</span><span class='op'>)</span><span class='op'>)</span>,
+  light<span class='op'>=</span><span class='fu'><a href='calc_light.html'>calc_light</a></span><span class='op'>(</span><span class='va'>solar.time</span>, latitude<span class='op'>=</span><span class='va'>coords</span><span class='op'>$</span><span class='va'>lat</span>, longitude<span class='op'>=</span><span class='va'>coords</span><span class='op'>$</span><span class='va'>lon</span><span class='op'>)</span>
+<span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/as.data.frame.html'>as.data.frame</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>PAR.merged</span> <span class='op'>&lt;-</span> <span class='fu'>calc_light_merged</span><span class='op'>(</span><span class='va'>PAR.obs</span>, <span class='va'>PAR.mod</span><span class='op'>$</span><span class='va'>solar.time</span>,
+  latitude<span class='op'>=</span><span class='va'>coords</span><span class='op'>$</span><span class='va'>lat</span>, longitude<span class='op'>=</span><span class='va'>coords</span><span class='op'>$</span><span class='va'>lon</span>, max.gap<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>20</span>, units<span class='op'>=</span><span class='st'>'hours'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/bind.html'>bind_rows</a></span><span class='op'>(</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='va'>PAR.obs</span><span class='op'>)</span>, type<span class='op'>=</span><span class='st'>'obs'</span><span class='op'>)</span>, <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='va'>PAR.mod</span><span class='op'>)</span>, type<span class='op'>=</span><span class='st'>'mod'</span><span class='op'>)</span>,
+                 <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='va'>PAR.merged</span><span class='op'>)</span>, type<span class='op'>=</span><span class='st'>'merged'</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+       <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>type<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>ordered</a></span><span class='op'>(</span><span class='va'>type</span>, levels<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'obs'</span>,<span class='st'>'mod'</span>,<span class='st'>'merged'</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>solar.time</span>, y<span class='op'>=</span><span class='va'>light</span>, color<span class='op'>=</span><span class='va'>type</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -253,7 +255,7 @@ if they are many days away from a light observation.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

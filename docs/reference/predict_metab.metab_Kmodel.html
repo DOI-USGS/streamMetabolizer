@@ -74,7 +74,7 @@ Try get_params() to retrieve the predicted values of K600.daily." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@ Try get_params() to retrieve the predicted values of K600.daily." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +132,7 @@ Try get_params() to retrieve the predicted values of K600.daily." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -161,68 +161,69 @@ Try get_params() to retrieve the predicted values of K600.daily.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for metab_Kmodel</span>
-<span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(
-  <span class='no'>metab_model</span>,
-  <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>day_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>day_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='no'>...</span>,
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>use_saved</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+<span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span>
+  <span class='va'>metab_model</span>,
+  date_start <span class='op'>=</span> <span class='cn'>NA</span>,
+  date_end <span class='op'>=</span> <span class='cn'>NA</span>,
+  day_start <span class='op'>=</span> <span class='cn'>NA</span>,
+  day_end <span class='op'>=</span> <span class='cn'>NA</span>,
+  <span class='va'>...</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
+  use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>metab_model</th>
-      <td><p>A metabolism model, implementing the 
+      <td><p>A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism</p></td>
     </tr>
     <tr>
       <th>date_start</th>
-      <td><p>Date or a class convertible with as.Date. The first date 
+      <td><p>Date or a class convertible with as.Date. The first date
 (inclusive) for which to report metabolism predictions. If NA, no filtering
 is done.</p></td>
     </tr>
     <tr>
       <th>date_end</th>
-      <td><p>Date or a class convertible with as.Date. The last date 
+      <td><p>Date or a class convertible with as.Date. The last date
 (inclusive) for which to report metabolism predictions. If NA, no filtering
 is done.</p></td>
     </tr>
     <tr>
       <th>day_start</th>
-      <td><p>start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+      <td><p>start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For daily metabolism predictions, 
+fall exactly on an observation time. For daily metabolism predictions,
 day_end - day_start should probably equal 24 so that each day's estimate is
 representative of a 24-hour period.</p></td>
     </tr>
     <tr>
       <th>day_end</th>
-      <td><p>end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+      <td><p>end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. For daily metabolism predictions, day_end -
-day_start should probably equal 24 so that each day's estimate is 
+day_start should probably equal 24 so that each day's estimate is
 representative of a 24-hour period.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Other arguments passed to class-specific implementations of 
+      <td><p>Other arguments passed to class-specific implementations of
 <code>predict_metab</code></p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the output?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?</p></td>
     </tr>
     <tr>
       <th>use_saved</th>
-      <td><p>logical. Is it OK to use predictions that were saved with 
+      <td><p>logical. Is it OK to use predictions that were saved with
 the model?</p></td>
     </tr>
     </table>
@@ -243,7 +244,7 @@ the model?</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

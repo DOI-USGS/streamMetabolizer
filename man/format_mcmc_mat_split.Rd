@@ -20,7 +20,7 @@ format_mcmc_mat_split(
 \item{names_stats}{character vector of the names of the statistics}
 }
 \description{
-For split_dates models. Formats output into a one-row data.frame for 
+For split_dates models. Formats output into a one-row data.frame for
 row-binding with other such data.frames
 }
 \keyword{internal}

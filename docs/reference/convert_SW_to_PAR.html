@@ -74,7 +74,7 @@ changes in this ratio (see Britton and Dodd (1976))." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@ changes in this ratio (see Britton and Dodd (1976))." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +132,7 @@ changes in this ratio (see Britton and Dodd (1976))." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -160,7 +160,7 @@ changes in this ratio (see Britton and Dodd (1976))." />
 changes in this ratio (see Britton and Dodd (1976)).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>convert_SW_to_PAR</span>(<span class='no'>sw</span>, <span class='kw'>coef</span> <span class='kw'>=</span> <span class='fl'>2.114</span>)</pre>
+    <pre class="usage"><span class='fu'>convert_SW_to_PAR</span><span class='op'>(</span><span class='va'>sw</span>, coef <span class='op'>=</span> <span class='fl'>2.114</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -181,7 +181,10 @@ changes in this ratio (see Britton and Dodd (1976)).</p>
     <p>Numeric vector of PAR values in units umol/m^2/sec</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>convert_SW_to_PAR</span>(<span class='kw'>sw</span><span class='kw'>=</span><span class='fl'>800</span>)</div><div class='output co'>#&gt; [1] 1691.2</div><div class='input'><span class='fu'>convert_SW_to_PAR</span>(<span class='kw'>sw</span><span class='kw'>=</span><span class='fl'>800</span>, <span class='kw'>coef</span><span class='kw'>=</span><span class='fl'>2.1</span>)</div><div class='output co'>#&gt; [1] 1680</div><div class='input'><span class='fu'>convert_SW_to_PAR</span>(<span class='kw pkg'>unitted</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span>(<span class='fl'>473</span>, <span class='st'>"W m^-2"</span>))</div><div class='output co'>#&gt; unitted numeric (umol m^-2 s^-1)
+    <pre class="examples"><div class='input'><span class='fu'>convert_SW_to_PAR</span><span class='op'>(</span>sw<span class='op'>=</span><span class='fl'>800</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 1691.2</div><div class='input'><span class='fu'>convert_SW_to_PAR</span><span class='op'>(</span>sw<span class='op'>=</span><span class='fl'>800</span>, coef<span class='op'>=</span><span class='fl'>2.1</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 1680</div><div class='input'><span class='fu'>convert_SW_to_PAR</span><span class='op'>(</span><span class='fu'>unitted</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>473</span>, <span class='st'>"W m^-2"</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; unitted numeric (umol m^-2 s^-1)
 #&gt; [1] 999.922</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -198,7 +201,7 @@ changes in this ratio (see Britton and Dodd (1976)).</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

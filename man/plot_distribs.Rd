@@ -15,24 +15,24 @@ plot_distribs(
 )
 }
 \arguments{
-\item{dist_data}{Either a specs list (for priors only) or a metab_model 
+\item{dist_data}{Either a specs list (for priors only) or a metab_model
 object (for both priors and posteriors).}
 
 \item{parname}{character. the name of the parameter whose distribution[s] you
 wish to plot}
 
-\item{index}{integer or logical. Applicable only if plotting posteriors, and 
+\item{index}{integer or logical. Applicable only if plotting posteriors, and
 useful only if the parname is for a parameter having multiple (e.g., daily)
-instances. In this case, the index selects the instance and corresponds to 
-the row number in the data.frame element of \code{get_fit(metab_model)} 
-that contains the parameter, e.g. \code{get_fit(metab_model)$daily} for 
-\code{'GPP_daily'}. The default, TRUE, selects and pools all instances of 
+instances. In this case, the index selects the instance and corresponds to
+the row number in the data.frame element of \code{get_fit(metab_model)}
+that contains the parameter, e.g. \code{get_fit(metab_model)$daily} for
+\code{'GPP_daily'}. The default, TRUE, selects and pools all instances of
 the parameter.}
 
 \item{style}{character indicating which graphics package to use}
 }
 \description{
-Plot the prior and/or posterior disitrubtions as implied by the 
+Plot the prior and/or posterior disitrubtions as implied by the
 hyperparameters in a specs list and/or the
 }
 \examples{
