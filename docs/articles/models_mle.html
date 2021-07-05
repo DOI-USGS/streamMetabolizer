@@ -138,13 +138,9 @@
 <div id="preparing-the-input-data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preparing-the-input-data" class="anchor"></a>1. Preparing the input data</h1>
-<p>Load a small example dataset from the package (data are from French Creek in Laramie, WY, courtesy of Bob Hall). Explicitly attached units are optional but useful for confirming that the data are in the expected format. We’ll use the <code>streamMetabolizer</code> standard in defining our day to run from 4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
+<p>Load a small example dataset from the package (data are from French Creek in Laramie, WY, courtesy of Bob Hall). We’ll use the <code>streamMetabolizer</code> standard in defining our day to run from 4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span>, attach.units<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<pre><code>## Warning: The `attach.units` argument of `data_metab()` is deprecated as of streamMetabolizer 0.12.0.
-## In the future, streamMetabolizer will stop using the unitted package entirely.</code></pre>
-<pre><code>## Warning: The `attach.units` argument of `load_french_creek()` is deprecated as of streamMetabolizer 0.12.0.
-## In the future, streamMetabolizer will stop using the unitted package entirely.</code></pre>
+<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="configuring-the-model" class="section level1">
 <h1 class="hasAnchor">
@@ -158,7 +154,7 @@
 <h2 class="hasAnchor">
 <a href="#a--choose-a-model-structure" class="anchor"></a>2a. Choose a model structure</h2>
 <p>Call <code>mm_name</code> to choose a specific MLE model name/structure. Here we will fit the default MLE model. Many others are available (see <a href="model_structures.html">Model Structures</a> and <a href="gpp_er_eqs.html">GPP and ER equations</a>), but this one is common and fast.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mle_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'mle'</span><span class="op">)</span>
 <span class="va">mle_name</span></code></pre></div>
 <pre><code>## [1] "m_np_oi_tr_plrckm.nlm"</code></pre>
@@ -167,7 +163,7 @@
 <h2 class="hasAnchor">
 <a href="#b--set-the-specifications" class="anchor"></a>2b. Set the specifications</h2>
 <p>Having chosen a model, we next need to define a list of specifications for that model. The <code>specs</code> function creates a list appropriate to the model we chose.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span><span class="op">)</span>
 <span class="va">mle_specs</span></code></pre></div>
 <pre><code>## Model specifications:
@@ -180,7 +176,7 @@
 ##   init.ER.daily     -10                                                         
 ##   init.K600.daily   10</code></pre>
 <p>See <code><a href="../reference/specs.html">?specs</a></code> for definitions of all specifications. Note that most of the specifications in that help file are omitted from the output of <code><a href="../reference/specs.html">specs(mle_name)</a></code> above - this is because MLE models are simple and don’t have many parameters to set. Any of those parameters that are included in <code>mle_specs</code> can be modified, either by calling <code><a href="../reference/specs.html">specs()</a></code> again or by replacing that value in the <code>mle_specs</code> list. Here is a command that sets the the inital values of GPP, ER, and K600 for the likelihood maximization. (I’ve done this just for illustration; the model results aren’t affected by these particular changes for this particular dataset, and you will seldom need to edit these values.)</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span>, init.GPP.daily<span class="op">=</span><span class="fl">2</span>, init.ER.daily<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, init.K600.daily<span class="op">=</span><span class="fl">3</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
@@ -188,14 +184,14 @@
 <h1 class="hasAnchor">
 <a href="#fitting-the-model" class="anchor"></a>3. Fitting the model</h1>
 <p>Now actually fit the model using the <code>metab</code> function.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">mle_specs</span>, data<span class="op">=</span><span class="va">dat</span>, info<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>site<span class="op">=</span><span class="st">'French Creek, WY'</span>, source<span class="op">=</span><span class="st">'Bob Hall'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>It’s optional, but sometimes helpful, to include some sort of metadata in the <code>info</code>, as I’ve done above. I’ve chosen to put the metadata in a character vector, but metadata can take any format you like.</p>
 <div id="inspecting-the-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#inspecting-the-model" class="anchor"></a>4. Inspecting the model</h2>
 <p>Models show lots of relevant information if you simply print them at the command line.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mm</span></code></pre></div>
 <pre><code>## metab_model of type metab_mle 
 ##   User-supplied metadata:
@@ -211,7 +207,7 @@
 ##   init.GPP.daily    2                                                           
 ##   init.ER.daily     -1                                                          
 ##   init.K600.daily   3                                                           
-## Fitting time: 2.077 secs elapsed
+## Fitting time: 1.928 secs elapsed
 ## Parameters (3 dates):
 ##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
 ## 1 2012-09-18 2.814768         2.160462        3.469073 -2.113856 
@@ -235,11 +231,11 @@
 ## 2                   
 ## 3</code></pre>
 <p>You can also extract specific pieces of information using designated accessor functions. For example, the <code>info</code> and <code>data</code> are saved in the fitted model object and can be pulled out with <code>get_info</code> and <code>get_data</code>, respectively.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_info.html">get_info</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <pre><code>##               site             source 
 ## "French Creek, WY"         "Bob Hall"</code></pre>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light
 ## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
@@ -256,14 +252,14 @@
 ## 5 8.452734
 ## 6 8.463325</code></pre>
 <p>We can also get information about the model fitting process.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_fitting_time.html">get_fitting_time</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the time it took to fit the model</span></code></pre></div>
 <pre><code>##    user  system elapsed 
-##   1.994   0.026   2.077</code></pre>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+##   1.882   0.019   1.928</code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_version.html">get_version</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the streamMetabolizer version used to fit the model</span></code></pre></div>
 <pre><code>## [1] "0.12.0"</code></pre>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_specs.html">get_specs</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the specifications we passed in</span></code></pre></div>
 <pre><code>## Model specifications:
 ##   model_name        m_np_oi_tr_plrckm.nlm                                       
@@ -275,15 +271,15 @@
 ##   init.ER.daily     -1                                                          
 ##   init.K600.daily   3</code></pre>
 <p>There is a function to plot the daily metabolism estimates.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_metab_preds.html">plot_metab_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <p><img src="models_mle_files/figure-html/plot_metab1-1.png" width="672"></p>
 <p>There is also a function to plot the dissolved oxygen predictions (lines) along with the original observations (points).</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <p><img src="models_mle_files/figure-html/plot_metab2-1.png" width="672"></p>
 <p>You can output the daily and instantaneous predictions to data.frames for further inspection.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
 ## 1 2012-09-18 2.814768  2.160462  3.469073 -2.113856 -2.646426 -1.581285
@@ -293,7 +289,7 @@
 ## 1                         
 ## 2                         
 ## 3</code></pre>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light
 ## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0

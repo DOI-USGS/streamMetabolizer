@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Extract the metabolism parameters (fitted and/or fixed) from a model. — get_params" />
-<meta property="og:description" content="A function in the metab_model_interface. Returns estimates of those 
+<meta property="og:description" content="A function in the metab_model_interface. Returns estimates of those
 parameters describing the rates and/or shapes of GPP, ER, or reaeration." />
 
 
@@ -154,7 +154,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration." />
     </div>
 
     <div class="ref-description">
-    <p>A function in the metab_model_interface. Returns estimates of those 
+    <p>A function in the metab_model_interface. Returns estimates of those
 parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
     </div>
 
@@ -166,7 +166,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
   messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
   fixed <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"columns"</span>, <span class='st'>"stars"</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='co'># S3 method for metab_Kmodel</span>
@@ -178,7 +178,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
   messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
   fixed <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"columns"</span>, <span class='st'>"stars"</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
   use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
 
@@ -190,7 +190,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
   uncertainty <span class='op'>=</span> <span class='st'>"ci"</span>,
   messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='co'># S3 method for metab_model</span>
@@ -202,7 +202,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
   messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
   fixed <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"columns"</span>, <span class='st'>"stars"</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='co'># S3 method for metab_sim</span>
@@ -214,7 +214,7 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
   messages <span class='op'>=</span> <span class='cn'>TRUE</span>,
   fixed <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"columns"</span>, <span class='st'>"stars"</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -222,60 +222,61 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>metab_model</th>
-      <td><p>A metabolism model, implementing the 
+      <td><p>A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism</p></td>
     </tr>
     <tr>
       <th>date_start</th>
-      <td><p>Date or a class convertible with as.Date. The first date 
+      <td><p>Date or a class convertible with as.Date. The first date
 (inclusive) for which to report parameters. If NA, no filtering is done.</p></td>
     </tr>
     <tr>
       <th>date_end</th>
-      <td><p>Date or a class convertible with as.Date. The last date 
+      <td><p>Date or a class convertible with as.Date. The last date
 (inclusive) for which to report parameters.. If NA, no filtering is done.</p></td>
     </tr>
     <tr>
       <th>uncertainty</th>
       <td><p>character. Should columns for the uncertainty of parameter
-estimates be excluded ('none'), reported as standard deviations ('sd'), or 
-reported as lower and upper bounds of a 95 percent confidence interval 
-('ci')? When available (e.g., for Bayesian models), if 'ci' then the 
+estimates be excluded ('none'), reported as standard deviations ('sd'), or
+reported as lower and upper bounds of a 95 percent confidence interval
+('ci')? When available (e.g., for Bayesian models), if 'ci' then the
 central value will be the median (50th quantile) and the ranges will be the
-2.5th and 97.5th quantiles. If 'sd' then the central value will always be 
+2.5th and 97.5th quantiles. If 'sd' then the central value will always be
 the mean.</p></td>
     </tr>
     <tr>
       <th>messages</th>
-      <td><p>logical. Should warning and error messages from the fitting 
+      <td><p>logical. Should warning and error messages from the fitting
 procedure be included in the output?</p></td>
     </tr>
     <tr>
       <th>fixed</th>
-      <td><p>character. Should values pulled from data_daily (i.e., fixed 
+      <td><p>character. Should values pulled from data_daily (i.e., fixed
 rather that fitted) be treated identically ('none'), paired with a logicals
-column ending in '.fixed' ('columns'), converted to character and marked 
+column ending in '.fixed' ('columns'), converted to character and marked
 with a leading asterisk ('stars')?</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Other arguments passed to class-specific implementations of 
+      <td><p>Other arguments passed to class-specific implementations of
 <code>get_params</code></p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the output?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?</p></td>
     </tr>
     <tr>
       <th>use_saved</th>
-      <td><p>logical. Is it OK to use predictions that were saved with 
+      <td><p>logical. Is it OK to use predictions that were saved with
 the model?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A data.frame of the parameters needed to predict GPP, ER, D, and DO, 
+    <p>A data.frame of the parameters needed to predict GPP, ER, D, and DO,
   one row per date</p>
     <h2 class="hasAnchor" id="methods-by-class-"><a class="anchor" href="#methods-by-class-"></a>Methods (by class)</h2>
 

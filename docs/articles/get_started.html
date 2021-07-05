@@ -148,14 +148,10 @@
 <div id="preparing-the-input-data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preparing-the-input-data" class="anchor"></a>1. Preparing the input data</h1>
-<p>Load a small example dataset from the package (data are from French Creek in Laramie, WY, courtesy of Bob Hall). Explicitly attached units are optional but useful for confirming that the data are in the expected format. We’ll use the <code>streamMetabolizer</code> standard in defining our day to run from 4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
+<p>Load a small example dataset from the package (data are from French Creek in Laramie, WY, courtesy of Bob Hall). We’ll use the <code>streamMetabolizer</code> standard in defining our day to run from 4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span>, attach.units<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<pre><code>## Warning: The `attach.units` argument of `data_metab()` is deprecated as of streamMetabolizer 0.12.0.
-## In the future, streamMetabolizer will stop using the unitted package entirely.</code></pre>
-<pre><code>## Warning: The `attach.units` argument of `load_french_creek()` is deprecated as of streamMetabolizer 0.12.0.
-## In the future, streamMetabolizer will stop using the unitted package entirely.</code></pre>
-<p>See the <a href="data_prep.html">Data Preparation</a> tutorial for more on how to properly format and inspect a dataset.</p>
+<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span><span class="op">)</span></code></pre></div>
+<p>See the <code><a href="../reference/metab.html">?metab</a></code> help document and the <a href="data_prep.html">Data Preparation</a> tutorial for more on how to properly format and inspect a dataset.</p>
 </div>
 <div id="configuring-the-model" class="section level1">
 <h1 class="hasAnchor">
@@ -169,7 +165,7 @@
 <h2 class="hasAnchor">
 <a href="#a--choose-a-model-structure" class="anchor"></a>2a. Choose a model structure</h2>
 <p>For this example, we will specify a Bayesian model with both observation error and process error. We won’t pool K600 here because we don’t have many days of data, but pooling is one feature that makes Bayesian models better than MLE models in general. Another great feature of Bayesian models is that they produce more accurate and nuanced confidence intervals.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bayes_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'bayes'</span>, pool_K600<span class="op">=</span><span class="st">'none'</span>, err_obs_iid<span class="op">=</span><span class="cn">TRUE</span>, err_proc_iid<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">bayes_name</span></code></pre></div>
 <pre><code>## [1] "b_np_oipi_tr_plrckm.stan"</code></pre>
@@ -178,7 +174,7 @@
 <h2 class="hasAnchor">
 <a href="#b--set-the-specifications" class="anchor"></a>2b. Set the specifications</h2>
 <p>We now pass the model name to <code><a href="../reference/specs.html">specs()</a></code> to get a list of default specifications for this model.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bayes_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">bayes_name</span><span class="op">)</span>
 <span class="va">bayes_specs</span></code></pre></div>
 <pre><code>## Model specifications:
@@ -210,7 +206,7 @@
 ##   thin_steps               1                                                    
 ##   verbose                  FALSE</code></pre>
 <p>At this point we can alter some of the specifications if desired.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># one way to alter specifications: call specs() again</span>
 <span class="va">bayes_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">bayes_name</span>, burnin_steps<span class="op">=</span><span class="fl">100</span>, saved_steps<span class="op">=</span><span class="fl">200</span>, n_cores<span class="op">=</span><span class="fl">1</span>, GPP_daily_mu<span class="op">=</span><span class="fl">3</span>, GPP_daily_sigma<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
 <span class="co"># another way: use revise()</span>
@@ -223,16 +219,15 @@
 <h1 class="hasAnchor">
 <a href="#fitting-the-model" class="anchor"></a>3. Fitting the model</h1>
 <p>Once a model has been configured, you can fit the model to data with <code><a href="../reference/metab.html">metab()</a></code>. Bayesian models take a while to run, so be patient. Or switch to an MLE model if you can afford to sacrifice some accuracy for speed. (This small example usually takes about 30 seconds on my computer.)</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">bayes_specs</span>, data<span class="op">=</span><span class="va">dat</span><span class="op">)</span></code></pre></div>
-<pre><code>## Trying to compile a simple C file</code></pre>
 </div>
 <div id="inspecting-the-model" class="section level1">
 <h1 class="hasAnchor">
 <a href="#inspecting-the-model" class="anchor"></a>4. Inspecting the model</h1>
 <p>Once you’ve fit a model, you can inspect the output with functions including <code><a href="../reference/predict_metab.html">predict_metab()</a></code> and <code><a href="../reference/plot_metab_preds.html">plot_metab_preds()</a></code>, <code><a href="../reference/predict_DO.html">predict_DO()</a></code> and <code><a href="../reference/plot_DO_preds.html">plot_DO_preds()</a></code>, <code><a href="../reference/get_params.html">get_params()</a></code>, and <code><a href="../reference/get_fit.html">get_fit()</a></code>.</p>
 <p>Start by simply printing the model to the console.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mm</span></code></pre></div>
 <pre><code>## metab_model of type metab_bayes 
 ## streamMetabolizer version 0.12.0 
@@ -265,16 +260,16 @@
 ##   thin_steps               1                                                    
 ##   verbose                  FALSE                                                
 ##   model_path               /private/var/folders/_0/fbg0ffkj6z3fb_7jvm8wg86r00...
-## Fitting time: 16.679 secs elapsed
+## Fitting time: 15.621 secs elapsed
 ## Parameters (3 dates):
 ##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
-## 1 2012-09-18 4.607255         3.583838        8.190710 -3.571321 
-## 2 2012-09-19 4.300345         3.303195        8.350941 -3.405118 
-## 3 2012-09-20 5.171397         2.262458        7.216639 -3.678998 
+## 1 2012-09-18 4.011284       -0.3399707       11.185802 -2.924890 
+## 2 2012-09-19 4.763279       -0.3312861       11.452913 -3.809623 
+## 3 2012-09-20 4.970032        1.5315565        6.384107 -3.664768 
 ##   ER.daily.lower ER.daily.upper K600.daily K600.daily.lower K600.daily.upper
-## 1      -6.406937      -2.811030  47.42048          38.01067         83.38832
-## 2      -6.873145      -2.568283  41.51215          32.52184         79.80997
-## 3      -5.343638      -1.451997  51.98903          25.13151         73.32482
+## 1      -9.155801      0.3212199  41.64229       0.005768639        110.18960
+## 2      -9.174358      0.3902129  45.90257       0.170223010        104.36444
+## 3      -5.103419     -1.0005176  50.48629      18.147539291         66.43782
 ##   msgs.fit
 ## 1  w      
 ## 2  w      
@@ -283,7 +278,7 @@
 ##   There were 4 chains where the estimated Bayesian Fraction of Missing Information was low. See
 ## http://mc-stan.org/misc/warnings.html#bfmi-low
 ##   Examine the pairs() plot to diagnose sampling problems
-##   The largest R-hat is 3.47, indicating chains have not mixed.
+##   The largest R-hat is 4.01, indicating chains have not mixed.
 ## Running the chains for more iterations may help. See
 ## http://mc-stan.org/misc/warnings.html#r-hat
 ##   Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
@@ -297,57 +292,57 @@
 ## # A tibble: 3 x 9
 ##   date         GPP GPP.lower GPP.upper    ER ER.lower ER.upper msgs.fit 
 ##   &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    
-## 1 2012-09-18  4.61      3.58      8.19 -3.57    -6.41    -2.81 "w      "
-## 2 2012-09-19  4.30      3.30      8.35 -3.41    -6.87    -2.57 "w      "
-## 3 2012-09-20  5.17      2.26      7.22 -3.68    -5.34    -1.45 "w      "
+## 1 2012-09-18  4.01    -0.340     11.2  -2.92    -9.16    0.321 "w      "
+## 2 2012-09-19  4.76    -0.331     11.5  -3.81    -9.17    0.390 "w      "
+## 3 2012-09-20  4.97     1.53       6.38 -3.66    -5.10   -1.00  "w      "
 ## # … with 1 more variable: msgs.pred &lt;chr&gt;</code></pre>
 <p>Here are the daily metabolism predictions from the model:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <pre><code>## # A tibble: 3 x 10
 ##   date         GPP GPP.lower GPP.upper    ER ER.lower ER.upper msgs.fit warnings
 ##   &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;   
-## 1 2012-09-18  4.61      3.58      8.19 -3.57    -6.41    -2.81 "w     … ""      
-## 2 2012-09-19  4.30      3.30      8.35 -3.41    -6.87    -2.57 "w     … ""      
-## 3 2012-09-20  5.17      2.26      7.22 -3.68    -5.34    -1.45 "w     … ""      
+## 1 2012-09-18  4.01    -0.340     11.2  -2.92    -9.16    0.321 "w     … ""      
+## 2 2012-09-19  4.76    -0.331     11.5  -3.81    -9.17    0.390 "w     … ""      
+## 3 2012-09-20  4.97     1.53       6.38 -3.66    -5.10   -1.00  "w     … ""      
 ## # … with 1 more variable: errors &lt;chr&gt;</code></pre>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_metab_preds.html">plot_metab_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <p><img src="get_started_files/figure-html/bayes_pred_fig-1.png" width="480"></p>
 <p>You can inspect more of the fitted daily parameters, including K600, with <code><a href="../reference/get_params.html">get_params()</a></code>:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <pre><code>## # A tibble: 3 x 9
 ##   date       GPP.daily GPP.daily.sd ER.daily ER.daily.sd K600.daily
 ##   &lt;date&gt;         &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;
-## 1 2012-09-18      5.13         1.35    -4.09        1.13       52.8
-## 2 2012-09-19      4.97         1.79    -3.98        1.54       47.9
-## 3 2012-09-20      4.77         1.46    -3.42        1.09       49.2
+## 1 2012-09-18      4.46         3.98    -3.54        3.20       46.1
+## 2 2012-09-19      4.92         4.07    -3.86        3.28       47.0
+## 3 2012-09-20      4.21         1.86    -3.08        1.49       43.8
 ## # … with 3 more variables: K600.daily.sd &lt;dbl&gt;, warnings &lt;chr&gt;, errors &lt;chr&gt;</code></pre>
 <p>Here are the first few dissolved oxygen predictions from the model (<code>DO.mod</code>). They are returned along with the input data for convenience.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code>    date          solar.time DO.obs   DO.sat depth temp.water light</code></pre>
-<p>1 2012-09-18 2012-09-18 04:05:58 8.41 9.083329 0.16 3.60 0 2 2012-09-18 2012-09-18 04:20:58 8.42 9.093063 0.16 3.56 0 3 2012-09-18 2012-09-18 04:35:58 8.42 9.105254 0.16 3.51 0 4 2012-09-18 2012-09-18 04:50:58 8.43 9.112582 0.16 3.48 0 5 2012-09-18 2012-09-18 05:05:58 8.45 9.127267 0.16 3.42 0 6 2012-09-18 2012-09-18 05:20:58 8.46 9.137079 0.16 3.38 0 DO.mod 1 8.410000 2 8.400303 3 8.396858 4 8.397333 5 8.400844 6 8.406791</p>
+<p>1 2012-09-18 2012-09-18 04:05:58 8.41 9.083329 0.16 3.60 0 2 2012-09-18 2012-09-18 04:20:58 8.42 9.093063 0.16 3.56 0 3 2012-09-18 2012-09-18 04:35:58 8.42 9.105254 0.16 3.51 0 4 2012-09-18 2012-09-18 04:50:58 8.43 9.112582 0.16 3.48 0 5 2012-09-18 2012-09-18 05:05:58 8.45 9.127267 0.16 3.42 0 6 2012-09-18 2012-09-18 05:20:58 8.46 9.137079 0.16 3.38 0 DO.mod 1 8.410000 2 8.402977 3 8.400771 4 8.401710 5 8.405224 6 8.410909</p>
 <p>And here are the dissolved oxygen predictions in a figure:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
 <p><img src="get_started_files/figure-html/bayes_pdo_fig-1.png" width="480"></p>
 <p>For Bayesian models only, you can dig even deeper using <code>get_mcmc</code>, which returns a <code>stanfit</code> object that can be inspected using the <code>rstan</code> package. (These traceplots are pretty bad because we used so few MCMC iterations. You should strive for better in your final models.)</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_mcmc.html">get_mcmc</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span>
 <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html">traceplot</a></span><span class="op">(</span><span class="va">mcmc</span>, pars<span class="op">=</span><span class="st">'K600_daily'</span>, nrow<span class="op">=</span><span class="fl">3</span><span class="op">)</span></code></pre></div>
 <p><img src="get_started_files/figure-html/unnamed-chunk-3-1.png" width="480"></p>
 <p>The <code><a href="../reference/get_fit.html">get_fit()</a></code> function returns a list of data.frames, one per temporal resolution, containing all fitted values and details about their distributions and convergence. Here are just the overall metrics of model convergence (<code>Rhat</code>s, or potential scale reduction statistics; see Gelman and Rubin 1992 or Brooks and Gelman 1998):</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_fit.html">get_fit</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">$</span><span class="va">overall</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html">ends_with</a></span><span class="op">(</span><span class="st">'Rhat'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## # A tibble: 1 x 3
 ##   err_obs_iid_sigma_Rhat err_proc_iid_sigma_Rhat lp___Rhat
 ##                    &lt;dbl&gt;                   &lt;dbl&gt;     &lt;dbl&gt;
-## 1                   1.93                    3.39      2.97</code></pre>
+## 1                   2.15                    7.89      4.54</code></pre>
 <p>And here is a list of all column names available through <code><a href="../reference/get_fit.html">get_fit()</a></code>:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/get_fit.html">get_fit</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">names</span><span class="op">)</span></code></pre></div>
 <pre><code>## $daily

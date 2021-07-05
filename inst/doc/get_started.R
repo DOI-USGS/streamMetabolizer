@@ -7,7 +7,7 @@ library(streamMetabolizer)
 library(dplyr)
 
 ## ----data---------------------------------------------------------------------
-dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28, attach.units=TRUE)
+dat <- data_metab(num_days='3', res='15', day_start=4, day_end=28)
 
 ## ----bayes_name---------------------------------------------------------------
 bayes_name <- mm_name(type='bayes', pool_K600='none', err_obs_iid=TRUE, err_proc_iid=TRUE)

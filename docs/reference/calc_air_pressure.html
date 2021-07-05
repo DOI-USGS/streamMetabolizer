@@ -159,7 +159,7 @@
     <pre class="usage"><span class='fu'>calc_air_pressure</span><span class='op'>(</span>
   temp.air <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>15</span>, <span class='st'>"degC"</span><span class='op'>)</span>,
   elevation <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>762</span>, <span class='st'>"m"</span><span class='op'>)</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -177,13 +177,14 @@ http://www.infoplease.com/ipa/A0001792.html)</p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should the returned vector be a unitted object?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+the returned vector be a unitted object?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a numeric vector of barometric pressures in mb, with units attached 
+    <p>a numeric vector of barometric pressures in mb, with units attached
   if requested.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>

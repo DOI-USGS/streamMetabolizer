@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Predict metabolism from a fitted model. — predict_metab" />
-<meta property="og:description" content="A function in the metab_model_interface. Returns predictions (estimates) of 
+<meta property="og:description" content="A function in the metab_model_interface. Returns predictions (estimates) of
 GPP, ER, and K600." />
 
 
@@ -154,7 +154,7 @@ GPP, ER, and K600." />
     </div>
 
     <div class="ref-description">
-    <p>A function in the metab_model_interface. Returns predictions (estimates) of 
+    <p>A function in the metab_model_interface. Returns predictions (estimates) of
 GPP, ER, and K600.</p>
     </div>
 
@@ -165,7 +165,7 @@ GPP, ER, and K600.</p>
   day_start <span class='op'>=</span> <span class='fu'><a href='get_specs.html'>get_specs</a></span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>day_start</span>,
   day_end <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>min</a></span><span class='op'>(</span><span class='va'>day_start</span> <span class='op'>+</span> <span class='fl'>24</span>, <span class='fu'><a href='get_specs.html'>get_specs</a></span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>day_end</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
   use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
 
@@ -175,7 +175,7 @@ GPP, ER, and K600.</p>
   date_start <span class='op'>=</span> <span class='cn'>NA</span>,
   date_end <span class='op'>=</span> <span class='cn'>NA</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='co'># S3 method for metab_model</span>
@@ -186,7 +186,7 @@ GPP, ER, and K600.</p>
   day_start <span class='op'>=</span> <span class='fu'><a href='get_specs.html'>get_specs</a></span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>day_start</span>,
   day_end <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>min</a></span><span class='op'>(</span><span class='va'>day_start</span> <span class='op'>+</span> <span class='fl'>24</span>, <span class='fu'><a href='get_specs.html'>get_specs</a></span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span><span class='op'>$</span><span class='va'>day_end</span><span class='op'>)</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
   use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
@@ -195,52 +195,53 @@ GPP, ER, and K600.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>metab_model</th>
-      <td><p>A metabolism model, implementing the 
+      <td><p>A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism</p></td>
     </tr>
     <tr>
       <th>date_start</th>
-      <td><p>Date or a class convertible with as.Date. The first date 
+      <td><p>Date or a class convertible with as.Date. The first date
 (inclusive) for which to report metabolism predictions. If NA, no filtering
 is done.</p></td>
     </tr>
     <tr>
       <th>date_end</th>
-      <td><p>Date or a class convertible with as.Date. The last date 
+      <td><p>Date or a class convertible with as.Date. The last date
 (inclusive) for which to report metabolism predictions. If NA, no filtering
 is done.</p></td>
     </tr>
     <tr>
       <th>day_start</th>
-      <td><p>start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+      <td><p>start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For daily metabolism predictions, 
+fall exactly on an observation time. For daily metabolism predictions,
 day_end - day_start should probably equal 24 so that each day's estimate is
 representative of a 24-hour period.</p></td>
     </tr>
     <tr>
       <th>day_end</th>
-      <td><p>end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+      <td><p>end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. For daily metabolism predictions, day_end -
-day_start should probably equal 24 so that each day's estimate is 
+day_start should probably equal 24 so that each day's estimate is
 representative of a 24-hour period.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Other arguments passed to class-specific implementations of 
+      <td><p>Other arguments passed to class-specific implementations of
 <code>predict_metab</code></p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the output?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?</p></td>
     </tr>
     <tr>
       <th>use_saved</th>
-      <td><p>logical. Is it OK to use predictions that were saved with 
+      <td><p>logical. Is it OK to use predictions that were saved with
 the model?</p></td>
     </tr>
     </table>
@@ -248,13 +249,13 @@ the model?</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>A data.frame of daily metabolism estimates. Columns include:</p><dl>
-  
-  <dt>GPP</dt><dd><p>numeric estimate of Gross Primary Production, positive when 
+
+  <dt>GPP</dt><dd><p>numeric estimate of Gross Primary Production, positive when
   realistic, \(g O_2 m^{-2} d^{-1}\)</p></dd>
-  
-  <dt>ER</dt><dd><p>numeric estimate of Ecosystem Respiration, negative when 
+
+  <dt>ER</dt><dd><p>numeric estimate of Ecosystem Respiration, negative when
   realistic, \(g O_2 m^{-2} d^{-1}\)</p></dd>
-  
+
   <dt>K600</dt><dd><p>numeric estimate of the reaeration rate \(d^{-1}\)</p></dd> 
 </dl>
 

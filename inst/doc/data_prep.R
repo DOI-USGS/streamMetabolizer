@@ -3,7 +3,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## ----data, message=FALSE------------------------------------------------------
 library(streamMetabolizer)
-dat <- data_metab(num_days='3', res='15', attach.units=TRUE)
+dat <- data_metab(num_days='3', res='15')
 
 ## ----data_check---------------------------------------------------------------
 dim(dat)
@@ -15,7 +15,7 @@ library(tidyr)
 library(ggplot2)
 
 ## ----viz_inputs_DO, fig.width=7, fig.height=3---------------------------------
-dat %>% unitted::v() %>%
+dat %>% 
   mutate(DO.pctsat = 100 * (DO.obs / DO.sat)) %>%
   select(solar.time, starts_with('DO')) %>%
   gather(type, DO.value, starts_with('DO')) %>%
@@ -26,7 +26,7 @@ dat %>% unitted::v() %>%
 
 ## ----viz_inputs_other, fig.width=7, fig.height=4------------------------------
 labels <- c(depth='depth\n(m)', temp.water='water temp\n(deg C)', light='PAR\n(umol m^-2 s^-1)')
-dat %>% unitted::v() %>%
+dat %>% 
   select(solar.time, depth, temp.water, light) %>%
   gather(type, value, depth, temp.water, light) %>%
   mutate(

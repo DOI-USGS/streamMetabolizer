@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Predict DO from a fitted model. — predict_DO" />
-<meta property="og:description" content="A function in the metab_model_interface. Returns predictions of dissolved 
+<meta property="og:description" content="A function in the metab_model_interface. Returns predictions of dissolved
 oxygen." />
 
 
@@ -154,7 +154,7 @@ oxygen." />
     </div>
 
     <div class="ref-description">
-    <p>A function in the metab_model_interface. Returns predictions of dissolved 
+    <p>A function in the metab_model_interface. Returns predictions of dissolved
 oxygen.</p>
     </div>
 
@@ -163,7 +163,7 @@ oxygen.</p>
   date_start <span class='op'>=</span> <span class='cn'>NA</span>,
   date_end <span class='op'>=</span> <span class='cn'>NA</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
   use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
 
@@ -176,7 +176,7 @@ oxygen.</p>
   date_start <span class='op'>=</span> <span class='cn'>NA</span>,
   date_end <span class='op'>=</span> <span class='cn'>NA</span>,
   <span class='va'>...</span>,
-  attach.units <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>,
   use_saved <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
 
@@ -191,40 +191,41 @@ oxygen.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>metab_model</th>
-      <td><p>A metabolism model, implementing the 
+      <td><p>A metabolism model, implementing the
 metab_model_interface, to use in predicting metabolism</p></td>
     </tr>
     <tr>
       <th>date_start</th>
-      <td><p>Date or a class convertible with as.Date. The first date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+      <td><p>Date or a class convertible with as.Date. The first date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.</p></td>
     </tr>
     <tr>
       <th>date_end</th>
-      <td><p>Date or a class convertible with as.Date. The last date 
-(inclusive) for which to report DO predictions. If NA, no filtering is 
+      <td><p>Date or a class convertible with as.Date. The last date
+(inclusive) for which to report DO predictions. If NA, no filtering is
 done.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Other arguments passed to class-specific implementations of 
+      <td><p>Other arguments passed to class-specific implementations of
 <code>predict_DO</code></p></td>
     </tr>
     <tr>
       <th>attach.units</th>
-      <td><p>logical. Should units be attached to the output?</p></td>
+      <td><p>(deprecated, effectively FALSE in future) logical. Should
+units be attached to the output?</p></td>
     </tr>
     <tr>
       <th>use_saved</th>
-      <td><p>logical. Is it OK to use predictions that were saved with 
+      <td><p>logical. Is it OK to use predictions that were saved with
 the model?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A data.frame of dissolved oxygen predictions at the temporal 
+    <p>A data.frame of dissolved oxygen predictions at the temporal
   resolution of the input data</p>
     <h2 class="hasAnchor" id="methods-by-class-"><a class="anchor" href="#methods-by-class-"></a>Methods (by class)</h2>
 

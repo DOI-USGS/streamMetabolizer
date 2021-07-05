@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract the fitting specifications from a metabolism model. — get_specs • streamMetabolizer</title>
+<title>Warn about deprecation of a units-related argument or function — unitted_deprecate_warn • streamMetabolizer</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Extract the fitting specifications from a metabolism model. — get_specs" />
-<meta property="og:description" content="A function in the metab_model_interface. Returns the specifications that were
-passed in when fitting the metabolism model." />
+<meta property="og:title" content="Warn about deprecation of a units-related argument or function — unitted_deprecate_warn" />
+<meta property="og:description" content="Warn about deprecation of a units-related argument or function" />
 
 
 
@@ -148,53 +147,18 @@ passed in when fitting the metabolism model." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract the fitting specifications from a metabolism model.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/metab_model_interface.R'><code>R/metab_model_interface.R</code></a>, <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/metab_model-class.R'><code>R/metab_model-class.R</code></a></small>
-    <div class="hidden name"><code>get_specs.Rd</code></div>
+    <h1>Warn about deprecation of a units-related argument or function</h1>
+    <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/deprecated.R'><code>R/deprecated.R</code></a></small>
+    <div class="hidden name"><code>unitted_deprecate_warn.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>A function in the metab_model_interface. Returns the specifications that were
-passed in when fitting the metabolism model.</p>
+    <p>Warn about deprecation of a units-related argument or function</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_specs</span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>unitted_deprecate_warn</span><span class='op'>(</span><span class='va'>what</span><span class='op'>)</span></pre>
 
-<span class='co'># S3 method for metab_model</span>
-<span class='fu'>get_specs</span><span class='op'>(</span><span class='va'>metab_model</span><span class='op'>)</span></pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>metab_model</th>
-      <td><p>A metabolism model, implementing the
-metab_model_interface, for which to return the specifications</p></td>
-    </tr>
-    </table>
-
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>The list of specifications that was passed to <code><a href='metab.html'>metab</a>()</code></p>
-    <h2 class="hasAnchor" id="methods-by-class-"><a class="anchor" href="#methods-by-class-"></a>Methods (by class)</h2>
-
-    
-<ul>
-<li><p><code>metab_model</code>: This implementation is shared by many model types</p></li>
-</ul>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p>Other metab_model_interface: 
-<code><a href='get_data_daily.html'>get_data_daily</a>()</code>,
-<code><a href='get_data.html'>get_data</a>()</code>,
-<code><a href='get_fitting_time.html'>get_fitting_time</a>()</code>,
-<code><a href='get_fit.html'>get_fit</a>()</code>,
-<code><a href='get_info.html'>get_info</a>()</code>,
-<code><a href='get_param_names.html'>get_param_names</a>()</code>,
-<code><a href='get_params.html'>get_params</a>()</code>,
-<code><a href='get_version.html'>get_version</a>()</code>,
-<code><a href='predict_DO.html'>predict_DO</a>()</code>,
-<code><a href='predict_metab.html'>predict_metab</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
