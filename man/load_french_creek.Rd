@@ -4,7 +4,7 @@
 \alias{load_french_creek}
 \title{Load a short dataset from French Creek}
 \usage{
-load_french_creek(attach.units = TRUE)
+load_french_creek(attach.units = deprecated())
 }
 \arguments{
 \item{attach.units}{logical. Should units be attached to the data.frame?}

@@ -11,42 +11,42 @@ data_metab(
     "duplicated"),
   day_start = 4,
   day_end = 28,
-  attach.units = FALSE
+  attach.units = deprecated()
 )
 }
 \arguments{
-\item{num_days}{the number of days to include in the data. character format 
-because only certain numbers of days are permitted (see defaults in Usage 
+\item{num_days}{the number of days to include in the data. character format
+because only certain numbers of days are permitted (see defaults in Usage
 for the accepted options)}
 
 \item{res}{character specifying the desired resolution of the data in minutes
 (character; see defaults in Usage for the accepted options)}
 
-\item{flaws}{character specifying one or more flaws to include in the data, or
-empty (\code{c()}) for no flaws. default is no flaws.}
+\item{flaws}{character specifying one or more flaws to include in the data,
+or empty (\code{c()}) for no flaws. default is no flaws.}
 
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+\item{day_start}{start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.}
 
-\item{day_end}{end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+\item{day_end}{end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
 \item{attach.units}{logical. Should units be attached to the data.frame?}
 }
 \description{
-Get a formatted data.frame of inputs from which metabolism can be modeled. 
+Get a formatted data.frame of inputs from which metabolism can be modeled.
 These test data were provided by Bob Hall.
 }
 \examples{
