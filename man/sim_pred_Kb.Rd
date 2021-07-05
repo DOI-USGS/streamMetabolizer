@@ -15,11 +15,11 @@ the discharge bins. See also \code{\link{calc_bins}}}
 of lnK600 at each node. The default value of this spec is a function that
 computes lnK600s based on simulated K~Q relationships.}
 
-\item{lnQ.daily}{vector of daily values of the natural log of discharge, 
+\item{lnQ.daily}{vector of daily values of the natural log of discharge,
 e.g., \code{log(data_daily$discharge.daily)}}
 }
 \description{
-Uses linear interpolation among "nodes" (lnQ, lnK points) to predict daily 
-values of the natural log of K600, based on the lnK ~ lnQ relationship 
+Uses linear interpolation among "nodes" (lnQ, lnK points) to predict daily
+values of the natural log of K600, based on the lnK ~ lnQ relationship
 specified by \code{K600_lnQ_nodes_centers} and \code{lnK600_lnQ_nodes}
 }

@@ -15,12 +15,12 @@ lookup_google_timezone(
 \item{latitude}{degrees latitude (positive for north) of the location to look
 up.}
 
-\item{longitude}{degrees longitude (positive for east) of the location to 
+\item{longitude}{degrees longitude (positive for east) of the location to
 look up.}
 
-\item{timestamp}{POSIXct representation of a time - determines daylight 
-savings offset, if any. the default is Jan 1 for northern latitudes and 
-July 1 for southern latitudes, i.e., a time surely not during daylight 
+\item{timestamp}{POSIXct representation of a time - determines daylight
+savings offset, if any. the default is Jan 1 for northern latitudes and
+July 1 for southern latitudes, i.e., a time surely not during daylight
 savings time.}
 }
 \description{

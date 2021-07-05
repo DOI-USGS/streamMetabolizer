@@ -108,11 +108,11 @@ parameters describing the rates and/or shapes of GPP, ER, or reaeration.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{metab_Kmodel}: Make daily re-predictions of K600.daily based on the 
+\item \code{metab_Kmodel}: Make daily re-predictions of K600.daily based on the
 across-days model of K600.daily versus predictors. Only returns estimates
 for K600.daily, not any of the other daily parameters
 
-\item \code{metab_bayes}: Does a little formatting to convert from Stan output 
+\item \code{metab_bayes}: Does a little formatting to convert from Stan output
 to streamMetabolizer parameter names; otherwise the same as
 \code{get_params.metab_model}
 
@@ -120,7 +120,7 @@ to streamMetabolizer parameter names; otherwise the same as
 
 \item \code{metab_sim}: Generates new simulated values for daily parameters if
 they were described with evaluatable expressions in \code{\link{specs}}, or
-returns the fixed values for daily parameters if they were set in 
+returns the fixed values for daily parameters if they were set in
 \code{data_daily}
 }}
 

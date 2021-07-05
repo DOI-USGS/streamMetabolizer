@@ -18,8 +18,8 @@ by the \code{streamMetabolizer} package overall. Ensure that you have
 \code{chron} installed or install it with \code{install.packages('chron')}.
 }
 \details{
-This function produces a version of the French Creek dataset that agrees as 
-much as possible with raw code from Bob Hall, for comparison to functions 
-written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to 
+This function produces a version of the French Creek dataset that agrees as
+much as possible with raw code from Bob Hall, for comparison to functions
+written in streamMetabolizer. Line numbers in comments (L22, etc.) refer to
 those in 'stream_metab_usa/starter_files/One station metab code.R'
 }

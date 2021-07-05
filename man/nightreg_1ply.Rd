@@ -40,7 +40,7 @@ date by which this ply should be referred topresent.}
 \item{...}{other args that were passed untouched from the function calling 
 mm_model_by_ply, through mm_model_by_ply, and finally to this function.}
 
-\item{night_tests}{character vector of validity tests to conduct on the data 
+\item{night_tests}{character vector of validity tests to conduct on the data
 after subsetting to just nighttime}
 
 \item{specs}{a list of model specifications and parameters for a model. 
@@ -58,13 +58,13 @@ data.frame of estimates and \code{\link[stats]{lm}} model diagnostics
 Called from metab_night().
 }
 \references{
-Hornberger, George M., and Mahlon G. Kelly. Atmospheric 
-  Reaeration in a River Using Productivity Analysis. Journal of the 
+Hornberger, George M., and Mahlon G. Kelly. Atmospheric
+  Reaeration in a River Using Productivity Analysis. Journal of the
   Environmental Engineering Division 101, no. 5 (October 1975): 729-39.
-  
+
   Raymond, Peter A., Christopher J. Zappa, David Butman, Thomas L. Bott, Jody
-  Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and 
-  Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in 
+  Potter, Patrick Mulholland, Andrew E. Laursen, William H. McDowell, and
+  Denis Newbold. Scaling the gas transfer velocity and hydraulic geometry in
   streams and small rivers. Limnology & Oceanography: Fluids & Environments 2
   (2012); 41:53.
 }

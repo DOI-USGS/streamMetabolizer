@@ -10,7 +10,7 @@ get_mcmc_data(metab_model)
 \method{get_mcmc_data}{metab_bayes}(metab_model)
 }
 \arguments{
-\item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to 
+\item{metab_model}{A Bayesian metabolism model (metab_bayes) from which to
 return the data list that was passed to the MCMC}
 }
 \value{

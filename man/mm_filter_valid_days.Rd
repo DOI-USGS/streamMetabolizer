@@ -15,51 +15,51 @@ mm_filter_valid_days(
 )
 }
 \arguments{
-\item{data}{data.frame of instantaneous observations, to be filtered to only 
+\item{data}{data.frame of instantaneous observations, to be filtered to only
 those points on days that pass the specified tests in mm_is_valid_day}
 
 \item{data_daily}{data.frame of daily estimates/statistics, to be filtered in
 accordance with the filtering of data}
 
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+\item{day_start}{start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.}
 
-\item{day_end}{end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+\item{day_end}{end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
-\item{day_tests}{list of tests to conduct to determine whether each date 
+\item{day_tests}{list of tests to conduct to determine whether each date
 worth of data is valid for modeling. The results of these tests will be
 combined with the result of the test implied if \code{required_timestep} is
 numeric and then will be passed to \code{model_fun} as the
 \code{ply_validity} argument to that function.}
 
-\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
-length in days that a date must have to pass the validity check (to within 
-a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
-of this test will be combined with the results of the tests listed in 
-\code{day_tests} and reported to \code{model_fun} as the 
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep
+length in days that a date must have to pass the validity check (to within
+a tolerance of 0.2\% of the value of \code{required_timestep}). The result
+of this test will be combined with the results of the tests listed in
+\code{day_tests} and reported to \code{model_fun} as the
 \code{ply_validity} argument to that function.}
 
-\item{timestep_days}{TRUE if you would like the mean timestep length to be 
-calculated for each data ply and passed to \code{model_fun} as the 
-\code{timestep_days} argument to that function. Alternatively, this may be 
-numeric as a specifically expected timestep length in days; for example, a 
+\item{timestep_days}{TRUE if you would like the mean timestep length to be
+calculated for each data ply and passed to \code{model_fun} as the
+\code{timestep_days} argument to that function. Alternatively, this may be
+numeric as a specifically expected timestep length in days; for example, a
 1-hour timestep is 1/24 is 0.0416667.}
 }
 \value{
-list of data and data_daily with same structure as inputs but with 
+list of data and data_daily with same structure as inputs but with
   invalid days removed, plus a third data.frame of dates that were removed
 }
 \description{

@@ -36,9 +36,9 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_mle object containing the fitted model. This object can be 
-  inspected with the functions in the \code{\link{metab_model_interface}}. 
-  The \code{code} column in \code{get_fit(mm)} is defined in the Value 
+A metab_mle object containing the fitted model. This object can be
+  inspected with the functions in the \code{\link{metab_model_interface}}.
+  The \code{code} column in \code{get_fit(mm)} is defined in the Value
   subsection of \code{?nlm}.
 }
 \description{
@@ -57,7 +57,7 @@ dat_daily <- data.frame(date=as.Date(c("2012-09-18","2012-09-20")), K600.daily=3
 metab_mle(data=dat, data_daily=dat_daily)
 
 # PRK with day-specific inits on some days
-dat_daily <- data.frame(date=as.Date("2012-09-19"), 
+dat_daily <- data.frame(date=as.Date("2012-09-19"),
   init.GPP.daily=4, init.K600.daily=60)
 metab_mle(data=dat, data_daily=dat_daily)
 

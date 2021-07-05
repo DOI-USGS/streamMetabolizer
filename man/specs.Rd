@@ -121,35 +121,35 @@ model fitting). For type='Kmodel', the name of an interpolation or
 regression method relating K to the predictor[s] of choice. One of
 \code{c("mean", "lm", "loess")}.}
 
-\item{day_start}{start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+\item{day_start}{start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.}
 
-\item{day_end}{end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+\item{day_end}{end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.}
 
-\item{day_tests}{list of tests to conduct to determine whether each date 
+\item{day_tests}{list of tests to conduct to determine whether each date
 worth of data is valid for modeling. The results of these tests will be
 combined with the result of the test implied if \code{required_timestep} is
 numeric and then will be passed to \code{model_fun} as the
 \code{ply_validity} argument to that function.}
 
-\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep 
-length in days that a date must have to pass the validity check (to within 
-a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
-of this test will be combined with the results of the tests listed in 
-\code{day_tests} and reported to \code{model_fun} as the 
+\item{required_timestep}{NA or numeric (length 1). If numeric, the timestep
+length in days that a date must have to pass the validity check (to within
+a tolerance of 0.2\% of the value of \code{required_timestep}). The result
+of this test will be combined with the results of the tests listed in
+\code{day_tests} and reported to \code{model_fun} as the
 \code{ply_validity} argument to that function.}
 
 \item{init.GPP.daily}{the inital value of daily mean GPP (gO2 d^-1 m^-2) to
@@ -342,47 +342,47 @@ list into the data list for the MCMC run. Will be automatically generated
 during the specs() call; need only be revised if you're using a custom
 model that requires different hyperparameters.}
 
-\item{params_out}{a character vector of parameters whose values in the MCMC 
+\item{params_out}{a character vector of parameters whose values in the MCMC
 runs should be recorded and summarized}
 
 \item{n_chains}{the number of chains to run}
 
 \item{n_cores}{the number of cores to apply to this run}
 
-\item{burnin_steps}{the number of steps per chain to run and ignore before 
+\item{burnin_steps}{the number of steps per chain to run and ignore before
 starting to collect MCMC 'data'}
 
 \item{saved_steps}{the number of MCMC steps per chain to save}
 
-\item{thin_steps}{the number of steps to move before saving another step. 1 
+\item{thin_steps}{the number of steps to move before saving another step. 1
 means save all steps.}
 
 \item{verbose}{logical. give status messages?}
 
-\item{weights}{For Kmodel, character vector indicating the type of weighting 
+\item{weights}{For Kmodel, character vector indicating the type of weighting
 to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 
 \item{filters}{For Kmodel, named numeric vector of limits to use in filtering
 data_daily. Elements may include
 c("CI.max","discharge.daily.max","velocity.daily.max"). If an element is
 given, the corresponding filter is applied: K600.daily.upper-K600.daily.lower <=
-CI.max, discharge.daily <= discharge.daily.max, velocity.daily <= 
+CI.max, discharge.daily <= discharge.daily.max, velocity.daily <=
 velocity.daily.max}
 
-\item{predictors}{For Kmodel, character vector of variables (column names in 
-data or data_daily) to use in predicting K. Leave blank or set to c() for 
-no predictors. Otherwise, one or more of these may be included: c("date", 
+\item{predictors}{For Kmodel, character vector of variables (column names in
+data or data_daily) to use in predicting K. Leave blank or set to c() for
+no predictors. Otherwise, one or more of these may be included: c("date",
 "velocity.daily", "discharge.daily").}
 
-\item{transforms}{For Kmodel, a named character vector of names of functions 
-(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should 
-probably be logged. The vector names must match the values of 
-\code{predictors}, although not all elements of \code{predictors} must be 
-included in \code{transforms}. Recommended transforms include 
+\item{transforms}{For Kmodel, a named character vector of names of functions
+(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should
+probably be logged. The vector names must match the values of
+\code{predictors}, although not all elements of \code{predictors} must be
+included in \code{transforms}. Recommended transforms include
 \code{c(K600.daily='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
-\item{other_args}{Other arguments passed to the fitting function given by 
-\code{specs$engine}. \code{na.rm=TRUE} is already passed to 
+\item{other_args}{Other arguments passed to the fitting function given by
+\code{specs$engine}. \code{na.rm=TRUE} is already passed to
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 
 \item{K600_lnQ_cnode_meanlog}{For a sim model with pool_K600='binned'. The

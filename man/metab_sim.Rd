@@ -37,14 +37,14 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_sim object containing the fitted model. This object can be 
+A metab_sim object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
-Takes input data in the form of a sub-daily time series (\code{data}) of 
-DO.sat, depth, temperature, and light, and a daily time series 
-(\code{data_daily}) of GPP, ER, and K600 values, and turns these into 
-simulated DO.obs. Either \code{data} or \code{data_daily} should specify a 
+Takes input data in the form of a sub-daily time series (\code{data}) of
+DO.sat, depth, temperature, and light, and a daily time series
+(\code{data_daily}) of GPP, ER, and K600 values, and turns these into
+simulated DO.obs. Either \code{data} or \code{data_daily} should specify a
 starting DO.obs value for each day; if in \code{data}, this takes the form of
 a DO.obs column with values on at least the first time point of each day (all
 other values are ignored), or if in \code{data_daily}, this takes the form of
@@ -59,14 +59,14 @@ dat_daily <- data.frame(date=as.Date(paste0("2012-09-", 18:20)),
 
 # define simulation parameters
 mm <- metab_sim(
-  specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2, 
+  specs(mm_name('sim'), err_obs_sigma=0.1, err_proc_sigma=2,
     GPP_daily=NULL, ER_daily=NULL, K600_daily=NULL),
   data=dat, data_daily=dat_daily)
 # actual simulation happens during prediction - different each time
 get_params(mm)
 predict_metab(mm)
 predict_DO(mm)[seq(1,50,by=10),]
-predict_DO(mm)[seq(1,50,by=10),] 
+predict_DO(mm)[seq(1,50,by=10),]
 
 # or same each time if seed is set
 mm@specs$sim_seed <- 236
@@ -85,7 +85,7 @@ predict_metab(mm) # metab estimates are for data without errors
 predict_DO(mm)[seq(1,50,by=10),]
 
 ## simulations with variation at both sub-daily and multi-day scales
-sp <- specs(mm_name('sim', pool_K600='none'), 
+sp <- specs(mm_name('sim', pool_K600='none'),
   K600_daily = function(n, ...) pmax(0, rnorm(n, 10, 3))) # n is available within sim models
 mm <- metab(sp, dat)
 get_params(mm)

@@ -5,7 +5,7 @@
 \alias{metab_mle-class}
 \title{Metabolism model fitted by maximum likelihood estimation}
 \description{
-\code{metab_mle} models use non-linear minimization of the negative log 
+\code{metab_mle} models use non-linear minimization of the negative log
 likelihood to fit values of GPP, ER, and K for a given DO curve.
 }
 \seealso{

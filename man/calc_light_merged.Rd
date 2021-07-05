@@ -19,7 +19,7 @@ calc_light_merged(
 argument default, containing the full time series of observed light (should
 be at a lower temporal resolution than \code{PAR.mod})}
 
-\item{solar.time}{a vector of mean solar times for which the light should be 
+\item{solar.time}{a vector of mean solar times for which the light should be
 modeled and merged with the values in PAR.obs}
 
 \item{latitude}{numeric value or vector indicating the site latitude in 
@@ -34,16 +34,16 @@ location of the site}
 its best to guess a max.PAR that will make modeled light pretty similar to
 cloud-free days of observed light}
 
-\item{max.gap}{difftime or NA. If difftime, the maximum gap between a light 
-observation and a time point in solar.time, beyond which no value will be 
+\item{max.gap}{difftime or NA. If difftime, the maximum gap between a light
+observation and a time point in solar.time, beyond which no value will be
 given for light at that solar.time. If NA, all values will be modeled, even
 if they are many days away from a light observation.}
 
 \item{attach.units}{logical. Should the returned vector be a unitted object?}
 }
 \description{
-Merge two time series (one observed, one modeled) of photosynthetically 
-active radiation (PAR) for a series of date-times. You can also think about 
+Merge two time series (one observed, one modeled) of photosynthetically
+active radiation (PAR) for a series of date-times. You can also think about
 this as a way to smoothly interpolate a time series of observations.
 }
 \examples{
@@ -53,17 +53,17 @@ library(ggplot2)
 library(unitted)
 timebounds <- as.POSIXct(c('2008-03-12 00:00', '2008-03-12 23:59'), tz='UTC')
 coords <- list(lat=32.4, lon=-96.5)
-PAR.obs <- data_frame(
+PAR.obs <- tibble::tibble(
   solar.time=seq(timebounds[1], timebounds[2], by=as.difftime(3, units='hours')),
   light=c(0, 0, 85.9, 1160.5, 1539.0, 933.9, 0, 0)
 ) \%>\% as.data.frame()
-PAR.mod <- data_frame(
+PAR.mod <- tibble::tibble(
   solar.time=seq(timebounds[1], timebounds[2], by=as.difftime(0.25, units='hours')),
   light=calc_light(solar.time, latitude=coords$lat, longitude=coords$lon)
 ) \%>\% as.data.frame()
-PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time, 
+PAR.merged <- calc_light_merged(PAR.obs, PAR.mod$solar.time,
   latitude=coords$lat, longitude=coords$lon, max.gap=as.difftime(20, units='hours'))
-ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'), 
+ggplot(bind_rows(mutate(v(PAR.obs), type='obs'), mutate(v(PAR.mod), type='mod'),
                  mutate(v(PAR.merged), type='merged')) \%>\%
        mutate(type=ordered(type, levels=c('obs','mod','merged'))),
   aes(x=solar.time, y=light, color=type)) + geom_line() + geom_point() + theme_bw()

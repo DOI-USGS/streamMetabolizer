@@ -14,7 +14,7 @@ Kmodel_allply(
 )
 }
 \arguments{
-\item{data_daily_all}{data to use as input, with columns including K600.daily.obs, 
+\item{data_daily_all}{data to use as input, with columns including K600.daily.obs,
 weight, and any predictors}
 
 \item{engine}{The software or function to use in fitting the model. Should be
@@ -28,27 +28,27 @@ model fitting). For type='Kmodel', the name of an interpolation or
 regression method relating K to the predictor[s] of choice. One of
 \code{c("mean", "lm", "loess")}.}
 
-\item{weights}{For Kmodel, character vector indicating the type of weighting 
+\item{weights}{For Kmodel, character vector indicating the type of weighting
 to use. Set to c() for no weights. One of c("1/CI", "K600/CI", c()).}
 
-\item{predictors}{For Kmodel, character vector of variables (column names in 
-data or data_daily) to use in predicting K. Leave blank or set to c() for 
-no predictors. Otherwise, one or more of these may be included: c("date", 
+\item{predictors}{For Kmodel, character vector of variables (column names in
+data or data_daily) to use in predicting K. Leave blank or set to c() for
+no predictors. Otherwise, one or more of these may be included: c("date",
 "velocity.daily", "discharge.daily").}
 
-\item{transforms}{For Kmodel, a named character vector of names of functions 
-(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should 
-probably be logged. The vector names must match the values of 
-\code{predictors}, although not all elements of \code{predictors} must be 
-included in \code{transforms}. Recommended transforms include 
+\item{transforms}{For Kmodel, a named character vector of names of functions
+(probably 'log' or NA) to apply to K600.daily and/or the predictors. K600.daily should
+probably be logged. The vector names must match the values of
+\code{predictors}, although not all elements of \code{predictors} must be
+included in \code{transforms}. Recommended transforms include
 \code{c(K600.daily='log', date=NA, velocity.daily="log", discharge.daily="log")}}
 
-\item{other_args}{Other arguments passed to the fitting function given by 
-\code{specs$engine}. \code{na.rm=TRUE} is already passed to 
+\item{other_args}{Other arguments passed to the fitting function given by
+\code{specs$engine}. \code{na.rm=TRUE} is already passed to
 \code{mean} (which is actually implemented as \code{sum}, anyway).}
 }
 \description{
-The model will predict daily K estimates from preliminary daily K estimates. 
+The model will predict daily K estimates from preliminary daily K estimates.
 Called from metab_Kmodel().
 }
 \keyword{internal}

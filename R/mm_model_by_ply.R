@@ -1,54 +1,54 @@
 #' Split and label data into >=24-hr days for fitting daily metabolism
-#' 
+#'
 #' Splits up to two data.frames, data and data_daily, into date-specific chunks.
-#' These are passed to model_fun. If \code{day_tests} is not empty, those 
-#' validity checks are run and the results are also passed to model_fun (in 
-#' \code{validity}). The results of model_fun (which must be a data.frame) are 
-#' modified to include the data as a first column, then row-bound together into 
+#' These are passed to model_fun. If \code{day_tests} is not empty, those
+#' validity checks are run and the results are also passed to model_fun (in
+#' \code{validity}). The results of model_fun (which must be a data.frame) are
+#' modified to include the data as a first column, then row-bound together into
 #' a single data.frame containing results from all days.
-#' 
+#'
 #' @param model_fun the function to apply to each data ply. This function should
-#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end, 
-#'   ply_date)} where \code{data_daily} is \code{NULL} when the 
-#'   \code{data_daily} argument to \code{mm_model_by_ply} is missing or 
+#'   accept the arguments \code{c(data, data_daily, ..., day_start, day_end,
+#'   ply_date)} where \code{data_daily} is \code{NULL} when the
+#'   \code{data_daily} argument to \code{mm_model_by_ply} is missing or
 #'   \code{NULL}
-#' @param data required. A data.frame to split into chunks by date, where a 
-#'   'date' begins on the hour day_start and ends at the hour day_end. The 
+#' @param data required. A data.frame to split into chunks by date, where a
+#'   'date' begins on the hour day_start and ends at the hour day_end. The
 #'   solar.time column must be present.
-#' @param data_daily optional. A data.frame containing inputs with a daily 
-#'   timestep, each row of which will be passed to the corresponding date chunk 
+#' @param data_daily optional. A data.frame containing inputs with a daily
+#'   timestep, each row of which will be passed to the corresponding date chunk
 #'   from \code{data}. The date column must be present.
-#' @param day_start start time (inclusive) of a day's data in number of hours 
-#'   from the midnight that begins the date. For example, day_start=-1.5 
-#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+#' @param day_start start time (inclusive) of a day's data in number of hours
+#'   from the midnight that begins the date. For example, day_start=-1.5
+#'   indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 #'   the first observation time that occurs after that time if day_start doesn't
-#'   fall exactly on an observation time. For metabolism models working with 
-#'   single days of input data, it is conventional/useful to begin the day the 
-#'   evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+#'   fall exactly on an observation time. For metabolism models working with
+#'   single days of input data, it is conventional/useful to begin the day the
+#'   evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 #'   30. For multiple consecutive days, it may make the most sense to start just
-#'   before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-#'   regression, the date assigned to a chunk of data should be the date whose 
-#'   evening contains the data. The default is therefore 12 to 36 for 
+#'   before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+#'   regression, the date assigned to a chunk of data should be the date whose
+#'   evening contains the data. The default is therefore 12 to 36 for
 #'   metab_night, of which the times of darkness will be used.
-#' @param day_end end time (exclusive) of a day's data in number of hours from 
-#'   the midnight that begins the date. For example, day_end=30 indicates that 
-#'   data describing 2006-06-26 end at the last observation time that occurs 
+#' @param day_end end time (exclusive) of a day's data in number of hours from
+#'   the midnight that begins the date. For example, day_end=30 indicates that
+#'   data describing 2006-06-26 end at the last observation time that occurs
 #'   before 2006-06-27 06:00. See day_start for recommended start and end times.
-#' @param day_tests list of tests to conduct to determine whether each date 
+#' @param day_tests list of tests to conduct to determine whether each date
 #'   worth of data is valid for modeling. The results of these tests will be
 #'   combined with the result of the test implied if \code{required_timestep} is
 #'   numeric and then will be passed to \code{model_fun} as the
 #'   \code{ply_validity} argument to that function.
-#' @param required_timestep NA or numeric (length 1). If numeric, the timestep 
-#'   length in days that a date must have to pass the validity check (to within 
-#'   a tolerance of 0.2\% of the value of \code{required_timestep}). The result 
-#'   of this test will be combined with the results of the tests listed in 
-#'   \code{day_tests} and reported to \code{model_fun} as the 
+#' @param required_timestep NA or numeric (length 1). If numeric, the timestep
+#'   length in days that a date must have to pass the validity check (to within
+#'   a tolerance of 0.2\% of the value of \code{required_timestep}). The result
+#'   of this test will be combined with the results of the tests listed in
+#'   \code{day_tests} and reported to \code{model_fun} as the
 #'   \code{ply_validity} argument to that function.
-#' @param timestep_days TRUE if you would like the mean timestep length to be 
-#'   calculated for each data ply and passed to \code{model_fun} as the 
-#'   \code{timestep_days} argument to that function. Alternatively, this may be 
-#'   numeric as a specifically expected timestep length in days; for example, a 
+#' @param timestep_days TRUE if you would like the mean timestep length to be
+#'   calculated for each data ply and passed to \code{model_fun} as the
+#'   \code{timestep_days} argument to that function. Alternatively, this may be
+#'   numeric as a specifically expected timestep length in days; for example, a
 #'   1-hour timestep is 1/24 is 0.0416667.
 #' @param ... other args to be passed through mm_model_by_ply to model_fun
 #' @return a data.frame of model results
@@ -57,15 +57,15 @@
 #' @examples
 #' dat <- data_metab('10')
 #' mm_model_by_ply(mm_model_by_ply_prototype, data=dat, day_start=2, day_end=28)$date
-#' mm_model_by_ply(function(...) { data.frame(text='hi')}, 
+#' mm_model_by_ply(function(...) { data.frame(text='hi')},
 #'   data=dat, day_start=2, day_end=28)
 #' @export
 mm_model_by_ply <- function(
-  model_fun, data, data_daily=NULL, day_start, day_end, 
+  model_fun, data, data_daily=NULL, day_start, day_end,
   day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge', 'pos_depth'), required_timestep=NA,
   timestep_days=TRUE, ...
 ) {
-  
+
   # avoid some ugly edge cases
   if(missing(day_start) || is.null(day_start)) stop('day_start must be specified')
   if(missing(day_end) || is.null(day_end)) stop('day_end must be specified')
@@ -73,8 +73,8 @@ mm_model_by_ply <- function(
   if(day_end - day_start > 48) stop("day_end - day_start must not be > 48") # would break our odd/even algorithm
   if(-24 >= day_start || day_start >= 24) stop("day_start must be in (-24,24)")
   if(0 >= day_end || day_end >= 48) stop("day_end must be in (0,48)")
-  
-  # Identify the data plys that will let us use a user-specified-hr window for 
+
+  # Identify the data plys that will let us use a user-specified-hr window for
   # each date (day_start to day_end, which may be != 24). store this labeling in
   # two additional columns (odd.- and even.- date.groups)
   data.plys <- as.data.frame(v(data))
@@ -84,8 +84,8 @@ mm_model_by_ply <- function(
   if(length(min_timestep) == 1 && !is.na(min_timestep)[1] && min_timestep <= 0) {
     timesteps <- as.numeric(diff(v(data$solar.time)), units="days")
     timegoof <- which.min(timesteps) + c(0,1)
-    stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ", 
-         v(data$solar.time)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+    stop("min timestep is <= 0: ", format(min_timestep, digits=3), " days from ",
+         v(data$solar.time)[timegoof[1]], " (row ", timegoof[1], ") to ",
          v(data$solar.time)[timegoof[2]], " (row ", timegoof[2], ")")
   }
   if(!is.null(data_daily)) {
@@ -95,28 +95,28 @@ mm_model_by_ply <- function(
       timesteps <- as.numeric(diff(v(data_daily$date)), units="days")
       timegoof <- which.min(timesteps) + c(0,1)
       stop("min datestep is <= 0: ", min_datestep, " days from ",
-           v(data_daily$date)[timegoof[1]], " (row ", timegoof[1], ") to ", 
+           v(data_daily$date)[timegoof[1]], " (row ", timegoof[1], ") to ",
            v(data_daily$date)[timegoof[2]], " (row ", timegoof[2], ")")
     }
   }
   doyhr <- convert_date_to_doyhr(data.plys$solar.time)
   data.plys$date <- as.character(as.Date(lubridate::floor_date(data.plys$solar.time, 'year')) + as.difftime(floor(doyhr)-1, units='days'))
   data.plys$hour <- 24*(doyhr %% 1)
-  
+
   # subtract a tiny fudge factor (one second) to the start and end bounds so we
   # don't exclude times that are essentially equal to day_start, and so we do
   # exclude times that are essentially equal to day_end
   day_start_fudge <- day_start - 1/(60*60*24)
   day_end_fudge <- day_end - 1/(60*60*24)
-  
+
   # This function speeds things up in both of the next two loops. 'runs' refers
   # to sequential runs of values in date.group that have the same value.
   get_runs <- function(date.group) {
     values <- start <- end <- '.dplyr.var'
     replace(date.group, is.na(date.group), '') %>%
       rle() %>%
-      unclass %>% 
-      as_tibble %>% 
+      unclass %>%
+      as_tibble %>%
       mutate(end=cumsum(lengths), start=c(1, 1+end[-n()])) %>%
       filter(values != '') %>%
       select(date=values, start, end)
@@ -126,14 +126,14 @@ mm_model_by_ply <- function(
   date_rows <- get_runs(data.plys$date)
   odd.dates <- date_rows[which(seq_len(nrow(date_rows)) %% 2 == 1),]$date
   even.dates <- date_rows[which(seq_len(nrow(date_rows)) %% 2 == 0),]$date
-  
+
   # Assign each data row to one or two date plys. Because date plys can overlap,
   # there are two columns so that one row can belong to two dates if needed.
   dt.NA <- as.character(NA)
   if(nrow(data.plys) == 0) {
     data.plys <- bind_cols(
-      data.plys, 
-      data_frame(odd.date.group=dt.NA, even.date.group=dt.NA)[c(),])
+      data.plys,
+      tibble::tibble(odd.date.group=dt.NA, even.date.group=dt.NA)[c(),])
     out_list <- list()
   } else {
     data.plys <- bind_cols(
@@ -156,7 +156,7 @@ mm_model_by_ply <- function(
         }
       }))) %>%
       as.data.frame(stringsAsFactors=FALSE)
-    
+
     # filter out dates that don't ever appear on their own - this especially weeds
     # out first and last dates that were probably meant just to be part of the
     # second or penultimate dates when the date range is >24
@@ -167,7 +167,7 @@ mm_model_by_ply <- function(
     tbl.dates <- table(date.pairings$a)
     double.dates <- names(tbl.dates)[tbl.dates > 1]
     unique.dates <- sort(unique(c(solo.dates, double.dates)))
-    
+
     # Apply model_fun to each ply of the data, using if-else in the lapply loop to
     # cover both the odd and even groupings in date order
     runs <- bind_rows(
@@ -183,38 +183,38 @@ mm_model_by_ply <- function(
       # pick out the inst & daily plys for this date
       run <- runs[dt,]
       data_ply <- data_plys[run$start:run$end,]
-      data_daily_ply <- 
+      data_daily_ply <-
         if(!is.null(data_daily)) {
           data_daily[match(run$date, data_daily$date),]
         } else {
           NULL
         }
       ply_date <- run$date
-      
+
       # compute timestep and run validity checks if requested. if timestep_days is
       # FALSE or NA, it will be passed as NA to the model_fun and only computed
       # there if needed for specific tests
       if(length(timestep_days) > 1) stop("expecting no more than 1 value in timestep_days")
       timestep_days <- if(isTRUE(timestep_days)) {
-        mm_get_timestep(data_ply$solar.time, format='mean') 
+        mm_get_timestep(data_ply$solar.time, format='mean')
       } else if(is.na(timestep_days) || is.null(timestep_days) || timestep_days==FALSE) {
         NA
       } else timestep_days
       ply_validity <- mm_is_valid_day(
         data_ply=data_ply, day_start=day_start, day_end=day_end, day_tests=day_tests, required_timestep=required_timestep,
         ply_date=ply_date, timestep_days=timestep_days)
-      
+
       # run the user's model_fun
       out <- model_fun(
         data_ply=data_ply, data_daily_ply=data_daily_ply,
         day_start=day_start, day_end=day_end, ply_date=ply_date,
-        ply_validity=ply_validity, timestep_days=timestep_days, 
+        ply_validity=ply_validity, timestep_days=timestep_days,
         ...)
       # attach a date column if anything was returned
       if(is.null(out) || nrow(out)==0) NULL else data.frame(date=ply_date, out)
     })
   }
-  
+
   # if out_list came back with nothing, give the model_fun one more chance to
   # suggest column names
   if(length(out_list) == 0 || all(sapply(out_list, is.null))) {
@@ -223,9 +223,9 @@ mm_model_by_ply <- function(
         model_fun(
           data_ply=data[c(),], data_daily_ply=data_daily[c(),],
           day_start=day_start, day_end=day_end, ply_date=as.Date(NA),
-          ply_validity=NA, timestep_days=NA, 
+          ply_validity=NA, timestep_days=NA,
           ...) %>%
-          mutate(date=as.Date(NA)) %>% 
+          mutate(date=as.Date(NA)) %>%
           select(date, everything())),
       error=function(e) {
         # and if it REALLY doesn't work, just return an empty 1-column df
@@ -233,18 +233,18 @@ mm_model_by_ply <- function(
       }
     )
   }
-  
-  # combine the 1-row dfs, making sure to start with a 0-row df that represents 
-  # the dfs with the most columns to keep the column ordering consistent across 
+
+  # combine the 1-row dfs, making sure to start with a 0-row df that represents
+  # the dfs with the most columns to keep the column ordering consistent across
   # runs. dplyr::bind_rows should take care of any missing columns, since these
   # are matched by name, and missing columns are filled with NAs
   if(length(out_list) == 0) {
-    
+
   } else {
-    example_choice <- 
+    example_choice <-
       sapply(out_list, function(out) { if(is.null(out)) 0 else ncol(out) }) %>%
       which.max()
     out_example <- out_list[[example_choice]][FALSE,]
-    bind_rows(c(list(out_example), out_list)) %>% as.data.frame() 
+    bind_rows(c(list(out_example), out_list)) %>% as.data.frame()
   }
 }

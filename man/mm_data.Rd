@@ -2,7 +2,7 @@
 % Please edit documentation in R/mm_data.R
 \name{mm_data}
 \alias{mm_data}
-\title{Return the data types that may be used by metab_models using the 
+\title{Return the data types that may be used by metab_models using the
 metab_model_interface.}
 \usage{
 mm_data(..., optional = "none")
@@ -10,81 +10,81 @@ mm_data(..., optional = "none")
 \arguments{
 \item{...}{column names to select, as passed to \code{\link[dplyr]{select}}}
 
-\item{optional}{one or more character strings listing the columns, if any, 
-that may be excluded. If 'all', the entire data.frame may be omitted. If 
-'none', the entire data.frame must be included as prototyped. If specific 
-column names are given, those columns may be omitted entirely or passed to 
+\item{optional}{one or more character strings listing the columns, if any,
+that may be excluded. If 'all', the entire data.frame may be omitted. If
+'none', the entire data.frame must be included as prototyped. If specific
+column names are given, those columns may be omitted entirely or passed to
 \code{\link{metab}()} as all NAs.}
 }
 \value{
 data data.frame with columns as in the description
 }
 \description{
-Produces a unitted data.frame with the column names, units, and 
-  data format to be used by metab_models that comply strictly with the 
+Produces a unitted data.frame with the column names, units, and
+  data format to be used by metab_models that comply strictly with the
   metab_model_interface. These are the columns that may be included:
-  
+
   \itemize{
-  
-  \item{ \code{solar.time} date-time values in mean solar time (see 
-  \code{\link{calc_solar_time}} and/or 
-  \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone 
-  attribute of 'UTC'. May be approximated by local, non-daylight-savings 
-  clock time (still with nominal UTC timezone but with clock noons close to 
-  solar noon), but mean solar time is better for matching model time windows 
+
+  \item{ \code{solar.time} date-time values in mean solar time (see
+  \code{\link{calc_solar_time}} and/or
+  \code{\link{convert_UTC_to_solartime}}), in POSIXct format with a tzone
+  attribute of 'UTC'. May be approximated by local, non-daylight-savings
+  clock time (still with nominal UTC timezone but with clock noons close to
+  solar noon), but mean solar time is better for matching model time windows
   to the diel cycle of light availability. Throughout this package, variables
-  named "solar.time" are mean solar time, "app.solar.time" means apparent 
+  named "solar.time" are mean solar time, "app.solar.time" means apparent
   solar time, and "any.solar.time" means either.}
-  
-  \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
+
+  \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
   O[2] L^{-1}}{mg O2 / L}}
-  
-  \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at 
-  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using 
+
+  \item{ \code{DO.sat} dissolved oxygen concentrations if the water were at
+  equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
   \link{calc_DO_sat}}
-  
+
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
-  
+
   \item{ \code{temp.water} water temperature, \eqn{degC}}.
-  
-  \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\ 
+
+  \item{ \code{light} photosynthetically active radiation, \eqn{\mu mol\
   m^{-2} s^{-1}}{micro mols / m^2 / s}}
-  
+
   \item{ \code{date} dates of interest in Date format}
-  
-  \item{ \code{err.obs.sigma} SD of observation error to use in simulating 
+
+  \item{ \code{err.obs.sigma} SD of observation error to use in simulating
   data}
-  
+
   \item{ \code{err.obs.phi} autocorrelation of observation error to use in
   simulating data}
-  
+
   \item{ \code{err.proc.sigma} SD of process error to use in simulating data}
-  
+
   \item{ \code{err.proc.phi} autocorrelation of process error to use in
   simulating data}
-  
-  \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg 
+
+  \item{ \code{DO.obs} dissolved oxygen concentration observations, \eqn{mg
   O[2] L^{-1}}{mg O2 / L}}
-  
+
   \item{ \code{GPP} daily estimates of GPP, \eqn{g O[2] m^-2 d^-1}}
-  
+
   \item{ \code{ER} daily estimates of ER, \eqn{g O[2] m^-2 d^-1}}
-  
+
   \item{ \code{K600} daily estimates of K600, \eqn{d^-1}}
-  
-  \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2 
+
+  \item{ \code{GPP.init} daily initial values of GPP, \eqn{g O[2] m^-2
   d^-1}}, for use in maximum likelihood estimation
-  
-  \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}}, 
+
+  \item{ \code{ER.init} daily initial values of ER, \eqn{g O[2] m^-2 d^-1}},
   for use in maximum likelihood estimation
-  
-  \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use 
+
+  \item{ \code{K600.init} daily initial values of K600, \eqn{d^-1}}, for use
   in maximum likelihood estimation
-  
+
   \item{ \code{discharge.daily} daily mean river discharge, \eqn{m^3 s^-1}}
-  
+
   \item{ \code{velocity.daily} daily mean river flow velocity, \eqn{m s^-1}}
-  
+
   }
 }
 \details{

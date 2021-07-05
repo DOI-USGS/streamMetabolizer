@@ -35,13 +35,13 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_night object containing the fitted model. This object can be 
+A metab_night object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}}.
 }
 \description{
-Fits a model to estimate K from nighttime input data on DO, temperature, 
-light, etc. The default day start & end are 12 noon on the preceding to 
-present day; the algorithm then filters the data to just those time points 
+Fits a model to estimate K from nighttime input data on DO, temperature,
+light, etc. The default day start & end are 12 noon on the preceding to
+present day; the algorithm then filters the data to just those time points
 for which light is very low. Discharge is only used, if at all, to identify
 and exclude days with any negative discharge.
 }

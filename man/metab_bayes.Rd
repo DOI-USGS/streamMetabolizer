@@ -35,12 +35,12 @@ description.}
 within the metab_model object}
 }
 \value{
-A metab_bayes object containing the fitted model. This object can be 
+A metab_bayes object containing the fitted model. This object can be
   inspected with the functions in the \code{\link{metab_model_interface}} and
   also \code{\link{get_mcmc}}.
 }
 \description{
-Fits a Bayesian model to estimate GPP and ER from input data on DO, 
+Fits a Bayesian model to estimate GPP and ER from input data on DO,
 temperature, light, etc. See \code{\link{mm_name}} to choose a Bayesian model
 and \code{\link{specs}} for relevant options for the \code{specs} argument.
 }
@@ -59,7 +59,7 @@ model will be quieter, and the model will work.
 dat <- data_metab('3', res='30')
 # fast-ish model version, but still too slow to auto-run in examples
 mm <- metab_bayes(data=dat,
-  specs(mm_name('bayes', err_proc_iid=FALSE), 
+  specs(mm_name('bayes', err_proc_iid=FALSE),
     n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100))
 mm
 get_fitting_time(mm)
@@ -68,7 +68,7 @@ plot_DO_preds(predict_DO(mm))
 
 # error and warning messages are printed with the mm object if present
 dat <- data_metab('3', res='30', flaws=c('missing middle'))
-mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE), 
+mm <- metab(specs(mm_name('bayes', err_proc_iid=FALSE),
   n_cores=3, n_chains=3, burnin_steps=300, saved_steps=100, verbose=FALSE),
   data=dat)
 predict_metab(mm)
