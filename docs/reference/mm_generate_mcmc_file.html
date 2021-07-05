@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -130,7 +130,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,20 +156,20 @@
     <p>Generate the models in inst/models/bayes</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mm_generate_mcmc_file</span>(
-  <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"bayes"</span>,
-  <span class='kw'>pool_K600</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"none"</span>, <span class='st'>"normal"</span>, <span class='st'>"normal_sdzero"</span>, <span class='st'>"normal_sdfixed"</span>, <span class='st'>"linear"</span>,
-    <span class='st'>"linear_sdzero"</span>, <span class='st'>"linear_sdfixed"</span>, <span class='st'>"binned"</span>, <span class='st'>"binned_sdzero"</span>, <span class='st'>"binned_sdfixed"</span>),
-  <span class='kw'>err_obs_iid</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>TRUE</span>, <span class='fl'>FALSE</span>),
-  <span class='kw'>err_proc_acor</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>err_proc_iid</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>err_proc_GPP</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>FALSE</span>, <span class='fl'>TRUE</span>),
-  <span class='kw'>ode_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trapezoid"</span>, <span class='st'>"euler"</span>),
-  <span class='kw'>GPP_fun</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"linlight"</span>, <span class='st'>"satlight"</span>),
-  <span class='kw'>ER_fun</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"constant"</span>),
-  <span class='kw'>deficit_src</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"DO_mod"</span>, <span class='st'>"DO_obs"</span>),
-  <span class='kw'>engine</span> <span class='kw'>=</span> <span class='st'>"stan"</span>
-)</pre>
+    <pre class="usage"><span class='fu'>mm_generate_mcmc_file</span><span class='op'>(</span>
+  type <span class='op'>=</span> <span class='st'>"bayes"</span>,
+  pool_K600 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"none"</span>, <span class='st'>"normal"</span>, <span class='st'>"normal_sdzero"</span>, <span class='st'>"normal_sdfixed"</span>, <span class='st'>"linear"</span>,
+    <span class='st'>"linear_sdzero"</span>, <span class='st'>"linear_sdfixed"</span>, <span class='st'>"binned"</span>, <span class='st'>"binned_sdzero"</span>, <span class='st'>"binned_sdfixed"</span><span class='op'>)</span>,
+  err_obs_iid <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>TRUE</span>, <span class='cn'>FALSE</span><span class='op'>)</span>,
+  err_proc_acor <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  err_proc_iid <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  err_proc_GPP <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='cn'>FALSE</span>, <span class='cn'>TRUE</span><span class='op'>)</span>,
+  ode_method <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"trapezoid"</span>, <span class='st'>"euler"</span><span class='op'>)</span>,
+  GPP_fun <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"linlight"</span>, <span class='st'>"satlight"</span><span class='op'>)</span>,
+  ER_fun <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"constant"</span><span class='op'>)</span>,
+  deficit_src <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"DO_mod"</span>, <span class='st'>"DO_obs"</span><span class='op'>)</span>,
+  engine <span class='op'>=</span> <span class='st'>"stan"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -358,7 +358,7 @@ and its predictors (nothing, discharge, time, etc.)</p></li>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

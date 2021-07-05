@@ -74,7 +74,7 @@ identify and exclude days with any negative discharge." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -82,7 +82,7 @@ identify and exclude days with any negative discharge." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +132,7 @@ identify and exclude days with any negative discharge." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -160,14 +160,14 @@ on DO, temperature, light, etc. Discharge is only used, if at all, to
 identify and exclude days with any negative discharge.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>metab_mle</span>(
-  <span class='kw'>specs</span> <span class='kw'>=</span> <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>"mle"</span>)),
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='no'>solar.time</span>, <span class='no'>DO.obs</span>, <span class='no'>DO.sat</span>, <span class='no'>depth</span>, <span class='no'>temp.water</span>, <span class='no'>light</span>, <span class='no'>discharge</span>,
-    <span class='kw'>optional</span> <span class='kw'>=</span> <span class='st'>"discharge"</span>),
-  <span class='kw'>data_daily</span> <span class='kw'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='no'>date</span>, <span class='no'>K600.daily</span>, <span class='no'>init.GPP.daily</span>, <span class='no'>init.Pmax</span>, <span class='no'>init.alpha</span>,
-    <span class='no'>init.ER.daily</span>, <span class='no'>init.ER20</span>, <span class='no'>init.K600.daily</span>, <span class='kw'>optional</span> <span class='kw'>=</span> <span class='st'>"all"</span>),
-  <span class='kw'>info</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>metab_mle</span><span class='op'>(</span>
+  specs <span class='op'>=</span> <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>"mle"</span><span class='op'>)</span><span class='op'>)</span>,
+  data <span class='op'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='va'>solar.time</span>, <span class='va'>DO.obs</span>, <span class='va'>DO.sat</span>, <span class='va'>depth</span>, <span class='va'>temp.water</span>, <span class='va'>light</span>, <span class='va'>discharge</span>,
+    optional <span class='op'>=</span> <span class='st'>"discharge"</span><span class='op'>)</span>,
+  data_daily <span class='op'>=</span> <span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='va'>date</span>, <span class='va'>K600.daily</span>, <span class='va'>init.GPP.daily</span>, <span class='va'>init.Pmax</span>, <span class='va'>init.alpha</span>,
+    <span class='va'>init.ER.daily</span>, <span class='va'>init.ER20</span>, <span class='va'>init.K600.daily</span>, optional <span class='op'>=</span> <span class='st'>"all"</span><span class='op'>)</span>,
+  info <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -205,9 +205,9 @@ within the metab_model object</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A metab_mle object containing the fitted model. This object can be 
-  inspected with the functions in the <code><a href='metab_model_interface.html'>metab_model_interface</a></code>. 
-  The <code>code</code> column in <code><a href='get_fit.html'>get_fit(mm)</a></code> is defined in the Value 
+    <p>A metab_mle object containing the fitted model. This object can be
+  inspected with the functions in the <code><a href='metab_model_interface.html'>metab_model_interface</a></code>.
+  The <code>code</code> column in <code><a href='get_fit.html'>get_fit(mm)</a></code> is defined in the Value
   subsection of <code><a href='https://rdrr.io/r/stats/nlm.html'>?nlm</a></code>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -218,10 +218,11 @@ within the metab_model object</p></td>
 <code><a href='metab_sim.html'>metab_sim</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'3'</span>,<span class='st'>'30'</span>)
+    <pre class="examples"><div class='input'><span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'3'</span>,<span class='st'>'30'</span><span class='op'>)</span>
 <span class='co'># PRK</span>
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'>metab_mle</span>(<span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>)
-<span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'>metab_mle</span><span class='op'>(</span>data<span class='op'>=</span><span class='va'>dat</span><span class='op'>)</span>
+<span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
 #&gt; 1 2012-09-18 2.816207  1.894260  3.738153 -2.116196 -2.867236 -1.365155
 #&gt; 2 2012-09-19 3.287146  2.265982  4.308309 -2.479248 -3.322547 -1.635950
 #&gt; 3 2012-09-20 2.599133  1.935957  3.262309 -1.718192 -2.224222 -1.212162
@@ -230,9 +231,10 @@ within the metab_model object</p></td>
 #&gt; 2                         
 #&gt; 3                         </div><div class='input'>
 <span class='co'># PR with fixed K on two days</span>
-<span class='no'>dat_daily</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"2012-09-18"</span>,<span class='st'>"2012-09-20"</span>)), <span class='kw'>K600.daily</span><span class='kw'>=</span><span class='fl'>35</span>)
-<span class='fu'>metab_mle</span>(<span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>, <span class='kw'>data_daily</span><span class='kw'>=</span><span class='no'>dat_daily</span>)</div><div class='output co'>#&gt; metab_model of type metab_mle 
-#&gt; streamMetabolizer version 0.11.4 
+<span class='va'>dat_daily</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-09-18"</span>,<span class='st'>"2012-09-20"</span><span class='op'>)</span><span class='op'>)</span>, K600.daily<span class='op'>=</span><span class='fl'>35</span><span class='op'>)</span>
+<span class='fu'>metab_mle</span><span class='op'>(</span>data<span class='op'>=</span><span class='va'>dat</span>, data_daily<span class='op'>=</span><span class='va'>dat_daily</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; metab_model of type metab_mle 
+#&gt; streamMetabolizer version 0.12.0 
 #&gt; Specifications:
 #&gt;   model_name        m_np_oi_tr_plrckm.nlm                                       
 #&gt;   day_start         4                                                           
@@ -242,7 +244,7 @@ within the metab_model object</p></td>
 #&gt;   init.GPP.daily    8                                                           
 #&gt;   init.ER.daily     -10                                                         
 #&gt;   init.K600.daily   10                                                          
-#&gt; Fitting time: 0.51 secs elapsed
+#&gt; Fitting time: 1.24 secs elapsed
 #&gt; Parameters (3 dates):
 #&gt;         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
 #&gt; 1 2012-09-18 3.202406         3.018387        3.386425 -2.419569 
@@ -268,10 +270,11 @@ within the metab_model object</p></td>
 #&gt; 2      W            
 #&gt; 3                   </div><div class='input'>
 <span class='co'># PRK with day-specific inits on some days</span>
-<span class='no'>dat_daily</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>date</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2012-09-19"</span>),
-  <span class='kw'>init.GPP.daily</span><span class='kw'>=</span><span class='fl'>4</span>, <span class='kw'>init.K600.daily</span><span class='kw'>=</span><span class='fl'>60</span>)
-<span class='fu'>metab_mle</span>(<span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>, <span class='kw'>data_daily</span><span class='kw'>=</span><span class='no'>dat_daily</span>)</div><div class='output co'>#&gt; metab_model of type metab_mle 
-#&gt; streamMetabolizer version 0.11.4 
+<span class='va'>dat_daily</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>date<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2012-09-19"</span><span class='op'>)</span>,
+  init.GPP.daily<span class='op'>=</span><span class='fl'>4</span>, init.K600.daily<span class='op'>=</span><span class='fl'>60</span><span class='op'>)</span>
+<span class='fu'>metab_mle</span><span class='op'>(</span>data<span class='op'>=</span><span class='va'>dat</span>, data_daily<span class='op'>=</span><span class='va'>dat_daily</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; metab_model of type metab_mle 
+#&gt; streamMetabolizer version 0.12.0 
 #&gt; Specifications:
 #&gt;   model_name        m_np_oi_tr_plrckm.nlm                                       
 #&gt;   day_start         4                                                           
@@ -281,7 +284,7 @@ within the metab_model object</p></td>
 #&gt;   init.GPP.daily    8                                                           
 #&gt;   init.ER.daily     -10                                                         
 #&gt;   init.K600.daily   10                                                          
-#&gt; Fitting time: 0.572 secs elapsed
+#&gt; Fitting time: 1.381 secs elapsed
 #&gt; Parameters (3 dates):
 #&gt;         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
 #&gt; 1 2012-09-18 2.816207         1.894260        3.738153 -2.116196 
@@ -308,8 +311,9 @@ within the metab_model object</p></td>
 #&gt; 2                   
 #&gt; 3      W            </div><div class='input'>
 <span class='co'># Nonlinear GPP or ER equations</span>
-<span class='fu'>metab_mle</span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'mle'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'satlight'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>)</div><div class='output co'>#&gt; metab_model of type metab_mle 
-#&gt; streamMetabolizer version 0.11.4 
+<span class='fu'>metab_mle</span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'mle'</span>, GPP_fun<span class='op'>=</span><span class='st'>'satlight'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='va'>dat</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; metab_model of type metab_mle 
+#&gt; streamMetabolizer version 0.12.0 
 #&gt; Specifications:
 #&gt;   model_name        m_np_oi_tr_psrckm.nlm                                       
 #&gt;   day_start         4                                                           
@@ -320,7 +324,7 @@ within the metab_model object</p></td>
 #&gt;   init.alpha        1e-04                                                       
 #&gt;   init.ER.daily     -10                                                         
 #&gt;   init.K600.daily   10                                                          
-#&gt; Fitting time: 1.13 secs elapsed
+#&gt; Fitting time: 2.119 secs elapsed
 #&gt; Parameters (3 dates):
 #&gt;         date      Pmax Pmax.lower Pmax.upper        alpha alpha.lower
 #&gt; 1 2012-09-18 6.109019    5.645571   6.572466 0.008351642  0.007714609
@@ -344,8 +348,9 @@ within the metab_model object</p></td>
 #&gt;   msgs.fit msgs.pred
 #&gt; 1                   
 #&gt; 2      W            
-#&gt; 3                   </div><div class='input'><span class='fu'>metab_mle</span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'mle'</span>, <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'q10temp'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>)</div><div class='output co'>#&gt; metab_model of type metab_mle 
-#&gt; streamMetabolizer version 0.11.4 
+#&gt; 3                   </div><div class='input'><span class='fu'>metab_mle</span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'mle'</span>, ER_fun<span class='op'>=</span><span class='st'>'q10temp'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='va'>dat</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; metab_model of type metab_mle 
+#&gt; streamMetabolizer version 0.12.0 
 #&gt; Specifications:
 #&gt;   model_name        m_np_oi_tr_plrqkm.nlm                                       
 #&gt;   day_start         4                                                           
@@ -355,7 +360,7 @@ within the metab_model object</p></td>
 #&gt;   init.GPP.daily    8                                                           
 #&gt;   init.ER20         -10                                                         
 #&gt;   init.K600.daily   10                                                          
-#&gt; Fitting time: 0.622 secs elapsed
+#&gt; Fitting time: 1.408 secs elapsed
 #&gt; Parameters (3 dates):
 #&gt;         date GPP.daily GPP.daily.lower GPP.daily.upper       ER20 ER20.lower
 #&gt; 1 2012-09-18 2.056615         1.532462        2.580769 -2.704649   -3.453849
@@ -373,9 +378,10 @@ within the metab_model object</p></td>
 #&gt;   msgs.pred
 #&gt; 1          
 #&gt; 2          
-#&gt; 3          </div><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span>(<span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>))
-}</div></pre>
+#&gt; 3          </div><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span><span class='op'>(</span><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -391,7 +397,7 @@ within the metab_model object</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

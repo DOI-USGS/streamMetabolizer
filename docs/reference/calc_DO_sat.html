@@ -75,7 +75,7 @@ supplied conditions" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ supplied conditions" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ supplied conditions" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -161,13 +161,13 @@ supplied conditions</h1>
 supplied conditions</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_DO_sat</span>(
-  <span class='no'>temp.water</span>,
-  <span class='no'>pressure.air</span>,
-  <span class='kw'>salinity.water</span> <span class='kw'>=</span> <span class='fu'>u</span>(<span class='fl'>0</span>, <span class='st'>"PSU"</span>),
-  <span class='kw'>model</span> <span class='kw'>=</span> <span class='st'>"garcia-benson"</span>,
-  <span class='no'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>calc_DO_sat</span><span class='op'>(</span>
+  <span class='va'>temp.water</span>,
+  <span class='va'>pressure.air</span>,
+  salinity.water <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='st'>"PSU"</span><span class='op'>)</span>,
+  model <span class='op'>=</span> <span class='st'>"garcia-benson"</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -175,17 +175,17 @@ supplied conditions</p>
     <tr>
       <th>temp.water</th>
       <td><p>a numeric vector of water temperature in degrees Celsius,
-or a unitted object of water temperatures.</p></td>
+or a <a href='https://rdrr.io/pkg/unitted/man/unitted-class.html'>unitted</a> object of water temperatures.</p></td>
     </tr>
     <tr>
       <th>pressure.air</th>
       <td><p>barometric pressure in millibars, or a
-unitted object of barometric pressure.</p></td>
+<a href='https://rdrr.io/pkg/unitted/man/unitted-class.html'>unitted</a> object of barometric pressure.</p></td>
     </tr>
     <tr>
       <th>salinity.water</th>
       <td><p>a numeric vector of salinity in PSU, or a
-unitted object of salinity. Defaults to zero.</p></td>
+<a href='https://rdrr.io/pkg/unitted/man/unitted-class.html'>unitted</a> object of salinity. Defaults to zero.</p></td>
     </tr>
     <tr>
       <th>model</th>
@@ -206,8 +206,10 @@ concentrations, in mg/L, with units attached if any of the input vectors
 are unitted.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>calc_DO_sat</span>(<span class='kw'>temp</span><span class='kw'>=</span><span class='fl'>21</span>, <span class='kw'>press</span><span class='kw'>=</span><span class='fl'>1000.1</span>, <span class='kw'>sal</span><span class='kw'>=</span><span class='fl'>0</span>) <span class='co'># no units checking if no units provided</span></div><div class='output co'>#&gt; [1] 8.795956</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>unitted</span>)
-<span class='fu'>calc_DO_sat</span>(<span class='kw'>temp</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span>(<span class='fl'>21</span>,<span class='st'>"degC"</span>), <span class='kw'>press</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span>(<span class='fl'>1000.1</span>,<span class='st'>"mb"</span>), <span class='kw'>sal</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span>(<span class='fl'>0</span>,<span class='st'>"PSU"</span>)) <span class='co'># units are checked</span></div><div class='output co'>#&gt; unitted numeric (mgO2 L^-1)
+    <pre class="examples"><div class='input'><span class='fu'>calc_DO_sat</span><span class='op'>(</span>temp<span class='op'>=</span><span class='fl'>21</span>, press<span class='op'>=</span><span class='fl'>1000.1</span>, sal<span class='op'>=</span><span class='fl'>0</span><span class='op'>)</span> <span class='co'># no units checking if no units provided</span>
+</div><div class='output co'>#&gt; [1] 8.795956</div><div class='input'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/appling/unitted'>unitted</a></span><span class='op'>)</span>
+<span class='fu'>calc_DO_sat</span><span class='op'>(</span>temp<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>21</span>,<span class='st'>"degC"</span><span class='op'>)</span>, press<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>1000.1</span>,<span class='st'>"mb"</span><span class='op'>)</span>, sal<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/pkg/unitted/man/unitted.html'>u</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='st'>"PSU"</span><span class='op'>)</span><span class='op'>)</span> <span class='co'># units are checked</span>
+</div><div class='output co'>#&gt; unitted numeric (mgO2 L^-1)
 #&gt; [1] 8.795956</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -224,7 +226,7 @@ are unitted.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Get a demo dataset for modeling metabolism — data_metab" />
-<meta property="og:description" content="Get a formatted data.frame of inputs from which metabolism can be modeled. 
+<meta property="og:description" content="Get a formatted data.frame of inputs from which metabolism can be modeled.
 These test data were provided by Bob Hall." />
 
 
@@ -73,7 +73,7 @@ These test data were provided by Bob Hall." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ These test data were provided by Bob Hall." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ These test data were provided by Bob Hall." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -154,27 +154,27 @@ These test data were provided by Bob Hall." />
     </div>
 
     <div class="ref-description">
-    <p>Get a formatted data.frame of inputs from which metabolism can be modeled. 
+    <p>Get a formatted data.frame of inputs from which metabolism can be modeled.
 These test data were provided by Bob Hall.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>data_metab</span>(
-  <span class='kw'>num_days</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"1"</span>, <span class='st'>"3"</span>, <span class='st'>"10"</span>),
-  <span class='kw'>res</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"5"</span>, <span class='st'>"10"</span>, <span class='st'>"15"</span>, <span class='st'>"30"</span>),
-  <span class='kw'>flaws</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"missing middle"</span>, <span class='st'>"missing start"</span>, <span class='st'>"missing end"</span>, <span class='st'>"missorted"</span>,
-    <span class='st'>"duplicated"</span>),
-  <span class='kw'>day_start</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>day_end</span> <span class='kw'>=</span> <span class='fl'>28</span>,
-  <span class='kw'>attach.units</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>data_metab</span><span class='op'>(</span>
+  num_days <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"1"</span>, <span class='st'>"3"</span>, <span class='st'>"10"</span><span class='op'>)</span>,
+  res <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"5"</span>, <span class='st'>"10"</span>, <span class='st'>"15"</span>, <span class='st'>"30"</span><span class='op'>)</span>,
+  flaws <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"missing middle"</span>, <span class='st'>"missing start"</span>, <span class='st'>"missing end"</span>, <span class='st'>"missorted"</span>,
+    <span class='st'>"duplicated"</span><span class='op'>)</span>,
+  day_start <span class='op'>=</span> <span class='fl'>4</span>,
+  day_end <span class='op'>=</span> <span class='fl'>28</span>,
+  attach.units <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Deprecated.html'>deprecated</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>num_days</th>
-      <td><p>the number of days to include in the data. character format 
-because only certain numbers of days are permitted (see defaults in Usage 
+      <td><p>the number of days to include in the data. character format
+because only certain numbers of days are permitted (see defaults in Usage
 for the accepted options)</p></td>
     </tr>
     <tr>
@@ -184,29 +184,29 @@ for the accepted options)</p></td>
     </tr>
     <tr>
       <th>flaws</th>
-      <td><p>character specifying one or more flaws to include in the data, or
-empty (<code><a href='https://rdrr.io/r/base/c.html'>c()</a></code>) for no flaws. default is no flaws.</p></td>
+      <td><p>character specifying one or more flaws to include in the data,
+or empty (<code><a href='https://rdrr.io/r/base/c.html'>c()</a></code>) for no flaws. default is no flaws.</p></td>
     </tr>
     <tr>
       <th>day_start</th>
-      <td><p>start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+      <td><p>start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.</p></td>
     </tr>
     <tr>
       <th>day_end</th>
-      <td><p>end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+      <td><p>end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.</p></td>
     </tr>
     <tr>
@@ -217,19 +217,21 @@ before 2006-06-27 06:00. See day_start for recommended start and end times.</p><
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='fu'>data_metab</span>())</div><div class='output co'>#&gt;            solar.time DO.obs   DO.sat depth temp.water light
-#&gt; 1 2012-09-18 04:00:58   8.39 9.076040  0.16       3.63     0
-#&gt; 2 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
-#&gt; 3 2012-09-18 04:10:58   8.40 9.088194  0.16       3.58     0
-#&gt; 4 2012-09-18 04:15:58   8.41 9.090628  0.16       3.57     0
-#&gt; 5 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0
-#&gt; 6 2012-09-18 04:25:58   8.42 9.097936  0.16       3.54     0</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span>(<span class='fu'>data_metab</span>(<span class='kw'>res</span><span class='kw'>=</span><span class='st'>'30'</span>))</div><div class='output co'>#&gt;             solar.time DO.obs   DO.sat depth temp.water    light
-#&gt; 2  2012-09-18 04:05:58   8.41 9.083329  0.16       3.60   0.0000
-#&gt; 8  2012-09-18 04:35:58   8.42 9.105254  0.16       3.51   0.0000
-#&gt; 14 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42   0.0000
-#&gt; 20 2012-09-18 05:35:58   8.47 9.149369  0.16       3.33   0.0000
-#&gt; 26 2012-09-18 06:05:58   8.55 9.166621  0.16       3.26 134.3296
-#&gt; 32 2012-09-18 06:35:58   8.71 9.174032  0.16       3.23 361.1082</div></pre>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='fu'>data_metab</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;               solar.time DO.obs   DO.sat depth temp.water light
+#&gt; 5688 2012-09-18 04:00:58   8.39 9.076040  0.16       3.63     0
+#&gt; 5689 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
+#&gt; 5690 2012-09-18 04:10:58   8.40 9.088194  0.16       3.58     0
+#&gt; 5691 2012-09-18 04:15:58   8.41 9.090628  0.16       3.57     0
+#&gt; 5692 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0
+#&gt; 5693 2012-09-18 04:25:58   8.42 9.097936  0.16       3.54     0</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='fu'>data_metab</span><span class='op'>(</span>res<span class='op'>=</span><span class='st'>'30'</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;               solar.time DO.obs   DO.sat depth temp.water    light
+#&gt; 5689 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60   0.0000
+#&gt; 5695 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51   0.0000
+#&gt; 5701 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42   0.0000
+#&gt; 5707 2012-09-18 05:35:58   8.47 9.149369  0.16       3.33   0.0000
+#&gt; 5713 2012-09-18 06:05:58   8.55 9.166621  0.16       3.26 134.3296
+#&gt; 5719 2012-09-18 06:35:58   8.71 9.174032  0.16       3.23 361.1082</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -245,7 +247,7 @@ before 2006-06-27 06:00. See day_start for recommended start and end times.</p><
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

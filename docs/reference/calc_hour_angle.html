@@ -75,7 +75,7 @@ in solar time" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ in solar time" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ in solar time" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -161,7 +161,7 @@ http://education.gsfc.nasa.gov/experimental/July61999siteupdate/inv99Project.Sit
 in solar time</p>
     </div>
 
-    <pre class="usage"><span class='fu'>calc_hour_angle</span>(<span class='no'>hour</span>, <span class='kw'>format</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"degrees"</span>, <span class='st'>"radians"</span>))</pre>
+    <pre class="usage"><span class='fu'>calc_hour_angle</span><span class='op'>(</span><span class='va'>hour</span>, format <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"degrees"</span>, <span class='st'>"radians"</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -184,13 +184,14 @@ or "radians".</p></td>
   indicating the angle corresponding to each value supplied in <code>hour</code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>hourdf</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>hour</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>:<span class='fl'>12</span>,<span class='fl'>12.5</span>:<span class='fl'>23.5</span>),
-  <span class='kw'>hragl</span><span class='kw'>=</span><span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>calc_hour_angle</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>:<span class='fl'>12</span>,<span class='fl'>12.5</span>:<span class='fl'>23.5</span>)))
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span>(<span class='no'>hourdf</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>hour</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>hragl</span>)) +
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_abline.html'>geom_hline</a></span>(<span class='kw'>yintercept</span><span class='kw'>=</span><span class='fl'>0</span>, <span class='kw'>color</span><span class='kw'>=</span><span class='st'>"gold"</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span>()
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>hourdf</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>hour<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>:</span><span class='fl'>12</span>,<span class='fl'>12.5</span><span class='op'>:</span><span class='fl'>23.5</span><span class='op'>)</span>, 
+  hragl<span class='op'>=</span><span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>calc_hour_angle</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>:</span><span class='fl'>12</span>,<span class='fl'>12.5</span><span class='op'>:</span><span class='fl'>23.5</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='va'>hourdf</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>hour</span>, y<span class='op'>=</span><span class='va'>hragl</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> 
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_abline.html'>geom_hline</a></span><span class='op'>(</span>yintercept<span class='op'>=</span><span class='fl'>0</span>, color<span class='op'>=</span><span class='st'>"gold"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>geom_line</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -206,7 +207,7 @@ or "radians".</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -89,7 +89,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -103,13 +103,13 @@
 
       
 
-      </header><div class="row">
+      </header><script src="model_structures_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Model Structures</h1>
                         <h4 class="author">Alison Appling</h4>
             
-            <h4 class="date">2020-03-26</h4>
+            <h4 class="date">2021-07-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/master/vignettes/model_structures.Rmd"><code>vignettes/model_structures.Rmd</code></a></small>
       <div class="hidden name"><code>model_structures.Rmd</code></div>
@@ -148,13 +148,17 @@
 <h1 class="hasAnchor">
 <a href="#setting-a-model-name" class="anchor"></a>Setting a model name</h1>
 <p>The <code><a href="../reference/mm_name.html">mm_name()</a></code> function creates a cryptic (but complete and concise) model name from several options that you can specify. For example:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="kw">type</span><span class="kw">=</span><span class="st">'bayes'</span>) <span class="co"># the default Bayesian model</span></pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'bayes'</span><span class="op">)</span> <span class="co"># the default Bayesian model</span></code></pre></div>
 <pre><code>## [1] "b_np_oipi_tr_plrckm.stan"</code></pre>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="kw">type</span><span class="kw">=</span><span class="st">'bayes'</span>, <span class="kw">pool_K600</span><span class="kw">=</span><span class="st">'normal'</span>) <span class="co"># a Bayesian model with simple pooling of K600 to a shared mean</span></pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'bayes'</span>, pool_K600<span class="op">=</span><span class="st">'normal'</span><span class="op">)</span> <span class="co"># a Bayesian model with simple pooling of K600 to a shared mean</span></code></pre></div>
 <pre><code>## [1] "b_Kn_oipi_tr_plrckm.stan"</code></pre>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="kw">type</span><span class="kw">=</span><span class="st">'mle'</span>) <span class="co"># the default MLE model</span></pre></body></html></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'mle'</span><span class="op">)</span> <span class="co"># the default MLE model</span></code></pre></div>
 <pre><code>## [1] "m_np_oi_tr_plrckm.nlm"</code></pre>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="kw">type</span><span class="kw">=</span><span class="st">'mle'</span>, <span class="kw">ode_method</span><span class="kw">=</span><span class="st">'euler'</span>) <span class="co"># an MLE model with a simpler ode_method</span></pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'mle'</span>, ode_method<span class="op">=</span><span class="st">'euler'</span><span class="op">)</span> <span class="co"># an MLE model with a simpler ode_method</span></code></pre></div>
 <pre><code>## [1] "m_np_oi_eu_plrckm.nlm"</code></pre>
 <p>See the help file at <code><a href="../reference/mm_name.html">?mm_name</a></code> to learn about the structural options that you can adjust.</p>
 </div>
@@ -162,7 +166,8 @@
 <h1 class="hasAnchor">
 <a href="#interpreting-a-model-name" class="anchor"></a>Interpreting a model name</h1>
 <p>The <code><a href="../reference/mm_parse_name.html">mm_parse_name()</a></code> function splits a cryptic model name into its component features. For example:</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/mm_parse_name.html">mm_parse_name</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'b_np_oipi_tr_plrckm.stan'</span>, <span class="st">'m_np_pi_tr_psrqkm.nlm'</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/mm_parse_name.html">mm_parse_name</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'b_np_oipi_tr_plrckm.stan'</span>, <span class="st">'m_np_pi_tr_psrqkm.nlm'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>##    type pool_K600 err_obs_iid err_proc_acor err_proc_iid err_proc_GPP
 ## 1 bayes      none        TRUE         FALSE         TRUE        FALSE
 ## 2   mle      none       FALSE         FALSE         TRUE        FALSE
@@ -175,10 +180,12 @@
 <h1 class="hasAnchor">
 <a href="#listing-all-the-options" class="anchor"></a>Listing all the options</h1>
 <p>You can see the full list of available model structures by calling <code><a href="../reference/mm_valid_names.html">mm_valid_names()</a></code> (here we’ll just print a sampling of the full list):</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">valid_names</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/mm_valid_names.html">mm_valid_names</a></span>(<span class="kw">type</span><span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'bayes'</span>,<span class="st">'mle'</span>,<span class="st">'night'</span>))
-<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span>(<span class="no">valid_names</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">valid_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_valid_names.html">mm_valid_names</a></span><span class="op">(</span>type<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'bayes'</span>,<span class="st">'mle'</span>,<span class="st">'night'</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">valid_names</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 882</code></pre>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">valid_names</span>[<span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span>(<span class="fl">1</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span>(<span class="no">valid_names</span>),<span class="kw">length.out</span><span class="kw">=</span><span class="fl">20</span>)], <span class="st">'...'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">valid_names</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">valid_names</span><span class="op">)</span>,length.out<span class="op">=</span><span class="fl">20</span><span class="op">)</span><span class="op">]</span>, <span class="st">'...'</span><span class="op">)</span></code></pre></div>
 <pre><code>##  [1] "b_np_oipi_tr_plrckm.stan"  "b_Kb0_oi_eu_psrckm.stan"  
 ##  [3] "b_Kbx_oipi_eu_plrckm.stan" "b_Kl_oipi_tr_psrcko.stan" 
 ##  [5] "b_Kl0_oipp_eu_plrcko.stan" "b_Klx_pi_eu_psrcko.stan"  
@@ -213,7 +220,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

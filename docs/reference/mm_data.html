@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Return the data types that may be used by metab_models using the 
+<title>Return the data types that may be used by metab_models using the
 metab_model_interface. — mm_data • streamMetabolizer</title>
 
 
@@ -40,48 +40,48 @@ metab_model_interface. — mm_data • streamMetabolizer</title>
 
 
 
-<meta property="og:title" content="Return the data types that may be used by metab_models using the 
+<meta property="og:title" content="Return the data types that may be used by metab_models using the
 metab_model_interface. — mm_data" />
-<meta property="og:description" content="Produces a unitted data.frame with the column names, units, and 
-  data format to be used by metab_models that comply strictly with the 
-  metab_model_interface. These are the columns that may be included:  
+<meta property="og:description" content="Produces a unitted data.frame with the column names, units, and
+  data format to be used by metab_models that comply strictly with the
+  metab_model_interface. These are the columns that may be included:
 
-solar.time date-time values in mean solar time (see 
-  calc_solar_time and/or 
-  convert_UTC_to_solartime), in POSIXct format with a tzone 
-  attribute of 'UTC'. May be approximated by local, non-daylight-savings 
-  clock time (still with nominal UTC timezone but with clock noons close to 
-  solar noon), but mean solar time is better for matching model time windows 
+solar.time date-time values in mean solar time (see
+  calc_solar_time and/or
+  convert_UTC_to_solartime), in POSIXct format with a tzone
+  attribute of 'UTC'. May be approximated by local, non-daylight-savings
+  clock time (still with nominal UTC timezone but with clock noons close to
+  solar noon), but mean solar time is better for matching model time windows
   to the diel cycle of light availability. Throughout this package, variables
-  named &quot;solar.time&quot; are mean solar time, &quot;app.solar.time&quot; means apparent 
+  named &quot;solar.time&quot; are mean solar time, &quot;app.solar.time&quot; means apparent
   solar time, and &quot;any.solar.time&quot; means either.
-DO.obs dissolved oxygen concentration observations, \(mg 
+DO.obs dissolved oxygen concentration observations, \(mg
   O[2] L^{-1}\)
-DO.sat dissolved oxygen concentrations if the water were at 
-  equilibrium saturation \(mg O[2] L^{-1}\). Calculate using 
+DO.sat dissolved oxygen concentrations if the water were at
+  equilibrium saturation \(mg O[2] L^{-1}\). Calculate using
   calc_DO_sat
 depth stream depth, \(m\).
 temp.water water temperature, \(degC\).
-light photosynthetically active radiation, \(\mu mol\ 
+light photosynthetically active radiation, \(\mu mol\
   m^{-2} s^{-1}\)
 date dates of interest in Date format
-err.obs.sigma SD of observation error to use in simulating 
+err.obs.sigma SD of observation error to use in simulating
   data
 err.obs.phi autocorrelation of observation error to use in
   simulating data
 err.proc.sigma SD of process error to use in simulating data
 err.proc.phi autocorrelation of process error to use in
   simulating data
-DO.obs dissolved oxygen concentration observations, \(mg 
+DO.obs dissolved oxygen concentration observations, \(mg
   O[2] L^{-1}\)
 GPP daily estimates of GPP, \(g O[2] m^-2 d^-1\)
 ER daily estimates of ER, \(g O[2] m^-2 d^-1\)
 K600 daily estimates of K600, \(d^-1\)
-GPP.init daily initial values of GPP, \(g O[2] m^-2 
+GPP.init daily initial values of GPP, \(g O[2] m^-2
   d^-1\), for use in maximum likelihood estimation
-ER.init daily initial values of ER, \(g O[2] m^-2 d^-1\), 
+ER.init daily initial values of ER, \(g O[2] m^-2 d^-1\),
   for use in maximum likelihood estimation
-K600.init daily initial values of K600, \(d^-1\), for use 
+K600.init daily initial values of K600, \(d^-1\), for use
   in maximum likelihood estimation
 discharge.daily daily mean river discharge, \(m^3 s^-1\)
 velocity.daily daily mean river flow velocity, \(m s^-1\)
@@ -118,7 +118,7 @@ velocity.daily daily mean river flow velocity, \(m s^-1\)
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -126,7 +126,7 @@ velocity.daily daily mean river flow velocity, \(m s^-1\)
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -176,7 +176,7 @@ velocity.daily daily mean river flow velocity, \(m s^-1\)
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -193,53 +193,53 @@ velocity.daily daily mean river flow velocity, \(m s^-1\)
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Return the data types that may be used by metab_models using the 
+    <h1>Return the data types that may be used by metab_models using the
 metab_model_interface.</h1>
     <small class="dont-index">Source: <a href='https://github.com/USGS-R/streamMetabolizer/blob/master/R/mm_data.R'><code>R/mm_data.R</code></a></small>
     <div class="hidden name"><code>mm_data.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Produces a unitted data.frame with the column names, units, and 
-  data format to be used by metab_models that comply strictly with the 
-  metab_model_interface. These are the columns that may be included:</p>  
+    <p>Produces a unitted data.frame with the column names, units, and
+  data format to be used by metab_models that comply strictly with the
+  metab_model_interface. These are the columns that may be included:</p>
 <p></p><ul>
-<li><p><code>solar.time</code> date-time values in mean solar time (see 
-  <code><a href='calc_solar_time.html'>calc_solar_time</a></code> and/or 
-  <code><a href='convert_UTC_to_solartime.html'>convert_UTC_to_solartime</a></code>), in POSIXct format with a tzone 
-  attribute of 'UTC'. May be approximated by local, non-daylight-savings 
-  clock time (still with nominal UTC timezone but with clock noons close to 
-  solar noon), but mean solar time is better for matching model time windows 
+<li><p><code>solar.time</code> date-time values in mean solar time (see
+  <code><a href='calc_solar_time.html'>calc_solar_time</a></code> and/or
+  <code><a href='convert_UTC_to_solartime.html'>convert_UTC_to_solartime</a></code>), in POSIXct format with a tzone
+  attribute of 'UTC'. May be approximated by local, non-daylight-savings
+  clock time (still with nominal UTC timezone but with clock noons close to
+  solar noon), but mean solar time is better for matching model time windows
   to the diel cycle of light availability. Throughout this package, variables
-  named "solar.time" are mean solar time, "app.solar.time" means apparent 
+  named "solar.time" are mean solar time, "app.solar.time" means apparent
   solar time, and "any.solar.time" means either.</p></li>
-<li><p><code>DO.obs</code> dissolved oxygen concentration observations, \(mg 
+<li><p><code>DO.obs</code> dissolved oxygen concentration observations, \(mg
   O[2] L^{-1}\)</p></li>
-<li><p><code>DO.sat</code> dissolved oxygen concentrations if the water were at 
-  equilibrium saturation \(mg O[2] L^{-1}\). Calculate using 
+<li><p><code>DO.sat</code> dissolved oxygen concentrations if the water were at
+  equilibrium saturation \(mg O[2] L^{-1}\). Calculate using
   <a href='calc_DO_sat.html'>calc_DO_sat</a></p></li>
 <li><p><code>depth</code> stream depth, \(m\).</p></li>
 <li><p><code>temp.water</code> water temperature, \(degC\).</p></li>
-<li><p><code>light</code> photosynthetically active radiation, \(\mu mol\ 
+<li><p><code>light</code> photosynthetically active radiation, \(\mu mol\
   m^{-2} s^{-1}\)</p></li>
 <li><p><code>date</code> dates of interest in Date format</p></li>
-<li><p><code>err.obs.sigma</code> SD of observation error to use in simulating 
+<li><p><code>err.obs.sigma</code> SD of observation error to use in simulating
   data</p></li>
 <li><p><code>err.obs.phi</code> autocorrelation of observation error to use in
   simulating data</p></li>
 <li><p><code>err.proc.sigma</code> SD of process error to use in simulating data</p></li>
 <li><p><code>err.proc.phi</code> autocorrelation of process error to use in
   simulating data</p></li>
-<li><p><code>DO.obs</code> dissolved oxygen concentration observations, \(mg 
+<li><p><code>DO.obs</code> dissolved oxygen concentration observations, \(mg
   O[2] L^{-1}\)</p></li>
 <li><p><code>GPP</code> daily estimates of GPP, \(g O[2] m^-2 d^-1\)</p></li>
 <li><p><code>ER</code> daily estimates of ER, \(g O[2] m^-2 d^-1\)</p></li>
 <li><p><code>K600</code> daily estimates of K600, \(d^-1\)</p></li>
-<li><p><code>GPP.init</code> daily initial values of GPP, \(g O[2] m^-2 
+<li><p><code>GPP.init</code> daily initial values of GPP, \(g O[2] m^-2
   d^-1\), for use in maximum likelihood estimation</p></li>
-<li><p><code>ER.init</code> daily initial values of ER, \(g O[2] m^-2 d^-1\), 
+<li><p><code>ER.init</code> daily initial values of ER, \(g O[2] m^-2 d^-1\),
   for use in maximum likelihood estimation</p></li>
-<li><p><code>K600.init</code> daily initial values of K600, \(d^-1\), for use 
+<li><p><code>K600.init</code> daily initial values of K600, \(d^-1\), for use
   in maximum likelihood estimation</p></li>
 <li><p><code>discharge.daily</code> daily mean river discharge, \(m^3 s^-1\)</p></li>
 <li><p><code>velocity.daily</code> daily mean river flow velocity, \(m s^-1\)</p></li>
@@ -247,7 +247,7 @@ metab_model_interface.</h1>
 
     </div>
 
-    <pre class="usage"><span class='fu'>mm_data</span>(<span class='no'>...</span>, <span class='kw'>optional</span> <span class='kw'>=</span> <span class='st'>"none"</span>)</pre>
+    <pre class="usage"><span class='fu'>mm_data</span><span class='op'>(</span><span class='va'>...</span>, optional <span class='op'>=</span> <span class='st'>"none"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -258,10 +258,10 @@ metab_model_interface.</h1>
     </tr>
     <tr>
       <th>optional</th>
-      <td><p>one or more character strings listing the columns, if any, 
-that may be excluded. If 'all', the entire data.frame may be omitted. If 
-'none', the entire data.frame must be included as prototyped. If specific 
-column names are given, those columns may be omitted entirely or passed to 
+      <td><p>one or more character strings listing the columns, if any,
+that may be excluded. If 'all', the entire data.frame may be omitted. If
+'none', the entire data.frame must be included as prototyped. If specific
+column names are given, those columns may be omitted entirely or passed to
 <code><a href='metab.html'>metab</a>()</code> as all NAs.</p></td>
     </tr>
     </table>
@@ -276,7 +276,8 @@ column names are given, those columns may be omitted entirely or passed to
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># all possible columns</span>
-<span class='fu'>mm_data</span>()</div><div class='output co'>#&gt;            solar.time    DO.obs    DO.sat depth temp.water          light
+<span class='fu'>mm_data</span><span class='op'>(</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;            solar.time    DO.obs    DO.sat depth temp.water          light
 #&gt; U                     mgO2 L^-1 mgO2 L^-1     m       degC umol m^-2 s^-1
 #&gt; 1 2050-03-14 15:10:00      10.1      14.2   0.5       21.8          300.9
 #&gt;   discharge velocity       date  DO.mod.1 err.obs.sigma err.obs.phi
@@ -301,11 +302,13 @@ column names are given, those columns may be omitted entirely or passed to
 #&gt; U gO2 d^-1 m^-3 gO2 d^-1 m^-3
 #&gt; 1             5             5</div><div class='input'>
 <span class='co'># columns typical of instantaneous data</span>
-<span class='fu'>mm_data</span>(<span class='no'>solar.time</span>, <span class='no'>DO.obs</span>, <span class='no'>DO.sat</span>, <span class='no'>depth</span>, <span class='no'>temp.water</span>, <span class='no'>light</span>)</div><div class='output co'>#&gt;            solar.time    DO.obs    DO.sat depth temp.water          light
+<span class='fu'>mm_data</span><span class='op'>(</span><span class='va'>solar.time</span>, <span class='va'>DO.obs</span>, <span class='va'>DO.sat</span>, <span class='va'>depth</span>, <span class='va'>temp.water</span>, <span class='va'>light</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;            solar.time    DO.obs    DO.sat depth temp.water          light
 #&gt; U                     mgO2 L^-1 mgO2 L^-1     m       degC umol m^-2 s^-1
 #&gt; 1 2050-03-14 15:10:00      10.1      14.2   0.5       21.8          300.9</div><div class='input'>
 <span class='co'># columns typical of daily data</span>
-<span class='fu'>mm_data</span>(<span class='no'>date</span>, <span class='no'>K600.daily</span>, <span class='no'>discharge.daily</span>, <span class='no'>velocity.daily</span>)</div><div class='output co'>#&gt;         date K600.daily discharge.daily velocity.daily
+<span class='fu'>mm_data</span><span class='op'>(</span><span class='va'>date</span>, <span class='va'>K600.daily</span>, <span class='va'>discharge.daily</span>, <span class='va'>velocity.daily</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date K600.daily discharge.daily velocity.daily
 #&gt; U                  d^-1        m^3 s^-1         m s^-1
 #&gt; 1 2050-03-14         10               9              2</div></pre>
   </div>
@@ -323,7 +326,7 @@ column names are given, those columns may be omitted entirely or passed to
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -40,7 +40,7 @@
 
 
 <meta property="og:title" content="Plot the prior/posterior distributions of a parameter — plot_distribs" />
-<meta property="og:description" content="Plot the prior and/or posterior disitrubtions as implied by the 
+<meta property="og:description" content="Plot the prior and/or posterior disitrubtions as implied by the
 hyperparameters in a specs list and/or the" />
 
 
@@ -73,7 +73,7 @@ hyperparameters in a specs list and/or the" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ hyperparameters in a specs list and/or the" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ hyperparameters in a specs list and/or the" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -154,26 +154,26 @@ hyperparameters in a specs list and/or the" />
     </div>
 
     <div class="ref-description">
-    <p>Plot the prior and/or posterior disitrubtions as implied by the 
+    <p>Plot the prior and/or posterior disitrubtions as implied by the
 hyperparameters in a specs list and/or the</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_distribs</span>(
-  <span class='no'>dist_data</span>,
-  <span class='kw'>parname</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"GPP_daily"</span>, <span class='st'>"alpha"</span>, <span class='st'>"Pmax"</span>, <span class='st'>"ER_daily"</span>, <span class='st'>"K600_daily"</span>,
+    <pre class="usage"><span class='fu'>plot_distribs</span><span class='op'>(</span>
+  <span class='va'>dist_data</span>,
+  parname <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"GPP_daily"</span>, <span class='st'>"alpha"</span>, <span class='st'>"Pmax"</span>, <span class='st'>"ER_daily"</span>, <span class='st'>"K600_daily"</span>,
     <span class='st'>"K600_daily_meanlog"</span>, <span class='st'>"lnK600_lnQ_intercept"</span>, <span class='st'>"lnK600_lnQ_slope"</span>, <span class='st'>"K600_lnQ_nodes"</span>,
     <span class='st'>"K600_daily_sdlog"</span>, <span class='st'>"K600_daily_sigma"</span>, <span class='st'>"err_obs_iid_sigma"</span>, <span class='st'>"err_proc_acor_phi"</span>,
-    <span class='st'>"err_proc_acor_sigma"</span>, <span class='st'>"err_proc_iid_sigma"</span>, <span class='st'>"err_mult_GPP_sdlog"</span>),
-  <span class='kw'>index</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>style</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"dygraphs"</span>, <span class='st'>"ggplot2"</span>)
-)</pre>
+    <span class='st'>"err_proc_acor_sigma"</span>, <span class='st'>"err_proc_iid_sigma"</span>, <span class='st'>"err_mult_GPP_sdlog"</span><span class='op'>)</span>,
+  index <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  style <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"dygraphs"</span>, <span class='st'>"ggplot2"</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>dist_data</th>
-      <td><p>Either a specs list (for priors only) or a metab_model 
+      <td><p>Either a specs list (for priors only) or a metab_model
 object (for both priors and posteriors).</p></td>
     </tr>
     <tr>
@@ -183,12 +183,12 @@ wish to plot</p></td>
     </tr>
     <tr>
       <th>index</th>
-      <td><p>integer or logical. Applicable only if plotting posteriors, and 
+      <td><p>integer or logical. Applicable only if plotting posteriors, and
 useful only if the parname is for a parameter having multiple (e.g., daily)
-instances. In this case, the index selects the instance and corresponds to 
-the row number in the data.frame element of <code><a href='get_fit.html'>get_fit(metab_model)</a></code> 
-that contains the parameter, e.g. <code>get_fit(metab_model)$daily</code> for 
-<code>'GPP_daily'</code>. The default, TRUE, selects and pools all instances of 
+instances. In this case, the index selects the instance and corresponds to
+the row number in the data.frame element of <code><a href='get_fit.html'>get_fit(metab_model)</a></code>
+that contains the parameter, e.g. <code>get_fit(metab_model)$daily</code> for
+<code>'GPP_daily'</code>. The default, TRUE, selects and pools all instances of
 the parameter.</p></td>
     </tr>
     <tr>
@@ -199,19 +199,20 @@ the parameter.</p></td>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'># priors only</span>
-<span class='fu'>plot_distribs</span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='st'>'bayes'</span>, <span class='kw'>K600_daily_mu</span><span class='kw'>=</span><span class='fl'>30</span>), <span class='st'>'K600_daily'</span>)
+<span class='fu'>plot_distribs</span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='st'>'bayes'</span>, K600_daily_mu<span class='op'>=</span><span class='fl'>30</span><span class='op'>)</span>, <span class='st'>'K600_daily'</span><span class='op'>)</span>
 
 <span class='co'># posteriors, too</span>
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'bayes'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'1'</span>, <span class='kw'>res</span><span class='kw'>=</span><span class='st'>'30'</span>))
-<span class='fu'>plot_distribs</span>(<span class='no'>mm</span>, <span class='st'>'GPP_daily'</span>, <span class='fl'>1</span>)
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='metab.html'>metab</a></span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'bayes'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'1'</span>, res<span class='op'>=</span><span class='st'>'30'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'>plot_distribs</span><span class='op'>(</span><span class='va'>mm</span>, <span class='st'>'GPP_daily'</span>, <span class='fl'>1</span><span class='op'>)</span>
 
 <span class='co'># with modifications</span>
-<span class='fu'>plot_distribs</span>(<span class='no'>mm</span>, <span class='st'>'err_proc_iid_sigma'</span>) <span class='kw'>%&gt;%</span>
-  <span class='kw pkg'>dygraphs</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dygraphs/man/dyRangeSelector.html'>dyRangeSelector</a></span>(<span class='kw'>dateWindow</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>0.1</span>,<span class='fl'>1.3</span>)) <span class='kw'>%&gt;%</span>
-  <span class='kw pkg'>dygraphs</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dygraphs/man/dyAxis.html'>dyAxis</a></span>(<span class='kw'>name</span><span class='kw'>=</span><span class='st'>'y'</span>, <span class='kw'>valueRange</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>,<span class='fl'>15</span>))
-}</div></pre>
+<span class='fu'>plot_distribs</span><span class='op'>(</span><span class='va'>mm</span>, <span class='st'>'err_proc_iid_sigma'</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dygraphs</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dygraphs/man/dyRangeSelector.html'>dyRangeSelector</a></span><span class='op'>(</span>dateWindow<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>0.1</span>,<span class='fl'>1.3</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>dygraphs</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/dygraphs/man/dyAxis.html'>dyAxis</a></span><span class='op'>(</span>name<span class='op'>=</span><span class='st'>'y'</span>, valueRange<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>,<span class='fl'>15</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -227,7 +228,7 @@ the parameter.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

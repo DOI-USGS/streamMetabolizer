@@ -73,7 +73,7 @@ fitted model." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ fitted model." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ fitted model." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -158,12 +158,12 @@ fitted model." />
 fitted model.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>metab</span>(
-  <span class='kw'>specs</span> <span class='kw'>=</span> <span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>()),
-  <span class='kw'>data</span> <span class='kw'>=</span> <span class='fu'>v</span>(<span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='kw'>NULL</span>)),
-  <span class='kw'>data_daily</span> <span class='kw'>=</span> <span class='fu'>v</span>(<span class='fu'><a href='mm_data.html'>mm_data</a></span>(<span class='kw'>NULL</span>)),
-  <span class='kw'>info</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>metab</span><span class='op'>(</span>
+  specs <span class='op'>=</span> <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
+  data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span>,
+  data_daily <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/unitted/man/deunitted.html'>v</a></span><span class='op'>(</span><span class='fu'><a href='mm_data.html'>mm_data</a></span><span class='op'>(</span><span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span>,
+  info <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -212,7 +212,7 @@ within the metab_model object</p></td>
 be formatted as a data.frame with column names and values that
 depend on the model <code>type</code>, as follows.
 (If all columns are optional, <code>data</code> may equal <code>NULL</code>.)</p>
-<dl'>
+<dl>
   <dt><code>mle</code> or <code>night</code></dt><dd><p><table class='table'>
 <tr><td><strong>colname</strong></td><td><strong>class</strong></td><td><strong>units</strong></td><td><strong>need</strong></td></tr>
 <tr><td>solar.time</td><td>POSIXct,POSIXt</td><td></td><td>required</td></tr>
@@ -275,7 +275,7 @@ depend on the model <code>type</code>, as follows.
 be formatted as a data.frame with column names and values that
 depend on the model <code>type</code>, as follows.
 (If all columns are optional, <code>data_daily</code> may equal <code>NULL</code>.)</p>
-<dl'>
+<dl>
   <dt><code>night</code></dt><dd><p><code>NULL</code></p></dd>
   <dt><code>mle</code></dt><dd><p><table class='table'>
 <tr><td><strong>colname</strong></td><td><strong>class</strong></td><td><strong>units</strong></td><td><strong>need</strong></td></tr>
@@ -337,43 +337,52 @@ depend on the model <code>type</code>, as follows.
 
 </dl>
 
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Alison Appling</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='kw'>num_days</span><span class='kw'>=</span><span class='st'>'3'</span>)
+    <pre class="examples"><div class='input'><span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span>num_days<span class='op'>=</span><span class='st'>'3'</span><span class='op'>)</span>
 
 <span class='co'># fit a basic MLE model</span>
-<span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'>metab</span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'mle'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>, <span class='kw'>info</span><span class='kw'>=</span><span class='st'>'my info'</span>)
-<span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
+<span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'>metab</span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'mle'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='va'>dat</span>, info<span class='op'>=</span><span class='st'>'my info'</span><span class='op'>)</span>
+<span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
 #&gt; 1 2012-09-18 2.812955  2.435230  3.190680 -2.103521 -2.410113 -1.796930
 #&gt; 2 2012-09-19 3.277526  2.866958  3.688094 -2.470115 -2.808856 -2.131375
 #&gt; 3 2012-09-20 2.582700  2.313734  2.851666 -1.709653 -1.914700 -1.504606
 #&gt;   msgs.fit warnings errors
 #&gt; 1                         
 #&gt; 2      W                  
-#&gt; 3                         </div><div class='input'><span class='fu'><a href='get_info.html'>get_info</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt; [1] "my info"</div><div class='input'><span class='fu'><a href='get_fitting_time.html'>get_fitting_time</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;    user  system elapsed 
-#&gt;   1.055   0.005   1.059 </div><div class='input'>
+#&gt; 3                         </div><div class='input'><span class='fu'><a href='get_info.html'>get_info</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] "my info"</div><div class='input'><span class='fu'><a href='get_fitting_time.html'>get_fitting_time</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;    user  system elapsed 
+#&gt;   2.310   0.024   2.394 </div><div class='input'>
 <span class='co'># with chaining &amp; customization</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>dplyr</span>)</div><div class='output co'>#&gt; <span class='message'>------------------------------------------------------------------------------</span></div><div class='output co'>#&gt; <span class='message'>You have loaded dplyr after unitted - this is likely to cause problems.</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://dplyr.tidyverse.org'>dplyr</a></span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>------------------------------------------------------------------------------</span></div><div class='output co'>#&gt; <span class='message'>You have loaded dplyr after unitted - this is likely to cause problems.</span>
 #&gt; <span class='message'>If you need functions from both dplyr and unitted, please load dplyr first, then unitted:</span>
 #&gt; <span class='message'>library(dplyr); library(unitted)</span></div><div class='output co'>#&gt; <span class='message'>------------------------------------------------------------------------------</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘dplyr’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:stats’:</span>
 #&gt; <span class='message'></span>
 #&gt; <span class='message'>    filter, lag</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
 #&gt; <span class='message'></span>
-#&gt; <span class='message'>    intersect, setdiff, setequal, union</span></div><div class='input'><span class='no'>mm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'mle'</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'euler'</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='specs.html'>specs</a></span>(<span class='kw'>init.GPP.daily</span><span class='kw'>=</span><span class='fl'>40</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'>metab</span>(<span class='kw'>data</span><span class='kw'>=</span><span class='no'>dat</span>)
-<span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='no'>mm</span>)</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
+#&gt; <span class='message'>    intersect, setdiff, setequal, union</span></div><div class='input'><span class='va'>mm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'mle'</span>, ode_method<span class='op'>=</span><span class='st'>'euler'</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span>init.GPP.daily<span class='op'>=</span><span class='fl'>40</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='fu'>metab</span><span class='op'>(</span>data<span class='op'>=</span><span class='va'>dat</span><span class='op'>)</span>
+<span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
 #&gt; 1 2012-09-18 2.809444  2.402234  3.216654 -2.098404 -2.427638 -1.769169
 #&gt; 2 2012-09-19 3.271351  2.838930  3.703772 -2.463138 -2.818887 -2.107388
 #&gt; 3 2012-09-20 2.568592  2.286376  2.850807 -1.697389 -1.911571 -1.483207
 #&gt;   msgs.fit warnings errors
 #&gt; 1      W                  
 #&gt; 2      W                  
-#&gt; 3      W                  </div><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span>(<span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>))
-<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span>(<span class='fu'><a href='predict_DO.html'>predict_DO</a></span>(<span class='no'>mm</span>), <span class='kw'>y_var</span><span class='kw'>=</span><span class='st'>'pctsat'</span>, <span class='kw'>style</span><span class='kw'>=</span><span class='st'>'dygraphs'</span>)
-}</div></pre>
+#&gt; 3      W                  </div><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span><span class='op'>(</span><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='plot_DO_preds.html'>plot_DO_preds</a></span><span class='op'>(</span><span class='fu'><a href='predict_DO.html'>predict_DO</a></span><span class='op'>(</span><span class='va'>mm</span><span class='op'>)</span>, y_var<span class='op'>=</span><span class='st'>'pctsat'</span>, style<span class='op'>=</span><span class='st'>'dygraphs'</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -389,7 +398,7 @@ depend on the model <code>type</code>, as follows.
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

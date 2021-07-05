@@ -73,7 +73,7 @@ and regularity" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@ and regularity" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -131,7 +131,7 @@ and regularity" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -158,22 +158,22 @@ and regularity" />
 and regularity</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mm_filter_valid_days</span>(
-  <span class='no'>data</span>,
-  <span class='kw'>data_daily</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>day_start</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>day_end</span> <span class='kw'>=</span> <span class='fl'>27.99</span>,
-  <span class='kw'>day_tests</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"full_day"</span>, <span class='st'>"even_timesteps"</span>, <span class='st'>"complete_data"</span>, <span class='st'>"pos_discharge"</span>),
-  <span class='kw'>required_timestep</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>timestep_days</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>mm_filter_valid_days</span><span class='op'>(</span>
+  <span class='va'>data</span>,
+  data_daily <span class='op'>=</span> <span class='cn'>NULL</span>,
+  day_start <span class='op'>=</span> <span class='fl'>4</span>,
+  day_end <span class='op'>=</span> <span class='fl'>27.99</span>,
+  day_tests <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"full_day"</span>, <span class='st'>"even_timesteps"</span>, <span class='st'>"complete_data"</span>, <span class='st'>"pos_discharge"</span><span class='op'>)</span>,
+  required_timestep <span class='op'>=</span> <span class='cn'>NA</span>,
+  timestep_days <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>data</th>
-      <td><p>data.frame of instantaneous observations, to be filtered to only 
+      <td><p>data.frame of instantaneous observations, to be filtered to only
 those points on days that pass the specified tests in mm_is_valid_day</p></td>
     </tr>
     <tr>
@@ -183,29 +183,29 @@ accordance with the filtering of data</p></td>
     </tr>
     <tr>
       <th>day_start</th>
-      <td><p>start time (inclusive) of a day's data in number of hours 
-from the midnight that begins the date. For example, day_start=-1.5 
-indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at 
+      <td><p>start time (inclusive) of a day's data in number of hours
+from the midnight that begins the date. For example, day_start=-1.5
+indicates that data describing 2006-06-26 begin at 2006-06-25 22:30, or at
 the first observation time that occurs after that time if day_start doesn't
-fall exactly on an observation time. For metabolism models working with 
-single days of input data, it is conventional/useful to begin the day the 
-evening before, e.g., -1.5, and to end just before the next sunrise, e.g., 
+fall exactly on an observation time. For metabolism models working with
+single days of input data, it is conventional/useful to begin the day the
+evening before, e.g., -1.5, and to end just before the next sunrise, e.g.,
 30. For multiple consecutive days, it may make the most sense to start just
-before sunrise (e.g., 4) and to end 24 hours later. For nighttime 
-regression, the date assigned to a chunk of data should be the date whose 
-evening contains the data. The default is therefore 12 to 36 for 
+before sunrise (e.g., 4) and to end 24 hours later. For nighttime
+regression, the date assigned to a chunk of data should be the date whose
+evening contains the data. The default is therefore 12 to 36 for
 metab_night, of which the times of darkness will be used.</p></td>
     </tr>
     <tr>
       <th>day_end</th>
-      <td><p>end time (exclusive) of a day's data in number of hours from 
-the midnight that begins the date. For example, day_end=30 indicates that 
-data describing 2006-06-26 end at the last observation time that occurs 
+      <td><p>end time (exclusive) of a day's data in number of hours from
+the midnight that begins the date. For example, day_end=30 indicates that
+data describing 2006-06-26 end at the last observation time that occurs
 before 2006-06-27 06:00. See day_start for recommended start and end times.</p></td>
     </tr>
     <tr>
       <th>day_tests</th>
-      <td><p>list of tests to conduct to determine whether each date 
+      <td><p>list of tests to conduct to determine whether each date
 worth of data is valid for modeling. The results of these tests will be
 combined with the result of the test implied if <code>required_timestep</code> is
 numeric and then will be passed to <code>model_fun</code> as the
@@ -213,34 +213,36 @@ numeric and then will be passed to <code>model_fun</code> as the
     </tr>
     <tr>
       <th>required_timestep</th>
-      <td><p>NA or numeric (length 1). If numeric, the timestep 
-length in days that a date must have to pass the validity check (to within 
-a tolerance of 0.2% of the value of <code>required_timestep</code>). The result 
-of this test will be combined with the results of the tests listed in 
-<code>day_tests</code> and reported to <code>model_fun</code> as the 
+      <td><p>NA or numeric (length 1). If numeric, the timestep
+length in days that a date must have to pass the validity check (to within
+a tolerance of 0.2% of the value of <code>required_timestep</code>). The result
+of this test will be combined with the results of the tests listed in
+<code>day_tests</code> and reported to <code>model_fun</code> as the
 <code>ply_validity</code> argument to that function.</p></td>
     </tr>
     <tr>
       <th>timestep_days</th>
-      <td><p>TRUE if you would like the mean timestep length to be 
-calculated for each data ply and passed to <code>model_fun</code> as the 
-<code>timestep_days</code> argument to that function. Alternatively, this may be 
-numeric as a specifically expected timestep length in days; for example, a 
+      <td><p>TRUE if you would like the mean timestep length to be
+calculated for each data ply and passed to <code>model_fun</code> as the
+<code>timestep_days</code> argument to that function. Alternatively, this may be
+numeric as a specifically expected timestep length in days; for example, a
 1-hour timestep is 1/24 is 0.0416667.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>list of data and data_daily with same structure as inputs but with 
+    <p>list of data and data_daily with same structure as inputs but with
   invalid days removed, plus a third data.frame of dates that were removed</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='kw'>res</span><span class='kw'>=</span><span class='st'>'30'</span>, <span class='kw'>num_days</span><span class='kw'>=</span><span class='st'>'10'</span>, <span class='kw'>flaws</span><span class='kw'>=</span><span class='st'>'missing middle'</span>)
-<span class='no'>datfilt</span> <span class='kw'>&lt;-</span> <span class='fu'>mm_filter_valid_days</span>(<span class='no'>dat</span>)
-<span class='no'>datfilt</span>$<span class='no'>removed</span></div><div class='output co'>#&gt;         date           errors
+    <pre class="examples"><div class='input'><span class='va'>dat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span>res<span class='op'>=</span><span class='st'>'30'</span>, num_days<span class='op'>=</span><span class='st'>'10'</span>, flaws<span class='op'>=</span><span class='st'>'missing middle'</span><span class='op'>)</span>
+<span class='va'>datfilt</span> <span class='op'>&lt;-</span> <span class='fu'>mm_filter_valid_days</span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>
+<span class='va'>datfilt</span><span class='op'>$</span><span class='va'>removed</span>
+</div><div class='output co'>#&gt;         date           errors
 #&gt; 1 2012-09-20 uneven timesteps
-#&gt; 2 2012-09-22 uneven timesteps</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>dat</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>datfilt</span>$<span class='no'>data</span>))</div><div class='output co'>#&gt; [1] 463 384</div></pre>
+#&gt; 2 2012-09-22 uneven timesteps</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>datfilt</span><span class='op'>$</span><span class='va'>data</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 463 384</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -256,7 +258,7 @@ numeric as a specifically expected timestep length in days; for example, a
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -130,7 +130,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,21 +156,21 @@
     <p>Run Stan on a formatted data ply</p>
     </div>
 
-    <pre class="usage"><span class='fu'>runstan_bayes</span>(
-  <span class='no'>data_list</span>,
-  <span class='no'>model_path</span>,
-  <span class='no'>model_name</span>,
-  <span class='no'>params_out</span>,
-  <span class='no'>split_dates</span>,
-  <span class='kw'>keep_mcmc</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>n_chains</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>n_cores</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>burnin_steps</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
-  <span class='kw'>saved_steps</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
-  <span class='kw'>thin_steps</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='no'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>runstan_bayes</span><span class='op'>(</span>
+  <span class='va'>data_list</span>,
+  <span class='va'>model_path</span>,
+  <span class='va'>model_name</span>,
+  <span class='va'>params_out</span>,
+  <span class='va'>split_dates</span>,
+  keep_mcmc <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  n_chains <span class='op'>=</span> <span class='fl'>4</span>,
+  n_cores <span class='op'>=</span> <span class='fl'>4</span>,
+  burnin_steps <span class='op'>=</span> <span class='fl'>1000</span>,
+  saved_steps <span class='op'>=</span> <span class='fl'>1000</span>,
+  thin_steps <span class='op'>=</span> <span class='fl'>1</span>,
+  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -190,13 +190,13 @@ structure</p></td>
     </tr>
     <tr>
       <th>params_out</th>
-      <td><p>a character vector of parameters whose values in the MCMC 
+      <td><p>a character vector of parameters whose values in the MCMC
 runs should be recorded and summarized</p></td>
     </tr>
     <tr>
       <th>keep_mcmc</th>
-      <td><p>logical. If TRUE, the Stan output object will be saved. Be 
-careful; these can be big, and a run with many models might overwhelm R's 
+      <td><p>logical. If TRUE, the Stan output object will be saved. Be
+careful; these can be big, and a run with many models might overwhelm R's
 memory.</p></td>
     </tr>
     <tr>
@@ -209,7 +209,7 @@ memory.</p></td>
     </tr>
     <tr>
       <th>burnin_steps</th>
-      <td><p>the number of steps per chain to run and ignore before 
+      <td><p>the number of steps per chain to run and ignore before
 starting to collect MCMC 'data'</p></td>
     </tr>
     <tr>
@@ -218,7 +218,7 @@ starting to collect MCMC 'data'</p></td>
     </tr>
     <tr>
       <th>thin_steps</th>
-      <td><p>the number of steps to move before saving another step. 1 
+      <td><p>the number of steps to move before saving another step. 1
 means save all steps.</p></td>
     </tr>
     <tr>
@@ -247,7 +247,7 @@ means save all steps.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

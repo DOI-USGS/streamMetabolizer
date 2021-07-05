@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -130,7 +130,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,14 +156,14 @@
     <p>Filter unit or daily data by inclusive start &amp; end dates</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mm_filter_dates</span>(
-  <span class='no'>data</span>,
-  <span class='kw'>date_start</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>date_end</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>day_start</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>day_end</span> <span class='kw'>=</span> <span class='fl'>28</span>,
-  <span class='kw'>date_format</span> <span class='kw'>=</span> <span class='st'>"%Y-%m-%d"</span>
-)</pre>
+    <pre class="usage"><span class='fu'>mm_filter_dates</span><span class='op'>(</span>
+  <span class='va'>data</span>,
+  date_start <span class='op'>=</span> <span class='cn'>NA</span>,
+  date_end <span class='op'>=</span> <span class='cn'>NA</span>,
+  day_start <span class='op'>=</span> <span class='fl'>4</span>,
+  day_end <span class='op'>=</span> <span class='fl'>28</span>,
+  date_format <span class='op'>=</span> <span class='st'>"%Y-%m-%d"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -189,17 +189,19 @@ done.</p></td>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>tm</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span>(<span class='st'>"2017-10-02 00:00:00 UTC"</span>)
-<span class='no'>dt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2017-10-02"</span>)
-<span class='no'>udat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>solar.time</span><span class='kw'>=</span><span class='no'>tm</span> + <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>1</span>:<span class='fl'>100</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'hours'</span>), <span class='kw'>value</span><span class='kw'>=</span><span class='fl'>1</span>:<span class='fl'>100</span>)
-<span class='no'>udat1</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>mm_filter_dates</span>(<span class='no'>udat</span>)
-<span class='no'>udat2</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>mm_filter_dates</span>(<span class='no'>udat</span>, <span class='kw'>date_start</span><span class='kw'>=</span><span class='no'>dt</span>, <span class='kw'>date_end</span><span class='kw'>=</span><span class='no'>dt</span>)
-<span class='no'>udat3</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>mm_filter_dates</span>(<span class='no'>udat</span>, <span class='kw'>date_start</span><span class='kw'>=</span><span class='no'>dt</span>, <span class='kw'>date_end</span><span class='kw'>=</span><span class='no'>dt</span>,
-  <span class='kw'>day_start</span><span class='kw'>=</span><span class='fl'>12</span>, <span class='kw'>day_end</span><span class='kw'>=</span><span class='fl'>14</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>udat</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>udat1</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>udat2</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>udat3</span>))</div><div class='output co'>#&gt; [1] 100 100  25   3</div><div class='input'><span class='no'>ddat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(<span class='kw'>date</span><span class='kw'>=</span><span class='no'>dt</span> + <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span>(<span class='fl'>1</span>:<span class='fl'>100</span>, <span class='kw'>units</span><span class='kw'>=</span><span class='st'>'days'</span>), <span class='kw'>value</span><span class='kw'>=</span><span class='fl'>1</span>:<span class='fl'>100</span>)
-<span class='no'>ddat1</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>mm_filter_dates</span>(<span class='no'>ddat</span>)
-<span class='no'>ddat2</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>streamMetabolizer</span><span class='kw ns'>:::</span><span class='fu'>mm_filter_dates</span>(<span class='no'>ddat</span>, <span class='kw'>date_start</span><span class='kw'>=</span><span class='no'>dt</span>+<span class='fl'>10</span>, <span class='kw'>date_end</span><span class='kw'>=</span><span class='no'>dt</span>+<span class='fl'>20</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>ddat</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>ddat1</span>), <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>ddat2</span>))</div><div class='output co'>#&gt; [1] 100 100  11</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>tm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.POSIXlt.html'>as.POSIXct</a></span><span class='op'>(</span><span class='st'>"2017-10-02 00:00:00 UTC"</span><span class='op'>)</span>
+<span class='va'>dt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2017-10-02"</span><span class='op'>)</span>
+<span class='va'>udat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>solar.time<span class='op'>=</span><span class='va'>tm</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>, units<span class='op'>=</span><span class='st'>'hours'</span><span class='op'>)</span>, value<span class='op'>=</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span><span class='op'>)</span>
+<span class='va'>udat1</span> <span class='op'>&lt;-</span> <span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>mm_filter_dates</span><span class='op'>(</span><span class='va'>udat</span><span class='op'>)</span>
+<span class='va'>udat2</span> <span class='op'>&lt;-</span> <span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>mm_filter_dates</span><span class='op'>(</span><span class='va'>udat</span>, date_start<span class='op'>=</span><span class='va'>dt</span>, date_end<span class='op'>=</span><span class='va'>dt</span><span class='op'>)</span>
+<span class='va'>udat3</span> <span class='op'>&lt;-</span> <span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>mm_filter_dates</span><span class='op'>(</span><span class='va'>udat</span>, date_start<span class='op'>=</span><span class='va'>dt</span>, date_end<span class='op'>=</span><span class='va'>dt</span>, 
+  day_start<span class='op'>=</span><span class='fl'>12</span>, day_end<span class='op'>=</span><span class='fl'>14</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>udat</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>udat1</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>udat2</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>udat3</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 100 100  25   3</div><div class='input'><span class='va'>ddat</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>date<span class='op'>=</span><span class='va'>dt</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/difftime.html'>as.difftime</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>, units<span class='op'>=</span><span class='st'>'days'</span><span class='op'>)</span>, value<span class='op'>=</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span><span class='op'>)</span>
+<span class='va'>ddat1</span> <span class='op'>&lt;-</span> <span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>mm_filter_dates</span><span class='op'>(</span><span class='va'>ddat</span><span class='op'>)</span>
+<span class='va'>ddat2</span> <span class='op'>&lt;-</span> <span class='fu'>streamMetabolizer</span><span class='fu'>:::</span><span class='fu'>mm_filter_dates</span><span class='op'>(</span><span class='va'>ddat</span>, date_start<span class='op'>=</span><span class='va'>dt</span><span class='op'>+</span><span class='fl'>10</span>, date_end<span class='op'>=</span><span class='va'>dt</span><span class='op'>+</span><span class='fl'>20</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>ddat</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>ddat1</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>ddat2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 100 100  11</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -215,7 +217,7 @@ done.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -130,7 +130,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,11 +156,11 @@
     <p>Create a function to compute the numerical integration of a dDOdt function</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_calc_DO</span>(
-  <span class='no'>calc_dDOdt</span>,
-  <span class='kw'>ode_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/environment.html'>environment</a></span>(<span class='no'>calc_dDOdt</span>)$<span class='no'>ode_method</span>,
-  <span class='kw'>err.obs</span> <span class='kw'>=</span> <span class='fl'>0</span>
-)</pre>
+    <pre class="usage"><span class='fu'>create_calc_DO</span><span class='op'>(</span>
+  <span class='va'>calc_dDOdt</span>,
+  ode_method <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/environment.html'>environment</a></span><span class='op'>(</span><span class='va'>calc_dDOdt</span><span class='op'>)</span><span class='op'>$</span><span class='va'>ode_method</span>,
+  err.obs <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -205,67 +205,68 @@ regression model) <code>err.obs</code> should be missing or 0</p></td>
   given a set of metab.pars</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'># prepare data for examples</span>
-<span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span>(<span class='st'>'3'</span>,<span class='st'>'30'</span>)[<span class='fl'>97</span>:<span class='fl'>144</span>,][<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>1</span>,<span class='fl'>48</span>,<span class='kw'>by</span><span class='kw'>=</span><span class='fl'>2</span>),]
+<span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='data_metab.html'>data_metab</a></span><span class='op'>(</span><span class='st'>'3'</span>,<span class='st'>'30'</span><span class='op'>)</span><span class='op'>[</span><span class='fl'>97</span><span class='op'>:</span><span class='fl'>144</span>,<span class='op'>]</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>48</span>,by<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>,<span class='op'>]</span>
 <span class='co'># preds.init &lt;- list(GPP.daily=2.82,ER.daily=-2.12,K600.daily=31.27)</span>
-<span class='no'>preds.init</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>as.list</a></span>(<span class='kw pkg'>dplyr</span><span class='kw ns'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span>(
-  <span class='fu'><a href='predict_metab.html'>predict_metab</a></span>(<span class='fu'><a href='metab.html'>metab</a></span>(<span class='fu'><a href='specs.html'>specs</a></span>(<span class='fu'><a href='mm_name.html'>mm_name</a></span>(<span class='st'>'mle'</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>)), <span class='kw'>data</span><span class='kw'>=</span><span class='no'>data</span>)),
-  <span class='kw'>GPP.daily</span><span class='kw'>=</span><span class='no'>GPP</span>, <span class='kw'>ER.daily</span><span class='kw'>=</span><span class='no'>ER</span>, <span class='kw'>K600.daily</span><span class='kw'>=</span><span class='no'>K600</span>))
-<span class='no'>DOtime</span> <span class='kw'>&lt;-</span> <span class='no'>data</span>$<span class='no'>solar.time</span>
-<span class='no'>dDOtime</span> <span class='kw'>&lt;-</span> <span class='no'>data</span>$<span class='no'>solar.time</span>[-<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>data</span>)] + (<span class='no'>data</span>$<span class='no'>solar.time</span>[<span class='fl'>2</span>] - <span class='no'>data</span>$<span class='no'>solar.time</span>[<span class='fl'>1</span>])/<span class='fl'>2</span>
+<span class='va'>preds.init</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>as.list</a></span><span class='op'>(</span><span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span><span class='op'>(</span>
+  <span class='fu'><a href='predict_metab.html'>predict_metab</a></span><span class='op'>(</span><span class='fu'><a href='metab.html'>metab</a></span><span class='op'>(</span><span class='fu'><a href='specs.html'>specs</a></span><span class='op'>(</span><span class='fu'><a href='mm_name.html'>mm_name</a></span><span class='op'>(</span><span class='st'>'mle'</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span><span class='op'>)</span><span class='op'>)</span>, data<span class='op'>=</span><span class='va'>data</span><span class='op'>)</span><span class='op'>)</span>,
+  GPP.daily<span class='op'>=</span><span class='va'>GPP</span>, ER.daily<span class='op'>=</span><span class='va'>ER</span>, K600.daily<span class='op'>=</span><span class='va'>K600</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>DOtime</span> <span class='op'>&lt;-</span> <span class='va'>data</span><span class='op'>$</span><span class='va'>solar.time</span>
+<span class='va'>dDOtime</span> <span class='op'>&lt;-</span> <span class='va'>data</span><span class='op'>$</span><span class='va'>solar.time</span><span class='op'>[</span><span class='op'>-</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>+</span> <span class='op'>(</span><span class='va'>data</span><span class='op'>$</span><span class='va'>solar.time</span><span class='op'>[</span><span class='fl'>2</span><span class='op'>]</span> <span class='op'>-</span> <span class='va'>data</span><span class='op'>$</span><span class='va'>solar.time</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>2</span>
 
 <span class='co'># integration of dDOdt by euler, trapezoid, rk2, rk4, and lsoda methods</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>data</span>$<span class='no'>DO.obs</span>, <span class='kw'>pch</span><span class='kw'>=</span><span class='fl'>3</span>, <span class='kw'>cex</span><span class='kw'>=</span><span class='fl'>0.6</span>)
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>data</span><span class='op'>$</span><span class='va'>DO.obs</span>, pch<span class='op'>=</span><span class='fl'>3</span>, cex<span class='op'>=</span><span class='fl'>0.6</span><span class='op'>)</span>
 <span class='co'># euler</span>
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'euler'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'euler'</span>)
-<span class='no'>DO.mod.euler</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='kw'>metab.pars</span><span class='kw'>=</span><span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod.euler</span>, <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'l'</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'chartreuse3'</span>)
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'euler'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'euler'</span><span class='op'>)</span>
+<span class='va'>DO.mod.euler</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span>metab.pars<span class='op'>=</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod.euler</span>, type<span class='op'>=</span><span class='st'>'l'</span>, col<span class='op'>=</span><span class='st'>'chartreuse3'</span><span class='op'>)</span>
 <span class='co'># trapezoid=pairmeans</span>
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>)
-<span class='no'>DO.mod.trap</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='kw'>metab.pars</span><span class='kw'>=</span><span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod.trap</span>, <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'l'</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'gold'</span>)
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span><span class='op'>)</span>
+<span class='va'>DO.mod.trap</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span>metab.pars<span class='op'>=</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod.trap</span>, type<span class='op'>=</span><span class='st'>'l'</span>, col<span class='op'>=</span><span class='st'>'gold'</span><span class='op'>)</span>
 <span class='co'># lsoda</span>
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'lsoda'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'lsoda'</span>)
-<span class='no'>DO.mod</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='kw'>metab.pars</span><span class='kw'>=</span><span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod</span>, <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'l'</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'navy'</span>)
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'lsoda'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'lsoda'</span><span class='op'>)</span>
+<span class='va'>DO.mod</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span>metab.pars<span class='op'>=</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod</span>, type<span class='op'>=</span><span class='st'>'l'</span>, col<span class='op'>=</span><span class='st'>'navy'</span><span class='op'>)</span>
 <span class='co'># rk2</span>
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'rk2'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'rk2'</span>)
-<span class='no'>DO.mod</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='kw'>metab.pars</span><span class='kw'>=</span><span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod</span>, <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'l'</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'blue'</span>)
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'rk2'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'rk2'</span><span class='op'>)</span>
+<span class='va'>DO.mod</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span>metab.pars<span class='op'>=</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod</span>, type<span class='op'>=</span><span class='st'>'l'</span>, col<span class='op'>=</span><span class='st'>'blue'</span><span class='op'>)</span>
 <span class='co'># rk4</span>
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'rk4'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'rk4'</span>)
-<span class='no'>DO.mod</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='kw'>metab.pars</span><span class='kw'>=</span><span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod</span>, <span class='kw'>type</span><span class='kw'>=</span><span class='st'>'l'</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'magenta'</span>)
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'rk4'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'rk4'</span><span class='op'>)</span>
+<span class='va'>DO.mod</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span>metab.pars<span class='op'>=</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod</span>, type<span class='op'>=</span><span class='st'>'l'</span>, col<span class='op'>=</span><span class='st'>'magenta'</span><span class='op'>)</span>
 
 <span class='co'># with observation and/or process error</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>data</span>$<span class='no'>DO.obs</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'black'</span>, <span class='kw'>pch</span><span class='kw'>=</span><span class='fl'>3</span>, <span class='kw'>cex</span><span class='kw'>=</span><span class='fl'>0.6</span>)
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>err.obs</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>data</span>), <span class='fl'>0</span>, <span class='fl'>0</span>))
-<span class='no'>DO.mod.obs</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod.obs</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'black'</span>, <span class='kw'>lty</span><span class='kw'>=</span><span class='fl'>1</span>)
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>)
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>err.obs</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>data</span>), <span class='fl'>0</span>, <span class='fl'>0.3</span>))
-<span class='no'>DO.mod.obserr</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod.obserr</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'blue'</span>, <span class='kw'>lty</span><span class='kw'>=</span><span class='fl'>2</span>)
-<span class='no'>dDOdt</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span>(<span class='no'>data</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>GPP_fun</span><span class='kw'>=</span><span class='st'>'linlight'</span>,
-  <span class='kw'>ER_fun</span><span class='kw'>=</span><span class='st'>'constant'</span>, <span class='kw'>deficit_src</span><span class='kw'>=</span><span class='st'>'DO_mod'</span>, <span class='kw'>err.proc</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>data</span>), <span class='fl'>0</span>, <span class='fl'>2</span>))
-<span class='no'>DO</span> <span class='kw'>&lt;-</span> <span class='fu'>create_calc_DO</span>(<span class='no'>dDOdt</span>, <span class='kw'>ode_method</span><span class='kw'>=</span><span class='st'>'trapezoid'</span>, <span class='kw'>err.obs</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>data</span>), <span class='fl'>0</span>, <span class='fl'>0.1</span>))
-<span class='no'>DO.mod.operr</span> <span class='kw'>&lt;-</span> <span class='fu'>DO</span>(<span class='no'>preds.init</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span>(<span class='kw'>x</span><span class='kw'>=</span><span class='no'>DOtime</span>, <span class='kw'>y</span><span class='kw'>=</span><span class='no'>DO.mod.operr</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>'red'</span>, <span class='kw'>lty</span><span class='kw'>=</span><span class='fl'>2</span>)
-}</div></pre>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>data</span><span class='op'>$</span><span class='va'>DO.obs</span>, col<span class='op'>=</span><span class='st'>'black'</span>, pch<span class='op'>=</span><span class='fl'>3</span>, cex<span class='op'>=</span><span class='fl'>0.6</span><span class='op'>)</span>
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, err.obs<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>DO.mod.obs</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod.obs</span>, col<span class='op'>=</span><span class='st'>'black'</span>, lty<span class='op'>=</span><span class='fl'>1</span><span class='op'>)</span>
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, err.obs<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, <span class='fl'>0</span>, <span class='fl'>0.3</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>DO.mod.obserr</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod.obserr</span>, col<span class='op'>=</span><span class='st'>'blue'</span>, lty<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>dDOdt</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_calc_dDOdt.html'>create_calc_dDOdt</a></span><span class='op'>(</span><span class='va'>data</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, GPP_fun<span class='op'>=</span><span class='st'>'linlight'</span>,
+  ER_fun<span class='op'>=</span><span class='st'>'constant'</span>, deficit_src<span class='op'>=</span><span class='st'>'DO_mod'</span>, err.proc<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, <span class='fl'>0</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>DO</span> <span class='op'>&lt;-</span> <span class='fu'>create_calc_DO</span><span class='op'>(</span><span class='va'>dDOdt</span>, ode_method<span class='op'>=</span><span class='st'>'trapezoid'</span>, err.obs<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>, <span class='fl'>0</span>, <span class='fl'>0.1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>DO.mod.operr</span> <span class='op'>&lt;-</span> <span class='fu'>DO</span><span class='op'>(</span><span class='va'>preds.init</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/lines.html'>lines</a></span><span class='op'>(</span>x<span class='op'>=</span><span class='va'>DOtime</span>, y<span class='op'>=</span><span class='va'>DO.mod.operr</span>, col<span class='op'>=</span><span class='st'>'red'</span>, lty<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -281,7 +282,7 @@ regression model) <code>err.obs</code> should be missing or 0</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

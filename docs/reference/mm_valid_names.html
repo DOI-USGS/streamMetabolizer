@@ -75,7 +75,7 @@ slightly more readable with mm_parse_name if desired." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@ slightly more readable with mm_parse_name if desired." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -133,7 +133,7 @@ slightly more readable with mm_parse_name if desired." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -162,7 +162,7 @@ returned from this function, model names may be translated to something
 slightly more readable with <code><a href='mm_parse_name.html'>mm_parse_name</a></code> if desired.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mm_valid_names</span>(<span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"bayes"</span>, <span class='st'>"mle"</span>, <span class='st'>"night"</span>, <span class='st'>"Kmodel"</span>, <span class='st'>"sim"</span>))</pre>
+    <pre class="usage"><span class='fu'>mm_valid_names</span><span class='op'>(</span>type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"bayes"</span>, <span class='st'>"mle"</span>, <span class='st'>"night"</span>, <span class='st'>"Kmodel"</span>, <span class='st'>"sim"</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -187,7 +187,8 @@ estimation of K alone (by MLE or nighttime regression), K vs discharge
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>mm_valid_names</span>(<span class='st'>'mle'</span>)</div><div class='output co'>#&gt;   [1] "m_np_oi_tr_plrckm.nlm"  "m_np_pi_tr_plrckm.nlm"  "m_np_oi_eu_plrckm.nlm" 
+    <pre class="examples"><div class='input'><span class='fu'>mm_valid_names</span><span class='op'>(</span><span class='st'>'mle'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;   [1] "m_np_oi_tr_plrckm.nlm"  "m_np_pi_tr_plrckm.nlm"  "m_np_oi_eu_plrckm.nlm" 
 #&gt;   [4] "m_np_pi_eu_plrckm.nlm"  "m_np_oi_r2_plrckm.nlm"  "m_np_pi_r2_plrckm.nlm" 
 #&gt;   [7] "m_np_oi_o1_plrckm.nlm"  "m_np_pi_o1_plrckm.nlm"  "m_np_oi_o2_plrckm.nlm" 
 #&gt;  [10] "m_np_pi_o2_plrckm.nlm"  "m_np_oi_o3_plrckm.nlm"  "m_np_pi_o3_plrckm.nlm" 
@@ -362,7 +363,7 @@ estimation of K alone (by MLE or nighttime regression), K vs discharge
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

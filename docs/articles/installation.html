@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -89,7 +89,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -103,13 +103,13 @@
 
       
 
-      </header><div class="row">
+      </header><script src="installation_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Installation</h1>
                         <h4 class="author">Alison Appling</h4>
             
-            <h4 class="date">2020-03-28</h4>
+            <h4 class="date">2021-07-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/master/vignettes/installation.Rmd"><code>vignettes/installation.Rmd</code></a></small>
       <div class="hidden name"><code>installation.Rmd</code></div>
@@ -123,22 +123,15 @@
 <a href="#installing-streammetabolizer" class="anchor"></a>Installing streamMetabolizer</h1>
 <p>Use the <code>remotes</code> package to install <code>streamMetabolizer</code> from source.</p>
 <p>You may first need to install the <code>unitted</code> dependency:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_github.html">install_github</a></span>(<span class="st">'appling/unitted'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">'appling/unitted'</span><span class="op">)</span></code></pre></div>
 <p>You can then install the most cutting edge version of streamMetabolizer with this command:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_github.html">install_github</a></span>(<span class="st">"USGS-R/streamMetabolizer"</span>)</pre></body></html></div>
-<div id="software-dependencies" class="section level2">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"USGS-R/streamMetabolizer"</span><span class="op">)</span></code></pre></div>
+<div id="software-dependencies-for-bayesian-models" class="section level2">
 <h2 class="hasAnchor">
-<a href="#software-dependencies" class="anchor"></a>Software dependencies</h2>
-<p>If you plan to use Bayesian models on a Windows machine, you will need an up-to-date installation of <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a>. Run <code><a href="https://rdrr.io/pkg/devtools/man/reexports.html">devtools::find_rtools()</a></code> to make sure Rtools is ready to go. (Rtools is broadly useful for many R packages.) Having Rtools installed will allow you to install <code>rstan</code>, the package that <code>streamMetabolizer</code> relies on to run MCMC models.</p>
-<p>Bayesian models require the <a href="http://mc-stan.org/interfaces/rstan.html"><code>rstan</code></a> interface to <a href="http://mc-stan.org/">Stan</a>. Sometimes this is as simple as installing Rtools and calling the above <code><a href="https://rdrr.io/pkg/remotes/man/install_github.html">remotes::install_github</a></code> command, but other times everything seems fine until you try to run a Bayesian model in <code>streamMetabolizer</code>. Symptoms of an imperfect <code>rstan</code> installation are probably diverse. Here’s one we’ve seen:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r">&gt; bayes_fit  get_fit(bayes_fit)
-...
-$warnings
-[1] "running command ''/Library/Frameworks/R.framework/Resources/bin/R' CMD config CXX 2&gt;/dev/null' had status 1"
-
-$errors
-[1] "argument is of length zero"</pre></body></html></div>
-<p>In such cases you should refer to the detailed instructions on the <code>rstan</code> website for <a href="https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux">Mac and Linux</a> or <a href="https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows">Windows</a>.</p>
+<a href="#software-dependencies-for-bayesian-models" class="anchor"></a>Software dependencies for Bayesian models</h2>
+<p>The major dependency for Bayesian models is the <code>rstan</code> package, and installation of that package is rarely as simple as a call to <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages()</a></code>. Start at the <a href="https://github.com/stan-dev/rstan/wiki">rstan wiki page</a> for the most up-to-date installation instructions, which differ by operating system.</p>
 </div>
 </div>
   </div>
@@ -158,7 +151,7 @@ $errors
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

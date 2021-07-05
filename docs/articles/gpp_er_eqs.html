@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -89,7 +89,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -103,13 +103,13 @@
 
       
 
-      </header><div class="row">
+      </header><script src="gpp_er_eqs_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>GPP and ER Equations</h1>
                         <h4 class="author">Alison Appling</h4>
             
-            <h4 class="date">2020-03-26</h4>
+            <h4 class="date">2021-07-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/master/vignettes/gpp_er_eqs.Rmd"><code>vignettes/gpp_er_eqs.Rmd</code></a></small>
       <div class="hidden name"><code>gpp_er_eqs.Rmd</code></div>
@@ -127,23 +127,26 @@
 <h1 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h1>
 <p>Load streamMetabolizer and dplyr.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">streamMetabolizer</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">dplyr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/USGS-R/streamMetabolizer">streamMetabolizer</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span></code></pre></div>
 <p>Get some data to work with: here we’re requesting three days of data at 15-minute resolution. Thanks to Bob Hall for the test data.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">dat</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span>(<span class="st">'3'</span>, <span class="st">'15'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span><span class="st">'3'</span>, <span class="st">'15'</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="gpp-and-er-functions" class="section level1">
 <h1 class="hasAnchor">
 <a href="#gpp-and-er-functions" class="anchor"></a>GPP and ER functions</h1>
 <p>Here’s a basic model with GPP proportional to light and ER constant over time.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># the Classic: linear GPP, constant ER (also the default)</span>
-<span class="no">mm_classic</span> <span class="kw">&lt;-</span>
-  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="st">'mle'</span>, <span class="kw">GPP_fun</span><span class="kw">=</span><span class="st">'linlight'</span>, <span class="kw">ER_fun</span><span class="kw">=</span><span class="st">'constant'</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/specs.html">specs</a></span>() <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/metab.html">metab</a></span>(<span class="no">dat</span>)
-<span class="no">mm_classic</span></pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># the Classic: linear GPP, constant ER (also the default)</span>
+<span class="va">mm_classic</span> <span class="op">&lt;-</span> 
+  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'linlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span>
+<span class="va">mm_classic</span></code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.11.4 
+## streamMetabolizer version 0.12.0 
 ## Specifications:
 ##   model_name        m_np_oi_tr_plrckm.nlm                                            
 ##   day_start         4                                                                
@@ -153,7 +156,7 @@
 ##   init.GPP.daily    8                                                                
 ##   init.ER.daily     -10                                                              
 ##   init.K600.daily   10                                                               
-## Fitting time: 1.089 secs elapsed
+## Fitting time: 2.01 secs elapsed
 ## Parameters (3 dates):
 ##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily ER.daily.lower ER.daily.upper
 ## 1 2012-09-18 2.814873         2.158411        3.471335 -2.113937       -2.647968      -1.579906
@@ -169,14 +172,15 @@
 ## 2 2012-09-19 3.271209  2.561176  3.981243 -2.466198 -3.052360 -1.880037                   
 ## 3 2012-09-20 2.590927  2.119941  3.061914 -1.712055 -2.070765 -1.353344</code></pre>
 <p>Here’s one where GPP is a saturating function of light. ER is still constant.</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="co"># the Saturator: GPP saturating with light, constant ER</span>
-<span class="no">mm_saturator</span> <span class="kw">&lt;-</span>
-  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="st">'mle'</span>, <span class="kw">GPP_fun</span><span class="kw">=</span><span class="st">'satlight'</span>, <span class="kw">ER_fun</span><span class="kw">=</span><span class="st">'constant'</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/specs.html">specs</a></span>() <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/metab.html">metab</a></span>(<span class="no">dat</span>)
-<span class="no">mm_saturator</span></pre></body></html></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># the Saturator: GPP saturating with light, constant ER</span>
+<span class="va">mm_saturator</span> <span class="op">&lt;-</span> 
+  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span>
+<span class="va">mm_saturator</span></code></pre></div>
 <pre><code>## metab_model of type metab_mle 
-## streamMetabolizer version 0.11.4 
+## streamMetabolizer version 0.12.0 
 ## Specifications:
 ##   model_name        m_np_oi_tr_psrckm.nlm                                            
 ##   day_start         4                                                                
@@ -187,7 +191,7 @@
 ##   init.alpha        1e-04                                                            
 ##   init.ER.daily     -10                                                              
 ##   init.K600.daily   10                                                               
-## Fitting time: 1.73 secs elapsed
+## Fitting time: 3.127 secs elapsed
 ## Parameters (3 dates):
 ##         date       Pmax Pmax.lower Pmax.upper         alpha   alpha.lower alpha.upper    ER.daily
 ## 1 2012-09-18  6.033049    5.715948   6.350149 0.0083268781   7.885478e-03 0.008768279 -1.9344527 
@@ -205,19 +209,22 @@
 ## 2 2012-09-19 0.3859167        NA        NA -0.9486261 -1.609848 -0.2874042      W            
 ## 3 2012-09-20 2.4077931        NA        NA -1.6730454 -1.789892 -1.5561989</code></pre>
 <p>The Saturator produces fitting warnings, which are condensed to ‘w’ and a summary in the above print-out. They can be inspected in detail by looking directly at the fitted daily parameters:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator</span>) <span class="kw">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">date</span>, <span class="no">warnings</span>, <span class="no">errors</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date                 warnings errors
 ## 1 2012-09-18                                
 ## 2 2012-09-19 iteration limit exceeded       
 ## 3 2012-09-20</code></pre>
 <p>Similary, you can inspect the warnings and errors that arise during prediction by pulling out the daily metabolism predictions (but there aren’t any, so those columns are empty):</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span>(<span class="no">mm_saturator</span>) <span class="kw">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">date</span>, <span class="no">warnings</span>, <span class="no">errors</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date warnings errors
 ## 1 2012-09-18                
 ## 2 2012-09-19                
 ## 3 2012-09-20</code></pre>
 <p>You can predict and/or plot instantaneous DO values from the fitted daily parameters.</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span>(<span class="no">mm_saturator</span>) <span class="kw">%&gt;%</span> <span class="no">head</span></pre></body></html></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="va">head</span></code></pre></div>
 <pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light   DO.mod
 ## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0 8.410000
 ## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0 8.403197
@@ -225,14 +232,16 @@
 ## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0 8.397120
 ## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0 8.397068
 ## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0 8.398825</code></pre>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span>(<span class="no">mm_saturator</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span></code></pre></div>
 <p><img src="gpp_er_eqs_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>Yep, that fitting warning on day 2 was meaningful! We can encourage the model toward a good fit by adjusting the initial values of Pmax and alpha from which the fitting function should explore likelihood space. There are two ways to do this - as date-specific values in data_daily, or as values that apply to every date in specs(). The two methods can even be combined.</p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">mm_saturator2</span> <span class="kw">&lt;-</span>
-  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="st">'mle'</span>, <span class="kw">GPP_fun</span><span class="kw">=</span><span class="st">'satlight'</span>, <span class="kw">ER_fun</span><span class="kw">=</span><span class="st">'constant'</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/specs.html">specs</a></span>() <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/metab.html">metab</a></span>(<span class="no">dat</span>, <span class="kw">data_daily</span><span class="kw">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator</span>), <span class="no">date</span>, <span class="kw">init.Pmax</span><span class="kw">=</span><span class="no">Pmax</span>, <span class="kw">init.alpha</span><span class="kw">=</span><span class="no">alpha</span>))
-<span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator2</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mm_saturator2</span> <span class="op">&lt;-</span> 
+  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span>, data_daily<span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span>, <span class="va">date</span>, init.Pmax<span class="op">=</span><span class="va">Pmax</span>, init.alpha<span class="op">=</span><span class="va">alpha</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator2</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
 ## 1 2012-09-18 6.033048 0.1614450 0.008326878 0.0002252292 -1.934453  0.04636853   24.57065
 ## 2 2012-09-19 7.269997 0.2810137 0.009041328 0.0003329962 -2.239058  0.07721996   26.61005
@@ -249,11 +258,12 @@
 ## 1       
 ## 2       
 ## 3</code></pre>
-<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">mm_saturator3</span> <span class="kw">&lt;-</span>
-  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="st">'mle'</span>, <span class="kw">GPP_fun</span><span class="kw">=</span><span class="st">'satlight'</span>, <span class="kw">ER_fun</span><span class="kw">=</span><span class="st">'constant'</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/specs.html">specs</a></span>(<span class="kw">init.Pmax</span><span class="kw">=</span><span class="fl">6.2</span>, <span class="kw">init.alpha</span><span class="kw">=</span><span class="fl">0.008</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/metab.html">metab</a></span>(<span class="no">dat</span>)
-<span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator3</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mm_saturator3</span> <span class="op">&lt;-</span> 
+  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span>
+<span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator3</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
 ## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452  0.04637106   24.57065
 ## 2 2012-09-19 7.270001 0.2806162 0.009041332 0.0003330177 -2.239060  0.07715525   26.61006
@@ -270,11 +280,12 @@
 ## 1       
 ## 2       
 ## 3</code></pre>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="no">mm_saturator4</span> <span class="kw">&lt;-</span>
-  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span>(<span class="st">'mle'</span>, <span class="kw">GPP_fun</span><span class="kw">=</span><span class="st">'satlight'</span>, <span class="kw">ER_fun</span><span class="kw">=</span><span class="st">'constant'</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/specs.html">specs</a></span>(<span class="kw">init.Pmax</span><span class="kw">=</span><span class="fl">6.2</span>, <span class="kw">init.alpha</span><span class="kw">=</span><span class="fl">0.008</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/metab.html">metab</a></span>(<span class="no">dat</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">transmute</a></span>(<span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator</span>), <span class="no">date</span>, <span class="kw">init.Pmax</span><span class="kw">=</span><span class="no">Pmax</span>[<span class="fl">1</span>], <span class="kw">init.alpha</span><span class="kw">=</span><span class="no">alpha</span>[<span class="fl">1</span>])[<span class="fl">2</span>,])
-<span class="fu"><a href="../reference/get_params.html">get_params</a></span>(<span class="no">mm_saturator4</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mm_saturator4</span> <span class="op">&lt;-</span> 
+  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">transmute</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span>, <span class="va">date</span>, init.Pmax<span class="op">=</span><span class="va">Pmax</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, init.alpha<span class="op">=</span><span class="va">alpha</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>,<span class="op">]</span><span class="op">)</span>
+<span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator4</span><span class="op">)</span></code></pre></div>
 <pre><code>##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily
 ## 1 2012-09-18 6.033048 0.1614592 0.008326878 0.0002252284 -1.934452  0.04637106   24.57065
 ## 2 2012-09-19 7.270001 0.2806151 0.009041378 0.0003330192 -2.239069  0.07715563   26.61007
@@ -292,9 +303,11 @@
 ## 2       
 ## 3</code></pre>
 <p>Despite the remaining warnings, DO predictions from the saturating GPP-light function do look better than from the classic model for this particular dataset.</p>
-<div class="sourceCode" id="cb20"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span>(<span class="no">mm_classic</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm_classic</span><span class="op">)</span></code></pre></div>
 <p><img src="gpp_er_eqs_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
-<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span>(<span class="no">mm_saturator4</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm_saturator4</span><span class="op">)</span></code></pre></div>
 <p><img src="gpp_er_eqs_files/figure-html/unnamed-chunk-9-2.png" width="700"></p>
 <p>See the full list of available functions for gross primary productivity (GPP) and ecosystem respiration (ER) in <code><a href="../reference/mm_name.html">?mm_name</a></code>.</p>
 </div>
@@ -315,7 +328,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
