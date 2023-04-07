@@ -12,3 +12,4 @@ temp
 ^docs$
 ^pkgdown$
 ^CONDUCT\.md$
+^streamMetabolizer\.Rproj$
