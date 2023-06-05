@@ -26,7 +26,7 @@ See http://usgs-r.github.io/streamMetabolizer for tutorials on package installat
 
 | Branch | Linux | Windows | Test Coverage | USGS Status | DOI |
 |--------|-------|---------|---------------|-------------|-----|
-| master | [![master Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![master Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master) | [![master Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) | |
+| main | [![main Build Status](https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=main)](https://travis-ci.org/USGS-R/streamMetabolizer/branches) | [![main Build status](https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/main?svg=true)](https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/main) | [![main Coverage Status](https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=main)](https://coveralls.io/github/USGS-R/streamMetabolizer?branch=main) | [![USGS Status](https://img.shields.io/badge/USGS-Research-blue.svg)](https://owi.usgs.gov/R/packages.html#research) | |
 
 
 ## Questions and bug reports
