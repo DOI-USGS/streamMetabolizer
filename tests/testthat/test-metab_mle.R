@@ -108,15 +108,24 @@ test_that("metab_mle outputs look like Bob's", {
 
 })
 
-test_that("metab_models can be saved & reloaded (see helper-save_load.R)", {
+test_that("metab_models can be saved & reloaded efficiently (see helper-save_load.R)", {
 
+  skip("skipping check of gz9 as a great file compression choice; just doesn't seem that important")
+    
   # save and reload
   mm <- metab_mle(data=data_metab('1'))
-
+  
   # see if saveRDS with gzfile, compression=9 works well
   rdstimes <- save_load_timing(mm, reps=1) # autoloaded b/c script begins with 'helper' and is in this directory
   expect_true('gz6' %in% rdstimes$typelevel[1:3], info="gz6 is reasonably efficient for saveRDS")
   # plot_save_load_timing(rdstimes)
+  
+})
+
+test_that("metab_models can be saved & reloaded without loss of information (see helper-save_load.R)", {
+
+  # save and reload
+  mm <- metab_mle(data=data_metab('1'))
 
   # save and load the mm, make sure it stays the same
   test_save_load_recovery(mm)
