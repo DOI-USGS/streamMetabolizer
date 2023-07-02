@@ -484,7 +484,7 @@ prepdata_bayes <- function(
 
   # double-check that our dates are going to line up with the input dates. this
   # should be redundant w/ above date_table checks, so just being extra careful
-  obs_dates <- time_by_date_matrix(as.character(data$date, "%Y-%m-%d"))
+  obs_dates <- time_by_date_matrix(format(data$date, format="%Y-%m-%d"))
   unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
   if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
 
