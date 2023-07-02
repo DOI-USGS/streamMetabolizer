@@ -211,6 +211,7 @@ sessioninfo::session_info()
 ## 
 ##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library
 ```
+  
 
 ## Disclaimer
 
