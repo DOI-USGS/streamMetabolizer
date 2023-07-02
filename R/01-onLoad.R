@@ -2,14 +2,22 @@
 #' @importFrom utils available.packages contrib.url
 #' @keywords internal
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage(paste(strwrap(
-    "USGS Active Research Package: https://owi.usgs.gov/R/packages.html#research"), collapse='\n'))
-  packageStartupMessage(paste(strwrap(paste(
-    "This package was developed for research purposes.",
-    "We used it for our own applications and welcome flexible, resilient users who can help us test and improve the package.",
-    "Please give us feedback at https://github.com/USGS-R/streamMetabolizer/issues/new.\n")), collapse='\n'
-    ))
-
+  packageStartupMessage(paste(c(
+    strwrap(paste(
+      "streamMetabolizer is a USGS Archive Research Package:",
+      "https://owi.usgs.gov/R/packages.html#research")),
+    '',
+    strwrap(paste(
+      "Project funding has ended and our maintenance time is limited,",
+      "but we do attempt to provide bug fixes and lightweight support as we are able.",
+      "Submit questions or suggestions to https://github.com/USGS-R/streamMetabolizer/issues.")),
+    '',
+    c("In summer or fall 2023, this package will move from",
+      "https://github.com/USGS-R/streamMetabolizer to",
+      "https://github.com/DOI-USGS/streamMetabolizer.",
+      "Please update your links accordingly.")),
+    collapse='\n'))
+  
   # Load deSolve because otherwise after a few model runs we're likely to get
   # the following error. (It's possible this has been resolved by moving deSolve
   # from Suggests to Imports)
@@ -19,6 +27,7 @@
   ## Error in .C("unlock_solver") :
   ##   "unlock_solver" not resolved from current namespace (deSolve)
 }
+
 library(methods)
 
 #' Define a package environment for storing data specific to a project during an

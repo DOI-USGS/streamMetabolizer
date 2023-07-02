@@ -169,7 +169,7 @@ lubridate::tz(posix.time.localtz) # yep, we want and have the code for EST
 
 # Other data preparation
 
-streamMetabolizer offers many functions to help you prepare your data for modeling. We'll add more to this section later. For now, we recommend that you explore the help pages for the following functions:
+streamMetabolizer offers many functions to help you prepare your data for modeling. We recommend that you explore the help pages for the following functions:
 
 * `calc_depth`
 * `calc_DO_sat`
