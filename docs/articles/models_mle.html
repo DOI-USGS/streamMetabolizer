@@ -4,334 +4,340 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="streamMetabolizer">
 <title>MLE Models • streamMetabolizer</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="MLE Models">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="MLE Models">
 <meta property="og:description" content="streamMetabolizer">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
-      </span>
-    </div>
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
+    
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="../index.html">streamMetabolizer</a>
+
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/data_prep.html">Data Preparation</a>
-    </li>
-    <li>
-      <a href="../articles/get_started.html">Quickstart</a>
-    </li>
-    <li>
-      <a href="../articles/gpp_er_eqs.html">GPP and ER Equations</a>
-    </li>
-    <li>
-      <a href="../articles/installation.html">Installation</a>
-    </li>
-    <li>
-      <a href="../articles/model_structures.html">Model Structures</a>
-    </li>
-    <li>
-      <a href="../articles/models_bayes.html">Bayesian Models</a>
-    </li>
-    <li>
-      <a href="../articles/models_mle.html">MLE Models</a>
-    </li>
-    <li>
-      <a href="../articles/ode_methods.html">ODE Methods</a>
-    </li>
-    <li>
-      <a href="../articles/simulations.html">Simulations</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
-      </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
-</div>
-<!--/.nav-collapse -->
+<li class="active nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/data_prep.html">Data Preparation</a>
+    <a class="dropdown-item" href="../articles/get_started.html">Quickstart</a>
+    <a class="dropdown-item" href="../articles/gpp_er_eqs.html">GPP and ER Equations</a>
+    <a class="dropdown-item" href="../articles/installation.html">Installation</a>
+    <a class="dropdown-item" href="../articles/model_structures.html">Model Structures</a>
+    <a class="dropdown-item" href="../articles/models_bayes.html">Bayesian Models</a>
+    <a class="dropdown-item" href="../articles/models_mle.html">MLE Models</a>
+    <a class="dropdown-item" href="../articles/ode_methods.html">ODE Methods</a>
+    <a class="dropdown-item" href="../articles/simulations.html">Simulations</a>
   </div>
-<!--/.container -->
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
+</li>
+      </ul>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/USGS-R/streamMetabolizer/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
-<!--/.navbar -->
 
-      
+    
+  </div>
+</nav><div class="container template-article">
 
-      </header><script src="models_mle_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>MLE Models</h1>
-                        <h4 class="author">Alison Appling</h4>
+
+
+
+<div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+      <img src="" class="logo" alt=""><h1>MLE Models</h1>
+                        <h4 data-toc-skip class="author">Alison
+Appling</h4>
             
-            <h4 class="date">2021-07-05</h4>
+            <h4 data-toc-skip class="date">2023-07-02</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/master/vignettes/models_mle.Rmd"><code>vignettes/models_mle.Rmd</code></a></small>
-      <div class="hidden name"><code>models_mle.Rmd</code></div>
-
+      <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/HEAD/vignettes/models_mle.Rmd" class="external-link"><code>vignettes/models_mle.Rmd</code></a></small>
+      <div class="d-none name"><code>models_mle.Rmd</code></div>
     </div>
 
     
     
-<p>This file provides an example of fitting an MLE (maximum likelihood estimation) model, following the general outline in the <a href="get_started.html">Quickstart</a> tutorial.</p>
-<p>As a reminder, there are four steps to fitting a metabolism model in <code>streamMetabolizer</code>.</p>
+<p>This file provides an example of fitting an MLE (maximum likelihood
+estimation) model, following the general outline in the <a href="get_started.html">Quickstart</a> tutorial.</p>
+<p>As a reminder, there are four steps to fitting a metabolism model in
+<code>streamMetabolizer</code>.</p>
 <ol style="list-style-type: decimal">
 <li>Prepare and inspect the input data.</li>
 <li>Choose a model configuration appropriate to your data.</li>
 <li>Fit the model.</li>
 <li>Inspect the output.</li>
 </ol>
-<div id="preliminaries" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
+<div class="section level2">
+<h2 id="preliminaries">Preliminaries<a class="anchor" aria-label="anchor" href="#preliminaries"></a>
+</h2>
 <p>If you haven’t already installed the package, see the <a href="installation.html">Installation</a> tutorial.</p>
-<p>Next load the R libraries. Only <code>streamMetabolizer</code> is required to run models, but we’ll also be using <code>dplyr</code> to inspect the results.</p>
+<p>Next load the R libraries. Only <code>streamMetabolizer</code> is
+required to run models, but we’ll also be using <code>dplyr</code> to
+inspect the results.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/USGS-R/streamMetabolizer">streamMetabolizer</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/USGS-R/streamMetabolizer" class="external-link">streamMetabolizer</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="preparing-the-input-data" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preparing-the-input-data" class="anchor"></a>1. Preparing the input data</h1>
-<p>Load a small example dataset from the package (data are from French Creek in Laramie, WY, courtesy of Bob Hall). We’ll use the <code>streamMetabolizer</code> standard in defining our day to run from 4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
+<div class="section level2">
+<h2 id="preparing-the-input-data">1. Preparing the input data<a class="anchor" aria-label="anchor" href="#preparing-the-input-data"></a>
+</h2>
+<p>Load a small example dataset from the package (data are from French
+Creek in Laramie, WY, courtesy of Bob Hall). We’ll use the
+<code>streamMetabolizer</code> standard in defining our day to run from
+4 am (<code>day_start=4</code>) to 4 am (<code>day_end=28</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/data_metab.html">data_metab</a></span><span class="op">(</span>num_days<span class="op">=</span><span class="st">'3'</span>, res<span class="op">=</span><span class="st">'15'</span>, day_start<span class="op">=</span><span class="fl">4</span>, day_end<span class="op">=</span><span class="fl">28</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="configuring-the-model" class="section level1">
-<h1 class="hasAnchor">
-<a href="#configuring-the-model" class="anchor"></a>2. Configuring the model</h1>
-<p>There are two steps to configuring a metabolism model in <code>streamMetabolizer</code>.</p>
+<div class="section level2">
+<h2 id="configuring-the-model">2. Configuring the model<a class="anchor" aria-label="anchor" href="#configuring-the-model"></a>
+</h2>
+<p>There are two steps to configuring a metabolism model in
+<code>streamMetabolizer</code>.</p>
 <ol style="list-style-type: lower-alpha">
-<li>Identify the name of the model structure you want using <code><a href="../reference/mm_name.html">mm_name()</a></code>.</li>
-<li>Set the specifications for the model using defaults from<code><a href="../reference/specs.html">specs()</a></code> as a starting point.</li>
+<li>Identify the name of the model structure you want using
+<code><a href="../reference/mm_name.html">mm_name()</a></code>.</li>
+<li>Set the specifications for the model using defaults
+from<code><a href="../reference/specs.html">specs()</a></code> as a starting point.</li>
 </ol>
-<div id="a--choose-a-model-structure" class="section level2">
-<h2 class="hasAnchor">
-<a href="#a--choose-a-model-structure" class="anchor"></a>2a. Choose a model structure</h2>
-<p>Call <code>mm_name</code> to choose a specific MLE model name/structure. Here we will fit the default MLE model. Many others are available (see <a href="model_structures.html">Model Structures</a> and <a href="gpp_er_eqs.html">GPP and ER equations</a>), but this one is common and fast.</p>
+<div class="section level3">
+<h3 id="a--choose-a-model-structure">2a. Choose a model structure<a class="anchor" aria-label="anchor" href="#a--choose-a-model-structure"></a>
+</h3>
+<p>Call <code>mm_name</code> to choose a specific MLE model
+name/structure. Here we will fit the default MLE model. Many others are
+available (see <a href="model_structures.html">Model Structures</a> and
+<a href="gpp_er_eqs.html">GPP and ER equations</a>), but this one is
+common and fast.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mle_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'mle'</span><span class="op">)</span>
-<span class="va">mle_name</span></code></pre></div>
-<pre><code>## [1] "m_np_oi_tr_plrckm.nlm"</code></pre>
+<code class="sourceCode R"><span><span class="va">mle_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">'mle'</span><span class="op">)</span></span>
+<span><span class="va">mle_name</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] "m_np_oi_tr_plrckm.nlm"</span></span></code></pre>
 </div>
-<div id="b--set-the-specifications" class="section level2">
-<h2 class="hasAnchor">
-<a href="#b--set-the-specifications" class="anchor"></a>2b. Set the specifications</h2>
-<p>Having chosen a model, we next need to define a list of specifications for that model. The <code>specs</code> function creates a list appropriate to the model we chose.</p>
+<div class="section level3">
+<h3 id="b--set-the-specifications">2b. Set the specifications<a class="anchor" aria-label="anchor" href="#b--set-the-specifications"></a>
+</h3>
+<p>Having chosen a model, we next need to define a list of
+specifications for that model. The <code>specs</code> function creates a
+list appropriate to the model we chose.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span><span class="op">)</span>
-<span class="va">mle_specs</span></code></pre></div>
-<pre><code>## Model specifications:
-##   model_name        m_np_oi_tr_plrckm.nlm                                       
-##   day_start         4                                                           
-##   day_end           28                                                          
-##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...
-##   required_timestep NA                                                          
-##   init.GPP.daily    8                                                           
-##   init.ER.daily     -10                                                         
-##   init.K600.daily   10</code></pre>
-<p>See <code><a href="../reference/specs.html">?specs</a></code> for definitions of all specifications. Note that most of the specifications in that help file are omitted from the output of <code><a href="../reference/specs.html">specs(mle_name)</a></code> above - this is because MLE models are simple and don’t have many parameters to set. Any of those parameters that are included in <code>mle_specs</code> can be modified, either by calling <code><a href="../reference/specs.html">specs()</a></code> again or by replacing that value in the <code>mle_specs</code> list. Here is a command that sets the the inital values of GPP, ER, and K600 for the likelihood maximization. (I’ve done this just for illustration; the model results aren’t affected by these particular changes for this particular dataset, and you will seldom need to edit these values.)</p>
+<code class="sourceCode R"><span><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span><span class="op">)</span></span>
+<span><span class="va">mle_specs</span></span></code></pre></div>
+<pre><code><span><span class="co">## Model specifications:</span></span>
+<span><span class="co">##   model_name        m_np_oi_tr_plrckm.nlm                                       </span></span>
+<span><span class="co">##   day_start         4                                                           </span></span>
+<span><span class="co">##   day_end           28                                                          </span></span>
+<span><span class="co">##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...</span></span>
+<span><span class="co">##   required_timestep NA                                                          </span></span>
+<span><span class="co">##   init.GPP.daily    8                                                           </span></span>
+<span><span class="co">##   init.ER.daily     -10                                                         </span></span>
+<span><span class="co">##   init.K600.daily   10</span></span></code></pre>
+<p>See <code><a href="../reference/specs.html">?specs</a></code> for definitions of all specifications. Note
+that most of the specifications in that help file are omitted from the
+output of <code>specs(mle_name)</code> above - this is because MLE
+models are simple and don’t have many parameters to set. Any of those
+parameters that are included in <code>mle_specs</code> can be modified,
+either by calling <code><a href="../reference/specs.html">specs()</a></code> again or by replacing that value
+in the <code>mle_specs</code> list. Here is a command that sets the the
+inital values of GPP, ER, and K600 for the likelihood maximization.
+(I’ve done this just for illustration; the model results aren’t affected
+by these particular changes for this particular dataset, and you will
+seldom need to edit these values.)</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span>, init.GPP.daily<span class="op">=</span><span class="fl">2</span>, init.ER.daily<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, init.K600.daily<span class="op">=</span><span class="fl">3</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">mle_specs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="va">mle_name</span>, init.GPP.daily<span class="op">=</span><span class="fl">2</span>, init.ER.daily<span class="op">=</span><span class="op">-</span><span class="fl">1</span>, init.K600.daily<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
-<div id="fitting-the-model" class="section level1">
-<h1 class="hasAnchor">
-<a href="#fitting-the-model" class="anchor"></a>3. Fitting the model</h1>
+<div class="section level2">
+<h2 id="fitting-the-model">3. Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
+</h2>
 <p>Now actually fit the model using the <code>metab</code> function.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">mle_specs</span>, data<span class="op">=</span><span class="va">dat</span>, info<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>site<span class="op">=</span><span class="st">'French Creek, WY'</span>, source<span class="op">=</span><span class="st">'Bob Hall'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>It’s optional, but sometimes helpful, to include some sort of metadata in the <code>info</code>, as I’ve done above. I’ve chosen to put the metadata in a character vector, but metadata can take any format you like.</p>
-<div id="inspecting-the-model" class="section level2">
-<h2 class="hasAnchor">
-<a href="#inspecting-the-model" class="anchor"></a>4. Inspecting the model</h2>
-<p>Models show lots of relevant information if you simply print them at the command line.</p>
+<code class="sourceCode R"><span><span class="va">mm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">mle_specs</span>, data<span class="op">=</span><span class="va">dat</span>, info<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>site<span class="op">=</span><span class="st">'French Creek, WY'</span>, source<span class="op">=</span><span class="st">'Bob Hall'</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>It’s optional, but sometimes helpful, to include some sort of
+metadata in the <code>info</code>, as I’ve done above. I’ve chosen to
+put the metadata in a character vector, but metadata can take any format
+you like.</p>
+<div class="section level3">
+<h3 id="inspecting-the-model">4. Inspecting the model<a class="anchor" aria-label="anchor" href="#inspecting-the-model"></a>
+</h3>
+<p>Models show lots of relevant information if you simply print them at
+the command line.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mm</span></code></pre></div>
-<pre><code>## metab_model of type metab_mle 
-##   User-supplied metadata:
-##               site             source 
-## "French Creek, WY"         "Bob Hall" 
-## streamMetabolizer version 0.12.0 
-## Specifications:
-##   model_name        m_np_oi_tr_plrckm.nlm                                       
-##   day_start         4                                                           
-##   day_end           28                                                          
-##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...
-##   required_timestep NA                                                          
-##   init.GPP.daily    2                                                           
-##   init.ER.daily     -1                                                          
-##   init.K600.daily   3                                                           
-## Fitting time: 1.928 secs elapsed
-## Parameters (3 dates):
-##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily
-## 1 2012-09-18 2.814768         2.160462        3.469073 -2.113856 
-## 2 2012-09-19 3.271369         2.562593        3.980145 -2.466321 
-## 3 2012-09-20 2.590855         2.121370        3.060339 -1.712003 
-##   ER.daily.lower ER.daily.upper K600.daily K600.daily.lower K600.daily.upper
-## 1      -2.646426      -1.581285  31.05944          24.49085         37.62803
-## 2      -3.051682      -1.880959  33.23987          26.63807         39.84166
-## 3      -2.069836      -1.354171  28.71773          24.02289         33.41257
-##   msgs.fit
-## 1         
-## 2         
-## 3         
-## Predictions (3 dates):
-##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
-## 1 2012-09-18 2.814768  2.160462  3.469073 -2.113856 -2.646426 -1.581285
-## 2 2012-09-19 3.271369  2.562593  3.980145 -2.466321 -3.051682 -1.880959
-## 3 2012-09-20 2.590855  2.121370  3.060339 -1.712003 -2.069836 -1.354171
-##   msgs.fit msgs.pred
-## 1                   
-## 2                   
-## 3</code></pre>
-<p>You can also extract specific pieces of information using designated accessor functions. For example, the <code>info</code> and <code>data</code> are saved in the fitted model object and can be pulled out with <code>get_info</code> and <code>get_data</code>, respectively.</p>
+<code class="sourceCode R"><span><span class="va">mm</span></span></code></pre></div>
+<pre><code><span><span class="co">## metab_model of type metab_mle </span></span>
+<span><span class="co">##   User-supplied metadata:</span></span>
+<span><span class="co">##               site             source </span></span>
+<span><span class="co">## "French Creek, WY"         "Bob Hall" </span></span>
+<span><span class="co">## streamMetabolizer version 0.12.1 </span></span>
+<span><span class="co">## Specifications:</span></span>
+<span><span class="co">##   model_name        m_np_oi_tr_plrckm.nlm                                       </span></span>
+<span><span class="co">##   day_start         4                                                           </span></span>
+<span><span class="co">##   day_end           28                                                          </span></span>
+<span><span class="co">##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...</span></span>
+<span><span class="co">##   required_timestep NA                                                          </span></span>
+<span><span class="co">##   init.GPP.daily    2                                                           </span></span>
+<span><span class="co">##   init.ER.daily     -1                                                          </span></span>
+<span><span class="co">##   init.K600.daily   3                                                           </span></span>
+<span><span class="co">## Fitting time: 1.866 secs elapsed</span></span>
+<span><span class="co">## Parameters (3 dates):</span></span>
+<span><span class="co">##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily</span></span>
+<span><span class="co">## 1 2012-09-18 2.814768         2.160463        3.469073 -2.113856 </span></span>
+<span><span class="co">## 2 2012-09-19 3.271369         2.562592        3.980145 -2.466321 </span></span>
+<span><span class="co">## 3 2012-09-20 2.590855         2.121370        3.060339 -1.712003 </span></span>
+<span><span class="co">##   ER.daily.lower ER.daily.upper K600.daily K600.daily.lower K600.daily.upper</span></span>
+<span><span class="co">## 1      -2.646426      -1.581285  31.05944          24.49085         37.62803</span></span>
+<span><span class="co">## 2      -3.051683      -1.880959  33.23987          26.63806         39.84167</span></span>
+<span><span class="co">## 3      -2.069836      -1.354171  28.71773          24.02290         33.41257</span></span>
+<span><span class="co">##   msgs.fit</span></span>
+<span><span class="co">## 1         </span></span>
+<span><span class="co">## 2         </span></span>
+<span><span class="co">## 3         </span></span>
+<span><span class="co">## Predictions (3 dates):</span></span>
+<span><span class="co">##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper</span></span>
+<span><span class="co">## 1 2012-09-18 2.814768  2.160463  3.469073 -2.113856 -2.646426 -1.581285</span></span>
+<span><span class="co">## 2 2012-09-19 3.271369  2.562592  3.980145 -2.466321 -3.051683 -1.880959</span></span>
+<span><span class="co">## 3 2012-09-20 2.590855  2.121370  3.060339 -1.712003 -2.069836 -1.354171</span></span>
+<span><span class="co">##   msgs.fit msgs.pred</span></span>
+<span><span class="co">## 1                   </span></span>
+<span><span class="co">## 2                   </span></span>
+<span><span class="co">## 3</span></span></code></pre>
+<p>You can also extract specific pieces of information using designated
+accessor functions. For example, the <code>info</code> and
+<code>data</code> are saved in the fitted model object and can be pulled
+out with <code>get_info</code> and <code>get_data</code>,
+respectively.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/get_info.html">get_info</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
-<pre><code>##               site             source 
-## "French Creek, WY"         "Bob Hall"</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_info.html">get_info</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##               site             source </span></span>
+<span><span class="co">## "French Creek, WY"         "Bob Hall"</span></span></code></pre>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light
-## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
-## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0
-## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0
-## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0
-## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0
-## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0
-##     DO.mod
-## 1 8.410000
-## 2 8.421013
-## 3 8.431849
-## 4 8.442322
-## 5 8.452734
-## 6 8.463325</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##         date          solar.time DO.obs   DO.sat depth temp.water light</span></span>
+<span><span class="co">## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0</span></span>
+<span><span class="co">## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0</span></span>
+<span><span class="co">## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0</span></span>
+<span><span class="co">## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0</span></span>
+<span><span class="co">## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0</span></span>
+<span><span class="co">## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0</span></span>
+<span><span class="co">##     DO.mod</span></span>
+<span><span class="co">## 1 8.410000</span></span>
+<span><span class="co">## 2 8.421013</span></span>
+<span><span class="co">## 3 8.431849</span></span>
+<span><span class="co">## 4 8.442322</span></span>
+<span><span class="co">## 5 8.452734</span></span>
+<span><span class="co">## 6 8.463325</span></span></code></pre>
 <p>We can also get information about the model fitting process.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/get_fitting_time.html">get_fitting_time</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the time it took to fit the model</span></code></pre></div>
-<pre><code>##    user  system elapsed 
-##   1.882   0.019   1.928</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_fitting_time.html">get_fitting_time</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the time it took to fit the model</span></span></code></pre></div>
+<pre><code><span><span class="co">##    user  system elapsed </span></span>
+<span><span class="co">##   1.819   0.038   1.866</span></span></code></pre>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/get_version.html">get_version</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the streamMetabolizer version used to fit the model</span></code></pre></div>
-<pre><code>## [1] "0.12.0"</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_version.html">get_version</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the streamMetabolizer version used to fit the model</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] "0.12.1"</span></span></code></pre>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/get_specs.html">get_specs</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the specifications we passed in</span></code></pre></div>
-<pre><code>## Model specifications:
-##   model_name        m_np_oi_tr_plrckm.nlm                                       
-##   day_start         4                                                           
-##   day_end           28                                                          
-##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...
-##   required_timestep NA                                                          
-##   init.GPP.daily    2                                                           
-##   init.ER.daily     -1                                                          
-##   init.K600.daily   3</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_specs.html">get_specs</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span> <span class="co"># the specifications we passed in</span></span></code></pre></div>
+<pre><code><span><span class="co">## Model specifications:</span></span>
+<span><span class="co">##   model_name        m_np_oi_tr_plrckm.nlm                                       </span></span>
+<span><span class="co">##   day_start         4                                                           </span></span>
+<span><span class="co">##   day_end           28                                                          </span></span>
+<span><span class="co">##   day_tests         full_day, even_timesteps, complete_data, pos_discharge, p...</span></span>
+<span><span class="co">##   required_timestep NA                                                          </span></span>
+<span><span class="co">##   init.GPP.daily    2                                                           </span></span>
+<span><span class="co">##   init.ER.daily     -1                                                          </span></span>
+<span><span class="co">##   init.K600.daily   3</span></span></code></pre>
 <p>There is a function to plot the daily metabolism estimates.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plot_metab_preds.html">plot_metab_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_metab_preds.html">plot_metab_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></span></code></pre></div>
 <p><img src="models_mle_files/figure-html/plot_metab1-1.png" width="672"></p>
-<p>There is also a function to plot the dissolved oxygen predictions (lines) along with the original observations (points).</p>
+<p>There is also a function to plot the dissolved oxygen predictions
+(lines) along with the original observations (points).</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_DO_preds.html">plot_DO_preds</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></span></code></pre></div>
 <p><img src="models_mle_files/figure-html/plot_metab2-1.png" width="672"></p>
-<p>You can output the daily and instantaneous predictions to data.frames for further inspection.</p>
+<p>You can output the daily and instantaneous predictions to data.frames
+for further inspection.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></code></pre></div>
-<pre><code>##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper
-## 1 2012-09-18 2.814768  2.160462  3.469073 -2.113856 -2.646426 -1.581285
-## 2 2012-09-19 3.271369  2.562593  3.980145 -2.466321 -3.051682 -1.880959
-## 3 2012-09-20 2.590855  2.121370  3.060339 -1.712003 -2.069836 -1.354171
-##   msgs.fit warnings errors
-## 1                         
-## 2                         
-## 3</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##         date      GPP GPP.lower GPP.upper        ER  ER.lower  ER.upper</span></span>
+<span><span class="co">## 1 2012-09-18 2.814768  2.160463  3.469073 -2.113856 -2.646426 -1.581285</span></span>
+<span><span class="co">## 2 2012-09-19 3.271369  2.562592  3.980145 -2.466321 -3.051683 -1.880959</span></span>
+<span><span class="co">## 3 2012-09-20 2.590855  2.121370  3.060339 -1.712003 -2.069836 -1.354171</span></span>
+<span><span class="co">##   msgs.fit warnings errors</span></span>
+<span><span class="co">## 1                         </span></span>
+<span><span class="co">## 2                         </span></span>
+<span><span class="co">## 3</span></span></code></pre>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<pre><code>##         date          solar.time DO.obs   DO.sat depth temp.water light
-## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0
-## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0
-## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0
-## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0
-## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0
-## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0
-##     DO.mod
-## 1 8.410000
-## 2 8.421013
-## 3 8.431849
-## 4 8.442322
-## 5 8.452734
-## 6 8.463325</code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##         date          solar.time DO.obs   DO.sat depth temp.water light</span></span>
+<span><span class="co">## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0</span></span>
+<span><span class="co">## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0</span></span>
+<span><span class="co">## 3 2012-09-18 2012-09-18 04:35:58   8.42 9.105254  0.16       3.51     0</span></span>
+<span><span class="co">## 4 2012-09-18 2012-09-18 04:50:58   8.43 9.112582  0.16       3.48     0</span></span>
+<span><span class="co">## 5 2012-09-18 2012-09-18 05:05:58   8.45 9.127267  0.16       3.42     0</span></span>
+<span><span class="co">## 6 2012-09-18 2012-09-18 05:20:58   8.46 9.137079  0.16       3.38     0</span></span>
+<span><span class="co">##     DO.mod</span></span>
+<span><span class="co">## 1 8.410000</span></span>
+<span><span class="co">## 2 8.421013</span></span>
+<span><span class="co">## 3 8.431849</span></span>
+<span><span class="co">## 4 8.442322</span></span>
+<span><span class="co">## 5 8.452734</span></span>
+<span><span class="co">## 6 8.463325</span></span></code></pre>
 </div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
-
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
-  <p>Developed by Alison P. Appling, Robert O. Hall, Maite Arroita, Charles B. Yackulic.</p>
+    <footer><div class="pkgdown-footer-left">
+  <p></p>
+<p>Developed by Alison P. Appling, Robert O. Hall, Maite Arroita, Charles B. Yackulic.</p>
 </div>
 
-<div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+<div class="pkgdown-footer-right">
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
 
+  
 
   </body>
 </html>

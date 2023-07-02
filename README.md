@@ -1,9 +1,11 @@
 # streamMetabolizer: Models for Estimating Aquatic Photosynthesis and Respiration
 
-<span style="color: red;"> In summer or fall 2023, this package will
-move from <https://github.com/USGS-R/streamMetabolizer> to
-<https://github.com/DOI-USGS/streamMetabolizer>. Please update your
-links accordingly. </span>
+``` diff
+! In summer or fall 2023, this package will move from
+! https://github.com/USGS-R/streamMetabolizer to
+! https://github.com/DOI-USGS/streamMetabolizer.
+! Please update your links accordingly.
+```
 
 The `streamMetabolizer` R package uses inverse modeling to estimate
 aquatic photosynthesis and respiration (collectively, metabolism) from

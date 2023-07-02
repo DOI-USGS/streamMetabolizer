@@ -1,3 +1,7 @@
+# 0.12.1
+
+* updated README.md, code.json, and other package metadata files
+
 # 0.12.0
 
 * fixed compatibility issues with R 4.1.0 and recent (OK, not super recent)
