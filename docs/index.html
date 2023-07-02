@@ -4,14 +4,20 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="streamMetabolizer uses inverse modeling to estimate aquatic
+    photosynthesis and respiration (collectively, metabolism) from time series
+    data on dissolved oxygen, water temperature, depth, and light. The package
+    assists with data preparation, handles data gaps during modeling, and
+    provides tabular and graphical reports of model outputs. Several
+    time-honored methods are implemented along with many promising new variants
+    that produce more accurate and precise metabolism estimates.">
 <title>Models for Estimating Aquatic Photosynthesis and Respiration • streamMetabolizer</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
-<script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Models for Estimating Aquatic Photosynthesis and Respiration">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Models for Estimating Aquatic Photosynthesis and Respiration">
 <meta property="og:description" content="streamMetabolizer uses inverse modeling to estimate aquatic
     photosynthesis and respiration (collectively, metabolism) from time series
     data on dissolved oxygen, water temperature, depth, and light. The package
@@ -24,199 +30,251 @@
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
-    <div class="container template-home">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">streamMetabolizer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12.0</span>
-      </span>
-    </div>
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
+    
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="index.html">streamMetabolizer</a>
+
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.1</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="reference/index.html">Reference</a>
 </li>
-<li>
-  <a href="reference/index.html">Reference</a>
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="articles/data_prep.html">Data Preparation</a>
+    <a class="dropdown-item" href="articles/get_started.html">Quickstart</a>
+    <a class="dropdown-item" href="articles/gpp_er_eqs.html">GPP and ER Equations</a>
+    <a class="dropdown-item" href="articles/installation.html">Installation</a>
+    <a class="dropdown-item" href="articles/model_structures.html">Model Structures</a>
+    <a class="dropdown-item" href="articles/models_bayes.html">Bayesian Models</a>
+    <a class="dropdown-item" href="articles/models_mle.html">MLE Models</a>
+    <a class="dropdown-item" href="articles/ode_methods.html">ODE Methods</a>
+    <a class="dropdown-item" href="articles/simulations.html">Simulations</a>
+  </div>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="articles/data_prep.html">Data Preparation</a>
-    </li>
-    <li>
-      <a href="articles/get_started.html">Quickstart</a>
-    </li>
-    <li>
-      <a href="articles/gpp_er_eqs.html">GPP and ER Equations</a>
-    </li>
-    <li>
-      <a href="articles/installation.html">Installation</a>
-    </li>
-    <li>
-      <a href="articles/model_structures.html">Model Structures</a>
-    </li>
-    <li>
-      <a href="articles/models_bayes.html">Bayesian Models</a>
-    </li>
-    <li>
-      <a href="articles/models_mle.html">MLE Models</a>
-    </li>
-    <li>
-      <a href="articles/ode_methods.html">ODE Methods</a>
-    </li>
-    <li>
-      <a href="articles/simulations.html">Simulations</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="news/index.html">Changelog</a>
+<li class="nav-item">
+  <a class="nav-link" href="news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/USGS-R/streamMetabolizer/">
-    <span class="fab fa-github fa-lg"></span>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/USGS-R/streamMetabolizer/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
       </ul>
 </div>
-<!--/.nav-collapse -->
+
+    
   </div>
-<!--/.container -->
-</div>
-<!--/.navbar -->
-
-      
-
-      </header><div class="row">
-  <div class="contents col-md-9">
-<div id="streammetabolizer" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#streammetabolizer" class="anchor"></a>streamMetabolizer</h1></div>
-<div id="models-for-estimating-aquatic-photosynthesis-and-respiration" class="section level2">
-<h2 class="hasAnchor">
-<a href="#models-for-estimating-aquatic-photosynthesis-and-respiration" class="anchor"></a>Models for Estimating Aquatic Photosynthesis and Respiration</h2>
-<p>Alison P. Appling, Robert O. Hall, Jr., Maite Arroita, and Charles B. Yackulic</p>
-<p>The streamMetabolizer R package uses inverse modeling to estimate aquatic photosynthesis and respiration (collectively, metabolism) from time series data on dissolved oxygen, water temperature, depth, and light. The package assists with data preparation, handles data gaps during modeling, and provides tabular and graphical reports of model outputs. Several time-honored methods are implemented along with many promising new variants that produce more accurate and precise metabolism estimates.</p>
-<p>This package has been described, with special focus on the Bayesian model options, by <a href="https://doi.org/10.1002/2017JG004140">Appling et al. 2018</a>.</p>
-<p>Recommended citation: To see the recommended citation for this package, please run <code><a href="https://rdrr.io/r/utils/citation.html">citation('streamMetabolizer')</a></code> at the R prompt.</p>
-</div>
-<div id="getting-started" class="section level2">
-<h2 class="hasAnchor">
-<a href="#getting-started" class="anchor"></a>Getting started</h2>
-<p>See <a href="http://usgs-r.github.io/streamMetabolizer" class="uri">http://usgs-r.github.io/streamMetabolizer</a> for tutorials on package installation, getting started, and customizing your metabolism models.</p>
-</div>
-<div id="package-status" class="section level2">
-<h2 class="hasAnchor">
-<a href="#package-status" class="anchor"></a>Package status</h2>
-<table class="table">
-<colgroup>
-<col width="14%">
-<col width="12%">
-<col width="15%">
-<col width="26%">
-<col width="22%">
-<col width="8%">
-</colgroup>
-<thead><tr class="header">
-<th>Branch</th>
-<th>Linux</th>
-<th>Windows</th>
-<th>Test Coverage</th>
-<th>USGS Status</th>
-<th>DOI</th>
-</tr></thead>
-<tbody><tr class="odd">
-<td>master</td>
-<td><a href="https://travis-ci.org/USGS-R/streamMetabolizer/branches"><img src="https://travis-ci.org/USGS-R/streamMetabolizer.svg?branch=master" alt="master Build Status"></a></td>
-<td><a href="https://ci.appveyor.com/project/aappling-usgs/streammetabolizer/branch/master"><img src="https://ci.appveyor.com/api/projects/status/605tgcru05jdgb22/branch/master?svg=true" alt="master Build status"></a></td>
-<td><a href="https://coveralls.io/github/USGS-R/streamMetabolizer?branch=master"><img src="https://coveralls.io/repos/github/USGS-R/streamMetabolizer/badge.svg?branch=master" alt="master Coverage Status"></a></td>
-<td><a href="https://owi.usgs.gov/R/packages.html#research"><img src="https://img.shields.io/badge/USGS-Research-blue.svg" alt="USGS Status"></a></td>
-<td></td>
-</tr></tbody>
-</table>
-</div>
-<div id="questions-and-bug-reports" class="section level2">
-<h2 class="hasAnchor">
-<a href="#questions-and-bug-reports" class="anchor"></a>Questions and bug reports</h2>
-<p>Please report bugs and ask questions on the Issues page: <a href="https://github.com/USGS-R/streamMetabolizer/issues">https://github.com/USGS-R/streamMetabolizer/issues</a></p>
-<p>We can address your issues fastest if they are:</p>
-<ul>
-<li><p>New - search past issues first to see if your question has already been answered. Reopen an old issue if your question was almost but not quite answered.</p></li>
-<li><p>Complete - share all relevant code and console output/errors/warnings, in the order they were run and produced on your computer. Also include the output from a call to <code><a href="https://rdrr.io/pkg/sessioninfo/man/session_info.html">devtools::session_info()</a></code> to tell us about your computer’s configuration.</p></li>
-<li><p>Reproducible - include all the data and code necessary for us/others to recreate the problem locally. It’s fine to make up data if you can’t share yours, as long as the problem still comes through.</p></li>
-<li><p>Minimal - what is the smallest amount of data and code you can use to demonstrate the problem? This is less essential than the others but improves communication and our response time.</p></li>
-</ul>
-<div id="code-of-conduct" class="section level3">
-<h3 class="hasAnchor">
-<a href="#code-of-conduct" class="anchor"></a>Code of Conduct</h3>
-<p>We want to encourage a warm, welcoming, and safe environment for contributing to this project. See the <a href="https://github.com/USGS-R/streamMetabolizer/blob/develop/CONDUCT.md">code of conduct</a> for more information.</p>
-</div>
-<div id="package-support" class="section level3">
-<h3 class="hasAnchor">
-<a href="#package-support" class="anchor"></a>Package Support</h3>
-<p><code>streamMetabolizer</code> was developed 2015-2017 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS NAWQA program, and the USGS Office of Water Information. Ongoing package work is unfunded and therefore limited.</p>
-<p><a href="https://www.usgs.gov/"><img src="http://usgs-r.github.io/images/usgs.png" alt="USGS"></a></p>
-<p>Follow <a href="https://twitter.com/USGS_R"><code>@USGS_R</code> on Twitter</a> for updates on USGS R packages.</p>
+</nav><div class="container template-home">
+<div class="row">
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header"><h1 id="streammetabolizer-models-for-estimating-aquatic-photosynthesis-and-respiration">streamMetabolizer: Models for Estimating Aquatic Photosynthesis and Respiration<a class="anchor" aria-label="anchor" href="#streammetabolizer-models-for-estimating-aquatic-photosynthesis-and-respiration"></a>
+</h1></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="st">! In summer or fall 2023, this package will move from</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="st">! https://github.com/USGS-R/streamMetabolizer to</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="st">! https://github.com/DOI-USGS/streamMetabolizer.</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="st">! Please update your links accordingly.</span></span></code></pre></div>
+<p>The <code>streamMetabolizer</code> R package uses inverse modeling to estimate aquatic photosynthesis and respiration (collectively, metabolism) from time series data on dissolved oxygen, water temperature, depth, and light. The package assists with data preparation, handles data gaps during modeling, and provides tabular and graphical reports of model outputs. Several time-honored methods are implemented along with many promising new variants that produce more accurate and precise metabolism estimates.</p>
+<p>This package has been described, with special focus on the Bayesian model options, by <a href="https://doi.org/10.1002/2017JG004140" class="external-link">Appling et al. 2018a</a>. An application to 356 streams across the U.S. is described in <a href="https://doi.org/10.1038/sdata.2018.292" class="external-link">Appling et al. 2018b</a>.</p>
+<blockquote>
+<p>Appling, A. P., Hall, R. O., Yackulic, C. B., &amp; Arroita, M. (2018a). Overcoming equifinality: Leveraging long time series for stream metabolism estimation. Journal of Geophysical Research: Biogeosciences, 123(2), 624–645. <a href="https://doi.org/10.1002/2017JG004140" class="external-link uri">https://doi.org/10.1002/2017JG004140</a></p>
+</blockquote>
+<blockquote>
+<p>Appling, A. P., Read, J. S., Winslow, L. A., Arroita, M., Bernhardt, E. S., Griffiths, N. A., Hall, R. O., Harvey, J. W., Heffernan, J. B., Stanley, E. H., Stets, E. G., &amp; Yackulic, C. B. (2018b). The metabolic regimes of 356 rivers in the United States. Scientific Data, 5(1), 180292. <a href="https://doi.org/10.1038/sdata.2018.292" class="external-link uri">https://doi.org/10.1038/sdata.2018.292</a></p>
+</blockquote>
+<p>To see the recommended citation for this package, please run <code>citation('streamMetabolizer')</code> at the R prompt.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">'streamMetabolizer'</span><span class="op">)</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## To cite streamMetabolizer in publications, please use:</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##   Appling, Alison P., Robert O. Hall, Charles B. Yackulic, and Maite</span></span>
+<span><span class="co">##   Arroita. “Overcoming Equifinality: Leveraging Long Time Series for</span></span>
+<span><span class="co">##   Stream Metabolism Estimation.” Journal of Geophysical Research:</span></span>
+<span><span class="co">##   Biogeosciences 123, no. 2 (February 2018): 624–45.</span></span>
+<span><span class="co">##   https://doi.org/10.1002/2017JG004140.</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## A BibTeX entry for LaTeX users is</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##   @Article{,</span></span>
+<span><span class="co">##     author = {Alison P. Appling and Robert O. {Hall Jr.} and Charles B. Yackulic and Maite Arroita},</span></span>
+<span><span class="co">##     title = {Overcoming Equifinality: Leveraging Long Time Series for Stream Metabolism Estimation},</span></span>
+<span><span class="co">##     journal = {Journal of Geophysical Research: Biogeosciences},</span></span>
+<span><span class="co">##     year = {2018},</span></span>
+<span><span class="co">##     volume = {123},</span></span>
+<span><span class="co">##     number = {2},</span></span>
+<span><span class="co">##     doi = {10.1002/2017JG004140},</span></span>
+<span><span class="co">##     url = {https://github.com/USGS-R/streamMetabolizer},</span></span>
+<span><span class="co">##   }</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>To install the <code>streamMetabolizer</code> package, use the <code>remotes</code> package (running <code>install.packages('remotes')</code> first if needed). To use <code><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">remotes::install_github()</a></code> it is convenient to set a <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" class="external-link">GitHub Personal Access Token (PAT)</a>. There are <a href="https://usethis.r-lib.org/articles/git-credentials.html" class="external-link">several methods</a> for setting your PATs within R; the simplest is to call `Sys.setenv(GITHUB_PAT=“yyyy”), replacing yyyy with the PAT you established on the GitHub website.</p>
+<p>You may first need to install the <code>unitted</code> dependency:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'appling/unitted'</span><span class="op">)</span></span></code></pre></div>
+<p>You can then install the most cutting edge version of <code>streamMetabolizer</code> with this command:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
+<span>  <span class="st">"USGS-R/streamMetabolizer"</span>, <span class="co"># soon to be "DOI-USGS/streamMetabolizer"</span></span>
+<span>  build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="software-dependencies-for-bayesian-models">Software dependencies for Bayesian models<a class="anchor" aria-label="anchor" href="#software-dependencies-for-bayesian-models"></a>
+</h3>
+<p>The major dependency for Bayesian models is the <code>rstan</code> package, and installation of that package is rarely as simple as a call to <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code>. Start at the <a href="https://github.com/stan-dev/rstan/wiki" class="external-link">rstan wiki page</a> for the most up-to-date installation instructions, which differ by operating system.</p>
 </div>
 </div>
-<div id="disclaimer" class="section level2">
-<h2 class="hasAnchor">
-<a href="#disclaimer" class="anchor"></a>Disclaimer</h2>
-<p>This software is in the public domain because it contains materials that originally came from the U.S. Geological Survey (USGS), an agency of the United States Department of Interior. For more information, see the official USGS copyright policy at <a href="https://www.usgs.gov/visual-id/credit_usgs.html#copyright">https://www.usgs.gov/visual-id/credit_usgs.html#copyright</a></p>
-<p>Although this software program has been used by the USGS, no warranty, expressed or implied, is made by the USGS or the U.S. Government as to the accuracy and functioning of the program and related program material nor shall the fact of distribution constitute any such warranty, and no responsibility is assumed by the USGS in connection therewith.</p>
-<p>This software is provided “AS IS.”</p>
-<p><a href="https://creativecommons.org/publicdomain/zero/1.0/"><img src="https://i.creativecommons.org/p/zero/1.0/88x31.png" alt="CC0"></a></p>
+<div class="section level2">
+<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h2>
+<p>After installing and loading <code>streamMetabolizer</code>, run <code><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette()</a></code> in R to see tutorials on getting started and customizing your metabolism models.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span>package<span class="op">=</span><span class="st">'streamMetabolizer'</span><span class="op">)</span></span>
+<span><span class="co">## displays a list of available vignettes</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">'get_started'</span>, package<span class="op">=</span><span class="st">'streamMetabolizer'</span><span class="op">)</span></span>
+<span><span class="co">## displays an html or pdf rendering of the 'get_started' vignette</span></span></code></pre></div>
+<p>You can also view pre-built html versions of these vignettes in the “inst/doc” folder in the source code, e.g., <a href="https://github.com/USGS-R/streamMetabolizer/blob/main/inst/doc/get_started.html" class="external-link">inst/doc/get_started.html</a>, which you can download and then open in a browser.</p>
+</div>
+<div class="section level2">
+<h2 id="development-and-maintenance-status">Development and Maintenance Status<a class="anchor" aria-label="anchor" href="#development-and-maintenance-status"></a>
+</h2>
+<p><code>streamMetabolizer</code> is a USGS Archive Research Package: <a href="https://owi.usgs.gov/R/packages.html#research" class="external-link"><img src="https://img.shields.io/badge/USGS-Research-blue.svg" alt="USGS Status"></a></p>
+<p>Project funding has ended and our maintenance time is limited, but we do attempt to provide bug fixes and lightweight support as we are able. Submit questions or suggestions to <a href="https://github.com/USGS-R/streamMetabolizer/issues" class="external-link uri">https://github.com/USGS-R/streamMetabolizer/issues</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+</h2>
+<p>We want to encourage a warm, welcoming, and safe environment for contributing to this project. See <a href="https://github.com/USGS-R/streamMetabolizer/blob/main/CODE_OF_CONDUCT.md" class="external-link">CODE_OF_CONDUCT.md</a> for more information.</p>
+<p>For technical details on how to contribute, see <a href="https://github.com/USGS-R/streamMetabolizer/blob/main/CONTRIBUTING.md" class="external-link">CONTRIBUTING.md</a></p>
+<div class="section level3">
+<h3 id="development-history">Development History<a class="anchor" aria-label="anchor" href="#development-history"></a>
+</h3>
+<p><code>streamMetabolizer</code> was developed 2015-2018 with support from the USGS Powell Center (through a working group on Continental Patterns of Stream Metabolism), the USGS National Water Quality Program, and the USGS Office of Water Information.</p>
 </div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-    <div class="links">
-<h2>Links</h2>
+<div class="section level2">
+<h2 id="model-archive">Model Archive<a class="anchor" aria-label="anchor" href="#model-archive"></a>
+</h2>
+<p>The following version of R and package dependencies were used most recently to pass the embedded tests within this package. There is no guarantee of reproducible results using future versions of R or updated versions of package dependencies; however, we aim to test and update future modeling environments.</p>
+<!-- Run and paste manually after edits, only when tests pass locally -->
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">sessioninfo</span><span class="fu">::</span><span class="fu"><a href="https://r-lib.github.io/sessioninfo/reference/session_info.html" class="external-link">session_info</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## ─ Session info ───────────────────────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">##  setting  value</span></span>
+<span><span class="co">##  version  R version 4.2.3 (2023-03-15)</span></span>
+<span><span class="co">##  os       macOS Ventura 13.4.1</span></span>
+<span><span class="co">##  system   x86_64, darwin17.0</span></span>
+<span><span class="co">##  ui       RStudio</span></span>
+<span><span class="co">##  language (EN)</span></span>
+<span><span class="co">##  collate  en_US.UTF-8</span></span>
+<span><span class="co">##  ctype    en_US.UTF-8</span></span>
+<span><span class="co">##  tz       America/New_York</span></span>
+<span><span class="co">##  date     2023-07-02</span></span>
+<span><span class="co">##  rstudio  2023.06.0+421 Mountain Hydrangea (desktop)</span></span>
+<span><span class="co">##  pandoc   3.1.1 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/ (via rmarkdown)</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## ─ Packages ───────────────────────────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">##  package           * version  date (UTC) lib source</span></span>
+<span><span class="co">##  cli                 3.6.1    2023-03-23 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  deSolve             1.35     2023-03-12 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  digest              0.6.32   2023-06-26 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  dplyr               1.1.2    2023-04-20 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  evaluate            0.21     2023-05-05 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  fansi               1.0.4    2023-01-22 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  fastmap             1.1.1    2023-02-24 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  generics            0.1.3    2022-07-05 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  glue                1.6.2    2022-02-24 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  htmltools           0.5.5    2023-03-23 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  knitr               1.43     2023-05-25 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  LakeMetabolizer     1.5.5    2022-11-15 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  lazyeval            0.2.2    2019-03-15 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  lifecycle           1.0.3    2022-10-07 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  lubridate           1.9.2    2023-02-10 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  magrittr            2.0.3    2022-03-30 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  pillar              1.9.0    2023-03-22 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  pkgconfig           2.0.3    2019-09-22 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  plyr                1.8.8    2022-11-11 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  purrr               1.0.1    2023-01-10 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  R6                  2.5.1    2021-08-19 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  Rcpp                1.0.10   2023-01-22 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  rLakeAnalyzer       1.11.4.1 2019-06-09 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  rlang               1.1.1    2023-04-28 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  rmarkdown           2.22     2023-06-01 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  rstudioapi          0.14     2022-08-22 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  sessioninfo         1.2.2    2021-12-06 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  streamMetabolizer * 0.12.1   2023-07-02 [1] local</span></span>
+<span><span class="co">##  tibble              3.2.1    2023-03-20 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  tidyr               1.3.0    2023-01-24 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  tidyselect          1.2.0    2022-10-10 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  timechange          0.2.0    2023-01-11 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  unitted             0.2.9    2023-06-05 [1] Github (appling/unitted@d1f1172)</span></span>
+<span><span class="co">##  utf8                1.2.3    2023-01-31 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  vctrs               0.6.3    2023-06-14 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  xfun                0.39     2023-04-20 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">##  yaml                2.3.7    2023-01-23 [1] CRAN (R 4.2.0)</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##  [1] /Library/Frameworks/R.framework/Versions/4.2/Resources/library</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="disclaimer">Disclaimer<a class="anchor" aria-label="anchor" href="#disclaimer"></a>
+</h2>
+<p>This software is preliminary or provisional and is subject to revision. It is being provided to meet the need for timely best science. The software has not received final approval by the U.S. Geological Survey (USGS). No warranty, expressed or implied, is made by the USGS or the U.S. Government as to the functionality of the software and related material nor shall the fact of release constitute any such warranty. The software is provided on the condition that neither the USGS nor the U.S. Government shall be held liable for any damages resulting from the authorized or unauthorized use of the software.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/USGS-R/streamMetabolizer/">https://​github.com/​USGS-R/​streamMetabolizer/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/USGS-R/streamMetabolizer/issues">https://​github.com/​USGS-R/​streamMetabolizer/​issues</a>
-</li>
+<li><a href="https://github.com/USGS-R/streamMetabolizer/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/USGS-R/streamMetabolizer/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>file <a href="LICENSE-text.html">LICENSE</a>
-</li>
+<li><a href="LICENSE.html">Full license</a></li>
+<li><small>file <a href="LICENSE-text.html">LICENSE</a></small></li>
 </ul>
 </div>
+
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
+</ul>
+</div>
+
 <div class="citation">
-<h2>Citation</h2>
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html">Citing streamMetabolizer</a></li>
+<li><a href="authors.html#citation">Citing streamMetabolizer</a></li>
 </ul>
 </div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Alison P. Appling <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Robert O. Hall <br><small class="roles"> Author </small>  </li>
@@ -225,23 +283,28 @@
 </ul>
 </div>
 
-  </div>
+
+
+  </aside>
 </div>
 
 
-      <footer><div class="copyright">
-  <p>Developed by Alison P. Appling, Robert O. Hall, Maite Arroita, Charles B. Yackulic.</p>
+    <footer><div class="pkgdown-footer-left">
+  <p></p>
+<p>Developed by Alison P. Appling, Robert O. Hall, Maite Arroita, Charles B. Yackulic.</p>
 </div>
 
-<div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+<div class="pkgdown-footer-right">
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
 
+  
 
   </body>
 </html>
