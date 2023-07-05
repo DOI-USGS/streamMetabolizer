@@ -10,14 +10,14 @@
       "licenses": [
         {
           "name": "Public Domain, CC0-1.0",
-          "URL": "https://raw.githubusercontent.com/USGS-R/streamMetabolizer/main/LICENSE.md"
+          "URL": "https://raw.githubusercontent.com/DOI-USGS/streamMetabolizer/main/LICENSE.md"
         }
       ]
     },
-    "homepageURL": "https://github.com/USGS-R/streamMetabolizer/",
-    "downloadURL": "https://github.com/USGS-R/streamMetabolizer/archive/refs/heads/main.zip",
-    "disclaimerURL": "https://raw.githubusercontent.com/USGS-R/streamMetabolizer/main/DISCLAIMER.md",
-    "repositoryURL": "https://github.com/USGS-R/streamMetabolizer.git",
+    "homepageURL": "https://github.com/DOI-USGS/streamMetabolizer/",
+    "downloadURL": "https://github.com/DOI-USGS/streamMetabolizer/archive/refs/heads/main.zip",
+    "disclaimerURL": "https://raw.githubusercontent.com/DOI-USGS/streamMetabolizer/main/DISCLAIMER.md",
+    "repositoryURL": "https://github.com/DOI-USGS/streamMetabolizer.git",
     "vcs": "git",
     "laborHours": 2000,
     "tags": [
@@ -38,7 +38,7 @@
       "email": "aappling@usgs.gov"
     },
     "date": {
-      "metadataLastUpdated": "2023-07-02"
+      "metadataLastUpdated": "2023-07-05"
     }
   }
 ]
