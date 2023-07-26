@@ -13,3 +13,4 @@ temp
 ^pkgdown$
 ^CONDUCT\.md$
 ^streamMetabolizer\.Rproj$
+^\.github$
