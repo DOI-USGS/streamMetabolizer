@@ -83,7 +83,7 @@
                         <h4 data-toc-skip class="author">Alison
 Appling</h4>
             
-            <h4 data-toc-skip class="date">2023-07-02</h4>
+            <h4 data-toc-skip class="date">2023-07-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/USGS-R/streamMetabolizer/blob/HEAD/vignettes/gpp_er_eqs.Rmd" class="external-link"><code>vignettes/gpp_er_eqs.Rmd</code></a></small>
       <div class="d-none name"><code>gpp_er_eqs.Rmd</code></div>
@@ -117,8 +117,8 @@ over time.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the Classic: linear GPP, constant ER (also the default)</span></span>
 <span><span class="va">mm_classic</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'linlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'linlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></span>
 <span><span class="va">mm_classic</span></span></code></pre></div>
 <pre><code><span><span class="co">## metab_model of type metab_mle </span></span>
@@ -132,7 +132,7 @@ over time.</p>
 <span><span class="co">##   init.GPP.daily    8                                                                </span></span>
 <span><span class="co">##   init.ER.daily     -10                                                              </span></span>
 <span><span class="co">##   init.K600.daily   10                                                               </span></span>
-<span><span class="co">## Fitting time: 1.822 secs elapsed</span></span>
+<span><span class="co">## Fitting time: 1.606 secs elapsed</span></span>
 <span><span class="co">## Parameters (3 dates):</span></span>
 <span><span class="co">##         date GPP.daily GPP.daily.lower GPP.daily.upper   ER.daily ER.daily.lower ER.daily.upper</span></span>
 <span><span class="co">## 1 2012-09-18 2.814873         2.158410        3.471335 -2.113937       -2.647969      -1.579906</span></span>
@@ -152,8 +152,8 @@ constant.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the Saturator: GPP saturating with light, constant ER</span></span>
 <span><span class="va">mm_saturator</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></span>
 <span><span class="va">mm_saturator</span></span></code></pre></div>
 <pre><code><span><span class="co">## metab_model of type metab_mle </span></span>
@@ -168,7 +168,7 @@ constant.</p>
 <span><span class="co">##   init.alpha        1e-04                                                            </span></span>
 <span><span class="co">##   init.ER.daily     -10                                                              </span></span>
 <span><span class="co">##   init.K600.daily   10                                                               </span></span>
-<span><span class="co">## Fitting time: 2.687 secs elapsed</span></span>
+<span><span class="co">## Fitting time: 2.378 secs elapsed</span></span>
 <span><span class="co">## Parameters (3 dates):</span></span>
 <span><span class="co">##         date       Pmax Pmax.lower Pmax.upper         alpha  alpha.lower  alpha.upper     ER.daily</span></span>
 <span><span class="co">## 1 2012-09-18  6.033048    5.715948   6.350149 0.0083268769  0.0078854764 0.0087682775 -1.93445254 </span></span>
@@ -190,7 +190,7 @@ constant.</p>
 and a summary in the above print-out. They can be inspected in detail by
 looking directly at the fitted daily parameters:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date</span></span>
 <span><span class="co">## 1 2012-09-18</span></span>
 <span><span class="co">## 2 2012-09-19</span></span>
@@ -207,7 +207,7 @@ looking directly at the fitted daily parameters:</p>
 prediction by pulling out the daily metabolism predictions (but there
 aren’t any, so those columns are empty):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_metab.html">predict_metab</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">warnings</span>, <span class="va">errors</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date warnings errors</span></span>
 <span><span class="co">## 1 2012-09-18                </span></span>
 <span><span class="co">## 2 2012-09-19                </span></span>
@@ -215,7 +215,7 @@ aren’t any, so those columns are empty):</p>
 <p>You can predict and/or plot instantaneous DO values from the fitted
 daily parameters.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">head</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_DO.html">predict_DO</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">head</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date          solar.time DO.obs   DO.sat depth temp.water light   DO.mod</span></span>
 <span><span class="co">## 1 2012-09-18 2012-09-18 04:05:58   8.41 9.083329  0.16       3.60     0 8.410000</span></span>
 <span><span class="co">## 2 2012-09-18 2012-09-18 04:20:58   8.42 9.093063  0.16       3.56     0 8.403197</span></span>
@@ -234,8 +234,8 @@ or as values that apply to every date in specs(). The two methods can
 even be combined.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mm_saturator2</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span>, data_daily<span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span>, <span class="va">date</span>, init.Pmax<span class="op">=</span><span class="va">Pmax</span>, init.alpha<span class="op">=</span><span class="va">alpha</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator2</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date      Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily</span></span>
@@ -248,8 +248,8 @@ even be combined.</p>
 <span><span class="co">## 3     0.7089138</span></span></code></pre>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mm_saturator3</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator3</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily</span></span>
@@ -270,8 +270,8 @@ even be combined.</p>
 <span><span class="co">## 3</span></span></code></pre>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mm_saturator4</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/mm_name.html">mm_name</a></span><span class="op">(</span><span class="st">'mle'</span>, GPP_fun<span class="op">=</span><span class="st">'satlight'</span>, ER_fun<span class="op">=</span><span class="st">'constant'</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="fu"><a href="../reference/specs.html">specs</a></span><span class="op">(</span>init.Pmax<span class="op">=</span><span class="fl">6.2</span>, init.alpha<span class="op">=</span><span class="fl">0.008</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/pkg/magrittr/man/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/metab.html">metab</a></span><span class="op">(</span><span class="va">dat</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html" class="external-link">transmute</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator</span><span class="op">)</span>, <span class="va">date</span>, init.Pmax<span class="op">=</span><span class="va">Pmax</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, init.alpha<span class="op">=</span><span class="va">alpha</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>,<span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/get_params.html">get_params</a></span><span class="op">(</span><span class="va">mm_saturator4</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##         date     Pmax   Pmax.sd       alpha     alpha.sd  ER.daily ER.daily.sd K600.daily</span></span>
