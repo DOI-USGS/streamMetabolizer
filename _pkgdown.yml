@@ -1,4 +1,16 @@
 url: http://usgs-r.github.io/streamMetabolizer/
 template:
   bootstrap: 5
+  theme: atom-one-light
+  bslib:
+    bg: "white"
+    fg: "#283140"
+    navbar-brand-color: "white"
+    navbar-light-color: "white"
+    nav-link-color: "white"
+    nav-link-hover-color: "#a9a9a9"
+    navbar-light-brand-hover-color: "white"
+    navbar-light-hover-color: "white"
+    text-muted: "white"
+    pkgdown-nav-height: 125px
 
