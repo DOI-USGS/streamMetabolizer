@@ -21,6 +21,3 @@ inst/models/*.stanrds
 inst/doc
 doc
 Meta
-/doc/
-/Meta/
-docs
