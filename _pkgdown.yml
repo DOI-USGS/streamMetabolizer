@@ -1,4 +1,37 @@
-url: http://usgs-r.github.io/streamMetabolizer/
+# url: http://usgs-r.github.io/streamMetabolizer/
 template:
   bootstrap: 5
+  theme: atom-one-light
+  includes:
+    before_title: '<a href="https://www.usgs.gov/"><img src="logo.png" id="logo" alt="Home" style="padding: 0px 50px 0px 0px;"></a>'
+  bslib:
+    bg: "white"
+    fg: "#283140"
+    navbar-brand-color: "white"
+    navbar-light-color: "white"
+    nav-link-color: "white"
+    nav-link-hover-color: "#a9a9a9"
+    navbar-light-brand-hover-color: "white"
+    navbar-light-hover-color: "white"
+    text-muted: "white"
+    pkgdown-nav-height: 125px
+navbar:
+  left:
+  - text: Quickstart
+    href: articles/get_started.html
+  - text: Function Help
+    href: reference/index.html
+  - text: Data Preparation
+    href: articles/data_prep.html
+  - text: More Articles
+    menu:
+    - text: GPP and ER Equations
+      href: articles/gpp_er_eqs.html
+    - text: Model Structures
+      href: articles/model_structures.html
+    - text: Simulations
+      href: articles/simulations.html
+  right:
+    - icon: fa-github fa-lg
+      href: https://github.com/USGS-R/streamMetabolizer
 
