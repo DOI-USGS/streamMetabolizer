@@ -12,3 +12,6 @@ into the project, you can
 [fork this repository](https://help.github.com/articles/fork-a-repo/) and
 [submit a pull request](https://help.github.com/articles/about-pull-requests/)
 for review.
+
+Please note that non-governmental contributions explicitly give up their right to copyright 
+and license their contribution under the repository’s current license.
