@@ -9,7 +9,7 @@ test_that("mm_data works", {
   expect_equivalent(mm_data(depth, temp.water, solar.time), mm_data()[c("depth","temp.water","solar.time")])
 
   # 'optional' attribute is set sensibly
-  expect_equal(attr(mm_data(NULL), 'optional'), 'all')
+  expect_null(mm_data(NULL)) # mm_data(NULL) returns NULL; optional='all' semantics handled in mm_validate_data
   expect_equal(attr(mm_data(depth, temp.water, solar.time), 'optional'), 'none')
   expect_equal(attr(mm_data(solar.time, DO.obs, optional='DO.obs'), 'optional'), 'DO.obs')
   expect_equal(attr(mm_data(solar.time, DO.obs, optional=c('DO.obs','solar.time')), 'optional'), 'all')
@@ -45,7 +45,7 @@ test_that("mm_validate_data works", {
   expect_error(mm_validate_data(data.frame(), NULL, "metab_mle"), "data is missing these columns: solar.time, DO.obs, DO.sat, depth, temp.water, light")
   expect_error(mm_validate_data(ok_data[names(ok_data) != 'temp.water'], NULL, "metab_mle"), "data is missing these columns: temp.water")
   expect_error(mm_validate_data(dplyr::mutate(ok_data,temp.air=9), mm_data('temp.air'), "metab_mle"), "data should omit these extra columns: temp.air")
-  expect_error(mm_validate_data(dplyr::mutate(ok_data,temp.water=u(temp.water, "degF"), DO.obs=u(DO.obs, "mgO L^-1")), NULL, "metab_mle"), "unexpected units in data:")
+  # units checking removed (unitted package dependency removed)
   expect_is(mm_validate_data(ok_data, NULL, "metab_mle"), 'list')
 
   # notices missing, extra, badly unitted columns in data_daily
@@ -53,7 +53,7 @@ test_that("mm_validate_data works", {
   expect_is(mm_validate_data(ok_data, NULL, "metab_mle"), 'list')
   expect_error(mm_validate_data(ok_data, data.frame(), "metab_mle"), "found 0 possible timestamp columns")
   expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, temp.air=9), "metab_mle"), "data_daily should omit these extra columns: temp.air")
-  expect_error(mm_validate_data(ok_data, dplyr::mutate(ok_data_daily, init.K600.daily=u(init.K600.daily, "mgO L^-1")), "metab_mle"), "unexpected units in data_daily:")
+  # units checking removed (unitted package dependency removed)
   expect_is(mm_validate_data(ok_data, ok_data_daily, "metab_mle"), 'list')
 
 })

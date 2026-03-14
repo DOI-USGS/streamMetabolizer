@@ -27,7 +27,7 @@ mm_validate_data <- function(
     
     # the data expectation is set by the default data argument to the specific metabolism class
     expected.data <- formals(metab_class)[[data_type]] %>% eval()
-    optional.data <- attr(expected.data, 'optional')
+    optional.data <- if(is.null(expected.data)) 'all' else attr(expected.data, 'optional')
     if('all' %in% optional.data) optional.data <- c('all', names(expected.data))
     
     # quick return if dat is NULL

@@ -91,8 +91,8 @@ test_that("converting between UTC and local time works", {
   expect_error(convert_UTC_to_localtime(adate, latitude=51.48, longitude=0, time.type="not a type"), 'should be one of .standard local., .daylight local.', info="only accept valid time.types")
   #   real time changes
   # "POSIX has positive signs west of Greenwich" - https://opensource.apple.com/source/system_cmds/system_cmds-230/zic.tproj/datfiles/etcetera
-  expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(40, "degN"), longitude=105.3, time.type="standard")), "Etc/GMT-8", info="go east, be POSIX-negative")
-  expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=u(37, "degN"), longitude=-105.3, time.type="standard")), "Etc/GMT+7", info="go west, be POSIX-positive")
+  expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=40, longitude=105.3, time.type="standard")), "Etc/GMT-8", info="go east, be POSIX-negative")
+  expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=37, longitude=-105.3, time.type="standard")), "Etc/GMT+7", info="go west, be POSIX-positive")
   expect_equal(lubridate::tz(convert_UTC_to_localtime(adate, latitude=37, longitude=-105.3, time.type="standard")), "Etc/GMT+7", info="go west, be POSIX-positive")
   expect_equal(convert_UTC_to_localtime(somedates, latitude=34, longitude=-80, time.type="daylight"), lubridate::with_tz(somedates, "America/New_York"), info="handle multiple dates")
   expect_equal(convert_UTC_to_localtime(somedates, latitude=34, longitude=-80, time.type="standard"), lubridate::with_tz(somedates, "Etc/GMT+5"), info="handle multiple dates")
