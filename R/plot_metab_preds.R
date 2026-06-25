@@ -55,7 +55,7 @@ plot_metab_preds <- function(metab_preds, y_var=c('GPP','ER'),
       preds_ggplot <- v(metab_preds_all) %>%
         filter(as %in% y_var) %>%
         group_by(as) %>%
-        do({ if(all(is.na(.$fit))) .[FALSE,] else . }) %>%
+        group_modify(~ if(all(is.na(.x$fit))) .x[FALSE,] else .x) %>%
         ungroup()
       if('GPP' %in% names(y_lim)) {
         lim <- y_lim[['GPP']][1]; if(!is.na(lim)) preds_ggplot <- filter(preds_ggplot, as != 'GPP' | is.na(fit) | fit >= lim)
