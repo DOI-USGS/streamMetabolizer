@@ -57,7 +57,7 @@ Suggests:
     xts,
     rmarkdown
 Remotes:
-    github::appling/unitted
+    github::mdodrill-usgs/unitted@fix/select-defunct
 Collate:
     '01-onLoad.R'
     'calc_DO_deficit.R'
