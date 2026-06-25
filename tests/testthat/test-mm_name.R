@@ -1,4 +1,3 @@
-context('mm_name')
 
 test_that("mm_name can generate names", {
   # missing args OK

@@ -1,4 +1,3 @@
-context("metab_night")
 
 test_that("metab_night models can be created", {
   

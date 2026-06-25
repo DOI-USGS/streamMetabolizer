@@ -1,4 +1,3 @@
-context("model_by_ply")
 
 test_that("mm_model_by_ply creates intuitive ply_dates from day_start and day_end", {
   

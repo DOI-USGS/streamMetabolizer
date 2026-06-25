@@ -1,4 +1,3 @@
-context("hierarchy")
 
 ## There are currently no automated tests here because everything is slow.
 ## Longer tests, where we can investigate parameter estimates & convergence, are

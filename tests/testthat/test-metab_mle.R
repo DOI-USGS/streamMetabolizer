@@ -1,4 +1,3 @@
-context("metab_mle")
 
 test_that("metab_mle models can be created", {
 

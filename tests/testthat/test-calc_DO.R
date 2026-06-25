@@ -1,4 +1,3 @@
-context("calc_DO")
 
 library(unitted)
 

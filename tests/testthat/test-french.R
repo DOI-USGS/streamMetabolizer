@@ -1,4 +1,3 @@
-context("french creek data")
 
 test_that("French Creek data are similar for streamMetabolizer & Bob Hall's code", {
 

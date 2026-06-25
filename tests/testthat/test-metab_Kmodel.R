@@ -1,4 +1,3 @@
-context("metab_Kmodel")
 
 library(dplyr)
 

@@ -1,4 +1,3 @@
-context("metab_bayes")
 
 # # NB: these lines work within testthat() calls:
 # skip()

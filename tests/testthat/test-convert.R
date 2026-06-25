@@ -1,4 +1,3 @@
-context("convert")
 
 test_that("converting between k600 and kgas works", {
   # k600 to kgas
