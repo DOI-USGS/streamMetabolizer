@@ -16,7 +16,7 @@
 #'   the parameter.
 #' @param style character indicating which graphics package to use
 #' @import dplyr
-#' @importFrom tidyr spread
+#' @importFrom tidyr pivot_wider
 #' @importFrom stats dunif qnorm dnorm qlnorm dlnorm qbeta dbeta qgamma dgamma
 #'   qcauchy dcauchy rcauchy density
 #' @export
@@ -259,7 +259,7 @@ plot_distribs <- function(
       # prepare the data for dygraphs. if the distributions overlap on the x
       # axis, they'll look really funny unless we fill in the NA values, so also
       # approx those in
-      dydensdf <- spread(densdf, dist, y)
+      dydensdf <- pivot_wider(densdf, names_from = dist, values_from = y)
       if(plot_prior_rescaled || plot_posterior) {
         prior <- prior_rescaled <- posterior <- '.dplyr.var'
         dydensdf <- dydensdf %>%
