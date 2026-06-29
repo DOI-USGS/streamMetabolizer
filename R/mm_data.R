@@ -81,7 +81,7 @@
 #'
 #' @export
 #' @importFrom unitted u v get_units
-#' @importFrom lazyeval lazy_dots
+#' @importFrom rlang enquos as_name quo_is_null
 #' @import dplyr
 #' @examples
 #' # all possible columns
@@ -135,14 +135,14 @@ mm_data <- function(..., optional='none') {
     D.upper =   u(5,"gO2 m^-3 d^-1")
   )
   dat <- u(as.data.frame(lapply(dat, v)), sapply(dat, get_units))
-  .dots <- lazy_dots(...)
-  .nulldot <- length(.dots) == 1 && is.null(.dots[[1]]$expr)
+  .dots <- rlang::enquos(...)
+  .nulldot <- length(.dots) == 1 && rlang::quo_is_null(.dots[[1]])
   dat <- if(isTRUE(.nulldot)) {
     u(NULL)
   } else if(length(.dots) == 0) {
     dat
   } else {
-    .dotnames <- sapply(.dots, function(dot) as.character(dot$expr))
+    .dotnames <- sapply(.dots, rlang::as_name)
     dat[.dotnames]
   }
 
