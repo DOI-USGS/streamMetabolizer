@@ -117,9 +117,9 @@ plot_DO_preds <- function(
         filter(as %in% y_var) %>%
         arrange(solar.time) %>%
         group_by(date) %>%
-        do(., {
-          out <- .[c(seq_len(nrow(.)),nrow(.)),]
-          out[nrow(.)+1,c('pure','mod','obs')] <- NA
+        group_modify(~ {
+          out <- .x[c(seq_len(nrow(.x)), nrow(.x)), ]
+          out[nrow(.x)+1, c('pure','mod','obs')] <- NA
           out
         }) %>%
         ungroup()
