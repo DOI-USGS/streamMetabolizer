@@ -616,7 +616,7 @@ prepdata_bayes <- function(
 #' @import parallel
 #' @import dplyr
 #' @import tibble
-#' @importFrom tidyr gather spread
+#' @importFrom tidyr pivot_longer pivot_wider
 #' @keywords internal
 runstan_bayes <- function(
   data_list, model_path, model_name, params_out, split_dates, keep_mcmc=FALSE,
@@ -824,7 +824,7 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
     tibble::as_tibble(mcmc_mat[dim_rows,,drop=FALSE]) %>%
       mutate(rowname=rownames(mcmc_mat[dim_rows,,drop=FALSE])) %>%
       select(rowname, everything()) %>%
-      gather(stat, value=val, 2:ncol(.)) %>%
+      pivot_longer(cols = -rowname, names_to = "stat", values_to = "val") %>%
       mutate(variable=gsub("\\[[[:digit:]|,]+\\]", "", rowname),
              indexstr=if(1 %in% par_dims) '1' else sapply(strsplit(rowname, "\\[|\\]"), `[[`, 2),
              # parse/factorify the index for ordering
@@ -852,7 +852,7 @@ format_mcmc_mat_nosplit <- function(mcmc_mat, data_list_d, data_list_n, model_na
              varstat=ordered(paste0(variable, '_', stat), varstat_order)) %>%
       select(date_index, time_index, index, varstat, val) %>%
       arrange(date_index, time_index, index) %>%
-      spread(varstat, val)
+      pivot_wider(names_from = varstat, values_from = val)
   })
 
   # add the model object as a list item if requested
