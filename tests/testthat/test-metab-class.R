@@ -1,4 +1,3 @@
-context("metab_model class and inheriting classes")
 
 test_that("metab_model objects can be created and accessed", {
   

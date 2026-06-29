@@ -1,4 +1,3 @@
-context("calc_depth")
 
 test_that("calc_depth checks & returns values & units as expected", {
   # basic numbers, with & without defaults

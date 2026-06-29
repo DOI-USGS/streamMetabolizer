@@ -1,4 +1,3 @@
-context('distribs')
 # this file is really just to help me wrap my head around parameter
 # distributions and parameter scaling.
 

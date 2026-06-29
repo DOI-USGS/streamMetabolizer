@@ -1,4 +1,3 @@
-context("calc_light")
 
 test_that("high-level light function works", {
   stimes <- lubridate::force_tz(as.POSIXct(sprintf('2016-09-27 %02d:00', 1:24)), 'UTC')

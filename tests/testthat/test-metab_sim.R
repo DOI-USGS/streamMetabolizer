@@ -1,4 +1,3 @@
-context("metab_sim")
 
 test_that("metab_sim predictions (predict_metab, predict_DO) make sense", {
 

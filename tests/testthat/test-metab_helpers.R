@@ -1,4 +1,3 @@
-context("metab_model_helpers")
 
 test_that("mm_data works", {
 
