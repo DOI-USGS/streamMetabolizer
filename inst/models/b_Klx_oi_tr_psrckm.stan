@@ -31,12 +31,12 @@ data {
   vector[d] lnQ_daily;
   
   // Data
-  vector[d] DO_obs[n];
-  vector[d] DO_sat[n];
-  vector[d] light[n];
-  vector[d] const_mult_ER[n];
-  vector[d] depth[n];
-  vector[d] KO2_conv[n];
+  array[n] vector[d] DO_obs;
+  array[n] vector[d] DO_sat;
+  array[n] vector[d] light;
+  array[n] vector[d] const_mult_ER;
+  array[n] vector[d] depth;
+  array[n] vector[d] KO2_conv;
 }
 
 parameters {
@@ -55,10 +55,10 @@ transformed parameters {
   vector[d] K600_daily_predlog;
   real<lower=0> err_obs_iid_sigma;
   vector<lower=0>[d] alpha;
-  vector[d] GPP_inst[n];
-  vector[d] ER_inst[n];
-  vector[d] KO2_inst[n];
-  vector[d] DO_mod[n];
+  array[n] vector[d] GPP_inst;
+  array[n] vector[d] ER_inst;
+  array[n] vector[d] KO2_inst;
+  array[n] vector[d] DO_mod;
   
   // Rescale error distribution parameters
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
@@ -114,7 +114,7 @@ model {
   
 }
 generated quantities {
-  vector[d] err_obs_iid[n];
+  array[n] vector[d] err_obs_iid;
   vector[d] GPP;
   vector[d] ER;
   vector[n] DO_obs_vec; // temporary

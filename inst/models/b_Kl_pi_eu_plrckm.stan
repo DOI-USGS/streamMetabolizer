@@ -30,12 +30,12 @@ data {
   vector[d] lnQ_daily;
   
   // Data
-  vector[d] DO_obs[n];
-  vector[d] DO_sat[n];
-  vector[d] light_mult_GPP[n];
-  vector[d] const_mult_ER[n];
-  vector[d] depth[n];
-  vector[d] KO2_conv[n];
+  array[n] vector[d] DO_obs;
+  array[n] vector[d] DO_sat;
+  array[n] vector[d] light_mult_GPP;
+  array[n] vector[d] const_mult_ER;
+  array[n] vector[d] depth;
+  array[n] vector[d] KO2_conv;
 }
 
 parameters {
@@ -53,12 +53,12 @@ parameters {
 transformed parameters {
   vector[d] K600_daily_predlog;
   real<lower=0> K600_daily_sigma;
-  vector[d] DO_mod_partial_sigma[n];
+  array[n] vector[d] DO_mod_partial_sigma;
   real<lower=0> err_proc_iid_sigma;
-  vector[d] GPP_inst[n];
-  vector[d] ER_inst[n];
-  vector[d] KO2_inst[n];
-  vector[d] DO_mod_partial[n];
+  array[n] vector[d] GPP_inst;
+  array[n] vector[d] ER_inst;
+  array[n] vector[d] KO2_inst;
+  array[n] vector[d] DO_mod_partial;
   
   // Rescale pooling distribution parameter
   K600_daily_sigma = K600_daily_sigma_sigma * K600_daily_sigma_scaled;
@@ -117,7 +117,7 @@ model {
   
 }
 generated quantities {
-  vector[d] err_proc_iid[n-1];
+  array[n-1] vector[d] err_proc_iid;
   vector[d] GPP;
   vector[d] ER;
   vector[d] DO_R2;

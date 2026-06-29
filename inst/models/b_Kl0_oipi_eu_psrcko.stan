@@ -31,12 +31,12 @@ data {
   vector[d] lnQ_daily;
   
   // Data
-  vector[d] DO_obs[n];
-  vector[d] DO_sat[n];
-  vector[d] light[n];
-  vector[d] const_mult_ER[n];
-  vector[d] depth[n];
-  vector[d] KO2_conv[n];
+  array[n] vector[d] DO_obs;
+  array[n] vector[d] DO_sat;
+  array[n] vector[d] light;
+  array[n] vector[d] const_mult_ER;
+  array[n] vector[d] depth;
+  array[n] vector[d] KO2_conv;
 }
 
 parameters {
@@ -49,20 +49,20 @@ parameters {
   
   real<lower=0> err_obs_iid_sigma_scaled;
   real<lower=0> err_proc_iid_sigma_scaled;
-  vector[d] DO_mod[n];
+  array[n] vector[d] DO_mod;
 }
 
 transformed parameters {
   vector[d] K600_daily_predlog;
   vector[d] K600_daily;
   real<lower=0> err_obs_iid_sigma;
-  vector[d] DO_mod_partial_sigma[n];
+  array[n] vector[d] DO_mod_partial_sigma;
   real<lower=0> err_proc_iid_sigma;
   vector<lower=0>[d] alpha;
-  vector[d] GPP_inst[n];
-  vector[d] ER_inst[n];
-  vector[d] KO2_inst[n];
-  vector[d] DO_mod_partial[n];
+  array[n] vector[d] GPP_inst;
+  array[n] vector[d] ER_inst;
+  array[n] vector[d] KO2_inst;
+  array[n] vector[d] DO_mod_partial;
   
   // Rescale error distribution parameters
   err_obs_iid_sigma = err_obs_iid_sigma_scale * err_obs_iid_sigma_scaled;
@@ -129,8 +129,8 @@ model {
   
 }
 generated quantities {
-  vector[d] err_obs_iid[n];
-  vector[d] err_proc_iid[n-1];
+  array[n] vector[d] err_obs_iid;
+  array[n-1] vector[d] err_proc_iid;
   vector[d] GPP;
   vector[d] ER;
   vector[n] DO_obs_vec; // temporary
