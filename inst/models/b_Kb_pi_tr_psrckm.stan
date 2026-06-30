@@ -28,16 +28,16 @@ data {
   
   // Daily data
   vector[d] DO_obs_1;
-  int<lower=1,upper=b> lnQ_bins[2,d];
-  vector<lower=0,upper=1>[d] lnQ_bin_weights[2];
+  array[2, d] int<lower=1, upper=b> lnQ_bins;
+  array[2] vector<lower=0, upper=1>[d] lnQ_bin_weights;
   
   // Data
-  vector[d] DO_obs[n];
-  vector[d] DO_sat[n];
-  vector[d] light[n];
-  vector[d] const_mult_ER[n];
-  vector[d] depth[n];
-  vector[d] KO2_conv[n];
+  array[n] vector[d] DO_obs;
+  array[n] vector[d] DO_sat;
+  array[n] vector[d] light;
+  array[n] vector[d] const_mult_ER;
+  array[n] vector[d] depth;
+  array[n] vector[d] KO2_conv;
 }
 
 parameters {
@@ -55,13 +55,13 @@ parameters {
 transformed parameters {
   vector[d] K600_daily_predlog;
   real<lower=0> K600_daily_sigma;
-  vector[d] DO_mod_partial_sigma[n];
+  array[n] vector[d] DO_mod_partial_sigma;
   real<lower=0> err_proc_iid_sigma;
   vector<lower=0>[d] alpha;
-  vector[d] GPP_inst[n];
-  vector[d] ER_inst[n];
-  vector[d] KO2_inst[n];
-  vector[d] DO_mod_partial[n];
+  array[n] vector[d] GPP_inst;
+  array[n] vector[d] ER_inst;
+  array[n] vector[d] KO2_inst;
+  array[n] vector[d] DO_mod_partial;
   
   // Rescale pooling distribution parameter
   K600_daily_sigma = K600_daily_sigma_sigma * K600_daily_sigma_scaled;
@@ -102,7 +102,7 @@ transformed parameters {
       ) .* (timestep ./ (2.0 + KO2_inst[i+1] * timestep));
     for(j in 1:d) {
       DO_mod_partial_sigma[i+1,j] = err_proc_iid_sigma * 
-        sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*
+        sqrt(inv_square(depth[i,j]) + inv_square(depth[i+1,j])) .*
         (timestep / (2.0 + KO2_inst[i+1,j] * timestep));
     }
   }
@@ -130,7 +130,7 @@ model {
   
 }
 generated quantities {
-  vector[d] err_proc_iid[n-1];
+  array[n-1] vector[d] err_proc_iid;
   vector[d] GPP;
   vector[d] ER;
   vector[d] DO_R2;

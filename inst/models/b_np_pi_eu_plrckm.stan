@@ -24,12 +24,12 @@ data {
   vector[d] DO_obs_1;
   
   // Data
-  vector[d] DO_obs[n];
-  vector[d] DO_sat[n];
-  vector[d] light_mult_GPP[n];
-  vector[d] const_mult_ER[n];
-  vector[d] depth[n];
-  vector[d] KO2_conv[n];
+  array[n] vector[d] DO_obs;
+  array[n] vector[d] DO_sat;
+  array[n] vector[d] light_mult_GPP;
+  array[n] vector[d] const_mult_ER;
+  array[n] vector[d] depth;
+  array[n] vector[d] KO2_conv;
 }
 
 parameters {
@@ -41,12 +41,12 @@ parameters {
 }
 
 transformed parameters {
-  vector[d] DO_mod_partial_sigma[n];
+  array[n] vector[d] DO_mod_partial_sigma;
   real<lower=0> err_proc_iid_sigma;
-  vector[d] GPP_inst[n];
-  vector[d] ER_inst[n];
-  vector[d] KO2_inst[n];
-  vector[d] DO_mod_partial[n];
+  array[n] vector[d] GPP_inst;
+  array[n] vector[d] ER_inst;
+  array[n] vector[d] KO2_inst;
+  array[n] vector[d] DO_mod_partial;
   
   // Rescale error distribution parameters
   err_proc_iid_sigma = err_proc_iid_sigma_scale * err_proc_iid_sigma_scaled;
@@ -94,7 +94,7 @@ model {
   K600_daily ~ lognormal(K600_daily_meanlog, K600_daily_sdlog);
 }
 generated quantities {
-  vector[d] err_proc_iid[n-1];
+  array[n-1] vector[d] err_proc_iid;
   vector[d] GPP;
   vector[d] ER;
   vector[d] DO_R2;

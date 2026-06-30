@@ -203,28 +203,28 @@ mm_generate_mcmc_file <- function(
           linear=c(
             'vector[d] lnQ_daily;'),
           binned=c(
-            'int<lower=1,upper=b> lnQ_bins[2,d];',
-            'vector<lower=0,upper=1>[d] lnQ_bin_weights[2];')
+            'array[2, d] int<lower=1, upper=b> lnQ_bins;',
+            'array[2] vector<lower=0, upper=1>[d] lnQ_bin_weights;')
         )),
       
       # prepare to iterate over n obs for all d at a time:
       # https://groups.google.com/forum/#!topic/stan-users/ZHeFFV4q_gk
       indent(
         comment('Data'),
-        'vector[d] DO_obs[n];',
-        'vector[d] DO_sat[n];',
+        'array[n] vector[d] DO_obs;',
+        'array[n] vector[d] DO_sat;',
         # light_mult_GPP and const_mult_ER are multipliers that reflect light
         # and a constant, respectively, and produce estimates of GPP and ER,
         # respectively. The resulting GPP and ER estimates are in per-day units
         # (not per-timestep units)
         switch(
           features$GPP_fun,
-          linlight='vector[d] light_mult_GPP[n];',
-          satlight='vector[d] light[n];'
+          linlight='array[n] vector[d] light_mult_GPP;',
+          satlight='array[n] vector[d] light;'
         ),
-        'vector[d] const_mult_ER[n];',
-        'vector[d] depth[n];',
-        'vector[d] KO2_conv[n];'),
+        'array[n] vector[d] const_mult_ER;',
+        'array[n] vector[d] depth;',
+        'array[n] vector[d] KO2_conv;'),
       
       '}',''
     ),
@@ -290,16 +290,16 @@ mm_generate_mcmc_file <- function(
           # need to figure out how to scale phi (which might be 0-1 or very close to 0)
           'real<lower=0, upper=1> err_proc_acor_phi;',
           'real<lower=0> err_proc_acor_sigma_scaled;',
-          sprintf('vector[d] err_proc_acor_inc[%s];', switch(ode_method, euler='n-1', trapezoid='n'))),
+          sprintf('array[%s] vector[d] err_proc_acor_inc;', switch(ode_method, euler='n-1', trapezoid='n'))),
         if(err_proc_iid) c(
           'real<lower=0> err_proc_iid_sigma_scaled;'),
         if(err_proc_GPP) c(
           'real<lower=0> err_mult_GPP_sdlog_scaled;',
-          'vector<lower=0>[d] err_mult_GPP[n];'),
+          'array[n] vector<lower=0>[d] err_mult_GPP;'),
         
         # DO_mod if it's a fitted parameter (oipi models)
         if(err_obs_iid && err_proc_iid) c(
-          'vector[d] DO_mod[n];')
+          'array[n] vector[d] DO_mod;')
         
       ),
       '}',''
@@ -327,7 +327,7 @@ mm_generate_mcmc_file <- function(
       if(err_obs_iid) c(
         'real<lower=0> err_obs_iid_sigma;'),
       if(err_proc_acor || err_proc_iid) c(
-        'vector[d] DO_mod_partial_sigma[n];'
+        'array[n] vector[d] DO_mod_partial_sigma;'
       ),
       if(err_proc_acor) c(
         # 'real<lower=0, upper=1> err_proc_acor_phi;', # currently opting not to scale phi (which might be 0-1 or very close to 0)
@@ -343,25 +343,25 @@ mm_generate_mcmc_file <- function(
       
       # instantaneous GPP, ER, and KO2. the nth value isn't used to calculate DO
       # when ode_method=euler, but it's always used to calculate GPP and ER
-      c('vector[d] GPP_inst[n];',
-        'vector[d] ER_inst[n];',
-        'vector[d] KO2_inst[n];'),
+      c('array[n] vector[d] GPP_inst;',
+        'array[n] vector[d] ER_inst;',
+        'array[n] vector[d] KO2_inst;'),
       
       # these variables contain the combined, unnormalized GPP-producing
       # multiplier (combo_mult_GPP) and the sum of those multipliers on each day
       # (sum_combo_mult_GPP), from which the final GPP multiplier (mult_GPP)
       # will be implicitly calculated in the GPP_inst equation
       if(err_proc_GPP) c(
-        'vector<lower=0>[d] combo_mult_GPP[n];',
+        'array[n] vector<lower=0>[d] combo_mult_GPP;',
         'vector<lower=0>[d] mean_combo_mult_GPP;'),
       
       # instantaneous DO and possibly process error values
       if(err_proc_iid)
-        'vector[d] DO_mod_partial[n];'
+        'array[n] vector[d] DO_mod_partial;'
       else # err_obs_iid and/or err_proc_acor without err_proc_iid
-        'vector[d] DO_mod[n];',
+        'array[n] vector[d] DO_mod;',
       if(err_proc_acor)
-        sprintf('vector[d] err_proc_acor[%s];', switch(ode_method, euler='n-1', trapezoid='n'))
+        sprintf('array[%s] vector[d] err_proc_acor;', switch(ode_method, euler='n-1', trapezoid='n'))
     ),
     
     # pooling parameters
@@ -557,7 +557,7 @@ mm_generate_mcmc_file <- function(
                   s('timestep ./ depth[i,j]')
                 ),
                 'trapezoid' = indent(
-                  'sqrt(pow(depth[i,j], -2) + pow(depth[i+1,j], -2)) .*',
+                  'sqrt(inv_square(depth[i,j]) + inv_square(depth[i+1,j])) .*',
                   switch(
                     deficit_src,
                     'DO_obs' = s('(timestep / 2.0)'),
@@ -685,11 +685,11 @@ mm_generate_mcmc_file <- function(
     'generated quantities {',
     
     chunk(
-      if(err_obs_iid) 'vector[d] err_obs_iid[n];',
-      if(err_proc_iid) 'vector[d] err_proc_iid[n-1];',
+      if(err_obs_iid) 'array[n] vector[d] err_obs_iid;',
+      if(err_proc_iid) 'array[n-1] vector[d] err_proc_iid;',
       if(err_proc_GPP) c(
-        'vector[d] GPP_inst_partial[n];',
-        'vector[d] err_proc_GPP[n];',
+        'array[n] vector[d] GPP_inst_partial;',
+        'array[n] vector[d] err_proc_GPP;',
         'int n_light_day; // temporary',
         'vector[n] GPP_inst_day; // temporary',
         'vector[n] GPP_inst_diff_day; // temporary',
