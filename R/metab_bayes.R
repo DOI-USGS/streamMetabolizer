@@ -178,7 +178,8 @@ metab_bayes <- function(
       {if(!is.null(.)) setNames(., 'Compilation') else .}
       log <- extract_object_list('log') %>% { setNames(., paste0('MCMC_', names(.))) }
       bayes_log <- c(compile_log, log)
-      bayes_compile_time <- bayes_all_list[['compile_time']]
+      compile_times <- extract_object_list('compile_time')
+      bayes_compile_time <- Reduce(`+`, compile_times[!sapply(compile_times, is.null)], system.time({}))
       bayes_mcmc <- extract_object_list('mcmcfit')
       bayes_mcmc_data <- extract_object_list('mcmc_data')
       bayes_all <- list(daily=bayes_daily)
@@ -300,12 +301,12 @@ bayes_1ply <- function(
 
   # package the results, data, warnings, and errors
   outdf <- data.frame(
-    bayes_1day[!(names(bayes_1day) %in% c('mcmcfit','log','compile_log'))],
+    bayes_1day[!(names(bayes_1day) %in% c('mcmcfit','log','compile_log','compile_time'))],
     valid_day=isTRUE(ply_validity),
     warnings=paste0(trimws(unique(warn_strs)), collapse="; "),
     errors=paste0(trimws(unique(stop_strs)), collapse="; "),
     stringsAsFactors=FALSE) %>%
-    mutate(log = list(bayes_1day$log))
+    mutate(log = list(bayes_1day$log), compile_time = list(bayes_1day$compile_time))
 
   # attach the compile_log, mcmcfit, & mcmcdata if requested/available
   if(exists('compile_log', bayes_1day)) outdf$compile_log <- list(bayes_1day$compile_log)
