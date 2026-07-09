@@ -59,7 +59,10 @@ mm_validate_data <- function(
     # missing_cols was not among the data_tests or the metab_model data were 
     # specified without a timestamp column
     if('na_times' %in% data_tests) {
-      timecol <- grep('date|time', names(dat), value=TRUE)
+      # match against the known timestamp column names rather than a
+      # substring grep for 'date'/'time', which would also match non-
+      # timestamp columns such as 'travel.time'
+      timecol <- intersect(c('solar.time','date'), names(dat))
       if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns", call.=FALSE)
       na.times <- which(is.na(dat[[timecol]]))
       if(length(na.times) > 0) {

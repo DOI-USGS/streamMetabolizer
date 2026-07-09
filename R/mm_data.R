@@ -24,6 +24,24 @@
 #'   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
 #'   \link{calc_DO_sat}}
 #'
+#'   \item{ \code{DO.obs.up} dissolved oxygen concentration observations at the
+#'   upstream station of a two-station reach, \eqn{mg O[2] L^{-1}}{mg O2 / L}}
+#'
+#'   \item{ \code{DO.sat.up} dissolved oxygen concentrations at equilibrium
+#'   saturation at the upstream station of a two-station reach, \eqn{mg O[2]
+#'   L^{-1}}{mg O2 / L}}
+#'
+#'   \item{ \code{DO.obs.down} dissolved oxygen concentration observations at
+#'   the downstream station of a two-station reach, \eqn{mg O[2] L^{-1}}{mg O2
+#'   / L}}
+#'
+#'   \item{ \code{DO.sat.down} dissolved oxygen concentrations at equilibrium
+#'   saturation at the downstream station of a two-station reach, \eqn{mg O[2]
+#'   L^{-1}}{mg O2 / L}}
+#'
+#'   \item{ \code{travel.time} reach travel time between the upstream and
+#'   downstream stations of a two-station reach, in days, \eqn{d}{d}}
+#'
 #'   \item{ \code{depth} stream depth, \eqn{m}{m}}.
 #'
 #'   \item{ \code{temp.water} water temperature, \eqn{degC}}.
@@ -97,9 +115,14 @@ mm_data <- function(..., optional='none') {
     solar.time = u(as.POSIXct("2050-03-14 15:10:00", tz="UTC"), NA),
     DO.obs =     u(10.1,"mgO2 L^-1"),
     DO.sat =     u(14.2,"mgO2 L^-1"),
+    DO.obs.up =   u(10.1,"mgO2 L^-1"),
+    DO.sat.up =   u(14.2,"mgO2 L^-1"),
+    DO.obs.down = u(9.8,"mgO2 L^-1"),
+    DO.sat.down = u(14.0,"mgO2 L^-1"),
     depth =      u(0.5,"m"),
     temp.water = u(21.8,"degC"),
     light =      u(300.9,"umol m^-2 s^-1"),
+    travel.time = u(0.05,"d"),
     discharge =  u(9,"m^3 s^-1"),
     velocity =   u(2,"m s^-1"),
     date =       u(as.Date("2050-03-14", tz="UTC"), NA),
