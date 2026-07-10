@@ -37,7 +37,11 @@ mm_parse_name <- function(model_name, expand=FALSE) {
   # parse the name
   parsed <- strsplit(basename(model_name), "_|\\.")
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
-  type <- unname(c(b='bayes', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
+  # 'b2' (not just 'b') is the whole first token for two-station model files
+  # (e.g., 'b2_np_oi_tr_plrckm.stan'), since strsplit on "_|\\." above never
+  # splits within a token; an exact-match entry here is therefore sufficient
+  # and requires no change to the token-extraction logic itself
+  type <- unname(c(b='bayes', b2='bayes_2station', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
   pool_K600 <- unname(c(
     np='none', 
     Kn='normal', Kn0='normal_sdzero', Knx='normal_sdfixed',

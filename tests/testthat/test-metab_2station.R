@@ -150,3 +150,43 @@ test_that("units are stripped from all numeric outputs", {
   expect_false(is.unitted(out$n_obs))
   expect_false(is.unitted(out$n_days))
 })
+
+
+# mm_parse_name() for two-station models ---------------------------------
+
+test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
+  parsed <- mm_parse_name('b2_np_oi_tr_plrckm.stan')
+
+  expect_equal(parsed$type, 'bayes_2station')
+  # the rest of the name is shared syntax with one-station bayes models and
+  # should parse the same way regardless of the b vs. b2 prefix
+  expect_equal(parsed$pool_K600, 'none')
+  expect_true(parsed$err_obs_iid)
+  expect_false(parsed$err_proc_acor)
+  expect_false(parsed$err_proc_iid)
+  expect_false(parsed$err_proc_GPP)
+  expect_equal(parsed$ode_method, 'trapezoid')
+  expect_equal(parsed$GPP_fun, 'linlight')
+  expect_equal(parsed$ER_fun, 'constant')
+  expect_equal(parsed$deficit_src, 'DO_mod')
+  expect_equal(parsed$engine, 'stan')
+
+  # a one-station name with the same suffix should still parse as plain 'bayes'
+  expect_equal(mm_parse_name('b_np_oi_tr_plrckm.stan')$type, 'bayes')
+})
+
+
+# predict_DO.metab_2station stub -----------------------------------------
+
+test_that("predict_DO dispatches to the metab_2station stub and errors as expected", {
+  # metab_2station() is itself a stub (see tests above) and never returns a
+  # fitted model object, so there's no way yet to construct a real
+  # metab_2station instance. Mock the class attribute alone to exercise S3
+  # dispatch of predict_DO() to predict_DO.metab_2station().
+  mm <- structure(list(), class = c('metab_2station', 'metab_model'))
+
+  expect_error(
+    predict_DO(mm),
+    "predict_DO for two-station models not yet implemented .* requires D-4 completion"
+  )
+})

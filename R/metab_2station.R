@@ -65,3 +65,22 @@ metab_2station <- function(
 
   stop('metab_2station not yet implemented')
 }
+
+#' @describeIn predict_DO Stub for two-station (VFTS) models. Not yet
+#'   functional: \code{metab_2station} does not yet produce a fitted Stan
+#'   model to predict from (see \code{\link{metab_2station}}), so this always
+#'   errors. Once implemented, this method will return a data.frame
+#'   with columns \code{solar.time}, \code{DO.obs.down} (the observed
+#'   downstream DO from the input data), and \code{DO.mod.down} (the
+#'   two-station Stan model's predicted downstream DO) -- unlike the
+#'   one-station \code{predict_DO} methods, which return \code{DO.obs}/
+#'   \code{DO.mod}.
+#' @export
+predict_DO.metab_2station <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
+
+  # NOTE: R/plot_DO_preds.R and tests/testthat/helper-rmse_DO.R both
+  # hard-code the one-station DO.obs/DO.mod column names; they'll need to
+  # branch on (or be parameterized for) DO.obs.down/DO.mod.down once this
+  # method actually returns two-station predictions.
+  stop("predict_DO for two-station models not yet implemented — requires completion")
+}

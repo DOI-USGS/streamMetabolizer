@@ -88,6 +88,7 @@ Collate:
     'lookup_timezone.R'
     'lookup_usgs_elevation.R'
     'metab.R'
+    'metab_2station.R'
     'metab_model_interface.R'
     'specs-class.R'
     'metab_model-class.R'
@@ -120,6 +121,7 @@ Collate:
     'mm_predict_DO_1ply.R'
     'mm_predict_metab_1ply.R'
     'mm_sd_to_ci.R'
+    'mm_ts_prep_data.R'
     'mm_validate_data.R'
     'plot_DO_preds.R'
     'plot_distribs.R'
@@ -129,5 +131,5 @@ Collate:
     'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.3
 Encoding: UTF-8
