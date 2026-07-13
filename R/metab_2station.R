@@ -1,6 +1,11 @@
 #' @include metab_model-class.R metab_bayes.R
 NULL
 
+# Suppress R CMD CHECK NOTEs for column names used as unbound globals in
+# dplyr NSE calls (e.g. mutate, summarise). These are data frame column
+# names resolved at runtime, not missing variable declarations.
+utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
+
 #' Two-station Bayesian metabolism model fitting function
 #'
 #' Fits a two-station (upstream/downstream, a.k.a. VFTS) Bayesian model to
@@ -33,6 +38,7 @@ NULL
 #'
 #' @export
 #' @family metab_model
+#' @importFrom utils modifyList
 metab_2station <- function(
   specs=specs(mm_name('bayes_2station')),
   data=mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
@@ -126,9 +132,7 @@ metab_2station <- function(
     inst <- NULL
     withCallingHandlers(
       tryCatch({
-        if(!suppressPackageStartupMessages(require(rstan))) {
-          stop("the rstan package is required for Stan MCMC models")
-        }
+        if (!requireNamespace("rstan", quietly = TRUE)) stop("rstan is required but not installed. Install it with: install.packages('rstan')")
 
         consolelog <- utils::capture.output(
           stanfit <- rstan::stan(
