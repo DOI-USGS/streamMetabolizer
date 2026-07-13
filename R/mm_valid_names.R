@@ -10,7 +10,7 @@
 #' @examples
 #' mm_valid_names('mle')
 #' @export
-mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
+mm_valid_names <- function(type=c('bayes','bayes_2station','mle','night','Kmodel','sim')) {
 
   type <- match.arg(type, several.ok=TRUE)
   
@@ -38,6 +38,11 @@ mm_valid_names <- function(type=c('bayes','mle','night','Kmodel','sim')) {
       # mm_names(check_validity=TRUE))
       mnames <- grep('^b_', dir(system.file('models', package='streamMetabolizer')), value=TRUE)
       favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oi_tr_plrckm.stan','b_np_pi_tr_plrckm.stan','b_np_oipp_tr_plrckm.stan')
+    },
+    bayes_2station={
+      # single fixed model structure; no combinatorial name-building needed
+      mnames <- 'b2_np_oi_tr_plrckm.stan'
+      favorites <- mnames
     },
     mle={
       opts <- expand.grid(

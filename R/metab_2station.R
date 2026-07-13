@@ -1,15 +1,26 @@
-#' Two-station Bayesian metabolism model fitting function (stub)
+#' @include metab_model-class.R metab_bayes.R
+NULL
+
+#' Two-station Bayesian metabolism model fitting function
 #'
 #' Fits a two-station (upstream/downstream, a.k.a. VFTS) Bayesian model to
-#' estimate GPP and ER from paired upstream and downstream DO, temperature,
-#' light, and travel-time data. This function is currently a stub: it
-#' validates the \code{data} argument and enforces two-station-specific data
-#' requirements, but does not yet fit a model. See \code{\link{mm_name}} to
-#' choose a Bayesian model and \code{\link{specs}} for relevant options for
-#' the \code{specs} argument.
+#' estimate GPP, ER, and K600 from paired upstream and downstream DO,
+#' temperature, light, and travel-time data, using the single fixed Stan
+#' model in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See
+#' \code{\link{mm_name}} to choose a Bayesian model and \code{\link{specs}}
+#' for relevant options for the \code{specs} argument.
+#'
+#' Unlike \code{\link{metab_bayes}}, which supports many model structures via
+#' \code{split_dates}/\code{pool_K600}/etc., \code{metab_2station} always
+#' fits every date jointly in a single Stan call (\code{specs$split_dates} is
+#' forced to \code{FALSE} by \code{\link{specs}}), because the
+#' upstream-downstream lag shift ties each date's first modeled rows to the
+#' previous date's last rows.
 #'
 #' @inheritParams metab
-#' @return Not yet implemented; currently always errors after data validation.
+#' @return A metab_2station object containing the fitted model. This object
+#'   can be inspected with the functions in the
+#'   \code{\link{metab_model_interface}} and also \code{\link{get_mcmc}}.
 #'
 #' @section Two-station data requirements: In addition to the checks
 #'   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
@@ -30,57 +41,338 @@ metab_2station <- function(
   info=NULL
 ) {
 
-  # Check data for correct column names & units
-  dat_list <- mm_validate_data(data, data_daily, 'metab_2station')
+  stanfit <- NULL
+  fitting_time <- system.time({
+    # Check data for correct column names & units
+    dat_list <- mm_validate_data(data, data_daily, 'metab_2station')
+    data_v <- v(dat_list$data)
 
-  travel_time <- v(dat_list$data$travel.time)
-  solar_time <- v(dat_list$data$solar.time)
+    travel_time <- data_v$travel.time
+    solar_time <- data_v$solar.time
 
-  # a. travel.time must be strictly positive
-  if(any(travel_time <= 0)) {
-    stop('travel.time must be > 0')
+    # a. travel.time must be strictly positive
+    if(any(travel_time <= 0)) {
+      stop('travel.time must be > 0')
+    }
+
+    # b. travel.time is expected in days, so any value >= 1 almost certainly
+    # reflects a units mistake (e.g., minutes or hours rather than days)
+    if(any(travel_time >= 1)) {
+      stop('travel.time must be < 1 day; values >= 1 suggest incorrect units (expected days)')
+    }
+
+    # c. there must be enough lead-in rows of upstream DO before the first
+    # modeled row to cover the longest travel time in the dataset. timestep_days
+    # is the median observation interval, in days; max_lag is the number of
+    # timesteps by which upstream data must lead downstream predictions. The
+    # first max_lag rows of data serve only as lead-in and cannot themselves be
+    # modeled, so at least max_lag + 1 rows are required overall.
+    timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
+    max_lag <- max(round(travel_time / timestep_days))
+    if(nrow(dat_list$data) <= max_lag) {
+      lead_in_needed <- max_lag - nrow(dat_list$data) + 1
+      stop(paste0(
+        'insufficient lead-in data for upstream DO: the longest travel.time implies a lag of ',
+        max_lag, ' timestep(s), but only ', nrow(dat_list$data), ' row(s) were supplied; ',
+        'need ', lead_in_needed, ' more lead-in timestep(s) of upstream data before the first modeled row'))
+    }
+
+    # Reconstruct the same "modeled rows" (post-lead-in-trim) index set that
+    # mm_ts_prep_data() computes internally, using the identical timestep_days/
+    # lag/max_lag formula, so that Stan's date_index/time_index can be mapped
+    # back to actual dates and solar.times for the daily and instantaneous
+    # results below. (Duplicated here rather than exposed by
+    # mm_ts_prep_data(), which returns only the Stan-ready matrices.)
+    n_total <- nrow(dat_list$data)
+    keep <- seq.int(max_lag + 1, n_total)
+    modeled_solar_time <- solar_time[keep]
+    modeled_dates <- as.Date(modeled_solar_time)
+    date_df <- tibble::tibble(date=unique(modeled_dates), date_index=seq_along(unique(modeled_dates)))
+    n_days <- nrow(date_df)
+    if(length(keep) %% n_days != 0) {
+      stop(paste0(
+        'dates have differing numbers of modeled rows after lead-in removal; ',
+        'observations cannot be combined into a matrix: ',
+        paste(sprintf('%s (%d rows)', names(table(modeled_dates)), table(modeled_dates)), collapse=', ')))
+    }
+    n_obs <- length(keep) / n_days
+    obs_index_df <- tibble::tibble(
+      solar.time=modeled_solar_time,
+      DO.obs.down=data_v$DO.obs.down[keep],
+      date_index=rep(date_df$date_index, each=n_obs),
+      time_index=rep(seq_len(n_obs), times=n_days))
+
+    # Prepare the Stan data list (matrices from data, plus scalar priors from
+    # specs). modifyList (not c()) is used because mm_ts_prep_data() already
+    # supplies K600_lnorm_meanlog/K600_lnorm_sdlog (with its own fallback
+    # defaults), and those two names are also in specs$params_in; a plain
+    # c() would create duplicate-named list elements instead of overriding
+    data_list <- mm_ts_prep_data(dat_list$data, specs=specs)
+    data_list <- modifyList(data_list, specs[specs$params_in])
+
+    # Check and parse model file path
+    specs$model_path <- mm_locate_filename(specs$model_name)
+
+    # determine how many cores to use, as in runstan_bayes()
+    tot_cores <- parallel::detectCores()
+    if(!is.finite(tot_cores)) tot_cores <- 1
+    n_cores <- min(tot_cores, specs$n_cores)
+
+    # Fit the model, collecting errors/warnings as strings rather than
+    # letting a bad dataset halt execution without reporting anything back
+    stop_strs <- character(0)
+    warn_strs <- character(0)
+    daily <- NULL
+    inst <- NULL
+    withCallingHandlers(
+      tryCatch({
+        if(!suppressPackageStartupMessages(require(rstan))) {
+          stop("the rstan package is required for Stan MCMC models")
+        }
+
+        consolelog <- utils::capture.output(
+          stanfit <- rstan::stan(
+            file=specs$model_path, data=data_list, pars=specs$params_out,
+            chains=specs$n_chains, cores=n_cores,
+            iter=specs$burnin_steps + specs$saved_steps, warmup=specs$burnin_steps,
+            thin=specs$thin_steps, verbose=specs$verbose, open_progress=FALSE),
+          split=specs$verbose)
+
+        if(stanfit@mode == 2L) {
+          stop(paste(utils::capture.output(print(stanfit)), collapse='\n'))
+        }
+
+        # format the Stan summary matrix into per-variable data.frames
+        stan_mat <- rstan::summary(stanfit)$summary
+        mcmc_out <- format_mcmc_mat_nosplit(
+          stan_mat, data_list$n_days, data_list$n_obs, specs$model_name,
+          keep_mcmc=isTRUE(specs$keep_mcmcs), stanfit)
+
+        # daily GPP/ER/K600 estimates: join Stan's date_index back to dates
+        date_index <- time_index <- index <- '.dplyr.var'
+        daily <- mcmc_out$daily %>%
+          dplyr::left_join(date_df, by='date_index') %>%
+          dplyr::select(-date_index, -time_index, -index) %>%
+          dplyr::select(date, dplyr::everything())
+
+        # instantaneous DO.mod.down estimates come from the 'metab' Stan
+        # transformed parameter (posterior median), which format_mcmc_mat_nosplit()
+        # buckets by row count rather than by name since 'metab' isn't in its
+        # par_homes lookup table; find that bucket by its column names instead
+        is_metab_bucket <- sapply(mcmc_out, function(df) is.data.frame(df) && any(grepl('^metab_', names(df))))
+        metab_bucket_name <- names(mcmc_out)[is_metab_bucket][1]
+        if(is.na(metab_bucket_name)) {
+          stop("could not find 'metab' in the Stan output; check that specs$params_out includes 'metab'")
+        }
+        inst <- mcmc_out[[metab_bucket_name]] %>%
+          dplyr::select(date_index, time_index, DO.mod.down=metab_50pct) %>%
+          dplyr::inner_join(obs_index_df, by=c('date_index','time_index')) %>%
+          dplyr::select(solar.time, DO.obs.down, DO.mod.down) %>%
+          dplyr::arrange(solar.time)
+
+      }, error=function(err) {
+        stop_strs <<- c(stop_strs, err$message)
+      }), warning=function(war) {
+        warn_strs <<- c(warn_strs, war$message)
+        invokeRestart("muffleWarning")
+      })
+
+    # if fitting failed, fill in NA daily estimates (with real dates) so the
+    # returned model at least reports which dates were attempted
+    if(length(stop_strs) > 0 || is.null(daily)) {
+      na_vec <- rep(as.numeric(NA), nrow(date_df))
+      daily <- data.frame(
+        date=date_df$date,
+        GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
+        ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec,
+        K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)
+      inst <- NULL
+    }
+    daily <- dplyr::mutate(daily, valid_day=TRUE, warnings='', errors='')
+
+    fit <- list(
+      daily=daily, inst=inst,
+      warnings=trimws(unique(warn_strs)), errors=trimws(unique(stop_strs)))
+  })
+
+  # Package and return results
+  mm <- metab_model(
+    model_class="metab_2station",
+    info=info,
+    fit=fit,
+    log=NULL,
+    mcmc=if(isTRUE(specs$keep_mcmcs)) stanfit else NULL,
+    mcmc_data=if(isTRUE(specs$keep_mcmc_data)) data_list else NULL,
+    fitting_time=fitting_time,
+    compile_time=system.time({}), # rstan::stan() compiles & samples in one call; not timed separately
+    specs=specs,
+    data=dat_list$data, # keep the units if given
+    data_daily=dat_list$data_daily)
+
+  # Update data with DO predictions
+  success <- !is.null(fit$inst) && length(fit$errors) == 0
+  if(success) {
+    mm@data <- predict_DO(mm)
+  } else {
+    warntxt <- paste0(
+      'Modeling failed\n',
+      if(length(fit$warnings) > 0) paste0('  Warnings:\n', paste0('    ', fit$warnings, collapse='\n')),
+      if(length(fit$errors) > 0) paste0('  Errors:\n', paste0('    ', fit$errors, collapse='\n')))
+    warning(warntxt)
   }
 
-  # b. travel.time is expected in days, so any value >= 1 almost certainly
-  # reflects a units mistake (e.g., minutes or hours rather than days)
-  if(any(travel_time >= 1)) {
-    stop('travel.time must be < 1 day; values >= 1 suggest incorrect units (expected days)')
-  }
-
-  # c. there must be enough lead-in rows of upstream DO before the first
-  # modeled row to cover the longest travel time in the dataset. timestep_days
-  # is the median observation interval, in days; max_lag is the number of
-  # timesteps by which upstream data must lead downstream predictions. The
-  # first max_lag rows of data serve only as lead-in and cannot themselves be
-  # modeled, so at least max_lag + 1 rows are required overall.
-  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
-  max_lag <- max(round(travel_time / timestep_days))
-  if(nrow(dat_list$data) <= max_lag) {
-    lead_in_needed <- max_lag - nrow(dat_list$data) + 1
-    stop(paste0(
-      'insufficient lead-in data for upstream DO: the longest travel.time implies a lag of ',
-      max_lag, ' timestep(s), but only ', nrow(dat_list$data), ' row(s) were supplied; ',
-      'need ', lead_in_needed, ' more lead-in timestep(s) of upstream data before the first modeled row'))
-  }
-
-  stop('metab_2station not yet implemented')
+  # Return
+  mm
 }
 
-#' @describeIn predict_DO Stub for two-station (VFTS) models. Not yet
-#'   functional: \code{metab_2station} does not yet produce a fitted Stan
-#'   model to predict from (see \code{\link{metab_2station}}), so this always
-#'   errors. Once implemented, this method will return a data.frame
+
+#### metab_2station class ####
+
+#' Metabolism model fitted by two-station (VFTS) Bayesian MCMC
+#'
+#' \code{metab_2station} models use Bayesian MCMC methods to fit values of
+#' GPP, ER, and K600 from paired upstream/downstream DO curves. This class
+#' inherits from \code{metab_bayes} (same \code{log}/\code{mcmc}/
+#' \code{mcmc_data}/\code{compile_time} slots, and therefore the same
+#' \code{\link{get_mcmc}}, \code{\link{get_mcmc_data}}, and
+#' \code{\link{get_log}} methods), but \code{predict_metab} and
+#' \code{predict_DO} are overridden below because two-station's fitted-value
+#' structure and output columns differ from one-station's.
+#'
+#' @exportClass metab_2station
+#' @family metab.model.classes
+setClass("metab_2station", contains="metab_bayes")
+
+
+#' @describeIn get_params Does the same Stan-output-to-streamMetabolizer
+#'   renaming as \code{get_params.metab_bayes}, but (unlike that method) does
+#'   not delegate the rest of the work to \code{get_params.metab_model} via
+#'   \code{NextMethod()}: that generic implementation looks up parameter
+#'   names via \code{get_param_names()}, which assumes a
+#'   \code{metab_<type>()}-named model constructor (would look for
+#'   \code{metab_bayes_2station}, which doesn't exist -- our constructor is
+#'   \code{metab_2station}) and streamMetabolizer's ODE-based dDOdt framework
+#'   for one-station models, neither of which apply to the two-station
+#'   steady-state model. \code{fixed} column/star annotations (relevant only
+#'   to models that can take fixed daily parameters from \code{data_daily})
+#'   are not supported here.
+#' @export
+#' @import dplyr
+get_params.metab_2station <- function(
+  metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ...) {
+
+  uncertainty <- match.arg(uncertainty)
+
+  fit <- metab_model@fit$daily
+  if(is.null(fit)) return(NULL)
+
+  # Stan prohibits '.' in variable names, so convert back from '_' to '.',
+  # as in get_params.metab_bayes
+  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
+  parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
+  for(i in seq_along(parnames)) {
+    names(fit) <- gsub(names(parnames[i]), parnames[[i]], names(fit))
+  }
+  names(fit) <- gsub('_mean$', '', names(fit))
+  names(fit) <- gsub('_sd$', '.sd', names(fit))
+  names(fit) <- gsub('_50pct$', '.median', names(fit))
+  names(fit) <- gsub('_2.5pct$', '.lower', names(fit))
+  names(fit) <- gsub('_97.5pct$', '.upper', names(fit))
+
+  fit <- mm_filter_dates(fit, date_start=date_start, date_end=date_end)
+
+  metab.vars <- c('GPP.daily', 'ER.daily', 'K600.daily')
+  for(mv in metab.vars) {
+    if(paste0(mv, '.median') %in% names(fit)) fit[[mv]] <- fit[[paste0(mv, '.median')]]
+  }
+  keep.cols <- c('date', unlist(lapply(metab.vars, function(mv) grep(paste0('^', mv, '($|\\.)'), names(fit), value=TRUE))))
+  params <- fit[intersect(keep.cols, names(fit))]
+
+  params <- switch(
+    uncertainty,
+    'none' = params[!grepl('\\.median$|\\.sd$|\\.lower$|\\.upper$', names(params))],
+    'sd'   = params[!grepl('\\.median$|\\.lower$|\\.upper$', names(params))],
+    'ci'   = params[!grepl('\\.median$|\\.sd$', names(params))])
+
+  # attach raw warnings/errors columns (not yet compressed into a single
+  # column); show()'s pretty_print_ddat()/compress_msgs() does that
+  # compression itself at print time, as in get_params.metab_model
+  if(messages && exists('date', fit) && any(c('warnings','errors') %in% names(fit))) {
+    msgs <- fit[c('date','warnings','errors') %>% { .[. %in% names(fit)] }]
+    params <- left_join(params, msgs, by='date', copy=TRUE)
+  }
+
+  params
+}
+
+
+#' @describeIn predict_metab Pulls daily GPP, ER, and K600 estimates out of
+#'   the two-station Stan model results.
+#' @export
+#' @import dplyr
+predict_metab.metab_2station <- function(metab_model, date_start=NA, date_end=NA, ...) {
+
+  Var1 <- Var2 <- '.dplyr.var'
+  fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP_daily','ER_daily','K600_daily'), stringsAsFactors=FALSE) %>%
+    select(Var2, Var1) %>%
+    apply(MARGIN=1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_'))))
+  metab.names <- expand.grid(c('','.lower','.upper'), c('GPP','ER','K600'), stringsAsFactors=FALSE) %>%
+    select(Var2, Var1) %>%
+    apply(MARGIN=1, FUN=function(row) do.call(paste0, as.list(row)))
+
+  fit <- metab_model@fit$daily %>%
+    mm_filter_dates(date_start=date_start, date_end=date_end)
+  if(is.null(fit) || !all(fit.names %in% names(fit))) {
+    stop('could not find GPP_daily, ER_daily, and K600_daily estimates in the model fit')
+  }
+  preds <- fit[c('date', fit.names)] %>%
+    setNames(c('date', metab.names))
+
+  # add date-specific fitting warnings/errors, as in predict_metab.metab_bayes
+  warnings <- errors <- '.dplyr.var'
+  if(!is.null(fit) && all(c('date','warnings','errors') %in% names(fit))) {
+    messages <- fit %>%
+      select(date, warnings, errors) %>%
+      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
+    preds <- full_join(preds, messages, by='date', copy=TRUE)
+  } else {
+    preds <- mutate(preds, msgs.fit=NA)
+  }
+
+  preds <- mutate(
+    preds,
+    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
+    errors=if(length(metab_model@fit$errors) > 0) NA else '')
+
+  preds
+}
+
+
+#' @describeIn predict_DO Two-station (VFTS) models. Returns a data.frame
 #'   with columns \code{solar.time}, \code{DO.obs.down} (the observed
 #'   downstream DO from the input data), and \code{DO.mod.down} (the
-#'   two-station Stan model's predicted downstream DO) -- unlike the
-#'   one-station \code{predict_DO} methods, which return \code{DO.obs}/
-#'   \code{DO.mod}.
+#'   posterior median of the two-station Stan model's fitted downstream DO)
+#'   -- unlike the one-station \code{predict_DO} methods, which return
+#'   \code{DO.obs}/\code{DO.mod}. The values are those computed once at
+#'   fitting time (see \code{\link{metab_2station}}); \code{use_saved=FALSE}
+#'   (on-demand recomputation from the fitted daily GPP/ER/K600 medians) is
+#'   not implemented.
 #' @export
 predict_DO.metab_2station <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
 
+  if(!isTRUE(use_saved)) {
+    stop("predict_DO(use_saved=FALSE) is not implemented for metab_2station; only the fitted-time DO.mod.down values are available")
+  }
+
+  inst <- metab_model@fit$inst
+  if(is.null(inst)) {
+    stop("no DO.mod.down predictions are available; the model fit may have failed (see get_fit(metab_model))")
+  }
+
   # NOTE: R/plot_DO_preds.R and tests/testthat/helper-rmse_DO.R both
-  # hard-code the one-station DO.obs/DO.mod column names; they'll need to
-  # branch on (or be parameterized for) DO.obs.down/DO.mod.down once this
-  # method actually returns two-station predictions.
-  stop("predict_DO for two-station models not yet implemented — requires completion")
+  # hard-code the one-station DO.obs/DO.mod column names; they still need to
+  # branch on (or be parameterized for) DO.obs.down/DO.mod.down before those
+  # tools will work with two-station predictions -- deferred, out of scope
+  # for this PR.
+  mm_filter_dates(inst, date_start=date_start, date_end=date_end)
 }

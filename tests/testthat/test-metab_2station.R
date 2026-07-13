@@ -44,14 +44,6 @@ test_that("insufficient lead-in data triggers an error", {
   expect_error(metab_2station(data=dat), "insufficient lead-in data")
 })
 
-test_that("a minimal valid data.frame passes all data-format checks", {
-  dat <- make_2station_data(n=10)
-  # metab_2station is a stub, so a fully valid data.frame should make it all
-  # the way through the column/units/travel.time/lead-in checks and fail only
-  # on the final "not yet implemented" stop -- not on any validation check.
-  expect_error(metab_2station(data=dat), "metab_2station not yet implemented")
-})
-
 
 # mm_ts_prep_data() -----------------------------------------------------
 
@@ -176,17 +168,74 @@ test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
 })
 
 
-# predict_DO.metab_2station stub -----------------------------------------
+# mm_name() / mm_valid_names() / specs() for bayes_2station ---------------
 
-test_that("predict_DO dispatches to the metab_2station stub and errors as expected", {
-  # metab_2station() is itself a stub (see tests above) and never returns a
-  # fitted model object, so there's no way yet to construct a real
-  # metab_2station instance. Mock the class attribute alone to exercise S3
-  # dispatch of predict_DO() to predict_DO.metab_2station().
-  mm <- structure(list(), class = c('metab_2station', 'metab_model'))
+test_that("mm_name(type='bayes_2station') returns the single two-station model name", {
+  expect_equal(mm_name(type='bayes_2station'), 'b2_np_oi_tr_plrckm.stan')
+})
 
-  expect_error(
-    predict_DO(mm),
-    "predict_DO for two-station models not yet implemented .* requires D-4 completion"
-  )
+test_that("mm_valid_names('bayes_2station') returns the single two-station model name", {
+  expect_equal(mm_valid_names('bayes_2station'), 'b2_np_oi_tr_plrckm.stan')
+})
+
+test_that("specs(mm_name('bayes_2station')) has the expected params_in/params_out/split_dates", {
+  sp <- specs(mm_name('bayes_2station'))
+
+  expect_equal(
+    sp$params_in,
+    c('GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma',
+      'K600_lnorm_meanlog', 'K600_lnorm_sdlog'))
+  expect_equal(sp$params_out, c('GPP_daily', 'ER_daily', 'K600_daily', 'sigma', 'metab'))
+  expect_false(sp$split_dates)
+  expect_equal(sp$engine, 'stan')
+})
+
+
+# metab_2station() fitting, predict_metab(), predict_DO() ------------------
+
+# Subset two_station_example to just a few modeled days for a faster test
+# fit. Naively slicing rows doesn't work: max_lag (the number of upstream
+# lead-in rows required) is recomputed from whatever travel.time values are
+# present in the slice, so an arbitrary row range can leave a partial first
+# date once mm_ts_prep_data() trims max_lag rows off the front -- the same
+# lead-in-sizing logic used in data-raw/two_station_example.R is needed here
+# too.
+subset_2station_data <- function(full_data, n_modeled_days) {
+  solar_time <- v(full_data$solar.time)
+  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
+
+  all_dates <- unique(as.Date(solar_time))
+  modeled_dates <- all_dates[2:(1 + n_modeled_days)]
+  modeled_start <- as.POSIXct(paste0(modeled_dates[1], ' 00:00:00'), tz='UTC')
+  modeled_end <- as.POSIXct(paste0(modeled_dates[length(modeled_dates)], ' 23:45:00'), tz='UTC')
+
+  candidate_start <- modeled_start - as.difftime(1, units='days')
+  candidate <- full_data[solar_time >= candidate_start & solar_time <= modeled_end, ]
+  max_lag <- max(round(v(candidate$travel.time) / timestep_days))
+  lead_in_start <- modeled_start - as.difftime(max_lag * timestep_days, units='days')
+
+  full_data[solar_time >= lead_in_start & solar_time <= modeled_end, ]
+}
+
+test_that("metab() fits a two-station model and predict_metab()/predict_DO() work", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  small_dat <- subset_2station_data(two_station_example, n_modeled_days=3)
+
+  sp <- specs(
+    mm_name('bayes_2station'),
+    n_chains=1, n_cores=1, burnin_steps=100, saved_steps=100, verbose=FALSE)
+
+  mm <- metab(specs=sp, data=small_dat)
+  expect_s4_class(mm, 'metab_2station')
+
+  pm <- predict_metab(mm)
+  expect_s3_class(pm, 'data.frame')
+  expect_true(all(c('GPP','ER','K600') %in% names(pm)))
+  expect_equal(nrow(pm), 3)
+
+  pdo <- predict_DO(mm)
+  expect_s3_class(pdo, 'data.frame')
+  expect_true(all(c('DO.obs.down','DO.mod.down') %in% names(pdo)))
 })

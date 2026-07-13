@@ -250,6 +250,12 @@
 #'   proportional to light (with noise) and is applied to GPP rather than to
 #'   dDO/dt.
 #'
+#' @param K600_lnorm_meanlog hyperparameter for \code{type='bayes_2station'}.
+#'   The mean of a lognormal prior distribution for K600_daily.
+#' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2station'}. The
+#'   standard deviation parameter of a lognormal prior distribution for
+#'   K600_daily.
+#'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
 #'   during the specs() call; need only be revised if you're using a custom
@@ -423,7 +429,12 @@ specs <- function(
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
   err_mult_GPP_sdlog_sigma = 1,
-  
+
+  # hyperparameters for two-station (bayes_2station) K600. GPP_daily_mu,
+  # GPP_daily_sigma, ER_daily_mu, and ER_daily_sigma above are reused as-is
+  K600_lnorm_meanlog = 2.484907,
+  K600_lnorm_sdlog = 1.0,
+
   # vector of hyperparameters to include as MCMC data
   params_in,
   
@@ -624,9 +635,63 @@ specs <- function(
           warning(e)
           return(model_name)
         })
-      if(features$engine == "NA") 
+      if(features$engine == "NA")
         stop('engine must be specified for Bayesian models')
-      
+
+    },
+    'bayes_2station' = {
+
+      # bayes_2station has a single fixed model structure (see
+      # inst/models/b2_np_oi_tr_plrckm.stan), so params_in/params_out are
+      # hardcoded here rather than built up from pool_K600/GPP_fun/ER_fun/
+      # err_* toggles as in the 'bayes' case above
+
+      # the six scalar prior hyperparameters spliced into the Stan data list
+      # by mm_ts_prep_data()
+      all_specs$params_in <- c(
+        'GPP_daily_mu', 'GPP_daily_sigma',
+        'ER_daily_mu', 'ER_daily_sigma',
+        'K600_lnorm_meanlog', 'K600_lnorm_sdlog')
+
+      # list all needed arguments
+      included <- c(
+        # model setup
+        'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
+
+        # params_in is both a vector of specs to include and a vector to include in specs
+        all_specs$params_in, 'params_in',
+
+        # inheritParams runstan_bayes
+        'params_out', 'n_chains', 'n_cores',
+        'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
+      )
+
+      # compute some arguments
+      if('engine' %in% yes_missing) {
+        all_specs$engine <- 'stan'
+      }
+      if('split_dates' %in% yes_missing) {
+        # forced FALSE: the upstream/downstream lag shift ties consecutive
+        # days together, so days can't be modeled independently
+        all_specs$split_dates <- FALSE
+      }
+      if('params_out' %in% yes_missing) {
+        # 'metab' (the Stan transformed-parameter matrix of modeled
+        # downstream DO) is included so that predict_DO() has a fitted value
+        # to report; without it the model would only yield daily GPP/ER/K600
+        all_specs$params_out <- c('GPP_daily', 'ER_daily', 'K600_daily', 'sigma', 'metab')
+      }
+
+      # check for errors/inconsistencies
+      model_path <- tryCatch(
+        mm_locate_filename(model_name),
+        error=function(e) {
+          warning(e)
+          return(model_name)
+        })
+      if(features$engine == "NA")
+        stop('engine must be specified for Bayesian models')
+
     },
     'mle' = {
       # determine which init values will be needed

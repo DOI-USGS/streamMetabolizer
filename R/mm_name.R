@@ -54,6 +54,9 @@
 #' @param type character. The model type. Options: \itemize{ \item \code{mle}:
 #'   maximum likelihood estimation (see also \code{\link{metab_mle}}) \item
 #'   \code{bayes}: bayesian hierarchical models \code{\link{metab_bayes}} \item
+#'   \code{bayes_2station}: two-station (upstream/downstream, a.k.a. VFTS)
+#'   Bayesian model with a single fixed structure (see also
+#'   \code{\link{metab_2station}}) \item
 #'   \code{night}: nighttime regression (see also \code{\link{metab_night}})
 #'   \item \code{Kmodel}: regression of \emph{daily} estimates of
 #'   \code{K600.daily} versus discharge, time, etc., usually for 3-phase
@@ -155,7 +158,7 @@
 #' mm_name('sim', err_proc_acor=TRUE)
 #' mm_name('bayes', pool_K600='binned')
 mm_name <- function(
-  type=c('mle','bayes','night','Kmodel','sim'), 
+  type=c('mle','bayes','bayes_2station','night','Kmodel','sim'),
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
   pool_K600=c('none',
               'normal','normal_sdzero','normal_sdfixed',
@@ -175,9 +178,31 @@ mm_name <- function(
   engine=c('stan','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
   
-  # determine type
-  type <- match.arg(type)
-  
+  # determine type. 'bayes_2station' is matched exactly, before match.arg's
+  # partial-prefix matching, because 'b' would otherwise be an ambiguous
+  # abbreviation between 'bayes' and 'bayes_2station' -- so unlike the other
+  # types, 'bayes_2station' must be spelled out in full (no abbreviations).
+  # match.arg's choices are narrowed to exclude it so that pre-existing
+  # abbreviations like 'b' (-> 'bayes') and 'm' (-> 'mle') stay unambiguous.
+  if(missing(type)) {
+    type <- eval(formals(mm_name)$type)[1]
+  } else if(length(type) == 1 && identical(type, 'bayes_2station')) {
+    type <- 'bayes_2station'
+  } else {
+    type <- match.arg(type, choices=setdiff(eval(formals(mm_name)$type), 'bayes_2station'))
+  }
+
+  # bayes_2station has a single fixed model structure rather than being built
+  # from combinations of pool_K600/err_*/ode_method/GPP_fun/ER_fun/
+  # deficit_src/engine, so skip the argument-combination machinery below and
+  # return the one valid name directly
+  if(type == 'bayes_2station') {
+    mmname <- 'b2_np_oi_tr_plrckm.stan'
+    check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
+    if(isTRUE(check_validity)) mm_validate_name(mmname)
+    return(mmname)
+  }
+
   # set type-specific defaults where values weren't specified
   . <- '.dplyr.var'
   if(type != 'Kmodel') {
