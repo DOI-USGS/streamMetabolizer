@@ -43,7 +43,7 @@ manual_tests2 <- function() {
     check_validity=FALSE,
     stringsAsFactors=FALSE)
   stanfiles <- opts %>%
-    rowwise %>% do(tibble::tibble(model_name=do.call(mm_name, .))) %>%
+    rowwise() %>% group_modify(~ tibble::tibble(model_name=do.call(mm_name, as.list(.x)))) %>%
     unlist(use.names=FALSE) %>% sort %>% {.[!grepl('__', .)]} %>%
     .[. %in% mm_valid_names('bayes')]
 

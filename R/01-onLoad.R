@@ -1,5 +1,4 @@
 #' @import methods
-#' @importFrom utils available.packages contrib.url
 #' @keywords internal
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(paste(c(

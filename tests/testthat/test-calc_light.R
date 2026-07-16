@@ -74,27 +74,30 @@ test_that("calc_solar_insolation has consistent output with that of calc_sun_ris
       lm_sunrise=suppressWarnings(calc_sun_rise_set(date, lat))[,1],
       lm_sunset=suppressWarnings(calc_sun_rise_set(date, lat))[,2]) %>%
     group_by(jday, lat) %>%
-    do(with(., {
-      # compare to streamMetabolizer method, which determines light at any given time
-      hours <- seq(0,23.95,by=0.05)
-      insol <- calc_solar_insolation(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
-      whichdaytime <- which(insol > 0.00001)
-      if(any(!is.na(whichdaytime)))
-        sm_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
-      else
-        sm_daytime <- c(NA,NA)
+    group_modify(function(.x, .y) {
+      lat <- .y$lat
+      with(.x, {
+        # compare to streamMetabolizer method, which determines light at any given time
+        hours <- seq(0,23.95,by=0.05)
+        insol <- calc_solar_insolation(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
+        whichdaytime <- which(insol > 0.00001)
+        if(any(!is.na(whichdaytime)))
+          sm_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        else
+          sm_daytime <- c(NA,NA)
 
-      # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
-      isday <- LakeMetabolizer::is.day(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
-      whichdaytime <- which(isday)
-      if(any(!is.na(whichdaytime)))
-        id_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
-      else
-        id_daytime <- c(NA,NA)
+        # compare to calc_is_daytime (id) method (from LakeMetabolizer), which determines whether it is light at any given time
+        isday <- LakeMetabolizer::is.day(app.solar.time + as.difftime(hours, units="hours"), lat=lat)
+        whichdaytime <- which(isday)
+        if(any(!is.na(whichdaytime)))
+          id_daytime <- app.solar.time + as.difftime(hours[range(whichdaytime)], units="hours")
+        else
+          id_daytime <- c(NA,NA)
 
-      # put together
-      data.frame(., sm_sunrise=sm_daytime[1], sm_sunset=sm_daytime[2], id_sunrise=id_daytime[1], id_sunset=id_daytime[2])
-    }))
+        # put together
+        data.frame(.x, sm_sunrise=sm_daytime[1], sm_sunset=sm_daytime[2], id_sunrise=id_daytime[1], id_sunset=id_daytime[2])
+      })
+    })
 
   # Visual inspection
   # library(tidyr)
