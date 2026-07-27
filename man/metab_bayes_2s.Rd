@@ -59,11 +59,15 @@ previous date's last rows.
  In addition to the checks
   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
   reach travel time between the upstream and downstream stations, in days)
-  must be strictly positive and less than 1 day (values >= 1 usually
-  indicate travel time was supplied in the wrong units). There must also be
-  enough lead-in observations of upstream DO before the first row of
-  \code{data} to cover the longest travel time in the dataset, given the
-  (median) timestep of \code{data$solar.time}.
+  must be strictly positive and no greater than 8/24 days (8 hours).
+  Values above this limit either indicate travel time was supplied in the
+  wrong units (e.g., minutes or hours instead of days), or reflect a reach
+  whose actual travel time exceeds the 8-hour limit required to prevent
+  the previous day's light conditions from influencing the following
+  day's metabolism estimate. There must also be enough lead-in
+  observations of upstream DO before the first row of \code{data} to
+  cover the longest travel time in the dataset, given the (median)
+  timestep of \code{data$solar.time}.
 }
 
 \seealso{

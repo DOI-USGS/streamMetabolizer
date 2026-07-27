@@ -30,12 +30,12 @@ test_that("travel.time <= 0 triggers an error", {
   expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
 
-test_that("travel.time >= 1 triggers an error with a units hint", {
+test_that("travel.time > 8/24 days (8 hours) triggers an error with a units/limit hint", {
   dat <- make_2station_data(travel_time=1)
-  expect_error(metab_bayes_2s(data=dat), "travel.time must be < 1 day.*incorrect units")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be <= 8/24 days.*incorrect units")
 
   dat <- make_2station_data(travel_time=1.5)
-  expect_error(metab_bayes_2s(data=dat), "travel.time must be < 1 day.*incorrect units")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be <= 8/24 days.*incorrect units")
 })
 
 test_that("insufficient lead-in data triggers an error", {
