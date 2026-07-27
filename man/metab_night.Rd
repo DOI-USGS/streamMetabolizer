@@ -57,6 +57,7 @@ plot_DO_preds(predict_DO(mm))
 Other metab_model: 
 \code{\link{metab_Kmodel}},
 \code{\link{metab_bayes}},
+\code{\link{metab_bayes_2s}},
 \code{\link{metab_mle}},
 \code{\link{metab_sim}}
 }

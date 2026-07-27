@@ -23,13 +23,16 @@ mm_generate_mcmc_file(
 \item{type}{character. The model type. Options: \itemize{ \item \code{mle}:
 maximum likelihood estimation (see also \code{\link{metab_mle}}) \item
 \code{bayes}: bayesian hierarchical models \code{\link{metab_bayes}} \item
-\code{night}: nighttime regression (see also \code{\link{metab_night}})
-\item \code{Kmodel}: regression of \emph{daily} estimates of
-\code{K600.daily} versus discharge, time, etc., usually for 3-phase
-estimation of K alone (by MLE or nighttime regression), K vs discharge
-(using this model), and then GPP and ER with fixed K (by MLE) (see also
-\code{\link{metab_Kmodel}}) \item \code{sim}: simulation of \code{DO.obs}
-'data' for testing other models (see also \code{\link{metab_sim}}) }}
+\code{bayes_2s}: two-station (upstream/downstream, Variable Flow
+Two-Station) Bayesian model with a single fixed structure (see also
+\code{\link{metab_bayes_2s}}) \item \code{night}: nighttime regression (see
+also \code{\link{metab_night}}) \item \code{Kmodel}: regression of
+\emph{daily} estimates of \code{K600.daily} versus discharge, time, etc.,
+usually for 3-phase estimation of K alone (by MLE or nighttime regression),
+K vs discharge (using this model), and then GPP and ER with fixed K (by
+MLE) (see also \code{\link{metab_Kmodel}}) \item \code{sim}: simulation of
+\code{DO.obs} 'data' for testing other models (see also
+\code{\link{metab_sim}}) }}
 
 \item{pool_K600}{character. [How] should the model pool information among
 days to get more consistent daily estimates for K600? Options (see Details

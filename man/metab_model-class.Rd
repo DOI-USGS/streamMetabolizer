@@ -34,6 +34,7 @@ function.}
 Other metab.model.classes: 
 \code{\link{metab_Kmodel-class}},
 \code{\link{metab_bayes-class}},
+\code{\link{metab_bayes_2s-class}},
 \code{\link{metab_mle-class}},
 \code{\link{metab_night-class}},
 \code{\link{metab_sim-class}}

@@ -1,10 +1,9 @@
-# Builds data/two_station_example.rda from the VFTS paper's published input
-# data. Not run automatically as part of the package build/check; run
+# Builds data/two_station_example.rda from the VFTS (Variable Flow
+# Two-Station) paper's published input data. Not run automatically as part
+# of the package build/check; run
 # manually (with the package root as the working directory) whenever the
 # example dataset needs to be regenerated.
 #
-# File source: 2_station/Data/2_VFTS_and_One-station_model_input.csv, a sibling
-# directory of the package root (not included in the package itself)
 
 # Download from ScienceBase: https://www.sciencebase.gov/catalog/item/6887d457d4be024722b4aae2
 
@@ -36,14 +35,14 @@ modeled_start <- as.POSIXct('2011-07-31 00:00:00', tz='UTC')
 modeled_end <- as.POSIXct('2011-08-29 23:45:00', tz='UTC')
 timestep_days <- 15/(24*60)
 
-# metab_2station()'s upstream-DO lag shift (see mm_ts_prep_data() and
-# metab_2station()'s "Two-station data requirements" section) needs
+# metab_bayes_2s()'s upstream-DO lag shift (see prepdata_bayes_2s() and
+# metab_bayes_2s()'s "Two-station data requirements" section) needs
 # max_lag = max(round(travel.time / timestep_days)) rows of lead-in
-# immediately before modeled_start -- and because mm_ts_prep_data() trims
+# immediately before modeled_start -- and because prepdata_bayes_2s() trims
 # max_lag rows off the *start of the whole array*, not off each calendar
 # day, that lead-in window must be exactly max_lag rows (not e.g. a whole
 # extra day) or the first modeled date ends up with a different row count
-# than the rest, which mm_ts_prep_data() rejects. max_lag is computed from a
+# than the rest, which prepdata_bayes_2s() rejects. max_lag is computed from a
 # generous 2-day candidate lead-in window and then trimmed to size.
 candidate_start <- modeled_start - as.difftime(2, units='days')
 candidate <- vfts2 %>% filter(datetime >= candidate_start, datetime <= modeled_end)
@@ -54,7 +53,7 @@ vfts2_window <- vfts2 %>%
   filter(datetime >= lead_in_start, datetime <= modeled_end)
 
 # confirm the window is gap-free at the native 15-min timestep, and that
-# trimming the lead-in rows (as mm_ts_prep_data() does) leaves exactly 30
+# trimming the lead-in rows (as prepdata_bayes_2s() does) leaves exactly 30
 # modeled dates with equal row counts
 stopifnot(all(abs(diff(as.numeric(vfts2_window$datetime)) - 15*60) < 1e-6))
 modeled_dates <- as.Date(vfts2_window$datetime[seq.int(max_lag+1, nrow(vfts2_window))])

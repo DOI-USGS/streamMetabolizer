@@ -19,33 +19,33 @@ make_2station_data <- function(n=10, timestep_min=5, travel_time=0.01) {
 
 test_that("mm_validate_data catches missing required columns", {
   dat <- dplyr::select(make_2station_data(), -DO.obs.up)
-  expect_error(metab_2station(data=dat), "missing these columns")
+  expect_error(metab_bayes_2s(data=dat), "missing these columns")
 })
 
 test_that("travel.time <= 0 triggers an error", {
   dat <- make_2station_data(travel_time=0)
-  expect_error(metab_2station(data=dat), "travel.time must be > 0")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 
   dat <- make_2station_data(travel_time=-0.01)
-  expect_error(metab_2station(data=dat), "travel.time must be > 0")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
 
 test_that("travel.time >= 1 triggers an error with a units hint", {
   dat <- make_2station_data(travel_time=1)
-  expect_error(metab_2station(data=dat), "travel.time must be < 1 day.*incorrect units")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be < 1 day.*incorrect units")
 
   dat <- make_2station_data(travel_time=1.5)
-  expect_error(metab_2station(data=dat), "travel.time must be < 1 day.*incorrect units")
+  expect_error(metab_bayes_2s(data=dat), "travel.time must be < 1 day.*incorrect units")
 })
 
 test_that("insufficient lead-in data triggers an error", {
   # 2 rows but max_lag=3 timesteps of upstream lead-in are needed
   dat <- make_2station_data(n=2)
-  expect_error(metab_2station(data=dat), "insufficient lead-in data")
+  expect_error(metab_bayes_2s(data=dat), "insufficient lead-in data")
 })
 
 
-# mm_ts_prep_data() -----------------------------------------------------
+# prepdata_bayes_2s() -----------------------------------------------------
 
 # Build a two-day, unit-labeled data.frame with a known, traceable
 # DO.obs.up/DO.sat.up series (sequential integers) so the shift can be
@@ -80,7 +80,7 @@ make_ts_data <- function(n_leadin=3, n_day1=10, n_day2=7, travel_time=0.01, unit
 
 test_that("upstream DO is shifted by the correct lag", {
   dat <- make_ts_data()
-  out <- mm_ts_prep_data(dat)
+  out <- prepdata_bayes_2s(dat)
 
   # max_lag=3, so modeled row i (original index i) uses upstream data from
   # original row (i - 3). day 1's 7 modeled rows are original rows 4:10, so
@@ -94,7 +94,7 @@ test_that("upstream DO is shifted by the correct lag", {
 
 test_that("lead-in rows are excluded from the output matrices", {
   dat <- make_ts_data(n_leadin=3, n_day1=10, n_day2=7)
-  out <- mm_ts_prep_data(dat)
+  out <- prepdata_bayes_2s(dat)
 
   # 17 total rows in, 3 are lead-in-only, so 14 modeled rows should remain
   expect_equal(out$n_obs * out$n_days, nrow(dat) - 3)
@@ -106,7 +106,7 @@ test_that("lead-in rows are excluded from the output matrices", {
 
 test_that("output matrices have n_obs x n_days dimensions", {
   dat <- make_ts_data()
-  out <- mm_ts_prep_data(dat)
+  out <- prepdata_bayes_2s(dat)
 
   expect_equal(out$n_obs, 7)
   expect_equal(out$n_days, 2)
@@ -117,23 +117,25 @@ test_that("output matrices have n_obs x n_days dimensions", {
 
 test_that("all required Stan data block variables are present", {
   dat <- make_ts_data()
-  out <- mm_ts_prep_data(dat)
+  # K600_lnorm_meanlog/sdlog are owned by specs() (see PR D-6/I1); pass
+  # distinctive marker values here to confirm prepdata_bayes_2s() just reads
+  # them through from specs rather than computing its own defaults
+  out <- prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=1.23, K600_lnorm_sdlog=4.56))
 
   expected_names <- c(
     'n_obs','n_days','DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down',
     'light','depth','temp_water','travel_time','K600_lnorm_meanlog','K600_lnorm_sdlog')
   expect_true(all(expected_names %in% names(out)))
 
-  # placeholder K600 lognormal priors, per PR D-3
-  expect_equal(out$K600_lnorm_meanlog, log(3.48))
-  expect_equal(out$K600_lnorm_sdlog, 0.5)
+  expect_equal(out$K600_lnorm_meanlog, 1.23)
+  expect_equal(out$K600_lnorm_sdlog, 4.56)
 })
 
 test_that("units are stripped from all numeric outputs", {
   dat <- make_ts_data(unitted=TRUE)
   expect_true(is.unitted(dat))
 
-  out <- mm_ts_prep_data(dat)
+  out <- prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0))
   for(varname in c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down','light','depth','temp_water','travel_time')) {
     expect_false(is.unitted(out[[varname]]), info=varname)
   }
@@ -149,7 +151,7 @@ test_that("units are stripped from all numeric outputs", {
 test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
   parsed <- mm_parse_name('b2_np_oi_tr_plrckm.stan')
 
-  expect_equal(parsed$type, 'bayes_2station')
+  expect_equal(parsed$type, 'bayes_2s')
   # the rest of the name is shared syntax with one-station bayes models and
   # should parse the same way regardless of the b vs. b2 prefix
   expect_equal(parsed$pool_K600, 'none')
@@ -168,18 +170,18 @@ test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
 })
 
 
-# mm_name() / mm_valid_names() / specs() for bayes_2station ---------------
+# mm_name() / mm_valid_names() / specs() for bayes_2s ---------------
 
-test_that("mm_name(type='bayes_2station') returns the single two-station model name", {
-  expect_equal(mm_name(type='bayes_2station'), 'b2_np_oi_tr_plrckm.stan')
+test_that("mm_name(type='bayes_2s') returns the single two-station model name", {
+  expect_equal(mm_name(type='bayes_2s'), 'b2_np_oi_tr_plrckm.stan')
 })
 
-test_that("mm_valid_names('bayes_2station') returns the single two-station model name", {
-  expect_equal(mm_valid_names('bayes_2station'), 'b2_np_oi_tr_plrckm.stan')
+test_that("mm_valid_names('bayes_2s') returns the single two-station model name", {
+  expect_equal(mm_valid_names('bayes_2s'), 'b2_np_oi_tr_plrckm.stan')
 })
 
-test_that("specs(mm_name('bayes_2station')) has the expected params_in/params_out/split_dates", {
-  sp <- specs(mm_name('bayes_2station'))
+test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/split_dates", {
+  sp <- specs(mm_name('bayes_2s'))
 
   expect_equal(
     sp$params_in,
@@ -191,13 +193,13 @@ test_that("specs(mm_name('bayes_2station')) has the expected params_in/params_ou
 })
 
 
-# metab_2station() fitting, predict_metab(), predict_DO() ------------------
+# metab_bayes_2s() fitting, predict_metab(), predict_DO() ------------------
 
 # Subset two_station_example to just a few modeled days for a faster test
 # fit. Naively slicing rows doesn't work: max_lag (the number of upstream
 # lead-in rows required) is recomputed from whatever travel.time values are
 # present in the slice, so an arbitrary row range can leave a partial first
-# date once mm_ts_prep_data() trims max_lag rows off the front -- the same
+# date once prepdata_bayes_2s() trims max_lag rows off the front -- the same
 # lead-in-sizing logic used in data-raw/two_station_example.R is needed here
 # too.
 subset_2station_data <- function(full_data, n_modeled_days) {
@@ -224,11 +226,11 @@ test_that("metab() fits a two-station model and predict_metab()/predict_DO() wor
   small_dat <- subset_2station_data(two_station_example, n_modeled_days=3)
 
   sp <- specs(
-    mm_name('bayes_2station'),
+    mm_name('bayes_2s'),
     n_chains=1, n_cores=1, burnin_steps=100, saved_steps=100, verbose=FALSE)
 
   mm <- metab(specs=sp, data=small_dat)
-  expect_s4_class(mm, 'metab_2station')
+  expect_s4_class(mm, 'metab_bayes_2s')
 
   pm <- predict_metab(mm)
   expect_s3_class(pm, 'data.frame')

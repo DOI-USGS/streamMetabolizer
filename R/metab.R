@@ -60,7 +60,7 @@ metab <- function(specs=specs(mm_name()), data=v(mm_data(NULL)), data_daily=v(mm
   metab_fun <- switch(
     model_type,
     bayes           = metab_bayes,
-    bayes_2station  = metab_2station,
+    bayes_2s        = metab_bayes_2s,
     Kmodel          = metab_Kmodel,
     mle             = metab_mle,
     night           = metab_night,

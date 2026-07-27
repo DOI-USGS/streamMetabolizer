@@ -6,7 +6,7 @@
 \title{Example two-station (VFTS) input data}
 \format{
 A data.frame with 2904 rows and the 9 columns expected by
-  \code{\link{metab_2station}}'s \code{data} argument, each carrying
+  \code{\link{metab_bayes_2s}}'s \code{data} argument, each carrying
   \code{\link[unitted]{unitted}} units matching \code{\link{mm_data}}:
   \describe{
     \item{solar.time}{POSIXct timestamp, UTC}
@@ -43,13 +43,13 @@ two_station_example
 }
 \description{
 A 30-day example dataset for fitting a two-station (upstream/downstream,
-a.k.a. VFTS) metabolism model with \code{\link{metab_2station}}. It is a
-subset of the \code{VFTS-2} (variable-travel-time) run from the published
-two-station metabolism modeling dataset for a reach of the Colorado River
-in Glen Canyon, covering 2011-07-31 through 2011-08-29 at the source
-data's native 15-minute timestep, plus a lead-in block of upstream DO
-observations (exactly as long as the longest travel time in the dataset
-requires -- see \code{\link{metab_2station}}'s "Two-station data
-requirements" section) immediately before 2011-07-31.
+Variable Flow Two-Station) metabolism model with
+\code{\link{metab_bayes_2s}}. It is a subset of the \code{VFTS-2}
+(variable-travel-time) run from the published two-station metabolism modeling
+dataset for a reach of the Colorado River in Glen Canyon, covering 2011-07-31
+through 2011-08-29 at the source data's native 15-minute timestep, plus a
+lead-in block of upstream DO observations (exactly as long as the longest
+travel time in the dataset requires -- see \code{\link{metab_bayes_2s}}'s
+"Two-station data requirements" section) immediately before 2011-07-31.
 }
 \keyword{datasets}
