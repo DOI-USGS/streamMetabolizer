@@ -42,12 +42,11 @@ specs(
   K600_lnQ_nodediffs_sdlog = 0.5,
   K600_lnQ_nodes_meanlog = rep(log(12), length(K600_lnQ_nodes_centers)),
   K600_lnQ_nodes_sdlog = rep(1.32, length(K600_lnQ_nodes_centers)),
-  K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none = 1,
-    normal_sdfixed = 0.05, NA),
+  K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none = 1, normal_sdfixed
+    = 0.05, NA),
   K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear_sdfixed = 10,
     binned_sdfixed = 5, NA),
-  K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal = 0.05,
-    NA),
+  K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal = 0.05, NA),
   K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear = 1.2,
     binned = 0.24, NA),
   err_obs_iid_sigma_scale = 0.03,
@@ -56,6 +55,8 @@ specs(
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
   err_mult_GPP_sdlog_sigma = 1,
+  K600_lnorm_meanlog = 2.484907,
+  K600_lnorm_sdlog = 1,
   params_in,
   params_out,
   n_chains = 4,
@@ -74,9 +75,11 @@ specs(
   K600_lnQ_cnode_sdlog = 1,
   K600_lnQ_nodediffs_meanlog = 0.2,
   lnK600_lnQ_nodes = function(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog,
-    K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog, ...) {   
-     sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog,
-    K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog) },
+    K600_lnQ_cnode_sdlog, K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog, ...) {
+  
+      sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog,
+    K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog)
+ },
   discharge_daily = function(n, ...) rnorm(n, 20, 3),
   DO_mod_1 = NULL,
   K600_daily = function(n, K600_daily_predlog = log(10), ...) pmax(0, rnorm(n,
@@ -336,6 +339,13 @@ normalized to a daily mean of 1 before being multiplied by GPP_daily to
 estimate GPP_inst. The effect is a special kind of process error that is
 proportional to light (with noise) and is applied to GPP rather than to
 dDO/dt.}
+
+\item{K600_lnorm_meanlog}{hyperparameter for \code{type='bayes_2s'}.
+The mean of a lognormal prior distribution for K600_daily.}
+
+\item{K600_lnorm_sdlog}{hyperparameter for \code{type='bayes_2s'}. The
+standard deviation parameter of a lognormal prior distribution for
+K600_daily.}
 
 \item{params_in}{Character vector of hyperparameters to pass from the specs
 list into the data list for the MCMC run. Will be automatically generated
