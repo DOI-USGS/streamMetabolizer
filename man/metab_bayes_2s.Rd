@@ -66,8 +66,7 @@ previous date's last rows.
   the previous day's light conditions from influencing the following
   day's metabolism estimate. There must also be enough lead-in
   observations of upstream DO before the first row of \code{data} to
-  cover the longest travel time in the dataset, given the (median)
-  timestep of \code{data$solar.time}.
+  cover the longest travel time in the dataset.
 }
 
 \seealso{

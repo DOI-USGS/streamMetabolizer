@@ -1,4 +1,4 @@
-#' @include metab_model-class.R
+#' @include metab_model-class.R mm_time_by_date_matrix.R
 NULL
 
 #' Basic Bayesian metabolism model fitting function
@@ -479,15 +479,13 @@ prepdata_bayes <- function(
     )
     stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   }
-  time_by_date_matrix <- function(vec) {
-    matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
-  }
+  time_by_date_matrix <- mm_time_by_date_matrix(num_daily_obs, num_dates)
 
   # double-check that our dates are going to line up with the input dates. this
   # should be redundant w/ above date_table checks, so just being extra careful
-  obs_dates <- time_by_date_matrix(format(data$date, format="%Y-%m-%d"))
-  unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
-  if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
+  mm_check_dates_contiguous(
+    time_by_date_matrix(format(data$date, format="%Y-%m-%d")), date_table,
+    "couldn't fit given dates into matrix")
 
   # confirm that every day has the same modal timestep and put a value on that
   # timestep. the tolerance for uniqueness within each day is set by the default

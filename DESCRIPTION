@@ -96,6 +96,7 @@ Collate:
     'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
+    'mm_time_by_date_matrix.R'
     'metab_bayes.R'
     'metab_bayes_2s.R'
     'metab_inputs.R'

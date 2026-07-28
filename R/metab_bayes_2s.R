@@ -289,9 +289,9 @@ prepdata_bayes_2s <- function(data, specs=NULL) {
     travel_time = data$travel.time[keep]
   )
 
-  # pivot into n_obs x n_days matrices, one column per unique date, following
-  # the same time_by_date_matrix approach used for the 1-station Stan models
-  # (see prepdata_bayes() in metab_bayes.R)
+  # pivot into n_obs x n_days matrices, one column per unique date, using the
+  # same mm_time_by_date_matrix()/mm_check_dates_contiguous() helpers shared
+  # with prepdata_bayes() (see mm_time_by_date_matrix.R)
   date_vec <- as.character(as.Date(modeled$solar.time))
   date_table <- table(date_vec)
   n_days <- length(date_table)
@@ -304,16 +304,14 @@ prepdata_bayes_2s <- function(data, specs=NULL) {
   }
   n_obs <- n_obs_per_day
 
-  to_matrix <- function(vec) matrix(vec, nrow=n_obs, ncol=n_days, byrow=FALSE)
+  to_matrix <- mm_time_by_date_matrix(n_obs, n_days)
 
   # confirm each date occupies a contiguous block of rows, i.e., that data
   # was sorted by solar.time; otherwise the matrix pivot below would silently
   # scramble which rows belong to which date
-  date_mat <- to_matrix(date_vec)
-  unique_dates_per_col <- apply(date_mat, MARGIN=2, FUN=unique)
-  if(is.list(unique_dates_per_col) || !isTRUE(all.equal(unname(unique_dates_per_col), names(date_table)))) {
-    stop('data must be sorted by solar.time so that each date occupies a contiguous block of rows')
-  }
+  mm_check_dates_contiguous(
+    to_matrix(date_vec), date_table,
+    'data must be sorted by solar.time so that each date occupies a contiguous block of rows')
 
   list(
     n_obs = n_obs,
