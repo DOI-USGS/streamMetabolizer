@@ -623,10 +623,7 @@ runstan_bayes <- function(
   verbose=FALSE, ...) {
 
   # determine how many cores to use
-  tot_cores <- detectCores()
-  if (!is.finite(tot_cores)) { tot_cores <- 1 }
-  n_cores <- min(tot_cores, n_cores)
-  if(verbose) message(paste0("MCMC (","Stan","): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
+  n_cores <- mm_determine_cores(n_cores, n_chains=n_chains, verbose=verbose)
 
   # stan() can't find its own function cpp_object_initializer() unless the
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts

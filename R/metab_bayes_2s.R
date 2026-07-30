@@ -101,9 +101,7 @@ metab_bayes_2s <- function(
     specs$model_path <- mm_locate_filename(specs$model_name)
 
     # determine how many cores to use, as in runstan_bayes()
-    tot_cores <- parallel::detectCores()
-    if(!is.finite(tot_cores)) tot_cores <- 1
-    n_cores <- min(tot_cores, specs$n_cores)
+    n_cores <- mm_determine_cores(specs$n_cores, n_chains=specs$n_chains, verbose=specs$verbose)
 
     # Fit the model, collecting errors/warnings as strings rather than
     # letting a bad dataset halt execution without reporting anything back
