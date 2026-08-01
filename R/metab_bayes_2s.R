@@ -122,36 +122,39 @@ metab_bayes_2s <- function(
           split=specs$verbose)
 
         if(stanfit@mode == 2L) {
-          stop(paste(utils::capture.output(print(stanfit)), collapse='\n'))
+          # mirror runstan_bayes()'s warn-and-continue pattern for a failed
+          # run: report the diagnostic as a warning (caught below) and skip
+          # the post-processing steps, which all assume a successful fit
+          warning(paste(utils::capture.output(print(stanfit)), collapse='\n'))
+        } else {
+          # format the Stan summary matrix into per-variable data.frames
+          stan_mat <- rstan::summary(stanfit)$summary
+          mcmc_out <- format_mcmc_mat_nosplit(
+            stan_mat, data_list$n_days, data_list$n_obs, specs$model_name,
+            keep_mcmc=isTRUE(specs$keep_mcmcs), stanfit)
+
+          # daily GPP/ER/K600 estimates: join Stan's date_index back to dates
+          date_index <- time_index <- index <- '.dplyr.var'
+          daily <- mcmc_out$daily %>%
+            dplyr::left_join(date_df, by='date_index') %>%
+            dplyr::select(-date_index, -time_index, -index) %>%
+            dplyr::select(date, dplyr::everything())
+
+          # instantaneous DO.mod.down estimates come from the 'metab' Stan
+          # transformed parameter (posterior median), which format_mcmc_mat_nosplit()
+          # buckets by row count rather than by name since 'metab' isn't in its
+          # par_homes lookup table; find that bucket by its column names instead
+          is_metab_bucket <- sapply(mcmc_out, function(df) is.data.frame(df) && any(grepl('^metab_', names(df))))
+          metab_bucket_name <- names(mcmc_out)[is_metab_bucket][1]
+          if(is.na(metab_bucket_name)) {
+            stop("could not find 'metab' in the Stan output; check that specs$params_out includes 'metab'")
+          }
+          inst <- mcmc_out[[metab_bucket_name]] %>%
+            dplyr::select(date_index, time_index, DO.mod.down=metab_50pct) %>%
+            dplyr::inner_join(obs_index_df, by=c('date_index','time_index')) %>%
+            dplyr::select(solar.time, DO.obs.down, DO.mod.down) %>%
+            dplyr::arrange(solar.time)
         }
-
-        # format the Stan summary matrix into per-variable data.frames
-        stan_mat <- rstan::summary(stanfit)$summary
-        mcmc_out <- format_mcmc_mat_nosplit(
-          stan_mat, data_list$n_days, data_list$n_obs, specs$model_name,
-          keep_mcmc=isTRUE(specs$keep_mcmcs), stanfit)
-
-        # daily GPP/ER/K600 estimates: join Stan's date_index back to dates
-        date_index <- time_index <- index <- '.dplyr.var'
-        daily <- mcmc_out$daily %>%
-          dplyr::left_join(date_df, by='date_index') %>%
-          dplyr::select(-date_index, -time_index, -index) %>%
-          dplyr::select(date, dplyr::everything())
-
-        # instantaneous DO.mod.down estimates come from the 'metab' Stan
-        # transformed parameter (posterior median), which format_mcmc_mat_nosplit()
-        # buckets by row count rather than by name since 'metab' isn't in its
-        # par_homes lookup table; find that bucket by its column names instead
-        is_metab_bucket <- sapply(mcmc_out, function(df) is.data.frame(df) && any(grepl('^metab_', names(df))))
-        metab_bucket_name <- names(mcmc_out)[is_metab_bucket][1]
-        if(is.na(metab_bucket_name)) {
-          stop("could not find 'metab' in the Stan output; check that specs$params_out includes 'metab'")
-        }
-        inst <- mcmc_out[[metab_bucket_name]] %>%
-          dplyr::select(date_index, time_index, DO.mod.down=metab_50pct) %>%
-          dplyr::inner_join(obs_index_df, by=c('date_index','time_index')) %>%
-          dplyr::select(solar.time, DO.obs.down, DO.mod.down) %>%
-          dplyr::arrange(solar.time)
 
       }, error=function(err) {
         stop_strs <<- c(stop_strs, err$message)

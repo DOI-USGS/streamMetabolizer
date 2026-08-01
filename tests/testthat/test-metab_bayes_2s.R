@@ -241,3 +241,35 @@ test_that("metab() fits a two-station model and predict_metab()/predict_DO() wor
   expect_s3_class(pdo, 'data.frame')
   expect_true(all(c('DO.obs.down','DO.mod.down') %in% names(pdo)))
 })
+
+test_that("a failed Stan run (mode==2L) warns and continues, matching runstan_bayes()'s pattern, rather than erroring out", {
+  skip_if_not_installed('rstan')
+
+  # stand in for rstan::stan()'s return value on a failed run: only the
+  # 'mode' slot is inspected by metab_bayes_2s() before deciding to skip
+  # post-processing, so a minimal S4 object with that slot is sufficient
+  setClass('fake_failed_stanfit', representation(mode='integer'))
+  fake_stanfit <- methods::new('fake_failed_stanfit', mode=2L)
+  testthat::local_mocked_bindings(stan=function(...) fake_stanfit, .package='rstan')
+
+  dat <- make_ts_data()
+  sp <- specs(
+    mm_name('bayes_2s'),
+    n_chains=1, n_cores=1, burnin_steps=10, saved_steps=10, verbose=FALSE)
+
+  expect_warning(
+    mm <- metab_bayes_2s(specs=sp, data=dat),
+    'Modeling failed')
+
+  expect_s4_class(mm, 'metab_bayes_2s')
+  fit <- mm@fit
+  expect_true(nrow(fit$daily) > 0)
+  expect_true(all(is.na(fit$daily$GPP_daily_50pct)))
+  expect_true(all(is.na(fit$daily$ER_daily_50pct)))
+  expect_true(all(is.na(fit$daily$K600_daily_50pct)))
+  expect_true(all(fit$daily$valid_day))
+  expect_null(fit$inst)
+  expect_equal(length(fit$errors), 0)
+  expect_true(length(fit$warnings) > 0)
+  expect_true(any(grepl('fake_failed_stanfit', fit$warnings)))
+})
