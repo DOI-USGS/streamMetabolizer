@@ -16,13 +16,13 @@
 #'   \describe{
 #'     \item{solar.time}{POSIXct timestamp, UTC}
 #'     \item{DO.obs.up}{dissolved oxygen observed at the upstream station,
-#'       mg O2 / L}
+#'       mgO2 L^-1}
 #'     \item{DO.sat.up}{dissolved oxygen at equilibrium saturation at the
-#'       upstream station, mg O2 / L}
+#'       upstream station, mgO2 L^-1}
 #'     \item{DO.obs.down}{dissolved oxygen observed at the downstream
-#'       station, mg O2 / L}
+#'       station, mgO2 L^-1}
 #'     \item{DO.sat.down}{dissolved oxygen at equilibrium saturation at the
-#'       downstream station, mg O2 / L}
+#'       downstream station, mgO2 L^-1}
 #'     \item{light}{photosynthetically active radiation, umol m^-2 s^-1}
 #'     \item{depth}{reach depth, m}
 #'     \item{temp.water}{water temperature at the downstream station, degC}
