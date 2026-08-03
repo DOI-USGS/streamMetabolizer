@@ -125,7 +125,7 @@
 #'   dDO.preds.dblER = apply_dDOdt(3, -10, 15),
 #'   dDO.preds.dblK = apply_dDOdt(3, -5, 30))
 #' dDO.preds %>%
-#'   gather(key=dDO.series, value=dDO.dt, starts_with('dDO.preds')) %>%
+#'   tidyr::pivot_longer(cols=starts_with('dDO.preds'), names_to='dDO.series', values_to='dDO.dt') %>%
 #'   ggplot(aes(x=solar.time, y=dDO.dt, color=dDO.series)) + geom_line() + theme_bw()
 #'
 #' # try simulating process eror
