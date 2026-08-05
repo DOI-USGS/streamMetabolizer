@@ -146,6 +146,148 @@ test_that("units are stripped from all numeric outputs", {
 })
 
 
+# mm_lag_light_2s() ---------------------------------------------------------
+
+test_that("mm_lag_light_2s computes the traceable within-day light proportion", {
+  # 1 lead-in row + one 06:00-06:00 day (4 rows at a 6-hourly timestep, the
+  # same day window mm_align_2s() uses); travel.time=6hr -> lag=1, so each
+  # modeled row's window is itself plus the immediately preceding row
+  solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    as.difftime((0:4) * 6, units="hours")
+  light <- c(10, 1, 2, 3, 4)
+  travel.time <- rep(0.25, 5)
+
+  out <- mm_lag_light_2s(solar.time, light, travel.time)
+
+  # row 1 (2050-06-01 00:00) lacks lead-in (shift_idx = 0) and is also the
+  # lone row of the (irrelevant, partial) 06:00-day 2050-05-31; rows 2:5
+  # (06:00, 12:00, 18:00, and the next day's 00:00) fill the 06:00-day
+  # labeled 2050-06-01 and are hand-computed:
+  # day total (rows 2:5) = 1+2+3+4 = 10
+  # row2: sum(light[1:2])/10 = 11/10; row3: sum(light[2:3])/10 = 3/10
+  # row4: sum(light[3:4])/10 = 5/10;  row5: sum(light[4:5])/10 = 7/10
+  expect_true(is.na(out[1]))
+  expect_equal(out[2:5], c(1.1, 0.3, 0.5, 0.7))
+})
+
+test_that("insufficient lead-in yields NA, not a value from a truncated window", {
+  # 2 lead-in hours + one full 06:00-06:00 day (24 hourly rows, 06:00
+  # 2050-06-01 through 06:00 2050-06-02)
+  n <- 26
+  solar.time <- as.POSIXct("2050-06-01 04:00:00", tz="UTC") +
+    as.difftime((0:(n - 1)) * 1, units="hours")
+  light <- rep(1, n)
+  travel.time <- rep(2/24, n) # 2 hours -> lag=2
+
+  out <- mm_lag_light_2s(solar.time, light, travel.time)
+
+  # rows 1:2 (04:00, 05:00) have shift_idx < 1 (no lead-in); confirmed via
+  # mm_lag_2s directly rather than reimplementing the lead-in test here
+  has_leadin <- mm_lag_2s(solar.time, travel.time)$has_leadin
+  expect_false(any(has_leadin[1:2]))
+  expect_true(all(is.na(out[!has_leadin])))
+  expect_false(any(is.na(out[has_leadin])))
+})
+
+test_that("an incomplete 06:00-06:00 day (including a trailing partial day) gets NA, not a distorted fraction", {
+  # 2 lead-in hours + two full 06:00-06:00 days (24 hourly rows each) + a
+  # 5-row trailing partial day; constant light makes every complete-day,
+  # lead-in-eligible row's proportion the same constant, so any deviation
+  # would reveal a partial day leaking into the sum
+  n <- 55
+  solar.time <- as.POSIXct("2050-06-01 04:00:00", tz="UTC") +
+    as.difftime((0:(n - 1)) * 1, units="hours")
+  light <- rep(1, n)
+  travel.time <- rep(2/24, n) # 2 hours -> lag=2, window width 3
+
+  out <- mm_lag_light_2s(solar.time, light, travel.time)
+
+  # rows 1:2 lack lead-in; rows 3:50 fall in the two complete 06:00-days
+  # (proportion = window width / day length = 3/24); rows 51:55 are the
+  # partial trailing day
+  expect_true(all(is.na(out[1:2])))
+  expect_equal(out[3:50], rep(3/24, 48))
+  expect_true(all(is.na(out[51:55])))
+})
+
+test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regression test for #475 day-window mismatch)", {
+  # A day mm_align_2s() marks complete must never have NA light (see the
+  # day-sum-denominator roxygen section of mm_lag_light_2s()).
+  #
+  # Fixture: hourly timestep, 2050-06-01 04:00 through 2050-06-03 08:00.
+  # mm_align_2s() calls 06:00-days 2050-06-01 and 2050-06-02 complete (24/24
+  # rows each); 2050-06-01's day spans the early-morning hours of the
+  # midnight-incomplete calendar day 2050-06-02 (only 00:00-08:00 present,
+  # since the dataset ends there) -- exactly the boundary this test guards.
+  solar.time <- seq(
+    as.POSIXct("2050-06-01 04:00:00", tz="UTC"),
+    as.POSIXct("2050-06-03 08:00:00", tz="UTC"),
+    by="1 hour")
+  n <- length(solar.time)
+  light <- rep(100, n)
+  travel.time <- rep(2/24, n)
+
+  aln <- mm_align_2s(data.frame(solar.time=solar.time, travel.time=travel.time), max_travel_time_hours=10)
+  expect_equal(sort(as.character(unique(aln$date))), c("2050-06-01", "2050-06-02"))
+
+  light_lag <- mm_lag_light_2s(solar.time, light, travel.time)
+  # every row mm_align_2s() considers part of a complete day must have a
+  # real (non-NA) light proportion -- the boundaries now agree by default
+  expect_false(any(is.na(light_lag[aln$keep])))
+
+  # and prepdata_bayes_2s()'s defensive check (independent of how light was
+  # computed) should stay silent on this now-consistent data
+  dat <- data.frame(
+    solar.time = solar.time,
+    DO.obs.up = rep(9, n), DO.sat.up = rep(10, n),
+    DO.obs.down = rep(8.8, n), DO.sat.down = rep(9.9, n),
+    light = light_lag, depth = rep(0.5, n), temp.water = rep(20, n),
+    travel.time = travel.time)
+  expect_silent(prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0), aln=aln))
+})
+
+test_that("prepdata_bayes_2s() errors clearly if a complete day's light is NA (defensive check)", {
+  # Directly exercises the guard in prepdata_bayes_2s() -- independent of
+  # mm_lag_light_2s() -- so it still catches a reintroduced day-window
+  # mismatch (or any other source of NA light) even if the two functions
+  # drift apart again in the future
+  n <- 26
+  solar.time <- as.POSIXct("2050-06-01 04:00:00", tz="UTC") +
+    as.difftime((0:(n - 1)) * 1, units="hours")
+  dat <- data.frame(
+    solar.time = solar.time,
+    DO.obs.up = seq_len(n), DO.sat.up = seq_len(n) + 100,
+    DO.obs.down = seq_len(n) + 1000, DO.sat.down = rep(9.9, n),
+    light = rep(300, n), depth = rep(0.5, n), temp.water = rep(20, n),
+    travel.time = rep(2/24, n))
+
+  # sanity: this fixture fits cleanly with valid light
+  expect_silent(prepdata_bayes_2s(dat))
+
+  # inject NA into a modeled row of the (otherwise complete) 06:00-day
+  dat$light[10] <- NA
+  expect_error(prepdata_bayes_2s(dat), "light is NA for.*day.*mm_align_2s.*complete")
+})
+
+test_that("mm_lag_light_2s errors clearly on an irregular timestep grid", {
+  n <- 24
+  solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    as.difftime((0:(n - 1)) * 1, units="hours")
+  light <- rep(1, n)
+  travel.time <- rep(2/24, n)
+
+  # regular grid succeeds
+  expect_silent(mm_lag_light_2s(solar.time, light, travel.time))
+
+  # a single mid-series gap breaks regularity
+  solar.time.gap <- solar.time
+  solar.time.gap[10] <- solar.time.gap[10] + as.difftime(37, units="mins")
+  expect_error(
+    mm_lag_light_2s(solar.time.gap, light, travel.time),
+    "regular timestep grid.*#475")
+})
+
+
 # mm_parse_name() for two-station models ---------------------------------
 
 test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {

@@ -296,6 +296,22 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
     travel_time = data$travel.time[keep]
   )
 
+  # defensive check: every day mm_align_2s() considers complete must have
+  # non-NA light. Stan rejects NA data outright, and since two-station fits
+  # every date jointly, one bad day would fail the whole multi-day fit with
+  # an opaque diagnostic that never mentions light or day boundaries -- name
+  # the day here instead
+  na_light <- is.na(modeled$light)
+  if(any(na_light)) {
+    bad_dates <- unique(aln$date[na_light])
+    stop(paste0(
+      'light is NA for ', length(bad_dates), ' day(s) that mm_align_2s() otherwise ',
+      'considers complete: ', paste(bad_dates, collapse=', '), '. ',
+      'Whatever computed the light column is using a different day window than ',
+      'mm_align_2s(), or introduced other NAs -- check that before fitting; Stan ',
+      'does not accept NA data.'), call.=FALSE)
+  }
+
   # pivot into n_obs x n_days matrices, one column per two-station day, using
   # the same mm_time_by_date_matrix()/mm_check_dates_contiguous() helpers
   # shared with prepdata_bayes() (see mm_time_by_date_matrix.R). mm_align_2s()
@@ -328,6 +344,97 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
     K600_lnorm_meanlog = specs$K600_lnorm_meanlog,
     K600_lnorm_sdlog = specs$K600_lnorm_sdlog
   )
+}
+
+
+#' Compute the within-day light proportion for two-station light lagging
+#'
+#' Converts a single, already-combined light value per timestep into the
+#' travel-time-weighted, within-day light proportion required by
+#' \code{\link{metab_bayes_2s}}'s \code{light} column: Bishop et al. (2026)
+#' Eq. 2, light summed over the upstream travel-time window ending at each
+#' timestep, divided by that day's total light sum. See
+#' \code{\link{two_station_example}} for the quantity this must match.
+#'
+#' Reuses \code{\link{mm_lag_2s}} for the per-row lag, window-start index,
+#' and lead-in test, so this function's window can't drift from
+#' \code{\link{mm_align_2s}}'s definition of the same lag. Rows lacking
+#' lead-in (\code{shift_idx < 1}) get \code{NA} rather than a value computed
+#' from a truncated window.
+#'
+#' This function expects a single, already-combined light value per
+#' timestep.
+#'
+#' @section Day-sum denominator: the daily total in the denominator uses the
+#'   same \code{\link{mm_date_2s}} 06:00-06:00 day window that
+#'   \code{\link{mm_align_2s}}/\code{\link{metab_bayes_2s}} use elsewhere in
+#'   the two-station pipeline, so any 06:00-day \code{\link{mm_align_2s}}
+#'   counts as full is guaranteed to have every one of its rows counted as
+#'   full here too -- its light proportions are never \code{NA}. (An earlier
+#'   version used calendar midnight-to-midnight days instead, which could
+#'   disagree with \code{\link{mm_align_2s}} at the edges of
+#'   \code{solar.time}; see \code{test-metab_bayes_2s.R} for the regression
+#'   test.)
+#'
+#'   A day that doesn't hold a full \code{round(1/timestep_days)} rows --
+#'   at either end of \code{solar.time}, or from missing sensor data -- has
+#'   no well-defined total to divide by, so every row in that day gets
+#'   \code{NA} rather than a proportion computed from a partial sum.
+#'
+#' @section Regular-timestep requirement (temporary limitation): this
+#'   function assumes every row of \code{solar.time} is exactly one nominal
+#'   timestep apart, so that \code{\link{mm_lag_2s}}'s window-start indices
+#'   can be used directly as row offsets. Real deployment data with gaps or
+#'   multiple, mutually phase-shifted deployments breaks that assumption.
+#'   TODO(#475-item7): snap-to-bin rounding would lift this restriction. For
+#'   now, this function checks timestep regularity up front and errors
+#'   rather than silently computing wrong windows on irregular input.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending.
+#' @param light numeric vector, the same length as \code{solar.time}, of a
+#'   single combined light value per timestep.
+#' @param travel.time numeric vector of reach travel times, in days, the
+#'   same length as \code{solar.time}.
+#' @return a numeric vector, the same length as \code{solar.time}, of the
+#'   within-day light proportion, or \code{NA} where \code{solar.time} lacks
+#'   lead-in or falls in an incomplete 06:00-06:00 day.
+#' @keywords internal
+mm_lag_light_2s <- function(solar.time, light, travel.time) {
+
+  # regularity guard: mm_lag_2s()'s shift_idx is a row offset, which only
+  # matches a time offset when every row is exactly one nominal timestep
+  # apart (see the roxygen section above)
+  timesteps <- mm_get_timestep(solar.time, format='unique')
+  if(length(timesteps) != 1) {
+    stop(
+      'mm_lag_light_2s() requires a regular timestep grid; solar.time has ',
+      'gaps or multiple, phase-shifted deployments, which this function ',
+      'does not yet support (see issue #475)', call.=FALSE)
+  }
+
+  lagged <- mm_lag_2s(solar.time, travel.time)
+  n_total <- length(light)
+
+  # per-row window sum; window width varies row to row with travel.time, so
+  # this can't be a fixed-width rolling sum
+  window_sum <- vapply(seq_len(n_total), function(i) {
+    if(!lagged$has_leadin[i]) return(NA_real_)
+    sum(light[lagged$shift_idx[i]:i], na.rm=TRUE)
+  }, numeric(1))
+
+  # 06:00-day total (mm_date_2s(), same day window as mm_align_2s()), NA'd
+  # out for any day that doesn't fill the nominal timestep count (see the
+  # roxygen section on the day-sum denominator)
+  day_total <- '.dplyr.var'
+  day <- mm_date_2s(solar.time)
+  expected_n <- round(1 / lagged$timestep_days)
+  day_totals <- tibble::tibble(day=day, light=light) %>%
+    group_by(day) %>%
+    mutate(day_total=ifelse(n() == expected_n, sum(light, na.rm=TRUE), NA_real_)) %>%
+    ungroup() %>%
+    pull(day_total)
+
+  window_sum / day_totals
 }
 
 
