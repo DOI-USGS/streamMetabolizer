@@ -19,11 +19,8 @@
 #' \code{\link{revise}()} instead -- exactly backwards, since overriding the
 #' ceiling at \code{specs()}-creation time is the intended use. A
 #' \code{NULL}-default workaround was considered and rejected: it avoids the
-#' warning, but requires an extra \code{is.null()} resolution step inside
-#' \code{specs()} plus a second guard at the \code{mm_align_2s()} call site in
-#' \code{metab_bayes_2s.R} (duplicating one that already exists in
-#' \code{prepdata_bayes_2s()}) -- trading one hand-sync problem for a second,
-#' more fragile one. \code{specs()}'s literal default is kept in sync with
+#' warning but only shifts the hand-sync problem to a second, more fragile
+#' guard elsewhere. \code{specs()}'s literal default is kept in sync with
 #' this constant by hand; a guard test in \code{test-metab_bayes_2s.R}
 #' (search for "max_travel_time_hours default") fails if the two diverge.
 #'
