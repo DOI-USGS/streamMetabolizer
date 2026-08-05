@@ -27,17 +27,33 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   can be inspected with the functions in the
 #'   \code{\link{metab_model_interface}} and also \code{\link{get_mcmc}}.
 #'
+#' @section Two-station day window: Two-station days begin at 06:00 and run a
+#'   full 24 hours, to 06:00 the next day. This convention is unrelated to the
+#'   4 AM / 28-hour \code{day_start}/\code{day_end} window used by the
+#'   one-station models, which describes an overlapping diel window rather
+#'   than a partition of the time series; the two are not interchangeable.
+#'   Days that do not fill the window -- at the edges of a dataset whose
+#'   bounds don't fall on 06:00, or where observations are missing -- are
+#'   dropped with a message.
+#'
 #' @section Two-station data requirements: In addition to the checks
 #'   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
 #'   reach travel time between the upstream and downstream stations, in days)
-#'   must be strictly positive and no greater than 8/24 days (8 hours).
-#'   Values above this limit either indicate travel time was supplied in the
-#'   wrong units (e.g., minutes or hours instead of days), or reflect a reach
-#'   whose actual travel time exceeds the 8-hour limit required to prevent
-#'   the previous day's light conditions from influencing the following
-#'   day's metabolism estimate. There must also be enough lead-in
-#'   observations of upstream DO before the first row of \code{data} to
-#'   cover the longest travel time in the dataset.
+#'   must be strictly positive, and at least one row must have enough
+#'   preceding observations of upstream DO to cover its own travel time. Rows
+#'   at the start of \code{data} that lack that lead-in are not an error: they
+#'   serve as lead-in only, supplying upstream DO for later rows without being
+#'   modeled themselves.
+#'
+#'   Travel time is separately subject to a ceiling, \code{specs$
+#'   max_travel_time_hours} (10 hours by default, configurable up to 12).
+#'   Beyond it, a day's upstream parcel originates before the day's own 06:00
+#'   start, where the day-normalized light it experienced no longer has a
+#'   well-defined day total to be a proportion of. Days exceeding the ceiling
+#'   are dropped with a message rather than treated as an error, since the
+#'   remaining days are unaffected. A travel time far above the ceiling
+#'   usually means the column was supplied in the wrong units -- days are
+#'   expected, not minutes or hours.
 #'
 #' @export
 #' @family metab_model
@@ -59,42 +75,30 @@ metab_bayes_2s <- function(
     mm_validate_data_2station(dat_list$data)
 
     data_v <- v(dat_list$data)
-    travel_time <- data_v$travel.time
-    solar_time <- data_v$solar.time
 
-    # Reconstruct the same "modeled rows" (post-lead-in-trim) index set that
-    # prepdata_bayes_2s() computes internally, using the identical
-    # timestep_days/lag/max_lag formula, so that Stan's date_index/time_index
-    # can be mapped back to actual dates and solar.times for the daily and
-    # instantaneous results below. (Duplicated here rather than exposed by
-    # prepdata_bayes_2s(), which returns only the Stan-ready matrices.)
-    timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
-    max_lag <- max(round(travel_time / timestep_days))
-    n_total <- nrow(dat_list$data)
-    keep <- seq.int(max_lag + 1, n_total)
-    modeled_solar_time <- solar_time[keep]
-    modeled_dates <- as.Date(modeled_solar_time)
-    date_df <- tibble::tibble(date=unique(modeled_dates), date_index=seq_along(unique(modeled_dates)))
-    n_days <- nrow(date_df)
-    if(length(keep) %% n_days != 0) {
-      stop(paste0(
-        'dates have differing numbers of modeled rows after lead-in removal; ',
-        'observations cannot be combined into a matrix: ',
-        paste(sprintf('%s (%d rows)', names(table(modeled_dates)), table(modeled_dates)), collapse=', ')))
-    }
-    n_obs <- length(keep) / n_days
+    # Determine the same modeled-row index set that prepdata_bayes_2s()
+    # applies internally, so that Stan's date_index/time_index can be mapped
+    # back to actual dates and solar.times for the daily and instantaneous
+    # results below. Both call mm_align_2s() rather than reimplementing the
+    # lag/day-window math, so the two can't disagree about which rows are
+    # modeled (prepdata_bayes_2s() returns only the Stan-ready matrices, so
+    # the alignment itself isn't available to read back off its result).
+    aln <- mm_align_2s(data_v, max_travel_time_hours=specs$max_travel_time_hours)
+    keep <- aln$keep
+    modeled_solar_time <- data_v$solar.time[keep]
+    date_df <- tibble::tibble(date=unique(aln$date), date_index=seq_len(aln$n_days))
     obs_index_df <- tibble::tibble(
       solar.time=modeled_solar_time,
       DO.obs.down=data_v$DO.obs.down[keep],
-      date_index=rep(date_df$date_index, each=n_obs),
-      time_index=rep(seq_len(n_obs), times=n_days))
+      date_index=rep(date_df$date_index, each=aln$n_obs),
+      time_index=rep(seq_len(aln$n_obs), times=aln$n_days))
 
     # Prepare the Stan data list (matrices from data, plus scalar priors from
     # specs). modifyList (not c()) is used because prepdata_bayes_2s() already
     # supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from specs), and
     # those two names are also in specs$params_in; a plain c() would create
     # duplicate-named list elements instead of overriding
-    data_list <- prepdata_bayes_2s(dat_list$data, specs=specs)
+    data_list <- prepdata_bayes_2s(dat_list$data, specs=specs, aln=aln)
     data_list <- modifyList(data_list, specs[specs$params_in])
 
     # Check and parse model file path
@@ -220,15 +224,16 @@ metab_bayes_2s <- function(
 #' expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
 #' (see \code{\link{metab_bayes_2s}}).
 #'
-#' The upstream observation that "matches" a given downstream observation at
-#' row \code{i} was recorded \code{lag[i] <- round(travel.time[i] /
-#' timestep_days)} timesteps earlier, where \code{timestep_days} is the
-#' median timestep of \code{data$solar.time}. This must be computed the same
-#' way as in \code{\link{mm_validate_data_2station}}'s lead-in check, so that the
-#' \code{max(lag)} computed here always agrees with the lead-in requirement
-#' already validated there. The first \code{max(lag)} rows of \code{data} are
-#' lead-in rows: they supply upstream DO for the shift but are never
-#' themselves treated as modeled (downstream) observations.
+#' The alignment itself -- the per-row lag, the per-row lead-in test, the
+#' 06:00 day window, the travel-time ceiling, and the whole-day completeness
+#' requirement -- is computed by \code{mm_align_2s} (see \code{mm_lag_2s.R}),
+#' which \code{\link{metab_bayes_2s}} and \code{\link{mm_validate_data_2station}}
+#' also route through. This function only applies the resulting indices and
+#' pivots the result into matrices.
+#'
+#' Rows at the start of \code{data} whose upstream shift would reach before
+#' the first row are lead-in rows: they supply upstream DO for the shift but
+#' are never themselves treated as modeled (downstream) observations.
 #'
 #' @param data data.frame as validated by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time},
@@ -244,6 +249,12 @@ metab_bayes_2s <- function(
 #'   its own fallback values; if \code{specs} is omitted or missing these
 #'   fields, the resulting Stan data will contain NULL/missing values for
 #'   them.
+#' @param aln optional, the alignment already computed for \code{data} by
+#'   \code{mm_align_2s} (see \code{mm_lag_2s.R}). \code{\link{metab_bayes_2s}}
+#'   needs the same alignment to map Stan's indices back to dates, so it
+#'   computes it once and passes it here; leave \code{NULL} to compute it.
+#'   Supplying an alignment that doesn't correspond to \code{data} will
+#'   silently produce wrong matrices.
 #' @return a named list with all variables in the Stan model's data block:
 #'   \code{n_obs}, \code{n_days}, \code{DO_obs_up}, \code{DO_sat_up},
 #'   \code{DO_obs_down}, \code{DO_sat_down}, \code{light}, \code{depth},
@@ -251,32 +262,27 @@ metab_bayes_2s <- function(
 #'   matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
 #' @importFrom unitted v
 #' @keywords internal
-prepdata_bayes_2s <- function(data, specs=NULL) {
+prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
 
   # strip units; Stan cannot handle unitted vectors/matrices
   data <- v(data)
 
-  # timestep_days must match mm_validate_data_2station()'s lead-in check
-  # exactly (median timestep, in days), so that max_lag here agrees with
-  # what was validated there
-  timestep_days <- stats::median(as.numeric(diff(data$solar.time), units='days'))
-
-  # lag, in timesteps, that the upstream series must be shifted by to line up
-  # with each row's downstream observation
-  lag <- round(data$travel.time / timestep_days)
-  max_lag <- max(lag)
-  n_total <- nrow(data)
-
-  # the first max_lag rows are lead-in only (upstream DO used for the shift,
-  # but never modeled themselves). every row i > max_lag is guaranteed to
-  # have a valid shift target (i - lag[i] >= 1) because lag[i] <= max_lag
-  keep <- seq.int(max_lag + 1, n_total)
-  shift_idx <- keep - lag[keep]
-  if(any(shift_idx < 1)) {
-    # should be unreachable given max_lag's definition; guards against
-    # programming errors rather than expected user input
-    stop('internal error: upstream shift index falls before the first row of data')
+  # per-row lag, per-row lead-in, 06:00 day window, travel-time ceiling, and
+  # whole-day completeness -- all owned by mm_align_2s() so that this
+  # function, metab_bayes_2s(), and mm_validate_data_2station() share one
+  # definition. metab_bayes_2s() needs the same alignment to map Stan's
+  # indices back to dates, so it computes it once and passes it in; recompute
+  # it here only when called directly. specs may be NULL or lack the ceiling,
+  # in which case mm_align_2s()'s own default applies
+  if(is.null(aln)) {
+    aln <- if(is.null(specs$max_travel_time_hours)) {
+      mm_align_2s(data)
+    } else {
+      mm_align_2s(data, max_travel_time_hours=specs$max_travel_time_hours)
+    }
   }
+  keep <- aln$keep
+  shift_idx <- aln$shift_idx
 
   modeled <- data.frame(
     solar.time = data$solar.time[keep],
@@ -290,20 +296,14 @@ prepdata_bayes_2s <- function(data, specs=NULL) {
     travel_time = data$travel.time[keep]
   )
 
-  # pivot into n_obs x n_days matrices, one column per unique date, using the
-  # same mm_time_by_date_matrix()/mm_check_dates_contiguous() helpers shared
-  # with prepdata_bayes() (see mm_time_by_date_matrix.R)
-  date_vec <- as.character(as.Date(modeled$solar.time))
+  # pivot into n_obs x n_days matrices, one column per two-station day, using
+  # the same mm_time_by_date_matrix()/mm_check_dates_contiguous() helpers
+  # shared with prepdata_bayes() (see mm_time_by_date_matrix.R). mm_align_2s()
+  # has already guaranteed every day holds exactly n_obs rows
+  date_vec <- as.character(aln$date)
   date_table <- table(date_vec)
-  n_days <- length(date_table)
-  n_obs_per_day <- unique(unname(date_table))
-  if(length(n_obs_per_day) > 1) {
-    stop(
-      'dates have differing numbers of modeled rows after lead-in removal; ',
-      'observations cannot be combined into a matrix: ',
-      paste(sprintf('%s (%d rows)', names(date_table), date_table), collapse=', '))
-  }
-  n_obs <- n_obs_per_day
+  n_obs <- aln$n_obs
+  n_days <- aln$n_days
 
   to_matrix <- mm_time_by_date_matrix(n_obs, n_days)
 

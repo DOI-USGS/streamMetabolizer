@@ -12,11 +12,18 @@ mm_validate_data_2station(data)
 \code{travel.time}, sorted ascending by \code{solar.time}.}
 }
 \description{
-Checks the lead-in coverage requirement specific to
-\code{\link{metab_bayes_2s}}: there must be enough lead-in observations of
-upstream DO before the first modeled row to cover the longest travel time
-in the dataset, given the (median) timestep of \code{data$solar.time}.
-Column presence, timestamp validity, and travel.time bounds are expected
-to have already been checked by \code{\link{mm_validate_data}}.
+Checks the lead-in existence requirement specific to
+\code{\link{metab_bayes_2s}}: at least one row must have enough preceding
+upstream observations to cover its own travel time, given the (median)
+timestep of \code{data$solar.time}. This is a structural question -- is
+there any data at all to lag from? -- and so belongs with validation's
+other fail-fast checks.
+}
+\details{
+Rows that individually lack lead-in are not an error; they are dropped as
+lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
+owns the per-day travel-time ceiling. Column presence, timestamp validity,
+and travel.time positivity are expected to have already been checked by
+\code{\link{mm_validate_data}}.
 }
 \keyword{internal}

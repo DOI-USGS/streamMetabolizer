@@ -192,6 +192,14 @@ test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/spli
   expect_equal(sp$engine, 'stan')
 })
 
+test_that("specs()'s max_travel_time_hours default stays in sync with mm_max_travel_time_default", {
+  # specs()'s default is a hand-copied literal, not a reference to
+  # mm_max_travel_time_default (see the roxygen note in mm_lag_2s.R for why);
+  # this is a tripwire in case the two are ever edited independently
+  sp <- specs(mm_name('bayes_2s'))
+  expect_equal(sp$max_travel_time_hours, mm_max_travel_time_default)
+})
+
 
 # metab_bayes_2s() fitting, predict_metab(), predict_DO() ------------------
 

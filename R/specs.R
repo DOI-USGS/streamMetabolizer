@@ -255,6 +255,13 @@
 #' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
 #'   standard deviation parameter of a lognormal prior distribution for
 #'   K600_daily.
+#' @param max_travel_time_hours for \code{type='bayes_2s'}. The travel-time
+#'   ceiling, in hours: days whose longest \code{travel.time} exceeds this are
+#'   dropped, with a message, rather than modeled (see
+#'   \code{\link{metab_bayes_2s}}). Defaults to 10 hours and may not be set
+#'   above 12; a ceiling approaching the 24-hour day window would let a single
+#'   day's travel time consume the entire lead-in period, which defeats the
+#'   purpose of having a ceiling.
 #'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
@@ -436,6 +443,17 @@ specs <- function(
   # prepdata_bayes_2s() reads them from specs$K600_lnorm_meanlog/sdlog
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1.0,
+
+  # two-station travel-time ceiling, in hours. read by prepdata_bayes_2s() and
+  # metab_bayes_2s(), both of which pass it to mm_align_2s(). unlike the
+  # K600_lnorm_* hyperparameters above it is not spliced into the Stan data
+  # list, so it is not part of params_in.
+  #
+  # Literal here, not mm_max_travel_time_default -- see the comment above that
+  # constant in mm_lag_2s.R (prefer_missing misreads a bare-symbol default as
+  # "no default"). Kept in sync by hand; guarded by a test in
+  # test-metab_bayes_2s.R.
+  max_travel_time_hours = 10,
 
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -660,6 +678,9 @@ specs <- function(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
 
+        # data prep (not a Stan hyperparameter, so not in params_in)
+        'max_travel_time_hours',
+
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
 
@@ -667,6 +688,23 @@ specs <- function(
         'params_out', 'n_chains', 'n_cores',
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
+
+      # a ceiling at or near the 24-hour day window would let one day's travel
+      # time consume the whole lead-in period, so cap it well below that
+      if(!is.numeric(all_specs$max_travel_time_hours) ||
+         length(all_specs$max_travel_time_hours) != 1 ||
+         is.na(all_specs$max_travel_time_hours)) {
+        stop('max_travel_time_hours must be a single non-NA number', call.=FALSE)
+      }
+      if(all_specs$max_travel_time_hours <= 0) {
+        stop('max_travel_time_hours must be > 0', call.=FALSE)
+      }
+      if(all_specs$max_travel_time_hours > mm_max_travel_time_cap) {
+        stop(paste0(
+          'max_travel_time_hours must be <= ', mm_max_travel_time_cap, ' hours; a ceiling ',
+          'approaching the 24-hour two-station day window would allow a single day\'s travel ',
+          'time to consume the entire lead-in period'), call.=FALSE)
+      }
 
       # compute some arguments
       if('engine' %in% yes_missing) {

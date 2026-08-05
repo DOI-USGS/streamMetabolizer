@@ -55,18 +55,36 @@ forced to \code{FALSE} by \code{\link{specs}}), because the
 upstream-downstream lag shift ties each date's first modeled rows to the
 previous date's last rows.
 }
+\section{Two-station day window}{
+ Two-station days begin at 06:00 and run a
+  full 24 hours, to 06:00 the next day. This convention is unrelated to the
+  4 AM / 28-hour \code{day_start}/\code{day_end} window used by the
+  one-station models, which describes an overlapping diel window rather
+  than a partition of the time series; the two are not interchangeable.
+  Days that do not fill the window -- at the edges of a dataset whose
+  bounds don't fall on 06:00, or where observations are missing -- are
+  dropped with a message.
+}
+
 \section{Two-station data requirements}{
  In addition to the checks
   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
   reach travel time between the upstream and downstream stations, in days)
-  must be strictly positive and no greater than 8/24 days (8 hours).
-  Values above this limit either indicate travel time was supplied in the
-  wrong units (e.g., minutes or hours instead of days), or reflect a reach
-  whose actual travel time exceeds the 8-hour limit required to prevent
-  the previous day's light conditions from influencing the following
-  day's metabolism estimate. There must also be enough lead-in
-  observations of upstream DO before the first row of \code{data} to
-  cover the longest travel time in the dataset.
+  must be strictly positive, and at least one row must have enough
+  preceding observations of upstream DO to cover its own travel time. Rows
+  at the start of \code{data} that lack that lead-in are not an error: they
+  serve as lead-in only, supplying upstream DO for later rows without being
+  modeled themselves.
+
+  Travel time is separately subject to a ceiling, \code{specs$
+  max_travel_time_hours} (10 hours by default, configurable up to 12).
+  Beyond it, a day's upstream parcel originates before the day's own 06:00
+  start, where the day-normalized light it experienced no longer has a
+  well-defined day total to be a proportion of. Days exceeding the ceiling
+  are dropped with a message rather than treated as an error, since the
+  remaining days are unaffected. A travel time far above the ceiling
+  usually means the column was supplied in the wrong units -- days are
+  expected, not minutes or hours.
 }
 
 \seealso{

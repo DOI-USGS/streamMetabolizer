@@ -5,7 +5,7 @@
 \title{Reshape long-format two-station data into the list expected by the
 two-station Stan model}
 \usage{
-prepdata_bayes_2s(data, specs = NULL)
+prepdata_bayes_2s(data, specs = NULL, aln = NULL)
 }
 \arguments{
 \item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
@@ -23,6 +23,13 @@ populates them with sensible defaults. This function does not supply
 its own fallback values; if \code{specs} is omitted or missing these
 fields, the resulting Stan data will contain NULL/missing values for
 them.}
+
+\item{aln}{optional, the alignment already computed for \code{data} by
+\code{mm_align_2s} (see \code{mm_lag_2s.R}). \code{\link{metab_bayes_2s}}
+needs the same alignment to map Stan's indices back to dates, so it
+computes it once and passes it here; leave \code{NULL} to compute it.
+Supplying an alignment that doesn't correspond to \code{data} will
+silently produce wrong matrices.}
 }
 \value{
 a named list with all variables in the Stan model's data block:
@@ -38,14 +45,15 @@ expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
 (see \code{\link{metab_bayes_2s}}).
 }
 \details{
-The upstream observation that "matches" a given downstream observation at
-row \code{i} was recorded \code{lag[i] <- round(travel.time[i] /
-timestep_days)} timesteps earlier, where \code{timestep_days} is the
-median timestep of \code{data$solar.time}. This must be computed the same
-way as in \code{\link{mm_validate_data_2station}}'s lead-in check, so that the
-\code{max(lag)} computed here always agrees with the lead-in requirement
-already validated there. The first \code{max(lag)} rows of \code{data} are
-lead-in rows: they supply upstream DO for the shift but are never
-themselves treated as modeled (downstream) observations.
+The alignment itself -- the per-row lag, the per-row lead-in test, the
+06:00 day window, the travel-time ceiling, and the whole-day completeness
+requirement -- is computed by \code{mm_align_2s} (see \code{mm_lag_2s.R}),
+which \code{\link{metab_bayes_2s}} and \code{\link{mm_validate_data_2station}}
+also route through. This function only applies the resulting indices and
+pivots the result into matrices.
+
+Rows at the start of \code{data} whose upstream shift would reach before
+the first row are lead-in rows: they supply upstream DO for the shift but
+are never themselves treated as modeled (downstream) observations.
 }
 \keyword{internal}
