@@ -83,6 +83,13 @@ for(col in names(template)) {
 }
 two_station_example <- two_station_example[names(template)]
 
+# mm_data()'s shared 'light' template describes one-station's raw PAR
+# (umol m^-2 s^-1), but VFTS-2's 'light' column is already the day-normalized,
+# travel-time-weighted proportion that mm_lag_light_2s() computes (Bishop et
+# al. 2026 Eq. 2) -- unitless, not PAR. Override to NA units, matching the
+# package convention for dimensionless columns (e.g. err.obs.phi).
+two_station_example$light <- u(v(two_station_example$light), NA)
+
 # --- save -----------------------------------------------------------------
 
 usethis::use_data(two_station_example, overwrite=TRUE)

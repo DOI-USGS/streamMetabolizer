@@ -60,8 +60,15 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #' @importFrom utils modifyList
 metab_bayes_2s <- function(
   specs=specs(mm_name('bayes_2s')),
-  data=mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
-               light, depth, temp.water, travel.time),
+  data={
+    d <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
+                 light, depth, temp.water, travel.time)
+    # light here is the within-day proportion computed by
+    # mm_lag_light_2s(), not the raw PAR that mm_data()'s shared 'light'
+    # template describes -- unitless, matching two_station_example.
+    d$light <- u(v(d$light), NA)
+    d
+  },
   data_daily=mm_data(date, optional='all'),
   info=NULL
 ) {

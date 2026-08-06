@@ -18,7 +18,13 @@ A data.frame with 2904 rows and the 9 columns expected by
       station, mgO2 L^-1}
     \item{DO.sat.down}{dissolved oxygen at equilibrium saturation at the
       downstream station, mgO2 L^-1}
-    \item{light}{photosynthetically active radiation, umol m^-2 s^-1}
+    \item{light}{within-day light proportion: light reaching the reach
+      between each pair of upstream and downstream timepoints, summed over
+      the upstream travel-time window and divided by that day's total
+      light sum (Bishop et al. 2026 Eq. 2); unitless, range 0-1. Matches
+      the quantity computed by \code{\link{mm_lag_light_2s}}, not the raw
+      photosynthetically active radiation documented for \code{light} in
+      \code{\link{mm_data}}.}
     \item{depth}{reach depth, m}
     \item{temp.water}{water temperature at the downstream station, degC}
     \item{travel.time}{reach travel time between the upstream and
