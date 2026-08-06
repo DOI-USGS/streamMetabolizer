@@ -269,22 +269,145 @@ test_that("prepdata_bayes_2s() errors clearly if a complete day's light is NA (d
   expect_error(prepdata_bayes_2s(dat), "light is NA for.*day.*mm_align_2s.*complete")
 })
 
-test_that("mm_lag_light_2s errors clearly on an irregular timestep grid", {
+test_that("mm_lag_light_2s errors clearly when solar.time isn't on a snap-to-bin grid", {
   n <- 24
   solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
     as.difftime((0:(n - 1)) * 1, units="hours")
   light <- rep(1, n)
   travel.time <- rep(2/24, n)
 
-  # regular grid succeeds
+  # already on the grid succeeds
   expect_silent(mm_lag_light_2s(solar.time, light, travel.time))
 
-  # a single mid-series gap breaks regularity
-  solar.time.gap <- solar.time
-  solar.time.gap[10] <- solar.time.gap[10] + as.difftime(37, units="mins")
+  # a single off-grid timestamp (not a real gap -- an unsnapped offset)
+  # fails mm_lag_2s()'s snap-to-bin precondition check
+  solar.time.offgrid <- solar.time
+  solar.time.offgrid[10] <- solar.time.offgrid[10] + as.difftime(37, units="mins")
   expect_error(
-    mm_lag_light_2s(solar.time.gap, light, travel.time),
-    "regular timestep grid.*#475")
+    mm_lag_light_2s(solar.time.offgrid, light, travel.time),
+    "snap-to-bin grid.*mm_snap_to_bin_2s.*#475")
+})
+
+test_that("a real mid-series gap (on-grid, but a bin missing) is handled, not rejected", {
+  # 24 hourly rows with row 10 (bin 09:00) dropped entirely -- a true gap,
+  # still exactly on the hourly grid, unlike the off-grid case above.
+  # travel.time=4hr -> lag=4, so the gap is far enough back to fall both at
+  # a window boundary (for one row) and strictly inside a window (for
+  # another), exercising both of mm_lag_2s()'s consumers' failure modes
+  n <- 24
+  solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    as.difftime((0:(n - 1)) * 1, units="hours")
+  light <- rep(1, n)
+  travel.time <- rep(4/24, n)
+
+  keep <- seq_len(n) != 10 # drop the 09:00 bin
+  solar.time.gap <- solar.time[keep]
+  light.gap <- light[keep]
+  travel.time.gap <- travel.time[keep]
+
+  # no error: a missing bin is not a grid violation
+  expect_silent(lagged <- mm_lag_2s(solar.time.gap, travel.time.gap))
+
+  # point-lookup case: 13:00's target (13:00 - 4h = 09:00) is exactly the
+  # missing bin -- no real upstream match, so no silent (wrong) pairing
+  row_13 <- which(solar.time.gap == as.POSIXct("2050-06-01 13:00:00", tz="UTC"))
+  expect_false(lagged$has_leadin[row_13])
+
+  # window-sum case: 12:00's target (08:00) exists, so this row still has
+  # lead-in, but its window (08:00 through 12:00) spans the missing 09:00
+  # bin. The array-position range shift_idx:i still correctly resolves to
+  # only the 4 rows that actually exist (08:00, 10:00, 11:00, 12:00), not
+  # 5 -- a gap inside the window contributes fewer terms, not NA and not a
+  # wrong pairing
+  row_12 <- which(solar.time.gap == as.POSIXct("2050-06-01 12:00:00", tz="UTC"))
+  expect_true(lagged$has_leadin[row_12])
+  window <- light.gap[lagged$shift_idx[row_12]:row_12]
+  expect_equal(length(window), 4)
+  expect_equal(
+    solar.time.gap[lagged$shift_idx[row_12]:row_12],
+    as.POSIXct(c("2050-06-01 08:00:00", "2050-06-01 10:00:00", "2050-06-01 11:00:00", "2050-06-01 12:00:00"), tz="UTC"))
+})
+
+test_that("mm_lag_light_2s runs without erroring on the real, gappy two_station_raw_example (regression test for #475)", {
+  # previously blocked outright by the old regularity guard (any gap ->
+  # hard error); now gap-safe via timestep-bin matching in mm_lag_2s()
+  data("two_station_raw_example", envir=environment())
+  up <- two_station_raw_example$upstream
+  up_ts <- as.POSIXct(v(up$timestamp), tz="UTC")
+  travel.time <- rep(0.1, length(up_ts)) # real travel.time lives on downstream; a stand-in is fine here
+
+  expect_no_error(mm_lag_light_2s(up_ts, rep(1, length(up_ts)), travel.time))
+})
+
+test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale, leaving a fully clean day intact", {
+  # lead-in (4 rows before day 1's 06:00) + day 1 (96 rows @ 15 min, one
+  # dropped from the middle -- a real gap) + day 2 (96 rows, fully clean).
+  # travel.time=2 timesteps (30 min) -> lag=2
+  timestep_min <- 15
+  leadin <- as.POSIXct("2050-06-01 05:00:00", tz="UTC") + as.difftime((0:3) * timestep_min, units="mins")
+  day1 <- as.POSIXct("2050-06-01 06:00:00", tz="UTC") + as.difftime((0:95) * timestep_min, units="mins")
+  day2 <- as.POSIXct("2050-06-02 06:00:00", tz="UTC") + as.difftime((0:95) * timestep_min, units="mins")
+  solar.time <- c(leadin, day1, day2)
+  solar.time <- solar.time[solar.time != day1[48]] # drop one row from day 1's middle
+
+  travel.time <- rep(2 * timestep_min / 1440, length(solar.time))
+  data <- data.frame(solar.time=solar.time, travel.time=travel.time)
+
+  aln <- mm_align_2s(data, max_travel_time_hours=10)
+
+  # day 1 (gap-affected: the dropped row plus the one row whose target bin
+  # was the dropped row) is 94/96 complete and gets dropped wholesale, even
+  # though most of its rows individually had real upstream matches; day 2
+  # (fully clean) is unaffected and modeled in full
+  expect_equal(as.character(unique(aln$date)), "2050-06-02")
+  expect_equal(aln$n_days, 1)
+  expect_equal(aln$n_obs, 96)
+})
+
+
+# mm_snap_to_bin_2s() --------------------------------------------------------
+
+test_that("mm_snap_to_bin_2s snaps two phase-shifted patterns onto one common grid", {
+  # a 15-min nominal grid, plus two synthetic deployments each internally
+  # regular but offset from that grid -- one at :01/:16/:31/:46 (matching
+  # the design doc's example pattern), the other at :04/:19/:34/:49
+  marks <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") + as.difftime((0:19) * 15, units="mins")
+  series_a <- marks + as.difftime(1, units="mins")
+  series_b <- marks + as.difftime(4, units="mins")
+
+  snapped_a <- mm_snap_to_bin_2s(series_a)
+  snapped_b <- mm_snap_to_bin_2s(series_b)
+
+  # both phase patterns round (well within the +/-7.5 min half-timestep
+  # tolerance) onto the exact same grid, and thus onto each other
+  expect_equal(snapped_a, marks)
+  expect_equal(snapped_b, marks)
+  expect_equal(snapped_a, snapped_b)
+})
+
+test_that("mm_snap_to_bin_2s turns a true gap between deployments into empty bins, not a merge", {
+  # deployment 1: 5 rows, 15-min cadence, phase +1 min
+  seg1 <- as.POSIXct("2050-06-01 00:01:00", tz="UTC") + as.difftime((0:4) * 15, units="mins")
+  # a true gap of 3 hours (12 timesteps), then deployment 2: 5 rows, 15-min
+  # cadence, phase +4 min -- concatenated deployments, per the design doc
+  seg2 <- seg1[5] + as.difftime(3, units="hours") + as.difftime(4, units="mins") +
+    as.difftime((0:4) * 15, units="mins")
+  solar.time <- c(seg1, seg2)
+
+  snapped <- mm_snap_to_bin_2s(solar.time)
+
+  # snapping only rounds existing rows -- it neither drops nor fabricates any
+  expect_equal(length(snapped), length(solar.time))
+  expect_false(any(duplicated(snapped)))
+
+  # the true gap survives as a 3-hour (12-timestep) jump between the last row
+  # of deployment 1 and the first row of deployment 2, not a 1-timestep step
+  expect_equal(as.numeric(difftime(snapped[6], snapped[5], units="hours")), 3)
+
+  # the bins inside that gap are simply absent -- not silently interpolated
+  gap_bins <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    as.difftime(c(75, 90, 195), units="mins") # 01:15, 01:30, ..., 03:45
+  expect_false(any(gap_bins %in% snapped))
 })
 
 

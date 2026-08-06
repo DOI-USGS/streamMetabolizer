@@ -13,11 +13,11 @@ mm_validate_data_2station(data)
 }
 \description{
 Checks the lead-in existence requirement specific to
-\code{\link{metab_bayes_2s}}: at least one row must have enough preceding
-upstream observations to cover its own travel time, given the (median)
-timestep of \code{data$solar.time}. This is a structural question -- is
-there any data at all to lag from? -- and so belongs with validation's
-other fail-fast checks.
+\code{\link{metab_bayes_2s}}: at least one row must have a real upstream
+observation at its target travel-time offset, per \code{\link{mm_lag_2s}}'s
+timestep-bin matching. This is a structural question -- is there any data
+at all to lag from? -- and so belongs with validation's other fail-fast
+checks.
 }
 \details{
 Rows that individually lack lead-in are not an error; they are dropped as

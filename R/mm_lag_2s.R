@@ -61,28 +61,134 @@ mm_date_2s <- function(solar.time) {
   as.Date(solar.time - as.difftime(mm_day_start_2s, units='hours'), tz='UTC')
 }
 
+#' Fixed epoch anchoring the two-station snap-to-bin grid
+#'
+#' Shared by \code{\link{mm_bin_index_2s}} and, through it,
+#' \code{\link{mm_snap_to_bin_2s}} and \code{\link{mm_lag_2s}} -- one
+#' constant, so that two series snapped/binned independently (e.g. upstream
+#' and downstream) always land on the same absolute bins rather than each
+#' being anchored to its own first timestamp.
+#'
+#' @keywords internal
+mm_bin_epoch_2s <- as.POSIXct('1970-01-01 00:00:00', tz='UTC')
+
+#' Per-row timestep-bin index relative to the fixed two-station epoch
+#'
+#' The single definition of "which bin does this timestamp fall in,"
+#' shared by \code{\link{mm_snap_to_bin_2s}} (which rounds timestamps onto
+#' the bins) and \code{\link{mm_lag_2s}} (which matches rows by bin instead
+#' of by row position). \code{round()} to an integer bin index rather than
+#' comparing timestamps directly means two rows are ever considered the
+#' same bin only by exact match -- no tolerance parameter to tune, and no
+#' sensitivity to the floating-point noise that timestamp arithmetic (e.g.
+#' \code{\link{mm_snap_to_bin_2s}}'s own epoch offset) introduces at the
+#' sub-microsecond level.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC.
+#' @param timestep_days the nominal timestep, in days (see
+#'   \code{\link{mm_get_timestep}}).
+#' @return integer vector, the same length as \code{solar.time}
+#' @keywords internal
+mm_bin_index_2s <- function(solar.time, timestep_days) {
+  offset_days <- as.numeric(difftime(solar.time, mm_bin_epoch_2s, units='days'))
+  round(offset_days / timestep_days)
+}
+
+#' Snap timestamps onto a common per-series bin grid
+#'
+#' Concatenated sensor deployments can be internally regular but mutually
+#' phase-shifted -- one deployment logging on the \code{:01/:16/:31/:46}
+#' minute marks, the next on \code{:04/:19/:34/:49} -- which otherwise looks
+#' identical to a real gap. Rounding every timestamp to the nearest bin of
+#' the series' nominal timestep removes that ambiguity: both phase patterns
+#' land on the same grid, and a true gap between deployments becomes empty
+#' bins on that grid rather than a boundary that has to be tracked
+#' separately (see issue #475).
+#'
+#' The nominal timestep is detected via \code{\link{mm_get_timestep}}'s
+#' \code{'modal'} format, which is robust to the occasional large gap
+#' between deployments (an outlier, not the mode). Bins are anchored to a
+#' fixed UTC epoch (\code{\link{mm_bin_index_2s}}) rather than to
+#' \code{solar.time}'s own first value, so that two series snapped
+#' independently -- e.g. upstream and downstream -- land on the same
+#' absolute bins as long as they share a nominal timestep.
+#'
+#' Tradeoff, accepted: distortion of up to half a timestep. Travel time is
+#' already rounded to the nearest timestep for the lag (see
+#' \code{\link{mm_lag_2s}}), so this is the same class of approximation
+#' already in use, not a new one.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending.
+#' @return POSIXct vector, the same length as \code{solar.time}, of the
+#'   snapped timestamps.
+#' @keywords internal
+mm_snap_to_bin_2s <- function(solar.time) {
+
+  if(length(solar.time) < 2) {
+    stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
+  }
+
+  # mm_get_timestep(format='modal') sometimes wraps its answer in a length-1
+  # list (a pre-existing quirk of that function, not addressed here); unlist
+  # before checking length so a single detected timestep is never mistaken
+  # for a detection failure
+  timestep_days <- unlist(mm_get_timestep(solar.time, format='modal'))
+  if(length(timestep_days) != 1 || is.na(timestep_days)) {
+    stop('could not detect a single nominal timestep to snap to', call.=FALSE)
+  }
+
+  bin_index <- mm_bin_index_2s(solar.time, timestep_days)
+  mm_bin_epoch_2s + as.difftime(bin_index * timestep_days, units='days')
+}
+
 #' Compute the per-row upstream lag for two-station data
 #'
 #' The upstream observation that "matches" a given downstream observation at
 #' row \code{i} was recorded \code{lag[i] <- round(travel.time[i] /
-#' timestep_days)} timesteps earlier, where \code{timestep_days} is the median
-#' timestep of \code{solar.time}. This is the single definition of that
-#' calculation: \code{\link{mm_validate_data_2station}} (existence check) and
+#' timestep_days)} timesteps earlier, where \code{timestep_days} is the
+#' modal timestep of \code{solar.time} (see \code{\link{mm_get_timestep}}).
+#' This is the single definition of that calculation:
+#' \code{\link{mm_validate_data_2station}} (existence check) and
 #' \code{mm_align_2s} (used in turn by \code{\link{prepdata_bayes_2s}} and
 #' \code{\link{metab_bayes_2s}}) all route through it, so the three cannot
 #' drift apart.
 #'
-#' No rows are dropped here; \code{has_leadin} reports which rows *could* be
-#' modeled, and callers decide what to do about the rest.
+#' \code{shift_idx[i]} is found by matching \emph{timestep bins}
+#' (\code{\link{mm_bin_index_2s}}), not by subtracting \code{lag[i]} from
+#' \code{i}'s row position. A row offset only equals a time offset when
+#' every row is exactly one nominal timestep apart; real deployment data
+#' with gaps or multiple, mutually phase-shifted deployments breaks that
+#' assumption and would silently pair the wrong upstream row with a given
+#' downstream row. Bin matching instead looks up the row that actually sits
+#' \code{lag[i]} timesteps back in time, and reports \code{NA} (folded into
+#' \code{has_leadin = FALSE}) when no such row exists -- whether because the
+#' shift reaches before the start of the data (the original meaning of
+#' "insufficient lead-in") or because of a real gap partway through
+#' (\code{solar.time} has no row at that bin). Both cases mean the same
+#' thing to every caller: this row cannot be modeled for lack of a real
+#' upstream match, and callers decide what to do about the rest.
 #'
-#' @param solar.time POSIXct vector of timestamps, sorted ascending.
+#' Bin matching requires \code{solar.time} to already sit on a snap-to-bin
+#' grid (see \code{\link{mm_snap_to_bin_2s}}) -- otherwise a computed target
+#' bin might not correspond to any real timestamp's bin even when a
+#' matching row conceptually exists, silently under-counting lead-in rather
+#' than correctly finding them. This is checked up front (a round-trip
+#' through \code{\link{mm_snap_to_bin_2s}} must be a no-op) rather than
+#' assumed, and duplicate bins (more than one row per timestep bin, which
+#' \code{\link{mm_snap_to_bin_2s}} cannot itself detect or resolve) are
+#' rejected outright rather than silently matched to whichever row comes
+#' first.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending,
+#'   already snapped to a single nominal timestep via
+#'   \code{\link{mm_snap_to_bin_2s}}.
 #' @param travel.time numeric vector of reach travel times, in days, the same
 #'   length as \code{solar.time}.
-#' @return a list with \code{timestep_days} (median timestep, in days),
+#' @return a list with \code{timestep_days} (modal timestep, in days),
 #'   \code{lag} (per-row lag, in timesteps), \code{shift_idx} (per-row index
-#'   into the input rows supplying that row's upstream values; may be < 1 where
-#'   the shift reaches before the start of the data), and \code{has_leadin}
-#'   (logical, \code{shift_idx >= 1})
+#'   into the input rows supplying that row's upstream values, or \code{NA}
+#'   where no row exists at the target timestep bin), and \code{has_leadin}
+#'   (logical, \code{!is.na(shift_idx)})
 #' @keywords internal
 mm_lag_2s <- function(solar.time, travel.time) {
 
@@ -91,15 +197,39 @@ mm_lag_2s <- function(solar.time, travel.time) {
     stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
   }
 
-  timestep_days <- stats::median(as.numeric(diff(solar.time), units='days'))
+  timestep_days <- unlist(mm_get_timestep(solar.time, format='modal'))
+  if(length(timestep_days) != 1 || is.na(timestep_days)) {
+    stop('could not detect a single nominal timestep for solar.time', call.=FALSE)
+  }
+
+  # bin matching requires solar.time to already be on the snap-to-bin grid;
+  # confirmed by a round-trip, since already-snapped data is a fixed point
+  # of mm_snap_to_bin_2s() and anything else changes under it. 1-second
+  # tolerance is far above the ~microsecond floating-point noise that
+  # timestamp arithmetic introduces and far below any real timestep
+  snapped <- mm_snap_to_bin_2s(solar.time)
+  if(max(abs(as.numeric(snapped) - as.numeric(solar.time))) > 1) {
+    stop(
+      'solar.time is not on a snap-to-bin grid; call mm_snap_to_bin_2s() ',
+      'on it before mm_lag_2s() (see issue #475)', call.=FALSE)
+  }
+
+  bin_index <- mm_bin_index_2s(solar.time, timestep_days)
+  if(any(duplicated(bin_index))) {
+    stop(
+      'solar.time has more than one row in the same timestep bin; check for ',
+      'duplicate or near-duplicate timestamps', call.=FALSE)
+  }
+
   lag <- round(travel.time / timestep_days)
-  shift_idx <- seq_len(n_total) - lag
+  target_bin <- bin_index - lag
+  shift_idx <- match(target_bin, bin_index)
 
   list(
     timestep_days = timestep_days,
     lag = lag,
     shift_idx = shift_idx,
-    has_leadin = shift_idx >= 1)
+    has_leadin = !is.na(shift_idx))
 }
 
 #' Align two-station data onto its 06:00 day window
@@ -110,9 +240,12 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #' upstream values, and how those modeled rows partition into days.
 #'
 #' Rows are dropped for lack of lead-in on a *per-row* basis: row \code{i} is
-#' modelable whenever \code{i - lag[i] >= 1}. (An earlier implementation
-#' trimmed \code{max(lag)} rows off the front of the dataset, discarding rows
-#' that needed less lead-in than the dataset-wide worst case.)
+#' modelable whenever \code{\link{mm_lag_2s}} finds a real row at its target
+#' timestep bin (\code{has_leadin[i]}), whether the shift would otherwise
+#' reach before the start of the data or into a gap partway through. (An
+#' earlier implementation trimmed \code{max(lag)} rows off the front of the
+#' dataset, discarding rows that needed less lead-in than the dataset-wide
+#' worst case.)
 #'
 #' Whole days are dropped, with a message, in two cases:
 #' \itemize{

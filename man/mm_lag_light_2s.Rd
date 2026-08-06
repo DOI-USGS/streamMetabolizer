@@ -7,7 +7,9 @@
 mm_lag_light_2s(solar.time, light, travel.time)
 }
 \arguments{
-\item{solar.time}{POSIXct vector of timestamps, in UTC, sorted ascending.}
+\item{solar.time}{POSIXct vector of timestamps, in UTC, sorted ascending,
+already snapped to a single nominal timestep via
+\code{\link{mm_snap_to_bin_2s}}.}
 
 \item{light}{numeric vector, the same length as \code{solar.time}, of a
 single combined light value per timestep.}
@@ -56,15 +58,17 @@ timestep.
   \code{NA} rather than a proportion computed from a partial sum.
 }
 
-\section{Regular-timestep requirement (temporary limitation)}{
- this
-  function assumes every row of \code{solar.time} is exactly one nominal
-  timestep apart, so that \code{\link{mm_lag_2s}}'s window-start indices
-  can be used directly as row offsets. Real deployment data with gaps or
-  multiple, mutually phase-shifted deployments breaks that assumption.
-  TODO(#475-item7): snap-to-bin rounding would lift this restriction. For
-  now, this function checks timestep regularity up front and errors
-  rather than silently computing wrong windows on irregular input.
+\section{Snap-to-bin requirement}{
+ \code{\link{mm_lag_2s}} (called below)
+  matches rows by timestep bin rather than by row position, so gaps and
+  multiple, mutually phase-shifted deployments are handled correctly --
+  a missing bin inside a light-sum window simply contributes no term,
+  and a missing bin at a window's start yields \code{NA} via
+  \code{has_leadin}, both without special-casing here. What
+  \code{mm_lag_2s()} still requires, and enforces itself, is that
+  \code{solar.time} already sits on a single well-defined bin grid (see
+  \code{\link{mm_snap_to_bin_2s}}); this function does not duplicate that
+  check.
 }
 
 \keyword{internal}

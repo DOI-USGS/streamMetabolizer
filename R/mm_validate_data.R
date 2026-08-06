@@ -123,11 +123,11 @@ mm_validate_data <- function(
 #' Two-station-specific data validation
 #'
 #' Checks the lead-in existence requirement specific to
-#' \code{\link{metab_bayes_2s}}: at least one row must have enough preceding
-#' upstream observations to cover its own travel time, given the (median)
-#' timestep of \code{data$solar.time}. This is a structural question -- is
-#' there any data at all to lag from? -- and so belongs with validation's
-#' other fail-fast checks.
+#' \code{\link{metab_bayes_2s}}: at least one row must have a real upstream
+#' observation at its target travel-time offset, per \code{\link{mm_lag_2s}}'s
+#' timestep-bin matching. This is a structural question -- is there any data
+#' at all to lag from? -- and so belongs with validation's other fail-fast
+#' checks.
 #'
 #' Rows that individually lack lead-in are not an error; they are dropped as
 #' lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
@@ -150,10 +150,11 @@ mm_validate_data_2station <- function(data) {
   if(!any(lagged$has_leadin)) {
     max_lag <- max(lagged$lag)
     stop(paste0(
-      'insufficient lead-in data for upstream DO: no row has enough preceding upstream ',
-      'observations to cover its own travel.time. The longest travel.time implies a lag of ',
-      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; ',
-      'supply lead-in upstream data before the first row to be modeled'))
+      'insufficient lead-in data for upstream DO: no row has a real upstream ',
+      'observation at its target travel-time offset. The longest travel.time implies a lag of ',
+      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; this usually means ',
+      'lead-in upstream data is needed before the first row to be modeled, though sufficiently ',
+      'sparse or gappy data could produce the same error'))
   }
 
   invisible(NULL)

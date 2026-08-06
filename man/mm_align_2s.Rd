@@ -30,9 +30,12 @@ upstream values, and how those modeled rows partition into days.
 }
 \details{
 Rows are dropped for lack of lead-in on a *per-row* basis: row \code{i} is
-modelable whenever \code{i - lag[i] >= 1}. (An earlier implementation
-trimmed \code{max(lag)} rows off the front of the dataset, discarding rows
-that needed less lead-in than the dataset-wide worst case.)
+modelable whenever \code{\link{mm_lag_2s}} finds a real row at its target
+timestep bin (\code{has_leadin[i]}), whether the shift would otherwise
+reach before the start of the data or into a gap partway through. (An
+earlier implementation trimmed \code{max(lag)} rows off the front of the
+dataset, discarding rows that needed less lead-in than the dataset-wide
+worst case.)
 
 Whole days are dropped, with a message, in two cases:
 \itemize{

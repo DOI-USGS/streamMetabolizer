@@ -388,16 +388,20 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
 #'   no well-defined total to divide by, so every row in that day gets
 #'   \code{NA} rather than a proportion computed from a partial sum.
 #'
-#' @section Regular-timestep requirement (temporary limitation): this
-#'   function assumes every row of \code{solar.time} is exactly one nominal
-#'   timestep apart, so that \code{\link{mm_lag_2s}}'s window-start indices
-#'   can be used directly as row offsets. Real deployment data with gaps or
-#'   multiple, mutually phase-shifted deployments breaks that assumption.
-#'   TODO(#475-item7): snap-to-bin rounding would lift this restriction. For
-#'   now, this function checks timestep regularity up front and errors
-#'   rather than silently computing wrong windows on irregular input.
+#' @section Snap-to-bin requirement: \code{\link{mm_lag_2s}} (called below)
+#'   matches rows by timestep bin rather than by row position, so gaps and
+#'   multiple, mutually phase-shifted deployments are handled correctly --
+#'   a missing bin inside a light-sum window simply contributes no term,
+#'   and a missing bin at a window's start yields \code{NA} via
+#'   \code{has_leadin}, both without special-casing here. What
+#'   \code{mm_lag_2s()} still requires, and enforces itself, is that
+#'   \code{solar.time} already sits on a single well-defined bin grid (see
+#'   \code{\link{mm_snap_to_bin_2s}}); this function does not duplicate that
+#'   check.
 #'
-#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending.
+#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending,
+#'   already snapped to a single nominal timestep via
+#'   \code{\link{mm_snap_to_bin_2s}}.
 #' @param light numeric vector, the same length as \code{solar.time}, of a
 #'   single combined light value per timestep.
 #' @param travel.time numeric vector of reach travel times, in days, the
@@ -407,17 +411,6 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
 #'   lead-in or falls in an incomplete 06:00-06:00 day.
 #' @keywords internal
 mm_lag_light_2s <- function(solar.time, light, travel.time) {
-
-  # regularity guard: mm_lag_2s()'s shift_idx is a row offset, which only
-  # matches a time offset when every row is exactly one nominal timestep
-  # apart (see the roxygen section above)
-  timesteps <- mm_get_timestep(solar.time, format='unique')
-  if(length(timesteps) != 1) {
-    stop(
-      'mm_lag_light_2s() requires a regular timestep grid; solar.time has ',
-      'gaps or multiple, phase-shifted deployments, which this function ',
-      'does not yet support (see issue #475)', call.=FALSE)
-  }
 
   lagged <- mm_lag_2s(solar.time, travel.time)
   n_total <- length(light)
