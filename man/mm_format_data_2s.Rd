@@ -24,18 +24,18 @@ a unitted data.frame with columns \code{solar.time},
   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
   \code{travel.time}, sorted ascending by \code{solar.time}, ready for
-  \code{\link{mm_validate_data_2station}}
+  \code{\link{mm_validate_data}}'s two-station-specific lead-in check
 }
 \description{
 Takes the three raw, unaligned two-station data.frames -- upstream DO,
 downstream DO/temp/depth/travel time, and a single light series
 (see \code{\link{two_station_raw_example}} for the expected input shape)
--- and produces the single data.frame that \code{\link{mm_validate_data}}/
-\code{\link{mm_validate_data_2station}} and \code{\link{metab_bayes_2s}}
-expect (see \code{\link{two_station_example}}). Formatting data by hand to
-that same shape works equally well; this function is a convenience for the
-common case of separate upstream/downstream/light, not a
-requirement.
+-- and produces the single data.frame that \code{\link{mm_validate_data}}
+(including its two-station-specific lead-in check) and
+\code{\link{metab_bayes_2s}} expect (see \code{\link{two_station_example}}).
+Formatting data by hand to that same shape works equally well; this
+function is a convenience for the common case of separate
+upstream/downstream/light, not a requirement.
 }
 \details{
 "Raw" here means unaligned: inputs must already use
@@ -61,7 +61,7 @@ clock-minute offsets don't read as unmatched.
 
 \code{light} is converted from a raw per-timestep value into the
 within-day, travel-time-weighted proportion \code{\link{metab_bayes_2s}}
-requires (see \code{\link{mm_lag_light_2s}}), and its units are set to
-\code{NA} to match -- mirroring \code{\link{metab_bayes_2s}}'s own
-\code{data} default.
+requires, by summing each row's upstream travel-time window and dividing
+by that day's total light sum, and its units are set to \code{NA} to
+match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
 }
