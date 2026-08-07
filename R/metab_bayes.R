@@ -627,45 +627,11 @@ runstan_bayes <- function(
   # determine how many cores to use
   n_cores <- mm_determine_cores(n_cores, n_chains=n_chains, verbose=verbose)
 
-  # stan() can't find its own function cpp_object_initializer() unless the
-  # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
-  # (not solution):
-  # https://stat.ethz.ch/pipermail/r-devel/2014-September/069803.html
-  if(!suppressPackageStartupMessages(require(rstan))) {
-    stop("the rstan package is required for Stan MCMC models")
-  }
-
-  # use auto_write=TRUE to recompile if needed, or load from existing .rds file
-  # without recompiling if possible
-  compile_time <- system.time({})
-  mobj_path <- gsub('.stan$', '.stanrds', model_path)
-  if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
-    if(verbose) message("compiling Stan model")
-    compile_time <- system.time({
-      compile_log <- capture.output({
-        stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
-      }, type=c('output'), split=verbose)
-    })
-    rm(stan_mobj)
-    gc() # this humble line saves us from many horrible R crashes
-    autowrite_path <- gsub('.stan$', '.rds', model_path)
-    if(!file.exists(autowrite_path)) autowrite_path <- gsub('.stan$', '.rda', model_path) # for backwards compatibility with rstan < 2.13
-    if(!file.exists(autowrite_path)) autowrite_path <- file.path(tempdir(), basename(autowrite_path))
-    if(!file.exists(autowrite_path)) {
-      warning('could not find saved rds model file')
-    } else {
-      tryCatch({
-        file.copy(autowrite_path, mobj_path, overwrite=TRUE)
-        file.remove(autowrite_path)
-      }, error=function(e) {
-        warning('could not copy Stan rds to .stanrds file: ', e$message)
-        mobj_path <- autowrite_path
-      })
-    }
-  } else {
-    if(verbose) message("loading pre-compiled Stan model")
-  }
-  stan_mobj <- readRDS(mobj_path)
+  # compile the Stan model, or load it from the .stanrds cache if unchanged
+  compiled <- mm_compile_stan_model(model_path, verbose=verbose)
+  stan_mobj <- compiled$stan_mobj
+  compile_time <- compiled$compile_time
+  compile_log <- compiled$compile_log
 
   # make note of existing log files so we don't read them later
   oldlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
@@ -719,7 +685,7 @@ runstan_bayes <- function(
   log <- if(length(logfile) > 0) readLines(logfile) else consolelog
   stan_out <- c(stan_out, c(
     list(log=log),
-    if(exists('compile_log')) list(compile_log=compile_log),
+    if(!is.null(compile_log)) list(compile_log=compile_log),
     list(compile_time=compile_time)))
 
   return(stan_out)

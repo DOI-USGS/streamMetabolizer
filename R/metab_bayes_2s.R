@@ -74,6 +74,7 @@ metab_bayes_2s <- function(
 ) {
 
   stanfit <- NULL
+  compile_time <- system.time({})
   fitting_time <- system.time({
     # Check data for correct column names, units, and travel.time bounds
     # (mm_validate_data()), then check lead-in coverage
@@ -124,12 +125,17 @@ metab_bayes_2s <- function(
       tryCatch({
         if (!requireNamespace("rstan", quietly = TRUE)) stop("rstan is required but not installed. Install it with: install.packages('rstan')")
 
+        # compile the Stan model, or load it from the .stanrds cache if
+        # unchanged (same cache runstan_bayes() uses for one-station)
+        compiled <- mm_compile_stan_model(specs$model_path, verbose=specs$verbose)
+        compile_time <- compiled$compile_time
+
         consolelog <- utils::capture.output(
-          stanfit <- rstan::stan(
-            file=specs$model_path, data=data_list, pars=specs$params_out,
-            chains=specs$n_chains, cores=n_cores,
+          stanfit <- rstan::sampling(
+            object=compiled$stan_mobj, data=data_list, pars=specs$params_out,
+            include=TRUE, chains=specs$n_chains, cores=n_cores,
             iter=specs$burnin_steps + specs$saved_steps, warmup=specs$burnin_steps,
-            thin=specs$thin_steps, verbose=specs$verbose, open_progress=FALSE),
+            thin=specs$thin_steps, init="random", verbose=specs$verbose, open_progress=FALSE),
           split=specs$verbose)
 
         if(stanfit@mode == 2L) {
@@ -200,8 +206,8 @@ metab_bayes_2s <- function(
     log=NULL,
     mcmc=if(isTRUE(specs$keep_mcmcs)) stanfit else NULL,
     mcmc_data=if(isTRUE(specs$keep_mcmc_data)) data_list else NULL,
-    fitting_time=fitting_time,
-    compile_time=system.time({}), # rstan::stan() compiles & samples in one call; not timed separately
+    fitting_time=fitting_time - compile_time,
+    compile_time=compile_time,
     specs=specs,
     data=dat_list$data, # keep the units if given
     data_daily=dat_list$data_daily)

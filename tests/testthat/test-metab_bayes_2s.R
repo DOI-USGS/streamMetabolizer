@@ -518,12 +518,16 @@ test_that("metab() fits a two-station model and predict_metab()/predict_DO() wor
 test_that("a failed Stan run (mode==2L) warns and continues, matching runstan_bayes()'s pattern, rather than erroring out", {
   skip_if_not_installed('rstan')
 
-  # stand in for rstan::stan()'s return value on a failed run: only the
+  # stand in for rstan::sampling()'s return value on a failed run: only the
   # 'mode' slot is inspected by metab_bayes_2s() before deciding to skip
-  # post-processing, so a minimal S4 object with that slot is sufficient
+  # post-processing, so a minimal S4 object with that slot is sufficient.
+  # mm_compile_stan_model() is also mocked so this test doesn't depend on a
+  # real compile or on the .stanrds cache file's state on disk.
   setClass('fake_failed_stanfit', representation(mode='integer'))
   fake_stanfit <- methods::new('fake_failed_stanfit', mode=2L)
-  testthat::local_mocked_bindings(stan=function(...) fake_stanfit, .package='rstan')
+  testthat::local_mocked_bindings(
+    mm_compile_stan_model=function(...) list(stan_mobj=NULL, compile_time=system.time({}), compile_log=NULL))
+  testthat::local_mocked_bindings(sampling=function(...) fake_stanfit, .package='rstan')
 
   dat <- make_ts_data()
   sp <- specs(
