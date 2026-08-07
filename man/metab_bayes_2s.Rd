@@ -51,14 +51,27 @@ in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See \code{\link{mm_name}} to
 choose a Bayesian model and \code{\link{specs}} for relevant options for the
 \code{specs} argument.
 }
-\details{
-Unlike \code{\link{metab_bayes}}, which supports many model structures via
-\code{split_dates}/\code{pool_K600}/etc., \code{metab_bayes_2s} always
-fits every date jointly in a single Stan call (\code{specs$split_dates} is
-forced to \code{FALSE} by \code{\link{specs}}), because the
-upstream-downstream lag shift ties each date's first modeled rows to the
-previous date's last rows.
+\section{Fitting all dates at once, or one at a time}{
+ With
+  \code{specs$split_dates=FALSE} (the default) every date is fitted
+  together in a single Stan call; with \code{TRUE}, each date is fitted in
+  its own call. The difference that matters is the observation-error
+  \code{sigma}: the Stan model carries one \code{sigma} shared across
+  whatever dates it is given, so fitting dates one at a time estimates a
+  separate \code{sigma} per date instead of one pooled across the record.
+  That is a deliberate tradeoff rather than a defect -- it is exactly what
+  one-station's \code{split_dates=TRUE} already means on a structurally
+  identical model -- and it is why joint fitting remains the default: the
+  pooled estimate uses the whole record. Splitting is useful when dates
+  should not share an error estimate, or to keep one unfittable date from
+  costing the whole run, since each date's errors are collected and
+  reported against that date alone.
+
+  Fitting one date at a time does not mean slicing the data by date: each
+  date's upstream observations are drawn from earlier rows, across the
+  date boundary, exactly as in the joint fit.
 }
+
 \section{Two-station day window}{
  Two-station days begin at 06:00 and run a
   full 24 hours, to 06:00 the next day. This convention is unrelated to the

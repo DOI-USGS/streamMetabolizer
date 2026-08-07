@@ -711,8 +711,13 @@ specs <- function(
         all_specs$engine <- 'stan'
       }
       if('split_dates' %in% yes_missing) {
-        # forced FALSE: the upstream/downstream lag shift ties consecutive
-        # days together, so days can't be modeled independently
+        # FALSE by default, but both modes are supported. The two-station Stan
+        # model carries a single observation-error sigma shared across whatever
+        # dates it is given, so split_dates=TRUE estimates a separate sigma per
+        # date rather than one pooled across the record -- the same tradeoff
+        # one-station's split_dates already makes on a structurally identical
+        # model. Joint is the default because the pooled estimate uses the
+        # whole record; see metab_bayes_2s() for when splitting is preferable
         all_specs$split_dates <- FALSE
       }
       if('params_out' %in% yes_missing) {

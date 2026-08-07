@@ -738,3 +738,120 @@ test_that("bayes_perday_2s() compiles the Stan model once and hits the cache for
   expect_identical(file.info(stanrds_path)$mtime, mtime_before)
   expect_equal(unname(res$compile_time[['elapsed']]), 0)
 })
+
+
+# split_dates=TRUE wiring ------------------------------------------------
+
+test_that("specs() still defaults split_dates to FALSE but accepts TRUE for two-station", {
+  expect_false(specs(mm_name('bayes_2s'))$split_dates)
+  # setting it in specs() warns (revise() is the preferred route) exactly as
+  # it does for one-station, but the value is honored
+  expect_true(suppressWarnings(specs(mm_name('bayes_2s'), split_dates=TRUE))$split_dates)
+  expect_true(revise(specs(mm_name('bayes_2s')), split_dates=TRUE)$split_dates)
+})
+
+test_that("bayes_1fit_2s() formats with nosplit even when specs$split_dates is TRUE", {
+  # split_dates selects runstan_bayes()'s output formatter, not its looping.
+  # format_mcmc_mat_split() would collapse the summary to a single row and
+  # strip a '[1]' suffix, mangling metab[i,t] and leaving no 'daily' element
+  # -- which would silently turn every per-day fit into an apparent failure.
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- subset_2station_days(two_station_example, 2)
+  sp <- fast_2station_specs()
+  sp$split_dates <- TRUE
+  sp$model_path <- mm_locate_filename(sp$model_name)
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+
+  fit1 <- suppressMessages(bayes_1fit_2s(dat, aln=aln, specs=sp))
+
+  expect_false(is.null(fit1$daily))
+  expect_equal(nrow(fit1$daily), 2)
+  expect_true(all(c('date','GPP_daily_50pct','ER_daily_50pct','K600_daily_50pct') %in% names(fit1$daily)))
+  expect_equal(nrow(fit1$inst), 2 * 96)
+})
+
+test_that("metab_bayes_2s(split_dates=TRUE) fits per date and returns the joint mode's output shape", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- subset_2station_days(two_station_example, 3)
+  dates <- unique(suppressMessages(mm_align_2s(v(dat)))$date)
+  sp <- fast_2station_specs()
+
+  split <- suppressMessages(metab_bayes_2s(specs=revise(sp, split_dates=TRUE), data=dat))
+  joint <- suppressMessages(metab_bayes_2s(specs=revise(sp, split_dates=FALSE), data=dat))
+
+  expect_s4_class(split, 'metab_bayes_2s')
+  expect_equal(get_fit(split)$daily$date, dates)
+  expect_equal(nrow(predict_metab(split)), 3)
+  expect_equal(nrow(predict_DO(split)), 3 * 96)
+  expect_named(predict_DO(split), c('solar.time','DO.obs.down','DO.mod.down'))
+  expect_equal(nrow(get_params(split)), 3)
+
+  # downstream consumers must see the same shape either way
+  expect_named(predict_metab(split), names(predict_metab(joint)))
+  expect_named(get_params(split), names(get_params(joint)))
+  expect_true(all(names(get_fit(joint)$daily) %in% names(get_fit(split)$daily)))
+
+  # per-day estimates are plausible and independent, not copies of each other
+  pm <- predict_metab(split)
+  expect_true(all(pm$GPP > 0)); expect_true(all(pm$ER < 0)); expect_true(all(pm$K600 > 0))
+  expect_false(anyDuplicated(pm$GPP) > 0)
+})
+
+test_that("the mcmc slot holds one stanfit jointly and a date-named list per day, as for one-station", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- subset_2station_days(two_station_example, 3)
+  dates <- unique(suppressMessages(mm_align_2s(v(dat)))$date)
+  sp <- fast_2station_specs()
+
+  joint <- suppressMessages(metab_bayes_2s(specs=revise(sp, split_dates=FALSE, keep_mcmcs=TRUE), data=dat))
+  expect_s4_class(get_mcmc(joint), 'stanfit')
+
+  split <- suppressMessages(metab_bayes_2s(specs=revise(sp, split_dates=TRUE, keep_mcmcs=TRUE), data=dat))
+  mc <- get_mcmc(split)
+  expect_type(mc, 'list')
+  expect_length(mc, 3)
+  expect_equal(names(mc), as.character(dates))
+  expect_true(all(sapply(mc, function(x) inherits(x, 'stanfit'))))
+
+  # keep_mcmcs=FALSE keeps nothing, and says so the same way either mode does
+  none <- suppressMessages(metab_bayes_2s(specs=revise(sp, split_dates=TRUE, keep_mcmcs=FALSE), data=dat))
+  expect_null(get_mcmc(none))
+  expect_equal(nrow(predict_metab(none)), 3)
+})
+
+test_that("keep_mcmcs/keep_mcmc_data accept a vector of dates in per-day mode only", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- subset_2station_days(two_station_example, 3)
+  dates <- unique(suppressMessages(mm_align_2s(v(dat)))$date)
+  sp <- fast_2station_specs()
+  pick <- dates[c(1, 3)]
+
+  mm <- suppressMessages(metab_bayes_2s(
+    specs=revise(sp, split_dates=TRUE, keep_mcmcs=pick, keep_mcmc_data=dates[2]), data=dat))
+
+  mc <- get_mcmc(mm)
+  expect_equal(names(mc), as.character(dates))
+  expect_equal(names(mc)[!sapply(mc, is.null)], as.character(pick))
+
+  md <- get_mcmc_data(mm)
+  expect_equal(names(md)[!sapply(md, is.null)], as.character(dates[2]))
+  kept <- md[[as.character(dates[2])]]
+  expect_true(all(c('n_obs','n_days','DO_obs_up') %in% names(kept)))
+  expect_equal(kept$n_days, 1L)
+
+  # a date vector is meaningless when there is only one fit
+  expect_error(
+    metab_bayes_2s(specs=revise(sp, split_dates=FALSE, keep_mcmcs=pick), data=dat),
+    'keep_mcmcs must be a single logical value')
+  expect_error(
+    metab_bayes_2s(specs=revise(sp, split_dates=FALSE, keep_mcmc_data=pick), data=dat),
+    'keep_mcmc_data must be a single logical value')
+})

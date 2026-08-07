@@ -25,9 +25,11 @@ settings from it.}
 a list with \code{daily} (one row per date, with
   \code{valid_day}/\code{warnings}/\code{errors} columns), \code{inst}
   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
-  \code{NULL} if no date succeeded), \code{mcmcs} (per-date stanfit
-  objects, named by date), \code{compile_time}, \code{dates_fit},
-  \code{dates_failed}, and empty run-level \code{warnings}/\code{errors}
+  \code{NULL} if no date succeeded), \code{mcmcs} and \code{mcmc_datas}
+  (named by date, honoring \code{specs$keep_mcmcs}/\code{keep_mcmc_data};
+  \code{NULL} if no date was selected), \code{compile_time},
+  \code{dates_fit}, \code{dates_failed}, and empty run-level
+  \code{warnings}/\code{errors}
 }
 \description{
 Loops over the dates in a two-station alignment, fitting each in its own

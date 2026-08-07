@@ -15,12 +15,24 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #' choose a Bayesian model and \code{\link{specs}} for relevant options for the
 #' \code{specs} argument.
 #'
-#' Unlike \code{\link{metab_bayes}}, which supports many model structures via
-#' \code{split_dates}/\code{pool_K600}/etc., \code{metab_bayes_2s} always
-#' fits every date jointly in a single Stan call (\code{specs$split_dates} is
-#' forced to \code{FALSE} by \code{\link{specs}}), because the
-#' upstream-downstream lag shift ties each date's first modeled rows to the
-#' previous date's last rows.
+#' @section Fitting all dates at once, or one at a time: With
+#'   \code{specs$split_dates=FALSE} (the default) every date is fitted
+#'   together in a single Stan call; with \code{TRUE}, each date is fitted in
+#'   its own call. The difference that matters is the observation-error
+#'   \code{sigma}: the Stan model carries one \code{sigma} shared across
+#'   whatever dates it is given, so fitting dates one at a time estimates a
+#'   separate \code{sigma} per date instead of one pooled across the record.
+#'   That is a deliberate tradeoff rather than a defect -- it is exactly what
+#'   one-station's \code{split_dates=TRUE} already means on a structurally
+#'   identical model -- and it is why joint fitting remains the default: the
+#'   pooled estimate uses the whole record. Splitting is useful when dates
+#'   should not share an error estimate, or to keep one unfittable date from
+#'   costing the whole run, since each date's errors are collected and
+#'   reported against that date alone.
+#'
+#'   Fitting one date at a time does not mean slicing the data by date: each
+#'   date's upstream observations are drawn from earlier rows, across the
+#'   date boundary, exactly as in the joint fit.
 #'
 #' @inheritParams metab
 #' @return A metab_bayes_2s object containing the fitted model. This object
@@ -74,6 +86,7 @@ metab_bayes_2s <- function(
 ) {
 
   stanfit <- NULL
+  mcmc_data <- NULL
   compile_time <- system.time({})
   fitting_time <- system.time({
     # Check data for correct column names, units, and travel.time bounds
@@ -91,43 +104,80 @@ metab_bayes_2s <- function(
     # the alignment itself isn't available to read back off its result).
     aln <- mm_align_2s(v(dat_list$data), max_travel_time_hours=specs$max_travel_time_hours)
 
-    # Prepare the Stan data list (matrices from data, plus scalar priors from
-    # specs). modifyList (not c()) is used because prepdata_bayes_2s() already
-    # supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from specs), and
-    # those two names are also in specs$params_in; a plain c() would create
-    # duplicate-named list elements instead of overriding.
-    #
-    # Prepared here, outside bayes_1fit_2s(), so that data problems
-    # prepdata_bayes_2s() detects (NA light in an otherwise complete day,
-    # non-contiguous dates) still halt the joint fit with the original error
-    # rather than being collected and reported as a failed fit
-    data_list <- prepdata_bayes_2s(dat_list$data, specs=specs, aln=aln)
-    data_list <- modifyList(data_list, specs[specs$params_in])
-
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
 
-    # Fit every date jointly in one Stan call, collecting errors/warnings as
-    # strings rather than letting a bad dataset halt execution without
-    # reporting anything back
-    fit1 <- bayes_1fit_2s(
-      dat_list$data, aln=aln, specs=specs, data_list=data_list)
-    stanfit <- fit1$stanfit
-    compile_time <- fit1$compile_time
-
-    # if fitting failed, fill in NA daily estimates (with real dates) so the
-    # returned model at least reports which dates were attempted
-    daily <- fit1$daily
-    inst <- fit1$inst
-    if(length(fit1$errors) > 0 || is.null(daily)) {
-      daily <- mm_na_daily(fit1$date_df$date)
-      inst <- NULL
+    # check the format of keep_mcmcs/keep_mcmc_data, as in metab_bayes(): the
+    # date-vector form only means something when each date has its own fit
+    if(is.logical(specs$keep_mcmcs)) {
+      if(length(specs$keep_mcmcs) != 1) {
+        stop("if keep_mcmcs is logical, it must have length 1")
+      }
+    } else if(specs$split_dates == FALSE) {
+      stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
     }
-    daily <- dplyr::mutate(daily, valid_day=TRUE, warnings='', errors='')
+    if(is.logical(specs$keep_mcmc_data)) {
+      if(length(specs$keep_mcmc_data) != 1) {
+        stop("if keep_mcmc_data is logical, it must have length 1")
+      }
+    } else if(specs$split_dates == FALSE) {
+      stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
+    }
 
-    fit <- list(
-      daily=daily, inst=inst,
-      warnings=fit1$warnings, errors=fit1$errors)
+    if(isTRUE(specs$split_dates)) {
+      # one date at a time. Each date's data preparation happens inside its
+      # own error-collecting handler, so a single bad date is reported in that
+      # date's errors column rather than halting the rest of the run
+      if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
+      if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
+      perday <- bayes_perday_2s(dat_list$data, specs=specs, aln=aln)
+
+      stanfit <- perday$mcmcs
+      mcmc_data <- perday$mcmc_datas
+      compile_time <- perday$compile_time
+      fit <- list(
+        daily=perday$daily, inst=perday$inst,
+        warnings=perday$warnings, errors=perday$errors)
+
+    } else {
+      # every date jointly, in a single Stan call.
+      #
+      # Prepare the Stan data list (matrices from data, plus scalar priors
+      # from specs). modifyList (not c()) is used because prepdata_bayes_2s()
+      # already supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from
+      # specs), and those two names are also in specs$params_in; a plain c()
+      # would create duplicate-named list elements instead of overriding.
+      #
+      # Prepared here, outside bayes_1fit_2s(), so that data problems
+      # prepdata_bayes_2s() detects (NA light in an otherwise complete day,
+      # non-contiguous dates) halt the joint fit with the original error
+      # rather than being collected and reported as a failed fit
+      data_list <- prepdata_bayes_2s(dat_list$data, specs=specs, aln=aln)
+      data_list <- modifyList(data_list, specs[specs$params_in])
+
+      # errors/warnings are collected as strings rather than letting a bad
+      # dataset halt execution without reporting anything back
+      fit1 <- bayes_1fit_2s(
+        dat_list$data, aln=aln, specs=specs, data_list=data_list,
+        keep_mcmc=isTRUE(specs$keep_mcmcs))
+      stanfit <- fit1$stanfit
+      mcmc_data <- if(isTRUE(specs$keep_mcmc_data)) data_list else NULL
+      compile_time <- fit1$compile_time
+
+      # if fitting failed, fill in NA daily estimates (with real dates) so the
+      # returned model at least reports which dates were attempted
+      daily <- fit1$daily
+      inst <- fit1$inst
+      if(length(fit1$errors) > 0 || is.null(daily)) {
+        daily <- mm_na_daily(fit1$date_df$date)
+        inst <- NULL
+      }
+      daily <- dplyr::mutate(daily, valid_day=TRUE, warnings='', errors='')
+
+      fit <- list(
+        daily=daily, inst=inst,
+        warnings=fit1$warnings, errors=fit1$errors)
+    }
   })
 
   # Package and return results
@@ -136,8 +186,11 @@ metab_bayes_2s <- function(
     info=info,
     fit=fit,
     log=NULL,
-    mcmc=if(isTRUE(specs$keep_mcmcs)) stanfit else NULL,
-    mcmc_data=if(isTRUE(specs$keep_mcmc_data)) data_list else NULL,
+    # a single stanfit in joint mode, a list of them named by date in per-day
+    # mode -- the same two shapes metab_bayes() already returns for
+    # split_dates=FALSE/TRUE
+    mcmc=stanfit,
+    mcmc_data=mcmc_data,
     fitting_time=fitting_time - compile_time,
     compile_time=compile_time,
     specs=specs,
@@ -202,17 +255,21 @@ metab_bayes_2s <- function(
 #'   inside the error-collecting handler, so that preparation failures are
 #'   reported as a failed fit instead. Supplying a list that doesn't
 #'   correspond to \code{data}/\code{aln} will silently produce wrong results.
+#' @param keep_mcmc logical. Retain the \code{stanfit} object in the result?
+#'   Resolved by the caller, which knows whether \code{specs$keep_mcmcs} names
+#'   this particular date.
 #' @return a list with \code{daily} (data.frame of per-date estimates, or
 #'   \code{NULL} if the fit failed), \code{inst} (data.frame of
 #'   \code{solar.time}/\code{DO.obs.down}/\code{DO.mod.down}, or \code{NULL}),
-#'   \code{stanfit} (\code{NULL} if the run failed), \code{data_list},
+#'   \code{stanfit} (\code{NULL} if the run failed or \code{keep_mcmc} is
+#'   \code{FALSE}), \code{data_list},
 #'   \code{compile_time}, \code{log}/\code{compile_log} (as returned by
 #'   \code{\link{runstan_bayes}}; not currently stored on the model object),
 #'   \code{date_df} (the date/date_index lookup, available even on failure),
 #'   and \code{warnings}/\code{errors} character vectors
 #' @importFrom utils modifyList
 #' @keywords internal
-bayes_1fit_2s <- function(data, aln, specs, data_list=NULL) {
+bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 
   data_v <- v(data)
   keep <- aln$keep
@@ -261,10 +318,16 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL) {
       # two-station breaks here, silently and without an error: check this
       # call site before doing that.
       #
-      # keep_mcmc=TRUE unconditionally so the stanfit comes back for the
-      # caller's mcmc slot; whether to retain it is specs$keep_mcmcs, which
-      # the caller applies.
-      specs$keep_mcmc <- TRUE
+      # split_dates is forced FALSE for this call regardless of the user's
+      # setting, because it selects runstan_bayes()'s output *formatter*, not
+      # its looping behavior: every two-station fit -- the joint one, and each
+      # date of bayes_perday_2s()'s loop -- is a single Stan call whose summary
+      # must go through format_mcmc_mat_nosplit(). format_mcmc_mat_split()
+      # collapses the summary to one row and strips a '[1]' suffix, which would
+      # mangle metab[i,t] and leave no 'daily' element for the caller to find,
+      # silently turning every fit into an apparent failure.
+      specs$split_dates <- FALSE
+      specs$keep_mcmc <- keep_mcmc
       stan_out <- do.call(runstan_bayes, c(list(data_list=data_list), specs))
 
       compile_time <- stan_out$compile_time
@@ -350,9 +413,11 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL) {
 #' @return a list with \code{daily} (one row per date, with
 #'   \code{valid_day}/\code{warnings}/\code{errors} columns), \code{inst}
 #'   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
-#'   \code{NULL} if no date succeeded), \code{mcmcs} (per-date stanfit
-#'   objects, named by date), \code{compile_time}, \code{dates_fit},
-#'   \code{dates_failed}, and empty run-level \code{warnings}/\code{errors}
+#'   \code{NULL} if no date succeeded), \code{mcmcs} and \code{mcmc_datas}
+#'   (named by date, honoring \code{specs$keep_mcmcs}/\code{keep_mcmc_data};
+#'   \code{NULL} if no date was selected), \code{compile_time},
+#'   \code{dates_fit}, \code{dates_failed}, and empty run-level
+#'   \code{warnings}/\code{errors}
 #' @keywords internal
 bayes_perday_2s <- function(data, specs, aln=NULL) {
 
@@ -381,7 +446,21 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
       n_days=1L,
       timestep_days=aln$timestep_days)
 
-    fit1 <- bayes_1fit_2s(data, aln=aln_1, specs=specs)
+    # keep_mcmcs/keep_mcmc_data are each either a single logical or a vector
+    # of dates naming which fits to retain, as in bayes_1ply()
+    dt <- as.Date(dt)
+    keep_mcmc <- if(is.logical(specs$keep_mcmcs)) {
+      isTRUE(specs$keep_mcmcs)
+    } else {
+      isTRUE(dt %in% specs$keep_mcmcs)
+    }
+    keep_mcmc_dat <- if(is.logical(specs$keep_mcmc_data)) {
+      isTRUE(specs$keep_mcmc_data)
+    } else {
+      isTRUE(dt %in% specs$keep_mcmc_data)
+    }
+
+    fit1 <- bayes_1fit_2s(data, aln=aln_1, specs=specs, keep_mcmc=keep_mcmc)
 
     failed <- length(fit1$errors) > 0 || is.null(fit1$daily)
     daily <- if(failed) mm_na_daily(dt) else fit1$daily
@@ -398,7 +477,9 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 
     list(
       daily=daily, inst=if(failed) NULL else fit1$inst,
-      stanfit=fit1$stanfit, compile_time=fit1$compile_time, failed=failed)
+      stanfit=fit1$stanfit,
+      mcmc_data=if(keep_mcmc_dat) fit1$data_list else NULL,
+      compile_time=fit1$compile_time, failed=failed)
   })
   names(per_date) <- as.character(dates)
 
@@ -425,10 +506,19 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
       sum(failed), ' failed: ', paste(as.character(dates[failed]), collapse=', ')))
   }
 
+  # named lists keyed by date, with a NULL entry for any date not selected by
+  # keep_mcmcs/keep_mcmc_data; NULL overall when no date was selected, so that
+  # get_mcmc()/get_mcmc_data() report "nothing kept" the same way the joint
+  # fit does
+  drop_if_all_null <- function(x) if(all(vapply(x, is.null, logical(1)))) NULL else x
+  mcmcs <- drop_if_all_null(lapply(per_date, `[[`, 'stanfit'))
+  mcmc_datas <- drop_if_all_null(lapply(per_date, `[[`, 'mcmc_data'))
+
   list(
     daily=daily,
     inst=inst,
-    mcmcs=lapply(per_date, `[[`, 'stanfit'),
+    mcmcs=mcmcs,
+    mcmc_datas=mcmc_datas,
     compile_time=compile_time,
     dates_fit=dates[!failed],
     dates_failed=dates[failed],

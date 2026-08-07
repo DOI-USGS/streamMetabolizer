@@ -4,7 +4,7 @@
 \alias{bayes_1fit_2s}
 \title{Run one two-station Stan fit over one alignment}
 \usage{
-bayes_1fit_2s(data, aln, specs, data_list = NULL)
+bayes_1fit_2s(data, aln, specs, data_list = NULL, keep_mcmc = TRUE)
 }
 \arguments{
 \item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
@@ -29,12 +29,17 @@ errors propagating to the caller; leave \code{NULL} to prepare it here,
 inside the error-collecting handler, so that preparation failures are
 reported as a failed fit instead. Supplying a list that doesn't
 correspond to \code{data}/\code{aln} will silently produce wrong results.}
+
+\item{keep_mcmc}{logical. Retain the \code{stanfit} object in the result?
+Resolved by the caller, which knows whether \code{specs$keep_mcmcs} names
+this particular date.}
 }
 \value{
 a list with \code{daily} (data.frame of per-date estimates, or
   \code{NULL} if the fit failed), \code{inst} (data.frame of
   \code{solar.time}/\code{DO.obs.down}/\code{DO.mod.down}, or \code{NULL}),
-  \code{stanfit} (\code{NULL} if the run failed), \code{data_list},
+  \code{stanfit} (\code{NULL} if the run failed or \code{keep_mcmc} is
+  \code{FALSE}), \code{data_list},
   \code{compile_time}, \code{log}/\code{compile_log} (as returned by
   \code{\link{runstan_bayes}}; not currently stored on the model object),
   \code{date_df} (the date/date_index lookup, available even on failure),
