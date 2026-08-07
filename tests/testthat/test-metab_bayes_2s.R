@@ -550,3 +550,191 @@ test_that("a failed Stan run (mode==2L) warns and continues, matching runstan_ba
   expect_true(length(fit$warnings) > 0)
   expect_true(any(grepl('fake_failed_stanfit', fit$warnings)))
 })
+
+
+# bayes_perday_2s() per-day fitting ---------------------------------------
+
+# Subset two_station_example to its first n_days complete 06:00-06:00 days,
+# keeping the leading rows those days need for upstream lead-in. Driven by
+# mm_align_2s() itself rather than by calendar dates, so the subset can't
+# disagree with the day partition the fitting code will recompute from it.
+subset_2station_days <- function(full_data, n_days) {
+  aln <- suppressMessages(mm_align_2s(v(full_data)))
+  dates <- unique(aln$date)[seq_len(n_days)]
+  rows <- which(aln$date %in% dates)
+  full_data[min(aln$shift_idx[rows]):max(aln$keep[rows]), ]
+}
+
+# Slice an alignment down to a single date, exactly as bayes_perday_2s() does
+slice_aln_1day <- function(aln, dt) {
+  rows <- which(aln$date == dt)
+  list(keep=aln$keep[rows], shift_idx=aln$shift_idx[rows], date=aln$date[rows],
+       n_obs=aln$n_obs, n_days=1L, timestep_days=aln$timestep_days)
+}
+
+fast_2station_specs <- function() {
+  specs(mm_name('bayes_2s'), n_chains=1, n_cores=1,
+        burnin_steps=100, saved_steps=100, verbose=FALSE)
+}
+
+test_that("a per-day alignment slice preps the same Stan matrices as the joint fit's column", {
+  # The correctness test for the slicing itself, independent of Stan: each
+  # day's one-column data list must match that day's column of the all-days
+  # data list element for element. Catches an off-by-one in either keep or
+  # shift_idx, which plausible-looking GPP/ER estimates would not.
+  sp <- fast_2station_specs()
+  dat <- subset_2station_days(two_station_example, 4)
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  joint <- prepdata_bayes_2s(dat, specs=sp, aln=aln)
+
+  dates <- unique(aln$date)
+  mats <- c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down',
+            'light','depth','temp_water','travel_time')
+  for(i in seq_along(dates)) {
+    day <- prepdata_bayes_2s(dat, specs=sp, aln=slice_aln_1day(aln, dates[i]))
+    expect_equal(day$n_days, 1L)
+    expect_equal(day$n_obs, joint$n_obs)
+    for(m in mats) {
+      expect_identical(as.vector(day[[m]]), as.vector(joint[[m]][, i]),
+                       info=paste(m, 'on', dates[i]))
+    }
+  }
+})
+
+test_that("every day's upstream reach crosses into earlier rows, so the alignment (not the data) is what gets sliced", {
+  # Guards the reason bayes_perday_2s() hands the *full* data to each day's
+  # fit: shift_idx points at rows outside the day being fit, so slicing the
+  # data.frame per day instead would drop the upstream values it needs.
+  dat <- subset_2station_days(two_station_example, 4)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  for(dt in unique(aln$date)) {
+    rows <- which(aln$date == dt)
+    expect_lt(min(aln$shift_idx[rows]), min(aln$keep[rows]))
+  }
+})
+
+test_that("bayes_perday_2s() fits one day at a time and returns the joint fit's output shape", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  sp <- fast_2station_specs()
+  dat <- subset_2station_days(two_station_example, 3)
+
+  res <- suppressMessages(bayes_perday_2s(dat, specs=sp))
+
+  # (a) one result per day
+  expect_equal(nrow(res$daily), 3)
+  expect_length(res$dates_fit, 3)
+  expect_length(res$dates_failed, 0)
+  expect_equal(res$daily$date, unique(suppressMessages(mm_align_2s(v(dat)))$date))
+  expect_length(res$mcmcs, 3)
+
+  # (b) plausible per-day estimates: GPP positive, ER negative, K600 positive
+  expect_true(all(res$daily$GPP_daily_50pct > 0))
+  expect_true(all(res$daily$ER_daily_50pct < 0))
+  expect_true(all(res$daily$K600_daily_50pct > 0))
+  expect_true(all(is.finite(res$daily$GPP_daily_50pct)))
+
+  # inst covers every modeled timestep of every day, in solar.time order
+  expect_equal(nrow(res$inst), 3 * 96)
+  expect_named(res$inst, c('solar.time','DO.obs.down','DO.mod.down'))
+  expect_false(is.unsorted(res$inst$solar.time))
+
+  # the shape downstream consumers see must not depend on per-day vs. joint
+  joint <- suppressMessages(metab_bayes_2s(specs=sp, data=dat))
+  expect_true(all(names(joint@fit$daily) %in% names(res$daily)))
+  expect_named(res$inst, names(joint@fit$inst))
+  expect_equal(nrow(res$daily), nrow(joint@fit$daily))
+
+  # run-level warnings/errors stay empty: predict_metab() blanks out every
+  # date's estimates when they aren't
+  expect_length(res$errors, 0)
+  expect_length(res$warnings, 0)
+})
+
+test_that("bayes_perday_2s() isolates a corrupted day instead of aborting the run", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  sp <- fast_2station_specs()
+  dat <- subset_2station_days(two_station_example, 3)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  bad_date <- unique(aln$date)[2]
+
+  # inject a bad value into one modeled row of the middle day
+  dat$light[aln$keep[aln$date == bad_date][10]] <- u(NA_real_, get_units(dat$light))
+
+  res <- suppressMessages(bayes_perday_2s(dat, specs=sp))
+
+  # the whole run completed, every date is still reported
+  expect_equal(nrow(res$daily), 3)
+  expect_equal(res$dates_failed, bad_date)
+  expect_length(res$dates_fit, 2)
+
+  # the bad day is NA and names its problem; the others are unaffected
+  bad <- res$daily[res$daily$date == bad_date, ]
+  good <- res$daily[res$daily$date != bad_date, ]
+  expect_true(is.na(bad$GPP_daily_50pct))
+  expect_match(bad$errors, 'light is NA')
+  expect_true(all(!is.na(good$GPP_daily_50pct)))
+  expect_true(all(good$errors == ''))
+
+  # only the good days contribute instantaneous predictions
+  expect_equal(nrow(res$inst), 2 * 96)
+  expect_false(bad_date %in% mm_date_2s(res$inst$solar.time))
+})
+
+test_that("a failed Stan run on one day is recorded as that day's warning, leaving other days fit", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  # mirrors the joint fit's treatment of a mode==2L stanfit (a warning, not
+  # an error), but scoped to the one day that failed
+  sp <- fast_2station_specs()
+  dat <- subset_2station_days(two_station_example, 3)
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  bad_date <- unique(aln$date)[2]
+
+  setClass('fake_failed_stanfit', representation(mode='integer'))
+  fake_stanfit <- methods::new('fake_failed_stanfit', mode=2L)
+  real_sampling <- rstan::sampling
+  call_n <- 0
+  testthat::local_mocked_bindings(
+    sampling=function(...) {
+      call_n <<- call_n + 1
+      if(call_n == 2) fake_stanfit else real_sampling(...)
+    }, .package='rstan')
+
+  res <- suppressMessages(bayes_perday_2s(dat, specs=sp, aln=aln))
+
+  expect_equal(res$dates_failed, bad_date)
+  expect_length(res$dates_fit, 2)
+  bad <- res$daily[res$daily$date == bad_date, ]
+  expect_true(is.na(bad$GPP_daily_50pct))
+  expect_match(bad$warnings, 'fake_failed_stanfit')
+  expect_true(all(!is.na(res$daily$GPP_daily_50pct[res$daily$date != bad_date])))
+  expect_equal(nrow(res$inst), 2 * 96)
+})
+
+test_that("bayes_perday_2s() compiles the Stan model once and hits the cache for every later day", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  sp <- fast_2station_specs()
+  sp$model_path <- mm_locate_filename(sp$model_name)
+  stanrds_path <- gsub('\\.stan$', '.stanrds', sp$model_path)
+
+  # warm the cache first, so this test measures the loop's behavior rather
+  # than whichever test happened to run first
+  invisible(mm_compile_stan_model(sp$model_path))
+  expect_true(file.exists(stanrds_path))
+  mtime_before <- file.info(stanrds_path)$mtime
+
+  dat <- subset_2station_days(two_station_example, 3)
+  res <- suppressMessages(bayes_perday_2s(dat, specs=sp))
+
+  # no day recompiled: the cache file is untouched and no day was charged
+  # any compile time
+  expect_identical(file.info(stanrds_path)$mtime, mtime_before)
+  expect_equal(unname(res$compile_time[['elapsed']]), 0)
+})

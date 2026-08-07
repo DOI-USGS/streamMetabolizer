@@ -127,6 +127,7 @@ Collate:
     'mm_locate_filename.R'
     'mm_model_by_ply.R'
     'mm_model_by_ply_prototype.R'
+    'mm_na_daily.R'
     'mm_predict_DO_1ply.R'
     'mm_predict_metab_1ply.R'
     'mm_sd_to_ci.R'

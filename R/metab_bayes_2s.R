@@ -82,120 +82,52 @@ metab_bayes_2s <- function(
     dat_list <- mm_validate_data(data, data_daily, 'metab_bayes_2s')
     mm_validate_data_2station(dat_list$data)
 
-    data_v <- v(dat_list$data)
-
     # Determine the same modeled-row index set that prepdata_bayes_2s()
     # applies internally, so that Stan's date_index/time_index can be mapped
     # back to actual dates and solar.times for the daily and instantaneous
-    # results below. Both call mm_align_2s() rather than reimplementing the
+    # results. Both call mm_align_2s() rather than reimplementing the
     # lag/day-window math, so the two can't disagree about which rows are
     # modeled (prepdata_bayes_2s() returns only the Stan-ready matrices, so
     # the alignment itself isn't available to read back off its result).
-    aln <- mm_align_2s(data_v, max_travel_time_hours=specs$max_travel_time_hours)
-    keep <- aln$keep
-    modeled_solar_time <- data_v$solar.time[keep]
-    date_df <- tibble::tibble(date=unique(aln$date), date_index=seq_len(aln$n_days))
-    obs_index_df <- tibble::tibble(
-      solar.time=modeled_solar_time,
-      DO.obs.down=data_v$DO.obs.down[keep],
-      date_index=rep(date_df$date_index, each=aln$n_obs),
-      time_index=rep(seq_len(aln$n_obs), times=aln$n_days))
+    aln <- mm_align_2s(v(dat_list$data), max_travel_time_hours=specs$max_travel_time_hours)
 
     # Prepare the Stan data list (matrices from data, plus scalar priors from
     # specs). modifyList (not c()) is used because prepdata_bayes_2s() already
     # supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from specs), and
     # those two names are also in specs$params_in; a plain c() would create
-    # duplicate-named list elements instead of overriding
+    # duplicate-named list elements instead of overriding.
+    #
+    # Prepared here, outside bayes_1fit_2s(), so that data problems
+    # prepdata_bayes_2s() detects (NA light in an otherwise complete day,
+    # non-contiguous dates) still halt the joint fit with the original error
+    # rather than being collected and reported as a failed fit
     data_list <- prepdata_bayes_2s(dat_list$data, specs=specs, aln=aln)
     data_list <- modifyList(data_list, specs[specs$params_in])
 
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
 
-    # determine how many cores to use, as in runstan_bayes()
-    n_cores <- mm_determine_cores(specs$n_cores, n_chains=specs$n_chains, verbose=specs$verbose)
-
-    # Fit the model, collecting errors/warnings as strings rather than
-    # letting a bad dataset halt execution without reporting anything back
-    stop_strs <- character(0)
-    warn_strs <- character(0)
-    daily <- NULL
-    inst <- NULL
-    withCallingHandlers(
-      tryCatch({
-        if (!requireNamespace("rstan", quietly = TRUE)) stop("rstan is required but not installed. Install it with: install.packages('rstan')")
-
-        # compile the Stan model, or load it from the .stanrds cache if
-        # unchanged (same cache runstan_bayes() uses for one-station)
-        compiled <- mm_compile_stan_model(specs$model_path, verbose=specs$verbose)
-        compile_time <- compiled$compile_time
-
-        consolelog <- utils::capture.output(
-          stanfit <- rstan::sampling(
-            object=compiled$stan_mobj, data=data_list, pars=specs$params_out,
-            include=TRUE, chains=specs$n_chains, cores=n_cores,
-            iter=specs$burnin_steps + specs$saved_steps, warmup=specs$burnin_steps,
-            thin=specs$thin_steps, init="random", verbose=specs$verbose, open_progress=FALSE),
-          split=specs$verbose)
-
-        if(stanfit@mode == 2L) {
-          # mirror runstan_bayes()'s warn-and-continue pattern for a failed
-          # run: report the diagnostic as a warning (caught below) and skip
-          # the post-processing steps, which all assume a successful fit
-          warning(paste(utils::capture.output(print(stanfit)), collapse='\n'))
-        } else {
-          # format the Stan summary matrix into per-variable data.frames
-          stan_mat <- rstan::summary(stanfit)$summary
-          mcmc_out <- format_mcmc_mat_nosplit(
-            stan_mat, data_list$n_days, data_list$n_obs, specs$model_name,
-            keep_mcmc=isTRUE(specs$keep_mcmcs), stanfit)
-
-          # daily GPP/ER/K600 estimates: join Stan's date_index back to dates
-          date_index <- time_index <- index <- '.dplyr.var'
-          daily <- mcmc_out$daily %>%
-            dplyr::left_join(date_df, by='date_index') %>%
-            dplyr::select(-date_index, -time_index, -index) %>%
-            dplyr::select(date, dplyr::everything())
-
-          # instantaneous DO.mod.down estimates come from the 'metab' Stan
-          # transformed parameter (posterior median), which format_mcmc_mat_nosplit()
-          # buckets by row count rather than by name since 'metab' isn't in its
-          # par_homes lookup table; find that bucket by its column names instead
-          is_metab_bucket <- sapply(mcmc_out, function(df) is.data.frame(df) && any(grepl('^metab_', names(df))))
-          metab_bucket_name <- names(mcmc_out)[is_metab_bucket][1]
-          if(is.na(metab_bucket_name)) {
-            stop("could not find 'metab' in the Stan output; check that specs$params_out includes 'metab'")
-          }
-          inst <- mcmc_out[[metab_bucket_name]] %>%
-            dplyr::select(date_index, time_index, DO.mod.down=metab_50pct) %>%
-            dplyr::inner_join(obs_index_df, by=c('date_index','time_index')) %>%
-            dplyr::select(solar.time, DO.obs.down, DO.mod.down) %>%
-            dplyr::arrange(solar.time)
-        }
-
-      }, error=function(err) {
-        stop_strs <<- c(stop_strs, err$message)
-      }), warning=function(war) {
-        warn_strs <<- c(warn_strs, war$message)
-        invokeRestart("muffleWarning")
-      })
+    # Fit every date jointly in one Stan call, collecting errors/warnings as
+    # strings rather than letting a bad dataset halt execution without
+    # reporting anything back
+    fit1 <- bayes_1fit_2s(
+      dat_list$data, aln=aln, specs=specs, data_list=data_list)
+    stanfit <- fit1$stanfit
+    compile_time <- fit1$compile_time
 
     # if fitting failed, fill in NA daily estimates (with real dates) so the
     # returned model at least reports which dates were attempted
-    if(length(stop_strs) > 0 || is.null(daily)) {
-      na_vec <- rep(as.numeric(NA), nrow(date_df))
-      daily <- data.frame(
-        date=date_df$date,
-        GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
-        ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec,
-        K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)
+    daily <- fit1$daily
+    inst <- fit1$inst
+    if(length(fit1$errors) > 0 || is.null(daily)) {
+      daily <- mm_na_daily(fit1$date_df$date)
       inst <- NULL
     }
     daily <- dplyr::mutate(daily, valid_day=TRUE, warnings='', errors='')
 
     fit <- list(
       daily=daily, inst=inst,
-      warnings=trimws(unique(warn_strs)), errors=trimws(unique(stop_strs)))
+      warnings=fit1$warnings, errors=fit1$errors)
   })
 
   # Package and return results
@@ -226,6 +158,282 @@ metab_bayes_2s <- function(
 
   # Return
   mm
+}
+
+
+#### fitting helpers ####
+
+#' Run one two-station Stan fit over one alignment
+#'
+#' The single Stan call plus output formatting shared by
+#' \code{\link{metab_bayes_2s}}'s joint (all-dates-at-once) fit and
+#' \code{bayes_perday_2s}'s per-day loop. Nothing here depends on
+#' \code{aln} covering more than one day, so the same code path serves both:
+#' the joint fit passes the full alignment from \code{mm_align_2s}, and the
+#' per-day loop passes a one-day slice of it.
+#'
+#' The Stan call itself -- compile (or load from the \code{.stanrds} cache),
+#' sample, and format the summary matrix into per-variable data.frames -- is
+#' delegated to \code{\link{runstan_bayes}}, which handles two-station data
+#' unchanged. What remains here is the two-station-specific part: collecting
+#' errors, joining Stan's indices back to dates and solar.times, and pulling
+#' the modeled downstream DO out of the \code{metab} parameter.
+#'
+#' Errors and warnings are collected as strings rather than propagated, in
+#' the same shape \code{\link{bayes_1ply}} uses for one-station, so that a
+#' caller looping over days can record a bad day and continue.
+#'
+#' @param data data.frame as validated by \code{\link{mm_validate_data}} for
+#'   \code{\link{metab_bayes_2s}}, units optional. This is the \emph{full}
+#'   dataset in both modes, never a per-day slice: \code{aln}'s \code{keep}
+#'   and \code{shift_idx} index into it, and \code{shift_idx} routinely
+#'   reaches back into the previous day's rows for upstream values.
+#' @param aln an alignment as returned by \code{mm_align_2s} (see
+#'   \code{mm_lag_2s.R}), either the whole thing or a single-day slice of it
+#'   (see \code{bayes_perday_2s}).
+#' @param specs a list of model specs (see \code{\link{specs}}), including
+#'   \code{model_path} as resolved by \code{\link{mm_locate_filename}}. Passed
+#'   on to \code{\link{runstan_bayes}}, which reads the chain/step/core
+#'   settings from it.
+#' @param data_list optional, the Stan data list already prepared for
+#'   \code{data}/\code{aln} by \code{\link{prepdata_bayes_2s}} (plus the
+#'   \code{specs$params_in} scalars). Supply it to keep data-preparation
+#'   errors propagating to the caller; leave \code{NULL} to prepare it here,
+#'   inside the error-collecting handler, so that preparation failures are
+#'   reported as a failed fit instead. Supplying a list that doesn't
+#'   correspond to \code{data}/\code{aln} will silently produce wrong results.
+#' @return a list with \code{daily} (data.frame of per-date estimates, or
+#'   \code{NULL} if the fit failed), \code{inst} (data.frame of
+#'   \code{solar.time}/\code{DO.obs.down}/\code{DO.mod.down}, or \code{NULL}),
+#'   \code{stanfit} (\code{NULL} if the run failed), \code{data_list},
+#'   \code{compile_time}, \code{log}/\code{compile_log} (as returned by
+#'   \code{\link{runstan_bayes}}; not currently stored on the model object),
+#'   \code{date_df} (the date/date_index lookup, available even on failure),
+#'   and \code{warnings}/\code{errors} character vectors
+#' @importFrom utils modifyList
+#' @keywords internal
+bayes_1fit_2s <- function(data, aln, specs, data_list=NULL) {
+
+  data_v <- v(data)
+  keep <- aln$keep
+
+  # map Stan's date_index/time_index back to real dates and solar.times.
+  # mm_align_2s() guarantees each day holds exactly n_obs rows, in ascending
+  # solar.time order, so the indices tile day-major over keep
+  date_df <- tibble::tibble(date=unique(aln$date), date_index=seq_len(aln$n_days))
+  obs_index_df <- tibble::tibble(
+    solar.time=data_v$solar.time[keep],
+    DO.obs.down=data_v$DO.obs.down[keep],
+    date_index=rep(date_df$date_index, each=aln$n_obs),
+    time_index=rep(seq_len(aln$n_obs), times=aln$n_days))
+
+  stop_strs <- character(0)
+  warn_strs <- character(0)
+  daily <- NULL
+  inst <- NULL
+  stanfit <- NULL
+  stan_log <- NULL
+  compile_log <- NULL
+  compile_time <- system.time({})
+
+  withCallingHandlers(
+    tryCatch({
+      if (!requireNamespace("rstan", quietly = TRUE)) stop("rstan is required but not installed. Install it with: install.packages('rstan')")
+
+      if(is.null(data_list)) {
+        data_list <- prepdata_bayes_2s(data, specs=specs, aln=aln)
+        data_list <- modifyList(data_list, specs[specs$params_in])
+      }
+
+      # Compile, sample, and format via one-station's runstan_bayes(), which
+      # handles all three identically for two-station data: it takes the
+      # nosplit branch (specs$split_dates is always FALSE here) and its
+      # mm_compile_stan_model() call is the same .stanrds cache two-station
+      # already used. runstan_bayes() also emits the mode==2L
+      # failed-run warning, which the handler below collects.
+      #
+      # CAUTION: this delegation is only safe because
+      # format_mcmc_mat_nosplit()'s data_list_d/data_list_n parameters are
+      # declared but never referenced in its body -- runstan_bayes() passes
+      # data_list$d/$n, which do not exist in a two-station data list (whose
+      # Stan data block names them n_days/n_obs) and so arrive as NULL. If
+      # anyone ever wires those two parameters up to actually be used,
+      # two-station breaks here, silently and without an error: check this
+      # call site before doing that.
+      #
+      # keep_mcmc=TRUE unconditionally so the stanfit comes back for the
+      # caller's mcmc slot; whether to retain it is specs$keep_mcmcs, which
+      # the caller applies.
+      specs$keep_mcmc <- TRUE
+      stan_out <- do.call(runstan_bayes, c(list(data_list=data_list), specs))
+
+      compile_time <- stan_out$compile_time
+      stan_log <- stan_out$log
+      compile_log <- stan_out$compile_log
+      stanfit <- stan_out$mcmcfit
+
+      # on a failed run runstan_bayes() warns (collected below) and returns
+      # no parameter data.frames, so there is nothing to reshape
+      if(!is.null(stan_out$daily)) {
+
+        # daily GPP/ER/K600 estimates: join Stan's date_index back to dates
+        date_index <- time_index <- index <- '.dplyr.var'
+        daily <- stan_out$daily %>%
+          dplyr::left_join(date_df, by='date_index') %>%
+          dplyr::select(-date_index, -time_index, -index) %>%
+          dplyr::select(date, dplyr::everything())
+
+        # instantaneous DO.mod.down estimates come from the 'metab' Stan
+        # transformed parameter (posterior median), which format_mcmc_mat_nosplit()
+        # buckets by row count rather than by name since 'metab' isn't in its
+        # par_homes lookup table; find that bucket by its column names instead
+        is_metab_bucket <- sapply(stan_out, function(df) is.data.frame(df) && any(grepl('^metab_', names(df))))
+        metab_bucket_name <- names(stan_out)[is_metab_bucket][1]
+        if(is.na(metab_bucket_name)) {
+          stop("could not find 'metab' in the Stan output; check that specs$params_out includes 'metab'")
+        }
+        inst <- stan_out[[metab_bucket_name]] %>%
+          dplyr::select(date_index, time_index, DO.mod.down=metab_50pct) %>%
+          dplyr::inner_join(obs_index_df, by=c('date_index','time_index')) %>%
+          dplyr::select(solar.time, DO.obs.down, DO.mod.down) %>%
+          dplyr::arrange(solar.time)
+      }
+
+    }, error=function(err) {
+      stop_strs <<- c(stop_strs, err$message)
+    }), warning=function(war) {
+      warn_strs <<- c(warn_strs, war$message)
+      invokeRestart("muffleWarning")
+    })
+
+  list(
+    daily=daily, inst=inst, stanfit=stanfit, data_list=data_list,
+    compile_time=compile_time, log=stan_log, compile_log=compile_log,
+    date_df=date_df,
+    warnings=trimws(unique(warn_strs)), errors=trimws(unique(stop_strs)))
+}
+
+#' Fit the two-station Stan model one date at a time
+#'
+#' Loops over the dates in a two-station alignment, fitting each in its own
+#' Stan call, and reassembles the per-date results into the same
+#' \code{daily}/\code{inst} shape \code{\link{metab_bayes_2s}}'s joint fit
+#' produces -- so \code{\link{predict_metab}}, \code{\link{predict_DO}}, and
+#' \code{\link{get_params}} see a consistent structure either way.
+#'
+#' A failed date does not abort the run: each date's fit collects its own
+#' errors and warnings (see \code{bayes_1fit_2s}), which are recorded in that
+#' date's \code{warnings}/\code{errors} columns while the remaining dates
+#' proceed. This mirrors \code{\link{bayes_1ply}}'s per-day behavior for
+#' one-station models. Run-level \code{warnings}/\code{errors} are
+#' deliberately left empty for date-specific failures, because
+#' \code{\link{predict_metab}} blanks out \emph{every} date's estimates when
+#' the run-level slots are non-empty.
+#'
+#' The dates come from \code{mm_align_2s}'s non-overlapping 06:00-06:00
+#' partition, already computed and carried on \code{aln}; day membership is
+#' not re-derived here. In particular this does not route through
+#' \code{\link{mm_model_by_ply}}, whose overlapping \code{day_start}/
+#' \code{day_end} diel window is a different partition of the same rows (see
+#' the two-station day window section of \code{\link{metab_bayes_2s}}).
+#'
+#' @section Per-date sigma: the Stan model carries a single observation-error
+#'   \code{sigma} shared across whatever dates it is given, so fitting one
+#'   date at a time estimates a separate \code{sigma} per date rather than
+#'   one pooled across the record. That is the same tradeoff one-station's
+#'   \code{split_dates=TRUE} already makes on a structurally identical
+#'   model, not a defect of this loop.
+#'
+#' @inheritParams bayes_1fit_2s
+#' @param aln optional, the alignment already computed for \code{data} by
+#'   \code{mm_align_2s}. Leave \code{NULL} to compute it here.
+#' @return a list with \code{daily} (one row per date, with
+#'   \code{valid_day}/\code{warnings}/\code{errors} columns), \code{inst}
+#'   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
+#'   \code{NULL} if no date succeeded), \code{mcmcs} (per-date stanfit
+#'   objects, named by date), \code{compile_time}, \code{dates_fit},
+#'   \code{dates_failed}, and empty run-level \code{warnings}/\code{errors}
+#' @keywords internal
+bayes_perday_2s <- function(data, specs, aln=NULL) {
+
+  if(is.null(aln)) {
+    aln <- mm_align_2s(v(data), max_travel_time_hours=specs$max_travel_time_hours)
+  }
+
+  # resolved once rather than per date: it doesn't depend on which date is
+  # being fit. Core count is not hoisted the same way -- runstan_bayes()
+  # resolves it per call, as it already does for each one-station ply
+  if(is.null(specs$model_path)) specs$model_path <- mm_locate_filename(specs$model_name)
+
+  dates <- unique(aln$date)
+
+  per_date <- lapply(dates, function(dt) {
+
+    # slice the alignment, not the data: keep/shift_idx index into the full
+    # dataset, and shift_idx routinely points at the previous date's rows for
+    # this date's upstream values
+    rows <- which(aln$date == dt)
+    aln_1 <- list(
+      keep=aln$keep[rows],
+      shift_idx=aln$shift_idx[rows],
+      date=aln$date[rows],
+      n_obs=aln$n_obs,
+      n_days=1L,
+      timestep_days=aln$timestep_days)
+
+    fit1 <- bayes_1fit_2s(data, aln=aln_1, specs=specs)
+
+    failed <- length(fit1$errors) > 0 || is.null(fit1$daily)
+    daily <- if(failed) mm_na_daily(dt) else fit1$daily
+
+    # valid_day refers to whether mm_align_2s() accepted the date, not to
+    # whether its fit converged -- every date reaching this loop passed the
+    # day-window and travel-time checks, so it stays TRUE and a failure is
+    # reported through the errors column, as in the joint fit
+    daily <- dplyr::mutate(
+      daily,
+      valid_day=TRUE,
+      warnings=paste0(fit1$warnings, collapse='; '),
+      errors=paste0(fit1$errors, collapse='; '))
+
+    list(
+      daily=daily, inst=if(failed) NULL else fit1$inst,
+      stanfit=fit1$stanfit, compile_time=fit1$compile_time, failed=failed)
+  })
+  names(per_date) <- as.character(dates)
+
+  failed <- vapply(per_date, `[[`, logical(1), 'failed')
+
+  # bind_rows (not rbind) because a failed date contributes only the nine
+  # NA quantile columns while a successful one carries the full set of Stan
+  # summary statistics; the missing columns fill with NA
+  daily <- dplyr::bind_rows(lapply(per_date, `[[`, 'daily'))
+
+  insts <- lapply(per_date, `[[`, 'inst')
+  insts <- insts[!vapply(insts, is.null, logical(1))]
+  inst <- if(length(insts) > 0) {
+    dplyr::arrange(dplyr::bind_rows(insts), solar.time)
+  } else NULL
+
+  # only the first date should pay a compile cost; the rest load the
+  # .stanrds cache and contribute a zero compile_time
+  compile_time <- Reduce(`+`, lapply(per_date, `[[`, 'compile_time'), system.time({}))
+
+  if(any(failed)) {
+    message(paste0(
+      'fit ', sum(!failed), ' of ', length(dates), ' date(s); ',
+      sum(failed), ' failed: ', paste(as.character(dates[failed]), collapse=', ')))
+  }
+
+  list(
+    daily=daily,
+    inst=inst,
+    mcmcs=lapply(per_date, `[[`, 'stanfit'),
+    compile_time=compile_time,
+    dates_fit=dates[!failed],
+    dates_failed=dates[failed],
+    warnings=character(0),
+    errors=character(0))
 }
 
 
