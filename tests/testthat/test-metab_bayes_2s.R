@@ -2,9 +2,14 @@
 # Build a minimal, valid two-station data.frame. Defaults give a 5-minute
 # timestep (0.0034722 days) and a 0.01-day travel time, so
 # max_lag = round(0.01 / 0.0034722) = 3 timesteps of required upstream lead-in.
-make_2station_data <- function(n=10, timestep_min=5, travel_time=0.01) {
+# n=291 by default: 3 lead-in rows before 2050-06-01's 06:00 start, plus one
+# genuinely complete 06:00-06:00 day (288 rows at 5-min resolution), so the
+# default fixture is a real day under mm_align_2s()'s completeness check
+# rather than a partial-day fragment; n can still be overridden down to a
+# toy size (e.g. n=2) for tests that specifically want too little data.
+make_2station_data <- function(n=291, timestep_min=5, travel_time=0.01) {
   data.frame(
-    solar.time = as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    solar.time = as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
       as.difftime((seq_len(n) - 1) * timestep_min, units="mins"),
     DO.obs.up = rep(9, n),
     DO.sat.up = rep(10, n),
@@ -30,12 +35,61 @@ test_that("travel.time <= 0 triggers an error", {
   expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
 
-test_that("travel.time > 8/24 days (8 hours) triggers an error with a units/limit hint", {
-  dat <- make_2station_data(travel_time=1)
-  expect_error(metab_bayes_2s(data=dat), "travel.time must be <= 8/24 days.*incorrect units")
+# A day whose travel.time exceeds specs$max_travel_time_hours (10-hour
+# default, 12-hour cap) is not a dataset-wide error: mm_align_2s() drops
+# just that day, with a message naming the date and travel time (see
+# mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
+# at the default travel_time=0.01 (well under the ceiling), day 2 reusing
+# day 1's complete-day rows as a template, re-dated to follow immediately
+# after, with travel.time raised to 15 hours (above the ceiling). Day 2
+# still has real upstream lead-in -- it draws on day 1's data -- so the
+# ceiling, not lead-in availability, is what drops it.
+make_2day_ceiling_data <- function() {
+  day1 <- make_2station_data()
+  day2 <- day1[-(1:3), ] # drop day 1's own lead-in rows; keep the 288-row complete-day block as a template
+  day2$solar.time <- max(day1$solar.time) + as.difftime(seq_len(nrow(day2)) * 5, units="mins")
+  day2$travel.time <- 15/24
+  rbind(day1, day2)
+}
 
-  dat <- make_2station_data(travel_time=1.5)
-  expect_error(metab_bayes_2s(data=dat), "travel.time must be <= 8/24 days.*incorrect units")
+test_that("mm_align_2s drops a day whose travel.time exceeds the ceiling, leaving other days intact", {
+  dat <- make_2day_ceiling_data()
+
+  aln <- expect_message(
+    mm_align_2s(dat),
+    "dropping 1 day\\(s\\) whose travel.time exceeds the 10-hour ceiling: 2050-06-02 \\(15\\.00 hours\\)")
+
+  # the offending day is gone entirely, not merely marked invalid; the good
+  # day (2050-06-01) is unaffected
+  expect_equal(as.character(unique(aln$date)), "2050-06-01")
+  expect_equal(aln$n_days, 1)
+  expect_equal(aln$n_obs, 288)
+})
+
+test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fits the remaining day normally", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- make_2day_ceiling_data()
+  sp <- specs(
+    mm_name('bayes_2s'),
+    n_chains=1, n_cores=1, burnin_steps=100, saved_steps=100, verbose=FALSE)
+
+  mm <- expect_message(
+    metab_bayes_2s(specs=sp, data=dat),
+    "dropping 1 day\\(s\\) whose travel.time exceeds the 10-hour ceiling: 2050-06-02")
+
+  # day 2 never reached Stan and isn't reported as a failure -- it was
+  # excluded from the dataset before fitting, not modeled and marked bad;
+  # day 1 fits with real, finite estimates, same as if day 2 had never been
+  # in the input at all
+  expect_length(mm@fit$errors, 0)
+  pm <- predict_metab(mm)
+  expect_equal(nrow(pm), 1)
+  expect_equal(as.character(pm$date), "2050-06-01")
+  expect_true(is.finite(pm$GPP))
+  expect_true(is.finite(pm$ER))
+  expect_true(is.finite(pm$K600))
 })
 
 test_that("insufficient lead-in data triggers an error", {
@@ -49,16 +103,16 @@ test_that("insufficient lead-in data triggers an error", {
 
 # Build a two-day, unit-labeled data.frame with a known, traceable
 # DO.obs.up/DO.sat.up series (sequential integers) so the shift can be
-# checked by exact value, plus a leading lead-in block. 5-minute timestep
-# (0.0034722 days) and 0.01-day travel.time give
-# max_lag = round(0.01 / 0.0034722) = 3 lead-in timesteps.
-# Day 1 = 10 rows (3 lead-in + 7 modeled), Day 2 = 7 rows (all modeled), so
-# both modeled days end up with n_obs = 7 rows.
-make_ts_data <- function(n_leadin=3, n_day1=10, n_day2=7, travel_time=0.01, unitted=FALSE) {
-  n_total <- n_day1 + n_day2
-  solar.time <- c(
-    as.POSIXct("2050-06-01 00:00:00", tz="UTC") + as.difftime((seq_len(n_day1) - 1) * 5, units="mins"),
-    as.POSIXct("2050-06-02 00:00:00", tz="UTC") + as.difftime((seq_len(n_day2) - 1) * 5, units="mins"))
+# checked by exact value, plus a leading lead-in block. Hourly timestep
+# (0.0416667 days) and 3-hour (0.125-day) travel.time give
+# max_lag = round(0.125 / 0.0416667) = 3 lead-in timesteps. n_leadin=3 rows
+# precede day 1's 06:00 start (an incomplete, and thus dropped, partial day
+# of their own); day 1 and day 2 are each a genuinely complete 06:00-06:00
+# window (24 hourly rows), so both modeled days end up with n_obs = 24 rows.
+make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125, unitted=FALSE) {
+  n_total <- n_leadin + n_day1 + n_day2
+  solar.time <- as.POSIXct("2050-06-01 03:00:00", tz="UTC") +
+    as.difftime((seq_len(n_total) - 1), units="hours")
   dat <- data.frame(
     solar.time = solar.time,
     DO.obs.up = seq_len(n_total),        # traceable: value == original row index
@@ -83,20 +137,20 @@ test_that("upstream DO is shifted by the correct lag", {
   out <- prepdata_bayes_2s(dat)
 
   # max_lag=3, so modeled row i (original index i) uses upstream data from
-  # original row (i - 3). day 1's 7 modeled rows are original rows 4:10, so
-  # they pick up DO.obs.up from original rows 1:7; day 2's 7 modeled rows are
-  # original rows 11:17, picking up DO.obs.up from original rows 8:14.
-  expect_equal(out$DO_obs_up[,1], as.numeric(1:7))
-  expect_equal(out$DO_obs_up[,2], as.numeric(8:14))
-  expect_equal(out$DO_sat_up[,1], as.numeric(1:7) + 100)
-  expect_equal(out$DO_sat_up[,2], as.numeric(8:14) + 100)
+  # original row (i - 3). day 1's 24 modeled rows are original rows 4:27, so
+  # they pick up DO.obs.up from original rows 1:24; day 2's 24 modeled rows
+  # are original rows 28:51, picking up DO.obs.up from original rows 25:48.
+  expect_equal(out$DO_obs_up[,1], as.numeric(1:24))
+  expect_equal(out$DO_obs_up[,2], as.numeric(25:48))
+  expect_equal(out$DO_sat_up[,1], as.numeric(1:24) + 100)
+  expect_equal(out$DO_sat_up[,2], as.numeric(25:48) + 100)
 })
 
 test_that("lead-in rows are excluded from the output matrices", {
-  dat <- make_ts_data(n_leadin=3, n_day1=10, n_day2=7)
+  dat <- make_ts_data(n_leadin=3, n_day1=24, n_day2=24)
   out <- prepdata_bayes_2s(dat)
 
-  # 17 total rows in, 3 are lead-in-only, so 14 modeled rows should remain
+  # 51 total rows in, 3 are lead-in-only, so 48 modeled rows should remain
   expect_equal(out$n_obs * out$n_days, nrow(dat) - 3)
   # none of the lead-in DO.obs.up values (1, 2, 3) should appear as a
   # DOWNSTREAM-paired value, i.e., the first modeled column should start at
@@ -108,10 +162,10 @@ test_that("output matrices have n_obs x n_days dimensions", {
   dat <- make_ts_data()
   out <- prepdata_bayes_2s(dat)
 
-  expect_equal(out$n_obs, 7)
+  expect_equal(out$n_obs, 24)
   expect_equal(out$n_days, 2)
   for(varname in c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down','light','depth','temp_water','travel_time')) {
-    expect_equal(dim(out[[varname]]), c(7, 2), info=varname)
+    expect_equal(dim(out[[varname]]), c(24, 2), info=varname)
   }
 })
 
@@ -473,8 +527,12 @@ subset_2station_data <- function(full_data, n_modeled_days) {
 
   all_dates <- unique(as.Date(solar_time))
   modeled_dates <- all_dates[2:(1 + n_modeled_days)]
-  modeled_start <- as.POSIXct(paste0(modeled_dates[1], ' 00:00:00'), tz='UTC')
-  modeled_end <- as.POSIXct(paste0(modeled_dates[length(modeled_dates)], ' 23:45:00'), tz='UTC')
+  # two-station days run 06:00 -> 06:00 the next day (not calendar midnight
+  # to midnight), so the last requested day's window isn't complete until one
+  # timestep before the following day's 06:00
+  modeled_start <- as.POSIXct(paste0(modeled_dates[1], ' 06:00:00'), tz='UTC')
+  modeled_end <- as.POSIXct(paste0(modeled_dates[length(modeled_dates)] + 1, ' 06:00:00'), tz='UTC') -
+    as.difftime(timestep_days, units='days')
 
   candidate_start <- modeled_start - as.difftime(1, units='days')
   candidate <- full_data[solar_time >= candidate_start & solar_time <= modeled_end, ]
