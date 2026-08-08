@@ -5,7 +5,12 @@
 \title{Combine raw two-station upstream/downstream/light data into
 \code{metab_bayes_2s}'s expected shape}
 \usage{
-mm_format_data_2s(upstream, downstream, light)
+mm_format_data_2s(
+  upstream,
+  downstream,
+  light,
+  max_gap_hours = mm_max_gap_hours_default
+)
 }
 \arguments{
 \item{upstream}{data.frame or unitted data.frame with columns
@@ -18,6 +23,12 @@ mm_format_data_2s(upstream, downstream, light)
 \item{light}{data.frame or unitted data.frame with columns
 \code{timestamp} (POSIXct, UTC), \code{light} (a single combined value
 per timestep)}
+
+\item{max_gap_hours}{the gap-filling tolerance, in hours: runs of missing
+data spanning no more than this are interpolated, longer runs are left in
+place. Defaults to 1 hour and may not be set above 2. To have gaps
+treated identically here and during fitting, pass the same value to
+\code{\link{specs}}'s \code{max_gap_hours}.}
 }
 \value{
 a unitted data.frame with columns \code{solar.time},
@@ -65,3 +76,19 @@ requires, by summing each row's upstream travel-time window and dividing
 by that day's total light sum, and its units are set to \code{NA} to
 match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
 }
+\section{Gap filling}{
+ brief interruptions in the record -- a sonde that
+  logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
+  linear interpolation, so that a day marred by a short dropout can be
+  modeled rather than discarded. Gaps longer than \code{max_gap_hours} are
+  left in place, and \code{\link{metab_bayes_2s}} drops the days holding
+  them. Filling happens here while \code{light} is still a raw
+  per-timestep value, before the within-day proportion is computed, which
+  is the accurate order: the proportion is then formed from a complete
+  series divided by a complete day total. This is a reason to supply raw
+  light and let this function convert it, rather than formatting data by
+  hand -- \code{\link{metab_bayes_2s}} can still fill gaps in
+  hand-formatted data, but by then \code{light} has already been
+  normalized, and interpolating it is only an approximation.
+}
+

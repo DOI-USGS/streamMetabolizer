@@ -58,6 +58,7 @@ specs(
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1,
   max_travel_time_hours = 10,
+  max_gap_hours = 1,
   params_in,
   params_out,
   n_chains = 4,
@@ -355,6 +356,14 @@ dropped, with a message, rather than modeled (see
 above 12; a ceiling approaching the 24-hour day window would let a single
 day's travel time consume the entire lead-in period, which defeats the
 purpose of having a ceiling.}
+
+\item{max_gap_hours}{for \code{type='bayes_2s'}. The gap-filling tolerance,
+in hours: runs of missing observations spanning no more than this are
+bridged by linear interpolation so their days can still be modeled, while
+longer runs are left in place and their days dropped (see
+\code{\link{metab_bayes_2s}}). Defaults to 1 hour and may not be set above
+2; interpolating across more of a diel DO or light curve invents structure
+rather than bridging a blip.}
 
 \item{params_in}{Character vector of hyperparameters to pass from the specs
 list into the data list for the MCMC run. Will be automatically generated

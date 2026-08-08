@@ -1,4 +1,4 @@
-#' @include mm_lag_2s.R
+#' @include mm_lag_2s.R mm_fill_gaps_2s.R
 NULL
 
 #' Combine raw two-station upstream/downstream/light data into
@@ -41,6 +41,20 @@ NULL
 #' by that day's total light sum, and its units are set to \code{NA} to
 #' match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
 #'
+#' @section Gap filling: brief interruptions in the record -- a sonde that
+#'   logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
+#'   linear interpolation, so that a day marred by a short dropout can be
+#'   modeled rather than discarded. Gaps longer than \code{max_gap_hours} are
+#'   left in place, and \code{\link{metab_bayes_2s}} drops the days holding
+#'   them. Filling happens here while \code{light} is still a raw
+#'   per-timestep value, before the within-day proportion is computed, which
+#'   is the accurate order: the proportion is then formed from a complete
+#'   series divided by a complete day total. This is a reason to supply raw
+#'   light and let this function convert it, rather than formatting data by
+#'   hand -- \code{\link{metab_bayes_2s}} can still fill gaps in
+#'   hand-formatted data, but by then \code{light} has already been
+#'   normalized, and interpolating it is only an approximation.
+#'
 #' @param upstream data.frame or unitted data.frame with columns
 #'   \code{timestamp} (POSIXct, UTC), \code{DO.obs}, \code{DO.sat}
 #' @param downstream data.frame or unitted data.frame with columns
@@ -49,6 +63,11 @@ NULL
 #' @param light data.frame or unitted data.frame with columns
 #'   \code{timestamp} (POSIXct, UTC), \code{light} (a single combined value
 #'   per timestep)
+#' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
+#'   data spanning no more than this are interpolated, longer runs are left in
+#'   place. Defaults to 1 hour and may not be set above 2. To have gaps
+#'   treated identically here and during fitting, pass the same value to
+#'   \code{\link{specs}}'s \code{max_gap_hours}.
 #' @return a unitted data.frame with columns \code{solar.time},
 #'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
 #'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
@@ -56,7 +75,8 @@ NULL
 #'   \code{\link{mm_validate_data}}'s two-station-specific lead-in check
 #' @importFrom unitted v u get_units
 #' @export
-mm_format_data_2s <- function(upstream, downstream, light) {
+mm_format_data_2s <- function(upstream, downstream, light,
+                              max_gap_hours=mm_max_gap_hours_default) {
 
   mm_check_required_cols(upstream, c('timestamp','DO.obs','DO.sat'), 'upstream')
   mm_check_required_cols(downstream, c('timestamp','DO.obs','DO.sat','temp.water','depth','travel.time'), 'downstream')
@@ -142,17 +162,27 @@ mm_format_data_2s <- function(upstream, downstream, light) {
 
   # --- assemble onto downstream's row structure, no row ever dropped ------
 
-  light_raw <- light$light[shift_idx_light]
   out <- data.frame(
     solar.time = downstream$timestamp,
     DO.obs.up = upstream$DO.obs[shift_idx_up],
     DO.sat.up = upstream$DO.sat[shift_idx_up],
     DO.obs.down = downstream$DO.obs,
     DO.sat.down = downstream$DO.sat,
-    light = mm_lag_light_2s(downstream$timestamp, light_raw, downstream$travel.time),
+    light = light$light[shift_idx_light],
     depth = downstream$depth,
     temp.water = downstream$temp.water,
     travel.time = downstream$travel.time)
+
+  # --- fill short gaps, while light is still raw --------------------------
+  #
+  # order matters: the within-day proportion computed below divides each row's
+  # travel-time window sum by that day's total light. Filling first means both
+  # the numerator and the denominator are computed from a complete series;
+  # interpolating the proportion afterwards could not repair the denominator,
+  # which would still be short by the missing terms
+  out <- mm_fill_gaps_2s(out, max_gap_hours=max_gap_hours)
+
+  out$light <- mm_lag_light_2s(out$solar.time, out$light, out$travel.time)
 
   template <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
                        light, depth, temp.water, travel.time)

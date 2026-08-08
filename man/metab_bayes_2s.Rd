@@ -79,8 +79,37 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   one-station models, which describes an overlapping diel window rather
   than a partition of the time series; the two are not interchangeable.
   Days that do not fill the window -- at the edges of a dataset whose
-  bounds don't fall on 06:00, or where observations are missing -- are
-  dropped with a message.
+  bounds don't fall on 06:00, or where observations are missing and the
+  gap was too long to bridge (see the next section) -- are dropped with a
+  message.
+}
+
+\section{Gap filling}{
+ Brief interruptions in the record are bridged by
+  linear interpolation before day completeness is assessed, so that a day
+  marred by a short sensor dropout can be modeled rather than discarded.
+  Missing timesteps and \code{NA} values are treated alike, and a gap is
+  measured by the time it spans rather than by how many rows are missing
+  across it. Runs longer than \code{specs$max_gap_hours} (1 hour by
+  default, configurable up to 2) are left untouched, and the days holding
+  them are dropped: the policy is deliberately two-tier, because the Stan
+  model's fixed-shape matrices cannot represent a partially observed day.
+  Gaps at the very start or end of the record are never filled, since
+  interpolation there would mean extrapolating from one side.
+
+  Two consequences are worth knowing about. First, the returned model's
+  data -- what \code{\link{get_data}} and \code{\link{predict_DO}} report
+  -- covers the filled timesteps too, so it can hold rows that were not in
+  the \code{data} argument, and \code{predict_DO} accordingly returns
+  predictions at those timesteps. This is what keeps the predictions
+  aligned with the rows actually modeled. Second, if \code{data} was
+  prepared by \code{\link{mm_format_data_2s}} its gaps are already filled
+  and nothing happens here; but if it was formatted by hand, its
+  \code{light} column already holds the within-day proportion rather than
+  raw light, and interpolating an already-normalized value is an
+  approximation -- the day total it was divided by is itself short by the
+  missing terms. Supplying raw light to \code{\link{mm_format_data_2s}} and
+  letting it do the conversion avoids that.
 }
 
 \section{Two-station data requirements}{

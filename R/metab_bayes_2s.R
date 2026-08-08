@@ -45,8 +45,35 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   one-station models, which describes an overlapping diel window rather
 #'   than a partition of the time series; the two are not interchangeable.
 #'   Days that do not fill the window -- at the edges of a dataset whose
-#'   bounds don't fall on 06:00, or where observations are missing -- are
-#'   dropped with a message.
+#'   bounds don't fall on 06:00, or where observations are missing and the
+#'   gap was too long to bridge (see the next section) -- are dropped with a
+#'   message.
+#'
+#' @section Gap filling: Brief interruptions in the record are bridged by
+#'   linear interpolation before day completeness is assessed, so that a day
+#'   marred by a short sensor dropout can be modeled rather than discarded.
+#'   Missing timesteps and \code{NA} values are treated alike, and a gap is
+#'   measured by the time it spans rather than by how many rows are missing
+#'   across it. Runs longer than \code{specs$max_gap_hours} (1 hour by
+#'   default, configurable up to 2) are left untouched, and the days holding
+#'   them are dropped: the policy is deliberately two-tier, because the Stan
+#'   model's fixed-shape matrices cannot represent a partially observed day.
+#'   Gaps at the very start or end of the record are never filled, since
+#'   interpolation there would mean extrapolating from one side.
+#'
+#'   Two consequences are worth knowing about. First, the returned model's
+#'   data -- what \code{\link{get_data}} and \code{\link{predict_DO}} report
+#'   -- covers the filled timesteps too, so it can hold rows that were not in
+#'   the \code{data} argument, and \code{predict_DO} accordingly returns
+#'   predictions at those timesteps. This is what keeps the predictions
+#'   aligned with the rows actually modeled. Second, if \code{data} was
+#'   prepared by \code{\link{mm_format_data_2s}} its gaps are already filled
+#'   and nothing happens here; but if it was formatted by hand, its
+#'   \code{light} column already holds the within-day proportion rather than
+#'   raw light, and interpolating an already-normalized value is an
+#'   approximation -- the day total it was divided by is itself short by the
+#'   missing terms. Supplying raw light to \code{\link{mm_format_data_2s}} and
+#'   letting it do the conversion avoids that.
 #'
 #' @section Two-station data requirements: In addition to the checks
 #'   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
@@ -85,6 +112,12 @@ metab_bayes_2s <- function(
   info=NULL
 ) {
 
+  if(missing(specs)) {
+    # if specs is left to the default, it gets confused about whether specs() is
+    # the argument or the function. tell it which:
+    specs <- streamMetabolizer::specs(mm_name('bayes_2s'))
+  }
+
   stanfit <- NULL
   mcmc_data <- NULL
   compile_time <- system.time({})
@@ -93,6 +126,16 @@ metab_bayes_2s <- function(
     # (mm_validate_data()), then check lead-in coverage
     # (mm_validate_data_2station()), before any data prep begins
     dat_list <- mm_validate_data(data, data_daily, 'metab_bayes_2s')
+
+    # Bridge short gaps before anything measures day completeness. This
+    # reassigns dat_list$data, and every consumer downstream -- the lead-in
+    # check, mm_align_2s(), the fitting functions, and the @data slot that
+    # predict_DO() reads back -- uses the filled frame, so the row indices
+    # mm_align_2s() returns keep referring to the frame they were computed
+    # from. Data prepared by mm_format_data_2s() has already been filled, so
+    # this is a no-op for it; hand-formatted data is filled here or nowhere
+    dat_list$data <- mm_fill_gaps_2s(dat_list$data, max_gap_hours=specs$max_gap_hours)
+
     mm_validate_data_2station(dat_list$data)
 
     # Determine the same modeled-row index set that prepdata_bayes_2s()
@@ -872,7 +915,11 @@ predict_metab.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA
 #'   \code{DO.obs}/\code{DO.mod}. The values are those computed once at fitting
 #'   time (see \code{\link{metab_bayes_2s}}); \code{use_saved=FALSE} (on-demand
 #'   recomputation from the fitted daily GPP/ER/K600 medians) is not
-#'   implemented.
+#'   implemented. Rows cover every timestep that was modeled, which includes
+#'   any that were interpolated to bridge a short gap in the input data (see
+#'   \code{\link{metab_bayes_2s}}'s gap-filling section), so \code{DO.obs.down}
+#'   may hold an interpolated rather than an observed value at those
+#'   timesteps.
 #' @export
 predict_DO.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA, ..., use_saved=TRUE) {
 

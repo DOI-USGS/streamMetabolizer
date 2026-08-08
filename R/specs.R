@@ -262,6 +262,13 @@
 #'   above 12; a ceiling approaching the 24-hour day window would let a single
 #'   day's travel time consume the entire lead-in period, which defeats the
 #'   purpose of having a ceiling.
+#' @param max_gap_hours for \code{type='bayes_2s'}. The gap-filling tolerance,
+#'   in hours: runs of missing observations spanning no more than this are
+#'   bridged by linear interpolation so their days can still be modeled, while
+#'   longer runs are left in place and their days dropped (see
+#'   \code{\link{metab_bayes_2s}}). Defaults to 1 hour and may not be set above
+#'   2; interpolating across more of a diel DO or light curve invents structure
+#'   rather than bridging a blip.
 #'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
@@ -454,6 +461,17 @@ specs <- function(
   # "no default"). Kept in sync by hand; guarded by a test in
   # test-metab_bayes_2s.R.
   max_travel_time_hours = 10,
+
+  # two-station gap-filling tolerance, in hours. read by metab_bayes_2s(),
+  # which fills gaps in the validated data before any day-completeness
+  # assessment. like max_travel_time_hours it is not spliced into the Stan
+  # data list, so it is not part of params_in.
+  #
+  # Literal here, not mm_max_gap_hours_default -- see the comment above that
+  # constant in mm_fill_gaps_2s.R (prefer_missing misreads a bare-symbol
+  # default as "no default"). Kept in sync by hand; guarded by a test in
+  # test-mm_fill_gaps_2s.R.
+  max_gap_hours = 1,
 
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -678,8 +696,8 @@ specs <- function(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
 
-        # data prep (not a Stan hyperparameter, so not in params_in)
-        'max_travel_time_hours',
+        # data prep (not Stan hyperparameters, so not in params_in)
+        'max_travel_time_hours', 'max_gap_hours',
 
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -705,6 +723,10 @@ specs <- function(
           'approaching the 24-hour two-station day window would allow a single day\'s travel ',
           'time to consume the entire lead-in period'), call.=FALSE)
       }
+
+      # shared with mm_fill_gaps_2s(), which checks the same value again
+      # because mm_format_data_2s() supplies it directly rather than via specs
+      mm_check_max_gap_hours(all_specs$max_gap_hours)
 
       # compute some arguments
       if('engine' %in% yes_missing) {

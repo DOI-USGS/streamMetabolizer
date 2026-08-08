@@ -79,14 +79,23 @@ test_that("upstream/downstream deployment windows are trimmed to their overlap, 
   expect_false(any(is.na(v(out$DO.obs.up))))
 })
 
-test_that("no message and no dropped rows when inputs already share one deployment window (two_station_raw_example)", {
+test_that("no trimming and no dropped rows when inputs already share one deployment window (two_station_raw_example)", {
   data("two_station_raw_example", envir=environment())
   up <- two_station_raw_example$upstream
   down <- two_station_raw_example$downstream
   lt <- two_station_raw_example$light
 
-  expect_no_message(out <- mm_format_data_2s(up, down, lt))
-  expect_equal(nrow(out), nrow(down))
+  # gap filling reports what it bridged, so this call is no longer silent;
+  # what this test is about is that nothing gets *trimmed* -- the three
+  # inputs already share one deployment window
+  msgs <- capture_messages(out <- mm_format_data_2s(up, down, lt))
+  expect_false(any(grepl('trimming to the shared', msgs)))
+
+  # no downstream row is dropped. Rows are now *added*, though: filling
+  # bridges this record's short gaps (see test-mm_fill_gaps_2s.R), so the
+  # output is a superset of downstream's timestamps rather than a match
+  expect_true(all(v(mm_snap_to_bin_2s(down$timestamp)) %in% v(out$solar.time)))
+  expect_gte(nrow(out), nrow(down))
 })
 
 test_that("upstream and downstream with no overlapping window is an error", {
@@ -98,22 +107,38 @@ test_that("upstream and downstream with no overlapping window is an error", {
   expect_error(mm_format_data_2s(upstream, downstream, light), "no overlapping deployment window")
 })
 
-test_that("a downstream timestamp with no matching upstream/light bin gets NA, not a dropped row", {
-  # upstream/light are missing the 02:00 bin entirely (a real mid-series gap)
-  downstream <- make_hourly("2050-06-01 00:00:00", 5, DO.obs=1:5, DO.sat=1:5 + 10,
+test_that("a downstream timestamp with no matching upstream/light bin is interpolated when short, NA when too long", {
+  # upstream/light are missing bins that downstream has -- a real mid-series
+  # gap. At an hourly timestep the 1-hour tolerance spans exactly one bin,
+  # so one missing bin is bridged and two consecutive ones are not
+  downstream <- make_hourly("2050-06-01 00:00:00", 8, DO.obs=1:8, DO.sat=1:8 + 10,
                              temp.water=20, depth=0.5, travel.time=0.01)
-  upstream <- make_hourly("2050-06-01 00:00:00", 5, DO.obs=1:5, DO.sat=1:5 + 10)
-  upstream <- upstream[upstream$timestamp != as.POSIXct("2050-06-01 02:00:00", tz="UTC"), ]
-  light <- make_hourly("2050-06-01 00:00:00", 5, light=1:5 * 10)
-  light <- light[light$timestamp != as.POSIXct("2050-06-01 02:00:00", tz="UTC"), ]
+  drop_bins <- function(df, drop) df[!(v(df$timestamp) %in% drop), ]
+  make_up <- function(drop) drop_bins(
+    make_hourly("2050-06-01 00:00:00", 8, DO.obs=1:8, DO.sat=1:8 + 10), drop)
+  make_lt <- function(drop) drop_bins(
+    make_hourly("2050-06-01 00:00:00", 8, light=1:8 * 10), drop)
 
-  out <- mm_format_data_2s(upstream, downstream, light)
+  one <- as.POSIXct("2050-06-01 02:00:00", tz="UTC")
+  out <- suppressMessages(mm_format_data_2s(make_up(one), downstream, make_lt(one)))
 
-  expect_equal(nrow(out), 5)
-  gap_row <- which(v(out$solar.time) == as.POSIXct("2050-06-01 02:00:00", tz="UTC"))
-  expect_true(is.na(v(out$DO.obs.up)[gap_row]))
-  expect_true(is.na(v(out$DO.sat.up)[gap_row]))
-  expect_false(any(is.na(v(out$DO.obs.up)[-gap_row])))
+  # the row is still there and no longer NA: it is interpolated from its
+  # neighbours (DO.obs.up 2 and 4 bracket the missing 3)
+  expect_equal(nrow(out), 8)
+  gap_row <- which(v(out$solar.time) == one)
+  expect_false(any(is.na(v(out$DO.obs.up))))
+  expect_equal(v(out$DO.obs.up)[gap_row], 3)
+
+  # two consecutive missing bins exceed the tolerance, so the original
+  # contract still holds there: an unmatched bin is an NA, never a lost row
+  two <- one + as.difftime(c(0, 1), units="hours")
+  out2 <- suppressMessages(mm_format_data_2s(make_up(two), downstream, make_lt(two)))
+
+  expect_equal(nrow(out2), 8)
+  gap_rows <- which(v(out2$solar.time) %in% two)
+  expect_true(all(is.na(v(out2$DO.obs.up)[gap_rows])))
+  expect_true(all(is.na(v(out2$DO.sat.up)[gap_rows])))
+  expect_false(any(is.na(v(out2$DO.obs.up)[-gap_rows])))
 })
 
 test_that("a duplicate timestep bin in downstream is a clear error", {
