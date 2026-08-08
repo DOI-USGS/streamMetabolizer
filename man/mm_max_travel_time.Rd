@@ -30,17 +30,6 @@ time consume the entire lead-in period, which defeats the purpose of having
 a ceiling.
 
 \code{mm_max_travel_time_default} is the canonical default (currently 10).
-\code{\link{specs}} cannot reference it directly: its \code{prefer_missing}
-check flags any formal whose default is a bare symbol (via \code{is.symbol()}
-on the unevaluated default) as "no real default," which would trigger a
-false warning telling users to set \code{max_travel_time_hours} in
-\code{\link{revise}()} instead -- exactly backwards, since overriding the
-ceiling at \code{specs()}-creation time is the intended use. A
-\code{NULL}-default workaround was considered and rejected: it avoids the
-warning but only shifts the hand-sync problem to a second, more fragile
-guard elsewhere. \code{specs()}'s literal default is kept in sync with
-this constant by hand; a guard test in \code{test-metab_bayes_2s.R}
-(search for "max_travel_time_hours default") fails if the two diverge.
 }
 \keyword{datasets}
 \keyword{internal}

@@ -38,16 +38,6 @@ linear interpolation across a diel DO or light curve stays defensible.
 interpolation across more than a couple of hours of a diel curve --
 spanning dawn, dusk, or the midday peak -- invents structure rather than
 bridging a blip, and the accompanying day would be better dropped.
-
-\code{\link{specs}} cannot reference \code{mm_max_gap_hours_default}
-directly, for the same reason \code{\link{mm_max_travel_time}} documents:
-\code{prefer_missing} flags any formal whose unevaluated default is a bare
-symbol as "no real default", producing a warning that tells users to set
-the option in \code{\link{revise}()} instead -- backwards, since setting it
-at \code{specs()}-creation time is the intended use. \code{specs()}'s
-literal default is kept in sync with this constant by hand; a guard test in
-\code{test-mm_fill_gaps_2s.R} (search for "max_gap_hours default") fails if
-the two diverge.
 }
 \keyword{datasets}
 \keyword{internal}

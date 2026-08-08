@@ -224,14 +224,6 @@ test_that("max_gap_hours is validated against the cap", {
   expect_error(specs(mm_name('bayes_2s'), max_gap_hours=6), 'must be <= 2 hours')
 })
 
-test_that("specs()'s max_gap_hours default stays in sync with mm_max_gap_hours_default", {
-  # specs()'s default is a hand-copied literal, not a reference to
-  # mm_max_gap_hours_default (see the roxygen note in mm_fill_gaps_2s.R for
-  # why); this is a tripwire in case the two are ever edited independently
-  sp <- specs(mm_name('bayes_2s'))
-  expect_equal(sp$max_gap_hours, mm_max_gap_hours_default)
-})
-
 
 # integration with the day-window check -------------------------------------
 

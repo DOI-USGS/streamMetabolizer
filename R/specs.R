@@ -455,23 +455,13 @@ specs <- function(
   # metab_bayes_2s(), both of which pass it to mm_align_2s(). unlike the
   # K600_lnorm_* hyperparameters above it is not spliced into the Stan data
   # list, so it is not part of params_in.
-  #
-  # Literal here, not mm_max_travel_time_default -- see the comment above that
-  # constant in mm_lag_2s.R (prefer_missing misreads a bare-symbol default as
-  # "no default"). Kept in sync by hand; guarded by a test in
-  # test-metab_bayes_2s.R.
-  max_travel_time_hours = 10,
+  max_travel_time_hours = mm_max_travel_time_default,
 
   # two-station gap-filling tolerance, in hours. read by metab_bayes_2s(),
   # which fills gaps in the validated data before any day-completeness
   # assessment. like max_travel_time_hours it is not spliced into the Stan
   # data list, so it is not part of params_in.
-  #
-  # Literal here, not mm_max_gap_hours_default -- see the comment above that
-  # constant in mm_fill_gaps_2s.R (prefer_missing misreads a bare-symbol
-  # default as "no default"). Kept in sync by hand; guarded by a test in
-  # test-mm_fill_gaps_2s.R.
-  max_gap_hours = 1,
+  max_gap_hours = mm_max_gap_hours_default,
 
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -548,7 +538,12 @@ specs <- function(
   all_possible <- names(formals(specs))
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
-  prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
+  # the arguments w/o defaults, mostly. the empty symbol is what a formal with
+  # no default holds; is.symbol() would also catch a default that is itself a
+  # bare symbol (e.g. a constant reference), misreading it as "no default"
+  prefer_missing <- setdiff(
+    all_possible[sapply(formals(specs), function(f) identical(f, quote(expr=)))],
+    'params_out')
   prefer_not_missing <- if(features$type == 'bayes' && features$GPP_fun == 'satlight') {
     c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma')
   } else {
@@ -707,25 +702,9 @@ specs <- function(
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
 
-      # a ceiling at or near the 24-hour day window would let one day's travel
-      # time consume the whole lead-in period, so cap it well below that
-      if(!is.numeric(all_specs$max_travel_time_hours) ||
-         length(all_specs$max_travel_time_hours) != 1 ||
-         is.na(all_specs$max_travel_time_hours)) {
-        stop('max_travel_time_hours must be a single non-NA number', call.=FALSE)
-      }
-      if(all_specs$max_travel_time_hours <= 0) {
-        stop('max_travel_time_hours must be > 0', call.=FALSE)
-      }
-      if(all_specs$max_travel_time_hours > mm_max_travel_time_cap) {
-        stop(paste0(
-          'max_travel_time_hours must be <= ', mm_max_travel_time_cap, ' hours; a ceiling ',
-          'approaching the 24-hour two-station day window would allow a single day\'s travel ',
-          'time to consume the entire lead-in period'), call.=FALSE)
-      }
-
-      # shared with mm_fill_gaps_2s(), which checks the same value again
-      # because mm_format_data_2s() supplies it directly rather than via specs
+      # both shared with the functions that consume these values, which check
+      # them again because they can be called directly rather than via specs
+      mm_check_max_travel_time_hours(all_specs$max_travel_time_hours)
       mm_check_max_gap_hours(all_specs$max_gap_hours)
 
       # compute some arguments

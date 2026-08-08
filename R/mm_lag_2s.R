@@ -12,17 +12,6 @@
 #' a ceiling.
 #'
 #' \code{mm_max_travel_time_default} is the canonical default (currently 10).
-#' \code{\link{specs}} cannot reference it directly: its \code{prefer_missing}
-#' check flags any formal whose default is a bare symbol (via \code{is.symbol()}
-#' on the unevaluated default) as "no real default," which would trigger a
-#' false warning telling users to set \code{max_travel_time_hours} in
-#' \code{\link{revise}()} instead -- exactly backwards, since overriding the
-#' ceiling at \code{specs()}-creation time is the intended use. A
-#' \code{NULL}-default workaround was considered and rejected: it avoids the
-#' warning but only shifts the hand-sync problem to a second, more fragile
-#' guard elsewhere. \code{specs()}'s literal default is kept in sync with
-#' this constant by hand; a guard test in \code{test-metab_bayes_2s.R}
-#' (search for "max_travel_time_hours default") fails if the two diverge.
 #'
 #' @keywords internal
 #' @name mm_max_travel_time
@@ -33,6 +22,33 @@ mm_max_travel_time_default <- 10
 
 #' @rdname mm_max_travel_time
 mm_max_travel_time_cap <- 12
+
+#' Validate a travel-time ceiling
+#'
+#' Shared by \code{\link{mm_align_2s}} and \code{\link{specs}} so that the
+#' two entry points cannot disagree about what a legal ceiling is:
+#' \code{specs()} checks it at specs-creation time, and \code{mm_align_2s}
+#' checks it again because it may be called directly with a ceiling that never
+#' passed through a \code{specs} list.
+#'
+#' @param max_travel_time_hours the value to check.
+#' @keywords internal
+mm_check_max_travel_time_hours <- function(max_travel_time_hours) {
+  if(!is.numeric(max_travel_time_hours) || length(max_travel_time_hours) != 1 ||
+     is.na(max_travel_time_hours)) {
+    stop('max_travel_time_hours must be a single non-NA number', call.=FALSE)
+  }
+  if(max_travel_time_hours <= 0) {
+    stop('max_travel_time_hours must be > 0', call.=FALSE)
+  }
+  if(max_travel_time_hours > mm_max_travel_time_cap) {
+    stop(paste0(
+      'max_travel_time_hours must be <= ', mm_max_travel_time_cap, ' hours; a ceiling ',
+      'approaching the 24-hour two-station day window would allow a single day\'s travel ',
+      'time to consume the entire lead-in period'), call.=FALSE)
+  }
+  invisible(NULL)
+}
 
 #' Hour at which a two-station day begins
 #'
@@ -272,6 +288,8 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'   \code{timestep_days}
 #' @keywords internal
 mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) {
+
+  mm_check_max_travel_time_hours(max_travel_time_hours)
 
   solar_time <- data$solar.time
   travel_time <- data$travel.time
