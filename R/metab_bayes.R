@@ -136,27 +136,13 @@ metab_bayes <- function(
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
 
-    # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
-    if(is.logical(specs$keep_mcmcs)) {
-      if(length(specs$keep_mcmcs) != 1) {
-        stop("if keep_mcmcs is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
-    }
-    if(is.logical(specs$keep_mcmc_data)) {
-      if(length(specs$keep_mcmc_data) != 1) {
-        stop("if keep_mcmc_data is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
-    }
+    # check the format of keep_mcmcs/keep_mcmc_data, coercing a date vector to
+    # Date (more checks, below, are split_dates-specific)
+    specs <- mm_check_keep_mcmc_specs(specs)
 
     # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an
     # MCMC object from Stan)
     if(specs$split_dates == TRUE) {
-      if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
-      if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       # one day at a time, splitting into overlapping ~24-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
@@ -980,34 +966,12 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   preds <- fit[c('date', fit.names)] %>%
     setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
 
-  # add date-specific fitting warnings and errors as msgs.fit. though these
-  # could also be prediction messages if split_dates==T, we're planning to force
-  # split_dates to always be F in the near future. and whenever split_dates==F,
-  # date-specific messages are all just date validity notes and belong in
-  # fitting alone. general messages apply mostly to fitting so are noted here.
-  # get_params also handles general messages, but because we don't call
-  # get_params from this predict_metab function, we need to add those messages
-  # separately here
-  warnings <- errors <- '.dplyr.var'
-  if(!is.null(fit) && all(c('date','warnings','errors') %in% names(fit))) {
-    messages <- fit %>%
-      select(date, warnings, errors) %>%
-      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
-    preds <- full_join(preds, messages, by='date', copy=TRUE)
-  } else {
-    preds <- mutate(preds, msgs.fit=NA)
-  }
-
-  # add general fitting warnings and errors. almost always, general errors
-  # during fitting prohibit prediction and general warnings don't affect
-  # prediction; treat them here as if this is always the case (because
-  # prediction-specific errors or warnings would probably be due to a poorly
-  # written model, which I hope we'll have few of, and I don't know how I'd
-  # distinguish since both types of messages come out of Stan)
-  preds <- mutate(
-    preds,
-    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
-    errors=if(length(metab_model@fit$errors) > 0) NA else '')
+  # msgs.fit is treated as a fitting message, not a prediction one: when
+  # split_dates==F (which we plan to force in the near future) the date-specific
+  # messages are all just date validity notes, which belong to fitting alone
+  preds <- mm_attach_fit_msgs(
+    preds, fit,
+    warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
 
   # attach.units if requested
   if(attach.units) {
@@ -1033,18 +997,9 @@ get_params.metab_bayes <- function(
     attach.units <- FALSE
   }
 
-  # Stan prohibits '.' in variable names, so we have to convert back from '_' to
-  # '.' here to become consistent with the non-Bayesian models
-  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
-  parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
-  for(i in seq_along(parnames)) {
-    names(metab_model@fit$daily) <- gsub(names(parnames[i]), parnames[[i]], names(metab_model@fit$daily))
-  }
-  names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_50pct$', '.median', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_2.5pct$', '.lower', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_97.5pct$', '.upper', names(metab_model@fit$daily))
+  # rename in place, before NextMethod() picks the fit back up
+  metab_model@fit$daily <- mm_rename_stan_params(
+    metab_model@fit$daily, metab_model@specs$params_out)
   # code duplicated in get_params.metab_Kmodel:
   if(length(metab_model@fit$warnings) > 0) {
     omsg <- 'overall warnings'

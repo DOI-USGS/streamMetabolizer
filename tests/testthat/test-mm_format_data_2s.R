@@ -141,6 +141,37 @@ test_that("a downstream timestamp with no matching upstream/light bin is interpo
   expect_false(any(is.na(v(out2$DO.obs.up)[-gap_rows])))
 })
 
+test_that("the timestep is taken from downstream alone, so a coarser upstream/light is binned onto downstream's grid", {
+  # downstream is hourly, upstream/light are 2-hourly: the three series have
+  # different modal timesteps. Only downstream's is used, for all three, so
+  # upstream's rows land on every other hourly bin. Were the timestep instead
+  # re-detected per series, upstream's 2-hour bins would be numbered half as
+  # far apart and would match downstream's hourly bins at the wrong rows.
+  make_2hourly <- function(start, n, ...) {
+    data.frame(
+      timestamp = as.POSIXct(start, tz="UTC") + as.difftime((seq_len(n) - 1) * 2, units="hours"),
+      ...
+    )
+  }
+  downstream <- make_hourly("2050-06-01 00:00:00", 9, DO.obs=1:9, DO.sat=1:9 + 10,
+                             temp.water=20, depth=0.5, travel.time=0.01)
+  upstream <- make_2hourly("2050-06-01 00:00:00", 5, DO.obs=c(100,102,104,106,108), DO.sat=200)
+  light <- make_2hourly("2050-06-01 00:00:00", 5, light=c(10,12,14,16,18))
+
+  out <- suppressMessages(mm_format_data_2s(upstream, downstream, light))
+
+  # downstream's row structure is preserved exactly
+  expect_equal(nrow(out), 9)
+  expect_equal(v(out$solar.time), downstream$timestamp)
+
+  # upstream landed on bins 0,2,4,6,8 of downstream's hourly grid; the odd
+  # bins in between are single-bin gaps, bridged by interpolation
+  expect_equal(v(out$DO.obs.up), c(100,101,102,103,104,105,106,107,108))
+
+  # (light is NA throughout here only because mm_lag_light_2s() reports a
+  # within-day proportion and this 9-row fixture spans no 06:00-06:00 day)
+})
+
 test_that("a duplicate timestep bin in downstream is a clear error", {
   # 6 regularly-spaced rows (enough for mm_get_timestep()'s modal-timestep
   # detection to work cleanly) plus one extra row duplicating an existing bin

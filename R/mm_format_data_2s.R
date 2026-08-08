@@ -139,6 +139,10 @@ mm_format_data_2s <- function(upstream, downstream, light,
   upstream$timestamp <- mm_snap_to_bin_2s(upstream$timestamp)
   light$timestamp <- mm_snap_to_bin_2s(light$timestamp)
 
+  # the timestep is detected from downstream alone and applied to all three
+  # series, so that upstream and light are binned onto downstream's grid.
+  # deliberately not routed through mm_bin_grid_2s(), which would re-detect
+  # per series -- a real difference if the three have different modal timesteps
   timestep_days <- unlist(mm_get_timestep(downstream$timestamp, format='modal'))
   if(length(timestep_days) != 1 || is.na(timestep_days)) {
     stop('could not detect a single nominal timestep for downstream$timestamp', call.=FALSE)
@@ -147,15 +151,9 @@ mm_format_data_2s <- function(upstream, downstream, light,
   bin_down <- mm_bin_index_2s(downstream$timestamp, timestep_days)
   bin_up <- mm_bin_index_2s(upstream$timestamp, timestep_days)
   bin_light <- mm_bin_index_2s(light$timestamp, timestep_days)
-  if(any(duplicated(bin_down))) {
-    stop('downstream has more than one row in the same timestep bin; check for duplicate or near-duplicate timestamps', call.=FALSE)
-  }
-  if(any(duplicated(bin_up))) {
-    stop('upstream has more than one row in the same timestep bin; check for duplicate or near-duplicate timestamps', call.=FALSE)
-  }
-  if(any(duplicated(bin_light))) {
-    stop('light has more than one row in the same timestep bin; check for duplicate or near-duplicate timestamps', call.=FALSE)
-  }
+  mm_check_unique_bins_2s(bin_down, 'downstream')
+  mm_check_unique_bins_2s(bin_up, 'upstream')
+  mm_check_unique_bins_2s(bin_light, 'light')
 
   shift_idx_up <- match(bin_down, bin_up)
   shift_idx_light <- match(bin_down, bin_light)

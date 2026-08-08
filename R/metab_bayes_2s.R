@@ -150,29 +150,14 @@ metab_bayes_2s <- function(
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
 
-    # check the format of keep_mcmcs/keep_mcmc_data, as in metab_bayes(): the
-    # date-vector form only means something when each date has its own fit
-    if(is.logical(specs$keep_mcmcs)) {
-      if(length(specs$keep_mcmcs) != 1) {
-        stop("if keep_mcmcs is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
-    }
-    if(is.logical(specs$keep_mcmc_data)) {
-      if(length(specs$keep_mcmc_data) != 1) {
-        stop("if keep_mcmc_data is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
-    }
+    # check the format of keep_mcmcs/keep_mcmc_data, coercing a date vector
+    # to Date
+    specs <- mm_check_keep_mcmc_specs(specs)
 
     if(isTRUE(specs$split_dates)) {
       # one date at a time. Each date's data preparation happens inside its
       # own error-collecting handler, so a single bad date is reported in that
       # date's errors column rather than halting the rest of the run
-      if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
-      if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       perday <- bayes_perday_2s(dat_list$data, specs=specs, aln=aln)
 
       stanfit <- perday$mcmcs
@@ -825,18 +810,7 @@ get_params.metab_bayes_2s <- function(
   fit <- metab_model@fit$daily
   if(is.null(fit)) return(NULL)
 
-  # Stan prohibits '.' in variable names, so convert back from '_' to '.',
-  # as in get_params.metab_bayes
-  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
-  parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
-  for(i in seq_along(parnames)) {
-    names(fit) <- gsub(names(parnames[i]), parnames[[i]], names(fit))
-  }
-  names(fit) <- gsub('_mean$', '', names(fit))
-  names(fit) <- gsub('_sd$', '.sd', names(fit))
-  names(fit) <- gsub('_50pct$', '.median', names(fit))
-  names(fit) <- gsub('_2.5pct$', '.lower', names(fit))
-  names(fit) <- gsub('_97.5pct$', '.upper', names(fit))
+  fit <- mm_rename_stan_params(fit, metab_model@specs$params_out)
 
   fit <- mm_filter_dates(fit, date_start=date_start, date_end=date_end)
 
@@ -887,23 +861,9 @@ predict_metab.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA
   preds <- fit[c('date', fit.names)] %>%
     setNames(c('date', metab.names))
 
-  # add date-specific fitting warnings/errors, as in predict_metab.metab_bayes
-  warnings <- errors <- '.dplyr.var'
-  if(!is.null(fit) && all(c('date','warnings','errors') %in% names(fit))) {
-    messages <- fit %>%
-      select(date, warnings, errors) %>%
-      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
-    preds <- full_join(preds, messages, by='date', copy=TRUE)
-  } else {
-    preds <- mutate(preds, msgs.fit=NA)
-  }
-
-  preds <- mutate(
-    preds,
-    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
-    errors=if(length(metab_model@fit$errors) > 0) NA else '')
-
-  preds
+  mm_attach_fit_msgs(
+    preds, fit,
+    warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
 }
 
 

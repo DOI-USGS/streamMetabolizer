@@ -149,33 +149,11 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
     character(1))
   data_v <- v(data)
 
-  if(nrow(data_v) < 2) {
-    stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
-  }
-
-  timestep_days <- unlist(mm_get_timestep(data_v$solar.time, format='modal'))
-  if(length(timestep_days) != 1 || is.na(timestep_days)) {
-    stop('could not detect a single nominal timestep for solar.time', call.=FALSE)
-  }
-
   # gaps are measured in timestep bins, so solar.time must already be on the
   # bin grid -- the same precondition, checked the same way, as mm_lag_2s()
-  snapped <- mm_snap_to_bin_2s(data_v$solar.time)
-  if(max(abs(as.numeric(snapped) - as.numeric(data_v$solar.time))) > 1) {
-    stop(
-      'solar.time is not on a snap-to-bin grid; call mm_snap_to_bin_2s() ',
-      'on it before mm_fill_gaps_2s() (see issue #475)', call.=FALSE)
-  }
-
-  bin <- mm_bin_index_2s(data_v$solar.time, timestep_days)
-  if(is.unsorted(bin)) {
-    stop('data must be sorted ascending by solar.time', call.=FALSE)
-  }
-  if(any(duplicated(bin))) {
-    stop(
-      'solar.time has more than one row in the same timestep bin; check for ',
-      'duplicate or near-duplicate timestamps', call.=FALSE)
-  }
+  grid <- mm_bin_grid_2s(data_v$solar.time, caller='mm_fill_gaps_2s', check_sorted=TRUE)
+  timestep_days <- grid$timestep_days
+  bin <- grid$bin
 
   # the tolerance, as a whole number of timestep bins. the epsilon keeps an
   # exactly-representable ratio (a 1-hour tolerance on a 15-minute timestep is

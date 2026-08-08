@@ -157,6 +157,77 @@ mm_snap_to_bin_2s <- function(solar.time) {
   mm_bin_epoch_2s + as.difftime(bin_index * timestep_days, units='days')
 }
 
+#' Check that no two rows share a timestep bin
+#'
+#' @param bin integer vector of bin indices (see \code{\link{mm_bin_index_2s}}).
+#' @param what name of the series being checked, used in the error message.
+#' @keywords internal
+mm_check_unique_bins_2s <- function(bin, what) {
+  if(any(duplicated(bin))) {
+    stop(
+      what, ' has more than one row in the same timestep bin; check for ',
+      'duplicate or near-duplicate timestamps', call.=FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Detect and validate a two-station bin grid
+#'
+#' Establishes the timestep bin grid that the two-station functions match rows
+#' on: detects the nominal timestep, confirms \code{solar.time} is already on
+#' the snap-to-bin grid, and confirms no two rows land in the same bin.
+#'
+#' The grid check is a round-trip, since already-snapped data is a fixed point
+#' of \code{\link{mm_snap_to_bin_2s}} and anything else changes under it. The
+#' snapped values are reconstructed from the timestep detected here rather than
+#' by calling \code{\link{mm_snap_to_bin_2s}}, which would redundantly detect
+#' the same timestep a second time. The 1-second tolerance is far above the
+#' ~microsecond floating-point noise that timestamp arithmetic introduces and
+#' far below any real timestep.
+#'
+#' Not used by \code{\link{mm_snap_to_bin_2s}} itself, which cannot assume
+#' its input is already snapped and so cannot rely on the round-trip check.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC, already snapped via
+#'   \code{\link{mm_snap_to_bin_2s}}.
+#' @param what name of the series, used in error messages.
+#' @param caller name of the calling function, named in the off-grid error so
+#'   the user knows where to apply \code{\link{mm_snap_to_bin_2s}}.
+#' @param check_sorted if TRUE, also require the bins to be ascending. Not
+#'   every caller needs this, so it is opt-in; it runs between the grid and
+#'   duplicate checks, so that unsorted input is reported as such even when it
+#'   also contains duplicates.
+#' @return a list with \code{timestep_days} (modal timestep, in days) and
+#'   \code{bin} (integer bin index per row).
+#' @keywords internal
+mm_bin_grid_2s <- function(solar.time, what='solar.time', caller, check_sorted=FALSE) {
+
+  if(length(solar.time) < 2) {
+    stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
+  }
+
+  timestep_days <- unlist(mm_get_timestep(solar.time, format='modal'))
+  if(length(timestep_days) != 1 || is.na(timestep_days)) {
+    stop('could not detect a single nominal timestep for ', what, call.=FALSE)
+  }
+
+  bin <- mm_bin_index_2s(solar.time, timestep_days)
+
+  snapped <- mm_bin_epoch_2s + as.difftime(bin * timestep_days, units='days')
+  if(max(abs(as.numeric(snapped) - as.numeric(solar.time))) > 1) {
+    stop(
+      'solar.time is not on a snap-to-bin grid; call mm_snap_to_bin_2s() ',
+      'on it before ', caller, '() (see issue #475)', call.=FALSE)
+  }
+
+  if(check_sorted && is.unsorted(bin)) {
+    stop('data must be sorted ascending by solar.time', call.=FALSE)
+  }
+  mm_check_unique_bins_2s(bin, what)
+
+  list(timestep_days = timestep_days, bin = bin)
+}
+
 #' Compute the per-row upstream lag for two-station data
 #'
 #' The upstream observation that "matches" a given downstream observation at
@@ -208,34 +279,9 @@ mm_snap_to_bin_2s <- function(solar.time) {
 #' @keywords internal
 mm_lag_2s <- function(solar.time, travel.time) {
 
-  n_total <- length(solar.time)
-  if(n_total < 2) {
-    stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
-  }
-
-  timestep_days <- unlist(mm_get_timestep(solar.time, format='modal'))
-  if(length(timestep_days) != 1 || is.na(timestep_days)) {
-    stop('could not detect a single nominal timestep for solar.time', call.=FALSE)
-  }
-
-  # bin matching requires solar.time to already be on the snap-to-bin grid;
-  # confirmed by a round-trip, since already-snapped data is a fixed point
-  # of mm_snap_to_bin_2s() and anything else changes under it. 1-second
-  # tolerance is far above the ~microsecond floating-point noise that
-  # timestamp arithmetic introduces and far below any real timestep
-  snapped <- mm_snap_to_bin_2s(solar.time)
-  if(max(abs(as.numeric(snapped) - as.numeric(solar.time))) > 1) {
-    stop(
-      'solar.time is not on a snap-to-bin grid; call mm_snap_to_bin_2s() ',
-      'on it before mm_lag_2s() (see issue #475)', call.=FALSE)
-  }
-
-  bin_index <- mm_bin_index_2s(solar.time, timestep_days)
-  if(any(duplicated(bin_index))) {
-    stop(
-      'solar.time has more than one row in the same timestep bin; check for ',
-      'duplicate or near-duplicate timestamps', call.=FALSE)
-  }
+  grid <- mm_bin_grid_2s(solar.time, caller='mm_lag_2s')
+  timestep_days <- grid$timestep_days
+  bin_index <- grid$bin
 
   lag <- round(travel.time / timestep_days)
   target_bin <- bin_index - lag
