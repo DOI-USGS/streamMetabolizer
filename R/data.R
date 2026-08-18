@@ -1,6 +1,6 @@
 #' Example two-station (VFTS) input data
 #'
-#' A 30-day example dataset for fitting a two-station (upstream/downstream,
+#' A 29-day example dataset for fitting a two-station (upstream/downstream,
 #' Variable Flow Two-Station) metabolism model with
 #' \code{\link{metab_bayes_2s}}. It is a subset of the \code{VFTS-2}
 #' (variable-travel-time) run from the published two-station metabolism modeling
@@ -9,6 +9,17 @@
 #' lead-in block of upstream DO observations (exactly as long as the longest
 #' travel time in the dataset requires -- see \code{\link{metab_bayes_2s}}'s
 #' "Two-station data requirements" section) immediately before 2011-07-31.
+#' Two-station days run 06:00-06:00 rather than midnight-to-midnight, so the
+#' rows above span 30 calendar dates but yield 29 modeled days: the first and
+#' last don't fill a whole 24-hour window and are dropped during fitting.
+#'
+#' The upstream and downstream oxygen columns are contemporaneous: the
+#' \code{DO.obs.up} value on a given row was measured at that row's own
+#' \code{solar.time}, not at the earlier time the water left the upstream
+#' station. Pairing each downstream observation with the upstream water that
+#' became it is done during fitting, using \code{travel.time}, which is why
+#' the lead-in block above is needed and why stored data must not have that
+#' shift already applied.
 #'
 #' @format A data.frame with 2904 rows and the 9 columns expected by
 #'   \code{\link{metab_bayes_2s}}'s \code{data} argument, each carrying
@@ -36,7 +47,12 @@
 #'       downstream stations, d}
 #'   }
 #'
-#' @source Filtered to \code{model_run == 'VFTS-2'}; see
+#' @source Drawn from the \code{VFTS-2} (variable-travel-time) run, except for
+#'   the two upstream oxygen columns, which come from the same file's
+#'   \code{VFTS-3} run. Both runs cover the same reach and the same physical
+#'   sensors, but \code{VFTS-3} was run at a single fixed travel time, and only
+#'   its constant shift can be undone exactly to recover the contemporaneous
+#'   upstream series this dataset needs. See
 #'   \code{data-raw/two_station_example.R} for the extraction/renaming code.
 #'
 #'   Bishop, I.W., Deemer, B.R., Kennedy, T.A., Payn, R.A., Hall Jr, R.O. and
@@ -52,11 +68,17 @@
 #' Raw, unformatted two-station (VFTS) input data
 #'
 #' The raw counterpart to \code{\link{two_station_example}}: upstream and
-#' downstream sonde exports plus a modeled light series, but with no join, lag
-#' alignment, or mean-solar-time conversion -- unlike
-#' \code{\link{two_station_example}}, which has all of that processing
+#' downstream sonde exports plus a modeled light series, but with no join,
+#' no gap filling, no light conversion, and no mean-solar-time conversion --
+#' unlike \code{\link{two_station_example}}, which has all of that processing
 #' already done. \code{upstream}, \code{downstream}, and \code{light} are
 #' NOT pre-aligned to a common time grid or to each other.
+#'
+#' Neither dataset has the upstream travel-time shift applied: in both, the
+#' upstream and downstream oxygen values at a given timestamp are
+#' contemporaneous observations. That shift belongs to model fitting, which
+#' applies it from \code{travel.time}, so applying it to stored data would
+#' double it.
 #'
 #' @format A named list of three data.frames, each carrying
 #'   \code{\link[unitted]{unitted}} units matching \code{\link{mm_data}}

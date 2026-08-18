@@ -32,7 +32,12 @@ A data.frame with 2904 rows and the 9 columns expected by
   }
 }
 \source{
-Filtered to \code{model_run == 'VFTS-2'}; see
+Drawn from the \code{VFTS-2} (variable-travel-time) run, except for
+  the two upstream oxygen columns, which come from the same file's
+  \code{VFTS-3} run. Both runs cover the same reach and the same physical
+  sensors, but \code{VFTS-3} was run at a single fixed travel time, and only
+  its constant shift can be undone exactly to recover the contemporaneous
+  upstream series this dataset needs. See
   \code{data-raw/two_station_example.R} for the extraction/renaming code.
 
   Bishop, I.W., Deemer, B.R., Kennedy, T.A., Payn, R.A., Hall Jr, R.O. and
@@ -48,7 +53,7 @@ Filtered to \code{model_run == 'VFTS-2'}; see
 two_station_example
 }
 \description{
-A 30-day example dataset for fitting a two-station (upstream/downstream,
+A 29-day example dataset for fitting a two-station (upstream/downstream,
 Variable Flow Two-Station) metabolism model with
 \code{\link{metab_bayes_2s}}. It is a subset of the \code{VFTS-2}
 (variable-travel-time) run from the published two-station metabolism modeling
@@ -57,5 +62,17 @@ through 2011-08-29 at the source data's native 15-minute timestep, plus a
 lead-in block of upstream DO observations (exactly as long as the longest
 travel time in the dataset requires -- see \code{\link{metab_bayes_2s}}'s
 "Two-station data requirements" section) immediately before 2011-07-31.
+Two-station days run 06:00-06:00 rather than midnight-to-midnight, so the
+rows above span 30 calendar dates but yield 29 modeled days: the first and
+last don't fill a whole 24-hour window and are dropped during fitting.
+}
+\details{
+The upstream and downstream oxygen columns are contemporaneous: the
+\code{DO.obs.up} value on a given row was measured at that row's own
+\code{solar.time}, not at the earlier time the water left the upstream
+station. Pairing each downstream observation with the upstream water that
+became it is done during fitting, using \code{travel.time}, which is why
+the lead-in block above is needed and why stored data must not have that
+shift already applied.
 }
 \keyword{datasets}

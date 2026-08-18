@@ -42,10 +42,17 @@ two_station_raw_example
 }
 \description{
 The raw counterpart to \code{\link{two_station_example}}: upstream and
-downstream sonde exports plus a modeled light series, but with no join, lag
-alignment, or mean-solar-time conversion -- unlike
-\code{\link{two_station_example}}, which has all of that processing
+downstream sonde exports plus a modeled light series, but with no join,
+no gap filling, no light conversion, and no mean-solar-time conversion --
+unlike \code{\link{two_station_example}}, which has all of that processing
 already done. \code{upstream}, \code{downstream}, and \code{light} are
 NOT pre-aligned to a common time grid or to each other.
+}
+\details{
+Neither dataset has the upstream travel-time shift applied: in both, the
+upstream and downstream oxygen values at a given timestamp are
+contemporaneous observations. That shift belongs to model fitting, which
+applies it from \code{travel.time}, so applying it to stored data would
+double it.
 }
 \keyword{datasets}
