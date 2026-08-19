@@ -518,19 +518,43 @@ test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/spli
 
 # metab_bayes_2s() fitting, predict_metab(), predict_DO() ------------------
 
+# The first run of n_days consecutive two-station days that survive both
+# alignment and the day-validity tests, together with the alignment they came
+# from. two_station_example spans six years of real sensor record and carries
+# 90 multi-day gaps, so its valid days are not all adjacent: choosing the
+# first n_days valid days by position would drop a real gap inside a window
+# the tests below describe as consecutive, and days bordering a gap don't
+# behave like interior ones. Fails loudly rather than quietly returning a
+# gap-spanning run.
+first_valid_2station_days <- function(full_data, n_days) {
+  aln <- suppressMessages(mm_align_2s(v(full_data)))
+  aln <- suppressMessages(mm_filter_valid_days_2s(v(full_data), aln))$aln
+  dates <- unique(aln$date)
+  runs <- vapply(
+    seq_len(max(0, length(dates) - n_days + 1)),
+    function(i) all(diff(dates[i:(i + n_days - 1)]) == 1),
+    logical(1))
+  if(!any(runs)) {
+    stop('no run of ', n_days, ' consecutive valid two-station days available')
+  }
+  start <- which(runs)[1]
+  list(aln=aln, dates=dates[start:(start + n_days - 1)])
+}
+
 # Subset two_station_example to just a few modeled days for a faster test
 # fit. Naively slicing rows doesn't work: max_lag (the number of upstream
 # lead-in rows required) is recomputed from whatever travel.time values are
 # present in the slice, so an arbitrary row range can leave a partial first
 # date once prepdata_bayes_2s() trims max_lag rows off the front -- the same
 # lead-in-sizing logic used in data-raw/two_station_example.R is needed here
-# too.
+# too. Unlike subset_2station_days(), the lead-in block sized here is the
+# window-wide worst case rather than each row's own requirement, so part of
+# it is itself modelable and surfaces as one extra valid_day=FALSE day.
 subset_2station_data <- function(full_data, n_modeled_days) {
   solar_time <- v(full_data$solar.time)
   timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
 
-  all_dates <- unique(as.Date(solar_time))
-  modeled_dates <- all_dates[2:(1 + n_modeled_days)]
+  modeled_dates <- first_valid_2station_days(full_data, n_modeled_days)$dates
   # two-station days run 06:00 -> 06:00 the next day (not calendar midnight
   # to midnight), so the last requested day's window isn't complete until one
   # timestep before the following day's 06:00
@@ -612,15 +636,17 @@ test_that("a failed Stan run (mode==2L) warns and continues, matching runstan_ba
 
 # bayes_perday_2s() per-day fitting ---------------------------------------
 
-# Subset two_station_example to its first n_days complete 06:00-06:00 days,
-# keeping the leading rows those days need for upstream lead-in. Driven by
-# mm_align_2s() itself rather than by calendar dates, so the subset can't
-# disagree with the day partition the fitting code will recompute from it.
+# Subset two_station_example to its first n_days consecutive complete
+# 06:00-06:00 days, keeping the leading rows those days need for upstream
+# lead-in. Driven by the alignment itself rather than by calendar dates, so
+# the subset can't disagree with the day partition the fitting code will
+# recompute from it. Because the selected days are consecutive, the row range
+# below spans only the lead-in block and those days -- with a gap-spanning
+# selection it would also sweep in the partial days sitting in the gap.
 subset_2station_days <- function(full_data, n_days) {
-  aln <- suppressMessages(mm_align_2s(v(full_data)))
-  dates <- unique(aln$date)[seq_len(n_days)]
-  rows <- which(aln$date %in% dates)
-  full_data[min(aln$shift_idx[rows]):max(aln$keep[rows]), ]
+  sel <- first_valid_2station_days(full_data, n_days)
+  rows <- which(sel$aln$date %in% sel$dates)
+  full_data[min(sel$aln$shift_idx[rows]):max(sel$aln$keep[rows]), ]
 }
 
 # Slice an alignment down to a single date, exactly as bayes_perday_2s() does
