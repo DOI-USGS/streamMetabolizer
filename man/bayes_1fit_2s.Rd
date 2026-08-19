@@ -41,8 +41,8 @@ a list with \code{daily} (data.frame of per-date estimates, or
   \code{stanfit} (\code{NULL} if the run failed or \code{keep_mcmc} is
   \code{FALSE}), \code{data_list},
   \code{compile_time}, \code{log}/\code{compile_log} (as returned by
-  \code{\link{runstan_bayes}}; not currently stored on the model object),
-  \code{date_df} (the date/date_index lookup, available even on failure),
+  \code{\link{runstan_bayes}}; collected into the model object's log by the
+  caller), \code{date_df} (the date/date_index lookup, available even on failure),
   and \code{warnings}/\code{errors} character vectors
 }
 \description{

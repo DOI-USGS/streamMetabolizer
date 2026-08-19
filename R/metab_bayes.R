@@ -645,7 +645,8 @@ runstan_bayes <- function(
 
   # format output (but first detect and handle a failed model run)
   if(runstan_out@mode == 2L) {
-    # for failed model runs, we still want to keep the mcmc
+    # for failed model runs, the stanfit is discarded; only the log/warning
+    # below carries information about the failure
     stan_out <- NULL
     warning(capture.output(print(runstan_out)))
   } else if(split_dates) {

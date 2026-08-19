@@ -106,3 +106,23 @@ See http://usgs-r.github.io/streamMetabolizer for vignettes on the web.
   }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/USGS-R/streamMetabolizer}
+  \item \url{http://usgs-r.github.io/streamMetabolizer/}
+  \item Report bugs at \url{https://github.com/USGS-R/streamMetabolizer/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Alison P. Appling \email{aappling@usgs.gov}
+
+Authors:
+\itemize{
+  \item Robert O. Hall
+  \item Maite Arroita
+  \item Charles B. Yackulic
+}
+
+}

@@ -27,7 +27,9 @@ a list with \code{daily} (one row per date, with
   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
   \code{NULL} if no date succeeded), \code{mcmcs} and \code{mcmc_datas}
   (named by date, honoring \code{specs$keep_mcmcs}/\code{keep_mcmc_data};
-  \code{NULL} if no date was selected), \code{compile_time},
+  \code{NULL} if no date was selected), \code{compile_time}, \code{log}
+  (compile and per-date MCMC logs, named as in
+  \code{\link{metab_bayes}}'s \code{split_dates=TRUE} mode),
   \code{dates_fit}, \code{dates_failed}, and empty run-level
   \code{warnings}/\code{errors}
 }

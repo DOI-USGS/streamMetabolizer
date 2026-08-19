@@ -143,6 +143,7 @@ metab_bayes_2s <- function(
 
   stanfit <- NULL
   mcmc_data <- NULL
+  bayes_log <- NULL
   compile_time <- system.time({})
   fitting_time <- system.time({
     # Check data for correct column names, units, and travel.time bounds
@@ -206,6 +207,7 @@ metab_bayes_2s <- function(
       stanfit <- perday$mcmcs
       mcmc_data <- perday$mcmc_datas
       compile_time <- perday$compile_time
+      bayes_log <- perday$log
       fit <- list(
         daily=perday$daily, inst=perday$inst,
         warnings=perday$warnings, errors=perday$errors)
@@ -234,6 +236,10 @@ metab_bayes_2s <- function(
       stanfit <- fit1$stanfit
       mcmc_data <- if(isTRUE(specs$keep_mcmc_data)) data_list else NULL
       compile_time <- fit1$compile_time
+      # mirrors metab_bayes()'s split_dates==FALSE naming (bayes_allply's
+      # 'Compilation'/'MCMC_All_Days'), for the same single joint Stan call
+      bayes_log <- setNames(list(fit1$compile_log, fit1$log), c('Compilation', 'MCMC_All_Days'))
+      bayes_log <- bayes_log[!sapply(bayes_log, is.null)]
 
       # if fitting failed, fill in NA daily estimates (with real dates) so the
       # returned model at least reports which dates were attempted
@@ -260,7 +266,7 @@ metab_bayes_2s <- function(
     model_class="metab_bayes_2s",
     info=info,
     fit=fit,
-    log=NULL,
+    log=bayes_log,
     # a single stanfit in joint mode, a list of them named by date in per-day
     # mode -- the same two shapes metab_bayes() already returns for
     # split_dates=FALSE/TRUE
@@ -366,8 +372,8 @@ mm_rejoin_removed_days_2s <- function(daily, removed) {
 #'   \code{stanfit} (\code{NULL} if the run failed or \code{keep_mcmc} is
 #'   \code{FALSE}), \code{data_list},
 #'   \code{compile_time}, \code{log}/\code{compile_log} (as returned by
-#'   \code{\link{runstan_bayes}}; not currently stored on the model object),
-#'   \code{date_df} (the date/date_index lookup, available even on failure),
+#'   \code{\link{runstan_bayes}}; collected into the model object's log by the
+#'   caller), \code{date_df} (the date/date_index lookup, available even on failure),
 #'   and \code{warnings}/\code{errors} character vectors
 #' @importFrom utils modifyList
 #' @keywords internal
@@ -517,7 +523,9 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 #'   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
 #'   \code{NULL} if no date succeeded), \code{mcmcs} and \code{mcmc_datas}
 #'   (named by date, honoring \code{specs$keep_mcmcs}/\code{keep_mcmc_data};
-#'   \code{NULL} if no date was selected), \code{compile_time},
+#'   \code{NULL} if no date was selected), \code{compile_time}, \code{log}
+#'   (compile and per-date MCMC logs, named as in
+#'   \code{\link{metab_bayes}}'s \code{split_dates=TRUE} mode),
 #'   \code{dates_fit}, \code{dates_failed}, and empty run-level
 #'   \code{warnings}/\code{errors}
 #' @keywords internal
@@ -581,7 +589,8 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
       daily=daily, inst=if(failed) NULL else fit1$inst,
       stanfit=fit1$stanfit,
       mcmc_data=if(keep_mcmc_dat) fit1$data_list else NULL,
-      compile_time=fit1$compile_time, failed=failed)
+      compile_time=fit1$compile_time, failed=failed,
+      log=fit1$log, compile_log=fit1$compile_log)
   })
   names(per_date) <- as.character(dates)
 
@@ -616,12 +625,24 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
   mcmcs <- drop_if_all_null(lapply(per_date, `[[`, 'stanfit'))
   mcmc_datas <- drop_if_all_null(lapply(per_date, `[[`, 'mcmc_data'))
 
+  # mirrors metab_bayes()'s split_dates==TRUE naming: only the date(s) that
+  # triggered a compile contribute a 'Compilation' entry, and each date's Stan
+  # log is kept as 'MCMC_<date>'
+  compile_log <- lapply(per_date, `[[`, 'compile_log')
+  compile_log <- compile_log[!vapply(compile_log, is.null, logical(1))]
+  if(length(compile_log) > 0) names(compile_log) <- rep('Compilation', length(compile_log))
+  log <- lapply(per_date, `[[`, 'log')
+  log <- log[!vapply(log, is.null, logical(1))]
+  log <- setNames(log, paste0('MCMC_', names(log)))
+  bayes_log <- c(compile_log, log)
+
   list(
     daily=daily,
     inst=inst,
     mcmcs=mcmcs,
     mcmc_datas=mcmc_datas,
     compile_time=compile_time,
+    log=bayes_log,
     dates_fit=dates[!failed],
     dates_failed=dates[failed],
     warnings=character(0),
