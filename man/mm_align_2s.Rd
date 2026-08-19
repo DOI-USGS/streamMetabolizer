@@ -19,8 +19,10 @@ a list with \code{keep} (integer indices of the modeled rows, into
   the rows of \code{data}), \code{shift_idx} (integer indices, also into
   \code{data}, of the rows supplying each modeled row's upstream values),
   \code{date} (Date vector of two-station day labels, parallel to
-  \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days}, and
-  \code{timestep_days}
+  \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days},
+  \code{timestep_days}, and \code{removed} (a data.frame of \code{date} and
+  \code{errors} naming the days dropped here and why, so that a caller can
+  report a dropped day rather than omit it)
 }
 \description{
 Applies, in order: the per-row lead-in test, two-station day labeling, the

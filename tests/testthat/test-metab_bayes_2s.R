@@ -79,17 +79,15 @@ test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fi
     metab_bayes_2s(specs=sp, data=dat),
     "dropping 1 day\\(s\\) whose travel.time exceeds the 10-hour ceiling: 2050-06-02")
 
-  # day 2 never reached Stan and isn't reported as a failure -- it was
-  # excluded from the dataset before fitting, not modeled and marked bad;
-  # day 1 fits with real, finite estimates, same as if day 2 had never been
-  # in the input at all
+  # day 2 was excluded before fitting, so it is reported as an invalid day
+  # naming the ceiling rather than as a failed fit; day 1 is unaffected
   expect_length(mm@fit$errors, 0)
   pm <- predict_metab(mm)
-  expect_equal(nrow(pm), 1)
-  expect_equal(as.character(pm$date), "2050-06-01")
-  expect_true(is.finite(pm$GPP))
-  expect_true(is.finite(pm$ER))
-  expect_true(is.finite(pm$K600))
+  expect_equal(nrow(pm), 2)
+  expect_equal(as.character(pm$date), c("2050-06-01", "2050-06-02"))
+  expect_true(all(is.finite(unlist(pm[1, c('GPP','ER','K600')]))))
+  expect_true(all(is.na(unlist(pm[2, c('GPP','ER','K600')]))))
+  expect_equal(mm@fit$daily$valid_day, c(TRUE, FALSE))
 })
 
 test_that("insufficient lead-in data triggers an error", {
@@ -300,11 +298,10 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
   expect_silent(prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0), aln=aln))
 })
 
-test_that("prepdata_bayes_2s() errors clearly if a complete day's light is NA (defensive check)", {
-  # Directly exercises the guard in prepdata_bayes_2s() -- independent of
-  # mm_lag_light_2s() -- so it still catches a reintroduced day-window
-  # mismatch (or any other source of NA light) even if the two functions
-  # drift apart again in the future
+test_that("prepdata_bayes_2s() errors clearly if a complete day's data is NA (defensive check)", {
+  # The guard is reachable only by calling this function directly; a fit
+  # routed through metab_bayes_2s() drops such days first. Kept because Stan's
+  # own diagnostic for NA input names neither the column nor the day
   n <- 26
   solar.time <- as.POSIXct("2050-06-01 04:00:00", tz="UTC") +
     as.difftime((0:(n - 1)) * 1, units="hours")
@@ -319,8 +316,15 @@ test_that("prepdata_bayes_2s() errors clearly if a complete day's light is NA (d
   expect_silent(prepdata_bayes_2s(dat))
 
   # inject NA into a modeled row of the (otherwise complete) 06:00-day
-  dat$light[10] <- NA
-  expect_error(prepdata_bayes_2s(dat), "light is NA for.*day.*mm_align_2s.*complete")
+  dat_light <- dat
+  dat_light$light[10] <- NA
+  expect_error(prepdata_bayes_2s(dat_light), "NAs in light for.*day.*mm_align_2s.*complete")
+
+  # every modeled column, not just light -- including the upstream ones, which
+  # a day reaches back into the previous day for
+  dat_up <- dat
+  dat_up$DO.obs.up[2] <- NA
+  expect_error(prepdata_bayes_2s(dat_up), "NAs in DO.obs.up for.*day")
 })
 
 test_that("mm_lag_light_2s errors clearly when solar.time isn't on a snap-to-bin grid", {
@@ -558,7 +562,11 @@ test_that("metab() fits a two-station model and predict_metab()/predict_DO() wor
   pm <- predict_metab(mm)
   expect_s3_class(pm, 'data.frame')
   expect_true(all(c('GPP','ER','K600') %in% names(pm)))
-  expect_equal(nrow(pm), 3)
+  # 3 modeled days, plus the partial day formed by the lead-in block, which
+  # is reported as an invalid day rather than omitted
+  expect_equal(nrow(pm), 4)
+  expect_equal(mm@fit$daily$valid_day, c(FALSE, TRUE, TRUE, TRUE))
+  expect_equal(sum(is.finite(pm$GPP)), 3)
 
   pdo <- predict_DO(mm)
   expect_s3_class(pdo, 'data.frame')
@@ -725,7 +733,7 @@ test_that("bayes_perday_2s() isolates a corrupted day instead of aborting the ru
   bad <- res$daily[res$daily$date == bad_date, ]
   good <- res$daily[res$daily$date != bad_date, ]
   expect_true(is.na(bad$GPP_daily_50pct))
-  expect_match(bad$errors, 'light is NA')
+  expect_match(bad$errors, 'NAs in light')
   expect_true(all(!is.na(good$GPP_daily_50pct)))
   expect_true(all(good$errors == ''))
 
@@ -904,4 +912,215 @@ test_that("keep_mcmcs/keep_mcmc_data accept a vector of dates in per-day mode on
   expect_error(
     metab_bayes_2s(specs=revise(sp, split_dates=FALSE, keep_mcmc_data=pick), data=dat),
     'keep_mcmc_data must be a single logical value')
+})
+
+#### dropped days are reported, not omitted ####
+
+test_that("mm_align_2s() reports the days it drops, and why", {
+  # the travel-time ceiling
+  aln <- suppressMessages(mm_align_2s(make_2day_ceiling_data()))
+  expect_equal(nrow(aln$removed), 1)
+  expect_named(aln$removed, c('date','errors'))
+  expect_equal(as.character(aln$removed$date), "2050-06-02")
+  expect_match(aln$removed$errors, "travel.time exceeds the 10-hour ceiling \\(15.00 hours\\)")
+
+  # a day that doesn't fill its 06:00-06:00 window. Shortening the second day
+  # of a two-day fixture, since dropping the only day is an error, not a result
+  dat <- make_2day_ceiling_data()
+  dat$travel.time <- 0.01 # put day 2 back under the ceiling
+  dat <- dat[1:(nrow(dat) - 20), ]
+  aln3 <- suppressMessages(mm_align_2s(dat))
+  expect_equal(nrow(aln3$removed), 1)
+  expect_equal(as.character(aln3$removed$date), "2050-06-02")
+  expect_match(aln3$removed$errors, "does not fill the 06:00-06:00 window \\(268 of 288")
+
+  # nothing dropped, nothing reported -- in particular the fixture's
+  # deliberate 3-row lead-in block (2050-05-31) is not reported as a lost day
+  aln4 <- suppressMessages(mm_align_2s(make_2station_data()))
+  expect_equal(nrow(aln4$removed), 0)
+  expect_false("2050-05-31" %in% as.character(aln4$removed$date))
+})
+
+test_that("mm_align_2s() reports a mid-record day with no upstream lead-in at all", {
+  # A handful of rows stranded inside an upstream outage, as happens mid-record
+  # in real data: the lag is 3 timesteps and the bins they reach back to all
+  # fall in the gap, so no row has an upstream match and the whole day would
+  # otherwise disappear -- no message, no row, nothing
+  day1 <- make_2station_data() # 3 lead-in rows + all of 2050-06-01
+  stranded <- day1[1:3, ]
+  stranded$solar.time <- as.POSIXct("2050-06-02 12:00:00", tz="UTC") +
+    as.difftime((0:2) * 5, units="mins")
+  dat <- rbind(day1, stranded)
+
+  aln <- expect_message(
+    mm_align_2s(dat),
+    "dropping 1 day\\(s\\) with no upstream lead-in at all: 2050-06-02 \\(3 row\\(s\\) supplied\\)")
+
+  # the good day is unaffected
+  expect_equal(as.character(unique(aln$date)), "2050-06-01")
+  expect_equal(aln$n_days, 1)
+
+  # and the stranded day is reported rather than omitted
+  expect_equal(as.character(aln$removed$date), "2050-06-02")
+  expect_match(aln$removed$errors, "no upstream observation at any row's travel-time offset")
+})
+
+test_that("a clean fit reports no invalid days", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  sp <- fast_2station_specs()
+  dat <- subset_2station_days(two_station_example, 3)
+
+  mm <- suppressMessages(metab_bayes_2s(specs=sp, data=dat))
+
+  expect_equal(nrow(mm@fit$daily), 3)
+  expect_true(all(mm@fit$daily$valid_day))
+  expect_true(all(mm@fit$daily$errors == ''))
+  expect_true(all(is.finite(predict_metab(mm)$GPP)))
+})
+
+# Corrupt one modeled row of the middle day of an n-day slice, so that
+# day_tests drops exactly that day and the days on either side are untouched.
+corrupt_middle_day <- function(n_days=3, col='depth', value=0) {
+  dat <- subset_2station_days(two_station_example, n_days)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  bad_date <- unique(aln$date)[2]
+  dat[[col]][aln$keep[aln$date == bad_date][10]] <- u(value, get_units(dat[[col]]))
+  list(data=dat, bad_date=bad_date, dates=unique(aln$date))
+}
+
+test_that("a day dropped by day_tests comes back as a valid_day=FALSE row (joint fit)", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  fx <- corrupt_middle_day()
+  sp <- fast_2station_specs()
+
+  mm <- expect_message(
+    metab_bayes_2s(specs=sp, data=fx$data),
+    "dropping 1 day\\(s\\) that fail day_tests")
+
+  daily <- mm@fit$daily
+
+  # every date supplied is accounted for, in date order
+  expect_equal(nrow(daily), 3)
+  expect_equal(daily$date, fx$dates)
+  expect_false(is.unsorted(daily$date))
+
+  bad <- daily[daily$date == fx$bad_date, ]
+  good <- daily[daily$date != fx$bad_date, ]
+  expect_false(bad$valid_day)
+  expect_true(all(good$valid_day))
+  expect_equal(bad$errors, 'depth <= 0')
+  expect_true(all(good$errors == ''))
+  expect_true(is.na(bad$GPP_daily_50pct))
+
+  # the run as a whole succeeded, with no run-level error to blank out the
+  # two good days' estimates
+  expect_length(mm@fit$errors, 0)
+  expect_true(all(!is.na(good$GPP_daily_50pct)))
+
+  # predict_metab() shows the dropped date too, with NA estimates
+  pm <- predict_metab(mm)
+  expect_equal(nrow(pm), 3)
+  expect_true(is.na(pm$GPP[pm$date == fx$bad_date]))
+  expect_true(all(is.finite(pm$GPP[pm$date != fx$bad_date])))
+
+  # instantaneous output covers only the modeled days
+  expect_equal(nrow(predict_DO(mm)), 2 * 96)
+  expect_false(fx$bad_date %in% mm_date_2s(predict_DO(mm)$solar.time))
+})
+
+test_that("a day dropped by day_tests comes back as a valid_day=FALSE row (per-day fit)", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  fx <- corrupt_middle_day()
+  sp <- fast_2station_specs()
+  sp$split_dates <- TRUE
+
+  mm <- suppressMessages(metab_bayes_2s(specs=sp, data=fx$data))
+  daily <- mm@fit$daily
+
+  expect_equal(nrow(daily), 3)
+  expect_equal(daily$date, fx$dates)
+
+  bad <- daily[daily$date == fx$bad_date, ]
+  expect_false(bad$valid_day)
+  expect_equal(bad$errors, 'depth <= 0')
+  expect_true(is.na(bad$GPP_daily_50pct))
+  expect_true(all(daily$valid_day[daily$date != fx$bad_date]))
+  expect_true(all(!is.na(daily$GPP_daily_50pct[daily$date != fx$bad_date])))
+
+  # reported identically in both modes: valid_day=FALSE, not a failed fit
+  expect_equal(nrow(predict_DO(mm)), 2 * 96)
+})
+
+test_that("an NA reaching a day only through the upstream lag drops that day, not the one it sits in", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  # the end-to-end version of the modeled-frame indexing property: put the NA
+  # in a row belonging to date 1 that only date 2 is modeled from
+  dat <- subset_2station_days(two_station_example, 3)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  dates <- unique(aln$date)
+  rows2 <- which(aln$date == dates[2])
+  # the earliest row date 2 reaches back to; it belongs to date 1
+  crossing_row <- min(aln$shift_idx[rows2])
+  expect_true(crossing_row %in% aln$keep[aln$date == dates[1]])
+
+  # long enough to exceed the gap-filling tolerance, which would otherwise
+  # interpolate it away; every row of it is reached only by date 2
+  na_rows <- crossing_row + 0:7
+  expect_false(any(na_rows %in% aln$shift_idx[aln$date == dates[1]]))
+  dat$DO.obs.up[na_rows] <- u(NA_real_, get_units(dat$DO.obs.up))
+
+  mm <- suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=dat))
+  daily <- mm@fit$daily
+
+  expect_equal(daily$valid_day, c(TRUE, FALSE, TRUE))
+  expect_equal(daily$errors[2], 'NAs in DO.obs.up')
+})
+
+test_that("days dropped by mm_align_2s() are reported alongside those dropped by day_tests", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- make_2day_ceiling_data() # day 2 is over the travel-time ceiling
+  sp <- fast_2station_specs()
+
+  mm <- suppressMessages(metab_bayes_2s(specs=sp, data=dat))
+  daily <- mm@fit$daily
+
+  expect_equal(nrow(daily), 2)
+  expect_equal(as.character(daily$date), c("2050-06-01", "2050-06-02"))
+  expect_equal(daily$valid_day, c(TRUE, FALSE))
+  expect_match(daily$errors[2], "travel.time exceeds the 10-hour ceiling")
+  expect_true(is.na(daily$GPP_daily_50pct[2]))
+  expect_true(!is.na(daily$GPP_daily_50pct[1]))
+})
+
+test_that("a dataset with no usable days errors clearly rather than reaching Stan", {
+  dat <- subset_2station_days(two_station_example, 2)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  for(dt in unique(aln$date)) {
+    dat$depth[aln$keep[aln$date == dt][1]] <- u(0, get_units(dat$depth))
+  }
+
+  expect_error(
+    suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=dat)),
+    "no days remain after day_tests")
+})
+
+test_that("specs$day_tests is honored, not hard-coded", {
+  dat <- corrupt_middle_day()$data
+  sp <- fast_2station_specs()
+  sp$day_tests <- 'complete_data' # drop pos_depth
+
+  # the depth<=0 day is no longer rejected before fitting
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  res <- suppressMessages(mm_filter_valid_days_2s(dat, aln, day_tests=sp$day_tests))
+  expect_equal(nrow(res$removed), 0)
 })

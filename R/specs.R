@@ -691,8 +691,11 @@ specs <- function(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
 
-        # data prep (not Stan hyperparameters, so not in params_in)
-        'max_travel_time_hours', 'max_gap_hours',
+        # data prep (not Stan hyperparameters, so not in params_in).
+        # day_start/day_end/required_timestep are deliberately absent: they
+        # configure the one-station diel window, which two-station does not
+        # use. day_tests is here because the per-day validity tests are shared
+        'max_travel_time_hours', 'max_gap_hours', 'day_tests',
 
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -702,10 +705,18 @@ specs <- function(
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
 
-      # both shared with the functions that consume these values, which check
+      # resolved before the check below, which applies to the default as much
+      # as to a user-supplied value. See ?mm_day_tests_2s for why this is a
+      # subset rather than the shared five-test default
+      if('day_tests' %in% yes_missing) {
+        all_specs$day_tests <- mm_day_tests_2s_default
+      }
+
+      # all shared with the functions that consume these values, which check
       # them again because they can be called directly rather than via specs
       mm_check_max_travel_time_hours(all_specs$max_travel_time_hours)
       mm_check_max_gap_hours(all_specs$max_gap_hours)
+      mm_check_day_tests_2s(all_specs$day_tests)
 
       # compute some arguments
       if('engine' %in% yes_missing) {

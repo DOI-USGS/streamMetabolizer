@@ -330,8 +330,10 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'   the rows of \code{data}), \code{shift_idx} (integer indices, also into
 #'   \code{data}, of the rows supplying each modeled row's upstream values),
 #'   \code{date} (Date vector of two-station day labels, parallel to
-#'   \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days}, and
-#'   \code{timestep_days}
+#'   \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days},
+#'   \code{timestep_days}, and \code{removed} (a data.frame of \code{date} and
+#'   \code{errors} naming the days dropped here and why, so that a caller can
+#'   report a dropped day rather than omit it)
 #' @keywords internal
 mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) {
 
@@ -351,15 +353,42 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
   }
   date <- mm_date_2s(solar_time[keep])
 
+  # Announcing a dropped day and recording it are one action, not two: a day
+  # messaged about but not recorded is exactly the day that disappears from
+  # the results with nothing to explain it. headline completes "dropping N
+  # day(s) ___"; reason is the stored per-day explanation; detail is the
+  # per-day specifics both use
+  removed <- mm_no_removed_days_2s()
+  drop_days <- function(dates, detail, headline, reason) {
+    message(paste0(
+      'dropping ', length(dates), ' day(s) ', headline, ': ',
+      paste(sprintf('%s (%s)', as.character(dates), detail), collapse=', ')))
+    removed <<- rbind(removed, data.frame(
+      date=as.Date(dates), errors=paste0(reason, ' (', detail, ')'),
+      stringsAsFactors=FALSE))
+  }
+
+  # a day none of whose rows have lead-in never enters keep at all. Days before
+  # the first modelable row are exempt: that prefix is the lead-in block,
+  # supplied on purpose to be drawn from rather than modeled
+  all_dates <- mm_date_2s(solar_time)
+  no_leadin <- sort(unique(all_dates[all_dates >= all_dates[keep[1]] & !(all_dates %in% date)]))
+  if(length(no_leadin) > 0) {
+    drop_days(
+      no_leadin, sprintf('%d row(s) supplied', tabulate(match(all_dates, no_leadin), length(no_leadin))),
+      'with no upstream lead-in at all',
+      "no upstream observation at any row's travel-time offset")
+  }
+
   # travel-time ceiling: drop the offending day, not the whole dataset
   max_travel_time_days <- max_travel_time_hours / 24
   worst_by_day <- tapply(travel_time[keep], date, max)
   over_ceiling <- worst_by_day[worst_by_day > max_travel_time_days]
   if(length(over_ceiling) > 0) {
-    message(paste0(
-      'dropping ', length(over_ceiling), ' day(s) whose travel.time exceeds the ',
-      max_travel_time_hours, '-hour ceiling: ',
-      paste(sprintf('%s (%.2f hours)', names(over_ceiling), unname(over_ceiling) * 24), collapse=', ')))
+    drop_days(
+      names(over_ceiling), sprintf('%.2f hours', unname(over_ceiling) * 24),
+      paste0('whose travel.time exceeds the ', max_travel_time_hours, '-hour ceiling'),
+      paste0('travel.time exceeds the ', max_travel_time_hours, '-hour ceiling'))
     in_bounds <- !(as.character(date) %in% names(over_ceiling))
     keep <- keep[in_bounds]
     date <- date[in_bounds]
@@ -371,10 +400,10 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
   n_by_day <- table(date)
   partial <- n_by_day[n_by_day != expected_n_obs]
   if(length(partial) > 0) {
-    message(paste0(
-      'dropping ', length(partial), ' day(s) that do not fill the 06:00-06:00 window: ',
-      paste(sprintf('%s (%d of %d expected observations)', names(partial), unname(partial), expected_n_obs),
-            collapse=', ')))
+    drop_days(
+      names(partial), sprintf('%d of %d expected observations', unname(partial), expected_n_obs),
+      'that do not fill the 06:00-06:00 window',
+      'does not fill the 06:00-06:00 window')
     complete <- !(as.character(date) %in% names(partial))
     keep <- keep[complete]
     date <- date[complete]
@@ -386,11 +415,15 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
       '-hour travel.time ceiling and the 06:00-06:00 day-window requirement'), call.=FALSE)
   }
 
+  removed <- removed[order(removed$date), , drop=FALSE]
+  rownames(removed) <- NULL
+
   list(
     keep = keep,
     shift_idx = lagged$shift_idx[keep],
     date = date,
     n_obs = expected_n_obs,
     n_days = length(unique(date)),
-    timestep_days = lagged$timestep_days)
+    timestep_days = lagged$timestep_days,
+    removed = removed)
 }

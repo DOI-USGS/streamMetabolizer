@@ -1,4 +1,5 @@
 #' @include metab_model-class.R metab_bayes.R
+#' @include mm_modeled_rows_2s.R mm_filter_valid_days_2s.R
 NULL
 
 # Suppress R CMD CHECK NOTEs for column names used as unbound globals in
@@ -47,7 +48,7 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   Days that do not fill the window -- at the edges of a dataset whose
 #'   bounds don't fall on 06:00, or where observations are missing and the
 #'   gap was too long to bridge (see the next section) -- are dropped with a
-#'   message.
+#'   message and reported as invalid days in the results.
 #'
 #' @section Gap filling: Brief interruptions in the record are bridged by
 #'   linear interpolation before day completeness is assessed, so that a day
@@ -93,6 +94,28 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   remaining days are unaffected. A travel time far above the ceiling
 #'   usually means the column was supplied in the wrong units -- days are
 #'   expected, not minutes or hours.
+#'
+#' @section Day validity tests: the checks above concern a day's structure --
+#'   does it fill its window, is its travel time usable. \code{specs$day_tests}
+#'   covers the data itself, and defaults to
+#'   \code{c('complete_data', 'pos_depth')}: a day is dropped if any value it
+#'   would be modeled from is \code{NA}, or if its depth is not positive.
+#'   Neither can be modeled around, and one bad day fails \emph{every} date of
+#'   a joint fit with a diagnostic naming neither the column nor the day.
+#'
+#'   The values tested are the ones the day is modeled from, which is not the
+#'   same as the rows falling inside it: a day's upstream DO comes from one
+#'   travel time earlier, routinely from the preceding day's rows.
+#'
+#'   Only a subset of the one-station tests is accepted: \code{full_day} and
+#'   \code{even_timesteps} are rejected, each rejecting nearly every such day.
+#'
+#' @section Dropped days in the results: a day dropped for any reason above
+#'   never reaches Stan, but is not omitted from the results either. It appears
+#'   among the daily estimates as a \code{valid_day=FALSE} row with \code{NA}
+#'   values and the reason in its \code{errors} column, so that every date
+#'   supplied in \code{data} is accounted for. Instantaneous predictions cover
+#'   only the modeled timesteps, a dropped day having none to report.
 #'
 #' @export
 #' @family metab_model
@@ -146,6 +169,26 @@ metab_bayes_2s <- function(
     # modeled (prepdata_bayes_2s() returns only the Stan-ready matrices, so
     # the alignment itself isn't available to read back off its result).
     aln <- mm_align_2s(v(dat_list$data), max_travel_time_hours=specs$max_travel_time_hours)
+
+    # Reject days whose modeled values fail specs$day_tests. Validation
+    # upstream checks structure only, so this is the first look at the values
+    filtered <- mm_filter_valid_days_2s(dat_list$data, aln, day_tests=specs$day_tests)
+
+    # from both stages, so no day that failed to reach Stan goes unreported
+    removed <- rbind(aln$removed, filtered$removed)
+    removed <- removed[order(removed$date), , drop=FALSE]
+    rownames(removed) <- NULL
+    aln <- filtered$aln
+
+    if(aln$n_days == 0) {
+      stop(paste0(
+        'no days remain after day_tests (',
+        paste(specs$day_tests, collapse=', '), '): all ', nrow(filtered$removed),
+        ' remaining day(s) were dropped. First few: ',
+        paste(sprintf('%s (%s)',
+                      as.character(utils::head(filtered$removed$date, 3)),
+                      utils::head(filtered$removed$errors, 3)), collapse='; ')), call.=FALSE)
+    }
 
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
@@ -206,6 +249,10 @@ metab_bayes_2s <- function(
         daily=daily, inst=inst,
         warnings=fit1$warnings, errors=fit1$errors)
     }
+
+    # same in both modes: the days dropped before fitting come back as
+    # valid_day=FALSE rows carrying the reason they were dropped
+    fit$daily <- mm_rejoin_removed_days_2s(fit$daily, removed)
   })
 
   # Package and return results
@@ -243,6 +290,33 @@ metab_bayes_2s <- function(
 
 
 #### fitting helpers ####
+
+#' Add pre-fit dropped days back into a two-station daily results frame
+#'
+#' Called once, where both fitting modes converge, so that neither can report
+#' a dropped day differently from the other.
+#'
+#' @param daily the fitted daily results, already carrying
+#'   \code{valid_day}/\code{warnings}/\code{errors} columns.
+#' @param removed data.frame of \code{date} and \code{errors} for the dropped days.
+#' @return \code{daily} with one added row per dropped day, sorted by date;
+#'   columns present only in \code{daily} are \code{NA} on the added rows.
+#' @keywords internal
+mm_rejoin_removed_days_2s <- function(daily, removed) {
+
+  if(nrow(removed) == 0) return(daily)
+
+  # bind_rows, not rbind: the added rows carry only the GPP/ER/K600 quantile
+  # columns, and the rest fill with NA rather than being enumerated here
+  na_rows <- mm_na_daily(removed$date)
+  na_rows$valid_day <- FALSE
+  na_rows$warnings <- ''
+  na_rows$errors <- removed$errors
+
+  date <- '.dplyr.var'
+  dplyr::arrange(dplyr::bind_rows(daily, na_rows), date)
+}
+
 
 #' Run one two-station Stan fit over one alignment
 #'
@@ -620,35 +694,20 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
       mm_align_2s(data, max_travel_time_hours=specs$max_travel_time_hours)
     }
   }
-  keep <- aln$keep
-  shift_idx <- aln$shift_idx
+  modeled <- mm_modeled_rows_2s(data, aln)
 
-  modeled <- data.frame(
-    solar.time = data$solar.time[keep],
-    DO_obs_up = data$DO.obs.up[shift_idx],
-    DO_sat_up = data$DO.sat.up[shift_idx],
-    DO_obs_down = data$DO.obs.down[keep],
-    DO_sat_down = data$DO.sat.down[keep],
-    light = data$light[keep],
-    depth = data$depth[keep],
-    temp_water = data$temp.water[keep],
-    travel_time = data$travel.time[keep]
-  )
-
-  # defensive check: every day mm_align_2s() considers complete must have
-  # non-NA light. Stan rejects NA data outright, and since two-station fits
-  # every date jointly, one bad day would fail the whole multi-day fit with
-  # an opaque diagnostic that never mentions light or day boundaries -- name
-  # the day here instead
-  na_light <- is.na(modeled$light)
-  if(any(na_light)) {
-    bad_dates <- unique(aln$date[na_light])
+  # defensive, for direct calls only: a fit routed through metab_bayes_2s()
+  # has already dropped these days. Stan's own diagnostic for NA data names
+  # neither column nor day, so name them here instead
+  if(anyNA(modeled)) {
+    bad_cols <- names(modeled)[vapply(modeled, anyNA, logical(1))]
+    bad_dates <- unique(aln$date[!stats::complete.cases(modeled)])
     stop(paste0(
-      'light is NA for ', length(bad_dates), ' day(s) that mm_align_2s() otherwise ',
-      'considers complete: ', paste(bad_dates, collapse=', '), '. ',
-      'Whatever computed the light column is using a different day window than ',
-      'mm_align_2s(), or introduced other NAs -- check that before fitting; Stan ',
-      'does not accept NA data.'), call.=FALSE)
+      'NAs in ', paste(bad_cols, collapse=', '), ' for ', length(bad_dates),
+      ' day(s) that mm_align_2s() otherwise considers complete: ',
+      paste(bad_dates, collapse=', '),
+      '. Stan does not accept NA data; run mm_filter_valid_days_2s() first, or ',
+      'fit via metab_bayes_2s(), which does.'), call.=FALSE)
   }
 
   # pivot into n_obs x n_days matrices, one column per two-station day, using
@@ -672,14 +731,14 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
   list(
     n_obs = n_obs,
     n_days = n_days,
-    DO_obs_up = to_matrix(modeled$DO_obs_up),
-    DO_sat_up = to_matrix(modeled$DO_sat_up),
-    DO_obs_down = to_matrix(modeled$DO_obs_down),
-    DO_sat_down = to_matrix(modeled$DO_sat_down),
+    DO_obs_up = to_matrix(modeled$DO.obs.up),
+    DO_sat_up = to_matrix(modeled$DO.sat.up),
+    DO_obs_down = to_matrix(modeled$DO.obs.down),
+    DO_sat_down = to_matrix(modeled$DO.sat.down),
     light = to_matrix(modeled$light),
     depth = to_matrix(modeled$depth),
-    temp_water = to_matrix(modeled$temp_water),
-    travel_time = to_matrix(modeled$travel_time),
+    temp_water = to_matrix(modeled$temp.water),
+    travel_time = to_matrix(modeled$travel.time),
     K600_lnorm_meanlog = specs$K600_lnorm_meanlog,
     K600_lnorm_sdlog = specs$K600_lnorm_sdlog
   )

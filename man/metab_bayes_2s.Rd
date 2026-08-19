@@ -81,7 +81,7 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   Days that do not fill the window -- at the edges of a dataset whose
   bounds don't fall on 06:00, or where observations are missing and the
   gap was too long to bridge (see the next section) -- are dropped with a
-  message.
+  message and reported as invalid days in the results.
 }
 
 \section{Gap filling}{
@@ -131,6 +131,32 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   remaining days are unaffected. A travel time far above the ceiling
   usually means the column was supplied in the wrong units -- days are
   expected, not minutes or hours.
+}
+
+\section{Day validity tests}{
+ the checks above concern a day's structure --
+  does it fill its window, is its travel time usable. \code{specs$day_tests}
+  covers the data itself, and defaults to
+  \code{c('complete_data', 'pos_depth')}: a day is dropped if any value it
+  would be modeled from is \code{NA}, or if its depth is not positive.
+  Neither can be modeled around, and one bad day fails \emph{every} date of
+  a joint fit with a diagnostic naming neither the column nor the day.
+
+  The values tested are the ones the day is modeled from, which is not the
+  same as the rows falling inside it: a day's upstream DO comes from one
+  travel time earlier, routinely from the preceding day's rows.
+
+  Only a subset of the one-station tests is accepted: \code{full_day} and
+  \code{even_timesteps} are rejected, each rejecting nearly every such day.
+}
+
+\section{Dropped days in the results}{
+ a day dropped for any reason above
+  never reaches Stan, but is not omitted from the results either. It appears
+  among the daily estimates as a \code{valid_day=FALSE} row with \code{NA}
+  values and the reason in its \code{errors} column, so that every date
+  supplied in \code{data} is accounted for. Instantaneous predictions cover
+  only the modeled timesteps, a dropped day having none to report.
 }
 
 \seealso{

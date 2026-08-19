@@ -194,11 +194,22 @@ test_that("mm_format_data_2s()'s output passes mm_validate_data()/mm_validate_da
   dat_list <- mm_validate_data(out, metab_class="metab_bayes_2s")
   expect_no_error(mm_validate_data_2station(dat_list$data))
 
-  prep <- suppressMessages(prepdata_bayes_2s(dat_list$data))
+  # the same route metab_bayes_2s() takes: align, then drop days whose modeled
+  # values fail day_tests, then prep. Skipping the middle step leaves NAs in
+  # the matrices -- 86 of this record's 891 aligned days carry one, mostly
+  # from upstream outages -- and Stan rejects those outright
+  sp <- specs(mm_name('bayes_2s'))
+  aln <- suppressMessages(mm_align_2s(v(dat_list$data), max_travel_time_hours=sp$max_travel_time_hours))
+  filtered <- suppressMessages(mm_filter_valid_days_2s(dat_list$data, aln, day_tests=sp$day_tests))
+  expect_gt(nrow(filtered$removed), 0) # this record does exercise the filter
+
+  prep <- suppressMessages(prepdata_bayes_2s(dat_list$data, specs=sp, aln=filtered$aln))
   expect_equal(prep$n_obs, 96) # 15-min timestep -> 96 obs per 06:00-06:00 day
   expect_gt(prep$n_days, 0)
+  expect_equal(prep$n_days, filtered$aln$n_days)
   for(varname in c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down','light','depth','temp_water','travel_time')) {
     expect_equal(dim(prep[[varname]]), c(prep$n_obs, prep$n_days), info=varname)
+    expect_false(anyNA(prep[[varname]]), info=varname)
   }
 })
 
