@@ -15,9 +15,10 @@ mm_bin_grid_2s(solar.time, what = "solar.time", caller, check_sorted = FALSE)
 \item{caller}{name of the calling function, named in the off-grid error so
 the user knows where to apply \code{\link{mm_snap_to_bin_2s}}.}
 
-\item{check_sorted}{if TRUE, also require the bins to be ascending. Checked
-between the grid and duplicate checks, where the callers that need it
-check it.}
+\item{check_sorted}{if TRUE, also require the bins to be ascending. Not
+every caller needs this, so it is opt-in; it runs between the grid and
+duplicate checks, so that unsorted input is reported as such even when it
+also contains duplicates.}
 }
 \value{
 a list with \code{timestep_days} (modal timestep, in days) and
