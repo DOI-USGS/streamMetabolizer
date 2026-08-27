@@ -3,26 +3,17 @@ NULL
 
 #' Default and maximum gap-filling tolerance for two-station models
 #'
-#' The tolerance bounds how much consecutive missing data may be interpolated
-#' across before a gap is left in place. Gaps within the tolerance are filled;
-#' longer ones are not, and the days holding them are dropped by
-#' \code{\link{mm_align_2s}}'s whole-day completeness requirement. There is no
-#' middle tier: nothing partially filled ever reaches Stan.
+#' Bounds how much consecutive missing data may be interpolated across
+#' before a gap is left in place; longer gaps are left as-is, and the days
+#' holding them are dropped by \code{\link{mm_align_2s}}'s whole-day
+#' completeness requirement. There is no middle tier: nothing partially
+#' filled ever reaches Stan.
 #'
-#' \code{mm_max_gap_hours_default} is the canonical default (currently 1).
-#' Bishop et al. (2026) interpolate a single missing point and drop the day at
-#' two or more consecutive missing points -- 15 minutes at the source data's
-#' native timestep. One hour is a deliberate loosening of that rule rather
-#' than a restatement of it: on the source record, missing-data runs are
-#' sharply bimodal (sub-2-hour blips, or multi-day sensor outages, with
-#' little in between), so a one-hour tolerance recovers most of what is
-#' recoverable while keeping every interpolated stretch short enough that
-#' linear interpolation across a diel DO or light curve stays defensible.
-#'
-#' \code{mm_max_gap_hours_cap} bounds what a user may ask for. Linear
-#' interpolation across more than a couple of hours of a diel curve --
-#' spanning dawn, dusk, or the midday peak -- invents structure rather than
-#' bridging a blip, and the accompanying day would be better dropped.
+#' \code{mm_max_gap_hours_default} is the canonical default (currently 1
+#' hour) -- looser than Bishop et al. (2026)'s single-point/15-minute rule.
+#' \code{mm_max_gap_hours_cap} bounds what a user may ask for: linear
+#' interpolation across more than a couple of hours of a diel curve invents
+#' structure rather than bridging a blip.
 #'
 #' @keywords internal
 #' @name mm_max_gap
@@ -30,18 +21,19 @@ NULL
 
 #' @rdname mm_max_gap
 mm_max_gap_hours_default <- 1
+# on the source record, missing-data runs are sharply bimodal (sub-2-hour
+# blips, or multi-day sensor outages, with little in between); one hour
+# recovers most of what's recoverable while keeping every interpolated
+# stretch short enough that linear interpolation across a diel DO or light
+# curve stays defensible
 
 #' @rdname mm_max_gap
 mm_max_gap_hours_cap <- 2
 
 #' Validate a gap-filling tolerance
 #'
-#' Shared by \code{\link{mm_fill_gaps_2s}} and \code{\link{specs}} so that the
-#' two entry points cannot disagree about what a legal tolerance is:
-#' \code{specs()} checks it at specs-creation time (early, as it does for
-#' \code{max_travel_time_hours}), and \code{mm_fill_gaps_2s} checks it again
-#' because \code{\link{mm_format_data_2s}} takes the tolerance directly rather
-#' than through a \code{specs} list.
+#' Shared by \code{specs()} and \code{\link{mm_fill_gaps_2s}} so the two
+#' can't disagree about what tolerance is legal.
 #'
 #' @param max_gap_hours the value to check.
 #' @keywords internal
@@ -63,62 +55,34 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 
 #' Interpolate short gaps in two-station data
 #'
-#' Fills gaps in a two-station data.frame that are short enough to bridge by
-#' linear interpolation, so that a day marred by a brief sensor dropout can be
-#' modeled instead of discarded. Gaps longer than \code{max_gap_hours} are
-#' left exactly as they were, and the days holding them are dropped later by
-#' \code{\link{mm_align_2s}}'s whole-day completeness requirement -- the
-#' policy is two-tier, with no ragged middle ground, because the Stan model's
-#' \code{n_obs x n_days} matrices have no masking mechanism.
+#' Fills gaps short enough to bridge by linear interpolation, so a day
+#' marred by a brief sensor dropout can still be modeled. Gaps longer than
+#' \code{max_gap_hours} are left as-is and the day is dropped later by
+#' \code{\link{mm_align_2s}}'s completeness check -- there's no partial-fill
+#' middle ground, since the Stan model's \code{n_obs x n_days} matrices
+#' can't mask individual missing values.
 #'
-#' Missing data takes two forms, and this function treats them identically
-#' because they describe the same physical event:
-#' \itemize{
-#'   \item \emph{missing rows}: no row exists at a timestep bin at all, which
-#'     is what \code{\link{mm_format_data_2s}} produces when the downstream
-#'     sonde logged nothing there. Rows are inserted, and their
-#'     \code{solar.time} is computed exactly from the bin grid rather than
-#'     interpolated.
-#'   \item \emph{missing values}: a row exists but a column is \code{NA} --
-#'     from an unmatched upstream observation, or a sensor that logged
-#'     \code{NA} rather than skipping the timestep.
-#' }
+#' A gap can be a missing row (no observation at a timestep bin) or a
+#' missing value (a row exists but a column is \code{NA}); both are treated
+#' as the same event. Gap length is measured in timestep bins between the
+#' bracketing observations, not row count, so a run that looks short by row
+#' count but spans a multi-day outage is correctly refused.
 #'
-#' Both are measured the same way, in timestep bins between the two
-#' observations bracketing the gap, so a gap is judged by how much time it
-#' spans rather than by how many rows happen to be present across it. A
-#' consequence worth noting: an \code{NA} run that looks short in row terms
-#' but straddles a multi-day outage is correctly refused, because its
-#' bracketing observations are far apart on the bin grid even though they are
-#' adjacent rows.
+#' Gaps at the start or end of the record are never filled, since
+#' interpolation needs observations on both sides; those edge days are
+#' already dropped by the completeness requirement.
 #'
-#' Gaps at the very start or end of the record are never filled: linear
-#' interpolation needs an observation on both sides, and extrapolating from
-#' one would fabricate data rather than bridge it. Those edge days are already
-#' dropped by the completeness requirement.
+#' @section Invariant: This function never returns a row with \code{NA} in
+#'   an interpolated column -- a partially-fillable inserted row is dropped
+#'   rather than kept.
 #'
-#' @section Invariant: this function never introduces a row carrying \code{NA}
-#'   in any interpolated column. Where a short missing-row gap overlaps a
-#'   longer missing-value gap in some column -- a brief downstream dropout
-#'   inside a multi-hour upstream outage, say -- the inserted rows cannot be
-#'   fully filled, so they are removed again. Rows supplied by the caller are
-#'   never dropped, only added to. Without this, a partly-filled row would
-#'   satisfy the completeness row count while still carrying \code{NA} into
-#'   Stan.
-#'
-#' @section Interpolating light: the \code{light} column is interpolated like
-#'   any other, but what that means depends on what it holds.
-#'   \code{\link{mm_format_data_2s}} fills gaps in \emph{raw} light before
-#'   converting it to the within-day proportion, which is the meaningful
-#'   order: the proportion is then computed from a complete series over a
-#'   complete day total. Data formatted by hand arrives with \code{light}
-#'   already converted, and interpolating it is an approximation -- an
-#'   interpolated proportion is not the proportion that would have been
-#'   computed from the missing raw light, because the day total in the
-#'   denominator is itself short by the missing terms. It is a good deal
-#'   better than the alternative, which is to leave the day unmodelable, but
-#'   supplying raw light and letting it be converted is the more accurate
-#'   route.
+#' @section Interpolating light: The \code{light} column is interpolated
+#'   like any other, but accuracy depends on timing:
+#'   \code{\link{mm_format_data_2s}} fills raw light before converting to
+#'   the within-day proportion (accurate), while hand-formatted data
+#'   arrives pre-converted, so interpolating it approximates a proportion
+#'   whose denominator is already short the missing terms. Supplying raw
+#'   light is the more accurate route.
 #'
 #' @param data data.frame, unitted or not, with \code{solar.time} already
 #'   snapped to a single nominal timestep via \code{\link{mm_snap_to_bin_2s}}
@@ -176,6 +140,10 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   # pruning afterwards: a multi-day outage would otherwise become thousands
   # of all-NA rows, and a day made entirely of them would satisfy the
   # completeness row count while carrying nothing but NA into Stan
+  #
+  # gap length is measured in bins (step = diff(bin)), not row count, so a
+  # run that looks short in rows is still correctly rejected if it spans a
+  # multi-day outage on the bin grid
   step <- diff(bin)
   gap_at <- which(step > 1)
   n_missing <- step[gap_at] - 1
@@ -192,6 +160,8 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   work_bin <- bin
   if(length(new_bins) > 0) {
     added <- data_v[rep(NA_integer_, length(new_bins)), , drop=FALSE]
+    # solar.time for an inserted row comes from the bin grid directly, not
+    # interpolated -- the bin index alone determines the timestamp
     added$solar.time <- mm_bin_epoch_2s + as.difftime(new_bins * timestep_days, units='days')
     added$.inserted <- TRUE
     work <- rbind(work, added)
@@ -236,6 +206,11 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   }
 
   # --- enforce the no-NA-row invariant ------------------------------------
+  # a short missing-row gap can overlap a longer missing-value gap in some
+  # column (a brief downstream dropout inside a multi-hour upstream outage,
+  # say), leaving an inserted row that can't be fully filled. Without
+  # dropping it back out, a partly-filled row would satisfy the completeness
+  # row count while still carrying NA into Stan
   incomplete <- rowSums(is.na(work[target_cols])) > 0
   drop_back <- work$.inserted & incomplete
   if(any(drop_back)) {

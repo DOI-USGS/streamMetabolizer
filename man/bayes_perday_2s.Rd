@@ -58,12 +58,11 @@ not re-derived here. In particular this does not route through
 the two-station day window section of \code{\link{metab_bayes_2s}}).
 }
 \section{Per-date sigma}{
- the Stan model carries a single observation-error
-  \code{sigma} shared across whatever dates it is given, so fitting one
-  date at a time estimates a separate \code{sigma} per date rather than
-  one pooled across the record. That is the same tradeoff one-station's
-  \code{split_dates=TRUE} already makes on a structurally identical
-  model, not a defect of this loop.
+ fitting one date at a time estimates a separate
+  observation-error \code{sigma} per date rather than one pooled across
+  the record -- the same tradeoff described in
+  \code{\link{metab_bayes_2s}}'s "Fitting all dates at once, or one at a
+  time" section.
 }
 
 \keyword{internal}

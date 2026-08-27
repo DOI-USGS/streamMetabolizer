@@ -10,11 +10,7 @@ mm_check_max_gap_hours(max_gap_hours)
 \item{max_gap_hours}{the value to check.}
 }
 \description{
-Shared by \code{\link{mm_fill_gaps_2s}} and \code{\link{specs}} so that the
-two entry points cannot disagree about what a legal tolerance is:
-\code{specs()} checks it at specs-creation time (early, as it does for
-\code{max_travel_time_hours}), and \code{mm_fill_gaps_2s} checks it again
-because \code{\link{mm_format_data_2s}} takes the tolerance directly rather
-than through a \code{specs} list.
+Shared by \code{specs()} and \code{\link{mm_fill_gaps_2s}} so the two
+can't disagree about what tolerance is legal.
 }
 \keyword{internal}

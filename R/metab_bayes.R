@@ -317,10 +317,9 @@ bayes_1ply <- function(
 #'
 #' @param data_all data.frame of the form \code{mm_data(solar.time, DO.obs,
 #'   DO.sat, depth, temp.water, light)} containing the full (possibly
-#'   multi-day) filtered dataset for this model - unlike \code{bayes_1ply()}'s
-#'   \code{data_ply}, which receives one estimation-day at a time,
-#'   \code{bayes_allply()} is called once with all valid dates together (used
-#'   when \code{specs$split_dates==FALSE})
+#'   multi-day) filtered dataset: unlike \code{bayes_1ply()}'s per-day
+#'   \code{data_ply}, \code{bayes_allply()} is called once with all valid
+#'   dates together, when \code{specs$split_dates==FALSE}.
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
 #' @param removed data.frame of dates that were removed and why

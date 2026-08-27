@@ -11,10 +11,8 @@ An object of class \code{numeric} of length 1.
 mm_day_start_2s
 }
 \description{
-Two-station days run from 06:00 to 06:00 the next day, a full 24-hour
-window, following Bishop et al. (2026). This is unrelated to one-station's
-\code{day_start}/\code{day_end} (4 AM, 28 hours), which describe an
-overlapping diel window rather than a partition of the time series; the two
-conventions must not be conflated or shared.
+Two-station days run 06:00-06:00 (24 hours), following Bishop et al.
+(2026) -- distinct from one-station's overlapping 4 AM-28-hour diel
+window (\code{day_start}/\code{day_end}); the two must not be conflated.
 }
 \keyword{internal}

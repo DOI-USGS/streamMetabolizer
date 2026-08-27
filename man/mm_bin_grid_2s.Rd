@@ -15,30 +15,18 @@ mm_bin_grid_2s(solar.time, what = "solar.time", caller, check_sorted = FALSE)
 \item{caller}{name of the calling function, named in the off-grid error so
 the user knows where to apply \code{\link{mm_snap_to_bin_2s}}.}
 
-\item{check_sorted}{if TRUE, also require the bins to be ascending. Not
-every caller needs this, so it is opt-in; it runs between the grid and
-duplicate checks, so that unsorted input is reported as such even when it
-also contains duplicates.}
+\item{check_sorted}{if TRUE, also require the bins to be ascending. Runs
+between the grid and duplicate checks, so unsorted input is reported as
+such even when it also contains duplicates.}
 }
 \value{
 a list with \code{timestep_days} (modal timestep, in days) and
   \code{bin} (integer bin index per row).
 }
 \description{
-Establishes the timestep bin grid that the two-station functions match rows
-on: detects the nominal timestep, confirms \code{solar.time} is already on
-the snap-to-bin grid, and confirms no two rows land in the same bin.
-}
-\details{
-The grid check is a round-trip, since already-snapped data is a fixed point
-of \code{\link{mm_snap_to_bin_2s}} and anything else changes under it. The
-snapped values are reconstructed from the timestep detected here rather than
-by calling \code{\link{mm_snap_to_bin_2s}}, which would redundantly detect
-the same timestep a second time. The 1-second tolerance is far above the
-~microsecond floating-point noise that timestamp arithmetic introduces and
-far below any real timestep.
-
-Not used by \code{\link{mm_snap_to_bin_2s}} itself, which cannot assume
-its input is already snapped and so cannot rely on the round-trip check.
+Establishes the timestep bin grid that the two-station functions match
+rows on: detects the nominal timestep, confirms \code{solar.time} is
+already on the snap-to-bin grid, and confirms no two rows land in the
+same bin.
 }
 \keyword{internal}

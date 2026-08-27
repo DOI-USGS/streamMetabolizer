@@ -15,26 +15,18 @@ POSIXct vector, the same length as \code{solar.time}, of the
 }
 \description{
 Concatenated sensor deployments can be internally regular but mutually
-phase-shifted -- one deployment logging on the \code{:01/:16/:31/:46}
-minute marks, the next on \code{:04/:19/:34/:49} -- which otherwise looks
+phase-shifted (e.g. one logging on the \code{:01/:16/:31/:46} minute
+marks, the next on \code{:04/:19/:34/:49}), which otherwise looks
 identical to a real gap. Rounding every timestamp to the nearest bin of
 the series' nominal timestep removes that ambiguity: both phase patterns
-land on the same grid, and a true gap between deployments becomes empty
-bins on that grid rather than a boundary that has to be tracked
-separately (see issue #475).
+land on the same grid, and a true gap becomes empty bins rather than a
+boundary to track separately (see issue #475).
 }
 \details{
-The nominal timestep is detected via \code{\link{mm_get_timestep}}'s
-\code{'modal'} format, which is robust to the occasional large gap
-between deployments (an outlier, not the mode). Bins are anchored to a
-fixed UTC epoch (\code{\link{mm_bin_index_2s}}) rather than to
-\code{solar.time}'s own first value, so that two series snapped
-independently -- e.g. upstream and downstream -- land on the same
-absolute bins as long as they share a nominal timestep.
-
-Tradeoff, accepted: distortion of up to half a timestep. Travel time is
-already rounded to the nearest timestep for the lag (see
-\code{\link{mm_lag_2s}}), so this is the same class of approximation
-already in use, not a new one.
+Bins are anchored to a fixed epoch (\code{\link{mm_bin_epoch_2s}}), so two
+series snapped independently -- e.g. upstream and downstream -- land on
+the same absolute bins. Snapping distorts timestamps by up to half a
+timestep; this is the same class of approximation already accepted for
+travel-time rounding in \code{\link{mm_lag_2s}}.
 }
 \keyword{internal}

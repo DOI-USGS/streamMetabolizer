@@ -18,8 +18,7 @@ as in \code{specs$params_out}.}
 \description{
 Stan prohibits '.' in variable names, so parameters come back with '_'
 where the rest of the package uses '.'. Converts the parameter names
-themselves -- longest first, so a shorter name can never rewrite part of a
-longer one -- and then the summary-statistic suffixes.
+themselves, then the summary-statistic suffixes.
 }
 \details{
 Shared by the Bayesian model types' \code{\link{get_params}} methods.

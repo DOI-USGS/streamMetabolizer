@@ -11,13 +11,11 @@
 #' The record is shipped whole rather than trimmed to a clean stretch, so it
 #' still contains the 90 interruptions the sensors actually produced -- every
 #' one of them a full day or longer. Combined with the 06:00-06:00 day window
-#' (two-station days do not run midnight to midnight), this means the 1748
-#' calendar dates spanned here yield 1551 modeled days: 91 dates do not fill a
-#' complete 24-hour window, and a further 15 hold gaps in their upstream
-#' oxygen columns. Days dropped for either reason are reported as
-#' \code{valid_day=FALSE} rather than silently omitted. That messiness is the
-#' point -- it exercises the day-validity handling that real sensor records
-#' demand, which a gap-free excerpt would leave untested.
+#' (two-station days do not run midnight to midnight), the 1748 calendar
+#' dates spanned here yield 1551 modeled days: 91 do not fill a complete
+#' 24-hour window, and a further 15 hold gaps in their upstream oxygen
+#' columns. Days dropped for either reason are reported as
+#' \code{valid_day=FALSE} rather than silently omitted.
 #'
 #' The upstream and downstream oxygen columns are contemporaneous: the
 #' \code{DO.obs.up} value on a given row was measured at that row's own

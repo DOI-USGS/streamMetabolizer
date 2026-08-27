@@ -2,8 +2,7 @@
 #'
 #' Stan prohibits '.' in variable names, so parameters come back with '_'
 #' where the rest of the package uses '.'. Converts the parameter names
-#' themselves -- longest first, so a shorter name can never rewrite part of a
-#' longer one -- and then the summary-statistic suffixes.
+#' themselves, then the summary-statistic suffixes.
 #'
 #' Shared by the Bayesian model types' \code{\link{get_params}} methods.
 #'
@@ -15,6 +14,7 @@
 mm_rename_stan_params <- function(df, params_out) {
 
   parnames <- setNames(gsub('_', '\\.', params_out), params_out)
+  # longest first, so a shorter name can never rewrite part of a longer one
   parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
   for(i in seq_along(parnames)) {
     names(df) <- gsub(names(parnames[i]), parnames[[i]], names(df))

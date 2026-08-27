@@ -22,15 +22,14 @@ reports which dates were attempted instead of returning nothing.
 }
 \details{
 Shared by \code{bayes_allply} (one-station, all dates in one Stan call)
-and the two-station fitting functions (see \code{metab_bayes_2s.R}), which
-built byte-identical frames independently before this was extracted.
-Keeping the column list in one place is the point: it also appears in
-\code{bayes_1ply} and in \code{\link{metab_bayes}}'s removed-dates join,
-and those two are deliberately \emph{not} routed through here -- the
-former returns a single row with no \code{date} column (its caller,
-\code{\link{mm_model_by_ply}}, attaches one), and the latter builds its
-columns onto an existing data.frame of removed dates and marks them
-\code{valid_day=FALSE}. Serving either from here would take more
+and the two-station fitting functions (see \code{metab_bayes_2s.R}). The
+same column list also appears in \code{bayes_1ply} and in
+\code{\link{metab_bayes}}'s removed-dates join, and those two are
+deliberately \emph{not} routed through here: \code{bayes_1ply} returns a
+single row with no \code{date} column (its caller,
+\code{\link{mm_model_by_ply}}, attaches one), and the removed-dates join
+builds its columns onto an existing data.frame of removed dates and marks
+them \code{valid_day=FALSE}. Serving either from here would take more
 branching than the duplication costs.
 }
 \keyword{internal}

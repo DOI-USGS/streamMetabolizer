@@ -36,9 +36,6 @@ and lead-in test, so this function's window can't drift from
 \code{\link{mm_align_2s}}'s definition of the same lag. Rows lacking
 lead-in (\code{shift_idx < 1}) get \code{NA} rather than a value computed
 from a truncated window.
-
-This function expects a single, already-combined light value per
-timestep.
 }
 \section{Day-sum denominator}{
  the daily total in the denominator uses the
@@ -46,11 +43,7 @@ timestep.
   \code{\link{mm_align_2s}}/\code{\link{metab_bayes_2s}} use elsewhere in
   the two-station pipeline, so any 06:00-day \code{\link{mm_align_2s}}
   counts as full is guaranteed to have every one of its rows counted as
-  full here too -- its light proportions are never \code{NA}. (An earlier
-  version used calendar midnight-to-midnight days instead, which could
-  disagree with \code{\link{mm_align_2s}} at the edges of
-  \code{solar.time}; see \code{test-metab_bayes_2s.R} for the regression
-  test.)
+  full here too -- its light proportions are never \code{NA}.
 
   A day that doesn't hold a full \code{round(1/timestep_days)} rows --
   at either end of \code{solar.time}, or from missing sensor data -- has
@@ -59,16 +52,12 @@ timestep.
 }
 
 \section{Snap-to-bin requirement}{
- \code{\link{mm_lag_2s}} (called below)
-  matches rows by timestep bin rather than by row position, so gaps and
-  multiple, mutually phase-shifted deployments are handled correctly --
-  a missing bin inside a light-sum window simply contributes no term,
-  and a missing bin at a window's start yields \code{NA} via
-  \code{has_leadin}, both without special-casing here. What
-  \code{mm_lag_2s()} still requires, and enforces itself, is that
-  \code{solar.time} already sits on a single well-defined bin grid (see
-  \code{\link{mm_snap_to_bin_2s}}); this function does not duplicate that
-  check.
+ \code{\link{mm_lag_2s}} matches rows by
+  timestep bin, so a missing bin inside a light-sum window simply
+  contributes no term, and a missing bin at a window's start yields
+  \code{NA} via \code{has_leadin} -- both without special-casing here.
+  This function does not itself check that \code{solar.time} sits on a
+  bin grid; \code{\link{mm_lag_2s}} does.
 }
 
 \keyword{internal}

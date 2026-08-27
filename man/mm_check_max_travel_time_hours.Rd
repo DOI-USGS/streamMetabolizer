@@ -10,10 +10,7 @@ mm_check_max_travel_time_hours(max_travel_time_hours)
 \item{max_travel_time_hours}{the value to check.}
 }
 \description{
-Shared by \code{\link{mm_align_2s}} and \code{\link{specs}} so that the
-two entry points cannot disagree about what a legal ceiling is:
-\code{specs()} checks it at specs-creation time, and \code{mm_align_2s}
-checks it again because it may be called directly with a ceiling that never
-passed through a \code{specs} list.
+Shared by \code{specs()} and \code{\link{mm_align_2s}} so the two can't
+disagree about what ceiling is legal.
 }
 \keyword{internal}

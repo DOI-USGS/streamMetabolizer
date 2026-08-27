@@ -16,8 +16,7 @@ a Date vector of two-station day labels, the same length as
 }
 \description{
 Labels each timestamp with the two-station day it belongs to: the day
-beginning at \code{mm_day_start_2s} (06:00) and running 24 hours. A
-timestamp at 05:45 therefore belongs to the *previous* calendar date, and
-one at 06:00 to the current calendar date.
+beginning at \code{mm_day_start_2s} (06:00) and running 24 hours. 05:45
+belongs to the *previous* calendar date; 06:00 to the current one.
 }
 \keyword{internal}

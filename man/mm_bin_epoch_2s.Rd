@@ -11,10 +11,10 @@ An object of class \code{POSIXct} (inherits from \code{POSIXt}) of length 1.
 mm_bin_epoch_2s
 }
 \description{
-Shared by \code{\link{mm_bin_index_2s}} and, through it,
-\code{\link{mm_snap_to_bin_2s}} and \code{\link{mm_lag_2s}} -- one
-constant, so that two series snapped/binned independently (e.g. upstream
-and downstream) always land on the same absolute bins rather than each
-being anchored to its own first timestamp.
+Shared by \code{\link{mm_bin_index_2s}} (and, through it,
+\code{\link{mm_snap_to_bin_2s}} and \code{\link{mm_lag_2s}}) so two series
+snapped/binned independently -- e.g. upstream and downstream -- land on
+the same absolute bins, rather than each anchored to its own first
+timestamp.
 }
 \keyword{internal}

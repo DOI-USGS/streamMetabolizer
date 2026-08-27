@@ -17,19 +17,12 @@ mm_max_travel_time_default
 mm_max_travel_time_cap
 }
 \description{
-The ceiling bounds how far back in time a modeled day may reach for its
-upstream observations. Past the ceiling, the upstream parcel (and the light
-it experienced) originates before the modeled day's own 06:00 start, so the
-day-normalized light proportion no longer has a well-defined day total to be
-a proportion of; such days are dropped rather than modeled.
-}
-\details{
-\code{mm_max_travel_time_cap} is deliberately well below the 24-hour day
-window: a ceiling at the full window length would let a single day's travel
-time consume the entire lead-in period, which defeats the purpose of having
-a ceiling.
-
-\code{mm_max_travel_time_default} is the canonical default (currently 10).
+Bounds how far back in time a modeled day may reach for upstream
+observations; days whose travel time exceeds the ceiling are dropped
+rather than modeled. \code{mm_max_travel_time_default} is the canonical
+default (currently 10); \code{mm_max_travel_time_cap} is kept well below
+the 24-hour day window so a single day's travel time can't consume the
+entire lead-in period.
 }
 \keyword{datasets}
 \keyword{internal}

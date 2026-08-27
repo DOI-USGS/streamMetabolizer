@@ -24,11 +24,9 @@ NULL
 #' timestep bin.
 #'
 #' \code{upstream} and \code{downstream} are first trimmed to their shared
-#' deployment window: rows outside it could never be matched to anything, and
-#' comparing the two ranges up front gives one clear message about what was
-#' dropped and why, rather than a scattered NA in every unmatched row.
-#' \code{light} is trimmed to the same window (it is expected to be a
-#' modeled, gap-free series that outlasts both sondes, per
+#' deployment window, with a message reporting how many rows of each were
+#' dropped. \code{light} is trimmed to the same window (it is expected to be
+#' a modeled, gap-free series that outlasts both sondes, per
 #' \code{\link{two_station_raw_example}}).
 #'
 #' All three inputs' timestamps are snapped onto a common bin grid before
@@ -43,17 +41,15 @@ NULL
 #'
 #' @section Gap filling: brief interruptions in the record -- a sonde that
 #'   logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
-#'   linear interpolation, so that a day marred by a short dropout can be
-#'   modeled rather than discarded. Gaps longer than \code{max_gap_hours} are
-#'   left in place, and \code{\link{metab_bayes_2s}} drops the days holding
-#'   them. Filling happens here while \code{light} is still a raw
-#'   per-timestep value, before the within-day proportion is computed, which
-#'   is the accurate order: the proportion is then formed from a complete
-#'   series divided by a complete day total. This is a reason to supply raw
-#'   light and let this function convert it, rather than formatting data by
-#'   hand -- \code{\link{metab_bayes_2s}} can still fill gaps in
-#'   hand-formatted data, but by then \code{light} has already been
-#'   normalized, and interpolating it is only an approximation.
+#'   linear interpolation, so a day marred by a short dropout can be modeled
+#'   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
+#'   place, and \code{\link{metab_bayes_2s}} drops the days holding them.
+#'   Filling happens here while \code{light} is still a raw per-timestep
+#'   value, before the within-day proportion is computed -- the accurate
+#'   order, since the proportion is then formed from a complete series
+#'   divided by a complete day total. See \code{\link{metab_bayes_2s}}'s own
+#'   gap-filling section for what happens if gaps are filled after the fact
+#'   instead, e.g. in hand-formatted data.
 #'
 #' @param upstream data.frame or unitted data.frame with columns
 #'   \code{timestamp} (POSIXct, UTC), \code{DO.obs}, \code{DO.sat}
@@ -105,6 +101,9 @@ mm_format_data_2s <- function(upstream, downstream, light,
   light <- check_types(light, 'light')
 
   # --- trim to the upstream/downstream shared deployment window -----------
+  # rows outside this window could never be matched to anything; comparing
+  # the two ranges up front gives one clear message about what was dropped
+  # and why, rather than a scattered NA in every unmatched row
 
   overlap_start <- max(min(upstream$timestamp), min(downstream$timestamp))
   overlap_end <- min(max(upstream$timestamp), max(downstream$timestamp))

@@ -17,27 +17,18 @@ mm_max_gap_hours_default
 mm_max_gap_hours_cap
 }
 \description{
-The tolerance bounds how much consecutive missing data may be interpolated
-across before a gap is left in place. Gaps within the tolerance are filled;
-longer ones are not, and the days holding them are dropped by
-\code{\link{mm_align_2s}}'s whole-day completeness requirement. There is no
-middle tier: nothing partially filled ever reaches Stan.
+Bounds how much consecutive missing data may be interpolated across
+before a gap is left in place; longer gaps are left as-is, and the days
+holding them are dropped by \code{\link{mm_align_2s}}'s whole-day
+completeness requirement. There is no middle tier: nothing partially
+filled ever reaches Stan.
 }
 \details{
-\code{mm_max_gap_hours_default} is the canonical default (currently 1).
-Bishop et al. (2026) interpolate a single missing point and drop the day at
-two or more consecutive missing points -- 15 minutes at the source data's
-native timestep. One hour is a deliberate loosening of that rule rather
-than a restatement of it: on the source record, missing-data runs are
-sharply bimodal (sub-2-hour blips, or multi-day sensor outages, with
-little in between), so a one-hour tolerance recovers most of what is
-recoverable while keeping every interpolated stretch short enough that
-linear interpolation across a diel DO or light curve stays defensible.
-
-\code{mm_max_gap_hours_cap} bounds what a user may ask for. Linear
-interpolation across more than a couple of hours of a diel curve --
-spanning dawn, dusk, or the midday peak -- invents structure rather than
-bridging a blip, and the accompanying day would be better dropped.
+\code{mm_max_gap_hours_default} is the canonical default (currently 1
+hour) -- looser than Bishop et al. (2026)'s single-point/15-minute rule.
+\code{mm_max_gap_hours_cap} bounds what a user may ask for: linear
+interpolation across more than a couple of hours of a diel curve invents
+structure rather than bridging a blip.
 }
 \keyword{datasets}
 \keyword{internal}

@@ -4,17 +4,17 @@ NULL
 #' Day-validity tests applicable to two-station models
 #'
 #' \code{mm_day_tests_2s_default} is the default; \code{mm_day_tests_2s_allowed}
-#' bounds what a user may ask for. Both are a chosen subset of
-#' \code{\link{mm_is_valid_day}}'s five tests, not the shared default inherited
-#' wholesale.
+#' bounds what a user may ask for -- a chosen subset of
+#' \code{\link{mm_is_valid_day}}'s five tests, not the shared default
+#' inherited wholesale.
 #'
 #' \code{full_day} and \code{even_timesteps} are excluded because they would
-#' reject nearly every two-station day, not merely fail to help: the first
-#' tests a 4 AM / 28-hour diel window, which is not the 24-hour 06:00-06:00
-#' window a two-station day occupies, and the second requires evenly spaced
-#' timesteps, which two-station tolerates gaps in on purpose.
-#' \code{pos_discharge} is allowed but off by default, a no-op until
-#' two-station data carries a \code{discharge} column (issue #475).
+#' reject nearly every two-station day: the first tests a 4 AM/28-hour diel
+#' window, not the 24-hour 06:00-06:00 window a two-station day occupies;
+#' the second requires evenly spaced timesteps, which two-station tolerates
+#' gaps in on purpose. \code{pos_discharge} is allowed but off by default, a
+#' no-op until two-station data carries a \code{discharge} column (issue
+#' #475).
 #'
 #' @keywords internal
 #' @name mm_day_tests_2s
@@ -56,25 +56,18 @@ mm_check_day_tests_2s <- function(day_tests) {
 
 #' Drop two-station days whose modeled data fails the day-validity tests
 #'
-#' Sits between the day-window alignment and the fit. The alignment owns the
-#' structural questions -- does this day fill its window, is its travel time
-#' usable -- and this owns the data-quality ones: are the modeled values all
-#' present, is depth positive. Without it \code{NA}s reach Stan and fail the
-#' whole joint fit, naming neither column nor date (issue #475). Failing days
-#' leave the alignment and are returned separately, so the caller can report
-#' them rather than let them disappear.
+#' Sits between the day-window alignment and the fit: the alignment owns the
+#' structural questions (does this day fill its window, is its travel time
+#' usable), and this owns the data-quality ones (are the modeled values all
+#' present, is depth positive). Without it, \code{NA}s reach Stan and fail
+#' the whole joint fit, naming neither column nor date (issue #475). Failing
+#' days leave the alignment and are returned separately, so the caller can
+#' report them rather than let them disappear.
 #'
 #' \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 #' \code{\link{mm_is_valid_day}} underneath it is: that function partitions
-#' rows into one-station's overlapping diel windows, which are not two-station
-#' days, and it filters a data.frame rather than an alignment.
-#'
-#' @section Why the tests run on the modeled frame: a two-station day is not a
-#'   contiguous slice of \code{data} -- its upstream columns come from
-#'   \code{aln$shift_idx}, rows one travel time earlier and routinely in the
-#'   preceding day, while the rest come from \code{aln$keep}. Testing a day's
-#'   own rows would both miss upstream \code{NA}s it depends on and blame
-#'   others on the wrong date.
+#' rows into one-station's overlapping diel windows, which are not
+#' two-station days, and it filters a data.frame rather than an alignment.
 #'
 #' @param data data.frame as validated by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}, units optional. The full dataset, not a
@@ -95,6 +88,11 @@ mm_filter_valid_days_2s <- function(data, aln, day_tests=mm_day_tests_2s_default
     return(list(aln=aln, removed=mm_no_removed_days_2s()))
   }
 
+  # a two-station day is not a contiguous slice of data: its upstream columns
+  # come from aln$shift_idx (rows one travel time earlier, routinely in the
+  # preceding day), while the rest come from aln$keep. Testing a day's own
+  # rows would both miss upstream NAs it depends on and blame others on the
+  # wrong date -- so tests run on this already-assembled modeled frame instead
   modeled <- mm_modeled_rows_2s(data, aln)
 
   # one test per day, over row indices grouped once rather than rescanning the

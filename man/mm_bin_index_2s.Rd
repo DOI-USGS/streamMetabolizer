@@ -16,14 +16,7 @@ mm_bin_index_2s(solar.time, timestep_days)
 integer vector, the same length as \code{solar.time}
 }
 \description{
-The single definition of "which bin does this timestamp fall in,"
-shared by \code{\link{mm_snap_to_bin_2s}} (which rounds timestamps onto
-the bins) and \code{\link{mm_lag_2s}} (which matches rows by bin instead
-of by row position). \code{round()} to an integer bin index rather than
-comparing timestamps directly means two rows are ever considered the
-same bin only by exact match -- no tolerance parameter to tune, and no
-sensitivity to the floating-point noise that timestamp arithmetic (e.g.
-\code{\link{mm_snap_to_bin_2s}}'s own epoch offset) introduces at the
-sub-microsecond level.
+The single definition of "which bin does this timestamp fall in," shared
+by \code{\link{mm_snap_to_bin_2s}} and \code{\link{mm_lag_2s}}.
 }
 \keyword{internal}

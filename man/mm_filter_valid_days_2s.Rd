@@ -23,27 +23,18 @@ a list with \code{aln} (the input alignment, with failing dates
   \code{date} and \code{errors}, one row per dropped date)
 }
 \description{
-Sits between the day-window alignment and the fit. The alignment owns the
-structural questions -- does this day fill its window, is its travel time
-usable -- and this owns the data-quality ones: are the modeled values all
-present, is depth positive. Without it \code{NA}s reach Stan and fail the
-whole joint fit, naming neither column nor date (issue #475). Failing days
-leave the alignment and are returned separately, so the caller can report
-them rather than let them disappear.
+Sits between the day-window alignment and the fit: the alignment owns the
+structural questions (does this day fill its window, is its travel time
+usable), and this owns the data-quality ones (are the modeled values all
+present, is depth positive). Without it, \code{NA}s reach Stan and fail
+the whole joint fit, naming neither column nor date (issue #475). Failing
+days leave the alignment and are returned separately, so the caller can
+report them rather than let them disappear.
 }
 \details{
 \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 \code{\link{mm_is_valid_day}} underneath it is: that function partitions
-rows into one-station's overlapping diel windows, which are not two-station
-days, and it filters a data.frame rather than an alignment.
+rows into one-station's overlapping diel windows, which are not
+two-station days, and it filters a data.frame rather than an alignment.
 }
-\section{Why the tests run on the modeled frame}{
- a two-station day is not a
-  contiguous slice of \code{data} -- its upstream columns come from
-  \code{aln$shift_idx}, rows one travel time earlier and routinely in the
-  preceding day, while the rest come from \code{aln$keep}. Testing a day's
-  own rows would both miss upstream \code{NA}s it depends on and blame
-  others on the wrong date.
-}
-
 \keyword{internal}

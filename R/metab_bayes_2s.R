@@ -22,11 +22,10 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   its own call. The difference that matters is the observation-error
 #'   \code{sigma}: the Stan model carries one \code{sigma} shared across
 #'   whatever dates it is given, so fitting dates one at a time estimates a
-#'   separate \code{sigma} per date instead of one pooled across the record.
-#'   That is a deliberate tradeoff rather than a defect -- it is exactly what
-#'   one-station's \code{split_dates=TRUE} already means on a structurally
-#'   identical model -- and it is why joint fitting remains the default: the
-#'   pooled estimate uses the whole record. Splitting is useful when dates
+#'   separate \code{sigma} per date instead of one pooled across the record
+#'   -- the same tradeoff one-station's \code{split_dates=TRUE} makes on a
+#'   structurally identical model. Joint fitting is the default because the
+#'   pooled estimate uses the whole record; splitting is useful when dates
 #'   should not share an error estimate, or to keep one unfittable date from
 #'   costing the whole run, since each date's errors are collected and
 #'   reported against that date alone.
@@ -40,18 +39,17 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   can be inspected with the functions in the
 #'   \code{\link{metab_model_interface}} and also \code{\link{get_mcmc}}.
 #'
-#' @section Two-station day window: Two-station days begin at 06:00 and run a
-#'   full 24 hours, to 06:00 the next day. This convention is unrelated to the
-#'   4 AM / 28-hour \code{day_start}/\code{day_end} window used by the
-#'   one-station models, which describes an overlapping diel window rather
-#'   than a partition of the time series; the two are not interchangeable.
-#'   Days that do not fill the window -- at the edges of a dataset whose
-#'   bounds don't fall on 06:00, or where observations are missing and the
-#'   gap was too long to bridge (see the next section) -- are dropped with a
-#'   message and reported as invalid days in the results.
+#' @section Two-station day window: Two-station days run 06:00-06:00 (24
+#'   hours) -- unrelated to the one-station models' overlapping 4 AM/28-hour
+#'   \code{day_start}/\code{day_end} window, which is not a partition of the
+#'   time series; the two are not interchangeable. Days that do not fill the
+#'   window -- at the edges of a dataset whose bounds don't fall on 06:00, or
+#'   where observations are missing and the gap was too long to bridge (see
+#'   the next section) -- are dropped with a message and reported as invalid
+#'   days in the results.
 #'
 #' @section Gap filling: Brief interruptions in the record are bridged by
-#'   linear interpolation before day completeness is assessed, so that a day
+#'   linear interpolation before day completeness is assessed, so a day
 #'   marred by a short sensor dropout can be modeled rather than discarded.
 #'   Missing timesteps and \code{NA} values are treated alike, and a gap is
 #'   measured by the time it spans rather than by how many rows are missing
@@ -62,38 +60,37 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   Gaps at the very start or end of the record are never filled, since
 #'   interpolation there would mean extrapolating from one side.
 #'
-#'   Two consequences are worth knowing about. First, the returned model's
-#'   data -- what \code{\link{get_data}} and \code{\link{predict_DO}} report
-#'   -- covers the filled timesteps too, so it can hold rows that were not in
-#'   the \code{data} argument, and \code{predict_DO} accordingly returns
-#'   predictions at those timesteps. This is what keeps the predictions
-#'   aligned with the rows actually modeled. Second, if \code{data} was
-#'   prepared by \code{\link{mm_format_data_2s}} its gaps are already filled
-#'   and nothing happens here; but if it was formatted by hand, its
-#'   \code{light} column already holds the within-day proportion rather than
-#'   raw light, and interpolating an already-normalized value is an
-#'   approximation -- the day total it was divided by is itself short by the
-#'   missing terms. Supplying raw light to \code{\link{mm_format_data_2s}} and
-#'   letting it do the conversion avoids that.
+#'   Two consequences follow. First, the returned model's data -- what
+#'   \code{\link{get_data}} and \code{\link{predict_DO}} report -- covers the
+#'   filled timesteps too, so it can hold rows that were not in the
+#'   \code{data} argument, and \code{predict_DO} returns predictions at those
+#'   timesteps accordingly. Second, if \code{data} was prepared by
+#'   \code{\link{mm_format_data_2s}} its gaps are already filled and nothing
+#'   happens here; but data formatted by hand already holds \code{light} as
+#'   the within-day proportion rather than raw light, and interpolating an
+#'   already-normalized value is an approximation, since the day total it
+#'   was divided by is itself short by the missing terms. Supplying raw
+#'   light to \code{\link{mm_format_data_2s}} and letting it do the
+#'   conversion avoids that.
 #'
 #' @section Two-station data requirements: In addition to the checks
-#'   performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
-#'   reach travel time between the upstream and downstream stations, in days)
-#'   must be strictly positive, and at least one row must have enough
-#'   preceding observations of upstream DO to cover its own travel time. Rows
-#'   at the start of \code{data} that lack that lead-in are not an error: they
-#'   serve as lead-in only, supplying upstream DO for later rows without being
+#'   performed by \code{\link{mm_validate_data}}, \code{data$travel.time}
+#'   (the reach travel time between stations, in days) must be strictly
+#'   positive, and at least one row must have enough preceding observations
+#'   of upstream DO to cover its own travel time. Rows at the start of
+#'   \code{data} that lack that lead-in are not an error: they serve as
+#'   lead-in only, supplying upstream DO for later rows without being
 #'   modeled themselves.
 #'
-#'   Travel time is separately subject to a ceiling, \code{specs$
-#'   max_travel_time_hours} (10 hours by default, configurable up to 12).
-#'   Beyond it, a day's upstream parcel originates before the day's own 06:00
-#'   start, where the day-normalized light it experienced no longer has a
-#'   well-defined day total to be a proportion of. Days exceeding the ceiling
-#'   are dropped with a message rather than treated as an error, since the
-#'   remaining days are unaffected. A travel time far above the ceiling
-#'   usually means the column was supplied in the wrong units -- days are
-#'   expected, not minutes or hours.
+#'   Travel time is also subject to a ceiling, \code{specs$
+#'   max_travel_time_hours} (10 hours by default, configurable up to 12):
+#'   beyond it, a day's upstream parcel originates before the day's own
+#'   06:00 start, where the light it experienced no longer has a
+#'   well-defined day total to be a proportion of. Days exceeding the
+#'   ceiling are dropped with a message rather than treated as an error,
+#'   since the remaining days are unaffected. A travel time far above the
+#'   ceiling usually means the column was supplied in the wrong units --
+#'   days are expected, not minutes or hours.
 #'
 #' @section Day validity tests: the checks above concern a day's structure --
 #'   does it fill its window, is its travel time usable. \code{specs$day_tests}
@@ -103,12 +100,13 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   Neither can be modeled around, and one bad day fails \emph{every} date of
 #'   a joint fit with a diagnostic naming neither the column nor the day.
 #'
-#'   The values tested are the ones the day is modeled from, which is not the
-#'   same as the rows falling inside it: a day's upstream DO comes from one
-#'   travel time earlier, routinely from the preceding day's rows.
+#'   The values tested are the ones the day is modeled from, not the rows
+#'   falling inside it: a day's upstream DO comes from one travel time
+#'   earlier, routinely from the preceding day's rows.
 #'
 #'   Only a subset of the one-station tests is accepted: \code{full_day} and
-#'   \code{even_timesteps} are rejected, each rejecting nearly every such day.
+#'   \code{even_timesteps} are rejected, each rejecting nearly every
+#'   two-station day.
 #'
 #' @section Dropped days in the results: a day dropped for any reason above
 #'   never reaches Stan, but is not omitted from the results either. It appears
@@ -508,12 +506,11 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 #' \code{day_end} diel window is a different partition of the same rows (see
 #' the two-station day window section of \code{\link{metab_bayes_2s}}).
 #'
-#' @section Per-date sigma: the Stan model carries a single observation-error
-#'   \code{sigma} shared across whatever dates it is given, so fitting one
-#'   date at a time estimates a separate \code{sigma} per date rather than
-#'   one pooled across the record. That is the same tradeoff one-station's
-#'   \code{split_dates=TRUE} already makes on a structurally identical
-#'   model, not a defect of this loop.
+#' @section Per-date sigma: fitting one date at a time estimates a separate
+#'   observation-error \code{sigma} per date rather than one pooled across
+#'   the record -- the same tradeoff described in
+#'   \code{\link{metab_bayes_2s}}'s "Fitting all dates at once, or one at a
+#'   time" section.
 #'
 #' @inheritParams bayes_1fit_2s
 #' @param aln optional, the alignment already computed for \code{data} by
@@ -781,35 +778,24 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
 #' lead-in (\code{shift_idx < 1}) get \code{NA} rather than a value computed
 #' from a truncated window.
 #'
-#' This function expects a single, already-combined light value per
-#' timestep.
-#'
 #' @section Day-sum denominator: the daily total in the denominator uses the
 #'   same \code{\link{mm_date_2s}} 06:00-06:00 day window that
 #'   \code{\link{mm_align_2s}}/\code{\link{metab_bayes_2s}} use elsewhere in
 #'   the two-station pipeline, so any 06:00-day \code{\link{mm_align_2s}}
 #'   counts as full is guaranteed to have every one of its rows counted as
-#'   full here too -- its light proportions are never \code{NA}. (An earlier
-#'   version used calendar midnight-to-midnight days instead, which could
-#'   disagree with \code{\link{mm_align_2s}} at the edges of
-#'   \code{solar.time}; see \code{test-metab_bayes_2s.R} for the regression
-#'   test.)
+#'   full here too -- its light proportions are never \code{NA}.
 #'
 #'   A day that doesn't hold a full \code{round(1/timestep_days)} rows --
 #'   at either end of \code{solar.time}, or from missing sensor data -- has
 #'   no well-defined total to divide by, so every row in that day gets
 #'   \code{NA} rather than a proportion computed from a partial sum.
 #'
-#' @section Snap-to-bin requirement: \code{\link{mm_lag_2s}} (called below)
-#'   matches rows by timestep bin rather than by row position, so gaps and
-#'   multiple, mutually phase-shifted deployments are handled correctly --
-#'   a missing bin inside a light-sum window simply contributes no term,
-#'   and a missing bin at a window's start yields \code{NA} via
-#'   \code{has_leadin}, both without special-casing here. What
-#'   \code{mm_lag_2s()} still requires, and enforces itself, is that
-#'   \code{solar.time} already sits on a single well-defined bin grid (see
-#'   \code{\link{mm_snap_to_bin_2s}}); this function does not duplicate that
-#'   check.
+#' @section Snap-to-bin requirement: \code{\link{mm_lag_2s}} matches rows by
+#'   timestep bin, so a missing bin inside a light-sum window simply
+#'   contributes no term, and a missing bin at a window's start yields
+#'   \code{NA} via \code{has_leadin} -- both without special-casing here.
+#'   This function does not itself check that \code{solar.time} sits on a
+#'   bin grid; \code{\link{mm_lag_2s}} does.
 #'
 #' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending,
 #'   already snapped to a single nominal timestep via
@@ -870,14 +856,10 @@ setClass("metab_bayes_2s", contains="metab_bayes")
 
 
 #' @describeIn get_params Does the same Stan-output-to-streamMetabolizer
-#'   renaming as \code{get_params.metab_bayes}, but (unlike that method) does
-#'   not delegate the rest of the work to \code{get_params.metab_model} via
-#'   \code{NextMethod()}: that generic implementation looks up parameter
-#'   names via \code{get_param_names()}, which builds an ODE-based dDOdt
-#'   function using streamMetabolizer's one-station instantaneous-rate
-#'   framework (\code{ode_method}/\code{GPP_fun}/\code{ER_fun}/
-#'   \code{deficit_src}) -- machinery that doesn't apply to the two-station
-#'   steady-state model's daily GPP/ER/K600 parameters. \code{fixed}
+#'   renaming as \code{get_params.metab_bayes}, but does not delegate to
+#'   \code{get_params.metab_model} via \code{NextMethod()}: the two-station
+#'   steady-state model's daily GPP/ER/K600 parameters don't fit that
+#'   generic's one-station, ODE-based parameter-name lookup. \code{fixed}
 #'   column/star annotations (relevant only to models that can take fixed
 #'   daily parameters from \code{data_daily}) are not supported here.
 #' @export
@@ -885,6 +867,10 @@ setClass("metab_bayes_2s", contains="metab_bayes")
 get_params.metab_bayes_2s <- function(
   metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ...) {
 
+  # not delegated to get_params.metab_model via NextMethod(): that generic's
+  # parameter-name lookup builds an ODE-based dDOdt function from one-station's
+  # ode_method/GPP_fun/ER_fun/deficit_src specs, which don't exist for this
+  # steady-state model
   uncertainty <- match.arg(uncertainty)
 
   fit <- metab_model@fit$daily

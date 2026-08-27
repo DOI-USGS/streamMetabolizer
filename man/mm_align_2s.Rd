@@ -20,35 +20,32 @@ a list with \code{keep} (integer indices of the modeled rows, into
   \code{data}, of the rows supplying each modeled row's upstream values),
   \code{date} (Date vector of two-station day labels, parallel to
   \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days},
-  \code{timestep_days}, and \code{removed} (a data.frame of \code{date} and
-  \code{errors} naming the days dropped here and why, so that a caller can
-  report a dropped day rather than omit it)
+  \code{timestep_days}, and \code{removed} (a data.frame of \code{date}
+  and \code{errors} naming the days dropped here and why)
 }
 \description{
 Applies, in order: the per-row lead-in test, two-station day labeling, the
-travel-time ceiling, and the whole-day completeness requirement. The result
-describes which input rows are modeled, which input rows supply their
-upstream values, and how those modeled rows partition into days.
+travel-time ceiling, and the whole-day completeness requirement. The
+result describes which input rows are modeled, which input rows supply
+their upstream values, and how those modeled rows partition into days.
 }
 \details{
-Rows are dropped for lack of lead-in on a *per-row* basis: row \code{i} is
-modelable whenever \code{\link{mm_lag_2s}} finds a real row at its target
-timestep bin (\code{has_leadin[i]}), whether the shift would otherwise
-reach before the start of the data or into a gap partway through. (An
-earlier implementation trimmed \code{max(lag)} rows off the front of the
-dataset, discarding rows that needed less lead-in than the dataset-wide
-worst case.)
+Rows are dropped for lack of lead-in individually, not by trimming a
+fixed prefix sized to the dataset's worst-case lag: a row is modeled
+whenever \code{\link{mm_lag_2s}} finds it a real upstream match, whether
+the shift would otherwise reach before the start of the data or into a
+gap partway through.
 
 Whole days are dropped, with a message, in two cases:
 \itemize{
   \item the day's longest travel time exceeds
     \code{max_travel_time_hours} (see \code{\link{mm_max_travel_time}});
   \item the day does not fill its 24-hour window, i.e. it holds fewer than
-    \code{round(1 / timestep_days)} modeled rows. Partial days arise at the
-    edges of any dataset whose bounds don't fall on 06:00, and from missing
-    sensor readings. Dropping them is required by the fixed-shape
-    \code{n_obs x n_days} matrices the Stan model expects; tolerating small
-    within-day gaps by interpolation is separate, later work.
+    \code{round(1 / timestep_days)} modeled rows. Partial days arise at
+    the edges of any dataset whose bounds don't fall on 06:00, and from
+    missing sensor readings; they're dropped because the Stan model
+    expects fixed-shape \code{n_obs x n_days} matrices. Interpolating
+    small within-day gaps instead of dropping is out of scope here.
 }
 }
 \keyword{internal}

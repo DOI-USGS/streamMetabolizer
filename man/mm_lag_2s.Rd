@@ -22,41 +22,18 @@ a list with \code{timestep_days} (modal timestep, in days),
   (logical, \code{!is.na(shift_idx)})
 }
 \description{
-The upstream observation that "matches" a given downstream observation at
-row \code{i} was recorded \code{lag[i] <- round(travel.time[i] /
-timestep_days)} timesteps earlier, where \code{timestep_days} is the
-modal timestep of \code{solar.time} (see \code{\link{mm_get_timestep}}).
-This is the single definition of that calculation:
-\code{\link{mm_validate_data_2station}} (existence check) and
-\code{mm_align_2s} (used in turn by \code{\link{prepdata_bayes_2s}} and
-\code{\link{metab_bayes_2s}}) all route through it, so the three cannot
-drift apart.
+The upstream observation matching downstream row \code{i} was recorded
+\code{lag[i] <- round(travel.time[i] / timestep_days)} timesteps earlier,
+where \code{timestep_days} is the modal timestep of \code{solar.time}.
+This is the single definition of that calculation -- \code{mm_align_2s}
+and \code{\link{mm_validate_data_2station}} both route through it, so the
+two cannot drift apart.
 }
 \details{
-\code{shift_idx[i]} is found by matching \emph{timestep bins}
-(\code{\link{mm_bin_index_2s}}), not by subtracting \code{lag[i]} from
-\code{i}'s row position. A row offset only equals a time offset when
-every row is exactly one nominal timestep apart; real deployment data
-with gaps or multiple, mutually phase-shifted deployments breaks that
-assumption and would silently pair the wrong upstream row with a given
-downstream row. Bin matching instead looks up the row that actually sits
-\code{lag[i]} timesteps back in time, and reports \code{NA} (folded into
-\code{has_leadin = FALSE}) when no such row exists -- whether because the
-shift reaches before the start of the data (the original meaning of
-"insufficient lead-in") or because of a real gap partway through
-(\code{solar.time} has no row at that bin). Both cases mean the same
-thing to every caller: this row cannot be modeled for lack of a real
-upstream match, and callers decide what to do about the rest.
-
-Bin matching requires \code{solar.time} to already sit on a snap-to-bin
-grid (see \code{\link{mm_snap_to_bin_2s}}) -- otherwise a computed target
-bin might not correspond to any real timestamp's bin even when a
-matching row conceptually exists, silently under-counting lead-in rather
-than correctly finding them. This is checked up front (a round-trip
-through \code{\link{mm_snap_to_bin_2s}} must be a no-op) rather than
-assumed, and duplicate bins (more than one row per timestep bin, which
-\code{\link{mm_snap_to_bin_2s}} cannot itself detect or resolve) are
-rejected outright rather than silently matched to whichever row comes
-first.
+\code{shift_idx[i]} is \code{NA} (folded into \code{has_leadin = FALSE})
+when no row exists at row \code{i}'s target timestep bin -- whether
+because the shift reaches before the start of the data or into a real
+gap partway through the series. Both cases mean the same thing to every
+caller: this row cannot be modeled for lack of a real upstream match.
 }
 \keyword{internal}

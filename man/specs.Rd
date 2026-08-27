@@ -353,17 +353,14 @@ K600_daily.}
 ceiling, in hours: days whose longest \code{travel.time} exceeds this are
 dropped, with a message, rather than modeled (see
 \code{\link{metab_bayes_2s}}). Defaults to 10 hours and may not be set
-above 12; a ceiling approaching the 24-hour day window would let a single
-day's travel time consume the entire lead-in period, which defeats the
-purpose of having a ceiling.}
+above 12.}
 
 \item{max_gap_hours}{for \code{type='bayes_2s'}. The gap-filling tolerance,
 in hours: runs of missing observations spanning no more than this are
 bridged by linear interpolation so their days can still be modeled, while
 longer runs are left in place and their days dropped (see
-\code{\link{metab_bayes_2s}}). Defaults to 1 hour and may not be set above
-2; interpolating across more of a diel DO or light curve invents structure
-rather than bridging a blip.}
+\code{\link{metab_bayes_2s}}). Defaults to 1 hour and may not be set
+above 2.}
 
 \item{params_in}{Character vector of hyperparameters to pass from the specs
 list into the data list for the MCMC run. Will be automatically generated

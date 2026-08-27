@@ -18,18 +18,18 @@ mm_day_tests_2s_allowed
 }
 \description{
 \code{mm_day_tests_2s_default} is the default; \code{mm_day_tests_2s_allowed}
-bounds what a user may ask for. Both are a chosen subset of
-\code{\link{mm_is_valid_day}}'s five tests, not the shared default inherited
-wholesale.
+bounds what a user may ask for -- a chosen subset of
+\code{\link{mm_is_valid_day}}'s five tests, not the shared default
+inherited wholesale.
 }
 \details{
 \code{full_day} and \code{even_timesteps} are excluded because they would
-reject nearly every two-station day, not merely fail to help: the first
-tests a 4 AM / 28-hour diel window, which is not the 24-hour 06:00-06:00
-window a two-station day occupies, and the second requires evenly spaced
-timesteps, which two-station tolerates gaps in on purpose.
-\code{pos_discharge} is allowed but off by default, a no-op until
-two-station data carries a \code{discharge} column (issue #475).
+reject nearly every two-station day: the first tests a 4 AM/28-hour diel
+window, not the 24-hour 06:00-06:00 window a two-station day occupies;
+the second requires evenly spaced timesteps, which two-station tolerates
+gaps in on purpose. \code{pos_discharge} is allowed but off by default, a
+no-op until two-station data carries a \code{discharge} column (issue
+#475).
 }
 \keyword{datasets}
 \keyword{internal}
