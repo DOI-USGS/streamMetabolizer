@@ -351,14 +351,10 @@ setClass("metab_bayes_2s", contains="metab_bayes")
 
 
 #' @describeIn get_params Does the same Stan-output-to-streamMetabolizer
-#'   renaming as \code{get_params.metab_bayes}, but (unlike that method) does
-#'   not delegate the rest of the work to \code{get_params.metab_model} via
-#'   \code{NextMethod()}: that generic implementation looks up parameter
-#'   names via \code{get_param_names()}, which builds an ODE-based dDOdt
-#'   function using streamMetabolizer's one-station instantaneous-rate
-#'   framework (\code{ode_method}/\code{GPP_fun}/\code{ER_fun}/
-#'   \code{deficit_src}) -- machinery that doesn't apply to the two-station
-#'   steady-state model's daily GPP/ER/K600 parameters. \code{fixed}
+#'   renaming as \code{get_params.metab_bayes}, but does not delegate to
+#'   \code{get_params.metab_model} via \code{NextMethod()}: the two-station
+#'   steady-state model's daily GPP/ER/K600 parameters don't fit that
+#'   generic's one-station, ODE-based parameter-name lookup. \code{fixed}
 #'   column/star annotations (relevant only to models that can take fixed
 #'   daily parameters from \code{data_daily}) are not supported here.
 #' @export
@@ -366,6 +362,10 @@ setClass("metab_bayes_2s", contains="metab_bayes")
 get_params.metab_bayes_2s <- function(
   metab_model, date_start=NA, date_end=NA, uncertainty=c('sd','ci','none'), messages=TRUE, ...) {
 
+  # not delegated to get_params.metab_model via NextMethod(): that generic's
+  # parameter-name lookup builds an ODE-based dDOdt function from one-station's
+  # ode_method/GPP_fun/ER_fun/deficit_src specs, which don't exist for this
+  # steady-state model
   uncertainty <- match.arg(uncertainty)
 
   fit <- metab_model@fit$daily

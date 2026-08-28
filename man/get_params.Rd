@@ -129,14 +129,10 @@ to streamMetabolizer parameter names; otherwise the same as
 \code{get_params.metab_model}
 
 \item \code{get_params(metab_bayes_2s)}: Does the same Stan-output-to-streamMetabolizer
-renaming as \code{get_params.metab_bayes}, but (unlike that method) does
-not delegate the rest of the work to \code{get_params.metab_model} via
-\code{NextMethod()}: that generic implementation looks up parameter
-names via \code{get_param_names()}, which builds an ODE-based dDOdt
-function using streamMetabolizer's one-station instantaneous-rate
-framework (\code{ode_method}/\code{GPP_fun}/\code{ER_fun}/
-\code{deficit_src}) -- machinery that doesn't apply to the two-station
-steady-state model's daily GPP/ER/K600 parameters. \code{fixed}
+renaming as \code{get_params.metab_bayes}, but does not delegate to
+\code{get_params.metab_model} via \code{NextMethod()}: the two-station
+steady-state model's daily GPP/ER/K600 parameters don't fit that
+generic's one-station, ODE-based parameter-name lookup. \code{fixed}
 column/star annotations (relevant only to models that can take fixed
 daily parameters from \code{data_daily}) are not supported here.
 

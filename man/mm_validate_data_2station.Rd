@@ -12,11 +12,10 @@ mm_validate_data_2station(data)
 \code{travel.time}, sorted ascending by \code{solar.time}.}
 }
 \description{
-Checks the lead-in coverage requirement specific to
-\code{\link{metab_bayes_2s}}: there must be enough lead-in observations of
-upstream DO before the first modeled row to cover the longest travel time
-in the dataset, given the (median) timestep of \code{data$solar.time}.
-Column presence, timestamp validity, and travel.time bounds are expected
-to have already been checked by \code{\link{mm_validate_data}}.
+Checks the lead-in coverage requirement described in
+\code{\link{metab_bayes_2s}}, using the (median) timestep of
+\code{data$solar.time} to compute the required lag. Column presence,
+timestamp validity, and travel.time bounds are expected to have already
+been checked by \code{\link{mm_validate_data}}.
 }
 \keyword{internal}

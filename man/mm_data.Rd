@@ -43,6 +43,24 @@ Produces a unitted data.frame with the column names, units, and
   equilibrium saturation \eqn{mg O[2] L^{-1}}{mg O2 / L}. Calculate using
   \link{calc_DO_sat}}
 
+  \item{ \code{DO.obs.up} dissolved oxygen concentration observations at the
+  upstream station of a two-station reach, \eqn{mg O[2] L^{-1}}{mg O2 / L}}
+
+  \item{ \code{DO.sat.up} dissolved oxygen concentrations at equilibrium
+  saturation at the upstream station of a two-station reach, \eqn{mg O[2]
+  L^{-1}}{mg O2 / L}}
+
+  \item{ \code{DO.obs.down} dissolved oxygen concentration observations at
+  the downstream station of a two-station reach, \eqn{mg O[2] L^{-1}}{mg O2
+  / L}}
+
+  \item{ \code{DO.sat.down} dissolved oxygen concentrations at equilibrium
+  saturation at the downstream station of a two-station reach, \eqn{mg O[2]
+  L^{-1}}{mg O2 / L}}
+
+  \item{ \code{travel.time} reach travel time between the upstream and
+  downstream stations of a two-station reach, in days, \eqn{d}{d}}
+
   \item{ \code{depth} stream depth, \eqn{m}{m}}.
 
   \item{ \code{temp.water} water temperature, \eqn{degC}}.
