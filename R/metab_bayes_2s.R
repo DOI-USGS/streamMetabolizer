@@ -909,9 +909,19 @@ get_params.metab_bayes_2s <- function(
 #'   the two-station Stan model results.
 #' @export
 #' @import dplyr
-predict_metab.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA, ...) {
+#' @importFrom lifecycle deprecated is_present
+#' @importFrom unitted get_units u
+predict_metab.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA, ..., attach.units=deprecated()) {
 
   Var1 <- Var2 <- '.dplyr.var'
+
+  # check units-related arguments
+  if (lifecycle::is_present(attach.units)) {
+    unitted_deprecate_warn("predict_metab(attach.units)")
+  } else {
+    attach.units <- FALSE
+  }
+
   fit.names <- expand.grid(c('50pct','2.5pct','97.5pct'), c('GPP_daily','ER_daily','K600_daily'), stringsAsFactors=FALSE) %>%
     select(Var2, Var1) %>%
     apply(MARGIN=1, FUN=function(row) do.call(paste, c(as.list(row), list(sep='_'))))
@@ -927,9 +937,16 @@ predict_metab.metab_bayes_2s <- function(metab_model, date_start=NA, date_end=NA
   preds <- fit[c('date', fit.names)] %>%
     setNames(c('date', metab.names))
 
-  mm_attach_fit_msgs(
+  preds <- mm_attach_fit_msgs(
     preds, fit,
     warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
+
+  # attach.units if requested
+  if(attach.units) {
+    pred.units <- get_units(mm_data())[sapply(names(preds), function(x) strsplit(x, '\\.')[[1]][1], USE.NAMES=FALSE)]
+    preds <- u(preds, pred.units)
+  }
+  preds
 }
 
 

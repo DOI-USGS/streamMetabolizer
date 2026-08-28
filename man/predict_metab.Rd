@@ -27,7 +27,13 @@ predict_metab(
   attach.units = deprecated()
 )
 
-\method{predict_metab}{metab_bayes_2s}(metab_model, date_start = NA, date_end = NA, ...)
+\method{predict_metab}{metab_bayes_2s}(
+  metab_model,
+  date_start = NA,
+  date_end = NA,
+  ...,
+  attach.units = deprecated()
+)
 
 \method{predict_metab}{metab_model}(
   metab_model,
