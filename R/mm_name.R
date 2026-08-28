@@ -54,13 +54,16 @@
 #' @param type character. The model type. Options: \itemize{ \item \code{mle}:
 #'   maximum likelihood estimation (see also \code{\link{metab_mle}}) \item
 #'   \code{bayes}: bayesian hierarchical models \code{\link{metab_bayes}} \item
-#'   \code{night}: nighttime regression (see also \code{\link{metab_night}})
-#'   \item \code{Kmodel}: regression of \emph{daily} estimates of
-#'   \code{K600.daily} versus discharge, time, etc., usually for 3-phase
-#'   estimation of K alone (by MLE or nighttime regression), K vs discharge
-#'   (using this model), and then GPP and ER with fixed K (by MLE) (see also
-#'   \code{\link{metab_Kmodel}}) \item \code{sim}: simulation of \code{DO.obs}
-#'   'data' for testing other models (see also \code{\link{metab_sim}}) }
+#'   \code{bayes_2s}: two-station (upstream/downstream, Variable Flow
+#'   Two-Station) Bayesian model with a single fixed structure (see also
+#'   \code{\link{metab_bayes_2s}}) \item \code{night}: nighttime regression (see
+#'   also \code{\link{metab_night}}) \item \code{Kmodel}: regression of
+#'   \emph{daily} estimates of \code{K600.daily} versus discharge, time, etc.,
+#'   usually for 3-phase estimation of K alone (by MLE or nighttime regression),
+#'   K vs discharge (using this model), and then GPP and ER with fixed K (by
+#'   MLE) (see also \code{\link{metab_Kmodel}}) \item \code{sim}: simulation of
+#'   \code{DO.obs} 'data' for testing other models (see also
+#'   \code{\link{metab_sim}}) }
 #' @param pool_K600 character. [How] should the model pool information among
 #'   days to get more consistent daily estimates for K600? Options (see Details
 #'   for more): \itemize{ \item \code{none}: no pooling of K600 \item
@@ -155,7 +158,7 @@
 #' mm_name('sim', err_proc_acor=TRUE)
 #' mm_name('bayes', pool_K600='binned')
 mm_name <- function(
-  type=c('mle','bayes','night','Kmodel','sim'), 
+  type=c('mle','bayes','bayes_2s','night','Kmodel','sim'),
   #pool_GPP='none', pool_ER='none', pool_eoi='alldays', pool_epc='alldays', pool_epi='alldays',
   pool_K600=c('none',
               'normal','normal_sdzero','normal_sdfixed',
@@ -174,17 +177,39 @@ mm_name <- function(
   deficit_src=c('DO_mod','DO_obs','DO_obs_filter','NA'),
   engine=c('stan','nlm','lm','mean','loess','rnorm'),
   check_validity=TRUE) {
-  
-  # determine type
-  type <- match.arg(type)
-  
+
+  # determine type. 'bayes_2s' is matched exactly, before match.arg's
+  # partial-prefix matching, because 'b' would otherwise be an ambiguous
+  # abbreviation between 'bayes' and 'bayes_2s' -- so unlike the other
+  # types, 'bayes_2s' must be spelled out in full (no abbreviations).
+  # match.arg's choices are narrowed to exclude it so that pre-existing
+  # abbreviations like 'b' (-> 'bayes') and 'm' (-> 'mle') stay unambiguous.
+  if(missing(type)) {
+    type <- eval(formals(mm_name)$type)[1]
+  } else if(length(type) == 1 && identical(type, 'bayes_2s')) {
+    type <- 'bayes_2s'
+  } else {
+    type <- match.arg(type, choices=setdiff(eval(formals(mm_name)$type), 'bayes_2s'))
+  }
+
+  # bayes_2s has a single fixed model structure rather than being built
+  # from combinations of pool_K600/err_*/ode_method/GPP_fun/ER_fun/
+  # deficit_src/engine, so skip the argument-combination machinery below and
+  # return the one valid name directly
+  if(type == 'bayes_2s') {
+    mmname <- 'b2_np_oi_tr_plrckm.stan'
+    check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
+    if(isTRUE(check_validity)) mm_validate_name(mmname)
+    return(mmname)
+  }
+
   # set type-specific defaults where values weren't specified
   . <- '.dplyr.var'
   if(type != 'Kmodel') {
     relevant_args <- names(formals(mm_name)) %>% .[!(. %in% c('type','check_validity'))]
   } else {
     # only one argument allowed for Kmodel
-    relevant_args <- 'engine' 
+    relevant_args <- 'engine'
     # directly specify all the rest
     pool_K600='complete'
     pool_all='complete'
@@ -205,9 +230,9 @@ mm_name <- function(
       assign(ms, default_args[[ms]])
     }
   }
-  
-  # check arguments and throw errors as needed. these checks define the names 
-  # that are possible to create; will be supplemented by call to mm_valid_names 
+
+  # check arguments and throw errors as needed. these checks define the names
+  # that are possible to create; will be supplemented by call to mm_valid_names
   # to see if a specific arg combo is actually implemented
   if(type != 'Kmodel') {
     pool_K600 <- match.arg(pool_K600)
@@ -229,7 +254,7 @@ mm_name <- function(
   engine <- match.arg(engine)
   if(!(engine %in% list(bayes='stan', mle='nlm', night='lm', Kmodel=c('mean','lm','loess'), sim='rnorm')[[type]]))
     stop("mismatch between type (",type,") and engine (",engine,")")
-  
+
   # make the name
   mmname <- paste0(
     c(bayes='b', mle='m', night='n', Kmodel='K', sim='s')[[type]], '_',
@@ -237,19 +262,19 @@ mm_name <- function(
     c(none_or_fitted='', sdzero='0', sdfixed='x')[[tryCatch(strsplit(pool_K600, '_')[[1]][[2]], error=function(e) 'none_or_fitted')]],
     c(none='np', partial='', complete='')[[pool_all]], '_',
     if(err_obs_iid) 'oi', if(err_proc_acor) 'pc', if(err_proc_iid) 'pi', if(err_proc_GPP) 'pp', '_',
-    c(Euler='Eu', pairmeans='pm', trapezoid='tr', rk2='r2', 
-      lsoda='o1', lsode='o2', lsodes='o3', lsodar='o4', vode='o5', daspk='o6', euler='eu', rk4='o8', 
+    c(Euler='Eu', pairmeans='pm', trapezoid='tr', rk2='r2',
+      lsoda='o1', lsode='o2', lsodes='o3', lsodar='o4', vode='o5', daspk='o6', euler='eu', rk4='o8',
       ode23='o9', ode45='o10', radau='o11', bdf='o12', bdf_d='o13', adams='o14', impAdams='o15', impAdams_d='o16',
       'NA'='')[[ode_method]], '_',
     c(linlight='pl', satlight='ps', satlightq10temp='pq', 'NA'='')[[GPP_fun]],
     c(constant='rc', q10temp='rq', 'NA'='')[[ER_fun]],
-    c(DO_mod='km', DO_obs='ko', DO_obs_filter='kf', 'NA'='')[[deficit_src]], 
+    c(DO_mod='km', DO_obs='ko', DO_obs_filter='kf', 'NA'='')[[deficit_src]],
     '.', engine)
-  
+
   # check validity if requested
   check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
   if(isTRUE(check_validity)) mm_validate_name(mmname)
-  
+
   # return
   mmname
 }

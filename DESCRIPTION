@@ -39,9 +39,12 @@ Imports:
     lubridate,
     magrittr,
     methods,
+    parallel,
+    stats,
     tibble (>= 1.1.0),
     tidyr,
-    unitted (>= 0.2.8)
+    unitted (>= 0.2.8),
+    utils
 Suggests:
     chron,
     devtools,
@@ -80,6 +83,7 @@ Collate:
     'create_calc_DO.R'
     'create_calc_NLL.R'
     'create_calc_dDOdt.R'
+    'data.R'
     'data_metab.R'
     'deprecated.R'
     'load_french_creek.R'
@@ -92,7 +96,9 @@ Collate:
     'specs-class.R'
     'metab_model-class.R'
     'metab_Kmodel.R'
+    'mm_time_by_date_matrix.R'
     'metab_bayes.R'
+    'metab_bayes_2s.R'
     'metab_inputs.R'
     'metab_mle.R'
     'metab_model.get_param_names.R'
@@ -104,6 +110,7 @@ Collate:
     'metab_sim.R'
     'mm_check_mcmc_file.R'
     'mm_data.R'
+    'mm_determine_cores.R'
     'mm_filter_dates.R'
     'mm_filter_hours.R'
     'mm_filter_valid_days.R'
@@ -129,5 +136,6 @@ Collate:
     'streamMetabolizer-deprecated.R'
     'streamMetabolizer.R'
     'zz_build_docs.R'
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.3
 Encoding: UTF-8
+LazyData: true

@@ -6,6 +6,82 @@
 # skip_on_appveyor()
 # skip_if_not_installed('deSolve')
 
+
+# prepdata_bayes() ---------------------------------------------------------
+#
+# Direct, fast (no Stan) unit tests for prepdata_bayes()'s matrix-pivot and
+# contiguous-sort-check behavior. Written to pin current behavior ahead of
+# extracting shared logic with prepdata_bayes_2s() (see mm_time_by_date_matrix.R).
+
+# Build a minimal, traceable two-day data.frame: 4 rows/day, DO.obs ==
+# original row index so the pivoted matrix's values can be checked exactly.
+make_bayes_prepdata <- function(n_per_day=4, n_days=2, shuffle=FALSE) {
+  n_total <- n_per_day * n_days
+  solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
+    as.difftime(
+      rep((seq_len(n_per_day) - 1) * (24 / n_per_day), n_days) +
+        rep((seq_len(n_days) - 1) * 24, each=n_per_day),
+      units="hours")
+  dat <- data.frame(
+    solar.time = solar.time,
+    date = as.Date(solar.time),
+    DO.obs = seq_len(n_total),
+    DO.sat = rep(10, n_total),
+    depth = rep(1, n_total),
+    temp.water = rep(20, n_total),
+    light = rep(100, n_total)
+  )
+  if(shuffle) {
+    # interleave day1/day2 rows to break contiguity while keeping an equal
+    # row count per date (so the earlier date_table-based check still passes
+    # and only the contiguous-sort check is exercised)
+    dat <- dat[order(rep(seq_len(n_per_day), n_days)), ]
+  }
+  dat
+}
+
+test_that("prepdata_bayes() pivots data into the expected n x d matrix (dims and values)", {
+  sp <- specs(mm_name('bayes'))
+  dat <- make_bayes_prepdata(n_per_day=4, n_days=2)
+
+  out <- prepdata_bayes(data=dat, data_daily=NULL, ply_date=NA, specs=sp)
+
+  expect_equal(out$d, 2)
+  expect_equal(out$n, 4)
+  expect_equal(dim(out$DO_obs), c(4, 2))
+  expect_equal(dim(out$DO_sat), c(4, 2))
+  expect_equal(dim(out$depth), c(4, 2))
+  # values: matrix(vec, nrow=4, ncol=2, byrow=FALSE) fills column-wise, so
+  # day 1 = original rows 1:4, day 2 = original rows 5:8
+  expect_equal(out$DO_obs[,1], as.numeric(1:4))
+  expect_equal(out$DO_obs[,2], as.numeric(5:8))
+})
+
+test_that("prepdata_bayes()'s contiguous-sort check passes for properly sorted data", {
+  sp <- specs(mm_name('bayes'))
+  dat <- make_bayes_prepdata(n_per_day=4, n_days=2)
+
+  expect_silent(prepdata_bayes(data=dat, data_daily=NULL, ply_date=NA, specs=sp))
+})
+
+test_that("prepdata_bayes() errors for data that isn't sorted by date", {
+  # HISTORY: prior to the mm_time_by_date_matrix()/mm_check_dates_contiguous()
+  # extraction, this check was `if(!all.equal(unique_dates, names(date_table)))
+  # stop("couldn't fit given dates into matrix")`, unguarded by isTRUE().
+  # Confirmed empirically pre-refactor: whenever the dates were truly
+  # non-contiguous, all.equal() returned a character vector (not TRUE), and
+  # `!` on a character vector always errors with "invalid argument type" in
+  # base R -- so the intended "couldn't fit given dates into matrix" message
+  # was actually unreachable. The shared mm_check_dates_contiguous() helper
+  # fixes this as a side effect of the extraction, so this test now
+  # asserts the originally-intended message.
+  sp <- specs(mm_name('bayes'))
+  dat <- make_bayes_prepdata(n_per_day=4, n_days=2, shuffle=TRUE)
+
+  expect_error(prepdata_bayes(data=dat, data_daily=NULL, ply_date=NA, specs=sp), "couldn't fit given dates into matrix")
+})
+
+
 manual_test4 <- function() {
 
   library(streamMetabolizer)

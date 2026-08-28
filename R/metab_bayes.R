@@ -1,4 +1,4 @@
-#' @include metab_model-class.R
+#' @include metab_model-class.R mm_time_by_date_matrix.R
 NULL
 
 #' Basic Bayesian metabolism model fitting function
@@ -330,9 +330,11 @@ bayes_1ply <- function(
 #' Called from metab_bayes().
 #'
 #' @param data_all data.frame of the form \code{mm_data(solar.time, DO.obs,
-#'   DO.sat, depth, temp.water, light)} and containing data for just one
-#'   estimation-day (this may be >24 hours but only yields estimates for one
-#'   24-hour period)
+#'   DO.sat, depth, temp.water, light)} containing the full (possibly
+#'   multi-day) filtered dataset for this model - unlike \code{bayes_1ply()}'s
+#'   \code{data_ply}, which receives one estimation-day at a time,
+#'   \code{bayes_allply()} is called once with all valid dates together (used
+#'   when \code{specs$split_dates==FALSE})
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
 #' @param removed data.frame of dates that were removed and why
@@ -479,15 +481,13 @@ prepdata_bayes <- function(
     )
     stop("dates have differing numbers of rows; observations cannot be combined in matrix")
   }
-  time_by_date_matrix <- function(vec) {
-    matrix(data=vec, nrow=num_daily_obs, ncol=num_dates, byrow=FALSE)
-  }
+  time_by_date_matrix <- mm_time_by_date_matrix(num_daily_obs, num_dates)
 
   # double-check that our dates are going to line up with the input dates. this
   # should be redundant w/ above date_table checks, so just being extra careful
-  obs_dates <- time_by_date_matrix(format(data$date, format="%Y-%m-%d"))
-  unique_dates <- apply(obs_dates, MARGIN=2, FUN=function(timevec) unique(timevec))
-  if(!all.equal(unique_dates, names(date_table))) stop("couldn't fit given dates into matrix")
+  mm_check_dates_contiguous(
+    time_by_date_matrix(format(data$date, format="%Y-%m-%d")), date_table,
+    "couldn't fit given dates into matrix")
 
   # confirm that every day has the same modal timestep and put a value on that
   # timestep. the tolerance for uniqueness within each day is set by the default
@@ -625,10 +625,7 @@ runstan_bayes <- function(
   verbose=FALSE, ...) {
 
   # determine how many cores to use
-  tot_cores <- detectCores()
-  if (!is.finite(tot_cores)) { tot_cores <- 1 }
-  n_cores <- min(tot_cores, n_cores)
-  if(verbose) message(paste0("MCMC (","Stan","): requesting ",n_chains," chains on ",n_cores," of ",tot_cores," available cores"))
+  n_cores <- mm_determine_cores(n_cores, n_chains=n_chains, verbose=verbose)
 
   # stan() can't find its own function cpp_object_initializer() unless the
   # namespace is loaded. requireNamespace is somehow not doing this. Thoughts

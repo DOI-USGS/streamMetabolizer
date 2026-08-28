@@ -80,6 +80,7 @@ file.edit(get_specs(mm)$model_path)
 \seealso{
 Other metab_model: 
 \code{\link{metab_Kmodel}},
+\code{\link{metab_bayes_2s}},
 \code{\link{metab_mle}},
 \code{\link{metab_night}},
 \code{\link{metab_sim}}

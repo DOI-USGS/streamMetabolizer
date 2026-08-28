@@ -59,7 +59,10 @@ mm_validate_data <- function(
     # missing_cols was not among the data_tests or the metab_model data were 
     # specified without a timestamp column
     if('na_times' %in% data_tests) {
-      timecol <- grep('date|time', names(dat), value=TRUE)
+      # match against the known timestamp column names rather than a
+      # substring grep for 'date'/'time', which would also match non-
+      # timestamp columns such as 'travel.time'
+      timecol <- intersect(c('solar.time','date'), names(dat))
       if(length(timecol) != 1) stop("in ", data_type, " found ", length(timecol), " possible timestamp columns", call.=FALSE)
       na.times <- which(is.na(dat[[timecol]]))
       if(length(na.times) > 0) {
@@ -84,16 +87,73 @@ mm_validate_data <- function(
         data.units <- get_units(dat)[mismatched.units]
         expected.units <- get_units(expected.data)[mismatched.units]
         stop(paste0("unexpected units in ", data_type, ": ", paste0(
-          "(", 1:length(mismatched.units), ") ", 
+          "(", 1:length(mismatched.units), ") ",
           names(data.units), " = ", data.units, ", expected ", expected.units,
           collapse="; ")), call.=FALSE)
       }
     }
-    
+
+    # check travel.time bounds, if present. only two-station models supply
+    # this column, so this is a no-op for other model types. travel.time is
+    # expected in days; values outside (0, 8/24] either reflect a units
+    # mistake (e.g., minutes or hours rather than days) or a reach whose
+    # travel time exceeds the 8-hour limit needed to keep the previous
+    # day's light from bleeding into the following day's metabolism estimate
+    if('travel.time' %in% names(dat)) {
+      travel.time <- v(dat$travel.time)
+      if(any(travel.time <= 0)) {
+        stop('travel.time must be > 0', call.=FALSE)
+      }
+      if(any(travel.time > 8/24)) {
+        stop('travel.time must be <= 8/24 days (8 hours); values above this either suggest incorrect units ',
+             '(expected days, e.g. not minutes or hours) or a reach travel time that exceeds the 8-hour limit ',
+             "required to prevent the previous day's light conditions from influencing the following day's ",
+             'metabolism estimate', call.=FALSE)
+      }
+    }
+
     # return the data, whose columns may be reordered/filtered
     dat
   })
-  
+
   # return the data.frames, which may have had their columns reordered during validation and are packaged as a list
   return(dat_all)
+}
+
+
+#' Two-station-specific data validation
+#'
+#' Checks the lead-in coverage requirement described in
+#' \code{\link{metab_bayes_2s}}, using the (median) timestep of
+#' \code{data$solar.time} to compute the required lag. Column presence,
+#' timestamp validity, and travel.time bounds are expected to have already
+#' been checked by \code{\link{mm_validate_data}}.
+#'
+#' @param data data.frame as returned by \code{\link{mm_validate_data}} for
+#'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
+#'   \code{travel.time}, sorted ascending by \code{solar.time}.
+#' @keywords internal
+mm_validate_data_2station <- function(data) {
+
+  data_v <- v(data)
+  travel_time <- data_v$travel.time
+  solar_time <- data_v$solar.time
+
+  # there must be enough lead-in rows of upstream DO before the first
+  # modeled row to cover the longest travel time in the dataset. timestep_days
+  # is the median observation interval, in days; max_lag is the number of
+  # timesteps by which upstream data must lead downstream predictions. The
+  # first max_lag rows of data serve only as lead-in and cannot themselves be
+  # modeled, so at least max_lag + 1 rows are required overall.
+  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
+  max_lag <- max(round(travel_time / timestep_days))
+  if(nrow(data) <= max_lag) {
+    lead_in_needed <- max_lag - nrow(data) + 1
+    stop(paste0(
+      'insufficient lead-in data for upstream DO: the longest travel.time implies a lag of ',
+      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; ',
+      'need ', lead_in_needed, ' more lead-in timestep(s) of upstream data before the first modeled row'))
+  }
+
+  invisible(NULL)
 }

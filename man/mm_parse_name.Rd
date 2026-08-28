@@ -11,17 +11,17 @@ mm_parse_name(model_name, expand = FALSE)
 
 \item{expand}{logical: should additional columns such as model_name and
 pool_K600_type be added? If expand=TRUE then the result cannot be passed
-directly back into mm_name, but the additional columns may be helpful for 
+directly back into mm_name, but the additional columns may be helpful for
 interpreting the model structure.}
 }
 \description{
-Returns a data.frame with one column per model structure detail and one row 
-per `model_name` supplied to this function. See \code{?\link{mm_name}} for a 
+Returns a data.frame with one column per model structure detail and one row
+per `model_name` supplied to this function. See \code{?\link{mm_name}} for a
 description of each of the data.frame columns that is returned.
 }
 \details{
-Custom model files (for MCMC) may have additional characters after an 
-underscore at the end of the name and before the prefix. For example, 
+Custom model files (for MCMC) may have additional characters after an
+underscore at the end of the name and before the prefix. For example,
 'b_np_pcpi_eu_ko.stan' and 'b_np_pcpi_eu_ko_v2.stan' are parsed the same; the
 _v2 is ignored by this function.
 }

@@ -250,6 +250,12 @@
 #'   proportional to light (with noise) and is applied to GPP rather than to
 #'   dDO/dt.
 #'
+#' @param K600_lnorm_meanlog hyperparameter for \code{type='bayes_2s'}.
+#'   The mean of a lognormal prior distribution for K600_daily.
+#' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
+#'   standard deviation parameter of a lognormal prior distribution for
+#'   K600_daily.
+#'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
 #'   during the specs() call; need only be revised if you're using a custom
@@ -337,39 +343,39 @@
 #' specs(mm_name(type='bayes', pool_K600='normal'))
 #' @export
 specs <- function(
-  
+
   ## All or several models
-  
+
   model_name = mm_name(),
   engine,
-  
+
   # inheritParams mm_model_by_ply
   day_start = 4,
   day_end = 28,
-  
+
   # inheritParams mm_is_valid_day
   day_tests=c('full_day', 'even_timesteps', 'complete_data', 'pos_discharge', 'pos_depth'),
   required_timestep=NA,
-  
-  
+
+
   ## MLE
-  
+
   # initial values
-  init.GPP.daily = 8, 
+  init.GPP.daily = 8,
   init.Pmax = 10,
   init.alpha = 0.0001,
-  init.ER.daily = -10, 
+  init.ER.daily = -10,
   init.ER20 = -10,
   init.K600.daily = 10,
-  
-  
+
+
   ## Bayes
-  
+
   # model setup
   split_dates,
   keep_mcmcs = TRUE,
   keep_mcmc_data = TRUE,
-  
+
   # hyperparameters for non-hierarchical GPP & ER
   GPP_daily_mu = 3.1,
   GPP_daily_lower = -Inf,
@@ -381,41 +387,41 @@ specs <- function(
   ER_daily_mu = -7.1,
   ER_daily_upper = Inf,
   ER_daily_sigma = 7.1,
-  
+
   # hyperparameters for non-hierarchical K600
   K600_daily_meanlog = log(12),
-  
+
   # hyperparameters for hierarchical K600 - normal
   K600_daily_meanlog_meanlog = log(12),
   K600_daily_meanlog_sdlog = 1.32,
-  
+
   # hyperparameters for hierarchical K600 - linear. defaults should be
   # reasonably constrained, not too wide
   lnK600_lnQ_intercept_mu = 2,
   lnK600_lnQ_intercept_sigma = 2.4,
   lnK600_lnQ_slope_mu = 0,
   lnK600_lnQ_slope_sigma = 0.5,
-  
-  # hyperparameters for hierarchical K600 - binned. K600_daily ~ 
-  # lognormal(K600_daily_nodes_meanlog[lnQ_bin], 
+
+  # hyperparameters for hierarchical K600 - binned. K600_daily ~
+  # lognormal(K600_daily_nodes_meanlog[lnQ_bin],
   # K600_daily_nodes_sdlog[lnQ_bin]) with linear interpolation among bins before
-  # exponentiating. nodes_meanlog and nodes_sdlog may be length b = 
-  # length(K600_daily_lnQ_nodes) or length 1 (to be replicated to length b). 
-  # -8:6 covers almost all points in Raymond et al. 2012 and will therefore 
+  # exponentiating. nodes_meanlog and nodes_sdlog may be length b =
+  # length(K600_daily_lnQ_nodes) or length 1 (to be replicated to length b).
+  # -8:6 covers almost all points in Raymond et al. 2012 and will therefore
   # always be too broad a range for a single stream. -3:3 will catch some
   # streams to rivers as a first cut, though users should still modify
   K600_lnQ_nodes_centers = -3:3, # the x=lnQ values for the nodes
   K600_lnQ_nodediffs_sdlog = 0.5, # for centers 1 apart; for centers 0.2 apart, use 1/5 of this
   K600_lnQ_nodes_meanlog = rep(log(12), length(K600_lnQ_nodes_centers)), # distribs for the y=K600 values of the nodes
   K600_lnQ_nodes_sdlog = rep(1.32, length(K600_lnQ_nodes_centers)),
-  
+
   # hyperparameters for any K pooling or non-pooling strategy
   K600_daily_sdlog = switch(mm_parse_name(model_name)$pool_K600, none=1, normal_sdfixed=0.05, NA),
   K600_daily_sigma = switch(mm_parse_name(model_name)$pool_K600, linear_sdfixed=10, binned_sdfixed=5, NA),
   K600_daily_sdlog_sigma = switch(mm_parse_name(model_name)$pool_K600, normal=0.05, NA),
   K600_daily_sigma_sigma = switch(mm_parse_name(model_name)$pool_K600, linear=1.2, binned=0.24, NA),
   # normal_sdzero, linear_sdzero, and binned_sdzero all have no parameters for this
-  
+
   # hyperparameters for error terms
   err_obs_iid_sigma_scale = 0.03,
   err_proc_iid_sigma_scale = 5,
@@ -423,10 +429,17 @@ specs <- function(
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
   err_mult_GPP_sdlog_sigma = 1,
-  
+
+  # hyperparameters for two-station (bayes_2s) K600. GPP_daily_mu,
+  # GPP_daily_sigma, ER_daily_mu, and ER_daily_sigma above are reused as-is.
+  # These are the sole source of the K600 lognormal prior defaults --
+  # prepdata_bayes_2s() reads them from specs$K600_lnorm_meanlog/sdlog
+  K600_lnorm_meanlog = 2.484907,
+  K600_lnorm_sdlog = 1.0,
+
   # vector of hyperparameters to include as MCMC data
   params_in,
-  
+
   # inheritParams runstan_bayes
   params_out,
   n_chains = 4,
@@ -435,22 +448,22 @@ specs <- function(
   saved_steps = 500,
   thin_steps = 1,
   verbose = FALSE,
-  
-  
+
+
   ## Kmodel
-  
+
   #inheritParams prepdata_Kmodel
   weights = c("K600/CI"), # 'K600/CI' is argued for in stream_metab_usa issue #64
   filters = c(CI.max=NA, discharge.daily.max=NA, velocity.daily.max=NA),
-  
+
   #inheritParams Kmodel_allply
-  predictors = c("discharge.daily"), 
+  predictors = c("discharge.daily"),
   transforms = c(K600='log', date=NA, velocity.daily="log", discharge.daily="log"),
   other_args = c(),
-  
-  
+
+
   ## Sim
-  
+
   # multi-day simulation parameters. already above for bayes:
   # K600_lnQ_nodes_centers, K600_lnQ_nodediffs_sdlog
   K600_lnQ_cnode_meanlog = log(6), # distrib for the y=K600 values of the middle (or just past middle) node
@@ -461,7 +474,7 @@ specs <- function(
     sim_Kb(K600_lnQ_nodes_centers, K600_lnQ_cnode_meanlog, K600_lnQ_cnode_sdlog,
            K600_lnQ_nodediffs_meanlog, K600_lnQ_nodediffs_sdlog)
   },
-  
+
   # daily simulation parameters
   discharge_daily = function(n, ...) rnorm(n, 20, 3),
   DO_mod_1 = NULL,
@@ -471,29 +484,29 @@ specs <- function(
   alpha = function(n, ...) pmax(0, rnorm(n, 0.0001, 0.00002)),
   ER_daily = function(n, ...) pmin(0, rnorm(n, -10, 5)),
   ER20 = function(n, ...) pmin(0, rnorm(n, -10, 4)),
-  
+
   # sub-daily simulation parameters
   err_obs_sigma = 0.01,
   err_obs_phi = 0,
   err_proc_sigma = 0.2,
   err_proc_phi = 0,
   err_round = NA,
-  
+
   # simulation replicability
   sim_seed = NA
-  
+
 ) {
-  
+
   # make it easier to enter custom specs by creating the type-specific default if model_name %in% 'mle', etc.
   if(model_name %in% eval(formals(mm_name)$type))
     model_name <- mm_name(type=model_name)
-  
+
   # check the validity of the model_name against the list of officially accepted model names
   mm_validate_name(model_name)
-  
+
   # parse the model_name
   features <- mm_parse_name(model_name, expand=TRUE)
-  
+
   # collect info about the arguments
   required <- 'model_name'
   all_possible <- names(formals(specs))
@@ -501,11 +514,11 @@ specs <- function(
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
   prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
   prefer_not_missing <- if(features$type == 'bayes' && features$GPP_fun == 'satlight') {
-    c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma') 
+    c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma')
   } else {
     c() # could be made more extensive
   }
-  
+
   # argument checks
   if(any(required %in% yes_missing))
     stop("missing and required argument: ", paste(required[required %in% yes_missing], collapse=", "))
@@ -521,16 +534,16 @@ specs <- function(
   if(length(redundant) > 0) {
     warning("argument[s] that should usually be specified in revise() rather than specs(): ", paste(redundant, collapse=", "))
   }
-  
+
   # collect the defaults + directly specified arguments
   all_specs <- as.list(environment())
-  
+
   # copy/calculate arguments as appropriate to the model
   specs <- list()
   switch(
     features$type,
     'bayes' = {
-      
+
       # list the specs that will make it all the way to the Stan model as data
       all_specs$params_in <- c(
         switch(
@@ -555,27 +568,27 @@ specs <- function(
         if(features$err_proc_iid) 'err_proc_iid_sigma_scale',
         if(features$err_proc_GPP) 'err_mult_GPP_sdlog_sigma'
       )
-      
+
       # list all needed arguments
       included <- c(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
-        
+
         # date ply day_tests
         'day_start', 'day_end', 'day_tests', 'required_timestep',
-        
-        # discharge binning parameters are not params_in, though they're 
+
+        # discharge binning parameters are not params_in, though they're
         # conceptually related and therefore colocated in formals(specs)
         if(features$pool_K600_type == 'binned') c('K600_lnQ_nodes_centers'),
-        
+
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
-        
+
         # inheritParams runstan_bayes
-        'params_out', 'n_chains', 'n_cores', 
+        'params_out', 'n_chains', 'n_cores',
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
-      
+
       # compute some arguments
       if('engine' %in% yes_missing) {
         all_specs$engine <- features$engine
@@ -584,7 +597,7 @@ specs <- function(
         all_specs$split_dates <- switch(
           features$pool_K600_type,
           'none' = FALSE, # pretty sure FALSE is faster. also allows hierarchical error terms
-          'normal'=, 'linear'=, 'binned' = FALSE, 
+          'normal'=, 'linear'=, 'binned' = FALSE,
           stop("unknown pool_K600; unsure how to set split_dates"))
       }
       if(features$pool_K600_type == 'binned') {
@@ -605,7 +618,7 @@ specs <- function(
             none=c(),
             normal=c('K600_daily_predlog'),
             linear=c('K600_daily_predlog', 'lnK600_lnQ_intercept', 'lnK600_lnQ_slope'),
-            binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')), 
+            binned=c('K600_daily_predlog', 'lnK600_lnQ_nodes')),
           if(features$pool_K600_sd == 'fitted')
             switch(
               features$pool_K600_type,
@@ -616,31 +629,85 @@ specs <- function(
           if(features$err_proc_iid) c('err_proc_iid_sigma', 'err_proc_iid'),
           if(features$err_proc_GPP) c('err_proc_GPP', 'GPP_pseudo_R2'))
       }
-      
+
       # check for errors/inconsistencies
       model_path <- tryCatch(
-        mm_locate_filename(model_name), 
+        mm_locate_filename(model_name),
         error=function(e) {
           warning(e)
           return(model_name)
         })
-      if(features$engine == "NA") 
+      if(features$engine == "NA")
         stop('engine must be specified for Bayesian models')
-      
+
+    },
+    'bayes_2s' = {
+
+      # bayes_2s has a single fixed model structure (see
+      # inst/models/b2_np_oi_tr_plrckm.stan), so params_in/params_out are
+      # hardcoded here rather than built up from pool_K600/GPP_fun/ER_fun/
+      # err_* toggles as in the 'bayes' case above
+
+      # the six scalar prior hyperparameters spliced into the Stan data list
+      # by prepdata_bayes_2s()
+      all_specs$params_in <- c(
+        'GPP_daily_mu', 'GPP_daily_sigma',
+        'ER_daily_mu', 'ER_daily_sigma',
+        'K600_lnorm_meanlog', 'K600_lnorm_sdlog')
+
+      # list all needed arguments
+      included <- c(
+        # model setup
+        'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
+
+        # params_in is both a vector of specs to include and a vector to include in specs
+        all_specs$params_in, 'params_in',
+
+        # inheritParams runstan_bayes
+        'params_out', 'n_chains', 'n_cores',
+        'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
+      )
+
+      # compute some arguments
+      if('engine' %in% yes_missing) {
+        all_specs$engine <- 'stan'
+      }
+      if('split_dates' %in% yes_missing) {
+        # forced FALSE: the upstream/downstream lag shift ties consecutive
+        # days together, so days can't be modeled independently
+        all_specs$split_dates <- FALSE
+      }
+      if('params_out' %in% yes_missing) {
+        # 'metab' (the Stan transformed-parameter matrix of modeled
+        # downstream DO) is included so that predict_DO() has a fitted value
+        # to report; without it the model would only yield daily GPP/ER/K600
+        all_specs$params_out <- c('GPP_daily', 'ER_daily', 'K600_daily', 'sigma', 'metab')
+      }
+
+      # check for errors/inconsistencies
+      model_path <- tryCatch(
+        mm_locate_filename(model_name),
+        error=function(e) {
+          warning(e)
+          return(model_name)
+        })
+      if(features$engine == "NA")
+        stop('engine must be specified for Bayesian models')
+
     },
     'mle' = {
       # determine which init values will be needed
       . <- '.dplyr.var'
       init.needs <- paste0('init.', get_param_names(model_name)$required)
-      
+
       # list all needed arguments
       included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep', init.needs)
 
-    }, 
+    },
     'night' = {
       # list all needed arguments
       included <- c('model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep')
-      
+
       # some different defaults for night relative to other models
       if('day_start' %in% yes_missing) {
         all_specs$day_start <- 12
@@ -651,18 +718,18 @@ specs <- function(
       if('day_tests' %in% yes_missing) {
         all_specs$day_tests <- c(day_tests, 'include_sunset')
       }
-      
-    }, 
+
+    },
     'Kmodel' = {
       # list all needed arguments
       included <- c(
         'model_name', 'engine', 'day_start', 'day_end', 'day_tests', 'required_timestep',
         'weights', 'filters', 'predictors', 'transforms', 'other_args')
-      
+
       if('engine' %in% yes_missing) {
         all_specs$engine <- features$engine
       }
-      
+
       # some different defaults for each engine, because no one set of defaults
       # makes sense for all engines
       #if('weights' %in% yes_missing) all_specs$weights <- c("K600/CI") # same for all, so use default as in Usage
@@ -687,12 +754,12 @@ specs <- function(
           if('other_args' %in% yes_missing) all_specs$other_args <- list(possible_args=names(formals('loess'))[-which(names(formals('loess')) %in% c('formula','data','weights'))])
         }
       )
-      
+
     },
     'sim' = {
       # determine which daily parameters will be needed
       par_needs <- gsub('\\.', '_', unlist(get_param_names(model_name)[c('optional','required')]))
-      
+
       # list all needed arguments
       included <- c(
         'model_name', 'day_start', 'day_end', 'day_tests', 'required_timestep',
@@ -701,23 +768,23 @@ specs <- function(
           none=c(),
           normal=stop("pool_K600='normal' unavailable for now; try 'binned' instead"),
           linear=stop("pool_K600='linear' unavailable for now; try 'binned' instead"), # 'discharge_daily', etc.
-          binned=c('K600_lnQ_nodes_centers', 
+          binned=c('K600_lnQ_nodes_centers',
                    'K600_lnQ_cnode_meanlog', 'K600_lnQ_cnode_sdlog', 'K600_lnQ_nodediffs_meanlog', 'K600_lnQ_nodediffs_sdlog',
                    'lnK600_lnQ_nodes')),
         par_needs, 'err_round', 'sim_seed')
-      
+
       if(features$pool_K600 == 'binned') {
         if('K600_lnQ_nodes_centers' %in% yes_missing) # override the default, which is for 'bayes' rather than 'sim'
           all_specs$K600_lnQ_nodes_centers <- function(discharge.daily, ...) calc_bins(log(discharge.daily), 'width', width=0.2)$bounds
       }
     }
   )
-  
+
   # stop if truly irrelevant arguments were given
-  if(length(irrelevant <- not_missing[!(not_missing %in% included)]) > 0) 
+  if(length(irrelevant <- not_missing[!(not_missing %in% included)]) > 0)
     stop("irrelevant argument: ", paste(irrelevant, collapse=", "))
-  
+
   # return just the arguments we actually need
   add_specs_class(all_specs[included])
-  
+
 }

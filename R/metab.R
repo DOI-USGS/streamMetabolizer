@@ -59,11 +59,12 @@ metab <- function(specs=specs(mm_name()), data=v(mm_data(NULL)), data_daily=v(mm
   model_type <- mm_parse_name(specs$model_name)$type
   metab_fun <- switch(
     model_type,
-    bayes  = metab_bayes,
-    Kmodel = metab_Kmodel,
-    mle    = metab_mle,
-    night  = metab_night,
-    sim    = metab_sim)
+    bayes           = metab_bayes,
+    bayes_2s        = metab_bayes_2s,
+    Kmodel          = metab_Kmodel,
+    mle             = metab_mle,
+    night           = metab_night,
+    sim             = metab_sim)
   
   # run the model
   metab_fun(specs=specs, data=data, data_daily=data_daily, info=info)

@@ -1,20 +1,20 @@
 #' Parse a model name into its features
-#' 
-#' Returns a data.frame with one column per model structure detail and one row 
-#' per `model_name` supplied to this function. See \code{?\link{mm_name}} for a 
+#'
+#' Returns a data.frame with one column per model structure detail and one row
+#' per `model_name` supplied to this function. See \code{?\link{mm_name}} for a
 #' description of each of the data.frame columns that is returned.
-#' 
-#' Custom model files (for MCMC) may have additional characters after an 
-#' underscore at the end of the name and before the prefix. For example, 
+#'
+#' Custom model files (for MCMC) may have additional characters after an
+#' underscore at the end of the name and before the prefix. For example,
 #' 'b_np_pcpi_eu_ko.stan' and 'b_np_pcpi_eu_ko_v2.stan' are parsed the same; the
 #' _v2 is ignored by this function.
-#' 
+#'
 #' @seealso The converse of this function is \code{\link{mm_name}}.
-#'   
+#'
 #' @param model_name character: the model name
 #' @param expand logical: should additional columns such as model_name and
 #'   pool_K600_type be added? If expand=TRUE then the result cannot be passed
-#'   directly back into mm_name, but the additional columns may be helpful for 
+#'   directly back into mm_name, but the additional columns may be helpful for
 #'   interpreting the model structure.
 #' @import dplyr
 #' @importFrom stats na.omit
@@ -25,21 +25,24 @@
 mm_parse_name <- function(model_name, expand=FALSE) {
 
   # define function that gets used to parse prk_terms
-  match_or_NA <- function(key, pairs) { 
-    matches <- c(unname(na.omit(key[pairs]))) 
+  match_or_NA <- function(key, pairs) {
+    matches <- c(unname(na.omit(key[pairs])))
     if(length(matches) == 0) {
       'NA'
     } else if(length(matches) > 1) {
-      stop('found too many matches in PRK terms') 
+      stop('found too many matches in PRK terms')
     } else { matches }
   }
 
   # parse the name
   parsed <- strsplit(basename(model_name), "_|\\.")
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
-  type <- unname(c(b='bayes', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
+  # the "_|\\." split regex above handles 'b2' correctly. No change
+  # to the token-extraction logic was needed to support two-station names --
+  # only a new lookup entry below, mapping the 'b2' token to its type name.
+  type <- unname(c(b='bayes', b2='bayes_2s', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
   pool_K600 <- unname(c(
-    np='none', 
+    np='none',
     Kn='normal', Kn0='normal_sdzero', Knx='normal_sdfixed',
     Kl='linear', Kl0='linear_sdzero', Klx='linear_sdfixed',
     Kb='binned', Kb0='binned_sdzero', Kbx='binned_sdfixed',
@@ -59,8 +62,8 @@ mm_parse_name <- function(model_name, expand=FALSE) {
   err_proc_iid <-  grepl('pi', sapply(parsed, `[`, 3))
   err_proc_GPP <-  grepl('pp', sapply(parsed, `[`, 3))
   ode_method <- unname(
-    c(Eu='Euler', pm='pairmeans', tr='trapezoid', r2='rk2', o1='lsoda', o2='lsode', o3='lsodes', 
-      o4='lsodar', o5='vode', o6='daspk', o7='euler', eu='euler', o8='rk4', o9='ode23', o10='ode45', o11='radau', 
+    c(Eu='Euler', pm='pairmeans', tr='trapezoid', r2='rk2', o1='lsoda', o2='lsode', o3='lsodes',
+      o4='lsodar', o5='vode', o6='daspk', o7='euler', eu='euler', o8='rk4', o9='ode23', o10='ode45', o11='radau',
       o12='bdf', o13='bdf_d', o14='adams', o15='impAdams', o16='impAdams_d')[sapply(parsed, `[`, 4)])
   prk_terms <- bind_rows(lapply(parsed, function(parsed1) {
     prk_term <- parsed1[5]
@@ -75,7 +78,7 @@ mm_parse_name <- function(model_name, expand=FALSE) {
   ER_fun <- prk_terms$ER_fun
   deficit_src <- prk_terms$deficit_src
   engine <- sapply(parsed, function(vec) vec[length(vec)]) # the last one - leaves room for custom name endings before the suffix
-  
+
   # combine the parsed pieces into a data.frame
   df <- data.frame(
     model_name=model_name,
@@ -91,10 +94,10 @@ mm_parse_name <- function(model_name, expand=FALSE) {
     GPP_fun=ifelse(is.na(GPP_fun), 'NA', GPP_fun),
     ER_fun=ifelse(is.na(ER_fun), 'NA', ER_fun),
     deficit_src=ifelse(is.na(deficit_src), 'NA', deficit_src),
-    engine=ifelse(is.na(engine), 'NA', engine), 
+    engine=ifelse(is.na(engine), 'NA', engine),
     stringsAsFactors=FALSE)
-  
+
   if(!expand) df$model_name <- df$pool_K600_type <- df$pool_K600_sd <- NULL
-  
+
   df
 }
