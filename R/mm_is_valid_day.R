@@ -54,6 +54,11 @@ mm_is_valid_day <- function(
   
   # initialize vectors
   stop_strs <- character(0)
+  # NA unless the block below computes it: the full_day/even_timesteps guards
+  # below use `&` rather than `&&`, so they evaluate is.finite(timestep.days)
+  # even when neither test was requested. NA makes that FALSE and skips the
+  # test, instead of erroring on a variable that was never assigned
+  timestep.days <- NA
   
   # find the mean timestep if it will be needed
   if(any(c('full_day','even_timesteps') %in% day_tests) || !isTRUE(is.na(required_timestep))) {

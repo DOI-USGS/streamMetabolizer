@@ -93,22 +93,21 @@ mm_validate_data <- function(
       }
     }
 
-    # check travel.time bounds, if present. only two-station models supply
-    # this column, so this is a no-op for other model types. travel.time is
-    # expected in days; values outside (0, 8/24] either reflect a units
-    # mistake (e.g., minutes or hours rather than days) or a reach whose
-    # travel time exceeds the 8-hour limit needed to keep the previous
-    # day's light from bleeding into the following day's metabolism estimate
+    # check travel.time positivity, if present. only two-station models supply
+    # this column, so this is a no-op for other model types: the column filter
+    # above has already dropped travel.time from any dat whose metab_class
+    # doesn't declare it. A zero or negative travel time makes the upstream
+    # lag meaningless, so this is a structural error.
+    #
+    # No upper bound is enforced here. An upper bound on travel time is a
+    # question about individual days, not about the dataset's structure, and
+    # the right response is to drop those days rather than reject the whole
+    # dataset -- something validation's fail-fast contract can't express. That
+    # ceiling now lives in mm_align_2s() (see mm_lag_2s.R).
     if('travel.time' %in% names(dat)) {
       travel.time <- v(dat$travel.time)
       if(any(travel.time <= 0)) {
         stop('travel.time must be > 0', call.=FALSE)
-      }
-      if(any(travel.time > 8/24)) {
-        stop('travel.time must be <= 8/24 days (8 hours); values above this either suggest incorrect units ',
-             '(expected days, e.g. not minutes or hours) or a reach travel time that exceeds the 8-hour limit ',
-             "required to prevent the previous day's light conditions from influencing the following day's ",
-             'metabolism estimate', call.=FALSE)
       }
     }
 
@@ -123,11 +122,18 @@ mm_validate_data <- function(
 
 #' Two-station-specific data validation
 #'
-#' Checks the lead-in coverage requirement described in
-#' \code{\link{metab_bayes_2s}}, using the (median) timestep of
-#' \code{data$solar.time} to compute the required lag. Column presence,
-#' timestamp validity, and travel.time bounds are expected to have already
-#' been checked by \code{\link{mm_validate_data}}.
+#' Checks the lead-in existence requirement specific to
+#' \code{\link{metab_bayes_2s}}: at least one row must have a real upstream
+#' observation at its target travel-time offset, per \code{\link{mm_lag_2s}}'s
+#' timestep-bin matching. This is a structural question -- is there any data
+#' at all to lag from? -- and so belongs with validation's other fail-fast
+#' checks.
+#'
+#' Rows that individually lack lead-in are not an error; they are dropped as
+#' lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
+#' owns the per-day travel-time ceiling. Column presence, timestamp validity,
+#' and travel.time positivity are expected to have already been checked by
+#' \code{\link{mm_validate_data}}.
 #'
 #' @param data data.frame as returned by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
@@ -136,23 +142,19 @@ mm_validate_data <- function(
 mm_validate_data_2station <- function(data) {
 
   data_v <- v(data)
-  travel_time <- data_v$travel.time
-  solar_time <- data_v$solar.time
 
-  # there must be enough lead-in rows of upstream DO before the first
-  # modeled row to cover the longest travel time in the dataset. timestep_days
-  # is the median observation interval, in days; max_lag is the number of
-  # timesteps by which upstream data must lead downstream predictions. The
-  # first max_lag rows of data serve only as lead-in and cannot themselves be
-  # modeled, so at least max_lag + 1 rows are required overall.
-  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
-  max_lag <- max(round(travel_time / timestep_days))
-  if(nrow(data) <= max_lag) {
-    lead_in_needed <- max_lag - nrow(data) + 1
+  # shared with prepdata_bayes_2s() and metab_bayes_2s() via mm_lag_2s(), so
+  # the lag computed here can't drift from the one they apply
+  lagged <- mm_lag_2s(data_v$solar.time, data_v$travel.time)
+
+  if(!any(lagged$has_leadin)) {
+    max_lag <- max(lagged$lag)
     stop(paste0(
-      'insufficient lead-in data for upstream DO: the longest travel.time implies a lag of ',
-      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; ',
-      'need ', lead_in_needed, ' more lead-in timestep(s) of upstream data before the first modeled row'))
+      'insufficient lead-in data for upstream DO: no row has a real upstream ',
+      'observation at its target travel-time offset. The longest travel.time implies a lag of ',
+      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; this usually means ',
+      'lead-in upstream data is needed before the first row to be modeled, though sufficiently ',
+      'sparse or gappy data could produce the same error'))
   }
 
   invisible(NULL)

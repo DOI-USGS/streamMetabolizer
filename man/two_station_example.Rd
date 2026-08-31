@@ -5,7 +5,7 @@
 \alias{two_station_example}
 \title{Example two-station (VFTS) input data}
 \format{
-A data.frame with 2904 rows and the 9 columns expected by
+A data.frame with 159072 rows and the 9 columns expected by
   \code{\link{metab_bayes_2s}}'s \code{data} argument, each carrying
   \code{\link[unitted]{unitted}} units matching \code{\link{mm_data}}:
   \describe{
@@ -18,15 +18,29 @@ A data.frame with 2904 rows and the 9 columns expected by
       station, mgO2 L^-1}
     \item{DO.sat.down}{dissolved oxygen at equilibrium saturation at the
       downstream station, mgO2 L^-1}
-    \item{light}{photosynthetically active radiation, umol m^-2 s^-1}
+    \item{light}{within-day light proportion: light reaching the reach
+      between each pair of upstream and downstream timepoints, summed over
+      the upstream travel-time window and divided by that day's total
+      light sum (Bishop et al. 2026 Eq. 2); unitless, range 0-1. Matches
+      the quantity computed by \code{\link{mm_lag_light_2s}}, not the raw
+      photosynthetically active radiation documented for \code{light} in
+      \code{\link{mm_data}}.}
     \item{depth}{reach depth, m}
     \item{temp.water}{water temperature at the downstream station, degC}
     \item{travel.time}{reach travel time between the upstream and
       downstream stations, d}
   }
+
+  Fitting all 1551 days at once is a long computation; subset to a handful
+  of days for interactive use.
 }
 \source{
-Filtered to \code{model_run == 'VFTS-2'}; see
+Drawn from the \code{VFTS-2} (variable-travel-time) run, except for
+  the two upstream oxygen columns, which come from the same file's
+  \code{VFTS-3} run. Both runs cover the same reach and the same physical
+  sensors, but \code{VFTS-3} was run at a single fixed travel time, and only
+  its constant shift can be undone exactly to recover the contemporaneous
+  upstream series this dataset needs. See
   \code{data-raw/two_station_example.R} for the extraction/renaming code.
 
   Bishop, I.W., Deemer, B.R., Kennedy, T.A., Payn, R.A., Hall Jr, R.O. and
@@ -42,14 +56,32 @@ Filtered to \code{model_run == 'VFTS-2'}; see
 two_station_example
 }
 \description{
-A 30-day example dataset for fitting a two-station (upstream/downstream,
+A six-year example dataset for fitting a two-station (upstream/downstream,
 Variable Flow Two-Station) metabolism model with
-\code{\link{metab_bayes_2s}}. It is a subset of the \code{VFTS-2}
+\code{\link{metab_bayes_2s}}. It is the complete \code{VFTS-2}
 (variable-travel-time) run from the published two-station metabolism modeling
-dataset for a reach of the Colorado River in Glen Canyon, covering 2011-07-31
-through 2011-08-29 at the source data's native 15-minute timestep, plus a
-lead-in block of upstream DO observations (exactly as long as the longest
-travel time in the dataset requires -- see \code{\link{metab_bayes_2s}}'s
-"Two-station data requirements" section) immediately before 2011-07-31.
+dataset for a reach of the Colorado River in Glen Canyon, covering
+2008-03-11 through 2014-02-28 at the source data's native 15-minute
+timestep.
+}
+\details{
+The record is shipped whole rather than trimmed to a clean stretch, so it
+still contains the 90 interruptions the sensors actually produced -- every
+one of them a full day or longer. Combined with the 06:00-06:00 day window
+(two-station days do not run midnight to midnight), the 1748 calendar
+dates spanned here yield 1551 modeled days: 91 do not fill a complete
+24-hour window, and a further 15 hold gaps in their upstream oxygen
+columns. Days dropped for either reason are reported as
+\code{valid_day=FALSE} rather than silently omitted.
+
+The upstream and downstream oxygen columns are contemporaneous: the
+\code{DO.obs.up} value on a given row was measured at that row's own
+\code{solar.time}, not at the earlier time the water left the upstream
+station. Pairing each downstream observation with the upstream water that
+became it is done during fitting, using \code{travel.time}; each modeled
+row therefore reaches back to an earlier row for its upstream value, and
+rows with no such row available (at the very start of the record, and
+immediately after each gap) are not modeled. Stored data must not have that
+shift already applied.
 }
 \keyword{datasets}

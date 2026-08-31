@@ -6,8 +6,12 @@
 \usage{
 metab_bayes_2s(
   specs = specs(mm_name("bayes_2s")),
-  data = mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down, light,
-    depth, temp.water, travel.time),
+  data = {
+     d <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
+    light, depth, temp.water, travel.time)
+     d$light <- u(v(d$light), NA)
+     d
+ },
   data_daily = mm_data(date, optional = "all"),
   info = NULL
 )
@@ -47,26 +51,110 @@ in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See \code{\link{mm_name}} to
 choose a Bayesian model and \code{\link{specs}} for relevant options for the
 \code{specs} argument.
 }
-\details{
-Unlike \code{\link{metab_bayes}}, which supports many model structures via
-\code{split_dates}/\code{pool_K600}/etc., \code{metab_bayes_2s} always
-fits every date jointly in a single Stan call (\code{specs$split_dates} is
-forced to \code{FALSE} by \code{\link{specs}}), because the
-upstream-downstream lag shift ties each date's first modeled rows to the
-previous date's last rows.
+\section{Fitting all dates at once, or one at a time}{
+ With
+  \code{specs$split_dates=FALSE} (the default) every date is fitted
+  together in a single Stan call; with \code{TRUE}, each date is fitted in
+  its own call. The difference that matters is the observation-error
+  \code{sigma}: the Stan model carries one \code{sigma} shared across
+  whatever dates it is given, so fitting dates one at a time estimates a
+  separate \code{sigma} per date instead of one pooled across the record
+  -- the same tradeoff one-station's \code{split_dates=TRUE} makes on a
+  structurally identical model. Joint fitting is the default because the
+  pooled estimate uses the whole record; splitting is useful when dates
+  should not share an error estimate, or to keep one unfittable date from
+  costing the whole run, since each date's errors are collected and
+  reported against that date alone.
+
+  Fitting one date at a time does not mean slicing the data by date: each
+  date's upstream observations are drawn from earlier rows, across the
+  date boundary, exactly as in the joint fit.
 }
+
+\section{Two-station day window}{
+ Two-station days run 06:00-06:00 (24
+  hours) -- unrelated to the one-station models' overlapping 4 AM/28-hour
+  \code{day_start}/\code{day_end} window, which is not a partition of the
+  time series; the two are not interchangeable. Days that do not fill the
+  window -- at the edges of a dataset whose bounds don't fall on 06:00, or
+  where observations are missing and the gap was too long to bridge (see
+  the next section) -- are dropped with a message and reported as invalid
+  days in the results.
+}
+
+\section{Gap filling}{
+ Brief interruptions in the record are bridged by
+  linear interpolation before day completeness is assessed, so a day
+  marred by a short sensor dropout can be modeled rather than discarded.
+  Missing timesteps and \code{NA} values are treated alike, and a gap is
+  measured by the time it spans rather than by how many rows are missing
+  across it. Runs longer than \code{specs$max_gap_hours} (1 hour by
+  default, configurable up to 2) are left untouched, and the days holding
+  them are dropped: the policy is deliberately two-tier, because the Stan
+  model's fixed-shape matrices cannot represent a partially observed day.
+  Gaps at the very start or end of the record are never filled, since
+  interpolation there would mean extrapolating from one side.
+
+  Two consequences follow. First, the returned model's data -- what
+  \code{\link{get_data}} and \code{\link{predict_DO}} report -- covers the
+  filled timesteps too, so it can hold rows that were not in the
+  \code{data} argument, and \code{predict_DO} returns predictions at those
+  timesteps accordingly. Second, if \code{data} was prepared by
+  \code{\link{mm_format_data_2s}} its gaps are already filled and nothing
+  happens here; but data formatted by hand already holds \code{light} as
+  the within-day proportion rather than raw light, and interpolating an
+  already-normalized value is an approximation, since the day total it
+  was divided by is itself short by the missing terms. Supplying raw
+  light to \code{\link{mm_format_data_2s}} and letting it do the
+  conversion avoids that.
+}
+
 \section{Two-station data requirements}{
  In addition to the checks
-  performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
-  reach travel time between the upstream and downstream stations, in days)
-  must be strictly positive and no greater than 8/24 days (8 hours).
-  Values above this limit either indicate travel time was supplied in the
-  wrong units (e.g., minutes or hours instead of days), or reflect a reach
-  whose actual travel time exceeds the 8-hour limit required to prevent
-  the previous day's light conditions from influencing the following
-  day's metabolism estimate. There must also be enough lead-in
-  observations of upstream DO before the first row of \code{data} to
-  cover the longest travel time in the dataset.
+  performed by \code{\link{mm_validate_data}}, \code{data$travel.time}
+  (the reach travel time between stations, in days) must be strictly
+  positive, and at least one row must have enough preceding observations
+  of upstream DO to cover its own travel time. Rows at the start of
+  \code{data} that lack that lead-in are not an error: they serve as
+  lead-in only, supplying upstream DO for later rows without being
+  modeled themselves.
+
+  Travel time is also subject to a ceiling, \code{specs$
+  max_travel_time_hours} (10 hours by default, configurable up to 12):
+  beyond it, a day's upstream parcel originates before the day's own
+  06:00 start, where the light it experienced no longer has a
+  well-defined day total to be a proportion of. Days exceeding the
+  ceiling are dropped with a message rather than treated as an error,
+  since the remaining days are unaffected. A travel time far above the
+  ceiling usually means the column was supplied in the wrong units --
+  days are expected, not minutes or hours.
+}
+
+\section{Day validity tests}{
+ the checks above concern a day's structure --
+  does it fill its window, is its travel time usable. \code{specs$day_tests}
+  covers the data itself, and defaults to
+  \code{c('complete_data', 'pos_depth')}: a day is dropped if any value it
+  would be modeled from is \code{NA}, or if its depth is not positive.
+  Neither can be modeled around, and one bad day fails \emph{every} date of
+  a joint fit with a diagnostic naming neither the column nor the day.
+
+  The values tested are the ones the day is modeled from, not the rows
+  falling inside it: a day's upstream DO comes from one travel time
+  earlier, routinely from the preceding day's rows.
+
+  Only a subset of the one-station tests is accepted: \code{full_day} and
+  \code{even_timesteps} are rejected, each rejecting nearly every
+  two-station day.
+}
+
+\section{Dropped days in the results}{
+ a day dropped for any reason above
+  never reaches Stan, but is not omitted from the results either. It appears
+  among the daily estimates as a \code{valid_day=FALSE} row with \code{NA}
+  values and the reason in its \code{errors} column, so that every date
+  supplied in \code{data} is accounted for. Instantaneous predictions cover
+  only the modeled timesteps, a dropped day having none to report.
 }
 
 \seealso{
