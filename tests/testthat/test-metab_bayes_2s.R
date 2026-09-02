@@ -169,30 +169,31 @@ test_that("output matrices have n_obs x n_days dimensions", {
 
 test_that("all required Stan data block variables are present", {
   dat <- make_ts_data()
-  # K600_lnorm_meanlog/sdlog are owned by specs() (see PR D-6/I1); pass
-  # distinctive marker values here to confirm prepdata_bayes_2s() just reads
-  # them through from specs rather than computing its own defaults
-  out <- prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=1.23, K600_lnorm_sdlog=4.56))
+  # k600_velocity_lnorm_meanlog/sdlog are owned by specs() (see PR D-6/I1);
+  # pass distinctive marker values here to confirm prepdata_bayes_2s() just
+  # reads them through from specs rather than computing its own defaults
+  out <- prepdata_bayes_2s(dat, specs=list(k600_velocity_lnorm_meanlog=1.23, k600_velocity_lnorm_sdlog=4.56))
 
   expected_names <- c(
     'n_obs','n_days','DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down',
-    'light','depth','temp_water','travel_time','K600_lnorm_meanlog','K600_lnorm_sdlog')
+    'light','depth','temp_water','travel_time',
+    'k600_velocity_lnorm_meanlog','k600_velocity_lnorm_sdlog')
   expect_true(all(expected_names %in% names(out)))
 
-  expect_equal(out$K600_lnorm_meanlog, 1.23)
-  expect_equal(out$K600_lnorm_sdlog, 4.56)
+  expect_equal(out$k600_velocity_lnorm_meanlog, 1.23)
+  expect_equal(out$k600_velocity_lnorm_sdlog, 4.56)
 })
 
 test_that("units are stripped from all numeric outputs", {
   dat <- make_ts_data(unitted=TRUE)
   expect_true(is.unitted(dat))
 
-  out <- prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0))
+  out <- prepdata_bayes_2s(dat, specs=list(k600_velocity_lnorm_meanlog=log(3.48), k600_velocity_lnorm_sdlog=0.5))
   for(varname in c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down','light','depth','temp_water','travel_time')) {
     expect_false(is.unitted(out[[varname]]), info=varname)
   }
-  expect_false(is.unitted(out$K600_lnorm_meanlog))
-  expect_false(is.unitted(out$K600_lnorm_sdlog))
+  expect_false(is.unitted(out$k600_velocity_lnorm_meanlog))
+  expect_false(is.unitted(out$k600_velocity_lnorm_sdlog))
   expect_false(is.unitted(out$n_obs))
   expect_false(is.unitted(out$n_days))
 })
@@ -295,7 +296,7 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
     DO.obs.down = rep(8.8, n), DO.sat.down = rep(9.9, n),
     light = light_lag, depth = rep(0.5, n), temp.water = rep(20, n),
     travel.time = travel.time)
-  expect_silent(prepdata_bayes_2s(dat, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0), aln=aln))
+  expect_silent(prepdata_bayes_2s(dat, specs=list(k600_velocity_lnorm_meanlog=log(3.48), k600_velocity_lnorm_sdlog=0.5), aln=aln))
 })
 
 test_that("prepdata_bayes_2s() errors clearly if a complete day's data is NA (defensive check)", {
@@ -509,10 +510,45 @@ test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/spli
   expect_equal(
     sp$params_in,
     c('GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma',
-      'K600_lnorm_meanlog', 'K600_lnorm_sdlog'))
+      'k600_velocity_lnorm_meanlog', 'k600_velocity_lnorm_sdlog'))
+  # K600_daily stays in params_out even though it is no longer a fitted
+  # parameter: the model reports it as a generated quantity
   expect_equal(sp$params_out, c('GPP_daily', 'ER_daily', 'K600_daily', 'sigma', 'metab'))
   expect_false(sp$split_dates)
   expect_equal(sp$engine, 'stan')
+})
+
+test_that("specs(mm_name('bayes_2s')) defaults the gas exchange prior to the velocity scale", {
+  # the prior is on k600_velocity (m d^-1), not on a rate-scale K600 (d^-1):
+  # the model divides it by each timestep's depth. Pinning the values here
+  # so a drift back toward the one-station K600_daily_meanlog convention
+  # (log(12)), which would double-apply the depth normalization, fails loudly
+  sp <- specs(mm_name('bayes_2s'))
+  expect_equal(sp$k600_velocity_lnorm_meanlog, log(3.48))
+  expect_equal(sp$k600_velocity_lnorm_sdlog, 0.5)
+  expect_null(sp$K600_lnorm_meanlog)
+  expect_null(sp$K600_lnorm_sdlog)
+})
+
+test_that("the two-station Stan model fits a velocity-scale k600 and reports a rate-scale K600_daily", {
+  # a text-level contract test on the model file, so it costs no compile.
+  # Guards the specific error this model has already made once: a
+  # rate-scale parameter fed into a formula that divides by depth
+  stan_code <- readLines(mm_locate_filename(mm_name('bayes_2s')))
+
+  # the fitted parameter is velocity-scale, and takes the velocity-scale prior
+  expect_match(stan_code, '^\\s*vector<lower=0>\\[n_days\\] k600_velocity;', all=FALSE)
+  expect_match(stan_code, 'k600_velocity\\[i\\] ~ lognormal\\(k600_velocity_lnorm_meanlog, k600_velocity_lnorm_sdlog\\);', all=FALSE)
+  expect_false(any(grepl('K600_daily\\s*;\\s*$|\\[n_days\\] K600_daily;', stan_code[seq_len(which(grepl('^transformed parameters', stan_code))[1])])))
+
+  # depth normalization happens exactly once, on the velocity-scale parameter
+  expect_equal(sum(grepl('k600_velocity\\[t\\] / depth\\[i,t\\]', stan_code)), 1L)
+
+  # K600_daily is reported as a generated quantity, so downstream consumers
+  # (mm_na_daily(), get_params(), predict_metab()) still find it by name
+  gq_start <- which(grepl('^generated quantities', stan_code))
+  expect_length(gq_start, 1L)
+  expect_match(stan_code[gq_start:length(stan_code)], 'vector\\[n_days\\] K600_daily;', all=FALSE)
 })
 
 
@@ -883,6 +919,41 @@ test_that("metab_bayes_2s(split_dates=TRUE) fits per date and returns the joint 
   pm <- predict_metab(split)
   expect_true(all(pm$GPP > 0)); expect_true(all(pm$ER < 0)); expect_true(all(pm$K600 > 0))
   expect_false(anyDuplicated(pm$GPP) > 0)
+})
+
+test_that("reported K600_daily is the day's velocity-scale k600 divided by depth, not the prior itself", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  # The units test. A prior tight enough to dominate the likelihood pins
+  # k600_velocity at its median, so the reported K600_daily has a value that
+  # can be predicted in closed form: mean(k600 / depth) over the day's
+  # modeled timesteps. Getting the prior's own scale back instead would mean
+  # the depth division had been dropped; getting that value divided by depth
+  # a second time would mean it had been applied twice.
+  k600 <- 3.48
+  sp <- revise(fast_2station_specs(),
+               k600_velocity_lnorm_meanlog=log(k600),
+               k600_velocity_lnorm_sdlog=0.01)
+  dat <- subset_2station_days(two_station_example, 2)
+
+  mm <- suppressMessages(metab_bayes_2s(specs=sp, data=dat))
+  fit <- get_fit(mm)$daily
+
+  # the same rows the model was fitted from, so the depths match cell for cell
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  modeled <- mm_modeled_rows_2s(v(dat), aln)
+  expected <- vapply(
+    fit$date,
+    function(dt) mean(k600 / modeled$depth[aln$date == dt]),
+    numeric(1))
+
+  expect_equal(fit$K600_daily_50pct, expected, tolerance=0.05)
+
+  # and the scale really is distinguishable: this reach is deep enough that
+  # the rate differs from the velocity by several fold, so the assertion
+  # above would fail if the depth division went missing
+  expect_true(all(expected < k600 / 2))
 })
 
 test_that("the mcmc slot holds one stanfit jointly and a date-named list per day, as for one-station", {

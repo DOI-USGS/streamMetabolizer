@@ -250,11 +250,18 @@
 #'   proportional to light (with noise) and is applied to GPP rather than to
 #'   dDO/dt.
 #'
-#' @param K600_lnorm_meanlog hyperparameter for \code{type='bayes_2s'}.
-#'   The mean of a lognormal prior distribution for K600_daily.
-#' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
-#'   standard deviation parameter of a lognormal prior distribution for
-#'   K600_daily.
+#' @param k600_velocity_lnorm_meanlog hyperparameter for
+#'   \code{type='bayes_2s'}. The meanlog of a lognormal prior distribution
+#'   for the daily gas exchange velocity (m d^-1), which is held constant
+#'   within a day and divided by each timestep's depth to give the rate of
+#'   reaeration used in the model. The daily mean of that rate is what the
+#'   model reports as K600_daily (d^-1), so this prior is on a different
+#'   quantity than the one-station \code{K600_daily_meanlog} and the two
+#'   take different values.
+#' @param k600_velocity_lnorm_sdlog hyperparameter for
+#'   \code{type='bayes_2s'}. The sdlog (standard deviation parameter) of the
+#'   lognormal prior distribution described for
+#'   \code{k600_velocity_lnorm_meanlog}.
 #' @param max_travel_time_hours for \code{type='bayes_2s'}. The travel-time
 #'   ceiling, in hours: days whose longest \code{travel.time} exceeds this are
 #'   dropped, with a message, rather than modeled (see
@@ -441,17 +448,22 @@ specs <- function(
   err_proc_acor_sigma_scale = 1,
   err_mult_GPP_sdlog_sigma = 1,
 
-  # hyperparameters for two-station (bayes_2s) K600. GPP_daily_mu,
+  # hyperparameters for two-station (bayes_2s) gas exchange. GPP_daily_mu,
   # GPP_daily_sigma, ER_daily_mu, and ER_daily_sigma above are reused as-is.
-  # These are the sole source of the K600 lognormal prior defaults --
-  # prepdata_bayes_2s() reads them from specs$K600_lnorm_meanlog/sdlog
-  K600_lnorm_meanlog = 2.484907,
-  K600_lnorm_sdlog = 1.0,
+  # These are the sole source of the lognormal prior defaults --
+  # prepdata_bayes_2s() reads them from
+  # specs$k600_velocity_lnorm_meanlog/sdlog. The prior is on the
+  # velocity-scale k600 (m d^-1), which the model divides by each timestep's
+  # depth; the reported K600_daily is the resulting daily mean rate (d^-1),
+  # so these are not interchangeable with the one-station
+  # K600_daily_meanlog/sdlog above
+  k600_velocity_lnorm_meanlog = log(3.48),
+  k600_velocity_lnorm_sdlog = 0.5,
 
   # two-station travel-time ceiling, in hours. read by prepdata_bayes_2s() and
   # metab_bayes_2s(), both of which pass it to mm_align_2s(). unlike the
-  # K600_lnorm_* hyperparameters above it is not spliced into the Stan data
-  # list, so it is not part of params_in.
+  # k600_velocity_lnorm_* hyperparameters above it is not spliced into the
+  # Stan data list, so it is not part of params_in.
   max_travel_time_hours = mm_max_travel_time_default,
 
   # two-station gap-filling tolerance, in hours. read by metab_bayes_2s(),
@@ -681,7 +693,7 @@ specs <- function(
       all_specs$params_in <- c(
         'GPP_daily_mu', 'GPP_daily_sigma',
         'ER_daily_mu', 'ER_daily_sigma',
-        'K600_lnorm_meanlog', 'K600_lnorm_sdlog')
+        'k600_velocity_lnorm_meanlog', 'k600_velocity_lnorm_sdlog')
 
       # list all needed arguments
       included <- c(

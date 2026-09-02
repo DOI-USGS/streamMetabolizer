@@ -215,9 +215,9 @@ metab_bayes_2s <- function(
       #
       # Prepare the Stan data list (matrices from data, plus scalar priors
       # from specs). modifyList (not c()) is used because prepdata_bayes_2s()
-      # already supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from
-      # specs), and those two names are also in specs$params_in; a plain c()
-      # would create duplicate-named list elements instead of overriding.
+      # already supplies k600_velocity_lnorm_meanlog/sdlog (read from specs),
+      # and those two names are also in specs$params_in; a plain c() would
+      # create duplicate-named list elements instead of overriding.
       #
       # Prepared here, outside bayes_1fit_2s(), so that data problems
       # prepdata_bayes_2s() detects (NA light in an otherwise complete day,
@@ -674,7 +674,8 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #'   include the lead-in rows required to cover the longest travel time (see
 #'   \code{\link{metab_bayes_2s}}).
 #' @param specs a list of model specs (see \code{\link{specs}}), expected to
-#'   already contain \code{K600_lnorm_meanlog} and \code{K600_lnorm_sdlog}
+#'   already contain \code{k600_velocity_lnorm_meanlog} and
+#'   \code{k600_velocity_lnorm_sdlog}
 #'   -- e.g., the object returned by \code{specs(mm_name('bayes_2s'))}, which
 #'   populates them with sensible defaults. This function does not supply
 #'   its own fallback values; if \code{specs} is omitted or missing these
@@ -690,7 +691,8 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #'   \code{n_obs}, \code{n_days}, \code{DO_obs_up}, \code{DO_sat_up},
 #'   \code{DO_obs_down}, \code{DO_sat_down}, \code{light}, \code{depth},
 #'   \code{temp_water}, \code{travel_time} (each an \code{n_obs x n_days}
-#'   matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
+#'   matrix, unitless), and the velocity-scale gas exchange prior
+#'   \code{k600_velocity_lnorm_meanlog}/\code{k600_velocity_lnorm_sdlog}
 #' @importFrom unitted v
 #' @keywords internal
 prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
@@ -757,8 +759,8 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
     depth = to_matrix(modeled$depth),
     temp_water = to_matrix(modeled$temp.water),
     travel_time = to_matrix(modeled$travel.time),
-    K600_lnorm_meanlog = specs$K600_lnorm_meanlog,
-    K600_lnorm_sdlog = specs$K600_lnorm_sdlog
+    k600_velocity_lnorm_meanlog = specs$k600_velocity_lnorm_meanlog,
+    k600_velocity_lnorm_sdlog = specs$k600_velocity_lnorm_sdlog
   )
 }
 

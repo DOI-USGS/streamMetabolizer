@@ -17,7 +17,8 @@ include the lead-in rows required to cover the longest travel time (see
 \code{\link{metab_bayes_2s}}).}
 
 \item{specs}{a list of model specs (see \code{\link{specs}}), expected to
-already contain \code{K600_lnorm_meanlog} and \code{K600_lnorm_sdlog}
+already contain \code{k600_velocity_lnorm_meanlog} and
+\code{k600_velocity_lnorm_sdlog}
 -- e.g., the object returned by \code{specs(mm_name('bayes_2s'))}, which
 populates them with sensible defaults. This function does not supply
 its own fallback values; if \code{specs} is omitted or missing these
@@ -36,7 +37,8 @@ a named list with all variables in the Stan model's data block:
   \code{n_obs}, \code{n_days}, \code{DO_obs_up}, \code{DO_sat_up},
   \code{DO_obs_down}, \code{DO_sat_down}, \code{light}, \code{depth},
   \code{temp_water}, \code{travel_time} (each an \code{n_obs x n_days}
-  matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
+  matrix, unitless), and the velocity-scale gas exchange prior
+  \code{k600_velocity_lnorm_meanlog}/\code{k600_velocity_lnorm_sdlog}
 }
 \description{
 Time-shifts the upstream DO series to match the travel time between
