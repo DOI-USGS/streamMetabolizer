@@ -55,8 +55,8 @@ specs(
   err_proc_acor_phi_beta = 1,
   err_proc_acor_sigma_scale = 1,
   err_mult_GPP_sdlog_sigma = 1,
-  K600_lnorm_meanlog = 2.484907,
-  K600_lnorm_sdlog = 1,
+  k600_velocity_lnorm_meanlog = log(3.48),
+  k600_velocity_lnorm_sdlog = 0.5,
   max_travel_time_hours = mm_max_travel_time_default,
   max_gap_hours = mm_max_gap_hours_default,
   params_in,
@@ -342,12 +342,19 @@ estimate GPP_inst. The effect is a special kind of process error that is
 proportional to light (with noise) and is applied to GPP rather than to
 dDO/dt.}
 
-\item{K600_lnorm_meanlog}{hyperparameter for \code{type='bayes_2s'}.
-The mean of a lognormal prior distribution for K600_daily.}
+\item{k600_velocity_lnorm_meanlog}{hyperparameter for
+\code{type='bayes_2s'}. The meanlog of a lognormal prior distribution
+for the daily gas exchange velocity (m d^-1), which is held constant
+within a day and divided by each timestep's depth to give the rate of
+reaeration used in the model. The daily mean of that rate is what the
+model reports as K600_daily (d^-1), so this prior is on a different
+quantity than the one-station \code{K600_daily_meanlog} and the two
+take different values.}
 
-\item{K600_lnorm_sdlog}{hyperparameter for \code{type='bayes_2s'}. The
-standard deviation parameter of a lognormal prior distribution for
-K600_daily.}
+\item{k600_velocity_lnorm_sdlog}{hyperparameter for
+\code{type='bayes_2s'}. The sdlog (standard deviation parameter) of the
+lognormal prior distribution described for
+\code{k600_velocity_lnorm_meanlog}.}
 
 \item{max_travel_time_hours}{for \code{type='bayes_2s'}. The travel-time
 ceiling, in hours: days whose longest \code{travel.time} exceeds this are
