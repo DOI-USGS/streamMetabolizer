@@ -1,0 +1,193 @@
+---
+title: "Two-Station Models: Estimating Travel Time"
+author: "Two-Station Team"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two-Station Models: Estimating Travel Time}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=80)
+```
+
+```{r libs, warning=FALSE, message=FALSE}
+library(streamMetabolizer)
+library(dplyr)
+```
+
+This vignette continues from [Two-Station Models](two_station.html). It 
+describes how to estimate the `travel.time` input, which is a required 
+input for the two-station model. Travel time is not computed by 
+`streamMetabolizer` — you supply it, as the `travel.time` column, in units 
+of fractional days. It's specific to two-station methods: because the model tracks a parcel of
+water as it moves between stations, and variable-flow reaches like
+hydropeaking tailwaters have travel times that themselves change through
+the day, getting this input right matters for the estimates that follow.
+
+The variable-flow two-station (VFTS) method of Bishop et al. (2026)
+compares four ways of estimating travel time, ordered here from most
+data-intensive/accurate to simplest/coarsest.
+
+## Detailed hydraulic modeling
+
+The most accurate approach Bishop et al. compared, an agent-based
+particle-tracker model producing per-timestep travel times (their
+`VFTS-PT` scenario, and the basis of the more mechanistically detailed
+coupled metabolic-hydraulic model of Payn et al. 2017), is also the most
+computationally demanding and requires considerably more technical setup
+than the other three. It's outside what `streamMetabolizer` itself
+provides; see Payn et al. (2017) for an example with this level of
+detail.
+
+## Natural tracer (specific conductivity)
+
+Rather than injecting a tracer, Bishop et al. (2026) take advantage of
+conductivity variation already present in the source water. In their
+site, the Colorado River below Glen Canyon Dam, conductivity varies
+because the upstream reservoir (Lake Powell) is stratified: the
+epilimnion and hypolimnion differ by roughly 250 µS/cm on average, with
+additional fresher pulses from snowmelt inflow. A distinctive
+conductivity peak recorded at the upstream sensor can be matched to the
+same feature arriving hours later at the downstream sensor; the time
+between them is the travel time for that water parcel.
+
+This works when the source water has a naturally variable signal to
+track, which isn't guaranteed at every site, the paper notes specific
+conductivity isn't a truly conservative tracer, though it performed well
+for their reach. An injected conservative tracer (e.g., bromide) is an
+alternative where no natural signal exists.
+
+A simplified demonstration, loosely following the peak-matching shown in
+Bishop et al.'s Figure 2A:
+
+```{r ts_conductivity_demo}
+set.seed(2011)
+
+# 24 hours at 15-minute resolution (96 obs/day, matching Bishop et al. 2026)
+times <- seq(as.POSIXct("2011-08-02 00:00:00", tz="UTC"),
+             as.POSIXct("2011-08-03 00:00:00", tz="UTC"),
+             by="15 min")
+
+# Simulated upriver specific conductivity (uS/cm), with one distinct peak
+cond_up <- 650 + 20 * exp(-((as.numeric(times) - as.numeric(times[40]))^2) /
+                             (2 * (3600 * 2)^2)) +
+  rnorm(length(times), sd = 1.5)
+
+# Downriver trace: same peak, arriving ~6 hours later
+travel_time_true_hr <- 6
+shift_steps <- round(travel_time_true_hr * 60 / 15)
+cond_down <- c(rep(645, shift_steps), cond_up[1:(length(cond_up) - shift_steps)]) +
+  rnorm(length(times), sd = 1.5)
+
+# Locate the peak in each trace and compute the offset
+peak_up_idx <- which.max(cond_up)
+peak_down_idx <- which.max(cond_down)
+
+travel_time_hr <- as.numeric(difftime(times[peak_down_idx], times[peak_up_idx],
+                                       units = "hours"))
+travel_time_hr
+```
+
+This toy example uses `which.max()` to find the peak in each trace.
+Bishop et al.'s actual approach involves more careful identification of
+*unambiguous* peaks (real records have multiple candidate peaks, noise,
+and occasional ambiguity between upriver and downriver features), and
+they only used peaks that could be confidently matched.
+
+<!-- TODO: expand this demo with a more realistic peak-detection approach,
+and/or real paired conductivity data, once available. -->
+
+## Discharge-based prediction
+
+Natural-tracer travel times are typically only available for a subset of
+days with clearly identifiable peaks, not continuously. Bishop et al. (2026) fit
+a log-linear regression between their tracer-derived travel times and
+discharge, with an additional term for the rate of change in discharge
+(to account for hysteresis — travel time responds differently to rising
+vs. falling flow), then used that fitted relationship to predict travel
+time continuously for every timestep in the record:
+
+```
+ln(travel_time) = β0 + β1 * ln(discharge) + β2 * (dQ/dt)
+```
+
+Fit to n = 1,476 tracer-derived travel times spanning discharge from
+118–716 m^3/s, their best-fit relationship (at a mean dQ/dt) was:
+
+```
+ln(travel time) = 4.74 + ln(discharge) - 0.02
+```
+
+This is the `VFTS-CQ` scenario in Bishop et al. (2026), and it's the
+approach that produces time-varying `travel.time` values reflecting
+changing velocity with discharge. A similar site-specific model could be
+developed in other sytems, but we do not recommend applying this exact fitting
+outside of this example.
+
+<!-- TODO: work through fitting an equivalent regression against a subset
+of two_station_example, once paired conductivity data is available to
+demonstrate with. -->
+
+## Uniform travel time
+
+The coarsest option: a single travel time, calculated as mean reach
+length divided by mean reach velocity, applied uniformly to every day and
+timestep. This is the `VFTS-MT` scenario in Bishop et al. (2026) — the
+least accurate of the four approaches they compared, but the only one
+requiring no tracer data at all, just basic reach dimensions and average
+discharge. Bishop et al. found this approach's accuracy highly sensitive
+to which single value gets chosen; supplemental runs using the 10th and
+90th percentile of discharge over their study period produced
+substantially different metabolism estimates than the mean-discharge run.
+
+
+## The travel-time ceiling
+
+<!-- TODO: keep this section in sync if the ceiling default or cap changes
+(mm_max_travel_time_default / mm_max_travel_time_cap). -->
+
+Travel time is subject to a ceiling, `specs$max_travel_time_hours`, which
+defaults to **10 hours** and may be set as high as 12. Any day whose longest
+travel time exceeds the ceiling is dropped, with a message; the remaining
+days are fit normally.
+
+The reason for dropping days with high travel times is the treatment of the
+`light` column. Beyond the ceiling, a day's upstream parcel
+originates before that day's own 06:00 start, and the within-day light
+proportion it experienced no longer has a well-defined day total to be a
+proportion of. A travel time far above the ceiling usually means the column
+was supplied in the wrong units — fractional days are expected, not hours or minutes.
+
+This same 10-hour threshold appears in Bishop et al. (2026): 43 of their
+study days had discharge-based travel time estimates exceeding 10 hours
+for at least one timestep, and those days were dropped from their
+analysis for the same reason, light estimates would otherwise include
+incident light carried over from the previous day.
+
+## Travel-time uncertainty
+
+<!-- TODO: expand with additional guidance. -->
+
+Uncertainty in travel time is not propagated into the metabolism estimates.
+If travel time is poorly constrained at your site, fit the model separately
+with low and high travel-time estimates (as in the `VFTS-MTlow` and
+`VFTS-MThi` sensitivity scenarios of Bishop et al. 2026) to bracket the
+effect on GPP, ER, and K600.
+
+### References
+
+Bishop, I.W., Deemer, B.R., Kennedy, T.A., Payn, R.A., Hall Jr, R.O.
+and Yackulic, C.B., 2026. A simplified two-station approach for modeling
+metabolism in dam tailwaters subject to diel flow variation. *Limnology
+and Oceanography: Methods*, p.e70066.
+https://doi.org/10.1002/lom3.70066
+
+Payn, R.A., Hall, R.O., Kennedy, T.A., Poole, G.C. and Marshall, L.A.,
+2017. A coupled metabolic-hydraulic model and calibration scheme for
+estimating whole-river metabolism during dynamic flow conditions.
+*Limnology and Oceanography: Methods*, 15(10), pp.847-866.
+https://doi.org/10.1002/lom3.10204
