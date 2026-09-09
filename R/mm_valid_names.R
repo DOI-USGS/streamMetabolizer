@@ -40,9 +40,8 @@ mm_valid_names <- function(type=c('bayes','bayes_2s','mle','night','Kmodel','sim
       favorites <- c('b_np_oipi_tr_plrckm.stan','b_np_oi_tr_plrckm.stan','b_np_pi_tr_plrckm.stan','b_np_oipp_tr_plrckm.stan')
     },
     bayes_2s={
-      # single fixed model structure; no combinatorial name-building needed
-      mnames <- 'b2_np_pi_plrc.stan'
-      favorites <- mnames
+      mnames <- c('b2_np_pi_plrc.stan', 'b2_Kb_pi_plrc.stan')
+      favorites <- 'b2_np_pi_plrc.stan'
     },
     mle={
       opts <- expand.grid(

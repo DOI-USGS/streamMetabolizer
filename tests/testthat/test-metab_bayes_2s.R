@@ -502,8 +502,27 @@ test_that("mm_name(type='bayes_2s') returns the single two-station model name", 
   expect_equal(mm_name(type='bayes_2s'), 'b2_np_pi_plrc.stan')
 })
 
-test_that("mm_valid_names('bayes_2s') returns the single two-station model name", {
-  expect_equal(mm_valid_names('bayes_2s'), 'b2_np_pi_plrc.stan')
+test_that("mm_valid_names('bayes_2s') lists the unpooled and binned two-station names", {
+  expect_equal(mm_valid_names('bayes_2s'), c('b2_np_pi_plrc.stan', 'b2_Kb_pi_plrc.stan'))
+})
+
+test_that("mm_name('bayes_2s', pool_K600='binned') builds the binned two-station name", {
+  expect_equal(mm_name('bayes_2s', pool_K600='binned'), 'b2_Kb_pi_plrc.stan')
+})
+
+test_that("mm_parse_name('b2_Kb_pi_plrc.stan') resolves the binned two-station features", {
+  p <- mm_parse_name('b2_Kb_pi_plrc.stan')
+  expect_identical(p$type, 'bayes_2s')
+  expect_identical(p$pool_K600, 'binned')
+  expect_true(p$err_proc_iid)
+  expect_identical(p$ode_method, 'NA')
+  expect_identical(p$deficit_src, 'NA')
+})
+
+test_that("specs() rejects the binned two-station model as not yet supported", {
+  expect_error(
+    specs(mm_name('bayes_2s', pool_K600='binned')),
+    'issue #441')
 })
 
 test_that("b2_np_pi_plrc.stan round-trips through the name grammar", {

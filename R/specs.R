@@ -683,6 +683,10 @@ specs <- function(
     },
     'bayes_2s' = {
 
+      if(features$pool_K600_type != 'none')
+        stop("two-station models with pooled K600 are not yet supported (", model_name,
+             "); only b2_np_pi_plrc.stan is implemented. See issue #441.", call.=FALSE)
+
       # bayes_2s has a single fixed model structure (see
       # inst/models/b2_np_pi_plrc.stan), so params_in/params_out are
       # hardcoded here rather than built up from pool_K600/GPP_fun/ER_fun/

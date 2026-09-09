@@ -47,7 +47,9 @@ test_that("mm_valid_names and mm_validate_names check model names", {
 
 test_that("specs uses any valid mm_name", {
   # subsample because there are >500 valid model names
-  mnames <- mm_valid_names()
+  # b2_Kb_pi_plrc.stan is a valid name but specs() intentionally errors on it
+  # until pooled-K600 two-station support lands (issue #441)
+  mnames <- setdiff(mm_valid_names(), "b2_Kb_pi_plrc.stan")
   expect_gte(length(mnames), 500)
   specs_list <- suppressWarnings(lapply(sample(mnames, 50), specs))
   # specs list lengths differ by model type. the exact range could change

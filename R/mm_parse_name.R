@@ -45,6 +45,8 @@ mm_parse_name <- function(model_name, expand=FALSE) {
   # suffix (e.g. b2_np_pi_plrc_v2) splits to 6+ pieces, skips the splice, and is
   # not parsed correctly yet -- b2_ detection here needs revisiting if such names
   # are ever supported.
+  # TODO(#441): this splice assumes b2_ names are exactly 5 pieces; re-verify if
+  # a trailing suffix or a future name axis makes them split to 6+ pieces.
   parsed <- lapply(parsed, function(p) {
     if (length(p) == 5L && identical(p[[1]], "b2")) append(p, "", after = 3L) else p
   })
