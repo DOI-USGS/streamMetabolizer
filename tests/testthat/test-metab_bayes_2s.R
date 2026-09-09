@@ -473,23 +473,25 @@ test_that("mm_snap_to_bin_2s turns a true gap between deployments into empty bin
 # mm_parse_name() for two-station models ---------------------------------
 
 test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
-  parsed <- mm_parse_name('b2_np_oi_tr_plrckm.stan')
+  parsed <- mm_parse_name('b2_np_pi_plrc.stan')
 
   expect_equal(parsed$type, 'bayes_2s')
-  # the rest of the name is shared syntax with one-station bayes models and
-  # should parse the same way regardless of the b vs. b2 prefix
+  # the two-station name grammar is b2-specific: one fewer slot than one-station
+  # bayes names (no ode_method position), so ode_method and deficit_src are not
+  # axes here and parse as 'NA'
   expect_equal(parsed$pool_K600, 'none')
-  expect_true(parsed$err_obs_iid)
+  expect_false(parsed$err_obs_iid)
   expect_false(parsed$err_proc_acor)
-  expect_false(parsed$err_proc_iid)
+  expect_true(parsed$err_proc_iid)
   expect_false(parsed$err_proc_GPP)
-  expect_equal(parsed$ode_method, 'trapezoid')
+  expect_equal(parsed$ode_method, 'NA')
   expect_equal(parsed$GPP_fun, 'linlight')
   expect_equal(parsed$ER_fun, 'constant')
-  expect_equal(parsed$deficit_src, 'DO_mod')
+  expect_equal(parsed$deficit_src, 'NA')
   expect_equal(parsed$engine, 'stan')
 
-  # a one-station name with the same suffix should still parse as plain 'bayes'
+  # a one-station name (single 'b_' prefix, full 6-slot grammar) is untouched by
+  # the b2_ normalization and still parses as plain 'bayes'
   expect_equal(mm_parse_name('b_np_oi_tr_plrckm.stan')$type, 'bayes')
 })
 
@@ -497,11 +499,24 @@ test_that("mm_parse_name recognizes the b2_ prefix for two-station models", {
 # mm_name() / mm_valid_names() / specs() for bayes_2s ---------------
 
 test_that("mm_name(type='bayes_2s') returns the single two-station model name", {
-  expect_equal(mm_name(type='bayes_2s'), 'b2_np_oi_tr_plrckm.stan')
+  expect_equal(mm_name(type='bayes_2s'), 'b2_np_pi_plrc.stan')
 })
 
 test_that("mm_valid_names('bayes_2s') returns the single two-station model name", {
-  expect_equal(mm_valid_names('bayes_2s'), 'b2_np_oi_tr_plrckm.stan')
+  expect_equal(mm_valid_names('bayes_2s'), 'b2_np_pi_plrc.stan')
+})
+
+test_that("b2_np_pi_plrc.stan round-trips through the name grammar", {
+  nm <- mm_name('bayes_2s')
+  expect_identical(nm, 'b2_np_pi_plrc.stan')
+  expect_identical(mm_validate_name(nm), nm)          # mm_name(check_validity=TRUE) path
+  p <- mm_parse_name(nm)
+  expect_identical(p$type, 'bayes_2s')
+  expect_identical(p$ode_method, 'NA')
+  expect_identical(p$deficit_src, 'NA')
+  expect_false(p$err_obs_iid); expect_true(p$err_proc_iid)
+  # empty-slot form parses identically (parser idempotence)
+  expect_identical(mm_parse_name('b2_np_pi__plrc.stan'), p)
 })
 
 test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/split_dates", {

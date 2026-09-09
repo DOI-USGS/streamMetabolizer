@@ -684,7 +684,7 @@ specs <- function(
     'bayes_2s' = {
 
       # bayes_2s has a single fixed model structure (see
-      # inst/models/b2_np_oi_tr_plrckm.stan), so params_in/params_out are
+      # inst/models/b2_np_pi_plrc.stan), so params_in/params_out are
       # hardcoded here rather than built up from pool_K600/GPP_fun/ER_fun/
       # err_* toggles as in the 'bayes' case above
 

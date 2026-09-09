@@ -36,10 +36,20 @@ mm_parse_name <- function(model_name, expand=FALSE) {
 
   # parse the name
   parsed <- strsplit(basename(model_name), "_|\\.")
+
+  # Two-station (b2_) names carry no ode_method slot: the closed-form model has
+  # no recursive timestep to discretize, so that axis does not exist. Splice an
+  # empty slot at position 4 so the positional parser below reads ode_method='NA'
+  # for these names, as an explicit 'NA' token would. Names built by mm_name()
+  # always have 5 pieces; a custom b2_ file with an extra axis or a trailing
+  # suffix (e.g. b2_np_pi_plrc_v2) splits to 6+ pieces, skips the splice, and is
+  # not parsed correctly yet -- b2_ detection here needs revisiting if such names
+  # are ever supported.
+  parsed <- lapply(parsed, function(p) {
+    if (length(p) == 5L && identical(p[[1]], "b2")) append(p, "", after = 3L) else p
+  })
+
   sapply(1:length(parsed), function(pnum) if(length(parsed[[pnum]]) <= 5) stop('missing one or more pieces in name: ', model_name[pnum]))
-  # the "_|\\." split regex above handles 'b2' correctly. No change
-  # to the token-extraction logic was needed to support two-station names --
-  # only a new lookup entry below, mapping the 'b2' token to its type name.
   type <- unname(c(b='bayes', b2='bayes_2s', m='mle', n='night', K='Kmodel', s='sim')[sapply(parsed, `[`, 1)])
   pool_K600 <- unname(c(
     np='none',

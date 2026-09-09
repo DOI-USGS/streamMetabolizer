@@ -12,7 +12,7 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #' Fits a two-station (upstream/downstream, Variable Flow Two-Station) Bayesian
 #' model to estimate GPP, ER, and K600 from paired upstream and downstream DO,
 #' temperature, light, and travel-time data, using the single fixed Stan model
-#' in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See \code{\link{mm_name}} to
+#' in \code{inst/models/b2_np_pi_plrc.stan}. See \code{\link{mm_name}} to
 #' choose a Bayesian model and \code{\link{specs}} for relevant options for the
 #' \code{specs} argument.
 #'
@@ -652,7 +652,7 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #'
 #' Time-shifts the upstream DO series to match the travel time between
 #' stations, then pivots the result into the \code{n_obs x n_days} matrices
-#' expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
+#' expected by the \code{data} block of \code{inst/models/b2_np_pi_plrc.stan}
 #' (see \code{\link{metab_bayes_2s}}).
 #'
 #' The alignment itself -- the per-row lag, the per-row lead-in test, the

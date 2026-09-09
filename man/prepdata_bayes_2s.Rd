@@ -43,7 +43,7 @@ a named list with all variables in the Stan model's data block:
 \description{
 Time-shifts the upstream DO series to match the travel time between
 stations, then pivots the result into the \code{n_obs x n_days} matrices
-expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
+expected by the \code{data} block of \code{inst/models/b2_np_pi_plrc.stan}
 (see \code{\link{metab_bayes_2s}}).
 }
 \details{

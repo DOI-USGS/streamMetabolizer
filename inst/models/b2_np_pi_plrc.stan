@@ -1,4 +1,4 @@
-// b2_np_oi_tr_plrckm.stan
+// b2_np_pi_plrc.stan
 
 data {
   int<lower=1> n_obs;  // number of total do observations

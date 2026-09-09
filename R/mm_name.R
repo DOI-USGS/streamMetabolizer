@@ -192,12 +192,15 @@ mm_name <- function(
     type <- match.arg(type, choices=setdiff(eval(formals(mm_name)$type), 'bayes_2s'))
   }
 
-  # bayes_2s has a single fixed model structure rather than being built
-  # from combinations of pool_K600/err_*/ode_method/GPP_fun/ER_fun/
-  # deficit_src/engine, so skip the argument-combination machinery below and
-  # return the one valid name directly
+  # bayes_2s has a single fixed model structure, so skip the argument-combination
+  # machinery below and return the one valid name directly. The two-station name
+  # grammar also has no ode_method or deficit_src position: the closed-form model
+  # has no recursive timestepping to discretize and no carried modeled-DO state to
+  # pick as the deficit source, so those axes do not exist here (they are not
+  # merely fixed to one value). pool_K600/err_*/GPP_fun/ER_fun are single-valued
+  # for now but retain their name tokens.
   if(type == 'bayes_2s') {
-    mmname <- 'b2_np_oi_tr_plrckm.stan'
+    mmname <- 'b2_np_pi_plrc.stan'
     check_validity <- if(!is.logical(check_validity)) stop("need check_validity to be a logical of length 1") else check_validity[1]
     if(isTRUE(check_validity)) mm_validate_name(mmname)
     return(mmname)

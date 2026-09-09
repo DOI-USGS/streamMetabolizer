@@ -47,7 +47,7 @@ A metab_bayes_2s object containing the fitted model. This object
 Fits a two-station (upstream/downstream, Variable Flow Two-Station) Bayesian
 model to estimate GPP, ER, and K600 from paired upstream and downstream DO,
 temperature, light, and travel-time data, using the single fixed Stan model
-in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See \code{\link{mm_name}} to
+in \code{inst/models/b2_np_pi_plrc.stan}. See \code{\link{mm_name}} to
 choose a Bayesian model and \code{\link{specs}} for relevant options for the
 \code{specs} argument.
 }
