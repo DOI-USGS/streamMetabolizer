@@ -21,10 +21,10 @@ The two-station approach estimates reach-scale gross primary production
 d^-1^) by pairing an upstream and a downstream dissolved oxygen sensor separated by a known
 travel time. Rather than modeling O~2~ dynamics at a single point, the
 method tracks how a parcel of water changes in O~2~ content and O~2~ percent 
-saturation as it travels between the two stations — making it appropriate for reaches 
-where O~2~ is not at steady state (e.g., dam
-tailwaters, reaches below waterfalls, or reaches with significant tributary inputs 
-or hyporheic exchange).
+saturation as it travels between the two stations — making it appropriate for
+reaches located below features that impact dissolved oxygen dynamics, such that
+O~2~ at the upstream end of the reach is not at equilibrium (e.g., dams,
+waterfalls, significant tributary inputs, or hyporheic zones).
 
 The implementation in `streamMetabolizer` follows the variable-flow
 two-station (VFTS) method of Bishop et al. (2026), which accounts for
@@ -37,11 +37,10 @@ workflow as the one-station Bayesian models (see the [Quickstart](get_started.ht
 
 **When to use the two-station model:**
 
-- The study reach has known spatial heterogeneity such that dissolved oxygen
-  is not at steady state within the reach (large tributary inputs, hyporheic zones, 
-  impoundments, waterfalls, wastewater inputs)
-- The study reach experiences event-based inputs such that dissolved oxygen
-  is not at steady state within the reach (e.g., monsoon or wildfire runoff)
+- The study reach is located below features that impact dissolved oxygen dynamics
+  (e.g., large tributary inputs, hyporheic zones, impoundments, waterfalls,
+  wastewater inputs, or event-based inputs such as monsoon or wildfire runoff),
+  such that dissolved oxygen at the upstream end of the reach is not at equilibrium.
  
 **Additional requirements of the two-station model:**
 
