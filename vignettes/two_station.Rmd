@@ -1,0 +1,349 @@
+---
+title: "Two-Station Models"
+author: "Two-Station Team"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two-Station Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=80)
+```
+
+## Background
+
+The two-station approach estimates reach-scale gross primary production
+(GPP), ecosystem respiration (ER), and the gas exchange rate constant (K600,
+d^-1^) by pairing an upstream and a downstream dissolved oxygen sensor separated by a known
+travel time. Rather than modeling O~2~ dynamics at a single point, the
+method tracks how a parcel of water changes in O~2~ content and O~2~ percent 
+saturation as it travels between the two stations — making it appropriate for
+reaches located below features that impact dissolved oxygen dynamics, such that
+O~2~ at the upstream end of the reach is not at equilibrium (e.g., dams,
+waterfalls, significant tributary inputs, or hyporheic zones).
+
+The implementation in `streamMetabolizer` follows the variable-flow
+two-station (VFTS) method of Bishop et al. (2026), which accounts for
+discharge-driven variation in travel time. The model can be used for rivers and
+streams with no sub-daily changes in flow as well as for systems that experience
+significant sub-daily flow variability (such as results from hydropeaking). 
+The model is fit with Stan and follows the same `specs()` → `metab()` → `predict_metab()` 
+workflow as the one-station Bayesian models (see the [Quickstart](get_started.html) and
+[Bayesian Models](models_bayes.html) tutorials).
+
+**When to use the two-station model:**
+
+- The study reach is located below features that impact dissolved oxygen dynamics
+  (e.g., large tributary inputs, hyporheic zones, impoundments, waterfalls,
+  wastewater inputs, or event-based inputs such as monsoon or wildfire runoff),
+  such that dissolved oxygen at the upstream end of the reach is not at equilibrium.
+ 
+**Additional requirements of the two-station model:**
+
+- An estimate is available for the travel time between sensors
+- Paired sensors should be placed within the 80% turnover 
+  reach for oxygen (ideal distance is ~0.7v/K600, and should not fall below 0.4v/K600; 
+  Reichert et al. 2009; Demars et al. 2015). 
+
+<!-- TODO: a decision checklist or flowchart for choosing between one- and
+two-station models could go here. -->
+
+**When to use a one-station model instead:**
+
+- The reach is well mixed and spatially homogeneous
+- A state space model structure that incorporates both process error and 
+  observation error is needed (the two-station model offers
+  process error only; see [Known limitations](#known-limitations))
+- An autocorrelated error structure is required
+
+```{r libs, warning=FALSE, message=FALSE}
+library(streamMetabolizer)
+library(dplyr)
+```
+
+## Getting your data in
+
+The `metab_bayes_2s()` requires a single formatted data file.  There are two
+ways the user can approach compiling this file. In path A, the user can start with the 
+raw shape (recommended for most users). Path A is the better starting point when 
+your data come off the sensors as separate series, which is the usual case. 
+In path B, the user has already assembled the data, and starts with the formatted shape 
+(recommended for advanced users only, particularly when 
+an alternate method for estimating fractional light is desired).
+
+**A. Raw.** You supply three separate data.frames — upstream sensor,
+downstream sensor, and light — to `mm_format_data_2s()`, which joins them
+onto a common time grid, bridges short gaps, converts light to the fractional 
+form the model needs, and returns a formatted data.frame (described below B. Formatted).
+`two_station_raw_example` shows that shape.
+
+**B. Formatted.** You supply one data.frame with all nine required
+columns, already joined onto a single time grid. `two_station_example`
+shows that shape.  
+ 
+
+### The raw shape
+
+`two_station_raw_example` is a list of three data.frames — the same Glen
+Canyon reach as `two_station_example`, but as it comes off the sensors: not
+joined, not aligned to a common grid, and with light still as raw PAR.  The
+units for light are unimportant as long as they are consistent, since they 
+will be used to calculate fractions of total daily light.
+
+```{r ts_raw_data}
+data(two_station_raw_example)
+lapply(two_station_raw_example, function(df) head(df, 2))
+```
+
+Each input needs package-convention column names: `timestamp` (POSIXct, UTC)
+plus `DO.obs` and `DO.sat` for `upstream`; `timestamp`, `DO.obs`, `DO.sat`,
+`temp.water`, `depth`, and `travel.time` for `downstream`; and `timestamp`
+plus `light` for `light`. Renaming columns to match is a step you do yourself, 
+before calling `mm_format_data_2s()`.  The light data.frame should be reach averaged
+light corresponding to the downstream time stamp.
+
+`DO.sat` for each station can be computed from that station's
+temperature and barometric pressure with `calc_DO_sat()`. We urge the user
+to be cautious about using raw sensor estimates of oxygen saturation as 
+these can be highly sensitive to the barometric pressure calibration on 
+your instrument.
+
+A quick demonstration with simulated values:
+
+```{r ts_do_sat_demo}
+set.seed(47)
+temp.water <- round(runif(20, min = 10, max = 25), 1)
+pressure.air <- round(runif(20, min = 980, max = 1010), 1)
+
+DO_sat_demo <- calc_DO_sat(temp.water, pressure.air)
+head(DO_sat_demo)
+```
+
+`pressure.air` is barometric pressure in millibars. 
+
+```{r ts_format}
+formatted <- mm_format_data_2s(
+  upstream   = two_station_raw_example$upstream,
+  downstream = two_station_raw_example$downstream,
+  light      = two_station_raw_example$light)
+
+head(formatted, 3)
+```
+
+`mm_format_data_2s()` does four things: it trims upstream and downstream to
+their shared deployment window (reporting what it dropped), snaps all three
+series onto a common timestep grid so that sensors logging a few minutes
+apart still match, interpolates short gaps, and converts raw light into the
+within-day proportion. The message above reports the gap filling.
+
+`downstream` is the backbone: every downstream row survives into the output,
+carrying `NA` wherever no upstream or light observation matched it.
+
+### The formatted shape (produced by mm_format_data_2s())
+
+```{r ts_example_data}
+data(two_station_example)
+head(two_station_example, 3)
+```
+
+| Column | Description |
+|---|---|
+| `solar.time` | Mean solar time (POSIXct, UTC tzone), on a regular timestep, labelling the downstream observations |
+| `DO.obs.up` | Upstream observed dissolved oxygen (mgO2 L^-1^) |
+| `DO.sat.up` | Upstream O~2~ saturation (mgO2 L^-1^) |
+| `DO.obs.down` | Downstream observed dissolved oxygen (mgO2 L^-1^) |
+| `DO.sat.down` | Downstream O~2~ saturation (mgO2 L^-1^) |
+| `light` | Within-day light proportion (unitless, 0–1) |
+| `depth` | Reach-averaged depth (m) — not point depth |
+| `temp.water` | Water temperature at the downstream station (degC) |
+| `travel.time` | Reach travel time between stations (d) |
+
+This formatted shape matches each downstream observation to the upstream
+water parcel that became it, using the travel times provided.
+
+`mm_format_data_2s()` does not convert timestamps to mean solar time. As in
+the one-station models, `solar.time` is expected to already be mean solar
+time (POSIXct, UTC tzone); convert your raw timestamps first with
+`calc_solar_time()` or `convert_UTC_to_solartime()` (see the
+[Data Preparation](data_prep.html) tutorial). Approximate local,
+non-daylight-saving clock time is a workable substitute, but mean solar time
+aligns the 06:00-06:00 day window and the within-day light proportion to the
+true diel light cycle.
+
+Three columns deserve attention relative to one-station data.
+
+**`depth`** is the reach-averaged depth between the two stations, not the
+point depth at either sensor. Using point depth will bias the metabolism
+estimates.
+
+**`travel.time`** is in days — a 6-hour travel time is `0.25`. It may vary
+from row to row, which is the point of the variable-flow method: as
+discharge changes, so does the time a parcel of water spends in the reach.
+A constant travel time is equally valid and simply repeats one value down
+the column.
+
+**`light`** is *not* raw photosynthetically active radiation, unlike the
+`light` column in the one-station models. It is the within-day proportion of
+light: the light reaching the reach over each row's upstream travel-time
+window, divided by that day's total. It is a unitless fraction between 0 and
+1. Nothing checks this — supplying raw PAR in this column does not raise an
+error, it just produces meaningless estimates — so getting it right is on
+you when hand-formatting. If you use `mm_format_data_2s()`, the conversion
+is done for you from raw light.
+
+<!-- TODO: consider validating that hand-supplied light is in [0, 1] and
+erroring on out-of-range (raw PAR) input. -->
+
+
+## How a two-station day is defined
+
+In streamMetabolizer, two-station day runs from **06:00 to 06:00 the next day**
+and this time window is not changeable by the user (e.g. there is no 
+`day_start`/`day_end` argument for two-station models. The two-station model
+partitions the record into non-overlapping 24-hour days. 
+
+To see which calendar dates your record covers, derive a day label from
+`solar.time` — shifting back by the 06:00 day start — and tabulate it:
+
+```{r ts_day_label}
+# unitted::v() strips the units the package data carry, so that plain
+# date arithmetic works
+solar_time <- unitted::v(formatted$solar.time)
+day_label <- as.Date(solar_time - as.difftime(6, units='hours'), tz='UTC')
+
+head(unique(day_label))
+```
+
+A day is modeled only if it is **completely** covered — every timestep from
+06:00 through 05:45 the next morning (96 rows at a 15-minute timestep).
+Completeness is assessed *after* short gaps are bridged (see **Gaps in the
+record** below), so a day with only a brief dropout still counts as complete.
+A day left incomplete by a gap too long to bridge is dropped rather than
+modeled on partial data.
+
+### Lead-in data
+
+Each modeled row's upstream value is taken from an earlier row: the parcel
+of water arriving downstream at a given timestamp left the upstream station
+`travel.time` earlier. So the first stretch of your dataset serves as
+*lead-in* — those rows supply upstream values for later rows without being
+modeled themselves.
+
+The practical consequence: **start your data before the first day you want
+estimates for**, by at least the longest travel time in the record. Rows
+lacking lead-in are not an error; they simply do not get their own estimates,
+and the (partial) day they belong to is dropped.
+
+`two_station_example` comes with a lead-in block already prepended to the
+start of its six-year record. In the [worked example](two_station_fitting.html)
+we instead create one by starting the subset 12 hours before the first day
+of interest.
+
+See [Two-Station Models: Estimating Travel Time](two_station_travel_time.html)
+for how travel time is estimated in practice, including the travel-time
+ceiling and how uncertainty in travel time affects metabolism estimates.
+
+## Gaps in the record
+
+Short interruptions — a sonde that logged nothing for a few timesteps, or
+logged `NA` — are bridged by linear interpolation, so that a day marred by a
+brief dropout can still be modeled instead of discarded. The tolerance is
+`specs$max_gap_hours`, which defaults to **1 hour** and may be set as high as
+2. Longer runs are left in place, and the days containing them are dropped.
+
+A few details worth knowing:
+
+- Missing timesteps and `NA` values are treated the same way, and a gap is
+  measured by the time it spans, not the number of rows missing across it.
+- Gaps at the very start or end of the record are never filled, since that
+  would mean extrapolating from one side.
+- Interpolated timesteps are part of the modeled record, so `predict_DO()`
+  returns predictions of them, and the predicted `DO.obs.down` at those
+  timesteps is the interpolated value rather than an observation.
+- If you prepared data with `mm_format_data_2s()`, gaps are already filled
+  and nothing more happens at fitting time. Pass the same `max_gap_hours` to
+  both if you change it from the default.
+
+Gap filling runs on both paths, but it is cleaner on raw data. On the DO
+columns, linear interpolation is straightforward either way. On `light` it
+is not: once light has been converted to the within-day proportion,
+interpolating it cannot repair that day's total, which is itself short by
+the missing terms. `mm_format_data_2s()` avoids this by filling gaps while
+`light` is still raw, before the conversion. If you hand-format, fill gaps
+in your raw series before computing the light proportion.
+
+### Why a day may be missing from your results {#missing-days}
+
+It is normal for a fitted two-station model to report **fewer days than your
+input data appears to span**. There are four distinct reasons, and it is
+worth knowing which one applies before concluding something went wrong.
+
+1. **Incomplete 06:00–06:00 coverage.** The day does not fill its window.
+   This is what happens at the edges of a dataset whose bounds don't fall on
+   06:00 — including, by design, the lead-in block at the start.
+2. **A gap too long to bridge.** A run of missing observations longer than
+   `max_gap_hours` remains in the record, leaving the day incomplete.
+3. **Travel time over the ceiling.** The day's longest `travel.time` exceeds
+   `max_travel_time_hours`.
+4. **No observations at all.** If a whole day is absent from the input —
+   sensors offline for days, say — there is nothing to report on, and the
+   day simply never appears.
+
+Cases 1 and 3 produce a message naming the days and the reason:
+
+```
+dropping 1 day(s) that do not fill the 06:00-06:00 window: 2009-08-23 (19 of 96 expected observations)
+```
+
+```
+dropping 6 day(s) whose travel.time exceeds the 10-hour ceiling: 2009-08-23 (10.42 hours), 2009-08-24 (11.03 hours), ...
+```
+
+Case 2 surfaces as case 1: the gap is what makes the day incomplete, so the
+message you see names the day and its observation count. Case 4 is the one
+that is genuinely silent — a day with no rows is never a candidate in the
+first place, so nothing is reported about it.
+
+To reconcile input days against fitted days, label your input rows and
+compare:
+
+```{r ts_missing_days}
+obs_per_day <- table(day_label)
+
+length(obs_per_day)          # days represented in the input
+sum(obs_per_day == 96)       # days fully covered at a 15-minute timestep
+```
+
+Across the full raw example, `r length(obs_per_day)`
+calendar days are represented but only `r sum(obs_per_day == 96)`
+are complete. Checking this before fitting is quicker than inferring it from the results.
+
+If *no* complete days survive, `metab_bayes_2s()` raises an error rather than
+returning an empty model.
+
+See [Two-Station Fitting and Worked Example](two_station_fitting.html) for a
+hands-on walk-through, including a worked example and priors/limitations.
+
+
+### References
+
+Bishop, I.W., Deemer, B.R., Kennedy, T.A., Payn, R.A., Hall Jr, R.O.
+and Yackulic, C.B., 2026. A simplified two-station approach for modeling
+metabolism in dam tailwaters subject to diel flow variation. *Limnology
+and Oceanography: Methods*, p.e70066.
+https://doi.org/10.1002/lom3.70066
+
+Demars, B. O. L., J. Thompson, and J. R. Manson. 2015.
+“Stream Metabolism and the Open Diel Oxygen Method:
+Principles, Practice, and Perspectives.” Limnology and Ocean-
+ography: Methods 13, no. 7: 356–374. https://doi.org/10.
+1002/lom3.10030.
+
+Reichert, P., U. Uehlinger, and V. Acuna. 2009. Estimating stream metabolism from 
+oxygen concentrations: effect of spatial heterogeneity. *Journal of Geophysical 
+Research- Biogeosciences*, 114, no. G3; 2008JG000917. https://doi.org/10.
+1029/2008JG000917.

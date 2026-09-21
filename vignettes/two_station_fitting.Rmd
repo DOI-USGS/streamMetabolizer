@@ -1,0 +1,330 @@
+---
+title: "Two-Station Models: Fitting and Worked Example"
+author: "Two-Station Team"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Two-Station Models: Fitting and Worked Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=80)
+```
+
+```{r libs, warning=FALSE, message=FALSE}
+library(streamMetabolizer)
+library(dplyr)
+```
+
+This vignette continues from [Two-Station Models](two_station.html),
+covering configuration, fitting, and worked examples using the two-station
+model.
+
+## Worked example
+
+We'll fit two short windows drawn from `two_station_example`, chosen to each
+demonstrate one of the two most common reasons a day gets dropped: a
+window-incomplete drop, and a `day_tests`/NA-validation drop. Both windows
+are 14 days with a 1-day lead-in buffer before the window start, matching
+the buffer convention used throughout this vignette.
+
+**Window A** — 2011-06-29 through 2011-07-12, with lead-in starting
+2011-06-28. This window's longest travel time is under 6.5 hours,
+comfortably inside the 10-hour default ceiling.
+
+**Window C** — 2011-10-18 through 2011-10-31, with lead-in starting
+2011-10-17. Travel time here stays under 6 hours, also well inside the
+ceiling.
+
+```{r ts_windows}
+window_a_start <- as.POSIXct("2011-06-28 00:00:00", tz="UTC")
+window_a_end   <- as.POSIXct("2011-07-13 00:00:00", tz="UTC")  # exclusive
+
+window_c_start <- as.POSIXct("2011-10-17 00:00:00", tz="UTC")
+window_c_end   <- as.POSIXct("2011-11-01 00:00:00", tz="UTC")  # exclusive
+
+dat_a <- two_station_example[two_station_example$solar.time >= window_a_start &
+                                two_station_example$solar.time < window_a_end, ]
+dat_c <- two_station_example[two_station_example$solar.time >= window_c_start &
+                                two_station_example$solar.time < window_c_end, ]
+```
+
+### Configuring the model
+
+`mm_name()` returns the model structure. Unlike the one-station types,
+`'bayes_2s'` must be spelled out in full — it cannot be abbreviated, because
+`'bayes'` is a prefix of it.
+
+```{r ts_name}
+bayes_2s_name <- mm_name('bayes_2s')
+bayes_2s_name
+```
+
+There is a single two-station model structure, so there are no
+`pool_K600`, `err_*`, etc. choices to make here as there are for
+`mm_name('bayes')` (see issue #441).
+
+<!-- TODO(#441): additional bayes_2s model structures and K600 pooling
+options will make these choices meaningful. -->
+
+`specs()` supplies the defaults; then you can use revise() to specify your own specs:
+
+```{r ts_specs}
+bayes_2s_specs <- specs(bayes_2s_name)
+bayes_2s_specs <- revise(bayes_2s_specs, burnin_steps=500, saved_steps=500,
+                         n_chains=4, n_cores=4)
+```
+
+### Fitting: a window-incomplete drop
+
+```{r ts_fit_a, eval=FALSE}
+mm_a <- metab_bayes_2s(bayes_2s_specs, data=dat_a)
+```
+
+```
+dropping 1 day(s) that do not fill the 06:00-06:00 window: 2011-06-29 (78 of 96 expected observations)
+```
+
+The lead-in day (2011-06-28) is set aside as expected, supplying upstream
+values for 2011-06-29 without being modeled itself. But 2011-06-29 *also*
+drops — it follows a real gap in the sensor record (2011-06-28 has zero
+rows for part of the day), and only 78 of the 96 expected observations
+survive into its travel-time window. Thirteen of the fourteen requested
+days come out fitted; the fourteenth is flagged, not silently absent,
+more on that below.
+
+`metab()` dispatches to `metab_bayes_2s()` on the model name, so
+`metab(bayes_2s_specs, data=dat_a)` is equivalent and lets the two-station
+model drop into the same chained workflow as the rest of the package.
+
+### Fitting: a `day_tests` drop
+
+```{r ts_fit_c, eval=FALSE}
+mm_c <- metab_bayes_2s(bayes_2s_specs, data=dat_c)
+```
+
+Window C's lead-in day sets aside cleanly, and all thirteen remaining days
+in the window fill their travel-time windows completely — but 2011-10-31
+fails a different check. The upstream sensor stops reporting partway
+through the day, leaving `NA` values in `DO.obs.up` and `DO.sat.up` that
+make the day unfittable even though the window itself is otherwise
+complete. This is the case a plot makes obvious: the downstream trace
+keeps recording normally while the upstream trace cuts out mid-day, right
+before the next real gap in the record begins on 2011-11-01. 
+
+### Inspecting the results
+
+`predict_metab()` gives daily GPP, ER, and K600 with credible intervals.
+Both dropped days appear as their own row, with every numeric column `NA`:
+
+```{r ts_pred_metab_a, eval=FALSE}
+predict_metab(mm_a)%>%
+  select(date,GPP,ER,K600,msgs.fit,warnings,errors)
+```
+
+```
+# A tibble: 14 × 13
+   date         GPP GPP.lower GPP.upper     ER ER.lower ER.upper  K600 K600.lower
+   <date>     <dbl>     <dbl>     <dbl>  <dbl>    <dbl>    <dbl> <dbl>      <dbl>
+ 1 2011-06-29    NA        NA        NA     NA       NA       NA    NA         NA
+ 2 2011-06-30  9.53      9.14      9.92 -10.8    -11.9    -9.79  15.8       14.6
+ 3 2011-07-01  7.68      7.37      7.97  -7.44    -8.37   -6.49  10.4        9.15
+ 4 2011-07-02  8.80      8.44      9.16  -8.29    -9.20   -7.35  11.2        9.96
+ 5 2011-07-03  8.27      7.98      8.56  -7.23    -7.90   -6.57  10.7        9.72
+# ℹ 9 more rows
+# ℹ 4 more variables: K600.upper <dbl>, msgs.fit <chr>, warnings <chr>,
+#   errors <chr>
+```
+
+The `msgs.fit` column on a dropped day carries a fixed-width status code
+rather than the reason text — for window A's 2011-06-29 row it reads as
+six blank spaces followed by `"E"`. `warnings` and `errors` in
+`predict_metab()` output stay blank even for dropped days; the actual
+reason lives in `get_params()` and `get_fit()`, not here.
+
+`get_params()` reports the same quantities with standard deviations, and
+this is where the reason text actually shows up:
+
+```{r ts_get_params, eval=FALSE}
+get_params(mm_a)
+get_params(mm_c)
+```
+
+```
+# Window A, row 1:
+  date        GPP.daily GPP.daily.sd ER.daily ER.daily.sd K600.daily K600.daily.sd warnings errors
+  2011-06-29         NA           NA       NA          NA         NA            NA       ""  "does not fill the 06:00-06:00 window (78 of 96 expected observations)"
+
+# Window C, row 14:
+  date        GPP.daily GPP.daily.sd ER.daily ER.daily.sd K600.daily K600.daily.sd warnings errors
+  2011-10-31         NA           NA       NA          NA         NA            NA       ""  "NAs in DO.obs.up; NAs in DO.sat.up"
+```
+
+`predict_DO()` returns the modeled downstream oxygen. Note the column
+names: **`DO.obs.down` and `DO.mod.down`**, not the one-station `DO.obs`
+and `DO.mod`. Code written against one-station output will need adjusting.
+
+Convergence diagnostics live in `get_fit()`. For two-station models the
+`Rhat` columns are per-day, in the `daily` element, which also carries the
+`valid_day` flag — the only place that column appears:
+
+```{r ts_valid_day, eval=FALSE}
+get_fit(mm_a)$daily %>%
+  select(date, valid_day, errors)
+```
+
+```
+# A tibble: 14 × 3
+   date       valid_day errors
+   <date>     <lgl>     <chr>
+ 1 2011-06-29 FALSE     "does not fill the 06:00-06:00 window (78 of 96 expected observations)"
+ 2 2011-06-30 TRUE      ""
+ 3 2011-07-01 TRUE      ""
+# ℹ 11 more rows
+```
+
+`get_fit()` also carries `warnings` and `errors` elements for messages not
+tied to any single day, and per-day `warnings`/`errors` columns within
+`daily`, as described in [Bayesian Models](models_bayes.html).
+
+`get_mcmc()` returns the underlying `stanfit` object for inspection with
+`rstan`:
+
+```{r ts_mcmc, eval=FALSE}
+mcmc <- get_mcmc(mm_a)
+rstan::traceplot(mcmc, pars='K600_daily', nrow=3)
+```
+
+## Fitting jointly or one day at a time
+
+By default every date is fit together in one Stan call. Setting
+`split_dates=TRUE` fits each date in its own call instead:
+
+```{r ts_perday, eval=FALSE}
+perday_specs <- revise(bayes_2s_specs, split_dates=TRUE)
+mm_a_perday <- metab_bayes_2s(perday_specs, data=dat_a)
+get_params(mm_a_perday)
+```
+
+```
+# A tibble: 13 × 9
+   date       GPP.daily GPP.daily.sd ER.daily ER.daily.sd K600.daily
+   <date>         <dbl>        <dbl>    <dbl>       <dbl>      <dbl>
+ 1 2011-06-30      9.54        0.178   -10.85       0.460       15.86
+ 2 2011-07-01      7.69        0.161    -7.47       0.446       10.47
+ 3 2011-07-02      8.81        0.176    -8.31       0.436       11.20
+ 4 2011-07-03      8.28        0.148    -7.25       0.331       10.71
+ 5 2011-07-04      6.87        0.121    -1.99       0.238        4.39
+# ℹ 8 more rows
+# ℹ 3 more variables: K600.daily.sd <dbl>, warnings <chr>, errors <chr>
+```
+
+Now we only have 13 rows, not 14 — the flagged day (2011-06-29) never reaches Stan
+in per-day mode, since each date is fit in its own separate call rather
+than joining the pooled fit.
+
+The difference that matters is the error term. The Stan model
+carries one `sigma` shared across whatever dates it is given, so fitting
+one day at a time estimates a separate `sigma` per day rather than one
+pooled across the record. Joint fitting is the default because the pooled
+estimate uses the whole record.
+
+Point estimates track closely between the two modes — GPP, ER, and K600
+daily means differ by only a few percent day to day. What moves is
+uncertainty, and not uniformly: for 2011-07-06, the per-day `ER.daily.sd`
+(0.241) is less than half the joint fit's (0.546); for 2011-07-08, per-day
+is slightly *higher* than joint (0.964 vs. 0.938). Which direction it
+moves depends on how much that day's own data supports a tight estimate
+versus how much it was relying on the pooled `sigma` — there's no single
+rule of thumb for which mode gives tighter intervals on a given day.
+
+Fitting one day at a time does not mean slicing the data by date. Each
+day's upstream observations still come from earlier rows, across the day
+boundary, exactly as in the joint fit.
+
+One consequence for `get_mcmc()`: in joint mode it returns a single
+`stanfit`; in per-day mode it returns a list of `stanfit` objects named by
+date — one entry per *fitted* day, so a dropped day has no entry at all.
+
+```{r ts_perday_mcmc, eval=FALSE}
+str(get_mcmc(mm_a_perday), max.level=1, list.len=3)
+```
+
+```
+List of 13
+ $ 2011-06-30:Formal class 'stanfit' [package "rstan"] with 10 slots
+ $ 2011-07-01:Formal class 'stanfit' [package "rstan"] with 10 slots
+ $ 2011-07-02:Formal class 'stanfit' [package "rstan"] with 10 slots
+  [list output truncated]
+```
+
+## Fitting the pre-formatted example
+
+`two_station_example` is already formatted and needs no preparation — it
+goes straight into the model. Here we fit just the first 14 days for a
+quick, build-friendly demo:
+
+```{r ts_example_fit, eval=FALSE}
+dat_start <- two_station_example[1:1344, ]
+mm_example <- metab_bayes_2s(specs(mm_name('bayes_2s')), data=dat_start)
+nrow(get_params(mm_example))
+```
+
+## Priors
+
+The two-station model takes six priors through `specs()`.
+
+**GPP and ER** use the same defaults as the one-station Bayesian models —
+`GPP_daily_mu` (3.1), `GPP_daily_sigma` (6.0), `ER_daily_mu` (-7.1), and
+`ER_daily_sigma` (7.1). There are no two-station-specific versions of these
+to look for.
+
+**K600** is set through `k600_velocity_lnorm_meanlog` (default `log(3.48)`,
+about 1.247) and `k600_velocity_lnorm_sdlog` (default 0.5) — the meanlog and
+sdlog of a lognormal prior. The names differ from the one-station
+`K600_daily_meanlog`/`K600_daily_sdlog` because the quantity differs: the
+two-station model puts its prior on the gas exchange velocity k600
+(m d^-1^), which the Stan model divides by each timestep's depth. The
+daily rate-scale `K600_daily` (d^-1^) reported in the results is a derived
+quantity, computed for comparability with the one-station output.
+
+These K600 defaults are generic, not tuned to any site, and K600 in
+particular is worth revisiting for your own reach. Independent estimates,
+from a tracer study, or from one-station fits on a hydraulically similar
+reach, make a better-centered prior; `qlnorm()` will tell you what
+quantiles a candidate `meanlog`/`sdlog` pair implies. (`plot_distribs()`
+can visualize the `GPP_daily` and `ER_daily` priors from a two-station
+specs list, but does not recognize the `k600_velocity_lnorm_*` names.)
+
+```{r ts_priors, eval=FALSE}
+site_specs <- revise(bayes_2s_specs,
+                     k600_velocity_lnorm_meanlog=log(15), k600_velocity_lnorm_sdlog=0.7,
+                     GPP_daily_mu=8, GPP_daily_sigma=4)
+```
+
+Note that K600 here is reaeration over the reach *between* the two stations,
+a reach-integrated quantity. There is a single K600 estimated per day; no
+hierarchical or binned pooling across days is available for two-station
+models (see issue #441).
+
+<!-- TODO(#441): hierarchical / binned K600 pooling for bayes_2s. -->
+
+## Known limitations {#known-limitations}
+
+- **No K600 pooling.** K600 is estimated independently for each day. The
+  hierarchical and binned pooling options offered by one-station models are
+  not available currently.
+- **`plot_DO_preds()` does not work on two-station models.** It expects the
+  one-station `DO.obs`/`DO.mod` column names. Plot `predict_DO()` output
+  directly for now. `plot_metab_preds()` does work.
+- **`predict_DO(use_saved=FALSE)` is not implemented.** Only the values
+  computed at fitting time are available.
+- **Whole days only.** A day is either completely covered or not modeled;
+  there is no partial-day fitting. See
+  [Why a day may be missing from your results](#missing-days).
+
+
+
