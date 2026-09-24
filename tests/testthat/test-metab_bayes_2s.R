@@ -35,13 +35,13 @@ test_that("travel.time <= 0 triggers an error", {
   expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
 
-# A day whose travel.time exceeds specs$max_travel_time_days (10-hour
-# default, 12-hour cap) is not a dataset-wide error: mm_align_2s() drops
+# A day whose travel.time exceeds specs$max_travel_time_days (10/24-day
+# default, 0.5-day cap) is not a dataset-wide error: mm_align_2s() drops
 # just that day, with a message naming the date and travel time (see
 # mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
 # at the default travel_time=0.01 (well under the ceiling), day 2 reusing
 # day 1's complete-day rows as a template, re-dated to follow immediately
-# after, with travel.time raised to 15 hours (above the ceiling). Day 2
+# after, with travel.time raised to 15 hours, 0.625 days (above the ceiling). Day 2
 # still has real upstream lead-in -- it draws on day 1's data -- so the
 # ceiling, not lead-in availability, is what drops it.
 make_2day_ceiling_data <- function() {
@@ -52,12 +52,22 @@ make_2day_ceiling_data <- function() {
   rbind(day1, day2)
 }
 
+test_that("mm_format_days_hours() shows days with hours in parentheses, singular at exactly one", {
+  fmt <- streamMetabolizer:::mm_format_days_hours
+  expect_equal(fmt(0.5), "0.5 days (12 hours)")
+  expect_equal(fmt(10/24), "0.42 days (10 hours)")
+  expect_equal(fmt(15/24), "0.63 days (15 hours)")
+  expect_equal(fmt(1/24), "0.04 days (1 hour)")
+  expect_equal(fmt(1), "1 day (24 hours)")
+  expect_equal(fmt(0.125), "0.13 days (3 hours)")
+})
+
 test_that("mm_align_2s drops a day whose travel.time exceeds the ceiling, leaving other days intact", {
   dat <- make_2day_ceiling_data()
 
   aln <- expect_message(
     mm_align_2s(dat),
-    "dropping 1 day\\(s\\) whose travel.time exceeds the 10-hour ceiling: 2050-06-02 \\(15\\.00 hours\\)")
+    "dropping 1 day\\(s\\) whose travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling: 2050-06-02 \\(0\\.63 days \\(15 hours\\)\\)")
 
   # the offending day is gone entirely, not merely marked invalid; the good
   # day (2050-06-01) is unaffected
@@ -77,7 +87,7 @@ test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fi
 
   mm <- expect_message(
     metab_bayes_2s(specs=sp, data=dat),
-    "dropping 1 day\\(s\\) whose travel.time exceeds the 10-hour ceiling: 2050-06-02")
+    "dropping 1 day\\(s\\) whose travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling: 2050-06-02")
 
   # day 2 was excluded before fitting, so it is reported as an invalid day
   # naming the ceiling rather than as a failed fit; day 1 is unaffected
@@ -948,7 +958,7 @@ test_that("mm_align_2s() reports the days it drops, and why", {
   expect_equal(nrow(aln$removed), 1)
   expect_named(aln$removed, c('date','errors'))
   expect_equal(as.character(aln$removed$date), "2050-06-02")
-  expect_match(aln$removed$errors, "travel.time exceeds the 10-hour ceiling \\(15.00 hours\\)")
+  expect_match(aln$removed$errors, "travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling \\(0\\.63 days \\(15 hours\\)\\)")
 
   # a day that doesn't fill its 06:00-06:00 window. Shortening the second day
   # of a two-day fixture, since dropping the only day is an error, not a result
@@ -1123,7 +1133,7 @@ test_that("days dropped by mm_align_2s() are reported alongside those dropped by
   expect_equal(nrow(daily), 2)
   expect_equal(as.character(daily$date), c("2050-06-01", "2050-06-02"))
   expect_equal(daily$valid_day, c(TRUE, FALSE))
-  expect_match(daily$errors[2], "travel.time exceeds the 10-hour ceiling")
+  expect_match(daily$errors[2], "travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling")
   expect_true(is.na(daily$GPP_daily_50pct[2]))
   expect_true(!is.na(daily$GPP_daily_50pct[1]))
 })

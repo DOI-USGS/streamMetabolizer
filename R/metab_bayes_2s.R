@@ -83,7 +83,7 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   modeled themselves.
 #'
 #'   Travel time is also subject to a ceiling, \code{specs$
-#'   max_travel_time_days} (10/24 days by default (10 hours); values above 0.5 (12 hours) are rejected):
+#'   max_travel_time_days} (defaults to 0.42 days (10 hours); values above 0.5 days (12 hours) are rejected):
 #'   beyond it, a day's upstream parcel almost certainly originates before the day's own
 #'   06:00 start, where the light it experienced no longer has a
 #'   well-defined day total to be a proportion of. Days exceeding the

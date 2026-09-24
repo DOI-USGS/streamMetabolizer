@@ -352,8 +352,8 @@ K600_daily.}
 \item{max_travel_time_days}{for \code{type='bayes_2s'}. The travel-time
 ceiling, in days: days whose longest \code{travel.time} exceeds this are
 dropped, with a message, rather than modeled (see
-\code{\link{metab_bayes_2s}}). Defaults to 10/24 (10 hours); values above
-0.5 (12 hours) are rejected.}
+\code{\link{metab_bayes_2s}}). Defaults to 0.42 days (10 hours); values above
+0.5 days (12 hours) are rejected.}
 
 \item{max_gap_hours}{for \code{type='bayes_2s'}. The gap-filling tolerance,
 in hours: runs of missing observations spanning no more than this are
