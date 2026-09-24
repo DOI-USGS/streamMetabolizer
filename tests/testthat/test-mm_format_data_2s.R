@@ -199,7 +199,7 @@ test_that("mm_format_data_2s()'s output passes mm_validate_data()/mm_validate_da
   # the matrices -- 86 of this record's 891 aligned days carry one, mostly
   # from upstream outages -- and Stan rejects those outright
   sp <- specs(mm_name('bayes_2s'))
-  aln <- suppressMessages(mm_align_2s(v(dat_list$data), max_travel_time_hours=sp$max_travel_time_hours))
+  aln <- suppressMessages(mm_align_2s(v(dat_list$data), max_travel_time_days=sp$max_travel_time_days))
   filtered <- suppressMessages(mm_filter_valid_days_2s(dat_list$data, aln, day_tests=sp$day_tests))
   expect_gt(nrow(filtered$removed), 0) # this record does exercise the filter
 

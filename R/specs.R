@@ -255,11 +255,11 @@
 #' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
 #'   standard deviation parameter of a lognormal prior distribution for
 #'   K600_daily.
-#' @param max_travel_time_hours for \code{type='bayes_2s'}. The travel-time
-#'   ceiling, in hours: days whose longest \code{travel.time} exceeds this are
+#' @param max_travel_time_days for \code{type='bayes_2s'}. The travel-time
+#'   ceiling, in days: days whose longest \code{travel.time} exceeds this are
 #'   dropped, with a message, rather than modeled (see
-#'   \code{\link{metab_bayes_2s}}). Defaults to 10 hours and may not be set
-#'   above 12.
+#'   \code{\link{metab_bayes_2s}}). Defaults to 10/24 (10 hours); values above
+#'   0.5 (12 hours) are rejected.
 #' @param max_gap_hours for \code{type='bayes_2s'}. The gap-filling tolerance,
 #'   in hours: runs of missing observations spanning no more than this are
 #'   bridged by linear interpolation so their days can still be modeled, while
@@ -448,15 +448,15 @@ specs <- function(
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1.0,
 
-  # two-station travel-time ceiling, in hours. read by prepdata_bayes_2s() and
+  # two-station travel-time ceiling, in days. read by prepdata_bayes_2s() and
   # metab_bayes_2s(), both of which pass it to mm_align_2s(). unlike the
   # K600_lnorm_* hyperparameters above it is not spliced into the Stan data
   # list, so it is not part of params_in.
-  max_travel_time_hours = mm_max_travel_time_default,
+  max_travel_time_days = mm_max_travel_time_default,
 
   # two-station gap-filling tolerance, in hours. read by metab_bayes_2s(),
   # which fills gaps in the validated data before any day-completeness
-  # assessment. like max_travel_time_hours it is not spliced into the Stan
+  # assessment. like max_travel_time_days it is not spliced into the Stan
   # data list, so it is not part of params_in.
   max_gap_hours = mm_max_gap_hours_default,
 
@@ -692,7 +692,7 @@ specs <- function(
         # day_start/day_end/required_timestep are deliberately absent: they
         # configure the one-station diel window, which two-station does not
         # use. day_tests is here because the per-day validity tests are shared
-        'max_travel_time_hours', 'max_gap_hours', 'day_tests',
+        'max_travel_time_days', 'max_gap_hours', 'day_tests',
 
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -711,7 +711,7 @@ specs <- function(
 
       # all shared with the functions that consume these values, which check
       # them again because they can be called directly rather than via specs
-      mm_check_max_travel_time_hours(all_specs$max_travel_time_hours)
+      mm_check_max_travel_time_days(all_specs$max_travel_time_days)
       mm_check_max_gap_hours(all_specs$max_gap_hours)
       mm_check_day_tests_2s(all_specs$day_tests)
 

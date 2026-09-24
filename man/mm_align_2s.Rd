@@ -4,14 +4,14 @@
 \alias{mm_align_2s}
 \title{Align two-station data onto its 06:00 day window}
 \usage{
-mm_align_2s(data, max_travel_time_hours = mm_max_travel_time_default)
+mm_align_2s(data, max_travel_time_days = mm_max_travel_time_default)
 }
 \arguments{
 \item{data}{data.frame (units already stripped) containing at least
 \code{solar.time} and \code{travel.time}, sorted ascending by
 \code{solar.time}.}
 
-\item{max_travel_time_hours}{the travel-time ceiling, in hours. Days whose
+\item{max_travel_time_days}{the travel-time ceiling, in days. Days whose
 longest travel time exceeds this are dropped.}
 }
 \value{
@@ -39,7 +39,7 @@ gap partway through.
 Whole days are dropped, with a message, in two cases:
 \itemize{
   \item the day's longest travel time exceeds
-    \code{max_travel_time_hours} (see \code{\link{mm_max_travel_time}});
+    \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
   \item the day does not fill its 24-hour window, i.e. it holds fewer than
     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
     the edges of any dataset whose bounds don't fall on 06:00, and from

@@ -20,9 +20,9 @@ mm_max_travel_time_cap
 Bounds how far back in time a modeled day may reach for upstream
 observations; days whose travel time exceeds the ceiling are dropped
 rather than modeled. \code{mm_max_travel_time_default} is the canonical
-default (currently 10); \code{mm_max_travel_time_cap} is kept well below
+default (currently 10 hours); \code{mm_max_travel_time_cap} is kept well below
 the 24-hour day window so a single day's travel time can't consume the
-entire lead-in period.
+entire lead-in period. Both are in days.
 }
 \keyword{datasets}
 \keyword{internal}

@@ -120,7 +120,7 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   modeled themselves.
 
   Travel time is also subject to a ceiling, \code{specs$
-  max_travel_time_hours} (10 hours by default, configurable up to 12):
+  max_travel_time_days} (10/24 days by default (10 hours); values above 0.5 (12 hours) are rejected):
   beyond it, a day's upstream parcel almost certainly originates before the day's own
   06:00 start, where the light it experienced no longer has a
   well-defined day total to be a proportion of. Days exceeding the

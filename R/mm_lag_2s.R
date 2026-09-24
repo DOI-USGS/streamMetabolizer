@@ -3,38 +3,38 @@
 #' Bounds how far back in time a modeled day may reach for upstream
 #' observations; days whose travel time exceeds the ceiling are dropped
 #' rather than modeled. \code{mm_max_travel_time_default} is the canonical
-#' default (currently 10); \code{mm_max_travel_time_cap} is kept well below
+#' default (currently 10 hours); \code{mm_max_travel_time_cap} is kept well below
 #' the 24-hour day window so a single day's travel time can't consume the
-#' entire lead-in period.
+#' entire lead-in period. Both are in days.
 #'
 #' @keywords internal
 #' @name mm_max_travel_time
 NULL
 
 #' @rdname mm_max_travel_time
-mm_max_travel_time_default <- 10
+mm_max_travel_time_default <- 10/24
 
 #' @rdname mm_max_travel_time
-mm_max_travel_time_cap <- 12
+mm_max_travel_time_cap <- 12/24
 
 #' Validate a travel-time ceiling
 #'
 #' Shared by \code{specs()} and \code{\link{mm_align_2s}} so the two can't
 #' disagree about what ceiling is legal.
 #'
-#' @param max_travel_time_hours the value to check.
+#' @param max_travel_time_days the value to check.
 #' @keywords internal
-mm_check_max_travel_time_hours <- function(max_travel_time_hours) {
-  if(!is.numeric(max_travel_time_hours) || length(max_travel_time_hours) != 1 ||
-     is.na(max_travel_time_hours)) {
-    stop('max_travel_time_hours must be a single non-NA number', call.=FALSE)
+mm_check_max_travel_time_days <- function(max_travel_time_days) {
+  if(!is.numeric(max_travel_time_days) || length(max_travel_time_days) != 1 ||
+     is.na(max_travel_time_days)) {
+    stop('max_travel_time_days must be a single non-NA number', call.=FALSE)
   }
-  if(max_travel_time_hours <= 0) {
-    stop('max_travel_time_hours must be > 0', call.=FALSE)
+  if(max_travel_time_days <= 0) {
+    stop('max_travel_time_days must be > 0', call.=FALSE)
   }
-  if(max_travel_time_hours > mm_max_travel_time_cap) {
+  if(max_travel_time_days > mm_max_travel_time_cap) {
     stop(paste0(
-      'max_travel_time_hours must be <= ', mm_max_travel_time_cap, ' hours; a ceiling ',
+      'max_travel_time_days must be <= ', mm_max_travel_time_cap, ' days (', mm_max_travel_time_cap * 24, ' hours); a ceiling ',
       'approaching the 24-hour two-station day window would allow a single day\'s travel ',
       'time to consume the entire lead-in period'), call.=FALSE)
   }
@@ -273,7 +273,7 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #' Whole days are dropped, with a message, in two cases:
 #' \itemize{
 #'   \item the day's longest travel time exceeds
-#'     \code{max_travel_time_hours} (see \code{\link{mm_max_travel_time}});
+#'     \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
 #'   \item the day does not fill its 24-hour window, i.e. it holds fewer than
 #'     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
 #'     the edges of any dataset whose bounds don't fall on 06:00, and from
@@ -285,7 +285,7 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #' @param data data.frame (units already stripped) containing at least
 #'   \code{solar.time} and \code{travel.time}, sorted ascending by
 #'   \code{solar.time}.
-#' @param max_travel_time_hours the travel-time ceiling, in hours. Days whose
+#' @param max_travel_time_days the travel-time ceiling, in days. Days whose
 #'   longest travel time exceeds this are dropped.
 #' @return a list with \code{keep} (integer indices of the modeled rows, into
 #'   the rows of \code{data}), \code{shift_idx} (integer indices, also into
@@ -295,9 +295,9 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'   \code{timestep_days}, and \code{removed} (a data.frame of \code{date}
 #'   and \code{errors} naming the days dropped here and why)
 #' @keywords internal
-mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) {
+mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
 
-  mm_check_max_travel_time_hours(max_travel_time_hours)
+  mm_check_max_travel_time_days(max_travel_time_days)
 
   solar_time <- data$solar.time
   travel_time <- data$travel.time
@@ -341,14 +341,13 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
   }
 
   # travel-time ceiling: drop the offending day, not the whole dataset
-  max_travel_time_days <- max_travel_time_hours / 24
   worst_by_day <- tapply(travel_time[keep], date, max)
   over_ceiling <- worst_by_day[worst_by_day > max_travel_time_days]
   if(length(over_ceiling) > 0) {
     drop_days(
       names(over_ceiling), sprintf('%.2f hours', unname(over_ceiling) * 24),
-      paste0('whose travel.time exceeds the ', max_travel_time_hours, '-hour ceiling'),
-      paste0('travel.time exceeds the ', max_travel_time_hours, '-hour ceiling'))
+      paste0('whose travel.time exceeds the ', max_travel_time_days * 24, '-hour ceiling'),
+      paste0('travel.time exceeds the ', max_travel_time_days * 24, '-hour ceiling'))
     in_bounds <- !(as.character(date) %in% names(over_ceiling))
     keep <- keep[in_bounds]
     date <- date[in_bounds]
@@ -371,7 +370,7 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
 
   if(length(keep) == 0) {
     stop(paste0(
-      'no complete days remain after applying the ', max_travel_time_hours,
+      'no complete days remain after applying the ', max_travel_time_days * 24,
       '-hour travel.time ceiling and the 06:00-06:00 day-window requirement'), call.=FALSE)
   }
 

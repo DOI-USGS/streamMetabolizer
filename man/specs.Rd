@@ -57,7 +57,7 @@ specs(
   err_mult_GPP_sdlog_sigma = 1,
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1,
-  max_travel_time_hours = mm_max_travel_time_default,
+  max_travel_time_days = mm_max_travel_time_default,
   max_gap_hours = mm_max_gap_hours_default,
   params_in,
   params_out,
@@ -349,11 +349,11 @@ The mean of a lognormal prior distribution for K600_daily.}
 standard deviation parameter of a lognormal prior distribution for
 K600_daily.}
 
-\item{max_travel_time_hours}{for \code{type='bayes_2s'}. The travel-time
-ceiling, in hours: days whose longest \code{travel.time} exceeds this are
+\item{max_travel_time_days}{for \code{type='bayes_2s'}. The travel-time
+ceiling, in days: days whose longest \code{travel.time} exceeds this are
 dropped, with a message, rather than modeled (see
-\code{\link{metab_bayes_2s}}). Defaults to 10 hours and may not be set
-above 12.}
+\code{\link{metab_bayes_2s}}). Defaults to 10/24 (10 hours); values above
+0.5 (12 hours) are rejected.}
 
 \item{max_gap_hours}{for \code{type='bayes_2s'}. The gap-filling tolerance,
 in hours: runs of missing observations spanning no more than this are

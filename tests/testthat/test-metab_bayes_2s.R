@@ -35,7 +35,7 @@ test_that("travel.time <= 0 triggers an error", {
   expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
 
-# A day whose travel.time exceeds specs$max_travel_time_hours (10-hour
+# A day whose travel.time exceeds specs$max_travel_time_days (10-hour
 # default, 12-hour cap) is not a dataset-wide error: mm_align_2s() drops
 # just that day, with a message naming the date and travel time (see
 # mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
@@ -279,7 +279,7 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
   light <- rep(100, n)
   travel.time <- rep(2/24, n)
 
-  aln <- mm_align_2s(data.frame(solar.time=solar.time, travel.time=travel.time), max_travel_time_hours=10)
+  aln <- mm_align_2s(data.frame(solar.time=solar.time, travel.time=travel.time), max_travel_time_days=10/24)
   expect_equal(sort(as.character(unique(aln$date))), c("2050-06-01", "2050-06-02"))
 
   light_lag <- mm_lag_light_2s(solar.time, light, travel.time)
@@ -411,7 +411,7 @@ test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale,
   travel.time <- rep(2 * timestep_min / 1440, length(solar.time))
   data <- data.frame(solar.time=solar.time, travel.time=travel.time)
 
-  aln <- mm_align_2s(data, max_travel_time_hours=10)
+  aln <- mm_align_2s(data, max_travel_time_days=10/24)
 
   # day 1 (gap-affected: the dropped row plus the one row whose target bin
   # was the dropped row) is 94/96 complete and gets dropped wholesale, even
@@ -668,7 +668,7 @@ test_that("a per-day alignment slice preps the same Stan matrices as the joint f
   # shift_idx, which plausible-looking GPP/ER estimates would not.
   sp <- fast_2station_specs()
   dat <- subset_2station_days(two_station_example, 4)
-  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_days=sp$max_travel_time_days))
   joint <- prepdata_bayes_2s(dat, specs=sp, aln=aln)
 
   dates <- unique(aln$date)
@@ -776,7 +776,7 @@ test_that("a failed Stan run on one day is recorded as that day's warning, leavi
   # an error), but scoped to the one day that failed
   sp <- fast_2station_specs()
   dat <- subset_2station_days(two_station_example, 3)
-  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_days=sp$max_travel_time_days))
   bad_date <- unique(aln$date)[2]
 
   setClass('fake_failed_stanfit', representation(mode='integer'))
@@ -846,7 +846,7 @@ test_that("bayes_1fit_2s() formats with nosplit even when specs$split_dates is T
   sp <- fast_2station_specs()
   sp$split_dates <- TRUE
   sp$model_path <- mm_locate_filename(sp$model_name)
-  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_hours=sp$max_travel_time_hours))
+  aln <- suppressMessages(mm_align_2s(v(dat), max_travel_time_days=sp$max_travel_time_days))
 
   fit1 <- suppressMessages(bayes_1fit_2s(dat, aln=aln, specs=sp))
 

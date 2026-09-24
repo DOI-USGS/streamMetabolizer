@@ -83,7 +83,7 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   modeled themselves.
 #'
 #'   Travel time is also subject to a ceiling, \code{specs$
-#'   max_travel_time_hours} (10 hours by default, configurable up to 12):
+#'   max_travel_time_days} (10/24 days by default (10 hours); values above 0.5 (12 hours) are rejected):
 #'   beyond it, a day's upstream parcel almost certainly originates before the day's own
 #'   06:00 start, where the light it experienced no longer has a
 #'   well-defined day total to be a proportion of. Days exceeding the
@@ -167,7 +167,7 @@ metab_bayes_2s <- function(
     # lag/day-window math, so the two can't disagree about which rows are
     # modeled (prepdata_bayes_2s() returns only the Stan-ready matrices, so
     # the alignment itself isn't available to read back off its result).
-    aln <- mm_align_2s(v(dat_list$data), max_travel_time_hours=specs$max_travel_time_hours)
+    aln <- mm_align_2s(v(dat_list$data), max_travel_time_days=specs$max_travel_time_days)
 
     # Reject days whose modeled values fail specs$day_tests. Validation
     # upstream checks structure only, so this is the first look at the values
@@ -529,7 +529,7 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 bayes_perday_2s <- function(data, specs, aln=NULL) {
 
   if(is.null(aln)) {
-    aln <- mm_align_2s(v(data), max_travel_time_hours=specs$max_travel_time_hours)
+    aln <- mm_align_2s(v(data), max_travel_time_days=specs$max_travel_time_days)
   }
 
   # resolved once rather than per date: it doesn't depend on which date is
@@ -706,10 +706,10 @@ prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
   # it here only when called directly. specs may be NULL or lack the ceiling,
   # in which case mm_align_2s()'s own default applies
   if(is.null(aln)) {
-    aln <- if(is.null(specs$max_travel_time_hours)) {
+    aln <- if(is.null(specs$max_travel_time_days)) {
       mm_align_2s(data)
     } else {
-      mm_align_2s(data, max_travel_time_hours=specs$max_travel_time_hours)
+      mm_align_2s(data, max_travel_time_days=specs$max_travel_time_days)
     }
   }
   modeled <- mm_modeled_rows_2s(data, aln)
