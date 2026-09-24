@@ -66,7 +66,7 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   costing the whole run, since each date's errors are collected and
   reported against that date alone.
 
-  Fitting one date at a time does not mean slicing the data by date: each
+  Fitting one date at a time does not mean slicing the data by the downstream date right away: each
   date's upstream observations are drawn from earlier rows, across the
   date boundary, exactly as in the joint fit.
 }
@@ -121,7 +121,7 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
 
   Travel time is also subject to a ceiling, \code{specs$
   max_travel_time_hours} (10 hours by default, configurable up to 12):
-  beyond it, a day's upstream parcel originates before the day's own
+  beyond it, a day's upstream parcel almost certainly originates before the day's own
   06:00 start, where the light it experienced no longer has a
   well-defined day total to be a proportion of. Days exceeding the
   ceiling are dropped with a message rather than treated as an error,

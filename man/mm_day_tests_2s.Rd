@@ -23,11 +23,11 @@ bounds what a user may ask for -- a chosen subset of
 inherited wholesale.
 }
 \details{
-\code{full_day} and \code{even_timesteps} are excluded because they would
-reject nearly every two-station day: the first tests a 4 AM/28-hour diel
-window, not the 24-hour 06:00-06:00 window a two-station day occupies;
-the second requires evenly spaced timesteps, which two-station tolerates
-gaps in on purpose. \code{pos_discharge} is allowed but off by default, a
+\code{full_day} and \code{even_timesteps} are excluded because two-station
+methods don't need regular timesteps: \code{full_day} requires observations
+at both ends of the day window (24 hours by default), and
+\code{even_timesteps} requires evenly spaced timesteps, which two-station tolerates
+gaps in on purpose (gap tolerance is a known benefit of two-station methods!). \code{pos_discharge} is allowed but off by default, a
 no-op until two-station data carries a \code{discharge} column (issue
 #475).
 }

@@ -318,7 +318,7 @@ mm_align_2s <- function(data, max_travel_time_hours=mm_max_travel_time_default) 
   # the results with nothing to explain it. headline completes "dropping N
   # day(s) ___"; reason is the stored per-day explanation; detail is the
   # per-day specifics both use
-  removed <- mm_no_removed_days_2s()
+  removed <- mm_no_removed_days_2s
   drop_days <- function(dates, detail, headline, reason) {
     message(paste0(
       'dropping ', length(dates), ' day(s) ', headline, ': ',

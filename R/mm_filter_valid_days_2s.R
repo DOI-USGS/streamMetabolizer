@@ -8,11 +8,11 @@ NULL
 #' \code{\link{mm_is_valid_day}}'s five tests, not the shared default
 #' inherited wholesale.
 #'
-#' \code{full_day} and \code{even_timesteps} are excluded because they would
-#' reject nearly every two-station day: the first tests a 4 AM/28-hour diel
-#' window, not the 24-hour 06:00-06:00 window a two-station day occupies;
-#' the second requires evenly spaced timesteps, which two-station tolerates
-#' gaps in on purpose. \code{pos_discharge} is allowed but off by default, a
+#' \code{full_day} and \code{even_timesteps} are excluded because two-station
+#' methods don't need regular timesteps: \code{full_day} requires observations
+#' at both ends of the day window (24 hours by default), and
+#' \code{even_timesteps} requires evenly spaced timesteps, which two-station tolerates
+#' gaps in on purpose (gap tolerance is a known benefit of two-station methods!). \code{pos_discharge} is allowed but off by default, a
 #' no-op until two-station data carries a \code{discharge} column (issue
 #' #475).
 #'
@@ -85,7 +85,7 @@ mm_filter_valid_days_2s <- function(data, aln, day_tests=mm_day_tests_2s_default
   mm_check_day_tests_2s(day_tests)
 
   if(length(day_tests) == 0) {
-    return(list(aln=aln, removed=mm_no_removed_days_2s()))
+    return(list(aln=aln, removed=mm_no_removed_days_2s))
   }
 
   # a two-station day is not a contiguous slice of data: its upstream columns
@@ -109,7 +109,7 @@ mm_filter_valid_days_2s <- function(data, aln, day_tests=mm_day_tests_2s_default
 
   invalid <- !vapply(validity, isTRUE, logical(1))
   if(!any(invalid)) {
-    return(list(aln=aln, removed=mm_no_removed_days_2s()))
+    return(list(aln=aln, removed=mm_no_removed_days_2s))
   }
 
   removed <- data.frame(
@@ -138,6 +138,4 @@ mm_filter_valid_days_2s <- function(data, aln, day_tests=mm_day_tests_2s_default
 #' stages that can drop a day always combine without special-casing.
 #'
 #' @keywords internal
-mm_no_removed_days_2s <- function() {
-  data.frame(date=as.Date(character(0)), errors=character(0), stringsAsFactors=FALSE)
-}
+mm_no_removed_days_2s <- data.frame(date=as.Date(character(0)), errors=character(0), stringsAsFactors=FALSE)
