@@ -8,13 +8,10 @@ two-station Stan model}
 prepdata_bayes_2s(data, specs = NULL)
 }
 \arguments{
-\item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}: must contain \code{solar.time},
-\code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
-\code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-\code{travel.time}, sorted ascending by \code{solar.time}, and must
-include the lead-in rows required to cover the longest travel time (see
-\code{\link{metab_bayes_2s}}).}
+\item{data}{an \code{aligned_2s} data.frame (see
+\code{\link{mm_align_data_2s}}): one row per modeled observation, each
+already holding its upstream values, sorted by \code{solar.time}, with
+the same number of rows every \code{date}.}
 
 \item{specs}{a list of model specs (see \code{\link{specs}}), expected to
 already contain \code{K600_lnorm_meanlog} and \code{K600_lnorm_sdlog}
@@ -32,20 +29,8 @@ a named list with all variables in the Stan model's data block:
   matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
 }
 \description{
-Time-shifts the upstream DO series to match the travel time between
-stations, then pivots the result into the \code{n_obs x n_days} matrices
-expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
-(see \code{\link{metab_bayes_2s}}).
-}
-\details{
-The upstream observation that "matches" a given downstream observation at
-row \code{i} was recorded \code{lag[i] <- round(travel.time[i] /
-timestep_days)} timesteps earlier, where \code{timestep_days} is the
-median timestep of \code{data$solar.time}. This must be computed the same
-way as in \code{\link{mm_validate_data_2station}}'s lead-in check, so that the
-\code{max(lag)} computed here always agrees with the lead-in requirement
-already validated there. The first \code{max(lag)} rows of \code{data} are
-lead-in rows: they supply upstream DO for the shift but are never
-themselves treated as modeled (downstream) observations.
+Pivots aligned two-station data into the \code{n_obs x n_days} matrices
+expected by the \code{data} block of the two-station Stan model (see
+\code{\link{metab_bayes_2s}}).
 }
 \keyword{internal}

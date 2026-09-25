@@ -255,7 +255,6 @@
 #' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
 #'   standard deviation parameter of a lognormal prior distribution for
 #'   K600_daily.
-#'
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
 #'   during the specs() call; need only be revised if you're using a custom
@@ -512,7 +511,12 @@ specs <- function(
   all_possible <- names(formals(specs))
   not_missing <- names(as.list(match.call())[-1]) # the arguments that were given explicitly
   yes_missing <- all_possible[!(all_possible %in% not_missing)]
-  prefer_missing <- setdiff(all_possible[sapply(formals(specs), is.symbol)], 'params_out') # the arguments w/o defaults, mostly
+  # the arguments w/o defaults, mostly. the empty symbol is what a formal with
+  # no default holds; is.symbol() would also catch a default that is itself a
+  # bare symbol (e.g. a constant reference), misreading it as "no default"
+  prefer_missing <- setdiff(
+    all_possible[sapply(formals(specs), function(f) identical(f, quote(expr=)))],
+    'params_out')
   prefer_not_missing <- if(features$type == 'bayes' && features$GPP_fun == 'satlight') {
     c('alpha_meanlog', 'alpha_sdlog', 'Pmax_mu', 'Pmax_sigma')
   } else {
@@ -660,6 +664,12 @@ specs <- function(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
 
+        # data prep (not Stan hyperparameters, so not in params_in).
+        # day_start/day_end/required_timestep are deliberately absent: they
+        # configure the one-station diel window, which two-station does not
+        # use. day_tests is here because the per-day validity tests are shared
+        'day_tests',
+
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
 
@@ -668,13 +678,29 @@ specs <- function(
         'burnin_steps', 'saved_steps', 'thin_steps', 'verbose'
       )
 
+      # resolved before the check below, which applies to the default as much
+      # as to a user-supplied value. See ?mm_day_tests_2s for why this is a
+      # subset rather than the shared five-test default
+      if('day_tests' %in% yes_missing) {
+        all_specs$day_tests <- mm_day_tests_2s_default
+      }
+
+      # shared with the function that consumes it, which checks it again
+      # because it can be called directly rather than via specs
+      mm_check_day_tests_2s(all_specs$day_tests)
+
       # compute some arguments
       if('engine' %in% yes_missing) {
         all_specs$engine <- 'stan'
       }
       if('split_dates' %in% yes_missing) {
-        # forced FALSE: the upstream/downstream lag shift ties consecutive
-        # days together, so days can't be modeled independently
+        # FALSE by default, but both modes are supported. The two-station Stan
+        # model carries a single observation-error sigma shared across whatever
+        # dates it is given, so split_dates=TRUE estimates a separate sigma per
+        # date rather than one pooled across the record -- the same tradeoff
+        # one-station's split_dates already makes on a structurally identical
+        # model. Joint is the default because the pooled estimate uses the
+        # whole record; see metab_bayes_2s() for when splitting is preferable
         all_specs$split_dates <- FALSE
       }
       if('params_out' %in% yes_missing) {

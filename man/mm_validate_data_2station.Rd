@@ -9,13 +9,31 @@ mm_validate_data_2station(data)
 \arguments{
 \item{data}{data.frame as returned by \code{\link{mm_validate_data}} for
 \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
-\code{travel.time}, sorted ascending by \code{solar.time}.}
+\code{travel.time}, sorted ascending by \code{solar.time}; or an
+\code{aligned_2s} data.frame.}
 }
 \description{
-Checks the lead-in coverage requirement described in
-\code{\link{metab_bayes_2s}}, using the (median) timestep of
-\code{data$solar.time} to compute the required lag. Column presence,
-timestamp validity, and travel.time bounds are expected to have already
-been checked by \code{\link{mm_validate_data}}.
+Checks the lead-in existence requirement specific to
+\code{\link{metab_bayes_2s}}: at least one row must have a real upstream
+observation at its target travel-time offset, per \code{\link{mm_lag_2s}}'s
+timestep-bin matching. This is a structural question -- is there any data
+at all to lag from? -- and so belongs with validation's other fail-fast
+checks.
+}
+\details{
+Rows that individually lack lead-in are not an error; they are dropped as
+lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
+owns the per-day travel-time ceiling. Column presence, timestamp validity,
+and travel.time positivity are expected to have already been checked by
+\code{\link{mm_validate_data}}.
+
+Aligned data (class \code{aligned_2s}) is checked per row and per day
+instead, since each row already holds its upstream values: a UTC
+\code{solar.time}, a \code{date}
+matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
+\code{solar.time}, the same number of rows every day, a single regular
+timestep across the whole frame, positive \code{travel.time}, and
+\code{travel.time} within the stored travel-time ceiling when one is
+recorded. \code{NA}s in the data columns are left to the day-validity tests.
 }
 \keyword{internal}

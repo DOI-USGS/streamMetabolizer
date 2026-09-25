@@ -81,7 +81,11 @@ Returns a data.frame with columns \code{solar.time}, \code{DO.obs.down}
 \code{DO.obs}/\code{DO.mod}. The values are those computed once at fitting
 time (see \code{\link{metab_bayes_2s}}); \code{use_saved=FALSE} (on-demand
 recomputation from the fitted daily GPP/ER/K600 medians) is not
-implemented.
+implemented. Rows cover every timestep that was modeled, which includes
+any that were interpolated to bridge a short gap in the input data (see
+\code{\link{metab_bayes_2s}}'s gap-filling section), so \code{DO.obs.down}
+may hold an interpolated rather than an observed value at those
+timesteps.
 
 \item \code{predict_DO(metab_model)}: This implementation is shared by many model types
 

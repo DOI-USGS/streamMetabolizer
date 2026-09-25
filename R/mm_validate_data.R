@@ -93,22 +93,21 @@ mm_validate_data <- function(
       }
     }
 
-    # check travel.time bounds, if present. only two-station models supply
-    # this column, so this is a no-op for other model types. travel.time is
-    # expected in days; values outside (0, 8/24] either reflect a units
-    # mistake (e.g., minutes or hours rather than days) or a reach whose
-    # travel time exceeds the 8-hour limit needed to keep the previous
-    # day's light from bleeding into the following day's metabolism estimate
+    # check travel.time positivity, if present. only two-station models supply
+    # this column, so this is a no-op for other model types: the column filter
+    # above has already dropped travel.time from any dat whose metab_class
+    # doesn't declare it. A zero or negative travel time makes the upstream
+    # lag meaningless, so this is a structural error.
+    #
+    # No upper bound is enforced here. An upper bound on travel time is a
+    # question about individual days, not about the dataset's structure, and
+    # the right response is to drop those days rather than reject the whole
+    # dataset -- something validation's fail-fast contract can't express. That
+    # ceiling now lives in mm_align_2s() (see mm_lag_2s.R).
     if('travel.time' %in% names(dat)) {
       travel.time <- v(dat$travel.time)
       if(any(travel.time <= 0)) {
         stop('travel.time must be > 0', call.=FALSE)
-      }
-      if(any(travel.time > 8/24)) {
-        stop('travel.time must be <= 8/24 days (8 hours); values above this either suggest incorrect units ',
-             '(expected days, e.g. not minutes or hours) or a reach travel time that exceeds the 8-hour limit ',
-             "required to prevent the previous day's light conditions from influencing the following day's ",
-             'metabolism estimate', call.=FALSE)
       }
     }
 
@@ -123,36 +122,107 @@ mm_validate_data <- function(
 
 #' Two-station-specific data validation
 #'
-#' Checks the lead-in coverage requirement described in
-#' \code{\link{metab_bayes_2s}}, using the (median) timestep of
-#' \code{data$solar.time} to compute the required lag. Column presence,
-#' timestamp validity, and travel.time bounds are expected to have already
-#' been checked by \code{\link{mm_validate_data}}.
+#' Checks the lead-in existence requirement specific to
+#' \code{\link{metab_bayes_2s}}: at least one row must have a real upstream
+#' observation at its target travel-time offset, per \code{\link{mm_lag_2s}}'s
+#' timestep-bin matching. This is a structural question -- is there any data
+#' at all to lag from? -- and so belongs with validation's other fail-fast
+#' checks.
+#'
+#' Rows that individually lack lead-in are not an error; they are dropped as
+#' lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
+#' owns the per-day travel-time ceiling. Column presence, timestamp validity,
+#' and travel.time positivity are expected to have already been checked by
+#' \code{\link{mm_validate_data}}.
+#'
+#' Aligned data (class \code{aligned_2s}) is checked per row and per day
+#' instead, since each row already holds its upstream values: a UTC
+#' \code{solar.time}, a \code{date}
+#' matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
+#' \code{solar.time}, the same number of rows every day, a single regular
+#' timestep across the whole frame, positive \code{travel.time}, and
+#' \code{travel.time} within the stored travel-time ceiling when one is
+#' recorded. \code{NA}s in the data columns are left to the day-validity tests.
 #'
 #' @param data data.frame as returned by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
-#'   \code{travel.time}, sorted ascending by \code{solar.time}.
+#'   \code{travel.time}, sorted ascending by \code{solar.time}; or an
+#'   \code{aligned_2s} data.frame.
 #' @keywords internal
 mm_validate_data_2station <- function(data) {
 
-  data_v <- v(data)
-  travel_time <- data_v$travel.time
-  solar_time <- data_v$solar.time
+  if(inherits(data, 'aligned_2s')) {
+    missing_cols <- setdiff(c('date', 'solar.time', 'travel.time'), names(data))
+    if(length(missing_cols) > 0) {
+      stop('aligned data is missing these columns: ', paste(missing_cols, collapse=', '), call.=FALSE)
+    }
+    if(nrow(data) == 0) stop('aligned data has no rows', call.=FALSE)
 
-  # there must be enough lead-in rows of upstream DO before the first
-  # modeled row to cover the longest travel time in the dataset. timestep_days
-  # is the median observation interval, in days; max_lag is the number of
-  # timesteps by which upstream data must lead downstream predictions. The
-  # first max_lag rows of data serve only as lead-in and cannot themselves be
-  # modeled, so at least max_lag + 1 rows are required overall.
-  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
-  max_lag <- max(round(travel_time / timestep_days))
-  if(nrow(data) <= max_lag) {
-    lead_in_needed <- max_lag - nrow(data) + 1
+    solar_time <- v(data[['solar.time']])
+    date <- v(data[['date']])
+    travel_time <- v(data[['travel.time']])
+
+    if(!lubridate::is.POSIXct(solar_time) || anyNA(solar_time)) {
+      stop("aligned data must have a non-NA 'solar.time' column of class POSIXct", call.=FALSE)
+    }
+    if(!(lubridate::tz(solar_time) %in% c('UTC','GMT'))) {
+      stop("expecting 'solar.time' to have timezone 'UTC'", call.=FALSE)
+    }
+    if(!lubridate::is.Date(date) || anyNA(date)) {
+      stop("aligned data must have a non-NA 'date' column of class Date", call.=FALSE)
+    }
+    if(!isTRUE(all(date == mm_date_2s(solar_time)))) {
+      stop("'date' must label each row with the 06:00-06:00 day its solar.time falls in", call.=FALSE)
+    }
+    if(is.unsorted(solar_time, strictly=TRUE)) {
+      stop('aligned data must be sorted by solar.time, with no duplicate timestamps', call.=FALSE)
+    }
+
+    # the Stan model's n_obs x n_days matrices need every day the same length
+    n_by_day <- table(date)
+    if(length(unique(n_by_day)) != 1) {
+      stop(paste0(
+        'every day of aligned data must hold the same number of rows; got between ',
+        min(n_by_day), ' and ', max(n_by_day)), call.=FALSE)
+    }
+
+    # one timestep across the whole frame, measured between consecutive rows
+    # of the same day so gaps between days don't count. 1-second tolerance,
+    # as for the snap-to-bin grid check
+    steps <- diff(as.numeric(solar_time))[date[-1] == date[-length(date)]]
+    if(length(steps) > 0 && diff(range(steps)) > 1) {
+      stop(paste0(
+        'aligned data must have a single regular timestep; found steps from ',
+        signif(min(steps) / 60, 3), ' to ', signif(max(steps) / 60, 3), ' minutes'), call.=FALSE)
+    }
+
+    if(any(travel_time <= 0, na.rm=TRUE)) {
+      stop('travel.time must be > 0', call.=FALSE)
+    }
+    ceiling_days <- attr(data, 'max_travel_time_days')
+    if(!is.null(ceiling_days) && any(travel_time > ceiling_days, na.rm=TRUE)) {
+      stop(paste0(
+        'travel.time exceeds the ', mm_format_days_hours(ceiling_days),
+        ' ceiling the data were aligned with'), call.=FALSE)
+    }
+
+    return(invisible(NULL))
+  }
+
+  data_v <- v(data)
+
+  # raw (not yet aligned) data, reached only when aligning. mm_lag_2s() is the
+  # same lag the alignment applies, so the two can't disagree
+  lagged <- mm_lag_2s(data_v$solar.time, data_v$travel.time)
+
+  if(!any(lagged$has_leadin)) {
+    max_lag <- max(lagged$lag)
     stop(paste0(
-      'insufficient lead-in data for upstream DO: the longest travel.time implies a lag of ',
-      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; ',
-      'need ', lead_in_needed, ' more lead-in timestep(s) of upstream data before the first modeled row'))
+      'insufficient lead-in data for upstream DO: no row has a real upstream ',
+      'observation at its target travel-time offset. The longest travel.time implies a lag of ',
+      max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; this usually means ',
+      'lead-in upstream data is needed before the first row to be modeled, though sufficiently ',
+      'sparse or gappy data could produce the same error'), call.=FALSE)
   }
 
   invisible(NULL)
