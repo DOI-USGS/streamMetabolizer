@@ -186,7 +186,7 @@ test_that("a duplicate timestep bin in downstream is a clear error", {
     "downstream has more than one row in the same timestep bin")
 })
 
-test_that("mm_format_data_2s()'s output passes mm_validate_data()/mm_validate_data_2station() and runs end-to-end through mm_align_2s()/prepdata_bayes_2s() on the real, gappy two_station_raw_example", {
+test_that("mm_format_data_2s()'s output passes validation and runs end-to-end through mm_align_data_2s()/prepdata_bayes_2s() on the real, gappy two_station_raw_example", {
   data("two_station_raw_example", envir=environment())
   out <- mm_format_data_2s(
     two_station_raw_example$upstream, two_station_raw_example$downstream, two_station_raw_example$light)
@@ -194,19 +194,19 @@ test_that("mm_format_data_2s()'s output passes mm_validate_data()/mm_validate_da
   dat_list <- mm_validate_data(out, metab_class="metab_bayes_2s")
   expect_no_error(mm_validate_data_2station(dat_list$data))
 
-  # the same route metab_bayes_2s() takes: align, then drop days whose modeled
-  # values fail day_tests, then prep. Skipping the middle step leaves NAs in
-  # the matrices -- 86 of this record's 891 aligned days carry one, mostly
-  # from upstream outages -- and Stan rejects those outright
+  # the same route a fit takes: align, then drop days whose modeled values
+  # fail day_tests, then prep. Skipping the middle step leaves NAs in the
+  # matrices -- 86 of this record's 891 aligned days carry one, mostly from
+  # upstream outages -- and Stan rejects those outright
   sp <- specs(mm_name('bayes_2s'))
-  aln <- suppressMessages(mm_align_2s(v(dat_list$data), max_travel_time_days=sp$max_travel_time_days))
-  filtered <- suppressMessages(mm_filter_valid_days_2s(dat_list$data, aln, day_tests=sp$day_tests))
+  aligned <- suppressMessages(mm_align_data_2s(out))
+  filtered <- suppressMessages(mm_filter_valid_days_2s(aligned, day_tests=sp$day_tests))
   expect_gt(nrow(filtered$removed), 0) # this record does exercise the filter
 
-  prep <- suppressMessages(prepdata_bayes_2s(dat_list$data, specs=sp, aln=filtered$aln))
+  prep <- suppressMessages(prepdata_bayes_2s(filtered$data, specs=sp))
   expect_equal(prep$n_obs, 96) # 15-min timestep -> 96 obs per 06:00-06:00 day
   expect_gt(prep$n_days, 0)
-  expect_equal(prep$n_days, filtered$aln$n_days)
+  expect_equal(prep$n_days, length(unique(filtered$data$date)))
   for(varname in c('DO_obs_up','DO_sat_up','DO_obs_down','DO_sat_down','light','depth','temp_water','travel_time')) {
     expect_equal(dim(prep[[varname]]), c(prep$n_obs, prep$n_days), info=varname)
     expect_false(anyNA(prep[[varname]]), info=varname)

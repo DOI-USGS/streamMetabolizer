@@ -90,6 +90,37 @@ test_that("errors from mm_align_data_2s() name no internal function", {
 })
 
 
+
+# mm_modeled_rows_2s() ------------------------------------------------------
+
+test_that("mm_modeled_rows_2s draws upstream from shift_idx and everything else from keep", {
+  dat <- make_2day_2station_data()
+  # distinct values per row make the indexing visible
+  dat$DO.obs.up <- seq_len(nrow(dat))
+  dat$DO.obs.down <- seq_len(nrow(dat)) + 10000
+  alignment <- suppressMessages(mm_align_2s(v(dat)))
+
+  modeled <- mm_modeled_rows_2s(dat, alignment)
+
+  expect_equal(nrow(modeled), length(alignment$keep))
+  expect_named(modeled, c('solar.time','DO.obs.up','DO.sat.up','DO.obs.down',
+                          'DO.sat.down','light','depth','temp.water','travel.time'))
+  expect_equal(modeled$DO.obs.up, dat$DO.obs.up[alignment$shift_idx])
+  expect_equal(modeled$DO.obs.down, dat$DO.obs.down[alignment$keep])
+  expect_equal(modeled$solar.time, dat$solar.time[alignment$keep])
+})
+
+test_that("mm_modeled_rows_2s strips units", {
+  dat <- make_2day_2station_data()
+  template <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
+                      light, depth, temp.water, travel.time)
+  for(col in names(template)) dat[[col]] <- u(dat[[col]], get_units(template[[col]]))
+  dat$light <- u(v(dat$light), NA)
+  alignment <- suppressMessages(mm_align_2s(v(dat)))
+
+  expect_false(is.unitted(mm_modeled_rows_2s(dat, alignment)))
+})
+
 # [ method ------------------------------------------------------------------
 
 test_that("row subsetting keeps the class, removed, and travel-time ceiling", {
@@ -151,6 +182,32 @@ test_that("mm_as_aligned_2s() records dropped days and the ceiling as unknown, a
   expect_silent(mm_as_aligned_2s(capped))
 })
 
+test_that("mm_as_aligned_2s() validates the frame with its date column", {
+  seen <- NULL
+  real_validate <- mm_validate_data
+  testthat::local_mocked_bindings(mm_validate_data=function(data, ...) {
+    seen <<- names(data)
+    real_validate(data, ...)
+  })
+  mm_as_aligned_2s(aligned_2day_plain())
+  expect_true('date' %in% seen)
+})
+
+test_that("mm_as_aligned_2s() rejects NA travel.time with the affected dates", {
+  plain <- aligned_2day_plain()
+  plain$travel.time[which(plain$date == plain$date[1])[5]] <- NA
+  err <- expect_error(
+    mm_as_aligned_2s(plain),
+    paste0("travel.time is NA on ", plain$date[1], "; fill it or remove those days"))
+  expect_false(grepl("mm_[a-z_0-9]+\\(|missing value", conditionMessage(err)))
+})
+
+test_that("mm_as_aligned_2s() rejects a solar.time that is not UTC", {
+  plain <- aligned_2day_plain()
+  attr(plain$solar.time, 'tzone') <- 'America/Denver'
+  expect_error(mm_as_aligned_2s(plain), "timezone 'UTC'")
+  expect_error(mm_as_aligned_2s(plain[setdiff(names(plain), 'date')]), "timezone 'UTC'")
+})
 
 # aligned-data validation ----------------------------------------------------
 

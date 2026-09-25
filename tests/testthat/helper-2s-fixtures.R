@@ -23,8 +23,8 @@ make_2station_data <- function(n=291, timestep_min=5, travel_time=0.01) {
   )
 }
 
-# A day whose travel.time exceeds specs$max_travel_time_days (10/24-day
-# default, 0.5-day cap) is not a dataset-wide error: mm_align_2s() drops
+# A day whose travel.time exceeds the alignment's max_travel_time_days
+# (10/24-day default, 0.5-day cap) is not a dataset-wide error: mm_align_2s() drops
 # just that day, with a message naming the date and travel time (see
 # mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
 # at the default travel_time=0.01 (well under the ceiling), day 2 reusing
@@ -40,7 +40,7 @@ make_2day_ceiling_data <- function() {
   rbind(day1, day2)
 }
 
-# Build a two-day, unit-labeled data.frame with a known, traceable
+# Build a two-day data.frame with a known, traceable
 # DO.obs.up/DO.sat.up series (sequential integers) so the shift can be
 # checked by exact value, plus a leading lead-in block. Hourly timestep
 # (0.0416667 days) and 3-hour (0.125-day) travel.time give
@@ -48,11 +48,11 @@ make_2day_ceiling_data <- function() {
 # precede day 1's 06:00 start (an incomplete, and thus dropped, partial day
 # of their own); day 1 and day 2 are each a genuinely complete 06:00-06:00
 # window (24 hourly rows), so both modeled days end up with n_obs = 24 rows.
-make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125, unitted=FALSE) {
+make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125) {
   n_total <- n_leadin + n_day1 + n_day2
   solar.time <- as.POSIXct("2050-06-01 03:00:00", tz="UTC") +
     as.difftime((seq_len(n_total) - 1), units="hours")
-  dat <- data.frame(
+  data.frame(
     solar.time = solar.time,
     DO.obs.up = seq_len(n_total),        # traceable: value == original row index
     DO.sat.up = seq_len(n_total) + 100,  # traceable, offset so it's distinguishable from DO.obs.up
@@ -63,26 +63,19 @@ make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125, un
     temp.water = rep(20, n_total),
     travel.time = rep(travel_time, n_total)
   )
-  if(unitted) {
-    units_template <- get_units(mm_data(
-      solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down, light, depth, temp.water, travel.time))
-    dat <- u(dat, unname(units_template[names(dat)]))
-  }
-  dat
 }
 
 # The first run of n_days consecutive two-station days that survive both
-# alignment and the day-validity tests, together with the alignment they came
-# from. two_station_example spans six years of real sensor record and carries
-# 90 multi-day gaps, so its valid days are not all adjacent: choosing the
-# first n_days valid days by position would drop a real gap inside a window
-# the tests below describe as consecutive, and days bordering a gap don't
-# behave like interior ones. Fails loudly rather than quietly returning a
-# gap-spanning run.
+# alignment and the day-validity tests. two_station_example spans six years
+# of real sensor record and carries 90 multi-day gaps, so its valid days are
+# not all adjacent: choosing the first n_days valid days by position would
+# drop a real gap inside a window the tests below describe as consecutive, and
+# days bordering a gap don't behave like interior ones. Fails loudly rather
+# than quietly returning a gap-spanning run.
 first_valid_2station_days <- function(full_data, n_days) {
-  aln <- suppressMessages(mm_align_2s(v(full_data)))
-  aln <- suppressMessages(mm_filter_valid_days_2s(v(full_data), aln))$aln
-  dates <- unique(aln$date)
+  aligned <- suppressMessages(mm_align_data_2s(full_data))
+  aligned <- suppressMessages(mm_filter_valid_days_2s(aligned))$data
+  dates <- unique(aligned$date)
   runs <- vapply(
     seq_len(max(0, length(dates) - n_days + 1)),
     function(i) all(diff(dates[i:(i + n_days - 1)]) == 1),
@@ -91,23 +84,21 @@ first_valid_2station_days <- function(full_data, n_days) {
     stop('no run of ', n_days, ' consecutive valid two-station days available')
   }
   start <- which(runs)[1]
-  list(aln=aln, dates=dates[start:(start + n_days - 1)])
+  dates[start:(start + n_days - 1)]
 }
 
 # Subset two_station_example to just a few modeled days for a faster test
 # fit. Naively slicing rows doesn't work: max_lag (the number of upstream
 # lead-in rows required) is recomputed from whatever travel.time values are
-# present in the slice, so an arbitrary row range can leave a partial first
-# date once prepdata_bayes_2s() trims max_lag rows off the front -- the same
-# lead-in-sizing logic used in data-raw/two_station_example.R is needed here
-# too. Unlike subset_2station_days(), the lead-in block sized here is the
+# present in the slice, so an arbitrary row range can leave the first date
+# without enough upstream rows to fill its window. Unlike subset_2station_days(), the lead-in block sized here is the
 # window-wide worst case rather than each row's own requirement, so part of
 # it is itself modelable and surfaces as one extra valid_day=FALSE day.
 subset_2station_data <- function(full_data, n_modeled_days) {
   solar_time <- v(full_data$solar.time)
   timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
 
-  modeled_dates <- first_valid_2station_days(full_data, n_modeled_days)$dates
+  modeled_dates <- first_valid_2station_days(full_data, n_modeled_days)
   # two-station days run 06:00 -> 06:00 the next day (not calendar midnight
   # to midnight), so the last requested day's window isn't complete until one
   # timestep before the following day's 06:00
@@ -125,15 +116,17 @@ subset_2station_data <- function(full_data, n_modeled_days) {
 
 # Subset two_station_example to its first n_days consecutive complete
 # 06:00-06:00 days, keeping the leading rows those days need for upstream
-# lead-in. Driven by the alignment itself rather than by calendar dates, so
-# the subset can't disagree with the day partition the fitting code will
-# recompute from it. Because the selected days are consecutive, the row range
-# below spans only the lead-in block and those days -- with a gap-spanning
-# selection it would also sweep in the partial days sitting in the gap.
+# lead-in, as raw (unaligned) data. The lead-in rows are found with the
+# alignment engine's own row indices, so the subset can't disagree with the
+# day partition that aligning it will recompute. Because the selected days are
+# consecutive, the row range below spans only the lead-in block and those
+# days -- with a gap-spanning selection it would also sweep in the partial
+# days sitting in the gap.
 subset_2station_days <- function(full_data, n_days) {
-  sel <- first_valid_2station_days(full_data, n_days)
-  rows <- which(sel$aln$date %in% sel$dates)
-  full_data[min(sel$aln$shift_idx[rows]):max(sel$aln$keep[rows]), ]
+  dates <- first_valid_2station_days(full_data, n_days)
+  alignment <- suppressMessages(mm_align_2s(v(full_data)))
+  rows <- which(alignment$date %in% dates)
+  full_data[min(alignment$shift_idx[rows]):max(alignment$keep[rows]), ]
 }
 
 fast_2station_specs <- function() {
@@ -141,14 +134,15 @@ fast_2station_specs <- function() {
         burnin_steps=100, saved_steps=100, verbose=FALSE)
 }
 
-# Corrupt one modeled row of the middle day of an n-day slice, so that
+# Corrupt one row of the middle day of an n-day aligned slice, so that
 # day_tests drops exactly that day and the days on either side are untouched.
+# Returns the aligned frame, ready to fit.
 corrupt_middle_day <- function(n_days=3, col='depth', value=0) {
-  dat <- subset_2station_days(two_station_example, n_days)
-  aln <- suppressMessages(mm_align_2s(v(dat)))
-  bad_date <- unique(aln$date)[2]
-  dat[[col]][aln$keep[aln$date == bad_date][10]] <- u(value, get_units(dat[[col]]))
-  list(data=dat, bad_date=bad_date, dates=unique(aln$date))
+  dat <- suppressMessages(mm_align_data_2s(subset_2station_days(two_station_example, n_days)))
+  dates <- unique(dat$date)
+  bad_date <- dates[2]
+  dat[[col]][which(dat$date == bad_date)[10]] <- value
+  list(data=dat, bad_date=bad_date, dates=dates)
 }
 
 # Two 06:00-06:00 days at a 5-minute timestep, preceded by 3 lead-in rows.

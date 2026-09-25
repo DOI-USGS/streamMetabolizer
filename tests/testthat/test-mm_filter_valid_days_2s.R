@@ -1,60 +1,42 @@
 filter_2day <- function(dat, ...) {
-  aln <- suppressMessages(mm_align_2s(v(dat)))
-  mm_filter_valid_days_2s(dat, aln, ...)
+  mm_filter_valid_days_2s(suppressMessages(mm_align_data_2s(dat)), ...)
 }
 
 test_that("the two-day fixture is what the rest of this file assumes", {
   dat <- make_2day_2station_data()
-  aln <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat)))
 
-  expect_equal(aln$n_days, 2)
-  expect_equal(aln$n_obs, 288)
-  expect_equal(as.character(unique(aln$date)), c("2050-06-01", "2050-06-02"))
-  expect_equal(range(aln$keep), c(4, 579))
+  expect_equal(alignment$n_days, 2)
+  expect_equal(alignment$n_obs, 288)
+  expect_equal(as.character(unique(alignment$date)), c("2050-06-01", "2050-06-02"))
+  expect_equal(range(alignment$keep), c(4, 579))
   # the lag is 3 rows, so day 2 reaches back into day 1's rows for its first
   # few upstream values
-  expect_equal(aln$shift_idx, aln$keep - 3)
-  expect_equal(min(aln$shift_idx[aln$date == as.Date("2050-06-02")]), 289)
-  expect_true(289 %in% aln$keep[aln$date == as.Date("2050-06-01")])
-})
-
-test_that("mm_modeled_rows_2s draws upstream from shift_idx and everything else from keep", {
-  dat <- make_2day_2station_data()
-  # distinct values per row make the indexing visible
-  dat$DO.obs.up <- seq_len(nrow(dat))
-  dat$DO.obs.down <- seq_len(nrow(dat)) + 10000
-  aln <- suppressMessages(mm_align_2s(v(dat)))
-
-  modeled <- mm_modeled_rows_2s(dat, aln)
-
-  expect_equal(nrow(modeled), length(aln$keep))
-  expect_named(modeled, c('solar.time','DO.obs.up','DO.sat.up','DO.obs.down',
-                          'DO.sat.down','light','depth','temp.water','travel.time'))
-  expect_equal(modeled$DO.obs.up, dat$DO.obs.up[aln$shift_idx])
-  expect_equal(modeled$DO.obs.down, dat$DO.obs.down[aln$keep])
-  expect_equal(modeled$solar.time, dat$solar.time[aln$keep])
-})
-
-test_that("mm_modeled_rows_2s strips units", {
-  dat <- make_2day_2station_data()
-  template <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
-                      light, depth, temp.water, travel.time)
-  for(col in names(template)) dat[[col]] <- u(dat[[col]], get_units(template[[col]]))
-  dat$light <- u(v(dat$light), NA)
-  aln <- suppressMessages(mm_align_2s(v(dat)))
-
-  expect_false(is.unitted(mm_modeled_rows_2s(dat, aln)))
+  expect_equal(alignment$shift_idx, alignment$keep - 3)
+  expect_equal(min(alignment$shift_idx[alignment$date == as.Date("2050-06-02")]), 289)
+  expect_true(289 %in% alignment$keep[alignment$date == as.Date("2050-06-01")])
 })
 
 test_that("a clean dataset passes untouched", {
-  dat <- make_2day_2station_data()
-  aln <- suppressMessages(mm_align_2s(v(dat)))
+  aligned <- suppressMessages(mm_align_data_2s(make_2day_2station_data()))
 
-  res <- expect_silent(mm_filter_valid_days_2s(dat, aln))
+  res <- expect_silent(mm_filter_valid_days_2s(aligned))
 
   expect_equal(nrow(res$removed), 0)
   expect_named(res$removed, c('date','errors'))
-  expect_equal(res$aln, aln)
+  expect_identical(res$data, aligned)
+})
+
+test_that("a filtered frame keeps its aligned class and alignment record", {
+  dat <- make_2day_2station_data()
+  dat$depth[300] <- 0
+  aligned <- suppressMessages(mm_align_data_2s(dat, max_travel_time_days=0.3))
+
+  res <- suppressMessages(mm_filter_valid_days_2s(aligned))
+
+  expect_s3_class(res$data, 'aligned_2s')
+  expect_identical(attr(res$data, 'removed'), attr(aligned, 'removed'))
+  expect_equal(attr(res$data, 'max_travel_time_days'), 0.3)
 })
 
 test_that("complete_data drops a day with an NA in a downstream column, leaving the other intact", {
@@ -65,14 +47,12 @@ test_that("complete_data drops a day with an NA in a downstream column, leaving 
 
   expect_equal(as.character(res$removed$date), "2050-06-02")
   expect_equal(res$removed$errors, "NAs in temp.water")
-  expect_equal(as.character(unique(res$aln$date)), "2050-06-01")
-  expect_equal(res$aln$n_days, 1)
-  expect_length(res$aln$keep, 288)
-  expect_length(res$aln$shift_idx, 288)
+  expect_equal(as.character(unique(res$data$date)), "2050-06-01")
+  expect_equal(nrow(res$data), 288)
 })
 
 test_that("an upstream NA is charged to the day that depends on it, not the day it sits in", {
-  # This is the whole reason the tests run on the modeled frame. Row 289 is
+  # This is why the tests run on aligned rows, not raw ones. Row 289 is
   # one of 2050-06-01's own rows, but nothing in 2050-06-01 is modeled from
   # it -- 2050-06-02's first upstream value is. Checking each day's own rows
   # would blame the wrong date.
@@ -83,7 +63,7 @@ test_that("an upstream NA is charged to the day that depends on it, not the day 
 
   expect_equal(as.character(res$removed$date), "2050-06-02")
   expect_equal(res$removed$errors, "NAs in DO.obs.up")
-  expect_equal(as.character(unique(res$aln$date)), "2050-06-01")
+  expect_equal(as.character(unique(res$data$date)), "2050-06-01")
 })
 
 test_that("an NA in a lead-in row that nothing is modeled from drops nothing", {
@@ -96,7 +76,7 @@ test_that("an NA in a lead-in row that nothing is modeled from drops nothing", {
 
   res <- expect_silent(filter_2day(dat))
   expect_equal(nrow(res$removed), 0)
-  expect_equal(res$aln$n_days, 2)
+  expect_equal(length(unique(res$data$date)), 2)
 })
 
 test_that("pos_depth drops a day whose depth is not positive", {
@@ -107,7 +87,7 @@ test_that("pos_depth drops a day whose depth is not positive", {
   res <- suppressMessages(filter_2day(dat))
   expect_equal(as.character(res$removed$date), "2050-06-02")
   expect_equal(res$removed$errors, "depth <= 0")
-  expect_equal(as.character(unique(res$aln$date)), "2050-06-01")
+  expect_equal(as.character(unique(res$data$date)), "2050-06-01")
 
   # negative depth, same treatment
   dat2 <- make_2day_2station_data()
@@ -138,20 +118,18 @@ test_that("a single-day dataset can be dropped entirely", {
 
   res <- suppressMessages(filter_2day(dat))
   expect_equal(nrow(res$removed), 1)
-  expect_equal(res$aln$n_days, 0)
-  expect_length(res$aln$keep, 0)
-  expect_length(res$aln$date, 0)
+  expect_equal(nrow(res$data), 0)
+  expect_s3_class(res$data, 'aligned_2s')
 })
 
-test_that("both days can be dropped, leaving an empty alignment for the caller to handle", {
+test_that("both days can be dropped, leaving an empty frame for the caller to handle", {
   dat <- make_2day_2station_data()
   dat$depth[10] <- 0
   dat$depth[300] <- 0
 
   res <- suppressMessages(filter_2day(dat))
   expect_equal(nrow(res$removed), 2)
-  expect_equal(res$aln$n_days, 0)
-  expect_length(res$aln$keep, 0)
+  expect_equal(nrow(res$data), 0)
 })
 
 test_that("an empty day_tests skips testing entirely, spelled either way", {
@@ -162,7 +140,7 @@ test_that("an empty day_tests skips testing entirely, spelled either way", {
   for(none in list(character(0), c())) {
     res <- expect_silent(filter_2day(dat, day_tests=none))
     expect_equal(nrow(res$removed), 0)
-    expect_equal(res$aln$n_days, 2)
+    expect_equal(length(unique(res$data$date)), 2)
   }
 
   # c() evaluates to NULL and is what the rest of the package uses to mean
@@ -182,20 +160,19 @@ test_that("one-station-only day_tests are rejected rather than silently applied"
   # full_day tests the 4 AM / 28-hour diel window and would reject every
   # two-station day; even_timesteps would undo the gap tolerance mm_lag_2s()
   # provides on purpose
-  dat <- make_2day_2station_data()
-  aln <- suppressMessages(mm_align_2s(v(dat)))
+  dat <- suppressMessages(mm_align_data_2s(make_2day_2station_data()))
 
   expect_error(
-    mm_filter_valid_days_2s(dat, aln, day_tests=c('complete_data','full_day')),
+    mm_filter_valid_days_2s(dat, day_tests=c('complete_data','full_day')),
     "may only include.*got full_day")
   expect_error(
-    mm_filter_valid_days_2s(dat, aln, day_tests='even_timesteps'),
+    mm_filter_valid_days_2s(dat, day_tests='even_timesteps'),
     "may only include.*got even_timesteps")
   expect_error(
-    mm_filter_valid_days_2s(dat, aln, day_tests=c('nonsense')),
+    mm_filter_valid_days_2s(dat, day_tests=c('nonsense')),
     "may only include.*got nonsense")
   expect_error(
-    mm_filter_valid_days_2s(dat, aln, day_tests=42),
+    mm_filter_valid_days_2s(dat, day_tests=42),
     "day_tests must be a character vector")
 })
 

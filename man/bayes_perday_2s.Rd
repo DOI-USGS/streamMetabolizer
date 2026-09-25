@@ -4,22 +4,19 @@
 \alias{bayes_perday_2s}
 \title{Fit the two-station Stan model one date at a time}
 \usage{
-bayes_perday_2s(data, specs, aln = NULL)
+bayes_perday_2s(data, specs, na_errors = NULL)
 }
 \arguments{
-\item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}, units optional. This is the \emph{full}
-dataset in both modes, never a per-day slice: \code{aln}'s \code{keep}
-and \code{shift_idx} index into it, and \code{shift_idx} routinely
-reaches back into the previous day's rows for upstream values.}
+\item{data}{an \code{aligned_2s} data.frame covering every date to fit.}
 
 \item{specs}{a list of model specs (see \code{\link{specs}}), including
 \code{model_path} as resolved by \code{\link{mm_locate_filename}}. Passed
 on to \code{\link{runstan_bayes}}, which reads the chain/step/core
 settings from it.}
 
-\item{aln}{optional, the alignment already computed for \code{data} by
-\code{mm_align_2s}. Leave \code{NULL} to compute it here.}
+\item{na_errors}{optional character vector of error messages named by
+date. Each named date is reported as failed with that message, without
+being fitted.}
 }
 \value{
 a list with \code{daily} (one row per date, with
@@ -50,9 +47,8 @@ deliberately left empty for date-specific failures, because
 \code{\link{predict_metab}} blanks out \emph{every} date's estimates when
 the run-level slots are non-empty.
 
-The dates come from \code{mm_align_2s}'s non-overlapping 06:00-06:00
-partition, already computed and carried on \code{aln}; day membership is
-not re-derived here. In particular this does not route through
+The dates are the aligned data's own non-overlapping 06:00-06:00
+\code{date} labels; day membership is not re-derived here. In particular this does not route through
 \code{\link{mm_model_by_ply}}, whose overlapping \code{day_start}/
 \code{day_end} diel window is a different partition of the same rows (see
 the two-station day window section of \code{\link{metab_bayes_2s}}).

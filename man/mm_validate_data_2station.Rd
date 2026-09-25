@@ -28,7 +28,8 @@ and travel.time positivity are expected to have already been checked by
 \code{\link{mm_validate_data}}.
 
 Aligned data (class \code{aligned_2s}) is checked per row and per day
-instead, since each row already holds its upstream values: a \code{date}
+instead, since each row already holds its upstream values: a UTC
+\code{solar.time}, a \code{date}
 matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
 \code{solar.time}, the same number of rows every day, a single regular
 timestep across the whole frame, positive \code{travel.time}, and

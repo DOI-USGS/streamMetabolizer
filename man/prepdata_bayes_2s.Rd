@@ -5,16 +5,13 @@
 \title{Reshape long-format two-station data into the list expected by the
 two-station Stan model}
 \usage{
-prepdata_bayes_2s(data, specs = NULL, aln = NULL)
+prepdata_bayes_2s(data, specs = NULL)
 }
 \arguments{
-\item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}: must contain \code{solar.time},
-\code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
-\code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-\code{travel.time}, sorted ascending by \code{solar.time}, and must
-include the lead-in rows required to cover the longest travel time (see
-\code{\link{metab_bayes_2s}}).}
+\item{data}{an \code{aligned_2s} data.frame (see
+\code{\link{mm_align_data_2s}}): one row per modeled observation, each
+already holding its upstream values, sorted by \code{solar.time}, with
+the same number of rows every \code{date}.}
 
 \item{specs}{a list of model specs (see \code{\link{specs}}), expected to
 already contain \code{K600_lnorm_meanlog} and \code{K600_lnorm_sdlog}
@@ -23,13 +20,6 @@ populates them with sensible defaults. This function does not supply
 its own fallback values; if \code{specs} is omitted or missing these
 fields, the resulting Stan data will contain NULL/missing values for
 them.}
-
-\item{aln}{optional, the alignment already computed for \code{data} by
-\code{mm_align_2s} (see \code{mm_lag_2s.R}). \code{\link{metab_bayes_2s}}
-needs the same alignment to map Stan's indices back to dates, so it
-computes it once and passes it here; leave \code{NULL} to compute it.
-Supplying an alignment that doesn't correspond to \code{data} will
-silently produce wrong matrices.}
 }
 \value{
 a named list with all variables in the Stan model's data block:
@@ -39,21 +29,8 @@ a named list with all variables in the Stan model's data block:
   matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
 }
 \description{
-Time-shifts the upstream DO series to match the travel time between
-stations, then pivots the result into the \code{n_obs x n_days} matrices
-expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
-(see \code{\link{metab_bayes_2s}}).
-}
-\details{
-The alignment itself -- the per-row lag, the per-row lead-in test, the
-06:00 day window, the travel-time ceiling, and the whole-day completeness
-requirement -- is computed by \code{mm_align_2s} (see \code{mm_lag_2s.R}),
-which \code{\link{metab_bayes_2s}} and \code{\link{mm_validate_data_2station}}
-also route through. This function only applies the resulting indices and
-pivots the result into matrices.
-
-Rows at the start of \code{data} whose upstream shift would reach before
-the first row are lead-in rows: they supply upstream DO for the shift but
-are never themselves treated as modeled (downstream) observations.
+Pivots aligned two-station data into the \code{n_obs x n_days} matrices
+expected by the \code{data} block of the two-station Stan model (see
+\code{\link{metab_bayes_2s}}).
 }
 \keyword{internal}

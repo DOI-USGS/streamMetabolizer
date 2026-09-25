@@ -4,22 +4,22 @@
 \alias{mm_modeled_rows_2s}
 \title{Resolve a two-station alignment into the rows that will be modeled}
 \usage{
-mm_modeled_rows_2s(data, aln)
+mm_modeled_rows_2s(data, alignment)
 }
 \arguments{
 \item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
 \code{\link{metab_bayes_2s}}, units optional. Always the \emph{full}
-dataset, never a per-day slice: \code{aln}'s indices point into it, and
+dataset, never a per-day slice: \code{alignment}'s indices point into it, and
 \code{shift_idx} routinely reaches into earlier days' rows.}
 
-\item{aln}{an alignment as returned by \code{mm_align_2s}, or a single-day
+\item{alignment}{an alignment as returned by \code{mm_align_2s}, or a single-day
 slice of one. Supplying an alignment that doesn't correspond to
 \code{data} will silently produce wrong rows.}
 }
 \value{
 a data.frame, units stripped, carrying the two-station data columns
-  with one row per modeled observation, parallel to \code{aln$keep} and
-  \code{aln$date}
+  with one row per modeled observation, parallel to \code{alignment$keep} and
+  \code{alignment$date}
 }
 \description{
 Produces one row per modeled observation, each column drawn from the rows

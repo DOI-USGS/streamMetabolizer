@@ -136,7 +136,8 @@ mm_validate_data <- function(
 #' \code{\link{mm_validate_data}}.
 #'
 #' Aligned data (class \code{aligned_2s}) is checked per row and per day
-#' instead, since each row already holds its upstream values: a \code{date}
+#' instead, since each row already holds its upstream values: a UTC
+#' \code{solar.time}, a \code{date}
 #' matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
 #' \code{solar.time}, the same number of rows every day, a single regular
 #' timestep across the whole frame, positive \code{travel.time}, and
@@ -163,6 +164,9 @@ mm_validate_data_2station <- function(data) {
 
     if(!lubridate::is.POSIXct(solar_time) || anyNA(solar_time)) {
       stop("aligned data must have a non-NA 'solar.time' column of class POSIXct", call.=FALSE)
+    }
+    if(!(lubridate::tz(solar_time) %in% c('UTC','GMT'))) {
+      stop("expecting 'solar.time' to have timezone 'UTC'", call.=FALSE)
     }
     if(!lubridate::is.Date(date) || anyNA(date)) {
       stop("aligned data must have a non-NA 'date' column of class Date", call.=FALSE)
@@ -207,8 +211,8 @@ mm_validate_data_2station <- function(data) {
 
   data_v <- v(data)
 
-  # shared with prepdata_bayes_2s() and metab_bayes_2s() via mm_lag_2s(), so
-  # the lag computed here can't drift from the one they apply
+  # raw (not yet aligned) data, reached only when aligning. mm_lag_2s() is the
+  # same lag the alignment applies, so the two can't disagree
   lagged <- mm_lag_2s(data_v$solar.time, data_v$travel.time)
 
   if(!any(lagged$has_leadin)) {

@@ -16,24 +16,24 @@ NULL
 #'
 #' @param data data.frame as validated by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}, units optional. Always the \emph{full}
-#'   dataset, never a per-day slice: \code{aln}'s indices point into it, and
+#'   dataset, never a per-day slice: \code{alignment}'s indices point into it, and
 #'   \code{shift_idx} routinely reaches into earlier days' rows.
-#' @param aln an alignment as returned by \code{mm_align_2s}, or a single-day
+#' @param alignment an alignment as returned by \code{mm_align_2s}, or a single-day
 #'   slice of one. Supplying an alignment that doesn't correspond to
 #'   \code{data} will silently produce wrong rows.
 #' @return a data.frame, units stripped, carrying the two-station data columns
-#'   with one row per modeled observation, parallel to \code{aln$keep} and
-#'   \code{aln$date}
+#'   with one row per modeled observation, parallel to \code{alignment$keep} and
+#'   \code{alignment$date}
 #' @importFrom unitted v
 #' @keywords internal
-mm_modeled_rows_2s <- function(data, aln) {
+mm_modeled_rows_2s <- function(data, alignment) {
 
   # units are stripped here rather than by each caller: Stan cannot take
   # unitted matrices, and the validity tests are simpler on plain numerics
   data <- v(data)
 
-  keep <- aln$keep
-  shift_idx <- aln$shift_idx
+  keep <- alignment$keep
+  shift_idx <- alignment$shift_idx
 
   data.frame(
     solar.time  = data$solar.time[keep],

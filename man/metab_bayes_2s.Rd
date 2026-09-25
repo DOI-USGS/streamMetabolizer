@@ -7,9 +7,11 @@
 metab_bayes_2s(
   specs = specs(mm_name("bayes_2s")),
   data = {
-     d <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
-    light, depth, temp.water, travel.time)
-     d$light <- u(v(d$light), NA)
+     d <- mm_data(date, solar.time, DO.obs.up, DO.sat.up, DO.obs.down,
+    DO.sat.down, light, depth, temp.water, travel.time)
+     d$light <- u(v(d$light),
+    NA)
+     attr(d, "optional") <- "date"
      d
  },
   data_daily = mm_data(date, optional = "all"),

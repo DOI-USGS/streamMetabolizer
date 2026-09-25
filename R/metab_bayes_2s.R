@@ -121,12 +121,16 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 metab_bayes_2s <- function(
   specs=specs(mm_name('bayes_2s')),
   data={
-    d <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
-                 light, depth, temp.water, travel.time)
+    d <- mm_data(date, solar.time, DO.obs.up, DO.sat.up, DO.obs.down,
+                 DO.sat.down, light, depth, temp.water, travel.time)
     # light here is the within-day proportion computed by
     # mm_lag_light_2s(), not the raw PAR that mm_data()'s shared 'light'
     # template describes -- unitless, matching two_station_example.
     d$light <- u(v(d$light), NA)
+    # date is added by aligning, so a frame not yet aligned may omit it. Set
+    # here rather than via mm_data(optional=) to keep the rendered usage
+    # lines short enough to wrap cleanly
+    attr(d, 'optional') <- 'date'
     d
   },
   data_daily=mm_data(date, optional='all'),
@@ -144,42 +148,40 @@ metab_bayes_2s <- function(
   bayes_log <- NULL
   compile_time <- system.time({})
   fitting_time <- system.time({
-    # Check data for correct column names, units, and travel.time bounds
-    # (mm_validate_data()), then check lead-in coverage
-    # (mm_validate_data_2station()), before any data prep begins
-    dat_list <- mm_validate_data(data, data_daily, 'metab_bayes_2s')
+    if(!inherits(data, 'aligned_2s')) {
+      stop(paste0(
+        'data must be aligned first: use mm_align_data_2s(), or mm_as_aligned_2s() ',
+        'for data aligned another way'), call.=FALSE)
+    }
+    mm_stop_if_na_travel_time_2s(data, 'fill it or remove those days before fitting')
 
-    # Bridge short gaps before anything measures day completeness. This
-    # reassigns dat_list$data, and every consumer downstream -- the lead-in
-    # check, mm_align_2s(), the fitting functions, and the @data slot that
-    # predict_DO() reads back -- uses the filled frame, so the row indices
-    # mm_align_2s() returns keep referring to the frame they were computed
-    # from. Data prepared by mm_format_data_2s() has already been filled, so
-    # this is a no-op for it; hand-formatted data is filled here or nowhere
-    dat_list$data <- mm_fill_gaps_2s(dat_list$data, max_gap_hours=specs$max_gap_hours)
-
+    # the timestamp test is left out because it accepts only one of
+    # solar.time/date; the aligned-data checks cover both columns instead
+    dat_list <- mm_validate_data(
+      data, data_daily, 'metab_bayes_2s', data_tests=c('missing_cols','extra_cols','units'))
     mm_validate_data_2station(dat_list$data)
 
-    # Determine the same modeled-row index set that prepdata_bayes_2s()
-    # applies internally, so that Stan's date_index/time_index can be mapped
-    # back to actual dates and solar.times for the daily and instantaneous
-    # results. Both call mm_align_2s() rather than reimplementing the
-    # lag/day-window math, so the two can't disagree about which rows are
-    # modeled (prepdata_bayes_2s() returns only the Stan-ready matrices, so
-    # the alignment itself isn't available to read back off its result).
-    aln <- mm_align_2s(v(dat_list$data), max_travel_time_days=specs$max_travel_time_days)
+    removed_align <- attr(dat_list$data, 'removed')
+    if(is.null(removed_align)) {
+      message('days dropped during alignment are unknown and cannot be reported')
+      removed_align <- mm_no_removed_days_2s
+    }
+
+    # recorded as an explicit NULL when unknown, and always taken from the
+    # data, so specs reused from an earlier fit can't carry a stale value
+    specs['aligned_max_travel_time_days'] <- list(attr(dat_list$data, 'max_travel_time_days'))
 
     # Reject days whose modeled values fail specs$day_tests. Validation
     # upstream checks structure only, so this is the first look at the values
-    filtered <- mm_filter_valid_days_2s(dat_list$data, aln, day_tests=specs$day_tests)
+    filtered <- mm_filter_valid_days_2s(dat_list$data, day_tests=specs$day_tests)
+    dat <- filtered$data
 
     # from both stages, so no day that failed to reach Stan goes unreported
-    removed <- rbind(aln$removed, filtered$removed)
+    removed <- rbind(removed_align, filtered$removed)
     removed <- removed[order(removed$date), , drop=FALSE]
     rownames(removed) <- NULL
-    aln <- filtered$aln
 
-    if(aln$n_days == 0) {
+    if(nrow(dat) == 0) {
       stop(paste0(
         'no days remain after day_tests (',
         paste(specs$day_tests, collapse=', '), '): all ', nrow(filtered$removed),
@@ -196,11 +198,28 @@ metab_bayes_2s <- function(
     # to Date
     specs <- mm_check_keep_mcmc_specs(specs)
 
+    # NAs that survived day_tests (e.g. with complete_data turned off) would
+    # reach Stan, whose diagnostic names neither the column nor the day. Name
+    # both here: the NA columns of each affected date, in column order
+    data_cols <- setdiff(names(dat), 'date')
+    na_rows <- !stats::complete.cases(as.data.frame(dat)[data_cols])
+    na_dates <- unique(dat$date[na_rows])
+    na_cols_by_date <- lapply(na_dates, function(dt) {
+      day <- as.data.frame(dat)[dat$date == dt, data_cols, drop=FALSE]
+      data_cols[vapply(day, anyNA, logical(1))]
+    })
+
     if(isTRUE(specs$split_dates)) {
-      # one date at a time. Each date's data preparation happens inside its
-      # own error-collecting handler, so a single bad date is reported in that
-      # date's errors column rather than halting the rest of the run
-      perday <- bayes_perday_2s(dat_list$data, specs=specs, aln=aln)
+      # one date at a time. A date with NA data fails on its own, reported in
+      # that date's errors column, and the rest of the run continues
+      na_errors <- setNames(
+        vapply(na_cols_by_date, function(cols) paste0(
+          'NAs in ', paste(cols, collapse=', '),
+          '; Stan does not accept NA data, so drop or fill this day before fitting, ',
+          "or include 'complete_data' in specs$day_tests to drop it automatically"),
+          character(1)),
+        as.character(na_dates))
+      perday <- bayes_perday_2s(dat, specs=specs, na_errors=na_errors)
 
       stanfit <- perday$mcmcs
       mcmc_data <- perday$mcmc_datas
@@ -211,8 +230,18 @@ metab_bayes_2s <- function(
         warnings=perday$warnings, errors=perday$errors)
 
     } else {
-      # every date jointly, in a single Stan call.
-      #
+      # every date jointly, in a single Stan call. NA data on any date would
+      # fail the whole fit, so it halts the run here instead
+      if(length(na_dates) > 0) {
+        bad_cols <- data_cols[data_cols %in% unlist(na_cols_by_date)]
+        stop(paste0(
+          'NAs in ', paste(bad_cols, collapse=', '), ' on ', length(na_dates), ' day(s): ',
+          paste(na_dates, collapse=', '),
+          '. Stan does not accept NA data; drop or fill those days before fitting, ',
+          "or include 'complete_data' in specs$day_tests to drop them automatically"),
+          call.=FALSE)
+      }
+
       # Prepare the Stan data list (matrices from data, plus scalar priors
       # from specs). modifyList (not c()) is used because prepdata_bayes_2s()
       # already supplies K600_lnorm_meanlog/K600_lnorm_sdlog (read from
@@ -220,16 +249,16 @@ metab_bayes_2s <- function(
       # would create duplicate-named list elements instead of overriding.
       #
       # Prepared here, outside bayes_1fit_2s(), so that data problems
-      # prepdata_bayes_2s() detects (NA light in an otherwise complete day,
-      # non-contiguous dates) halt the joint fit with the original error
-      # rather than being collected and reported as a failed fit
-      data_list <- prepdata_bayes_2s(dat_list$data, specs=specs, aln=aln)
+      # prepdata_bayes_2s() detects (non-contiguous dates) halt the joint fit
+      # with the original error rather than being collected and reported as a
+      # failed fit
+      data_list <- prepdata_bayes_2s(dat, specs=specs)
       data_list <- modifyList(data_list, specs[specs$params_in])
 
       # errors/warnings are collected as strings rather than letting a bad
       # dataset halt execution without reporting anything back
       fit1 <- bayes_1fit_2s(
-        dat_list$data, aln=aln, specs=specs, data_list=data_list,
+        dat, specs=specs, data_list=data_list,
         keep_mcmc=isTRUE(specs$keep_mcmcs))
       stanfit <- fit1$stanfit
       mcmc_data <- if(isTRUE(specs$keep_mcmc_data)) data_list else NULL
@@ -273,7 +302,7 @@ metab_bayes_2s <- function(
     fitting_time=fitting_time - compile_time,
     compile_time=compile_time,
     specs=specs,
-    data=dat_list$data, # keep the units if given
+    data=dat_list$data,
     data_daily=dat_list$data_daily)
 
   # Update data with DO predictions
@@ -322,14 +351,14 @@ mm_rejoin_removed_days_2s <- function(daily, removed) {
 }
 
 
-#' Run one two-station Stan fit over one alignment
+#' Run one two-station Stan fit over aligned data
 #'
 #' The single Stan call plus output formatting shared by
 #' \code{\link{metab_bayes_2s}}'s joint (all-dates-at-once) fit and
 #' \code{bayes_perday_2s}'s per-day loop. Nothing here depends on
-#' \code{aln} covering more than one day, so the same code path serves both:
-#' the joint fit passes the full alignment from \code{mm_align_2s}, and the
-#' per-day loop passes a one-day slice of it.
+#' \code{data} covering more than one day, so the same code path serves both:
+#' the joint fit passes every date, and the per-day loop passes one date's
+#' rows.
 #'
 #' The Stan call itself -- compile (or load from the \code{.stanrds} cache),
 #' sample, and format the summary matrix into per-variable data.frames -- is
@@ -342,25 +371,21 @@ mm_rejoin_removed_days_2s <- function(daily, removed) {
 #' the same shape \code{\link{bayes_1ply}} uses for one-station, so that a
 #' caller looping over days can record a bad day and continue.
 #'
-#' @param data data.frame as validated by \code{\link{mm_validate_data}} for
-#'   \code{\link{metab_bayes_2s}}, units optional. This is the \emph{full}
-#'   dataset in both modes, never a per-day slice: \code{aln}'s \code{keep}
-#'   and \code{shift_idx} index into it, and \code{shift_idx} routinely
-#'   reaches back into the previous day's rows for upstream values.
-#' @param aln an alignment as returned by \code{mm_align_2s} (see
-#'   \code{mm_lag_2s.R}), either the whole thing or a single-day slice of it
-#'   (see \code{bayes_perday_2s}).
+#' @param data an \code{aligned_2s} data.frame (see
+#'   \code{\link{mm_align_data_2s}}), either every date or one date's rows.
+#'   Each row already holds its upstream values, so slicing by \code{date}
+#'   loses nothing.
 #' @param specs a list of model specs (see \code{\link{specs}}), including
 #'   \code{model_path} as resolved by \code{\link{mm_locate_filename}}. Passed
 #'   on to \code{\link{runstan_bayes}}, which reads the chain/step/core
 #'   settings from it.
 #' @param data_list optional, the Stan data list already prepared for
-#'   \code{data}/\code{aln} by \code{\link{prepdata_bayes_2s}} (plus the
+#'   \code{data} by \code{\link{prepdata_bayes_2s}} (plus the
 #'   \code{specs$params_in} scalars). Supply it to keep data-preparation
 #'   errors propagating to the caller; leave \code{NULL} to prepare it here,
 #'   inside the error-collecting handler, so that preparation failures are
 #'   reported as a failed fit instead. Supplying a list that doesn't
-#'   correspond to \code{data}/\code{aln} will silently produce wrong results.
+#'   correspond to \code{data} will silently produce wrong results.
 #' @param keep_mcmc logical. Retain the \code{stanfit} object in the result?
 #'   Resolved by the caller, which knows whether \code{specs$keep_mcmcs} names
 #'   this particular date.
@@ -375,20 +400,19 @@ mm_rejoin_removed_days_2s <- function(daily, removed) {
 #'   and \code{warnings}/\code{errors} character vectors
 #' @importFrom utils modifyList
 #' @keywords internal
-bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
-
-  data_v <- v(data)
-  keep <- aln$keep
+bayes_1fit_2s <- function(data, specs, data_list=NULL, keep_mcmc=TRUE) {
 
   # map Stan's date_index/time_index back to real dates and solar.times.
-  # mm_align_2s() guarantees each day holds exactly n_obs rows, in ascending
-  # solar.time order, so the indices tile day-major over keep
-  date_df <- tibble::tibble(date=unique(aln$date), date_index=seq_len(aln$n_days))
+  # Aligned data holds the same number of rows every day, in ascending
+  # solar.time order, so the indices tile day-major over the rows
+  date_df <- tibble::tibble(date=unique(data$date))
+  date_df$date_index <- seq_len(nrow(date_df))
+  n_obs <- nrow(data) %/% max(nrow(date_df), 1L)
   obs_index_df <- tibble::tibble(
-    solar.time=data_v$solar.time[keep],
-    DO.obs.down=data_v$DO.obs.down[keep],
-    date_index=rep(date_df$date_index, each=aln$n_obs),
-    time_index=rep(seq_len(aln$n_obs), times=aln$n_days))
+    solar.time=data$solar.time,
+    DO.obs.down=data$DO.obs.down,
+    date_index=rep(date_df$date_index, each=n_obs),
+    time_index=rep(seq_len(n_obs), times=nrow(date_df)))
 
   stop_strs <- character(0)
   warn_strs <- character(0)
@@ -404,7 +428,7 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
       if (!requireNamespace("rstan", quietly = TRUE)) stop("rstan is required but not installed. Install it with: install.packages('rstan')")
 
       if(is.null(data_list)) {
-        data_list <- prepdata_bayes_2s(data, specs=specs, aln=aln)
+        data_list <- prepdata_bayes_2s(data, specs=specs)
         data_list <- modifyList(data_list, specs[specs$params_in])
       }
 
@@ -499,9 +523,8 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 #' \code{\link{predict_metab}} blanks out \emph{every} date's estimates when
 #' the run-level slots are non-empty.
 #'
-#' The dates come from \code{mm_align_2s}'s non-overlapping 06:00-06:00
-#' partition, already computed and carried on \code{aln}; day membership is
-#' not re-derived here. In particular this does not route through
+#' The dates are the aligned data's own non-overlapping 06:00-06:00
+#' \code{date} labels; day membership is not re-derived here. In particular this does not route through
 #' \code{\link{mm_model_by_ply}}, whose overlapping \code{day_start}/
 #' \code{day_end} diel window is a different partition of the same rows (see
 #' the two-station day window section of \code{\link{metab_bayes_2s}}).
@@ -513,8 +536,10 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 #'   time" section.
 #'
 #' @inheritParams bayes_1fit_2s
-#' @param aln optional, the alignment already computed for \code{data} by
-#'   \code{mm_align_2s}. Leave \code{NULL} to compute it here.
+#' @param data an \code{aligned_2s} data.frame covering every date to fit.
+#' @param na_errors optional character vector of error messages named by
+#'   date. Each named date is reported as failed with that message, without
+#'   being fitted.
 #' @return a list with \code{daily} (one row per date, with
 #'   \code{valid_day}/\code{warnings}/\code{errors} columns), \code{inst}
 #'   (all dates' instantaneous predictions, ordered by \code{solar.time}, or
@@ -526,32 +551,31 @@ bayes_1fit_2s <- function(data, aln, specs, data_list=NULL, keep_mcmc=TRUE) {
 #'   \code{dates_fit}, \code{dates_failed}, and empty run-level
 #'   \code{warnings}/\code{errors}
 #' @keywords internal
-bayes_perday_2s <- function(data, specs, aln=NULL) {
-
-  if(is.null(aln)) {
-    aln <- mm_align_2s(v(data), max_travel_time_days=specs$max_travel_time_days)
-  }
+bayes_perday_2s <- function(data, specs, na_errors=NULL) {
 
   # resolved once rather than per date: it doesn't depend on which date is
   # being fit. Core count is not hoisted the same way -- runstan_bayes()
   # resolves it per call, as it already does for each one-station ply
   if(is.null(specs$model_path)) specs$model_path <- mm_locate_filename(specs$model_name)
 
-  dates <- unique(aln$date)
+  dates <- unique(data$date)
 
   per_date <- lapply(dates, function(dt) {
 
-    # slice the alignment, not the data: keep/shift_idx index into the full
-    # dataset, and shift_idx routinely points at the previous date's rows for
-    # this date's upstream values
-    rows <- which(aln$date == dt)
-    aln_1 <- list(
-      keep=aln$keep[rows],
-      shift_idx=aln$shift_idx[rows],
-      date=aln$date[rows],
-      n_obs=aln$n_obs,
-      n_days=1L,
-      timestep_days=aln$timestep_days)
+    # a date with NA data never reaches Stan, whose own diagnostic would name
+    # neither the column nor the day; it fails here with the caller's message
+    na_error <- na_errors[as.character(dt)]
+    if(length(na_error) == 1 && !is.na(na_error)) {
+      daily <- dplyr::mutate(mm_na_daily(as.Date(dt)), valid_day=TRUE, warnings='', errors=unname(na_error))
+      return(list(
+        daily=daily, inst=NULL, stanfit=NULL, mcmc_data=NULL,
+        compile_time=system.time({}), failed=TRUE, log=NULL, compile_log=NULL))
+    }
+
+    # each aligned row already holds its upstream values, including those
+    # drawn from the previous date's rows, so the date's own rows are all
+    # its fit needs
+    data_1 <- data[data$date == dt, , drop=FALSE]
 
     # keep_mcmcs/keep_mcmc_data are each either a single logical or a vector
     # of dates naming which fits to retain, as in bayes_1ply()
@@ -567,15 +591,15 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
       isTRUE(dt %in% specs$keep_mcmc_data)
     }
 
-    fit1 <- bayes_1fit_2s(data, aln=aln_1, specs=specs, keep_mcmc=keep_mcmc)
+    fit1 <- bayes_1fit_2s(data_1, specs=specs, keep_mcmc=keep_mcmc)
 
     failed <- length(fit1$errors) > 0 || is.null(fit1$daily)
     daily <- if(failed) mm_na_daily(dt) else fit1$daily
 
-    # valid_day refers to whether mm_align_2s() accepted the date, not to
-    # whether its fit converged -- every date reaching this loop passed the
-    # day-window and travel-time checks, so it stays TRUE and a failure is
-    # reported through the errors column, as in the joint fit
+    # valid_day refers to whether the date survived alignment and day_tests,
+    # not to whether its fit converged -- every date reaching this loop did,
+    # so it stays TRUE and a failure is reported through the errors column,
+    # as in the joint fit
     daily <- dplyr::mutate(
       daily,
       valid_day=TRUE,
@@ -650,29 +674,14 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #' Reshape long-format two-station data into the list expected by the
 #' two-station Stan model
 #'
-#' Time-shifts the upstream DO series to match the travel time between
-#' stations, then pivots the result into the \code{n_obs x n_days} matrices
-#' expected by the \code{data} block of \code{inst/models/b2_np_oi_tr_plrckm.stan}
-#' (see \code{\link{metab_bayes_2s}}).
+#' Pivots aligned two-station data into the \code{n_obs x n_days} matrices
+#' expected by the \code{data} block of the two-station Stan model (see
+#' \code{\link{metab_bayes_2s}}).
 #'
-#' The alignment itself -- the per-row lag, the per-row lead-in test, the
-#' 06:00 day window, the travel-time ceiling, and the whole-day completeness
-#' requirement -- is computed by \code{mm_align_2s} (see \code{mm_lag_2s.R}),
-#' which \code{\link{metab_bayes_2s}} and \code{\link{mm_validate_data_2station}}
-#' also route through. This function only applies the resulting indices and
-#' pivots the result into matrices.
-#'
-#' Rows at the start of \code{data} whose upstream shift would reach before
-#' the first row are lead-in rows: they supply upstream DO for the shift but
-#' are never themselves treated as modeled (downstream) observations.
-#'
-#' @param data data.frame as validated by \code{\link{mm_validate_data}} for
-#'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time},
-#'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
-#'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-#'   \code{travel.time}, sorted ascending by \code{solar.time}, and must
-#'   include the lead-in rows required to cover the longest travel time (see
-#'   \code{\link{metab_bayes_2s}}).
+#' @param data an \code{aligned_2s} data.frame (see
+#'   \code{\link{mm_align_data_2s}}): one row per modeled observation, each
+#'   already holding its upstream values, sorted by \code{solar.time}, with
+#'   the same number of rows every \code{date}.
 #' @param specs a list of model specs (see \code{\link{specs}}), expected to
 #'   already contain \code{K600_lnorm_meanlog} and \code{K600_lnorm_sdlog}
 #'   -- e.g., the object returned by \code{specs(mm_name('bayes_2s'))}, which
@@ -680,12 +689,6 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #'   its own fallback values; if \code{specs} is omitted or missing these
 #'   fields, the resulting Stan data will contain NULL/missing values for
 #'   them.
-#' @param aln optional, the alignment already computed for \code{data} by
-#'   \code{mm_align_2s} (see \code{mm_lag_2s.R}). \code{\link{metab_bayes_2s}}
-#'   needs the same alignment to map Stan's indices back to dates, so it
-#'   computes it once and passes it here; leave \code{NULL} to compute it.
-#'   Supplying an alignment that doesn't correspond to \code{data} will
-#'   silently produce wrong matrices.
 #' @return a named list with all variables in the Stan model's data block:
 #'   \code{n_obs}, \code{n_days}, \code{DO_obs_up}, \code{DO_sat_up},
 #'   \code{DO_obs_down}, \code{DO_sat_down}, \code{light}, \code{depth},
@@ -693,49 +696,19 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
 #'   matrix, unitless), and \code{K600_lnorm_meanlog}/\code{K600_lnorm_sdlog}
 #' @importFrom unitted v
 #' @keywords internal
-prepdata_bayes_2s <- function(data, specs=NULL, aln=NULL) {
+prepdata_bayes_2s <- function(data, specs=NULL) {
 
   # strip units; Stan cannot handle unitted vectors/matrices
-  data <- v(data)
-
-  # per-row lag, per-row lead-in, 06:00 day window, travel-time ceiling, and
-  # whole-day completeness -- all owned by mm_align_2s() so that this
-  # function, metab_bayes_2s(), and mm_validate_data_2station() share one
-  # definition. metab_bayes_2s() needs the same alignment to map Stan's
-  # indices back to dates, so it computes it once and passes it in; recompute
-  # it here only when called directly. specs may be NULL or lack the ceiling,
-  # in which case mm_align_2s()'s own default applies
-  if(is.null(aln)) {
-    aln <- if(is.null(specs$max_travel_time_days)) {
-      mm_align_2s(data)
-    } else {
-      mm_align_2s(data, max_travel_time_days=specs$max_travel_time_days)
-    }
-  }
-  modeled <- mm_modeled_rows_2s(data, aln)
-
-  # defensive, for direct calls only: a fit routed through metab_bayes_2s()
-  # has already dropped these days. Stan's own diagnostic for NA data names
-  # neither column nor day, so name them here instead
-  if(anyNA(modeled)) {
-    bad_cols <- names(modeled)[vapply(modeled, anyNA, logical(1))]
-    bad_dates <- unique(aln$date[!stats::complete.cases(modeled)])
-    stop(paste0(
-      'NAs in ', paste(bad_cols, collapse=', '), ' for ', length(bad_dates),
-      ' day(s) that mm_align_2s() otherwise considers complete: ',
-      paste(bad_dates, collapse=', '),
-      '. Stan does not accept NA data; run mm_filter_valid_days_2s() first, or ',
-      'fit via metab_bayes_2s(), which does.'), call.=FALSE)
-  }
+  modeled <- v(data)
 
   # pivot into n_obs x n_days matrices, one column per two-station day, using
   # the same mm_time_by_date_matrix()/mm_check_dates_contiguous() helpers
-  # shared with prepdata_bayes() (see mm_time_by_date_matrix.R). mm_align_2s()
-  # has already guaranteed every day holds exactly n_obs rows
-  date_vec <- as.character(aln$date)
+  # shared with prepdata_bayes() (see mm_time_by_date_matrix.R). Aligned-data
+  # validation has already guaranteed every day holds the same number of rows
+  date_vec <- as.character(modeled$date)
   date_table <- table(date_vec)
-  n_obs <- aln$n_obs
-  n_days <- aln$n_days
+  n_days <- length(date_table)
+  n_obs <- nrow(modeled) %/% n_days
 
   to_matrix <- mm_time_by_date_matrix(n_obs, n_days)
 

@@ -189,7 +189,6 @@ test_that("max_gap_hours is validated against the cap", {
   expect_error(
     mm_fill_gaps_2s(dat, max_gap_hours=mm_max_gap_hours_cap + 0.5),
     'must be <= 2 hours')
-  expect_error(specs(mm_name('bayes_2s'), max_gap_hours=6), 'must be <= 2 hours')
 })
 
 
@@ -204,13 +203,13 @@ test_that("a day dropped for a short gap is recovered by filling", {
   hole <- which(dates == target)[40:42]
   gappy <- dat[-hole, ]
 
-  aln_before <- suppressMessages(mm_align_2s(gappy))
-  expect_false(target %in% aln_before$date)
+  alignment_before <- suppressMessages(mm_align_2s(gappy))
+  expect_false(target %in% alignment_before$date)
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
-  aln_after <- suppressMessages(mm_align_2s(filled))
-  expect_true(target %in% aln_after$date)
-  expect_equal(sum(aln_after$date == target), 96)
+  alignment_after <- suppressMessages(mm_align_2s(filled))
+  expect_true(target %in% alignment_after$date)
+  expect_equal(sum(alignment_after$date == target), 96)
 })
 
 test_that("a gap straddling 06:00 recovers both of the days it touches", {
@@ -221,12 +220,12 @@ test_that("a gap straddling 06:00 recovers both of the days it touches", {
   # two rows before the 06:00 boundary and two after it
   gappy <- dat[-((boundary - 2):(boundary + 1)), ]
 
-  aln_before <- suppressMessages(mm_align_2s(gappy))
-  expect_false(any(unique(dates)[2:3] %in% aln_before$date))
+  alignment_before <- suppressMessages(mm_align_2s(gappy))
+  expect_false(any(unique(dates)[2:3] %in% alignment_before$date))
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
-  aln_after <- suppressMessages(mm_align_2s(filled))
-  expect_true(all(unique(dates)[2:3] %in% aln_after$date))
+  alignment_after <- suppressMessages(mm_align_2s(filled))
+  expect_true(all(unique(dates)[2:3] %in% alignment_after$date))
 })
 
 test_that("an over-tolerance gap still costs its day", {
@@ -239,8 +238,8 @@ test_that("an over-tolerance gap still costs its day", {
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
   expect_equal(nrow(filled), nrow(gappy))
-  aln <- suppressMessages(mm_align_2s(filled))
-  expect_false(target %in% aln$date)
+  alignment <- suppressMessages(mm_align_2s(filled))
+  expect_false(target %in% alignment$date)
 })
 
 

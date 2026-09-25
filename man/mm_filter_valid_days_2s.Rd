@@ -4,37 +4,33 @@
 \alias{mm_filter_valid_days_2s}
 \title{Drop two-station days whose modeled data fails the day-validity tests}
 \usage{
-mm_filter_valid_days_2s(data, aln, day_tests = mm_day_tests_2s_default)
+mm_filter_valid_days_2s(data, day_tests = mm_day_tests_2s_default)
 }
 \arguments{
-\item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}, units optional. The full dataset, not a
-per-day slice.}
-
-\item{aln}{an alignment as returned by \code{mm_align_2s}.}
+\item{data}{an \code{aligned_2s} data.frame (see
+\code{\link{mm_align_data_2s}}). Each row already holds the upstream
+values it is modeled from, so a day's rows are exactly the values tested.}
 
 \item{day_tests}{character vector of \code{\link{mm_is_valid_day}} tests to
 apply; see \code{\link{mm_day_tests_2s}} for which are applicable and why.
 \code{NULL} or \code{character(0)} skips testing entirely.}
 }
 \value{
-a list with \code{aln} (the input alignment, with failing dates
-  removed and \code{n_days} updated) and \code{removed} (a data.frame of
+a list with \code{data} (the input with failing dates removed,
+  still of class \code{aligned_2s}) and \code{removed} (a data.frame of
   \code{date} and \code{errors}, one row per dropped date)
 }
 \description{
-Sits between the day-window alignment and the fit: the alignment owns the
-structural questions (does this day fill its window, is its travel time
-usable), and this owns the data-quality ones (are the modeled values all
-present, is depth positive). Without it, \code{NA}s reach Stan and fail
-the whole joint fit, naming neither column nor date (issue #475). Failing
-days leave the alignment and are returned separately, so the caller can
-report them rather than let them disappear.
+Sits between alignment and the fit: alignment owns the structural
+questions (does this day fill its window, is its travel time usable), and
+this owns the data-quality ones (are the modeled values all present, is
+depth positive). Failing days are removed from the data and returned
+separately, so the caller can report them rather than let them disappear.
 }
 \details{
 \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 \code{\link{mm_is_valid_day}} underneath it is: that function partitions
 rows into one-station's overlapping diel windows, which are not
-two-station days, and it filters a data.frame rather than an alignment.
+two-station days.
 }
 \keyword{internal}

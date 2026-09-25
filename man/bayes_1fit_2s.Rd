@@ -2,20 +2,15 @@
 % Please edit documentation in R/metab_bayes_2s.R
 \name{bayes_1fit_2s}
 \alias{bayes_1fit_2s}
-\title{Run one two-station Stan fit over one alignment}
+\title{Run one two-station Stan fit over aligned data}
 \usage{
-bayes_1fit_2s(data, aln, specs, data_list = NULL, keep_mcmc = TRUE)
+bayes_1fit_2s(data, specs, data_list = NULL, keep_mcmc = TRUE)
 }
 \arguments{
-\item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}, units optional. This is the \emph{full}
-dataset in both modes, never a per-day slice: \code{aln}'s \code{keep}
-and \code{shift_idx} index into it, and \code{shift_idx} routinely
-reaches back into the previous day's rows for upstream values.}
-
-\item{aln}{an alignment as returned by \code{mm_align_2s} (see
-\code{mm_lag_2s.R}), either the whole thing or a single-day slice of it
-(see \code{bayes_perday_2s}).}
+\item{data}{an \code{aligned_2s} data.frame (see
+\code{\link{mm_align_data_2s}}), either every date or one date's rows.
+Each row already holds its upstream values, so slicing by \code{date}
+loses nothing.}
 
 \item{specs}{a list of model specs (see \code{\link{specs}}), including
 \code{model_path} as resolved by \code{\link{mm_locate_filename}}. Passed
@@ -23,12 +18,12 @@ on to \code{\link{runstan_bayes}}, which reads the chain/step/core
 settings from it.}
 
 \item{data_list}{optional, the Stan data list already prepared for
-\code{data}/\code{aln} by \code{\link{prepdata_bayes_2s}} (plus the
+\code{data} by \code{\link{prepdata_bayes_2s}} (plus the
 \code{specs$params_in} scalars). Supply it to keep data-preparation
 errors propagating to the caller; leave \code{NULL} to prepare it here,
 inside the error-collecting handler, so that preparation failures are
 reported as a failed fit instead. Supplying a list that doesn't
-correspond to \code{data}/\code{aln} will silently produce wrong results.}
+correspond to \code{data} will silently produce wrong results.}
 
 \item{keep_mcmc}{logical. Retain the \code{stanfit} object in the result?
 Resolved by the caller, which knows whether \code{specs$keep_mcmcs} names
@@ -49,9 +44,9 @@ a list with \code{daily} (data.frame of per-date estimates, or
 The single Stan call plus output formatting shared by
 \code{\link{metab_bayes_2s}}'s joint (all-dates-at-once) fit and
 \code{bayes_perday_2s}'s per-day loop. Nothing here depends on
-\code{aln} covering more than one day, so the same code path serves both:
-the joint fit passes the full alignment from \code{mm_align_2s}, and the
-per-day loop passes a one-day slice of it.
+\code{data} covering more than one day, so the same code path serves both:
+the joint fit passes every date, and the per-day loop passes one date's
+rows.
 }
 \details{
 The Stan call itself -- compile (or load from the \code{.stanrds} cache),

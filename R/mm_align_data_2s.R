@@ -29,22 +29,8 @@ NULL
 #' @export
 mm_align_data_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
 
-  # an NA travel.time would otherwise fail the shared validator's positivity
-  # test with a base-R error that names neither the column nor the day
-  if('travel.time' %in% names(data)) {
-    na_rows <- is.na(v(data[['travel.time']]))
-    if(any(na_rows)) {
-      solar_time <- v(data[['solar.time']])
-      where <- if(lubridate::is.POSIXct(solar_time)) {
-        paste('on', paste(unique(mm_date_2s(solar_time[na_rows])), collapse=', '))
-      } else {
-        paste('in rows', paste(which(na_rows), collapse=', '))
-      }
-      stop(paste0(
-        'travel.time is NA ', where, '; fill it (mm_fill_gaps_2s() bridges short gaps) ',
-        'or remove those rows before aligning'), call.=FALSE)
-    }
-  }
+  mm_stop_if_na_travel_time_2s(
+    data, 'fill it (mm_fill_gaps_2s() bridges short gaps) or remove those rows before aligning')
 
   data <- mm_validate_data(data, NULL, 'metab_bayes_2s')$data
   mm_validate_data_2station(data)
@@ -73,16 +59,42 @@ mm_as_aligned_2s <- function(data) {
 
   df <- as.data.frame(v(data))
 
-  # validated without date: the metab_bayes_2s data template doesn't list it,
-  # and its timestamp check accepts only one of solar.time/date
-  body <- mm_validate_data(df[setdiff(names(df), 'date')], NULL, 'metab_bayes_2s')$data
-  body <- as.data.frame(v(body))
+  mm_stop_if_na_travel_time_2s(df, 'fill it or remove those days before marking the data as aligned')
 
-  date <- if('date' %in% names(df)) df$date else mm_date_2s(body$solar.time)
-  aligned <- new_aligned_2s(data.frame(date=date, body))
+  # the timestamp test is left out because it accepts only one of
+  # solar.time/date; the aligned-data checks below cover both columns instead
+  df <- mm_validate_data(
+    df, NULL, 'metab_bayes_2s', data_tests=c('missing_cols','extra_cols','units'))$data
+  df <- as.data.frame(v(df))
+
+  if(!('date' %in% names(df))) {
+    if(!lubridate::is.POSIXct(df$solar.time)) {
+      stop("expecting 'solar.time' to be of class 'POSIXct'", call.=FALSE)
+    }
+    df <- data.frame(date=mm_date_2s(df$solar.time), df)
+  }
+  aligned <- new_aligned_2s(df)
 
   mm_validate_data_2station(aligned)
   aligned
+}
+
+# Stop if travel.time has NAs, naming the affected days and ending with `fix`,
+# the caller's advice on what to do. Without this, an NA travel.time fails the
+# shared validator's positivity test with a base-R error that names neither
+# the column nor the day. A frame without travel.time is left to the
+# missing-columns check.
+mm_stop_if_na_travel_time_2s <- function(data, fix) {
+  if(!('travel.time' %in% names(data))) return(invisible(NULL))
+  na_rows <- is.na(v(data[['travel.time']]))
+  if(!any(na_rows)) return(invisible(NULL))
+  solar_time <- v(data[['solar.time']])
+  where <- if(lubridate::is.POSIXct(solar_time)) {
+    paste('on', paste(unique(mm_date_2s(solar_time[na_rows])), collapse=', '))
+  } else {
+    paste('in rows', paste(which(na_rows), collapse=', '))
+  }
+  stop(paste0('travel.time is NA ', where, '; ', fix), call.=FALSE)
 }
 
 # Set the aligned_2s class and attributes on a data.frame. A NULL removed or
