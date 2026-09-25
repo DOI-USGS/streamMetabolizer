@@ -630,7 +630,7 @@ bayes_perday_2s <- function(data, specs, aln=NULL) {
   if(length(compile_log) > 0) names(compile_log) <- rep('Compilation', length(compile_log))
   log <- lapply(per_date, `[[`, 'log')
   log <- log[!vapply(log, is.null, logical(1))]
-  log <- setNames(log, paste0('MCMC_', names(log)))
+  if(length(log) > 0) names(log) <- paste0('MCMC_', names(log))
   bayes_log <- c(compile_log, log)
 
   list(

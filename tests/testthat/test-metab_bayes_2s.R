@@ -753,6 +753,35 @@ test_that("metab_bayes_2s(split_dates=TRUE) fits per date and returns the joint 
   expect_false(anyDuplicated(pm$GPP) > 0)
 })
 
+test_that("metab_bayes_2s(split_dates=TRUE) reports every date as failed when none reaches Stan", {
+  skip_on_cran()
+  skip_if_not_installed('rstan')
+
+  dat <- subset_2station_days(two_station_example, 3)
+  aln <- suppressMessages(mm_align_2s(v(dat)))
+  dates <- unique(aln$date)
+  # a contiguous 4-hour NA run in each day's upstream DO: too long for gap
+  # filling to bridge, and day_tests=c() lets it through to each date's prep
+  for(dt in as.list(dates)) {
+    up <- aln$shift_idx[aln$date == dt][40] + 0:15
+    dat$DO.obs.up[up] <- u(NA_real_, get_units(dat$DO.obs.up))
+  }
+  sp <- revise(fast_2station_specs(), split_dates=TRUE, day_tests=c())
+
+  # no date produced predictions, so the run-level "Modeling failed" warning
+  # fires, as it does for a failed joint fit
+  expect_warning(
+    mm <- suppressMessages(metab_bayes_2s(specs=sp, data=dat)),
+    'Modeling failed')
+
+  expect_s4_class(mm, 'metab_bayes_2s')
+  daily <- get_fit(mm)$daily
+  expect_equal(daily$date, dates)
+  expect_true(all(is.na(daily$GPP_daily_50pct)))
+  expect_true(all(grepl('NAs in DO.obs.up', daily$errors)))
+  expect_null(get_fit(mm)$inst)
+})
+
 test_that("the mcmc slot holds one stanfit jointly and a date-named list per day, as for one-station", {
   skip_on_cran()
   skip_if_not_installed('rstan')
