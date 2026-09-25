@@ -7,14 +7,14 @@
 mm_fill_gaps_2s(data, max_gap_hours = mm_max_gap_hours_default)
 }
 \arguments{
-\item{data}{data.frame, unitted or not, with \code{solar.time} already
-snapped to a single nominal timestep via \code{\link{mm_snap_to_bin_2s}}
-and sorted ascending. Every other column is treated as a numeric time
-series to be interpolated.}
+\item{data}{data.frame, unitted or not, with \code{solar.time} already on
+a single nominal timestep grid (as in \code{\link{mm_format_data_2s}}
+output) and sorted ascending. Every other column is treated as a numeric
+time series to be interpolated.}
 
 \item{max_gap_hours}{the gap-filling tolerance, in hours: runs of missing
 data spanning no more than this are interpolated, longer runs are left in
-place. See \code{\link{mm_max_gap}}.}
+place. Defaults to 1 hour and may not be set above 2.}
 }
 \value{
 \code{data} with the same columns, column order, and units, and
@@ -23,12 +23,16 @@ place. See \code{\link{mm_max_gap}}.}
 \description{
 Fills gaps short enough to bridge by linear interpolation, so a day
 marred by a brief sensor dropout can still be modeled. Gaps longer than
-\code{max_gap_hours} are left as-is and the day is dropped later by
-\code{\link{mm_align_2s}}'s completeness check -- there's no partial-fill
-middle ground, since the Stan model's \code{n_obs x n_days} matrices
-can't mask individual missing values.
+\code{max_gap_hours} are left as-is and the day is dropped later, during
+alignment, for not filling its 06:00-06:00 window -- there's no
+partial-fill middle ground, since the Stan model's \code{n_obs x n_days}
+matrices can't mask individual missing values.
 }
 \details{
+When data have gaps, call this before \code{\link{mm_align_data_2s}}.
+Output of \code{\link{mm_format_data_2s}} is already filled at the
+\code{max_gap_hours} passed to \code{\link{mm_format_data_2s}}.
+
 A gap can be a missing row (no observation at a timestep bin) or a
 missing value (a row exists but a column is \code{NA}); both are treated
 as the same event. Gap length is measured in timestep bins between the
@@ -55,4 +59,3 @@ already dropped by the completeness requirement.
   light is the more accurate route.
 }
 
-\keyword{internal}

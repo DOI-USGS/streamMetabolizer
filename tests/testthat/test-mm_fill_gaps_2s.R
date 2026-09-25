@@ -1,35 +1,3 @@
-# Build a two-station data.frame on a 15-minute grid. At that timestep the
-# default 1-hour tolerance is exactly 4 bins, so a 4-bin gap is the largest
-# fillable one and a 5-bin gap is the smallest unfillable one -- every
-# boundary test below is written against those two numbers.
-make_gappy_data <- function(n=40, start="2050-06-01 00:00:00", travel_time=0.01) {
-  data.frame(
-    solar.time = as.POSIXct(start, tz="UTC") +
-      as.difftime((seq_len(n) - 1) * 15, units="mins"),
-    DO.obs.up = 9 + seq_len(n) / 100,
-    DO.sat.up = rep(10, n),
-    DO.obs.down = 8.8 + seq_len(n) / 100,
-    DO.sat.down = rep(9.9, n),
-    light = 100 + seq_len(n),
-    depth = rep(0.5, n),
-    temp.water = rep(20, n),
-    travel.time = rep(travel_time, n)
-  )
-}
-
-# Whole 06:00-06:00 days at a 15-minute timestep: 96 rows per day, plus
-# n_leadin rows before the first 06:00 so the modeled rows have upstream data
-# to lag from.
-make_full_days <- function(n_days=2, n_leadin=1, start_date="2050-06-01", travel_time=0.01) {
-  day_start <- as.POSIXct(paste0(start_date, " 06:00:00"), tz="UTC")
-  first <- day_start - as.difftime(n_leadin * 15, units="mins")
-  n <- n_leadin + 96 * n_days
-  dat <- make_gappy_data(n=n, travel_time=travel_time)
-  dat$solar.time <- first + as.difftime((seq_len(n) - 1) * 15, units="mins")
-  dat
-}
-
-
 # gap sizing ----------------------------------------------------------------
 
 test_that("missing-row gaps are filled up to the tolerance and left alone beyond it", {
@@ -203,7 +171,7 @@ test_that("mm_fill_gaps_2s enforces the same grid preconditions as mm_lag_2s", {
 
   offgrid <- dat
   offgrid$solar.time <- offgrid$solar.time + as.difftime(3, units="mins")
-  expect_error(mm_fill_gaps_2s(offgrid), 'not on a snap-to-bin grid')
+  expect_error(mm_fill_gaps_2s(offgrid), 'not on a regular timestep grid')
 
   duped <- rbind(dat, dat[10, ])
   duped <- duped[order(duped$solar.time), ]

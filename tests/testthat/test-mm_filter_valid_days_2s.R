@@ -1,25 +1,3 @@
-# Two 06:00-06:00 days at a 5-minute timestep, preceded by 3 lead-in rows.
-# travel.time=0.01 d is 2.88 timesteps, so lag = 3: each modeled row draws its
-# upstream values from 3 rows earlier. Rows 1-3 are lead-in (no upstream match
-# of their own), rows 4-291 are 2050-06-01, rows 292-579 are 2050-06-02. Day
-# 2's first three upstream values therefore come from rows 289-291, which sit
-# inside day 1 -- the overlap the modeled-frame indexing exists to get right.
-make_2day_2station_data <- function() {
-  n <- 3 + 2*288
-  data.frame(
-    solar.time = as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
-      as.difftime((seq_len(n) - 1) * 5, units="mins"),
-    DO.obs.up = rep(9, n),
-    DO.sat.up = rep(10, n),
-    DO.obs.down = rep(8.8, n),
-    DO.sat.down = rep(9.9, n),
-    light = rep(300, n),
-    depth = rep(0.5, n),
-    temp.water = rep(20, n),
-    travel.time = rep(0.01, n)
-  )
-}
-
 filter_2day <- function(dat, ...) {
   aln <- suppressMessages(mm_align_2s(v(dat)))
   mm_filter_valid_days_2s(dat, aln, ...)

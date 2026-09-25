@@ -32,7 +32,7 @@ Depends:
     R (>= 3.5.0)
 Imports:
     deSolve,
-    dplyr (>= 0.5.0),
+    dplyr (>= 1.0.0),
     LakeMetabolizer (>= 1.4.1),
     lifecycle,
     rlang,
@@ -111,6 +111,7 @@ Collate:
     'metab_model.show.R'
     'metab_night.R'
     'metab_sim.R'
+    'mm_align_data_2s.R'
     'mm_attach_fit_msgs.R'
     'mm_check_keep_mcmc_specs.R'
     'mm_check_mcmc_file.R'

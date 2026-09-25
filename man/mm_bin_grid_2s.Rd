@@ -4,16 +4,13 @@
 \alias{mm_bin_grid_2s}
 \title{Detect and validate a two-station bin grid}
 \usage{
-mm_bin_grid_2s(solar.time, what = "solar.time", caller, check_sorted = FALSE)
+mm_bin_grid_2s(solar.time, what = "solar.time", check_sorted = FALSE)
 }
 \arguments{
 \item{solar.time}{POSIXct vector of timestamps, in UTC, already snapped via
 \code{\link{mm_snap_to_bin_2s}}.}
 
 \item{what}{name of the series, used in error messages.}
-
-\item{caller}{name of the calling function, named in the off-grid error so
-the user knows where to apply \code{\link{mm_snap_to_bin_2s}}.}
 
 \item{check_sorted}{if TRUE, also require the bins to be ascending. Runs
 between the grid and duplicate checks, so unsorted input is reported as

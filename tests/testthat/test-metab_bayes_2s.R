@@ -1,27 +1,3 @@
-
-# Build a minimal, valid two-station data.frame. Defaults give a 5-minute
-# timestep (0.0034722 days) and a 0.01-day travel time, so
-# max_lag = round(0.01 / 0.0034722) = 3 timesteps of required upstream lead-in.
-# n=291 by default: 3 lead-in rows before 2050-06-01's 06:00 start, plus one
-# genuinely complete 06:00-06:00 day (288 rows at 5-min resolution), so the
-# default fixture is a real day under mm_align_2s()'s completeness check
-# rather than a partial-day fragment; n can still be overridden down to a
-# toy size (e.g. n=2) for tests that specifically want too little data.
-make_2station_data <- function(n=291, timestep_min=5, travel_time=0.01) {
-  data.frame(
-    solar.time = as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
-      as.difftime((seq_len(n) - 1) * timestep_min, units="mins"),
-    DO.obs.up = rep(9, n),
-    DO.sat.up = rep(10, n),
-    DO.obs.down = rep(8.8, n),
-    DO.sat.down = rep(9.9, n),
-    light = rep(300, n),
-    depth = rep(0.5, n),
-    temp.water = rep(20, n),
-    travel.time = rep(travel_time, n)
-  )
-}
-
 test_that("mm_validate_data catches missing required columns", {
   dat <- dplyr::select(make_2station_data(), -DO.obs.up)
   expect_error(metab_bayes_2s(data=dat), "missing these columns")
@@ -34,23 +10,6 @@ test_that("travel.time <= 0 triggers an error", {
   dat <- make_2station_data(travel_time=-0.01)
   expect_error(metab_bayes_2s(data=dat), "travel.time must be > 0")
 })
-
-# A day whose travel.time exceeds specs$max_travel_time_days (10/24-day
-# default, 0.5-day cap) is not a dataset-wide error: mm_align_2s() drops
-# just that day, with a message naming the date and travel time (see
-# mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
-# at the default travel_time=0.01 (well under the ceiling), day 2 reusing
-# day 1's complete-day rows as a template, re-dated to follow immediately
-# after, with travel.time raised to 15 hours, 0.625 days (above the ceiling). Day 2
-# still has real upstream lead-in -- it draws on day 1's data -- so the
-# ceiling, not lead-in availability, is what drops it.
-make_2day_ceiling_data <- function() {
-  day1 <- make_2station_data()
-  day2 <- day1[-(1:3), ] # drop day 1's own lead-in rows; keep the 288-row complete-day block as a template
-  day2$solar.time <- max(day1$solar.time) + as.difftime(seq_len(nrow(day2)) * 5, units="mins")
-  day2$travel.time <- 15/24
-  rbind(day1, day2)
-}
 
 test_that("mm_format_days_hours() shows days with hours in parentheses, singular at exactly one", {
   fmt <- streamMetabolizer:::mm_format_days_hours
@@ -108,37 +67,6 @@ test_that("insufficient lead-in data triggers an error", {
 
 
 # prepdata_bayes_2s() -----------------------------------------------------
-
-# Build a two-day, unit-labeled data.frame with a known, traceable
-# DO.obs.up/DO.sat.up series (sequential integers) so the shift can be
-# checked by exact value, plus a leading lead-in block. Hourly timestep
-# (0.0416667 days) and 3-hour (0.125-day) travel.time give
-# max_lag = round(0.125 / 0.0416667) = 3 lead-in timesteps. n_leadin=3 rows
-# precede day 1's 06:00 start (an incomplete, and thus dropped, partial day
-# of their own); day 1 and day 2 are each a genuinely complete 06:00-06:00
-# window (24 hourly rows), so both modeled days end up with n_obs = 24 rows.
-make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125, unitted=FALSE) {
-  n_total <- n_leadin + n_day1 + n_day2
-  solar.time <- as.POSIXct("2050-06-01 03:00:00", tz="UTC") +
-    as.difftime((seq_len(n_total) - 1), units="hours")
-  dat <- data.frame(
-    solar.time = solar.time,
-    DO.obs.up = seq_len(n_total),        # traceable: value == original row index
-    DO.sat.up = seq_len(n_total) + 100,  # traceable, offset so it's distinguishable from DO.obs.up
-    DO.obs.down = seq_len(n_total) + 1000, # traceable, offset so it's distinguishable from up/sat values
-    DO.sat.down = rep(9.9, n_total),
-    light = rep(300, n_total),
-    depth = rep(0.5, n_total),
-    temp.water = rep(20, n_total),
-    travel.time = rep(travel_time, n_total)
-  )
-  if(unitted) {
-    units_template <- get_units(mm_data(
-      solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down, light, depth, temp.water, travel.time))
-    dat <- u(dat, unname(units_template[names(dat)]))
-  }
-  dat
-}
 
 test_that("upstream DO is shifted by the correct lag", {
   dat <- make_ts_data()
@@ -353,7 +281,7 @@ test_that("mm_lag_light_2s errors clearly when solar.time isn't on a snap-to-bin
   solar.time.offgrid[10] <- solar.time.offgrid[10] + as.difftime(37, units="mins")
   expect_error(
     mm_lag_light_2s(solar.time.offgrid, light, travel.time),
-    "snap-to-bin grid.*mm_snap_to_bin_2s.*#475")
+    "not on a regular timestep grid.*mm_format_data_2s")
 })
 
 test_that("a real mid-series gap (on-grid, but a bin missing) is handled, not rejected", {
@@ -528,58 +456,6 @@ test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/spli
 
 # metab_bayes_2s() fitting, predict_metab(), predict_DO() ------------------
 
-# The first run of n_days consecutive two-station days that survive both
-# alignment and the day-validity tests, together with the alignment they came
-# from. two_station_example spans six years of real sensor record and carries
-# 90 multi-day gaps, so its valid days are not all adjacent: choosing the
-# first n_days valid days by position would drop a real gap inside a window
-# the tests below describe as consecutive, and days bordering a gap don't
-# behave like interior ones. Fails loudly rather than quietly returning a
-# gap-spanning run.
-first_valid_2station_days <- function(full_data, n_days) {
-  aln <- suppressMessages(mm_align_2s(v(full_data)))
-  aln <- suppressMessages(mm_filter_valid_days_2s(v(full_data), aln))$aln
-  dates <- unique(aln$date)
-  runs <- vapply(
-    seq_len(max(0, length(dates) - n_days + 1)),
-    function(i) all(diff(dates[i:(i + n_days - 1)]) == 1),
-    logical(1))
-  if(!any(runs)) {
-    stop('no run of ', n_days, ' consecutive valid two-station days available')
-  }
-  start <- which(runs)[1]
-  list(aln=aln, dates=dates[start:(start + n_days - 1)])
-}
-
-# Subset two_station_example to just a few modeled days for a faster test
-# fit. Naively slicing rows doesn't work: max_lag (the number of upstream
-# lead-in rows required) is recomputed from whatever travel.time values are
-# present in the slice, so an arbitrary row range can leave a partial first
-# date once prepdata_bayes_2s() trims max_lag rows off the front -- the same
-# lead-in-sizing logic used in data-raw/two_station_example.R is needed here
-# too. Unlike subset_2station_days(), the lead-in block sized here is the
-# window-wide worst case rather than each row's own requirement, so part of
-# it is itself modelable and surfaces as one extra valid_day=FALSE day.
-subset_2station_data <- function(full_data, n_modeled_days) {
-  solar_time <- v(full_data$solar.time)
-  timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
-
-  modeled_dates <- first_valid_2station_days(full_data, n_modeled_days)$dates
-  # two-station days run 06:00 -> 06:00 the next day (not calendar midnight
-  # to midnight), so the last requested day's window isn't complete until one
-  # timestep before the following day's 06:00
-  modeled_start <- as.POSIXct(paste0(modeled_dates[1], ' 06:00:00'), tz='UTC')
-  modeled_end <- as.POSIXct(paste0(modeled_dates[length(modeled_dates)] + 1, ' 06:00:00'), tz='UTC') -
-    as.difftime(timestep_days, units='days')
-
-  candidate_start <- modeled_start - as.difftime(1, units='days')
-  candidate <- full_data[solar_time >= candidate_start & solar_time <= modeled_end, ]
-  max_lag <- max(round(v(candidate$travel.time) / timestep_days))
-  lead_in_start <- modeled_start - as.difftime(max_lag * timestep_days, units='days')
-
-  full_data[solar_time >= lead_in_start & solar_time <= modeled_end, ]
-}
-
 test_that("metab() fits a two-station model and predict_metab()/predict_DO() work", {
   skip_on_cran()
   skip_if_not_installed('rstan')
@@ -646,29 +522,11 @@ test_that("a failed Stan run (mode==2L) warns and continues, matching runstan_ba
 
 # bayes_perday_2s() per-day fitting ---------------------------------------
 
-# Subset two_station_example to its first n_days consecutive complete
-# 06:00-06:00 days, keeping the leading rows those days need for upstream
-# lead-in. Driven by the alignment itself rather than by calendar dates, so
-# the subset can't disagree with the day partition the fitting code will
-# recompute from it. Because the selected days are consecutive, the row range
-# below spans only the lead-in block and those days -- with a gap-spanning
-# selection it would also sweep in the partial days sitting in the gap.
-subset_2station_days <- function(full_data, n_days) {
-  sel <- first_valid_2station_days(full_data, n_days)
-  rows <- which(sel$aln$date %in% sel$dates)
-  full_data[min(sel$aln$shift_idx[rows]):max(sel$aln$keep[rows]), ]
-}
-
 # Slice an alignment down to a single date, exactly as bayes_perday_2s() does
 slice_aln_1day <- function(aln, dt) {
   rows <- which(aln$date == dt)
   list(keep=aln$keep[rows], shift_idx=aln$shift_idx[rows], date=aln$date[rows],
        n_obs=aln$n_obs, n_days=1L, timestep_days=aln$timestep_days)
-}
-
-fast_2station_specs <- function() {
-  specs(mm_name('bayes_2s'), n_chains=1, n_cores=1,
-        burnin_steps=100, saved_steps=100, verbose=FALSE)
 }
 
 test_that("a per-day alignment slice preps the same Stan matrices as the joint fit's column", {
@@ -1015,16 +873,6 @@ test_that("a clean fit reports no invalid days", {
   expect_true(all(mm@fit$daily$errors == ''))
   expect_true(all(is.finite(predict_metab(mm)$GPP)))
 })
-
-# Corrupt one modeled row of the middle day of an n-day slice, so that
-# day_tests drops exactly that day and the days on either side are untouched.
-corrupt_middle_day <- function(n_days=3, col='depth', value=0) {
-  dat <- subset_2station_days(two_station_example, n_days)
-  aln <- suppressMessages(mm_align_2s(v(dat)))
-  bad_date <- unique(aln$date)[2]
-  dat[[col]][aln$keep[aln$date == bad_date][10]] <- u(value, get_units(dat[[col]]))
-  list(data=dat, bad_date=bad_date, dates=unique(aln$date))
-}
 
 test_that("a day dropped by day_tests comes back as a valid_day=FALSE row (joint fit)", {
   skip_on_cran()

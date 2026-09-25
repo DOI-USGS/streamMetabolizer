@@ -176,15 +176,13 @@ mm_check_unique_bins_2s <- function(bin, what) {
 #' @param solar.time POSIXct vector of timestamps, in UTC, already snapped via
 #'   \code{\link{mm_snap_to_bin_2s}}.
 #' @param what name of the series, used in error messages.
-#' @param caller name of the calling function, named in the off-grid error so
-#'   the user knows where to apply \code{\link{mm_snap_to_bin_2s}}.
 #' @param check_sorted if TRUE, also require the bins to be ascending. Runs
 #'   between the grid and duplicate checks, so unsorted input is reported as
 #'   such even when it also contains duplicates.
 #' @return a list with \code{timestep_days} (modal timestep, in days) and
 #'   \code{bin} (integer bin index per row).
 #' @keywords internal
-mm_bin_grid_2s <- function(solar.time, what='solar.time', caller, check_sorted=FALSE) {
+mm_bin_grid_2s <- function(solar.time, what='solar.time', check_sorted=FALSE) {
 
   if(length(solar.time) < 2) {
     stop('need at least 2 rows of data to determine a timestep', call.=FALSE)
@@ -209,9 +207,12 @@ mm_bin_grid_2s <- function(solar.time, what='solar.time', caller, check_sorted=F
   # timestep.
   snapped <- mm_bin_epoch_2s + as.difftime(bin * timestep_days, units='days')
   if(max(abs(as.numeric(snapped) - as.numeric(solar.time))) > 1) {
+    # reachable from exported functions, so point to the exported preparation
+    # step rather than the internal snapping helper
     stop(
-      'solar.time is not on a snap-to-bin grid; call mm_snap_to_bin_2s() ',
-      'on it before ', caller, '() (see issue #475)', call.=FALSE)
+      'solar.time is not on a regular timestep grid; prepare the data with ',
+      'mm_format_data_2s(), which snaps timestamps to a common grid',
+      call.=FALSE)
   }
 
   if(check_sorted && is.unsorted(bin)) {
@@ -253,7 +254,7 @@ mm_lag_2s <- function(solar.time, travel.time) {
   # requires solar.time already snapped to a grid: otherwise a computed
   # target_bin might not match any real timestamp's bin even when a
   # matching row conceptually exists, silently under-counting lead-in
-  grid <- mm_bin_grid_2s(solar.time, caller='mm_lag_2s')
+  grid <- mm_bin_grid_2s(solar.time)
   timestep_days <- grid$timestep_days
   bin_index <- grid$bin
 

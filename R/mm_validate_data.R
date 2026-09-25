@@ -135,11 +135,75 @@ mm_validate_data <- function(
 #' and travel.time positivity are expected to have already been checked by
 #' \code{\link{mm_validate_data}}.
 #'
+#' Aligned data (class \code{aligned_2s}) is checked per row and per day
+#' instead, since each row already holds its upstream values: a \code{date}
+#' matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
+#' \code{solar.time}, the same number of rows every day, a single regular
+#' timestep across the whole frame, positive \code{travel.time}, and
+#' \code{travel.time} within the stored travel-time ceiling when one is
+#' recorded. \code{NA}s in the data columns are left to the day-validity tests.
+#'
 #' @param data data.frame as returned by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
-#'   \code{travel.time}, sorted ascending by \code{solar.time}.
+#'   \code{travel.time}, sorted ascending by \code{solar.time}; or an
+#'   \code{aligned_2s} data.frame.
 #' @keywords internal
 mm_validate_data_2station <- function(data) {
+
+  if(inherits(data, 'aligned_2s')) {
+    missing_cols <- setdiff(c('date', 'solar.time', 'travel.time'), names(data))
+    if(length(missing_cols) > 0) {
+      stop('aligned data is missing these columns: ', paste(missing_cols, collapse=', '), call.=FALSE)
+    }
+    if(nrow(data) == 0) stop('aligned data has no rows', call.=FALSE)
+
+    solar_time <- v(data[['solar.time']])
+    date <- v(data[['date']])
+    travel_time <- v(data[['travel.time']])
+
+    if(!lubridate::is.POSIXct(solar_time) || anyNA(solar_time)) {
+      stop("aligned data must have a non-NA 'solar.time' column of class POSIXct", call.=FALSE)
+    }
+    if(!lubridate::is.Date(date) || anyNA(date)) {
+      stop("aligned data must have a non-NA 'date' column of class Date", call.=FALSE)
+    }
+    if(!isTRUE(all(date == mm_date_2s(solar_time)))) {
+      stop("'date' must label each row with the 06:00-06:00 day its solar.time falls in", call.=FALSE)
+    }
+    if(is.unsorted(solar_time, strictly=TRUE)) {
+      stop('aligned data must be sorted by solar.time, with no duplicate timestamps', call.=FALSE)
+    }
+
+    # the Stan model's n_obs x n_days matrices need every day the same length
+    n_by_day <- table(date)
+    if(length(unique(n_by_day)) != 1) {
+      stop(paste0(
+        'every day of aligned data must hold the same number of rows; got between ',
+        min(n_by_day), ' and ', max(n_by_day)), call.=FALSE)
+    }
+
+    # one timestep across the whole frame, measured between consecutive rows
+    # of the same day so gaps between days don't count. 1-second tolerance,
+    # as for the snap-to-bin grid check
+    steps <- diff(as.numeric(solar_time))[date[-1] == date[-length(date)]]
+    if(length(steps) > 0 && diff(range(steps)) > 1) {
+      stop(paste0(
+        'aligned data must have a single regular timestep; found steps from ',
+        signif(min(steps) / 60, 3), ' to ', signif(max(steps) / 60, 3), ' minutes'), call.=FALSE)
+    }
+
+    if(any(travel_time <= 0, na.rm=TRUE)) {
+      stop('travel.time must be > 0', call.=FALSE)
+    }
+    ceiling_days <- attr(data, 'max_travel_time_days')
+    if(!is.null(ceiling_days) && any(travel_time > ceiling_days, na.rm=TRUE)) {
+      stop(paste0(
+        'travel.time exceeds the ', mm_format_days_hours(ceiling_days),
+        ' ceiling the data were aligned with'), call.=FALSE)
+    }
+
+    return(invisible(NULL))
+  }
 
   data_v <- v(data)
 
@@ -154,7 +218,7 @@ mm_validate_data_2station <- function(data) {
       'observation at its target travel-time offset. The longest travel.time implies a lag of ',
       max_lag, ' timestep(s), but only ', nrow(data), ' row(s) were supplied; this usually means ',
       'lead-in upstream data is needed before the first row to be modeled, though sufficiently ',
-      'sparse or gappy data could produce the same error'))
+      'sparse or gappy data could produce the same error'), call.=FALSE)
   }
 
   invisible(NULL)
