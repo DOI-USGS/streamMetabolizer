@@ -27,11 +27,10 @@ of required parameters and their defaults depends on the model given in the
 \code{\link{specs}} lists the necessary parameters, describes them in 
 detail, and gives default values.}
 
-\item{data}{data.frame (not a tbl_df) of input data at the temporal
-resolution of raw observations (unit-value). Columns must have the same
-names, units, and format as the default. The solar.time column must also
-have a timezone code ('tzone' attribute) of 'UTC'. See the
-\strong{'Formatting \code{data}'} section below for a full description.}
+\item{data}{an \code{aligned_2s} data.frame, as returned by
+\code{\link{mm_align_data_2s}} or \code{\link{mm_as_aligned_2s}}: one row
+per modeled observation, each already holding its upstream values. Data
+that has not been aligned is rejected.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -44,6 +43,14 @@ within the metab_model object}
 A metab_bayes_2s object containing the fitted model. This object
   can be inspected with the functions in the
   \code{\link{metab_model_interface}} and also \code{\link{get_mcmc}}.
+
+  After a successful fit, \code{\link{get_data}} returns the model's
+  predictions, with columns \code{solar.time}, \code{DO.obs.down}, and
+  \code{DO.mod.down} (see \code{\link{predict_DO}}). Predictions cover every
+  modeled timestep, including any the user filled. After a failed fit,
+  \code{get_data} returns \code{data} as passed to the fit, after validation
+  and before the day validity tests, filled only if it was filled before
+  aligning.
 }
 \description{
 Fits a two-station (upstream/downstream, Variable Flow Two-Station) Bayesian
@@ -68,72 +75,26 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   costing the whole run, since each date's errors are collected and
   reported against that date alone.
 
-  Fitting one date at a time does not mean slicing the data by the downstream date right away: each
-  date's upstream observations are drawn from earlier rows, across the
-  date boundary, exactly as in the joint fit.
+  Each aligned row already carries its upstream values, including those
+  from the previous day's rows, so fitting dates separately uses the same
+  pairing as the joint fit.
 }
 
-\section{Two-station day window}{
- Two-station days run 06:00-06:00 (24
-  hours) -- unrelated to the one-station models' overlapping 4 AM/28-hour
-  \code{day_start}/\code{day_end} window, which is not a partition of the
-  time series; the two are not interchangeable. Days that do not fill the
-  window -- at the edges of a dataset whose bounds don't fall on 06:00, or
-  where observations are missing and the gap was too long to bridge (see
-  the next section) -- are dropped with a message and reported as invalid
-  days in the results.
-}
+\section{Preparing data}{
+ \code{data} must be aligned with
+  \code{\link{mm_align_data_2s}}, which labels 06:00-06:00 days and drops
+  incomplete ones; see its documentation. Lead-in and travel-time ceiling
+  requirements are applied during alignment
+  (\code{\link{mm_align_data_2s}}); the ceiling used is recorded in
+  \code{get_specs(mm)$aligned_max_travel_time_days}.
 
-\section{Gap filling}{
- Brief interruptions in the record are bridged by
-  linear interpolation before day completeness is assessed, so a day
-  marred by a short sensor dropout can be modeled rather than discarded.
-  Missing timesteps and \code{NA} values are treated alike, and a gap is
-  measured by the time it spans rather than by how many rows are missing
-  across it. Runs longer than \code{specs$max_gap_hours} (1 hour by
-  default, configurable up to 2) are left untouched, and the days holding
-  them are dropped: the policy is deliberately two-tier, because the Stan
-  model's fixed-shape matrices cannot represent a partially observed day.
-  Gaps at the very start or end of the record are never filled, since
-  interpolation there would mean extrapolating from one side.
-
-  Two consequences follow. First, the returned model's data -- what
-  \code{\link{get_data}} and \code{\link{predict_DO}} report -- covers the
-  filled timesteps too, so it can hold rows that were not in the
-  \code{data} argument, and \code{predict_DO} returns predictions at those
-  timesteps accordingly. Second, if \code{data} was prepared by
-  \code{\link{mm_format_data_2s}} its gaps are already filled and nothing
-  happens here; but data formatted by hand already holds \code{light} as
-  the within-day proportion rather than raw light, and interpolating an
-  already-normalized value is an approximation, since the day total it
-  was divided by is itself short by the missing terms. Supplying raw
-  light to \code{\link{mm_format_data_2s}} and letting it do the
-  conversion avoids that.
-}
-
-\section{Two-station data requirements}{
- In addition to the checks
-  performed by \code{\link{mm_validate_data}}, \code{data$travel.time}
-  (the reach travel time between stations, in days) must be strictly
-  positive, and at least one row must have enough preceding observations
-  of upstream DO to cover its own travel time. Rows at the start of
-  \code{data} that lack that lead-in are not an error: they serve as
-  lead-in only, supplying upstream DO for later rows without being
-  modeled themselves.
-
-  Travel time is also subject to a ceiling, \code{specs$
-  max_travel_time_days} (defaults to 0.42 days (10 hours); values above 0.5 days (12 hours) are rejected):
-  beyond it, a day's upstream parcel almost certainly originates before the day's own
-  06:00 start, where the light it experienced no longer has a
-  well-defined day total to be a proportion of. Days exceeding the
-  ceiling are dropped with a message rather than treated as an error,
-  since the remaining days are unaffected. A travel time far above the
-  ceiling usually means the column was supplied in the wrong units --
-  days are expected, not minutes or hours.
+  The fit does not fill gaps. Fill before aligning with
+  \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}
+  is already filled).
 }
 
 \section{Day validity tests}{
- the checks above concern a day's structure --
+ alignment settles each day's structure --
   does it fill its window, is its travel time usable. \code{specs$day_tests}
   covers the data itself, and defaults to
   \code{c('complete_data', 'pos_depth')}: a day is dropped if any value it
@@ -145,18 +106,22 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   falling inside it: a day's upstream DO comes from one travel time
   earlier, routinely from the preceding day's rows.
 
-  Only a subset of the one-station tests is accepted: \code{full_day} and
-  \code{even_timesteps} are rejected, each rejecting nearly every
-  two-station day.
+  Only a subset of the one-station tests is accepted. \code{full_day}
+  checks the one-station day window, which two-station days do not use, so
+  it would reject every day; \code{even_timesteps} is rejected because
+  aligned data is already required to have a single regular timestep.
 }
 
 \section{Dropped days in the results}{
- a day dropped for any reason above
-  never reaches Stan, but is not omitted from the results either. It appears
-  among the daily estimates as a \code{valid_day=FALSE} row with \code{NA}
-  values and the reason in its \code{errors} column, so that every date
-  supplied in \code{data} is accounted for. Instantaneous predictions cover
-  only the modeled timesteps, a dropped day having none to report.
+ a day dropped during alignment or by
+  the day validity tests never reaches Stan, but is not omitted from the
+  results either. It appears among the daily estimates as a
+  \code{valid_day=FALSE} row with \code{NA} values and the reason in its
+  \code{errors} column, so that every date in the data is accounted for.
+  Data marked with \code{\link{mm_as_aligned_2s}} carries no record of
+  days dropped during alignment, so only days dropped by the day validity
+  tests can be reported for it. Instantaneous predictions cover only the
+  modeled timesteps, a dropped day having none to report.
 }
 
 \seealso{

@@ -14,7 +14,14 @@ regular timestep grid, as in \code{\link{mm_format_data_2s}} output.
 \code{travel.time} may not be \code{NA}.}
 
 \item{max_travel_time_days}{the travel-time ceiling, in days. Defaults to
-0.42 days (10 hours); values above 0.5 days (12 hours) are rejected.}
+0.42 days (10 hours); values above 0.5 days (12 hours) are rejected.
+Beyond the ceiling, a day's upstream parcel almost certainly originates
+before the day's own 06:00 start, where the light it experienced no
+longer has a well-defined day total to be a proportion of. Days whose
+longest travel time exceeds the ceiling are dropped with a message rather
+than treated as an error, since the remaining days are unaffected. A
+travel time far above the ceiling usually means the column was supplied
+in the wrong units -- days are expected, not minutes or hours.}
 }
 \value{
 a data.frame of class \code{aligned_2s}, unitless, with a
@@ -34,4 +41,39 @@ result's \code{removed} attribute.
 \details{
 Gaps are not filled here. When data have gaps, call
 \code{\link{mm_fill_gaps_2s}} first.
+}
+\section{Two-station day window}{
+ Two-station days run 06:00-06:00 (24
+  hours) -- unrelated to the one-station models' overlapping 4 AM/28-hour
+  \code{day_start}/\code{day_end} window, which is not a partition of the
+  time series; the two are not interchangeable. Days that do not fill the
+  window -- at the edges of a dataset whose bounds don't fall on 06:00, or
+  where observations are missing and the gap was left unfilled (see
+  \code{\link{mm_fill_gaps_2s}}) -- are dropped with a message and
+  reported as invalid days in the results of
+  \code{\link{metab_bayes_2s}}.
+}
+
+\section{Lead-in and travel-time ceiling}{
+ \code{data$travel.time} (the
+  reach travel time between stations, in days) must be strictly positive,
+  and at least one row must have enough preceding observations of upstream
+  DO to cover its own travel time. Rows that lack that lead-in -- whose
+  look-back one travel time earlier falls before the start of \code{data}
+  or inside a gap -- are not an error: they serve as lead-in only,
+  supplying upstream DO for later rows without appearing in the result
+  themselves.
+
+  Travel time is also subject to a ceiling; see the
+  \code{max_travel_time_days} argument.
+}
+
+\examples{
+# four 06:00-06:00 days of the example data. The first day's opening rows
+# serve only as lead-in, so that day does not fill its window and is dropped
+dat <- two_station_example[
+  unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
+aligned <- mm_align_data_2s(dat)
+table(aligned$date)
+attr(aligned, 'removed')
 }

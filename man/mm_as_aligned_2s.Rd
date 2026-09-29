@@ -18,6 +18,20 @@ a data.frame of class \code{aligned_2s}, unitless, with a
 \description{
 For data aligned some other way than \code{\link{mm_align_data_2s}}: each
 row must already hold its downstream observation and the upstream values
-paired with it. The frame is validated as aligned data, and its dropped
+paired with it. The data.frame is validated as aligned data, and its dropped
 days and travel-time ceiling are recorded as unknown.
+}
+\examples{
+dat <- two_station_example[
+  unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
+aligned <- suppressMessages(mm_align_data_2s(dat))
+
+# a plain data.frame of aligned rows, with or without its date column,
+# marks back to the same rows
+plain <- as.data.frame(aligned)
+identical(as.data.frame(mm_as_aligned_2s(plain)), plain)
+identical(as.data.frame(mm_as_aligned_2s(plain[names(plain) != 'date'])), plain)
+
+# the days dropped during alignment are not known for a marked data.frame
+attr(mm_as_aligned_2s(plain), 'removed')
 }

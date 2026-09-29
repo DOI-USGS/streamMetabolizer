@@ -31,7 +31,7 @@ a list with \code{daily} (one row per date, with
   \code{warnings}/\code{errors}
 }
 \description{
-Loops over the dates in a two-station alignment, fitting each in its own
+Loops over the dates in aligned data, fitting each in its own
 Stan call, and reassembles the per-date results into the same
 \code{daily}/\code{inst} shape \code{\link{metab_bayes_2s}}'s joint fit
 produces -- so \code{\link{predict_metab}}, \code{\link{predict_DO}}, and
@@ -51,7 +51,7 @@ The dates are the aligned data's own non-overlapping 06:00-06:00
 \code{date} labels; day membership is not re-derived here. In particular this does not route through
 \code{\link{mm_model_by_ply}}, whose overlapping \code{day_start}/
 \code{day_end} diel window is a different partition of the same rows (see
-the two-station day window section of \code{\link{metab_bayes_2s}}).
+the two-station day window section of \code{\link{mm_align_data_2s}}).
 }
 \section{Per-date sigma}{
  fitting one date at a time estimates a separate

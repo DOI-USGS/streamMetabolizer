@@ -8,13 +8,14 @@ NULL
 #' \code{\link{mm_is_valid_day}}'s five tests, not the shared default
 #' inherited wholesale.
 #'
-#' \code{full_day} and \code{even_timesteps} are excluded because two-station
-#' methods don't need regular timesteps: \code{full_day} requires observations
-#' at both ends of the day window (24 hours by default), and
-#' \code{even_timesteps} requires evenly spaced timesteps, which two-station tolerates
-#' gaps in on purpose (gap tolerance is a known benefit of two-station methods!). \code{pos_discharge} is allowed but off by default, a
-#' no-op until two-station data carries a \code{discharge} column (issue
-#' #475).
+#' \code{full_day} and \code{even_timesteps} are excluded. \code{full_day}
+#' checks for observations at both ends of the one-station day window, which
+#' two-station's 06:00-06:00 days never match, so it would reject every day.
+#' \code{even_timesteps} is excluded because aligned data is already
+#' validated to have a single regular timestep across the whole data.frame.
+#' \code{pos_discharge} is allowed but off by default; it has no effect unless
+#' the data carry a \code{discharge} column, which two-station data currently
+#' does not.
 #'
 #' @keywords internal
 #' @name mm_day_tests_2s

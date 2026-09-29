@@ -36,8 +36,8 @@ mm_format_days_hours <- function(days) {
 
 #' Validate a travel-time ceiling
 #'
-#' Shared by \code{specs()} and \code{\link{mm_align_2s}} so the two can't
-#' disagree about what ceiling is legal.
+#' Checks the ceiling passed to \code{\link{mm_align_2s}} against
+#' \code{\link{mm_max_travel_time}}'s cap.
 #'
 #' @param max_travel_time_days the value to check.
 #' @keywords internal
@@ -296,8 +296,8 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
 #'     the edges of any dataset whose bounds don't fall on 06:00, and from
 #'     missing sensor readings; they're dropped because the Stan model
-#'     expects fixed-shape \code{n_obs x n_days} matrices. Interpolating
-#'     small within-day gaps instead of dropping is out of scope here.
+#'     expects fixed-shape \code{n_obs x n_days} matrices. Short gaps are
+#'     filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
 #' }
 #'
 #' @param data data.frame (units already stripped) containing at least
@@ -326,7 +326,7 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
   keep <- which(lagged$has_leadin)
   if(length(keep) == 0) {
     # mm_validate_data_2station() raises a more informative version of this
-    # error before fitting begins; this guards direct calls
+    # error before aligning; this guards direct calls
     stop('no rows have enough upstream lead-in data to be modeled', call.=FALSE)
   }
   date <- mm_date_2s(solar_time[keep])

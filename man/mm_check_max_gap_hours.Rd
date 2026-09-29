@@ -10,7 +10,7 @@ mm_check_max_gap_hours(max_gap_hours)
 \item{max_gap_hours}{the value to check.}
 }
 \description{
-Shared by \code{specs()} and \code{\link{mm_fill_gaps_2s}} so the two
-can't disagree about what tolerance is legal.
+Checks the tolerance passed to \code{\link{mm_fill_gaps_2s}} against
+\code{\link{mm_max_gap}}'s cap.
 }
 \keyword{internal}

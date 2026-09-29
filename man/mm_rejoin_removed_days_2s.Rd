@@ -2,7 +2,7 @@
 % Please edit documentation in R/metab_bayes_2s.R
 \name{mm_rejoin_removed_days_2s}
 \alias{mm_rejoin_removed_days_2s}
-\title{Add pre-fit dropped days back into a two-station daily results frame}
+\title{Add pre-fit dropped days back into a two-station daily results data.frame}
 \usage{
 mm_rejoin_removed_days_2s(daily, removed)
 }

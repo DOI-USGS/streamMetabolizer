@@ -103,7 +103,7 @@ mm_validate_data <- function(
     # question about individual days, not about the dataset's structure, and
     # the right response is to drop those days rather than reject the whole
     # dataset -- something validation's fail-fast contract can't express. That
-    # ceiling now lives in mm_align_2s() (see mm_lag_2s.R).
+    # ceiling lives in mm_align_2s() (see mm_lag_2s.R).
     if('travel.time' %in% names(dat)) {
       travel.time <- v(dat$travel.time)
       if(any(travel.time <= 0)) {
@@ -140,7 +140,7 @@ mm_validate_data <- function(
 #' \code{solar.time}, a \code{date}
 #' matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
 #' \code{solar.time}, the same number of rows every day, a single regular
-#' timestep across the whole frame, positive \code{travel.time}, and
+#' timestep across the whole data.frame, positive \code{travel.time}, and
 #' \code{travel.time} within the stored travel-time ceiling when one is
 #' recorded. \code{NA}s in the data columns are left to the day-validity tests.
 #'

@@ -32,8 +32,8 @@ mm_max_gap_hours_cap <- 2
 
 #' Validate a gap-filling tolerance
 #'
-#' Shared by \code{specs()} and \code{\link{mm_fill_gaps_2s}} so the two
-#' can't disagree about what tolerance is legal.
+#' Checks the tolerance passed to \code{\link{mm_fill_gaps_2s}} against
+#' \code{\link{mm_max_gap}}'s cap.
 #'
 #' @param max_gap_hours the value to check.
 #' @keywords internal
@@ -97,6 +97,17 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #'   place. Defaults to 1 hour and may not be set above 2.
 #' @return \code{data} with the same columns, column order, and units, and
 #'   with rows inserted where a short missing-row gap could be filled.
+#' @examples
+#' dat <- two_station_example[
+#'   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
+#'
+#' # remove 45 minutes of rows, then fill them back in
+#' gappy <- dat[-(200:202), ]
+#' filled <- mm_fill_gaps_2s(gappy)
+#' c(original=nrow(dat), gappy=nrow(gappy), filled=nrow(filled))
+#'
+#' # fill before aligning
+#' aligned <- mm_align_data_2s(filled)
 #' @importFrom stats approx
 #' @importFrom unitted u v is.unitted get_units
 #' @export

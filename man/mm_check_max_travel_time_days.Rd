@@ -10,7 +10,7 @@ mm_check_max_travel_time_days(max_travel_time_days)
 \item{max_travel_time_days}{the value to check.}
 }
 \description{
-Shared by \code{specs()} and \code{\link{mm_align_2s}} so the two can't
-disagree about what ceiling is legal.
+Checks the ceiling passed to \code{\link{mm_align_2s}} against
+\code{\link{mm_max_travel_time}}'s cap.
 }
 \keyword{internal}

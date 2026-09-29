@@ -32,7 +32,7 @@ instead, since each row already holds its upstream values: a UTC
 \code{solar.time}, a \code{date}
 matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
 \code{solar.time}, the same number of rows every day, a single regular
-timestep across the whole frame, positive \code{travel.time}, and
+timestep across the whole data.frame, positive \code{travel.time}, and
 \code{travel.time} within the stored travel-time ceiling when one is
 recorded. \code{NA}s in the data columns are left to the day-validity tests.
 }

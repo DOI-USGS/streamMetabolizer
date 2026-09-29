@@ -43,13 +43,13 @@ NULL
 #'   logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
 #'   linear interpolation, so a day marred by a short dropout can be modeled
 #'   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
-#'   place, and \code{\link{metab_bayes_2s}} drops the days holding them.
+#'   place, and \code{\link{mm_align_data_2s}} drops the days holding them.
 #'   Filling happens here while \code{light} is still a raw per-timestep
 #'   value, before the within-day proportion is computed -- the accurate
 #'   order, since the proportion is then formed from a complete series
-#'   divided by a complete day total. See \code{\link{metab_bayes_2s}}'s own
-#'   gap-filling section for what happens if gaps are filled after the fact
-#'   instead, e.g. in hand-formatted data.
+#'   divided by a complete day total. See the "Interpolating light" section
+#'   of \code{\link{mm_fill_gaps_2s}} for what happens if gaps are filled
+#'   after the fact instead, e.g. in hand-formatted data.
 #'
 #' @param upstream data.frame or unitted data.frame with columns
 #'   \code{timestamp} (POSIXct, UTC), \code{DO.obs}, \code{DO.sat}
@@ -61,14 +61,12 @@ NULL
 #'   per timestep)
 #' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
 #'   data spanning no more than this are interpolated, longer runs are left in
-#'   place. Defaults to 1 hour and may not be set above 2. To have gaps
-#'   treated identically here and during fitting, pass the same value to
-#'   \code{\link{specs}}'s \code{max_gap_hours}.
+#'   place. Defaults to 1 hour and may not be set above 2.
 #' @return a unitted data.frame with columns \code{solar.time},
 #'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
 #'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
 #'   \code{travel.time}, sorted ascending by \code{solar.time}, ready for
-#'   \code{\link{mm_validate_data}}'s two-station-specific lead-in check
+#'   \code{\link{mm_align_data_2s}}
 #' @importFrom unitted v u get_units
 #' @export
 mm_format_data_2s <- function(upstream, downstream, light,

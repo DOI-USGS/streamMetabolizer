@@ -44,8 +44,8 @@ Whole days are dropped, with a message, in two cases:
     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
     the edges of any dataset whose bounds don't fall on 06:00, and from
     missing sensor readings; they're dropped because the Stan model
-    expects fixed-shape \code{n_obs x n_days} matrices. Interpolating
-    small within-day gaps instead of dropping is out of scope here.
+    expects fixed-shape \code{n_obs x n_days} matrices. Short gaps are
+    filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
 }
 }
 \keyword{internal}

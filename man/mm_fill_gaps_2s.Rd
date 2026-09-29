@@ -59,3 +59,15 @@ already dropped by the completeness requirement.
   light is the more accurate route.
 }
 
+\examples{
+dat <- two_station_example[
+  unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
+
+# remove 45 minutes of rows, then fill them back in
+gappy <- dat[-(200:202), ]
+filled <- mm_fill_gaps_2s(gappy)
+c(original=nrow(dat), gappy=nrow(gappy), filled=nrow(filled))
+
+# fill before aligning
+aligned <- mm_align_data_2s(filled)
+}

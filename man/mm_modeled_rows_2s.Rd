@@ -8,13 +8,13 @@ mm_modeled_rows_2s(data, alignment)
 }
 \arguments{
 \item{data}{data.frame as validated by \code{\link{mm_validate_data}} for
-\code{\link{metab_bayes_2s}}, units optional. Always the \emph{full}
-dataset, never a per-day slice: \code{alignment}'s indices point into it, and
-\code{shift_idx} routinely reaches into earlier days' rows.}
+\code{\link{metab_bayes_2s}}, units optional: the same data the
+alignment was computed from, since \code{alignment}'s indices point into
+it and \code{shift_idx} routinely reaches into earlier days' rows.}
 
-\item{alignment}{an alignment as returned by \code{mm_align_2s}, or a single-day
-slice of one. Supplying an alignment that doesn't correspond to
-\code{data} will silently produce wrong rows.}
+\item{alignment}{an alignment as returned by \code{mm_align_2s}.
+Supplying an alignment that doesn't correspond to \code{data} will
+silently produce wrong rows.}
 }
 \value{
 a data.frame, units stripped, carrying the two-station data columns
@@ -31,7 +31,7 @@ testing them for validity -- agrees on which value belongs to which row.
 }
 \details{
 Columns keep their input names rather than the model's internal ones, so
-that anything reporting on this frame names a column the user supplied
+that anything reporting on this data.frame names a column the user supplied
 (\code{DO.obs.up}, not \code{DO_obs_up}).
 }
 \keyword{internal}
