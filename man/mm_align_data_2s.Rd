@@ -44,9 +44,10 @@ Gaps are not filled here. When data have gaps, call
 }
 \section{Two-station day window}{
  Two-station days run 06:00-06:00 (24
-  hours) -- unrelated to the one-station models' overlapping 4 AM/28-hour
-  \code{day_start}/\code{day_end} window, which is not a partition of the
-  time series; the two are not interchangeable. Days that do not fill the
+  hours). The one-station models' default day is also 24 hours, 4 AM to 4
+  AM (\code{day_start=4}, \code{day_end=28}); the two differ only in where
+  the day boundary falls. Either way, GPP, ER, and gas exchange are held
+  constant over one day's data. Days that do not fill the
   window -- at the edges of a dataset whose bounds don't fall on 06:00, or
   where observations are missing and the gap was left unfilled (see
   \code{\link{mm_fill_gaps_2s}}) -- are dropped with a message and

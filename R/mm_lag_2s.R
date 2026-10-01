@@ -61,8 +61,8 @@ mm_check_max_travel_time_days <- function(max_travel_time_days) {
 #' Hour at which a two-station day begins
 #'
 #' Two-station days run 06:00-06:00 (24 hours), following Bishop et al.
-#' (2026) -- distinct from one-station's overlapping 4 AM-28-hour diel
-#' window (\code{day_start}/\code{day_end}); the two must not be conflated.
+#' (2026). This is the same 24-hour day as the one-station default (4 AM to
+#' 4 AM, \code{day_start}/\code{day_end}), with a different boundary.
 #'
 #' @keywords internal
 mm_day_start_2s <- 6

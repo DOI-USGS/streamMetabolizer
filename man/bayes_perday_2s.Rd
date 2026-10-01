@@ -47,10 +47,10 @@ deliberately left empty for date-specific failures, because
 \code{\link{predict_metab}} blanks out \emph{every} date's estimates when
 the run-level slots are non-empty.
 
-The dates are the aligned data's own non-overlapping 06:00-06:00
+The dates are the aligned data's own 06:00-06:00
 \code{date} labels; day membership is not re-derived here. In particular this does not route through
-\code{\link{mm_model_by_ply}}, whose overlapping \code{day_start}/
-\code{day_end} diel window is a different partition of the same rows (see
+\code{\link{mm_model_by_ply}}, whose \code{day_start}/\code{day_end}
+window is a different partition of the same rows (see
 the two-station day window section of \code{\link{mm_align_data_2s}}).
 }
 \section{Per-date sigma}{

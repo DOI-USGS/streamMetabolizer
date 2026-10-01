@@ -24,10 +24,13 @@ inherited wholesale.
 }
 \details{
 \code{full_day} and \code{even_timesteps} are excluded. \code{full_day}
-checks for observations at both ends of the one-station day window, which
-two-station's 06:00-06:00 days never match, so it would reject every day.
-\code{even_timesteps} is excluded because aligned data is already
-validated to have a single regular timestep across the whole data.frame.
+checks for observations at the one-station day boundaries (4 AM to 4 AM by
+default), which a 06:00-06:00 two-station day does not match.
+\code{even_timesteps} is excluded because two-station methods do not
+need regular timesteps: irregular spacing within or at the ends of a day
+would not by itself invalidate a two-station day. (The current Stan model
+does need each day on a complete regular grid, which alignment enforces
+separately.)
 \code{pos_discharge} is allowed but off by default; it has no effect unless
 the data carry a \code{discharge} column, which two-station data currently
 does not.
