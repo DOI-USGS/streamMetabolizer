@@ -136,27 +136,13 @@ metab_bayes <- function(
     # Check and parse model file path
     specs$model_path <- mm_locate_filename(specs$model_name)
 
-    # check the format of keep_mcmcs (more checks, below, are split_dates-specific)
-    if(is.logical(specs$keep_mcmcs)) {
-      if(length(specs$keep_mcmcs) != 1) {
-        stop("if keep_mcmcs is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmcs must be a single logical value")
-    }
-    if(is.logical(specs$keep_mcmc_data)) {
-      if(length(specs$keep_mcmc_data) != 1) {
-        stop("if keep_mcmc_data is logical, it must have length 1")
-      }
-    } else if(specs$split_dates == FALSE) {
-      stop("if split_dates==FALSE, keep_mcmc_data must be a single logical value")
-    }
+    # check the format of keep_mcmcs/keep_mcmc_data, coercing a date vector to
+    # Date (more checks, below, are split_dates-specific)
+    specs <- mm_check_keep_mcmc_specs(specs)
 
     # model the data. create outputs bayes_all (a data.frame) and bayes_mcmc (an
     # MCMC object from Stan)
     if(specs$split_dates == TRUE) {
-      if(!is.logical(specs$keep_mcmcs)) specs$keep_mcmcs <- as.Date(specs$keep_mcmcs)
-      if(!is.logical(specs$keep_mcmc_data)) specs$keep_mcmc_data <- as.Date(specs$keep_mcmc_data)
       # one day at a time, splitting into overlapping ~24-hr 'plys' for each date
       bayes_daily <- mm_model_by_ply(
         bayes_1ply, data=data, data_daily=data_daily, # for mm_model_by_ply
@@ -331,10 +317,9 @@ bayes_1ply <- function(
 #'
 #' @param data_all data.frame of the form \code{mm_data(solar.time, DO.obs,
 #'   DO.sat, depth, temp.water, light)} containing the full (possibly
-#'   multi-day) filtered dataset for this model - unlike \code{bayes_1ply()}'s
-#'   \code{data_ply}, which receives one estimation-day at a time,
-#'   \code{bayes_allply()} is called once with all valid dates together (used
-#'   when \code{specs$split_dates==FALSE})
+#'   multi-day) filtered dataset: unlike \code{bayes_1ply()}'s per-day
+#'   \code{data_ply}, \code{bayes_allply()} is called once with all valid
+#'   dates together, when \code{specs$split_dates==FALSE}.
 #' @param data_daily_all data.frame of daily priors, if appropriate to the given
 #'   model_path
 #' @param removed data.frame of dates that were removed and why
@@ -383,12 +368,8 @@ bayes_allply <- function(
   # stop_strs may have accumulated during prepdata_bayes() or runstan_bayes()
   # calls. If failed, use dummy data to fill in the model output with NAs.
   if(length(stop_strs) > 0 || any(grepl("^Stan model .* does not contain samples", warn_strs))) {
-    na_vec <- rep(as.numeric(NA), nrow(date_df))
     bayes_allday <- c(
-      list(daily=data.frame(
-        date=date_df$date, GPP_daily_2.5pct=na_vec, GPP_daily_50pct=na_vec, GPP_daily_97.5pct=na_vec,
-        ER_daily_2.5pct=na_vec, ER_daily_50pct=na_vec, ER_daily_97.5pct=na_vec,
-        K600_daily_2.5pct=na_vec, K600_daily_50pct=na_vec, K600_daily_97.5pct=na_vec)),
+      list(daily=mm_na_daily(date_df$date)),
       list(log=if(exists('bayes_allday') && is.list(bayes_allday)) {
         bayes_allday[c('compile_log', 'log')]
       } else NULL ))
@@ -627,45 +608,11 @@ runstan_bayes <- function(
   # determine how many cores to use
   n_cores <- mm_determine_cores(n_cores, n_chains=n_chains, verbose=verbose)
 
-  # stan() can't find its own function cpp_object_initializer() unless the
-  # namespace is loaded. requireNamespace is somehow not doing this. Thoughts
-  # (not solution):
-  # https://stat.ethz.ch/pipermail/r-devel/2014-September/069803.html
-  if(!suppressPackageStartupMessages(require(rstan))) {
-    stop("the rstan package is required for Stan MCMC models")
-  }
-
-  # use auto_write=TRUE to recompile if needed, or load from existing .rds file
-  # without recompiling if possible
-  compile_time <- system.time({})
-  mobj_path <- gsub('.stan$', '.stanrds', model_path)
-  if(!file.exists(mobj_path) || file.info(mobj_path)$mtime < file.info(model_path)$mtime) {
-    if(verbose) message("compiling Stan model")
-    compile_time <- system.time({
-      compile_log <- capture.output({
-        stan_mobj <- rstan::stan_model(file=model_path, auto_write=TRUE)
-      }, type=c('output'), split=verbose)
-    })
-    rm(stan_mobj)
-    gc() # this humble line saves us from many horrible R crashes
-    autowrite_path <- gsub('.stan$', '.rds', model_path)
-    if(!file.exists(autowrite_path)) autowrite_path <- gsub('.stan$', '.rda', model_path) # for backwards compatibility with rstan < 2.13
-    if(!file.exists(autowrite_path)) autowrite_path <- file.path(tempdir(), basename(autowrite_path))
-    if(!file.exists(autowrite_path)) {
-      warning('could not find saved rds model file')
-    } else {
-      tryCatch({
-        file.copy(autowrite_path, mobj_path, overwrite=TRUE)
-        file.remove(autowrite_path)
-      }, error=function(e) {
-        warning('could not copy Stan rds to .stanrds file: ', e$message)
-        mobj_path <- autowrite_path
-      })
-    }
-  } else {
-    if(verbose) message("loading pre-compiled Stan model")
-  }
-  stan_mobj <- readRDS(mobj_path)
+  # compile the Stan model, or load it from the .stanrds cache if unchanged
+  compiled <- mm_compile_stan_model(model_path, verbose=verbose)
+  stan_mobj <- compiled$stan_mobj
+  compile_time <- compiled$compile_time
+  compile_log <- compiled$compile_log
 
   # make note of existing log files so we don't read them later
   oldlogfiles <- normalizePath(file.path(tempdir(), grep("_StanProgress.txt", dir(tempdir()), value=TRUE)))
@@ -697,7 +644,8 @@ runstan_bayes <- function(
 
   # format output (but first detect and handle a failed model run)
   if(runstan_out@mode == 2L) {
-    # for failed model runs, we still want to keep the mcmc
+    # for failed model runs, the stanfit is discarded; only the log/warning
+    # below carries information about the failure
     stan_out <- NULL
     warning(capture.output(print(runstan_out)))
   } else if(split_dates) {
@@ -719,7 +667,7 @@ runstan_bayes <- function(
   log <- if(length(logfile) > 0) readLines(logfile) else consolelog
   stan_out <- c(stan_out, c(
     list(log=log),
-    if(exists('compile_log')) list(compile_log=compile_log),
+    if(!is.null(compile_log)) list(compile_log=compile_log),
     list(compile_time=compile_time)))
 
   return(stan_out)
@@ -1018,34 +966,12 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
   preds <- fit[c('date', fit.names)] %>%
     setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
 
-  # add date-specific fitting warnings and errors as msgs.fit. though these
-  # could also be prediction messages if split_dates==T, we're planning to force
-  # split_dates to always be F in the near future. and whenever split_dates==F,
-  # date-specific messages are all just date validity notes and belong in
-  # fitting alone. general messages apply mostly to fitting so are noted here.
-  # get_params also handles general messages, but because we don't call
-  # get_params from this predict_metab function, we need to add those messages
-  # separately here
-  warnings <- errors <- '.dplyr.var'
-  if(!is.null(fit) && all(c('date','warnings','errors') %in% names(fit))) {
-    messages <- fit %>%
-      select(date, warnings, errors) %>%
-      compress_msgs('msgs.fit', warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
-    preds <- full_join(preds, messages, by='date', copy=TRUE)
-  } else {
-    preds <- mutate(preds, msgs.fit=NA)
-  }
-
-  # add general fitting warnings and errors. almost always, general errors
-  # during fitting prohibit prediction and general warnings don't affect
-  # prediction; treat them here as if this is always the case (because
-  # prediction-specific errors or warnings would probably be due to a poorly
-  # written model, which I hope we'll have few of, and I don't know how I'd
-  # distinguish since both types of messages come out of Stan)
-  preds <- mutate(
-    preds,
-    warnings=if(length(metab_model@fit$errors) > 0) NA else '',
-    errors=if(length(metab_model@fit$errors) > 0) NA else '')
+  # msgs.fit is treated as a fitting message, not a prediction one: when
+  # split_dates==F (which we plan to force in the near future) the date-specific
+  # messages are all just date validity notes, which belong to fitting alone
+  preds <- mm_attach_fit_msgs(
+    preds, fit,
+    warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)
 
   # attach.units if requested
   if(attach.units) {
@@ -1071,18 +997,9 @@ get_params.metab_bayes <- function(
     attach.units <- FALSE
   }
 
-  # Stan prohibits '.' in variable names, so we have to convert back from '_' to
-  # '.' here to become consistent with the non-Bayesian models
-  parnames <- setNames(gsub('_', '\\.', metab_model@specs$params_out), metab_model@specs$params_out)
-  parnames <- parnames[order(nchar(parnames), decreasing=TRUE)]
-  for(i in seq_along(parnames)) {
-    names(metab_model@fit$daily) <- gsub(names(parnames[i]), parnames[[i]], names(metab_model@fit$daily))
-  }
-  names(metab_model@fit$daily) <- gsub('_mean$', '', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_sd$', '.sd', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_50pct$', '.median', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_2.5pct$', '.lower', names(metab_model@fit$daily))
-  names(metab_model@fit$daily) <- gsub('_97.5pct$', '.upper', names(metab_model@fit$daily))
+  # rename in place, before NextMethod() picks the fit back up
+  metab_model@fit$daily <- mm_rename_stan_params(
+    metab_model@fit$daily, metab_model@specs$params_out)
   # code duplicated in get_params.metab_Kmodel:
   if(length(metab_model@fit$warnings) > 0) {
     omsg <- 'overall warnings'

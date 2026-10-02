@@ -6,8 +6,14 @@
 \usage{
 metab_bayes_2s(
   specs = specs(mm_name("bayes_2s")),
-  data = mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down, light,
-    depth, temp.water, travel.time),
+  data = {
+     d <- mm_data(date, solar.time, DO.obs.up, DO.sat.up, DO.obs.down,
+    DO.sat.down, light, depth, temp.water, travel.time)
+     d$light <- u(v(d$light),
+    NA)
+     attr(d, "optional") <- "date"
+     d
+ },
   data_daily = mm_data(date, optional = "all"),
   info = NULL
 )
@@ -21,11 +27,10 @@ of required parameters and their defaults depends on the model given in the
 \code{\link{specs}} lists the necessary parameters, describes them in 
 detail, and gives default values.}
 
-\item{data}{data.frame (not a tbl_df) of input data at the temporal
-resolution of raw observations (unit-value). Columns must have the same
-names, units, and format as the default. The solar.time column must also
-have a timezone code ('tzone' attribute) of 'UTC'. See the
-\strong{'Formatting \code{data}'} section below for a full description.}
+\item{data}{an \code{aligned_2s} data.frame, as returned by
+\code{\link{mm_align_data_2s}} or \code{\link{mm_as_aligned_2s}}: one row
+per modeled observation, each already holding its upstream values. Data
+that has not been aligned is rejected.}
 
 \item{data_daily}{data.frame containing inputs with a daily timestep. See the
 \strong{'Formatting \code{data_daily}'} section below for a full 
@@ -38,6 +43,14 @@ within the metab_model object}
 A metab_bayes_2s object containing the fitted model. This object
   can be inspected with the functions in the
   \code{\link{metab_model_interface}} and also \code{\link{get_mcmc}}.
+
+  After a successful fit, \code{\link{get_data}} returns the model's
+  predictions, with columns \code{solar.time}, \code{DO.obs.down}, and
+  \code{DO.mod.down} (see \code{\link{predict_DO}}). Predictions cover every
+  modeled timestep, including any the user filled. After a failed fit,
+  \code{get_data} returns \code{data} as passed to the fit, after validation
+  and before the day validity tests, filled only if it was filled before
+  aligning.
 }
 \description{
 Fits a two-station (upstream/downstream, Variable Flow Two-Station) Bayesian
@@ -47,26 +60,73 @@ in \code{inst/models/b2_np_oi_tr_plrckm.stan}. See \code{\link{mm_name}} to
 choose a Bayesian model and \code{\link{specs}} for relevant options for the
 \code{specs} argument.
 }
-\details{
-Unlike \code{\link{metab_bayes}}, which supports many model structures via
-\code{split_dates}/\code{pool_K600}/etc., \code{metab_bayes_2s} always
-fits every date jointly in a single Stan call (\code{specs$split_dates} is
-forced to \code{FALSE} by \code{\link{specs}}), because the
-upstream-downstream lag shift ties each date's first modeled rows to the
-previous date's last rows.
+\section{Fitting all dates at once, or one at a time}{
+ With
+  \code{specs$split_dates=FALSE} (the default) every date is fitted
+  together in a single Stan call; with \code{TRUE}, each date is fitted in
+  its own call. The difference that matters is the observation-error
+  \code{sigma}: the Stan model carries one \code{sigma} shared across
+  whatever dates it is given, so fitting dates one at a time estimates a
+  separate \code{sigma} per date instead of one pooled across the record
+  -- the same tradeoff one-station's \code{split_dates=TRUE} makes on a
+  structurally identical model. Joint fitting is the default because the
+  pooled estimate uses the whole record; splitting is useful when dates
+  should not share an error estimate, or to keep one unfittable date from
+  costing the whole run, since each date's errors are collected and
+  reported against that date alone.
+
+  Each aligned row already carries its upstream values, including those
+  from the previous day's rows, so fitting dates separately uses the same
+  pairing as the joint fit.
 }
-\section{Two-station data requirements}{
- In addition to the checks
-  performed by \code{\link{mm_validate_data}}, \code{data$travel.time} (the
-  reach travel time between the upstream and downstream stations, in days)
-  must be strictly positive and no greater than 8/24 days (8 hours).
-  Values above this limit either indicate travel time was supplied in the
-  wrong units (e.g., minutes or hours instead of days), or reflect a reach
-  whose actual travel time exceeds the 8-hour limit required to prevent
-  the previous day's light conditions from influencing the following
-  day's metabolism estimate. There must also be enough lead-in
-  observations of upstream DO before the first row of \code{data} to
-  cover the longest travel time in the dataset.
+
+\section{Preparing data}{
+ \code{data} must be aligned with
+  \code{\link{mm_align_data_2s}}, which labels 24-hour days (06:00-06:00
+  by default) and drops incomplete ones; see its documentation. The day
+  start hour, lead-in, and travel-time ceiling are all applied during
+  alignment (\code{\link{mm_align_data_2s}}); the day start hour and
+  ceiling used are recorded in \code{get_specs(mm)$aligned_day_start_hour}
+  and \code{get_specs(mm)$aligned_max_travel_time_days}.
+
+  The fit does not fill gaps. Fill before aligning with
+  \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}
+  is already filled).
+}
+
+\section{Day validity tests}{
+ alignment settles each day's structure --
+  does it fill its window, is its travel time usable. \code{specs$day_tests}
+  covers the data itself, and defaults to
+  \code{c('complete_data', 'pos_depth')}: a day is dropped if any value it
+  would be modeled from is \code{NA}, or if its depth is not positive.
+  Neither can be modeled around, and one bad day fails \emph{every} date of
+  a joint fit with a diagnostic naming neither the column nor the day.
+
+  The values tested are the ones the day is modeled from, not the rows
+  falling inside it: a day's upstream DO comes from one travel time
+  earlier, routinely from the preceding day's rows.
+
+  Only a subset of the one-station tests is accepted. \code{full_day}
+  checks for observations at the one-station day boundaries (4 AM to 4 AM
+  by default), which the two-station day boundary does not match.
+  \code{even_timesteps} is excluded because two-station methods do not
+  need regular timesteps: irregular spacing within or at the ends of a day
+  would not by itself invalidate a two-station day. (The current Stan model
+  does need each day on a complete regular grid, which alignment enforces
+  separately.)
+}
+
+\section{Dropped days in the results}{
+ a day dropped during alignment or by
+  the day validity tests never reaches Stan, but is not omitted from the
+  results either. It appears among the daily estimates as a
+  \code{valid_day=FALSE} row with \code{NA} values and the reason in its
+  \code{errors} column, so that every date in the data is accounted for.
+  Data marked with \code{\link{mm_as_aligned_2s}} carries no record of
+  days dropped during alignment, so only days dropped by the day validity
+  tests can be reported for it. Instantaneous predictions cover only the
+  modeled timesteps, a dropped day having none to report.
 }
 
 \seealso{
