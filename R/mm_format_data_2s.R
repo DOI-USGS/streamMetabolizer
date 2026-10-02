@@ -62,15 +62,23 @@ NULL
 #' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
 #'   data spanning no more than this are interpolated, longer runs are left in
 #'   place. Defaults to 1 hour and may not be set above 2.
+#' @param day_start_hour hour of the day, in [0, 24), at which each 24-hour
+#'   two-station day begins; sets the day whose total light each proportion
+#'   is divided by. Defaults to 6 (06:00-06:00). Recorded on the result, so
+#'   \code{\link{mm_align_data_2s}} can reject a different value.
 #' @return a unitted data.frame with columns \code{solar.time},
 #'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
 #'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-#'   \code{travel.time}, sorted ascending by \code{solar.time}, ready for
+#'   \code{travel.time}, sorted ascending by \code{solar.time}, and a
+#'   \code{day_start_hour} attribute, ready for
 #'   \code{\link{mm_align_data_2s}}
 #' @importFrom unitted v u get_units
 #' @export
 mm_format_data_2s <- function(upstream, downstream, light,
-                              max_gap_hours=mm_max_gap_hours_default) {
+                              max_gap_hours=mm_max_gap_hours_default,
+                              day_start_hour=mm_day_start_2s) {
+
+  mm_check_day_start_hour_2s(day_start_hour)
 
   mm_check_required_cols(upstream, c('timestamp','DO.obs','DO.sat'), 'upstream')
   mm_check_required_cols(downstream, c('timestamp','DO.obs','DO.sat','temp.water','depth','travel.time'), 'downstream')
@@ -177,7 +185,7 @@ mm_format_data_2s <- function(upstream, downstream, light,
   # which would still be short by the missing terms
   out <- mm_fill_gaps_2s(out, max_gap_hours=max_gap_hours)
 
-  out$light <- mm_lag_light_2s(out$solar.time, out$light, out$travel.time)
+  out$light <- mm_lag_light_2s(out$solar.time, out$light, out$travel.time, day_start_hour)
 
   template <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
                        light, depth, temp.water, travel.time)
@@ -188,7 +196,9 @@ mm_format_data_2s <- function(upstream, downstream, light,
   # metab_bayes_2s()'s data default, which overrides units the same way
   out$light <- u(v(out$light), NA)
 
-  as.data.frame(out[names(template)])
+  out <- as.data.frame(out[names(template)])
+  attr(out, 'day_start_hour') <- day_start_hour
+  out
 }
 
 #' Error clearly if a data.frame is missing any of a set of required columns

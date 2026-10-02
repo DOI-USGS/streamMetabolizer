@@ -4,7 +4,7 @@ filter_2day <- function(dat, ...) {
 
 test_that("the two-day fixture is what the rest of this file assumes", {
   dat <- make_2day_2station_data()
-  alignment <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat), day_start_hour=mm_day_start_2s))
 
   expect_equal(alignment$n_days, 2)
   expect_equal(alignment$n_obs, 288)

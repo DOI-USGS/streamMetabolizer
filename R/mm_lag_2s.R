@@ -58,28 +58,45 @@ mm_check_max_travel_time_days <- function(max_travel_time_days) {
   invisible(NULL)
 }
 
-#' Hour at which a two-station day begins
+#' Default hour at which a two-station day begins
 #'
-#' Two-station days run 06:00-06:00 (24 hours), following Bishop et al.
-#' (2026). This is the same 24-hour day as the one-station default (4 AM to
-#' 4 AM, \code{day_start}/\code{day_end}), with a different boundary.
+#' Two-station days run 24 hours from a start hour chosen during data prep;
+#' the default, 6 (06:00-06:00), follows Bishop et al. (2026).
 #'
 #' @keywords internal
 mm_day_start_2s <- 6
 
+#' Validate a two-station day start hour
+#'
+#' @param day_start_hour the value to check: a single number in [0, 24).
+#' @keywords internal
+mm_check_day_start_hour_2s <- function(day_start_hour) {
+  if(!is.numeric(day_start_hour) || length(day_start_hour) != 1 || is.na(day_start_hour)) {
+    stop('day_start_hour must be a single non-NA number', call.=FALSE)
+  }
+  if(day_start_hour < 0 || day_start_hour >= 24) {
+    stop('day_start_hour must be >= 0 and < 24', call.=FALSE)
+  }
+  invisible(NULL)
+}
+
 #' Assign two-station day labels to timestamps
 #'
-#' Labels each timestamp with the two-station day it belongs to: the day
-#' beginning at \code{mm_day_start_2s} (06:00) and running 24 hours. 05:45
-#' belongs to the *previous* calendar date; 06:00 to the current one.
+#' Labels each timestamp with the two-station day it belongs to: the 24-hour
+#' day beginning at \code{day_start_hour}. With the default start of 6,
+#' 05:45 belongs to the *previous* calendar date and 06:00 to the current
+#' one.
 #'
 #' @param solar.time POSIXct vector of timestamps, in UTC (as enforced by
 #'   \code{\link{mm_validate_data}}).
+#' @param day_start_hour hour of the day, in [0, 24), at which each
+#'   two-station day begins. Required, so every caller states the boundary it
+#'   uses.
 #' @return a Date vector of two-station day labels, the same length as
 #'   \code{solar.time}
 #' @keywords internal
-mm_date_2s <- function(solar.time) {
-  as.Date(solar.time - as.difftime(mm_day_start_2s, units='hours'), tz='UTC')
+mm_date_2s <- function(solar.time, day_start_hour) {
+  as.Date(solar.time - as.difftime(day_start_hour, units='hours'), tz='UTC')
 }
 
 #' Fixed epoch anchoring the two-station snap-to-bin grid
@@ -275,7 +292,7 @@ mm_lag_2s <- function(solar.time, travel.time) {
     has_leadin = !is.na(shift_idx))
 }
 
-#' Align two-station data onto its 06:00 day window
+#' Align two-station data onto its 24-hour day window
 #'
 #' Applies, in order: the per-row lead-in test, two-station day labeling, the
 #' travel-time ceiling, and the whole-day completeness requirement. The
@@ -294,10 +311,10 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'     \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
 #'   \item the day does not fill its 24-hour window, i.e. it holds fewer than
 #'     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
-#'     the edges of any dataset whose bounds don't fall on 06:00, and from
-#'     missing sensor readings; they're dropped because the Stan model
-#'     expects fixed-shape \code{n_obs x n_days} matrices. Short gaps are
-#'     filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
+#'     the edges of any dataset whose bounds don't fall on the day start
+#'     hour, and from missing sensor readings; they're dropped because the
+#'     Stan model expects fixed-shape \code{n_obs x n_days} matrices. Short
+#'     gaps are filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
 #' }
 #'
 #' @param data data.frame (units already stripped) containing at least
@@ -305,6 +322,8 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'   \code{solar.time}.
 #' @param max_travel_time_days the travel-time ceiling, in days. Days whose
 #'   longest travel time exceeds this are dropped.
+#' @param day_start_hour hour of the day, in [0, 24), at which each
+#'   two-station day begins.
 #' @return a list with \code{keep} (integer indices of the modeled rows, into
 #'   the rows of \code{data}), \code{shift_idx} (integer indices, also into
 #'   \code{data}, of the rows supplying each modeled row's upstream values),
@@ -313,9 +332,11 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'   \code{timestep_days}, and \code{removed} (a data.frame of \code{date}
 #'   and \code{errors} naming the days dropped here and why)
 #' @keywords internal
-mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
+mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
+                        day_start_hour) {
 
   mm_check_max_travel_time_days(max_travel_time_days)
+  mm_check_day_start_hour_2s(day_start_hour)
 
   solar_time <- data$solar.time
   travel_time <- data$travel.time
@@ -329,7 +350,7 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
     # error before aligning; this guards direct calls
     stop('no rows have enough upstream lead-in data to be modeled', call.=FALSE)
   }
-  date <- mm_date_2s(solar_time[keep])
+  date <- mm_date_2s(solar_time[keep], day_start_hour)
 
   # Announcing a dropped day and recording it are one action, not two: a day
   # messaged about but not recorded is exactly the day that disappears from
@@ -349,7 +370,7 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
   # a day none of whose rows have lead-in never enters keep at all. Days before
   # the first modelable row are exempt: that prefix is the lead-in block,
   # supplied on purpose to be drawn from rather than modeled
-  all_dates <- mm_date_2s(solar_time)
+  all_dates <- mm_date_2s(solar_time, day_start_hour)
   no_leadin <- sort(unique(all_dates[all_dates >= all_dates[keep[1]] & !(all_dates %in% date)]))
   if(length(no_leadin) > 0) {
     drop_days(
@@ -379,8 +400,8 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
   if(length(partial) > 0) {
     drop_days(
       names(partial), sprintf('%d of %d expected observations', unname(partial), expected_n_obs),
-      'that do not fill the 06:00-06:00 window',
-      'does not fill the 06:00-06:00 window')
+      'that do not fill the 24-hour day window',
+      'does not fill the 24-hour day window')
     complete <- !(as.character(date) %in% names(partial))
     keep <- keep[complete]
     date <- date[complete]
@@ -389,7 +410,7 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default) {
   if(length(keep) == 0) {
     stop(paste0(
       'no complete days remain after applying the ', mm_format_days_hours(max_travel_time_days),
-      ' travel.time ceiling and the 06:00-06:00 day-window requirement'), call.=FALSE)
+      ' travel.time ceiling and the 24-hour day-window requirement'), call.=FALSE)
   }
 
   removed <- removed[order(removed$date), , drop=FALSE]

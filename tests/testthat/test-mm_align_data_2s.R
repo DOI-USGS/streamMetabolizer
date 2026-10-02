@@ -98,7 +98,7 @@ test_that("mm_modeled_rows_2s draws upstream from shift_idx and everything else 
   # distinct values per row make the indexing visible
   dat$DO.obs.up <- seq_len(nrow(dat))
   dat$DO.obs.down <- seq_len(nrow(dat)) + 10000
-  alignment <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat), day_start_hour=mm_day_start_2s))
 
   modeled <- mm_modeled_rows_2s(dat, alignment)
 
@@ -116,7 +116,7 @@ test_that("mm_modeled_rows_2s strips units", {
                       light, depth, temp.water, travel.time)
   for(col in names(template)) dat[[col]] <- u(dat[[col]], get_units(template[[col]]))
   dat$light <- u(v(dat$light), NA)
-  alignment <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat), day_start_hour=mm_day_start_2s))
 
   expect_false(is.unitted(mm_modeled_rows_2s(dat, alignment)))
 })
@@ -168,7 +168,7 @@ test_that("mm_as_aligned_2s() validates its input", {
 test_that("mm_as_aligned_2s() keeps a user-supplied date, and so rejects a wrong one", {
   plain <- aligned_2day_plain()
   plain$date[1] <- plain$date[1] + 1
-  expect_error(mm_as_aligned_2s(plain), "06:00-06:00 day")
+  expect_error(mm_as_aligned_2s(plain), "pass that hour as day_start_hour")
 })
 
 test_that("mm_as_aligned_2s() records dropped days and the ceiling as unknown, and so skips the ceiling check", {
@@ -215,7 +215,7 @@ test_that("aligned-data validation rejects each malformed frame", {
   plain <- aligned_2day_plain()
   aligned <- suppressMessages(mm_align_data_2s(make_2day_2station_data()))
   with_ceiling <- function(df, ceiling_days) {
-    new_aligned_2s(df, max_travel_time_days=ceiling_days)
+    new_aligned_2s(df, max_travel_time_days=ceiling_days, day_start_hour=mm_day_start_2s)
   }
 
   cases <- list(
@@ -233,7 +233,7 @@ test_that("aligned-data validation rejects each malformed frame", {
       error="non-NA 'solar.time' column of class POSIXct"),
     'date not matching solar.time' = list(
       data={d <- plain; d$date[1] <- d$date[1] + 1; with_ceiling(d, NULL)},
-      error="06:00-06:00 day"),
+      error="24-hour day, starting at hour 6"),
     'NA date' = list(
       data={d <- plain; d$date[1] <- NA; with_ceiling(d, NULL)},
       error="non-NA 'date' column"),
@@ -260,7 +260,7 @@ test_that("aligned-data validation rejects each malformed frame", {
         steps <- function(start, minutes) as.POSIXct(start, tz='UTC') + as.difftime((0:95) * minutes, units='mins')
         d <- plain[1:192, ]
         d$solar.time <- c(steps('2050-06-01 06:00', 5), steps('2050-06-02 06:00', 15))
-        d$date <- mm_date_2s(d$solar.time)
+        d$date <- mm_date_2s(d$solar.time, mm_day_start_2s)
         with_ceiling(d, NULL)},
       error="single regular timestep; found steps from 5 to 15 minutes"),
     'non-positive travel.time' = list(
@@ -278,7 +278,7 @@ test_that("aligned-data validation rejects each malformed frame", {
 test_that("travel.time exactly at the stored ceiling passes", {
   d <- aligned_2day_plain()
   d$travel.time[5] <- 0.3
-  expect_silent(mm_validate_data_2station(new_aligned_2s(d, max_travel_time_days=0.3)))
+  expect_silent(mm_validate_data_2station(new_aligned_2s(d, max_travel_time_days=0.3, day_start_hour=mm_day_start_2s)))
 })
 
 
@@ -359,4 +359,46 @@ test_that("dplyr verbs keep the alignment record, but bind_rows() of separate al
   bound <- dplyr::bind_rows(a1, a2)
   expect_null(attr(bound, 'removed'))
   expect_null(attr(bound, 'max_travel_time_days'))
+})
+
+
+
+# day_start_hour -------------------------------------------------------------
+
+test_that("a non-default day_start_hour moves the day boundary", {
+  # make_ts_data(): hourly rows from 2050-06-01 03:00, 3-row lag. With days
+  # starting at midnight, 2050-06-02 is the one complete day
+  aligned <- suppressMessages(mm_align_data_2s(make_ts_data(), day_start_hour=0))
+  expect_identical(unique(aligned$date), as.Date('2050-06-02'))
+  expect_identical(aligned$solar.time[1], as.POSIXct('2050-06-02 00:00:00', tz='UTC'))
+  expect_identical(attr(aligned, 'day_start_hour'), 0)
+  expect_silent(mm_validate_data_2station(aligned))
+
+  default <- suppressMessages(mm_align_data_2s(make_ts_data()))
+  expect_identical(attr(default, 'day_start_hour'), 6)
+
+  # the hour is validated: 0 is allowed, 24 and malformed values are not
+  expect_error(mm_align_data_2s(make_ts_data(), day_start_hour=24), "day_start_hour must be >= 0 and < 24")
+  expect_error(mm_check_day_start_hour_2s(NA_real_), "single non-NA number")
+  expect_error(mm_check_day_start_hour_2s(-1), ">= 0 and < 24")
+  expect_silent(mm_check_day_start_hour_2s(0))
+})
+
+test_that("mm_as_aligned_2s() labels and checks dates with its own day_start_hour", {
+  plain <- as.data.frame(suppressMessages(mm_align_data_2s(make_ts_data(), day_start_hour=0)))
+  expect_identical(attr(mm_as_aligned_2s(plain, day_start_hour=0), 'day_start_hour'), 0)
+  expect_identical(
+    as.data.frame(mm_as_aligned_2s(plain[names(plain) != 'date'], day_start_hour=0)), plain)
+})
+
+test_that("rbind carries the day start hour unless pieces disagree", {
+  a6 <- suppressMessages(mm_align_data_2s(make_ts_data()))
+  later <- make_ts_data()
+  later$solar.time <- later$solar.time + as.difftime(10, units='days')
+  a0 <- suppressMessages(mm_align_data_2s(later, day_start_hour=0))
+  expect_error(mm_validate_data_2station(rbind(a6, a0)), "no recorded day_start_hour")
+
+  # a plain piece has no hour, so it doesn't conflict
+  a6_later <- suppressMessages(mm_align_data_2s(later))
+  expect_silent(mm_validate_data_2station(rbind(a6, as.data.frame(a6_later))))
 })

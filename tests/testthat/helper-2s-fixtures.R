@@ -124,7 +124,7 @@ subset_2station_data <- function(full_data, n_modeled_days) {
 # days sitting in the gap.
 subset_2station_days <- function(full_data, n_days) {
   dates <- first_valid_2station_days(full_data, n_days)
-  alignment <- suppressMessages(mm_align_2s(v(full_data)))
+  alignment <- suppressMessages(mm_align_2s(v(full_data), day_start_hour=mm_day_start_2s))
   rows <- which(alignment$date %in% dates)
   full_data[min(alignment$shift_idx[rows]):max(alignment$keep[rows]), ]
 }

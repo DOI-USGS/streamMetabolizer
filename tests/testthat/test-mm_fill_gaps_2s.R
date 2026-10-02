@@ -196,41 +196,41 @@ test_that("max_gap_hours is validated against the cap", {
 
 test_that("a day dropped for a short gap is recovered by filling", {
   dat <- make_full_days(n_days=2)
-  dates <- mm_date_2s(dat$solar.time)
+  dates <- mm_date_2s(dat$solar.time, mm_day_start_2s)
   target <- unique(dates)[2] # the first full 06:00-06:00 day
 
   # knock a 3-bin hole in the middle of that day
   hole <- which(dates == target)[40:42]
   gappy <- dat[-hole, ]
 
-  alignment_before <- suppressMessages(mm_align_2s(gappy))
+  alignment_before <- suppressMessages(mm_align_2s(gappy, day_start_hour=mm_day_start_2s))
   expect_false(target %in% alignment_before$date)
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
-  alignment_after <- suppressMessages(mm_align_2s(filled))
+  alignment_after <- suppressMessages(mm_align_2s(filled, day_start_hour=mm_day_start_2s))
   expect_true(target %in% alignment_after$date)
   expect_equal(sum(alignment_after$date == target), 96)
 })
 
 test_that("a gap straddling 06:00 recovers both of the days it touches", {
   dat <- make_full_days(n_days=3)
-  dates <- mm_date_2s(dat$solar.time)
+  dates <- mm_date_2s(dat$solar.time, mm_day_start_2s)
   boundary <- min(which(dates == unique(dates)[3])) # first row of the 2nd full day
 
   # two rows before the 06:00 boundary and two after it
   gappy <- dat[-((boundary - 2):(boundary + 1)), ]
 
-  alignment_before <- suppressMessages(mm_align_2s(gappy))
+  alignment_before <- suppressMessages(mm_align_2s(gappy, day_start_hour=mm_day_start_2s))
   expect_false(any(unique(dates)[2:3] %in% alignment_before$date))
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
-  alignment_after <- suppressMessages(mm_align_2s(filled))
+  alignment_after <- suppressMessages(mm_align_2s(filled, day_start_hour=mm_day_start_2s))
   expect_true(all(unique(dates)[2:3] %in% alignment_after$date))
 })
 
 test_that("an over-tolerance gap still costs its day", {
   dat <- make_full_days(n_days=2)
-  dates <- mm_date_2s(dat$solar.time)
+  dates <- mm_date_2s(dat$solar.time, mm_day_start_2s)
   target <- unique(dates)[2]
 
   hole <- which(dates == target)[40:45] # 6 bins, past the tolerance
@@ -238,7 +238,7 @@ test_that("an over-tolerance gap still costs its day", {
 
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
   expect_equal(nrow(filled), nrow(gappy))
-  alignment <- suppressMessages(mm_align_2s(filled))
+  alignment <- suppressMessages(mm_align_2s(filled, day_start_hour=mm_day_start_2s))
   expect_false(target %in% alignment$date)
 })
 
@@ -257,12 +257,12 @@ test_that("filling raw light before normalizing removes mm_lag_light_2s's na.rm 
   travel.time <- rep(2/24, n) # 2 hours -> lag=2, window width 3 rows
   light <- rep(12, n)
 
-  complete <- mm_lag_light_2s(solar.time, light, travel.time)
+  complete <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
 
   # one missing reading inside the complete 06:00-06:00 day
   gappy <- light
   gappy[10] <- NA
-  biased <- mm_lag_light_2s(solar.time, gappy, travel.time)
+  biased <- mm_lag_light_2s(solar.time, gappy, travel.time, day_start_hour=mm_day_start_2s)
 
   # na.rm=TRUE drops the missing term from the day total (24 rows x 12 = 288
   # becomes 276), so every row of the day is divided by too small a number
@@ -274,7 +274,7 @@ test_that("filling raw light before normalizing removes mm_lag_light_2s's na.rm 
   dat <- data.frame(
     solar.time=solar.time, light=gappy, travel.time=travel.time)
   filled <- suppressMessages(mm_fill_gaps_2s(dat, max_gap_hours=2))
-  repaired <- mm_lag_light_2s(filled$solar.time, filled$light, filled$travel.time)
+  repaired <- mm_lag_light_2s(filled$solar.time, filled$light, filled$travel.time, day_start_hour=mm_day_start_2s)
   expect_equal(repaired, complete)
 })
 
@@ -323,6 +323,6 @@ test_that("filling behaves on the real two_station_raw_example", {
     raw$upstream, raw$downstream, raw$light, max_gap_hours=15/60))
   expect_gt(nrow(dat), nrow(unfilled))
 
-  n_days <- function(d) suppressMessages(mm_align_2s(unitted::v(d)))$n_days
+  n_days <- function(d) suppressMessages(mm_align_2s(unitted::v(d), day_start_hour=mm_day_start_2s))$n_days
   expect_gt(n_days(dat), n_days(unfilled))
 })

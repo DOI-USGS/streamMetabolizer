@@ -137,8 +137,8 @@ mm_validate_data <- function(
 #'
 #' Aligned data (class \code{aligned_2s}) is checked per row and per day
 #' instead, since each row already holds its upstream values: a UTC
-#' \code{solar.time}, a \code{date}
-#' matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
+#' \code{solar.time}, a recorded day start hour, a \code{date} matching each
+#' \code{solar.time}'s 24-hour day from that hour, strictly ascending
 #' \code{solar.time}, the same number of rows every day, a single regular
 #' timestep across the whole data.frame, positive \code{travel.time}, and
 #' \code{travel.time} within the stored travel-time ceiling when one is
@@ -171,8 +171,18 @@ mm_validate_data_2station <- function(data) {
     if(!lubridate::is.Date(date) || anyNA(date)) {
       stop("aligned data must have a non-NA 'date' column of class Date", call.=FALSE)
     }
-    if(!isTRUE(all(date == mm_date_2s(solar_time)))) {
-      stop("'date' must label each row with the 06:00-06:00 day its solar.time falls in", call.=FALSE)
+    day_start_hour <- attr(data, 'day_start_hour')
+    if(is.null(day_start_hour)) {
+      stop(paste0(
+        "aligned data has no recorded day_start_hour; re-align it with ",
+        "mm_align_data_2s() or mark it with mm_as_aligned_2s() (pieces combined ",
+        "from different day start hours also have none)"), call.=FALSE)
+    }
+    mm_check_day_start_hour_2s(day_start_hour)
+    if(!isTRUE(all(date == mm_date_2s(solar_time, day_start_hour)))) {
+      stop(paste0(
+        "'date' must label each row with the 24-hour day, starting at hour ",
+        day_start_hour, ", that its solar.time falls in"), call.=FALSE)
     }
     if(is.unsorted(solar_time, strictly=TRUE)) {
       stop('aligned data must be sorted by solar.time, with no duplicate timestamps', call.=FALSE)

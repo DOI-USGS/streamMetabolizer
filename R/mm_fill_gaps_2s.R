@@ -58,7 +58,7 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #' Fills gaps short enough to bridge by linear interpolation, so a day
 #' marred by a brief sensor dropout can still be modeled. Gaps longer than
 #' \code{max_gap_hours} are left as-is and the day is dropped later, during
-#' alignment, for not filling its 06:00-06:00 window -- there's no
+#' alignment, for not filling its 24-hour day window -- there's no
 #' partial-fill middle ground, since the Stan model's \code{n_obs x n_days}
 #' matrices can't mask individual missing values.
 #'
@@ -95,8 +95,9 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
 #'   data spanning no more than this are interpolated, longer runs are left in
 #'   place. Defaults to 1 hour and may not be set above 2.
-#' @return \code{data} with the same columns, column order, and units, and
-#'   with rows inserted where a short missing-row gap could be filled.
+#' @return \code{data} with the same columns, column order, units, and
+#'   \code{day_start_hour} attribute (if any), and with rows inserted where a
+#'   short missing-row gap could be filled.
 #' @examples
 #' dat <- two_station_example[
 #'   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
@@ -260,5 +261,8 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
     }
   }
 
+  # the day start hour mm_format_data_2s() records must survive, so alignment
+  # can still reject a different one
+  attr(work, 'day_start_hour') <- attr(data, 'day_start_hour')
   work
 }

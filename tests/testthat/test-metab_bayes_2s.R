@@ -45,7 +45,7 @@ test_that("mm_align_2s drops a day whose travel.time exceeds the ceiling, leavin
   dat <- make_2day_ceiling_data()
 
   alignment <- expect_message(
-    mm_align_2s(dat),
+    mm_align_2s(dat, day_start_hour=mm_day_start_2s),
     "dropping 1 day\\(s\\) whose travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling: 2050-06-02 \\(0\\.63 days \\(15 hours\\)\\)")
 
   # the offending day is gone entirely, not merely marked invalid; the good
@@ -152,7 +152,7 @@ test_that("mm_lag_light_2s computes the traceable within-day light proportion", 
   light <- c(10, 1, 2, 3, 4)
   travel.time <- rep(0.25, 5)
 
-  out <- mm_lag_light_2s(solar.time, light, travel.time)
+  out <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
 
   # row 1 (2050-06-01 00:00) lacks lead-in (shift_idx = 0) and is also the
   # lone row of the (irrelevant, partial) 06:00-day 2050-05-31; rows 2:5
@@ -174,7 +174,7 @@ test_that("insufficient lead-in yields NA, not a value from a truncated window",
   light <- rep(1, n)
   travel.time <- rep(2/24, n) # 2 hours -> lag=2
 
-  out <- mm_lag_light_2s(solar.time, light, travel.time)
+  out <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
 
   # rows 1:2 (04:00, 05:00) have shift_idx < 1 (no lead-in); confirmed via
   # mm_lag_2s directly rather than reimplementing the lead-in test here
@@ -195,7 +195,7 @@ test_that("an incomplete 06:00-06:00 day (including a trailing partial day) gets
   light <- rep(1, n)
   travel.time <- rep(2/24, n) # 2 hours -> lag=2, window width 3
 
-  out <- mm_lag_light_2s(solar.time, light, travel.time)
+  out <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
 
   # rows 1:2 lack lead-in; rows 3:50 fall in the two complete 06:00-days
   # (proportion = window width / day length = 3/24); rows 51:55 are the
@@ -222,10 +222,12 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
   light <- rep(100, n)
   travel.time <- rep(2/24, n)
 
-  alignment <- mm_align_2s(data.frame(solar.time=solar.time, travel.time=travel.time), max_travel_time_days=10/24)
+  alignment <- mm_align_2s(
+    data.frame(solar.time=solar.time, travel.time=travel.time),
+    max_travel_time_days=10/24, day_start_hour=mm_day_start_2s)
   expect_equal(sort(as.character(unique(alignment$date))), c("2050-06-01", "2050-06-02"))
 
-  light_lag <- mm_lag_light_2s(solar.time, light, travel.time)
+  light_lag <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
   # every row mm_align_2s() considers part of a complete day must have a
   # real (non-NA) light proportion -- the boundaries now agree by default
   expect_false(any(is.na(light_lag[alignment$keep])))
@@ -280,14 +282,14 @@ test_that("mm_lag_light_2s errors clearly when solar.time isn't on a snap-to-bin
   travel.time <- rep(2/24, n)
 
   # already on the grid succeeds
-  expect_silent(mm_lag_light_2s(solar.time, light, travel.time))
+  expect_silent(mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s))
 
   # a single off-grid timestamp (not a real gap -- an unsnapped offset)
   # fails mm_lag_2s()'s snap-to-bin precondition check
   solar.time.offgrid <- solar.time
   solar.time.offgrid[10] <- solar.time.offgrid[10] + as.difftime(37, units="mins")
   expect_error(
-    mm_lag_light_2s(solar.time.offgrid, light, travel.time),
+    mm_lag_light_2s(solar.time.offgrid, light, travel.time, day_start_hour=mm_day_start_2s),
     "not on a regular timestep grid.*mm_format_data_2s")
 })
 
@@ -339,7 +341,7 @@ test_that("mm_lag_light_2s runs without erroring on the real, gappy two_station_
   up_ts <- as.POSIXct(v(up$timestamp), tz="UTC")
   travel.time <- rep(0.1, length(up_ts)) # real travel.time lives on downstream; a stand-in is fine here
 
-  expect_no_error(mm_lag_light_2s(up_ts, rep(1, length(up_ts)), travel.time))
+  expect_no_error(mm_lag_light_2s(up_ts, rep(1, length(up_ts)), travel.time, day_start_hour=mm_day_start_2s))
 })
 
 test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale, leaving a fully clean day intact", {
@@ -356,7 +358,7 @@ test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale,
   travel.time <- rep(2 * timestep_min / 1440, length(solar.time))
   data <- data.frame(solar.time=solar.time, travel.time=travel.time)
 
-  alignment <- mm_align_2s(data, max_travel_time_days=10/24)
+  alignment <- mm_align_2s(data, max_travel_time_days=10/24, day_start_hour=mm_day_start_2s)
 
   # day 1 (gap-affected: the dropped row plus the one row whose target bin
   # was the dropped row) is 94/96 complete and gets dropped wholesale, even
@@ -540,7 +542,7 @@ test_that("a per-day slice of aligned data preps the same Stan matrices as the j
 
   # every day's upstream values reach back before its own first row, so each
   # slice must carry values drawn from the previous day's rows
-  alignment <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat), day_start_hour=mm_day_start_2s))
   for(dt in as.list(unique(alignment$date))) {
     rows <- which(alignment$date == dt)
     expect_lt(min(alignment$shift_idx[rows]), min(alignment$keep[rows]))
@@ -667,7 +669,7 @@ test_that("metab_bayes_2s(split_dates=TRUE) names each NA date's own columns and
   # instantaneous predictions
   inst <- get_fit(mm)$inst
   expect_equal(nrow(inst), 2 * 96)
-  expect_setequal(unique(mm_date_2s(inst$solar.time)), dates[c(1, 4)])
+  expect_setequal(unique(mm_date_2s(inst$solar.time, mm_day_start_2s)), dates[c(1, 4)])
 })
 
 test_that("bayes_perday_2s() reports a date named in na_errors as failed without fitting it", {
@@ -813,7 +815,7 @@ test_that("metab_bayes_2s(split_dates=TRUE) reports every date as failed when no
   skip_if_not_installed('rstan')
 
   dat <- subset_2station_days(two_station_example, 3)
-  alignment <- suppressMessages(mm_align_2s(v(dat)))
+  alignment <- suppressMessages(mm_align_2s(v(dat), day_start_hour=mm_day_start_2s))
   dates <- unique(alignment$date)
   # a contiguous 4-hour NA run in each day's upstream DO, left unfilled, and
   # day_tests=c() lets it through to the fit
@@ -896,7 +898,7 @@ test_that("keep_mcmcs/keep_mcmc_data accept a vector of dates in per-day mode on
 
 test_that("mm_align_2s() reports the days it drops, and why", {
   # the travel-time ceiling
-  alignment <- suppressMessages(mm_align_2s(make_2day_ceiling_data()))
+  alignment <- suppressMessages(mm_align_2s(make_2day_ceiling_data(), day_start_hour=mm_day_start_2s))
   expect_equal(nrow(alignment$removed), 1)
   expect_named(alignment$removed, c('date','errors'))
   expect_equal(as.character(alignment$removed$date), "2050-06-02")
@@ -907,14 +909,14 @@ test_that("mm_align_2s() reports the days it drops, and why", {
   dat <- make_2day_ceiling_data()
   dat$travel.time <- 0.01 # put day 2 back under the ceiling
   dat <- dat[1:(nrow(dat) - 20), ]
-  alignment3 <- suppressMessages(mm_align_2s(dat))
+  alignment3 <- suppressMessages(mm_align_2s(dat, day_start_hour=mm_day_start_2s))
   expect_equal(nrow(alignment3$removed), 1)
   expect_equal(as.character(alignment3$removed$date), "2050-06-02")
-  expect_match(alignment3$removed$errors, "does not fill the 06:00-06:00 window \\(268 of 288")
+  expect_match(alignment3$removed$errors, "does not fill the 24-hour day window \\(268 of 288")
 
   # nothing dropped, nothing reported -- in particular the fixture's
   # deliberate 3-row lead-in block (2050-05-31) is not reported as a lost day
-  alignment4 <- suppressMessages(mm_align_2s(make_2station_data()))
+  alignment4 <- suppressMessages(mm_align_2s(make_2station_data(), day_start_hour=mm_day_start_2s))
   expect_equal(nrow(alignment4$removed), 0)
   expect_false("2050-05-31" %in% as.character(alignment4$removed$date))
 })
@@ -931,7 +933,7 @@ test_that("mm_align_2s() reports a mid-record day with no upstream lead-in at al
   dat <- rbind(day1, stranded)
 
   alignment <- expect_message(
-    mm_align_2s(dat),
+    mm_align_2s(dat, day_start_hour=mm_day_start_2s),
     "dropping 1 day\\(s\\) with no upstream lead-in at all: 2050-06-02 \\(3 row\\(s\\) supplied\\)")
 
   # the good day is unaffected
@@ -997,7 +999,7 @@ test_that("a day dropped by day_tests comes back as a valid_day=FALSE row (joint
 
   # instantaneous output covers only the modeled days
   expect_equal(nrow(predict_DO(mm)), 2 * 96)
-  expect_false(fx$bad_date %in% mm_date_2s(predict_DO(mm)$solar.time))
+  expect_false(fx$bad_date %in% mm_date_2s(predict_DO(mm)$solar.time, mm_day_start_2s))
 })
 
 test_that("a day dropped by day_tests comes back as a valid_day=FALSE row (per-day fit)", {
@@ -1083,7 +1085,7 @@ test_that("a fit reports days dropped by the travel-time ceiling and by day_test
   # day 3's travel.time exceeds the default ceiling
   dat <- make_2station_data(n=3 + 3*288)
   dates <- as.Date(c("2050-06-01", "2050-06-02", "2050-06-03"))
-  day_of <- mm_date_2s(dat$solar.time)
+  day_of <- mm_date_2s(dat$solar.time, mm_day_start_2s)
   dat$depth[which(day_of == dates[1])[10]] <- 0
   dat$travel.time[day_of == dates[3]] <- 15/24
 
@@ -1121,6 +1123,11 @@ test_that("the fit records the travel-time ceiling the data were aligned with", 
   # taken from the data every time, not carried over in reused specs
   mm3 <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=get_specs(mm), data=hand)))
   expect_null(get_specs(mm3)$aligned_max_travel_time_days)
+
+  # the day start hour is recorded the same way
+  mm4 <- suppressWarnings(suppressMessages(metab_bayes_2s(
+    specs=get_specs(mm), data=suppressMessages(mm_align_data_2s(make_ts_data(), day_start_hour=0)))))
+  expect_identical(get_specs(mm4)$aligned_day_start_hour, 0)
 
   # no gap-filling setting is recorded
   expect_false('aligned_max_gap_hours' %in% names(get_specs(mm)))

@@ -4,7 +4,7 @@
 \alias{mm_lag_light_2s}
 \title{Compute the within-day light proportion for two-station light lagging}
 \usage{
-mm_lag_light_2s(solar.time, light, travel.time)
+mm_lag_light_2s(solar.time, light, travel.time, day_start_hour)
 }
 \arguments{
 \item{solar.time}{POSIXct vector of timestamps, in UTC, sorted ascending,
@@ -16,11 +16,14 @@ single combined light value per timestep.}
 
 \item{travel.time}{numeric vector of reach travel times, in days, the
 same length as \code{solar.time}.}
+
+\item{day_start_hour}{hour of the day, in [0, 24), at which each
+two-station day begins.}
 }
 \value{
 a numeric vector, the same length as \code{solar.time}, of the
   within-day light proportion, or \code{NA} where \code{solar.time} lacks
-  lead-in or falls in an incomplete 06:00-06:00 day.
+  lead-in or falls in an incomplete 24-hour day.
 }
 \description{
 Converts a single, already-combined light value per timestep into the
@@ -39,10 +42,10 @@ from a truncated window.
 }
 \section{Day-sum denominator}{
  the daily total in the denominator uses the
-  same \code{\link{mm_date_2s}} 06:00-06:00 day window that
+  same \code{\link{mm_date_2s}} 24-hour day window that
   \code{\link{mm_align_2s}}/\code{\link{metab_bayes_2s}} use elsewhere in
-  the two-station pipeline, so any 06:00-day \code{\link{mm_align_2s}}
-  counts as full is guaranteed to have every one of its rows counted as
+  the two-station pipeline, so given the same \code{day_start_hour}, any
+  day \code{\link{mm_align_2s}} counts as full is guaranteed to have every one of its rows counted as
   full here too -- its light proportions are never \code{NA}.
 
   A day that doesn't hold a full \code{round(1/timestep_days)} rows --

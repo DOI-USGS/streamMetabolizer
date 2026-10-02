@@ -4,16 +4,21 @@
 \alias{mm_as_aligned_2s}
 \title{Mark a user-aligned data.frame as aligned two-station data}
 \usage{
-mm_as_aligned_2s(data)
+mm_as_aligned_2s(data, day_start_hour = mm_day_start_2s)
 }
 \arguments{
 \item{data}{data.frame, units optional, with the columns
 \code{\link{metab_bayes_2s}} expects and optionally a \code{date} column
-of 06:00-06:00 day labels. If \code{date} is absent it is added.}
+of day labels for 24-hour days starting at \code{day_start_hour}. If
+\code{date} is absent it is added.}
+
+\item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
+two-station day begins. Defaults to 6 (06:00-06:00). The \code{light}
+proportions must have been computed with the same day start hour.}
 }
 \value{
 a data.frame of class \code{aligned_2s}, unitless, with a
-  \code{date} column first.
+  \code{date} column first and a \code{day_start_hour} attribute.
 }
 \description{
 For data aligned some other way than \code{\link{mm_align_data_2s}}: each

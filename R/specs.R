@@ -647,8 +647,8 @@ specs <- function(
     },
     'bayes_2s' = {
 
-      # bayes_2s has a single fixed model structure (see
-      # inst/models/b2_np_oi_tr_plrckm.stan), so params_in/params_out are
+      # bayes_2s has a single fixed model structure (see the b2_ model file
+      # in inst/models), so params_in/params_out are
       # hardcoded here rather than built up from pool_K600/GPP_fun/ER_fun/
       # err_* toggles as in the 'bayes' case above
 
@@ -664,10 +664,11 @@ specs <- function(
         # model setup
         'model_name', 'engine', 'split_dates', 'keep_mcmcs', 'keep_mcmc_data',
 
-        # data prep (not Stan hyperparameters, so not in params_in).
-        # day_start/day_end/required_timestep are deliberately absent: they
-        # configure the one-station diel window, which two-station does not
-        # use. day_tests is here because the per-day validity tests are shared
+        # data prep (not Stan hyperparameters, so not in params_in). The
+        # two-station day boundary is not a spec: days are fixed during
+        # alignment (mm_align_data_2s()), before fitting, and the start hour
+        # used is recorded on the data. day_tests is here because the per-day
+        # validity tests run at fit time
         'day_tests',
 
         # params_in is both a vector of specs to include and a vector to include in specs

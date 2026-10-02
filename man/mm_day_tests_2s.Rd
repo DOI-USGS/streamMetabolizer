@@ -25,7 +25,7 @@ inherited wholesale.
 \details{
 \code{full_day} and \code{even_timesteps} are excluded. \code{full_day}
 checks for observations at the one-station day boundaries (4 AM to 4 AM by
-default), which a 06:00-06:00 two-station day does not match.
+default), which the two-station day boundary does not match.
 \code{even_timesteps} is excluded because two-station methods do not
 need regular timesteps: irregular spacing within or at the ends of a day
 would not by itself invalidate a two-station day. (The current Stan model

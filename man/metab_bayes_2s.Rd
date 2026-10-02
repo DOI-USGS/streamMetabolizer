@@ -82,11 +82,12 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
 
 \section{Preparing data}{
  \code{data} must be aligned with
-  \code{\link{mm_align_data_2s}}, which labels 06:00-06:00 days and drops
-  incomplete ones; see its documentation. Lead-in and travel-time ceiling
-  requirements are applied during alignment
-  (\code{\link{mm_align_data_2s}}); the ceiling used is recorded in
-  \code{get_specs(mm)$aligned_max_travel_time_days}.
+  \code{\link{mm_align_data_2s}}, which labels 24-hour days (06:00-06:00
+  by default) and drops incomplete ones; see its documentation. The day
+  start hour, lead-in, and travel-time ceiling are all applied during
+  alignment (\code{\link{mm_align_data_2s}}); the day start hour and
+  ceiling used are recorded in \code{get_specs(mm)$aligned_day_start_hour}
+  and \code{get_specs(mm)$aligned_max_travel_time_days}.
 
   The fit does not fill gaps. Fill before aligning with
   \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}
@@ -108,7 +109,7 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
 
   Only a subset of the one-station tests is accepted. \code{full_day}
   checks for observations at the one-station day boundaries (4 AM to 4 AM
-  by default), which a 06:00-06:00 two-station day does not match.
+  by default), which the two-station day boundary does not match.
   \code{even_timesteps} is excluded because two-station methods do not
   need regular timesteps: irregular spacing within or at the ends of a day
   would not by itself invalidate a two-station day. (The current Stan model

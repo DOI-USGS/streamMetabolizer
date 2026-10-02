@@ -35,11 +35,12 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   pairing as the joint fit.
 #'
 #' @section Preparing data: \code{data} must be aligned with
-#'   \code{\link{mm_align_data_2s}}, which labels 06:00-06:00 days and drops
-#'   incomplete ones; see its documentation. Lead-in and travel-time ceiling
-#'   requirements are applied during alignment
-#'   (\code{\link{mm_align_data_2s}}); the ceiling used is recorded in
-#'   \code{get_specs(mm)$aligned_max_travel_time_days}.
+#'   \code{\link{mm_align_data_2s}}, which labels 24-hour days (06:00-06:00
+#'   by default) and drops incomplete ones; see its documentation. The day
+#'   start hour, lead-in, and travel-time ceiling are all applied during
+#'   alignment (\code{\link{mm_align_data_2s}}); the day start hour and
+#'   ceiling used are recorded in \code{get_specs(mm)$aligned_day_start_hour}
+#'   and \code{get_specs(mm)$aligned_max_travel_time_days}.
 #'
 #'   The fit does not fill gaps. Fill before aligning with
 #'   \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}
@@ -76,7 +77,7 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'
 #'   Only a subset of the one-station tests is accepted. \code{full_day}
 #'   checks for observations at the one-station day boundaries (4 AM to 4 AM
-#'   by default), which a 06:00-06:00 two-station day does not match.
+#'   by default), which the two-station day boundary does not match.
 #'   \code{even_timesteps} is excluded because two-station methods do not
 #'   need regular timesteps: irregular spacing within or at the ends of a day
 #'   would not by itself invalidate a two-station day. (The current Stan model
@@ -131,7 +132,10 @@ metab_bayes_2s <- function(
         'data must be aligned first: use mm_align_data_2s(), or mm_as_aligned_2s() ',
         'for data aligned another way'), call.=FALSE)
     }
-    mm_stop_if_na_travel_time_2s(data, 'fill it or remove those days before fitting')
+    day_start_hour <- attr(data, 'day_start_hour')
+    if(!is.null(day_start_hour)) mm_check_day_start_hour_2s(day_start_hour)
+    mm_stop_if_na_travel_time_2s(
+      data, 'fill it or remove those days before fitting', day_start_hour)
 
     # the timestamp test is left out because it accepts only one of
     # solar.time/date; the aligned-data checks cover both columns instead
@@ -148,6 +152,7 @@ metab_bayes_2s <- function(
     # recorded as an explicit NULL when unknown, and always taken from the
     # data, so specs reused from an earlier fit can't carry a stale value
     specs['aligned_max_travel_time_days'] <- list(attr(dat_list$data, 'max_travel_time_days'))
+    specs['aligned_day_start_hour'] <- list(attr(dat_list$data, 'day_start_hour'))
 
     # Reject days whose modeled values fail specs$day_tests. Validation
     # upstream checks structure only, so this is the first look at the values
@@ -501,7 +506,7 @@ bayes_1fit_2s <- function(data, specs, data_list=NULL, keep_mcmc=TRUE) {
 #' \code{\link{predict_metab}} blanks out \emph{every} date's estimates when
 #' the run-level slots are non-empty.
 #'
-#' The dates are the aligned data's own 06:00-06:00
+#' The dates are the aligned data's own
 #' \code{date} labels; day membership is not re-derived here. In particular this does not route through
 #' \code{\link{mm_model_by_ply}}, whose \code{day_start}/\code{day_end}
 #' window is a different partition of the same rows (see
@@ -730,10 +735,10 @@ prepdata_bayes_2s <- function(data, specs=NULL) {
 #' from a truncated window.
 #'
 #' @section Day-sum denominator: the daily total in the denominator uses the
-#'   same \code{\link{mm_date_2s}} 06:00-06:00 day window that
+#'   same \code{\link{mm_date_2s}} 24-hour day window that
 #'   \code{\link{mm_align_2s}}/\code{\link{metab_bayes_2s}} use elsewhere in
-#'   the two-station pipeline, so any 06:00-day \code{\link{mm_align_2s}}
-#'   counts as full is guaranteed to have every one of its rows counted as
+#'   the two-station pipeline, so given the same \code{day_start_hour}, any
+#'   day \code{\link{mm_align_2s}} counts as full is guaranteed to have every one of its rows counted as
 #'   full here too -- its light proportions are never \code{NA}.
 #'
 #'   A day that doesn't hold a full \code{round(1/timestep_days)} rows --
@@ -755,12 +760,15 @@ prepdata_bayes_2s <- function(data, specs=NULL) {
 #'   single combined light value per timestep.
 #' @param travel.time numeric vector of reach travel times, in days, the
 #'   same length as \code{solar.time}.
+#' @param day_start_hour hour of the day, in [0, 24), at which each
+#'   two-station day begins.
 #' @return a numeric vector, the same length as \code{solar.time}, of the
 #'   within-day light proportion, or \code{NA} where \code{solar.time} lacks
-#'   lead-in or falls in an incomplete 06:00-06:00 day.
+#'   lead-in or falls in an incomplete 24-hour day.
 #' @keywords internal
-mm_lag_light_2s <- function(solar.time, light, travel.time) {
+mm_lag_light_2s <- function(solar.time, light, travel.time, day_start_hour) {
 
+  mm_check_day_start_hour_2s(day_start_hour)
   lagged <- mm_lag_2s(solar.time, travel.time)
   n_total <- length(light)
 
@@ -771,11 +779,11 @@ mm_lag_light_2s <- function(solar.time, light, travel.time) {
     sum(light[lagged$shift_idx[i]:i], na.rm=TRUE)
   }, numeric(1))
 
-  # 06:00-day total (mm_date_2s(), same day window as mm_align_2s()), NA'd
+  # day total (mm_date_2s(), same day window as mm_align_2s()), NA'd
   # out for any day that doesn't fill the nominal timestep count (see the
   # roxygen section on the day-sum denominator)
   day_total <- '.dplyr.var'
-  day <- mm_date_2s(solar.time)
+  day <- mm_date_2s(solar.time, day_start_hour)
   expected_n <- round(1 / lagged$timestep_days)
   day_totals <- tibble::tibble(day=day, light=light) %>%
     group_by(day) %>%

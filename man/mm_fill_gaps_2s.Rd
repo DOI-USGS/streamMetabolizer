@@ -17,14 +17,15 @@ data spanning no more than this are interpolated, longer runs are left in
 place. Defaults to 1 hour and may not be set above 2.}
 }
 \value{
-\code{data} with the same columns, column order, and units, and
-  with rows inserted where a short missing-row gap could be filled.
+\code{data} with the same columns, column order, units, and
+  \code{day_start_hour} attribute (if any), and with rows inserted where a
+  short missing-row gap could be filled.
 }
 \description{
 Fills gaps short enough to bridge by linear interpolation, so a day
 marred by a brief sensor dropout can still be modeled. Gaps longer than
 \code{max_gap_hours} are left as-is and the day is dropped later, during
-alignment, for not filling its 06:00-06:00 window -- there's no
+alignment, for not filling its 24-hour day window -- there's no
 partial-fill middle ground, since the Stan model's \code{n_obs x n_days}
 matrices can't mask individual missing values.
 }

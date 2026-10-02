@@ -10,7 +10,7 @@ NULL
 #'
 #' \code{full_day} and \code{even_timesteps} are excluded. \code{full_day}
 #' checks for observations at the one-station day boundaries (4 AM to 4 AM by
-#' default), which a 06:00-06:00 two-station day does not match.
+#' default), which the two-station day boundary does not match.
 #' \code{even_timesteps} is excluded because two-station methods do not
 #' need regular timesteps: irregular spacing within or at the ends of a day
 #' would not by itself invalidate a two-station day. (The current Stan model
@@ -69,7 +69,7 @@ mm_check_day_tests_2s <- function(day_tests) {
 #' \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 #' \code{\link{mm_is_valid_day}} underneath it is: that function partitions
 #' rows by the one-station \code{day_start}/\code{day_end} boundaries, not
-#' the 06:00 two-station boundary.
+#' the two-station day boundary.
 #'
 #' @param data an \code{aligned_2s} data.frame (see
 #'   \code{\link{mm_align_data_2s}}). Each row already holds the upstream

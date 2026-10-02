@@ -98,6 +98,34 @@ test_that("no trimming and no dropped rows when inputs already share one deploym
   expect_gte(nrow(out), nrow(down))
 })
 
+test_that("day_start_hour sets the day each light proportion is divided by", {
+  # two midnight-to-midnight days: complete at day_start_hour=0, so no NA
+  # light, while the default 06:00 boundary would leave partial edge days
+  downstream <- make_hourly("2050-06-01 00:00:00", 48, DO.obs=8, DO.sat=9,
+                             temp.water=20, depth=0.5, travel.time=0.01)
+  upstream <- make_hourly("2050-06-01 00:00:00", 48, DO.obs=8, DO.sat=9)
+  light <- make_hourly("2050-06-01 00:00:00", 48, light=1:48)
+  out <- mm_format_data_2s(upstream, downstream, light, day_start_hour=0)
+  day_sums <- tapply(v(out$light), mm_date_2s(v(out$solar.time), 0), sum)
+  expect_equal(unname(as.vector(day_sums)), c(1, 1))
+})
+
+test_that("aligning with a different day_start_hour than formatting is an error", {
+  downstream <- make_hourly("2050-06-01 00:00:00", 48, DO.obs=8, DO.sat=9,
+                             temp.water=20, depth=0.5, travel.time=0.01)
+  upstream <- make_hourly("2050-06-01 00:00:00", 48, DO.obs=8, DO.sat=9)
+  light <- make_hourly("2050-06-01 00:00:00", 48, light=1:48)
+  out <- mm_format_data_2s(upstream, downstream, light, day_start_hour=0)
+  expect_error(mm_align_data_2s(out), "formatted with day_start_hour=0 but are being aligned with day_start_hour=6")
+  expect_no_error(suppressMessages(mm_align_data_2s(out, day_start_hour=0)))
+  # gap-filling formatted data keeps the recorded hour, so the check still applies
+  expect_error(
+    mm_align_data_2s(suppressMessages(mm_fill_gaps_2s(out))),
+    "formatted with day_start_hour=0")
+  attr(out, 'day_start_hour') <- NULL
+  expect_no_error(suppressMessages(mm_align_data_2s(out)))
+})
+
 test_that("upstream and downstream with no overlapping window is an error", {
   downstream <- make_hourly("2050-06-01 00:00:00", 3, DO.obs=1:3, DO.sat=1:3 + 10,
                              temp.water=20, depth=0.5, travel.time=0.01)

@@ -31,6 +31,6 @@ separately, so the caller can report them rather than let them disappear.
 \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 \code{\link{mm_is_valid_day}} underneath it is: that function partitions
 rows by the one-station \code{day_start}/\code{day_end} boundaries, not
-the 06:00 two-station boundary.
+the two-station day boundary.
 }
 \keyword{internal}

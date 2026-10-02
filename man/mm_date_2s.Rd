@@ -4,19 +4,24 @@
 \alias{mm_date_2s}
 \title{Assign two-station day labels to timestamps}
 \usage{
-mm_date_2s(solar.time)
+mm_date_2s(solar.time, day_start_hour)
 }
 \arguments{
 \item{solar.time}{POSIXct vector of timestamps, in UTC (as enforced by
 \code{\link{mm_validate_data}}).}
+
+\item{day_start_hour}{hour of the day, in [0, 24), at which each
+two-station day begins. Required, so every caller states the boundary it
+uses.}
 }
 \value{
 a Date vector of two-station day labels, the same length as
   \code{solar.time}
 }
 \description{
-Labels each timestamp with the two-station day it belongs to: the day
-beginning at \code{mm_day_start_2s} (06:00) and running 24 hours. 05:45
-belongs to the *previous* calendar date; 06:00 to the current one.
+Labels each timestamp with the two-station day it belongs to: the 24-hour
+day beginning at \code{day_start_hour}. With the default start of 6,
+05:45 belongs to the *previous* calendar date and 06:00 to the current
+one.
 }
 \keyword{internal}

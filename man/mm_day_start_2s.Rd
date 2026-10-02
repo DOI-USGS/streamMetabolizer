@@ -3,7 +3,7 @@
 \docType{data}
 \name{mm_day_start_2s}
 \alias{mm_day_start_2s}
-\title{Hour at which a two-station day begins}
+\title{Default hour at which a two-station day begins}
 \format{
 An object of class \code{numeric} of length 1.
 }
@@ -11,8 +11,7 @@ An object of class \code{numeric} of length 1.
 mm_day_start_2s
 }
 \description{
-Two-station days run 06:00-06:00 (24 hours), following Bishop et al.
-(2026). This is the same 24-hour day as the one-station default (4 AM to
-4 AM, \code{day_start}/\code{day_end}), with a different boundary.
+Two-station days run 24 hours from a start hour chosen during data prep;
+the default, 6 (06:00-06:00), follows Bishop et al. (2026).
 }
 \keyword{internal}

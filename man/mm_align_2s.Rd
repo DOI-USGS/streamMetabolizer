@@ -2,9 +2,13 @@
 % Please edit documentation in R/mm_lag_2s.R
 \name{mm_align_2s}
 \alias{mm_align_2s}
-\title{Align two-station data onto its 06:00 day window}
+\title{Align two-station data onto its 24-hour day window}
 \usage{
-mm_align_2s(data, max_travel_time_days = mm_max_travel_time_default)
+mm_align_2s(
+  data,
+  max_travel_time_days = mm_max_travel_time_default,
+  day_start_hour
+)
 }
 \arguments{
 \item{data}{data.frame (units already stripped) containing at least
@@ -13,6 +17,9 @@ mm_align_2s(data, max_travel_time_days = mm_max_travel_time_default)
 
 \item{max_travel_time_days}{the travel-time ceiling, in days. Days whose
 longest travel time exceeds this are dropped.}
+
+\item{day_start_hour}{hour of the day, in [0, 24), at which each
+two-station day begins.}
 }
 \value{
 a list with \code{keep} (integer indices of the modeled rows, into
@@ -42,10 +49,10 @@ Whole days are dropped, with a message, in two cases:
     \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
   \item the day does not fill its 24-hour window, i.e. it holds fewer than
     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
-    the edges of any dataset whose bounds don't fall on 06:00, and from
-    missing sensor readings; they're dropped because the Stan model
-    expects fixed-shape \code{n_obs x n_days} matrices. Short gaps are
-    filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
+    the edges of any dataset whose bounds don't fall on the day start
+    hour, and from missing sensor readings; they're dropped because the
+    Stan model expects fixed-shape \code{n_obs x n_days} matrices. Short
+    gaps are filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
 }
 }
 \keyword{internal}

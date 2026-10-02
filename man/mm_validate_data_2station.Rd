@@ -29,8 +29,8 @@ and travel.time positivity are expected to have already been checked by
 
 Aligned data (class \code{aligned_2s}) is checked per row and per day
 instead, since each row already holds its upstream values: a UTC
-\code{solar.time}, a \code{date}
-matching each \code{solar.time}'s 06:00-06:00 day, strictly ascending
+\code{solar.time}, a recorded day start hour, a \code{date} matching each
+\code{solar.time}'s 24-hour day from that hour, strictly ascending
 \code{solar.time}, the same number of rows every day, a single regular
 timestep across the whole data.frame, positive \code{travel.time}, and
 \code{travel.time} within the stored travel-time ceiling when one is
