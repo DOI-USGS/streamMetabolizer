@@ -176,13 +176,62 @@ test_that("one-station-only day_tests are rejected rather than silently applied"
     "day_tests must be a character vector")
 })
 
+test_that("data coarser than hourly stops with the timestep unless min_n_obs=0; hourly passes", {
+  dat <- make_three_days_2s()
+
+  coarse <- align_every_n_hours_2s(dat, 3)
+  err <- conditionMessage(expect_error(mm_filter_valid_days_2s(coarse)))
+  expect_match(err, '8 observations per day')
+  expect_match(err, '180-minute timestep')
+  expect_match(err, 'Use hourly or finer data')
+  res <- mm_filter_valid_days_2s(coarse, min_n_obs=0)
+  expect_equal(nrow(res$data), nrow(coarse))
+
+  hourly <- align_every_n_hours_2s(dat, 1)
+  res <- expect_silent(mm_filter_valid_days_2s(hourly))
+  expect_equal(nrow(res$data), nrow(hourly))
+})
+
+test_that("days shorter than 24 hours are not mistaken for coarse data", {
+  # 15-minute data kept only from 10:00 to 14:00 each day: 16 rows per day,
+  # already finer than hourly, so the error must not suggest finer data
+  aligned <- suppressMessages(mm_align_data_2s(make_three_days_2s()))
+  hour <- as.integer(format(aligned$solar.time, '%H'))
+  part <- mm_as_aligned_2s(aligned[hour >= 10 & hour < 14, ], day_start_hour=6)
+  err <- conditionMessage(expect_error(mm_filter_valid_days_2s(part)))
+  expect_match(err, '16 observations per day')
+  expect_match(err, 'covering less than 24 hours')
+  expect_match(err, 'Use data with at least 20 observations per day')
+  expect_no_match(err, 'hourly')
+
+  # one row per day: the step between rows spans days, so no timestep is named
+  one <- mm_as_aligned_2s(part[!duplicated(part$date), ], day_start_hour=6)
+  err <- conditionMessage(expect_error(mm_filter_valid_days_2s(one)))
+  expect_match(err, '1 observation per day')
+  expect_no_match(err, 'minute|hourly|24 hours')
+})
+
+test_that("bad min_n_obs values are rejected by specs() and the filter", {
+  dat <- suppressMessages(mm_align_data_2s(make_2day_2station_data()))
+  for(bad in list(-1, 2.5, NA, Inf, c(10, 20))) {
+    expect_error(specs(mm_name('bayes_2s'), min_n_obs=bad), 'single whole number of 0 or more')
+  }
+  # the filter shares the same check
+  expect_error(mm_filter_valid_days_2s(dat, min_n_obs=-1), 'single whole number of 0 or more')
+})
+
+test_that("defaults shown as literals in usage lines stay in sync", {
+  expect_identical(formals(specs)$min_n_obs, mm_min_n_obs_2s_default)
+  expect_identical(formals(mm_fill_gaps_2s)$warn_fill_share, formals(mm_format_data_2s)$warn_fill_share)
+})
+
 test_that("specs() rejects the same day_tests, at specs-creation time", {
   expect_error(specs(mm_name('bayes_2s'), day_tests=c('complete_data','full_day')),
                "may only include.*got full_day")
   expect_silent(specs(mm_name('bayes_2s'), day_tests='complete_data'))
 })
 
-test_that("specs(mm_name('bayes_2s')) defaults day_tests to complete_data + pos_depth", {
+test_that("specs(mm_name('bayes_2s')) defaults day_tests to complete_data + pos_depth and min_n_obs to 20", {
   sp <- specs(mm_name('bayes_2s'))
   expect_equal(sp$day_tests, c('complete_data','pos_depth'))
 
@@ -195,6 +244,10 @@ test_that("specs(mm_name('bayes_2s')) defaults day_tests to complete_data + pos_
   expect_null(sp$day_start)
   expect_null(sp$day_end)
   expect_null(sp$required_timestep)
+
+  # min_n_obs is a two-station setting only
+  expect_equal(sp$min_n_obs, 20)
+  expect_null(specs(mm_name('bayes'))$min_n_obs)
 })
 
 test_that("mm_is_valid_day() accepts a day_tests subset that omits full_day and even_timesteps", {

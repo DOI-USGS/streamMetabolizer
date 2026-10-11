@@ -71,6 +71,10 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #'   Neither can be modeled around, and one bad day fails \emph{every} date of
 #'   a joint fit with a diagnostic naming neither the column nor the day.
 #'
+#'   \code{specs$min_n_obs} (default 20) is the fewest observations a day
+#'   must have; data coarser than about hourly stops with an error. Set it to
+#'   0 to fit coarser data anyway.
+#'
 #'   The values tested are the ones the day is modeled from, not the rows
 #'   falling inside it: a day's upstream DO comes from one travel time
 #'   earlier, routinely from the preceding day's rows.
@@ -155,8 +159,11 @@ metab_bayes_2s <- function(
     specs['aligned_day_start_hour'] <- list(attr(dat_list$data, 'day_start_hour'))
 
     # Reject days whose modeled values fail specs$day_tests. Validation
-    # upstream checks structure only, so this is the first look at the values
-    filtered <- mm_filter_valid_days_2s(dat_list$data, day_tests=specs$day_tests)
+    # upstream checks structure only, so this is the first look at the values.
+    # A specs list built without min_n_obs gets the default
+    min_n_obs <- if(is.null(specs$min_n_obs)) mm_min_n_obs_2s_default else specs$min_n_obs
+    filtered <- mm_filter_valid_days_2s(
+      dat_list$data, day_tests=specs$day_tests, min_n_obs=min_n_obs)
     dat <- filtered$data
 
     # from both stages, so no day that failed to reach Stan goes unreported

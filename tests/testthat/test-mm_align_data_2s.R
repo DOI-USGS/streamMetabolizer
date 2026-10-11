@@ -13,9 +13,7 @@ test_that("mm_align_data_2s() returns a unitless aligned frame with date first",
     'date', 'solar.time', 'DO.obs.up', 'DO.sat.up', 'DO.obs.down', 'DO.sat.down',
     'light', 'depth', 'temp.water', 'travel.time'))
 
-  raw <- two_station_raw_example
-  formatted <- suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light))
-  aligned_from_unitted <- suppressMessages(mm_align_data_2s(formatted))
+  aligned_from_unitted <- suppressMessages(mm_align_data_2s(formatted_raw_example_2s()$data))
   expect_false(any(vapply(unclass(aligned_from_unitted), unitted::is.unitted, logical(1))))
 })
 
@@ -68,8 +66,7 @@ test_that("each aligned row pairs downstream values with the upstream values one
   dat$DO.sat.up <- seq_len(nrow(dat)) + 1000
   expect_upstream_paired(dat)
 
-  raw <- two_station_raw_example
-  expect_upstream_paired(suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light)))
+  expect_upstream_paired(formatted_raw_example_2s()$data)
 })
 
 test_that("NA travel.time is rejected with the affected dates", {

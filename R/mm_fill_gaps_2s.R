@@ -53,6 +53,19 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
   invisible(NULL)
 }
 
+#' Validate a fill-share warning threshold
+#'
+#' @param warn_fill_share the value to check.
+#' @keywords internal
+#' @noRd
+mm_check_warn_fill_share <- function(warn_fill_share) {
+  if(!is.numeric(warn_fill_share) || length(warn_fill_share) != 1 || is.na(warn_fill_share) ||
+     warn_fill_share <= 0 || warn_fill_share > 1) {
+    stop('warn_fill_share must be a single number above 0 and at most 1', call.=FALSE)
+  }
+  invisible(NULL)
+}
+
 #' Interpolate short gaps in two-station data
 #'
 #' Fills gaps short enough to bridge by linear interpolation, so a day
@@ -80,6 +93,16 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #'   an interpolated column -- a partially-fillable inserted row is dropped
 #'   rather than kept.
 #'
+#' @section Heavily filled days: Filling never drops a day. When more than
+#'   \code{warn_fill_share} of a day's values in any column were filled, a
+#'   single warning lists those days with the share filled. Every filled
+#'   value counts toward the day its timestamp falls in, whether it filled a
+#'   missing row or a missing value. Some flagged days may still be dropped
+#'   later, during alignment.
+#'
+#'   The share is measured per call: values filled by an earlier call count
+#'   as observed in a later one.
+#'
 #' @section Interpolating light: The \code{light} column is interpolated
 #'   like any other, but accuracy depends on timing:
 #'   \code{\link{mm_format_data_2s}} fills raw light before converting to
@@ -95,6 +118,14 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
 #'   data spanning no more than this are interpolated, longer runs are left in
 #'   place. Defaults to 1 hour and may not be set above 2.
+#' @param warn_fill_share warn when more than this share of a day's values in
+#'   any column was filled. A number above 0 and at most 1; defaults to 0.25,
+#'   and 1 turns the warning off.
+#' @param day_start_hour hour of the day, in [0, 24), at which each 24-hour
+#'   two-station day begins, used to group filled values into days for the
+#'   warning. \code{NULL} (the default) uses the hour stored by
+#'   \code{\link{mm_format_data_2s}} if present, otherwise 6; a value that
+#'   differs from the stored hour is an error.
 #' @return \code{data} with the same columns, column order, units, and
 #'   \code{day_start_hour} attribute (if any), and with rows inserted where a
 #'   short missing-row gap could be filled.
@@ -112,9 +143,25 @@ mm_check_max_gap_hours <- function(max_gap_hours) {
 #' @importFrom stats approx
 #' @importFrom unitted u v is.unitted get_units
 #' @export
-mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
+mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default,
+                            warn_fill_share=0.25, day_start_hour=NULL) {
 
   mm_check_max_gap_hours(max_gap_hours)
+  mm_check_warn_fill_share(warn_fill_share)
+
+  # the recorded hour is the one the light proportions were made with, so it
+  # wins; an argument that disagrees with it is a mistake, not an override
+  recorded_hour <- attr(data, 'day_start_hour')
+  if(!is.null(recorded_hour)) mm_check_day_start_hour_2s(recorded_hour)
+  if(!is.null(day_start_hour)) mm_check_day_start_hour_2s(day_start_hour)
+  if(!is.null(recorded_hour) && !is.null(day_start_hour) && recorded_hour != day_start_hour) {
+    stop(paste0(
+      'data were formatted with day_start_hour=', recorded_hour, ' but are being filled with ',
+      'day_start_hour=', day_start_hour, '; use the same value for both'), call.=FALSE)
+  }
+  if(is.null(day_start_hour)) {
+    day_start_hour <- if(is.null(recorded_hour)) mm_day_start_2s else recorded_hour
+  }
 
   # units may sit on the columns alone (the shape mm_format_data_2s() and
   # two_station_example use) or on the frame as well (a true unitted
@@ -199,6 +246,9 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   # filled -- deliberately not calc_light_merged()'s rule=2, which would
   # extrapolate a constant off the end of the record
   n_values_filled <- 0L
+  # which values were filled, per column, for the per-day share warning
+  was_filled <- matrix(FALSE, nrow=nrow(work), ncol=length(target_cols),
+                       dimnames=list(NULL, target_cols))
   for(col in target_cols) {
     x <- work[[col]]
     if(!is.numeric(x)) next
@@ -217,6 +267,7 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
     if(any(fillable)) {
       x[fillable] <- interp[fillable]
       work[[col]] <- x
+      was_filled[, col] <- fillable
       n_values_filled <- n_values_filled + sum(fillable)
     }
   }
@@ -232,6 +283,7 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   if(any(drop_back)) {
     n_values_filled <- n_values_filled - sum(!is.na(work[drop_back, target_cols, drop=FALSE]))
     work <- work[!drop_back, , drop=FALSE]
+    was_filled <- was_filled[!drop_back, , drop=FALSE]
   }
 
   n_rows_inserted <- sum(work$.inserted)
@@ -253,6 +305,9 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
       else ''))
   }
 
+  mm_warn_heavily_filled_2s(
+    work$solar.time, was_filled, round(1 / timestep_days), warn_fill_share, day_start_hour)
+
   if(frame_unitted) {
     work <- u(work, col_units[names(work)])
   } else if(any(col_unitted)) {
@@ -265,4 +320,27 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default) {
   # can still reject a different one
   attr(work, 'day_start_hour') <- attr(data, 'day_start_hour')
   work
+}
+
+# Warn once about the days on which more than warn_fill_share of the values in
+# any column were filled. was_filled is a row-by-column logical matrix
+# parallel to solar.time; n_per_day is the row count of a full day
+mm_warn_heavily_filled_2s <- function(solar.time, was_filled, n_per_day, warn_fill_share,
+                                      day_start_hour) {
+  if(!any(was_filled)) return(invisible(NULL))
+  day <- mm_date_2s(solar.time, day_start_hour)
+  n_by_day <- rowsum(was_filled * 1, as.character(day))
+  share <- apply(n_by_day, 1, max) / n_per_day
+  flagged <- share[share > warn_fill_share]
+  if(length(flagged) == 0) return(invisible(NULL))
+
+  max_listed <- 10
+  listed <- utils::head(flagged, max_listed)
+  warning(paste0(
+    'more than ', format(signif(100 * warn_fill_share, 3)), '% of a column\'s values were filled on ',
+    length(flagged), ' day(s): ',
+    paste(sprintf('%s (%.1f%%)', names(listed), 100 * listed), collapse=', '),
+    if(length(flagged) > max_listed) paste0(', and ', length(flagged) - max_listed, ' more') else '',
+    '. Estimates for these days lean on interpolated values; some may still be dropped ',
+    'during alignment.'), call.=FALSE)
 }

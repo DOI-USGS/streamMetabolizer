@@ -125,9 +125,9 @@ test_that("output matrices have n_obs x n_days dimensions", {
 
 test_that("all required Stan data block variables are present", {
   dat <- make_ts_data()
-  # K600_lnorm_meanlog/sdlog are owned by specs() (see PR D-6/I1); pass
-  # distinctive marker values here to confirm prepdata_bayes_2s() just reads
-  # them through from specs rather than computing its own defaults
+  # K600_lnorm_meanlog/sdlog are owned by specs(); pass distinctive marker
+  # values here to confirm prepdata_bayes_2s() just reads them through from
+  # specs rather than computing its own defaults
   out <- prepdata_bayes_2s(
     suppressMessages(mm_align_data_2s(dat)), specs=list(K600_lnorm_meanlog=1.23, K600_lnorm_sdlog=4.56))
 
@@ -1036,6 +1036,25 @@ test_that("a dataset with no usable days errors clearly rather than reaching Sta
   expect_error(
     suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=dat)),
     "no days remain after day_tests")
+})
+
+test_that("specs$min_n_obs reaches the check, and a specs list without it gets 20", {
+  three_days <- make_three_days_2s()
+  hourly <- align_every_n_hours_2s(three_days, 1)
+
+  sp <- fast_2station_specs()
+  sp$min_n_obs <- 30
+  expect_error(
+    suppressMessages(metab_bayes_2s(specs=sp, data=hourly)),
+    'requires at least 30')
+
+  # without min_n_obs, 3-hourly data still stops at the default
+  sp$min_n_obs <- NULL
+  expect_false('min_n_obs' %in% names(sp))
+  coarse <- align_every_n_hours_2s(three_days, 3)
+  expect_error(
+    suppressMessages(metab_bayes_2s(specs=sp, data=coarse)),
+    'requires at least 20')
 })
 
 test_that("specs$day_tests is honored, not hard-coded", {

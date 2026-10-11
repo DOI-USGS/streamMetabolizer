@@ -255,6 +255,9 @@
 #' @param K600_lnorm_sdlog hyperparameter for \code{type='bayes_2s'}. The
 #'   standard deviation parameter of a lognormal prior distribution for
 #'   K600_daily.
+#' @param min_n_obs for \code{type='bayes_2s'}, the fewest observations each
+#'   day must have. If days have fewer, fitting stops with an error. Defaults
+#'   to 20, which admits hourly or finer data; 0 turns the check off.
 #' @param params_in Character vector of hyperparameters to pass from the specs
 #'   list into the data list for the MCMC run. Will be automatically generated
 #'   during the specs() call; need only be revised if you're using a custom
@@ -435,6 +438,9 @@ specs <- function(
   # prepdata_bayes_2s() reads them from specs$K600_lnorm_meanlog/sdlog
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1.0,
+
+  # fewest modeled rows per day for two-station (bayes_2s) models
+  min_n_obs = 20,
 
   # vector of hyperparameters to include as MCMC data
   params_in,
@@ -668,8 +674,8 @@ specs <- function(
         # two-station day boundary is not a spec: days are fixed during
         # alignment (mm_align_data_2s()), before fitting, and the start hour
         # used is recorded on the data. day_tests is here because the per-day
-        # validity tests run at fit time
-        'day_tests',
+        # validity tests run at fit time, as does the min_n_obs timestep check
+        'day_tests', 'min_n_obs',
 
         # params_in is both a vector of specs to include and a vector to include in specs
         all_specs$params_in, 'params_in',
@@ -689,6 +695,7 @@ specs <- function(
       # shared with the function that consumes it, which checks it again
       # because it can be called directly rather than via specs
       mm_check_day_tests_2s(all_specs$day_tests)
+      mm_check_min_n_obs_2s(all_specs$min_n_obs)
 
       # compute some arguments
       if('engine' %in% yes_missing) {

@@ -103,6 +103,10 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
   Neither can be modeled around, and one bad day fails \emph{every} date of
   a joint fit with a diagnostic naming neither the column nor the day.
 
+  \code{specs$min_n_obs} (default 20) is the fewest observations a day
+  must have; data coarser than about hourly stops with an error. Set it to
+  0 to fit coarser data anyway.
+
   The values tested are the ones the day is modeled from, not the rows
   falling inside it: a day's upstream DO comes from one travel time
   earlier, routinely from the preceding day's rows.

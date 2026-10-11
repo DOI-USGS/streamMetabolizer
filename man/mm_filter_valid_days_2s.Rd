@@ -4,7 +4,11 @@
 \alias{mm_filter_valid_days_2s}
 \title{Drop two-station days whose modeled data fails the day-validity tests}
 \usage{
-mm_filter_valid_days_2s(data, day_tests = mm_day_tests_2s_default)
+mm_filter_valid_days_2s(
+  data,
+  day_tests = mm_day_tests_2s_default,
+  min_n_obs = mm_min_n_obs_2s_default
+)
 }
 \arguments{
 \item{data}{an \code{aligned_2s} data.frame (see
@@ -14,6 +18,11 @@ values it is modeled from, so a day's rows are exactly the values tested.}
 \item{day_tests}{character vector of \code{\link{mm_is_valid_day}} tests to
 apply; see \code{\link{mm_day_tests_2s}} for which are applicable and why.
 \code{NULL} or \code{character(0)} skips testing entirely.}
+
+\item{min_n_obs}{the fewest observations each day must have. Every day of
+aligned data holds the same number of rows, so a shortfall is an error
+rather than a set of dropped days. Defaults to 20, which admits hourly
+or finer data; 0 turns the check off.}
 }
 \value{
 a list with \code{data} (the input with failing dates removed,

@@ -10,6 +10,7 @@ mm_format_data_2s(
   downstream,
   light,
   max_gap_hours = mm_max_gap_hours_default,
+  warn_fill_share = 0.25,
   day_start_hour = mm_day_start_2s
 )
 }
@@ -28,6 +29,10 @@ per timestep)}
 \item{max_gap_hours}{the gap-filling tolerance, in hours: runs of missing
 data spanning no more than this are interpolated, longer runs are left in
 place. Defaults to 1 hour and may not be set above 2.}
+
+\item{warn_fill_share}{warn when more than this share of a day's values in
+any column was filled; see \code{\link{mm_fill_gaps_2s}}. Defaults to
+0.25; 1 turns the warning off.}
 
 \item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
 two-station day begins; sets the day whose total light each proportion
@@ -85,6 +90,8 @@ match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
   linear interpolation, so a day marred by a short dropout can be modeled
   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
   place, and \code{\link{mm_align_data_2s}} drops the days holding them.
+  A warning lists days on which more than \code{warn_fill_share} of a
+  column's values were filled.
   Filling happens here while \code{light} is still a raw per-timestep
   value, before the within-day proportion is computed -- the accurate
   order, since the proportion is then formed from a complete series

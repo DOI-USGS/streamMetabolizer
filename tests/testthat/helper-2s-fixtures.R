@@ -197,3 +197,35 @@ make_full_days <- function(n_days=2, n_leadin=1, start_date="2050-06-01", travel
   dat$solar.time <- first + as.difftime((seq_len(n) - 1) * 15, units="mins")
   dat
 }
+
+# Three whole 15-minute days with a 3-hour travel time and 3 hours of lead-in,
+# so keeping only hourly or 3-hourly rows (align_every_n_hours_2s()) still
+# leaves every day its upstream lead-in
+make_three_days_2s <- function() {
+  make_full_days(n_days=3, n_leadin=12, travel_time=0.125)
+}
+
+# two_station_raw_example, formatted once and shared by the tests that need
+# realistic formatted data but are not about the fill-share warning, so that
+# warning is turned off rather than suppressed. messages holds what
+# formatting reported
+formatted_raw_example_2s <- local({
+  cached <- NULL
+  function() {
+    if(is.null(cached)) {
+      raw <- two_station_raw_example
+      msgs <- testthat::capture_messages(
+        out <- mm_format_data_2s(raw$upstream, raw$downstream, raw$light, warn_fill_share=1))
+      cached <<- list(data=out, messages=msgs)
+    }
+    cached
+  }
+})
+
+# Keep only the on-the-hour rows of two-station data whose hour is a multiple
+# of every_hours, as data logged on a coarser timestep would be, and align it
+align_every_n_hours_2s <- function(data, every_hours) {
+  st <- v(data$solar.time)
+  on_step <- format(st, '%M') == '00' & as.integer(format(st, '%H')) %% every_hours == 0
+  suppressMessages(mm_align_data_2s(data[on_step, ]))
+}

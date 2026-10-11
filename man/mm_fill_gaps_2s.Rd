@@ -4,7 +4,12 @@
 \alias{mm_fill_gaps_2s}
 \title{Interpolate short gaps in two-station data}
 \usage{
-mm_fill_gaps_2s(data, max_gap_hours = mm_max_gap_hours_default)
+mm_fill_gaps_2s(
+  data,
+  max_gap_hours = mm_max_gap_hours_default,
+  warn_fill_share = 0.25,
+  day_start_hour = NULL
+)
 }
 \arguments{
 \item{data}{data.frame, unitted or not, with \code{solar.time} already on
@@ -15,6 +20,16 @@ time series to be interpolated.}
 \item{max_gap_hours}{the gap-filling tolerance, in hours: runs of missing
 data spanning no more than this are interpolated, longer runs are left in
 place. Defaults to 1 hour and may not be set above 2.}
+
+\item{warn_fill_share}{warn when more than this share of a day's values in
+any column was filled. A number above 0 and at most 1; defaults to 0.25,
+and 1 turns the warning off.}
+
+\item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
+two-station day begins, used to group filled values into days for the
+warning. \code{NULL} (the default) uses the hour stored by
+\code{\link{mm_format_data_2s}} if present, otherwise 6; a value that
+differs from the stored hour is an error.}
 }
 \value{
 \code{data} with the same columns, column order, units, and
@@ -48,6 +63,18 @@ already dropped by the completeness requirement.
  This function never returns a row with \code{NA} in
   an interpolated column -- a partially-fillable inserted row is dropped
   rather than kept.
+}
+
+\section{Heavily filled days}{
+ Filling never drops a day. When more than
+  \code{warn_fill_share} of a day's values in any column were filled, a
+  single warning lists those days with the share filled. Every filled
+  value counts toward the day its timestamp falls in, whether it filled a
+  missing row or a missing value. Some flagged days may still be dropped
+  later, during alignment.
+
+  The share is measured per call: values filled by an earlier call count
+  as observed in a later one.
 }
 
 \section{Interpolating light}{

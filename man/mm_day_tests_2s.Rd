@@ -5,16 +5,21 @@
 \alias{mm_day_tests_2s}
 \alias{mm_day_tests_2s_default}
 \alias{mm_day_tests_2s_allowed}
+\alias{mm_min_n_obs_2s_default}
 \title{Day-validity tests applicable to two-station models}
 \format{
 An object of class \code{character} of length 2.
 
 An object of class \code{character} of length 3.
+
+An object of class \code{numeric} of length 1.
 }
 \usage{
 mm_day_tests_2s_default
 
 mm_day_tests_2s_allowed
+
+mm_min_n_obs_2s_default
 }
 \description{
 \code{mm_day_tests_2s_default} is the default; \code{mm_day_tests_2s_allowed}
@@ -35,5 +40,13 @@ separately.)
 the data carry a \code{discharge} column, which two-station data currently
 does not.
 }
+\section{Minimum rows per day}{
+ \code{mm_min_n_obs_2s_default} is the
+  default \code{min_n_obs}, the fewest observations a day must have: 20,
+  which admits hourly or finer data. Data with fewer observations
+  per day stop the run with an error rather than having days dropped; 0
+  turns the check off.
+}
+
 \keyword{datasets}
 \keyword{internal}

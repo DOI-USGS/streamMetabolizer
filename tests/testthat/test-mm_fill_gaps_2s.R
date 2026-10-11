@@ -114,7 +114,7 @@ test_that("filling never introduces an NA-bearing row on real data", {
   names(down)[names(down) == 'timestamp'] <- 'solar.time'
   down$solar.time <- mm_snap_to_bin_2s(down$solar.time)
 
-  filled <- suppressMessages(mm_fill_gaps_2s(down))
+  filled <- suppressMessages(mm_fill_gaps_2s(down, warn_fill_share=1))
 
   # original rows pass through untouched, so they are exactly the timestamps
   # the input already had; anything else was inserted
@@ -181,7 +181,7 @@ test_that("mm_fill_gaps_2s enforces the same grid preconditions as mm_lag_2s", {
   expect_error(mm_fill_gaps_2s(unsorted), 'sorted ascending')
 })
 
-test_that("max_gap_hours is validated against the cap", {
+test_that("max_gap_hours and warn_fill_share are validated", {
   dat <- make_gappy_data(n=20)
   expect_error(mm_fill_gaps_2s(dat, max_gap_hours=0), 'must be > 0')
   expect_error(mm_fill_gaps_2s(dat, max_gap_hours=c(1, 2)), 'single non-NA number')
@@ -189,6 +189,64 @@ test_that("max_gap_hours is validated against the cap", {
   expect_error(
     mm_fill_gaps_2s(dat, max_gap_hours=mm_max_gap_hours_cap + 0.5),
     'must be <= 2 hours')
+
+  for(bad in list(0, 1.5, NA, c(0.1, 0.2))) {
+    expect_error(mm_fill_gaps_2s(dat, warn_fill_share=bad), 'above 0 and at most 1')
+  }
+})
+
+
+# heavily filled days ------------------------------------------------------
+
+test_that("a day just over the fill share warns, naming it; just under is silent", {
+  # 08:00 onward, so every row is on the 2050-06-01 06:00 day. Two inserted
+  # rows fill every column, and two more values are filled inside existing
+  # rows of DO.obs.up: 4 of a full day's 96 values in that column, 4.2%
+  dat <- make_gappy_data(n=40, start="2050-06-01 08:00:00")
+  dat$DO.obs.up[20:21] <- NA
+  gappy <- dat[-(10:11), ]
+
+  expect_warning(
+    suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.04)),
+    '2050-06-01')
+  expect_warning(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.042)), NA)
+})
+
+test_that("filled values count toward the day of their own timestamp", {
+  # a 4-bin gap from 05:30 to 06:15: split 2 and 2 across a 06:00 day start,
+  # all 4 on one day with a midnight start
+  gappy <- make_gappy_data(n=8, start="2050-06-01 05:00:00")[-(3:6), ]
+  expect_warning(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.03)), NA)
+  expect_warning(
+    suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.03, day_start_hour=0)),
+    '2050-06-01')
+})
+
+test_that("with no day_start_hour given, the warning groups days by the hour stored on the data", {
+  # the same gap as above: it splits across a 06:00 day start, but not across
+  # the stored midnight start, so only grouping by the stored hour warns
+  gappy <- make_gappy_data(n=8, start="2050-06-01 05:00:00")[-(3:6), ]
+  attr(gappy, 'day_start_hour') <- 0
+  expect_warning(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.03)), '2050-06-01')
+})
+
+test_that("inserted rows dropped again do not count toward the filled share", {
+  # the dropped-row fixture from the invariant test above, plus one genuine
+  # fill: 1 of 96 values (1.0%) is under the threshold, but counting the 2
+  # dropped rows too would make it 3 of 96 (3.1%)
+  dat <- make_gappy_data(n=40, start="2050-06-01 08:00:00")
+  dat$DO.sat.up[15:26] <- NA
+  dat$DO.obs.down[35] <- NA
+  gappy <- dat[-(20:21), ]
+  expect_warning(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.015)), NA)
+})
+
+test_that("a day_start_hour that differs from the recorded one is an error", {
+  dat <- make_gappy_data(n=20)
+  attr(dat, 'day_start_hour') <- 6
+  expect_error(
+    mm_fill_gaps_2s(dat, day_start_hour=0),
+    'day_start_hour=6.*day_start_hour=0')
 })
 
 
@@ -308,7 +366,13 @@ test_that("mm_format_data_2s fills gaps before converting light to a proportion"
 test_that("filling behaves on the real two_station_raw_example", {
   data(two_station_raw_example)
   raw <- two_station_raw_example
-  dat <- suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light))
+  expect_warning(
+    dat <- suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light)),
+    '2011-01-12')
+  # the threshold reaches the fill step through mm_format_data_2s()
+  expect_warning(
+    suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light, warn_fill_share=1)),
+    NA)
 
   # every timestamp is still on the bin grid, still sorted, still unique.
   # "on the grid" allows the same 1-second slack mm_lag_2s() allows, since
@@ -320,7 +384,7 @@ test_that("filling behaves on the real two_station_raw_example", {
 
   # filling is what lets more days through the completeness check
   unfilled <- suppressMessages(mm_format_data_2s(
-    raw$upstream, raw$downstream, raw$light, max_gap_hours=15/60))
+    raw$upstream, raw$downstream, raw$light, max_gap_hours=15/60, warn_fill_share=1))
   expect_gt(nrow(dat), nrow(unfilled))
 
   n_days <- function(d) suppressMessages(mm_align_2s(unitted::v(d), day_start_hour=mm_day_start_2s))$n_days

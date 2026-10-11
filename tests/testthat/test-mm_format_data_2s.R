@@ -80,16 +80,14 @@ test_that("upstream/downstream deployment windows are trimmed to their overlap, 
 })
 
 test_that("no trimming and no dropped rows when inputs already share one deployment window (two_station_raw_example)", {
-  data("two_station_raw_example", envir=environment())
-  up <- two_station_raw_example$upstream
   down <- two_station_raw_example$downstream
-  lt <- two_station_raw_example$light
+  formatted <- formatted_raw_example_2s()
+  out <- formatted$data
 
   # gap filling reports what it bridged, so this call is no longer silent;
   # what this test is about is that nothing gets *trimmed* -- the three
   # inputs already share one deployment window
-  msgs <- capture_messages(out <- mm_format_data_2s(up, down, lt))
-  expect_false(any(grepl('trimming to the shared', msgs)))
+  expect_false(any(grepl('trimming to the shared', formatted$messages)))
 
   # no downstream row is dropped. Rows are now *added*, though: filling
   # bridges this record's short gaps (see test-mm_fill_gaps_2s.R), so the
@@ -215,9 +213,7 @@ test_that("a duplicate timestep bin in downstream is a clear error", {
 })
 
 test_that("mm_format_data_2s()'s output passes validation and runs end-to-end through mm_align_data_2s()/prepdata_bayes_2s() on the real, gappy two_station_raw_example", {
-  data("two_station_raw_example", envir=environment())
-  out <- mm_format_data_2s(
-    two_station_raw_example$upstream, two_station_raw_example$downstream, two_station_raw_example$light)
+  out <- formatted_raw_example_2s()$data
 
   dat_list <- mm_validate_data(out, metab_class="metab_bayes_2s")
   expect_no_error(mm_validate_data_2station(dat_list$data))
