@@ -37,10 +37,12 @@ utils::globalVariables(c(".", "metab_50pct", "DO.mod.down"))
 #' @section Preparing data: \code{data} must be aligned with
 #'   \code{\link{mm_align_data_2s}}, which labels 24-hour days (06:00-06:00
 #'   by default) and drops incomplete ones; see its documentation. The day
-#'   start hour, lead-in, and travel-time ceiling are all applied during
-#'   alignment (\code{\link{mm_align_data_2s}}); the day start hour and
-#'   ceiling used are recorded in \code{get_specs(mm)$aligned_day_start_hour}
-#'   and \code{get_specs(mm)$aligned_max_travel_time_days}.
+#'   start hour, lead-in, and light-window check are all applied during
+#'   alignment (\code{\link{mm_align_data_2s}}); the day start hour used and
+#'   whether the light-window check was applied are recorded in
+#'   \code{get_specs(mm)$aligned_day_start_hour} and
+#'   \code{get_specs(mm)$aligned_light_check}. A message notes when the
+#'   check was not applied.
 #'
 #'   The fit does not fill gaps. Fill before aligning with
 #'   \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}
@@ -152,10 +154,14 @@ metab_bayes_2s <- function(
       message('days dropped during alignment are unknown and cannot be reported')
       removed_align <- mm_no_removed_days_2s
     }
+    light_check <- attr(dat_list$data, 'light_check')
+    if(!isTRUE(light_check)) {
+      message('light check not applied: days whose light windows reach an earlier day were not screened')
+    }
 
     # recorded as an explicit NULL when unknown, and always taken from the
     # data, so specs reused from an earlier fit can't carry a stale value
-    specs['aligned_max_travel_time_days'] <- list(attr(dat_list$data, 'max_travel_time_days'))
+    specs['aligned_light_check'] <- list(light_check)
     specs['aligned_day_start_hour'] <- list(attr(dat_list$data, 'day_start_hour'))
 
     # Reject days whose modeled values fail specs$day_tests. Validation

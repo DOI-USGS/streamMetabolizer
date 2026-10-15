@@ -99,11 +99,9 @@ mm_validate_data <- function(
     # doesn't declare it. A zero or negative travel time makes the upstream
     # lag meaningless, so this is a structural error.
     #
-    # No upper bound is enforced here. An upper bound on travel time is a
-    # question about individual days, not about the dataset's structure, and
-    # the right response is to drop those days rather than reject the whole
-    # dataset -- something validation's fail-fast contract can't express. That
-    # ceiling lives in mm_align_2s() (see mm_lag_2s.R).
+    # No upper bound is enforced here. Long travel times are handled per day:
+    # days whose light windows reach light in an earlier day are dropped
+    # during alignment rather than rejecting the whole dataset.
     if('travel.time' %in% names(dat)) {
       travel.time <- v(dat$travel.time)
       if(any(travel.time <= 0)) {
@@ -131,18 +129,18 @@ mm_validate_data <- function(
 #'
 #' Rows that individually lack lead-in are not an error; they are dropped as
 #' lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
-#' owns the per-day travel-time ceiling. Column presence, timestamp validity,
-#' and travel.time positivity are expected to have already been checked by
-#' \code{\link{mm_validate_data}}.
+#' drops the days that fail the light-window check. Column presence,
+#' timestamp validity, and travel.time positivity are expected to have
+#' already been checked by \code{\link{mm_validate_data}}.
 #'
 #' Aligned data (class \code{aligned_2s}) is checked per row and per day
 #' instead, since each row already holds its upstream values: a UTC
 #' \code{solar.time}, a recorded day start hour, a \code{date} matching each
 #' \code{solar.time}'s 24-hour day from that hour, strictly ascending
 #' \code{solar.time}, the same number of rows every day, a single regular
-#' timestep across the whole data.frame, positive \code{travel.time}, and
-#' \code{travel.time} within the stored travel-time ceiling when one is
-#' recorded. \code{NA}s in the data columns are left to the day-validity tests.
+#' timestep across the whole data.frame, positive \code{travel.time}, and a
+#' \code{light_check} attribute that is \code{TRUE}, \code{FALSE}, or absent.
+#' \code{NA}s in the data columns are left to the day-validity tests.
 #'
 #' @param data data.frame as returned by \code{\link{mm_validate_data}} for
 #'   \code{\link{metab_bayes_2s}}: must contain \code{solar.time} and
@@ -209,11 +207,11 @@ mm_validate_data_2station <- function(data) {
     if(any(travel_time <= 0, na.rm=TRUE)) {
       stop('travel.time must be > 0', call.=FALSE)
     }
-    ceiling_days <- attr(data, 'max_travel_time_days')
-    if(!is.null(ceiling_days) && any(travel_time > ceiling_days, na.rm=TRUE)) {
+    light_check <- attr(data, 'light_check')
+    if(!is.null(light_check) && !(is.logical(light_check) && length(light_check) == 1 && !is.na(light_check))) {
       stop(paste0(
-        'travel.time exceeds the ', mm_format_days_hours(ceiling_days),
-        ' ceiling the data were aligned with'), call.=FALSE)
+        "aligned data has a malformed 'light_check' attribute; it must be TRUE, FALSE, ",
+        "or absent. Re-align the data with mm_align_data_2s()"), call.=FALSE)
     }
 
     return(invisible(NULL))

@@ -31,35 +31,11 @@ test_that("metab_bayes_2s() rejects NA travel.time in aligned data with the affe
   expect_false(grepl("mm_[a-z_0-9]+\\(|missing value", conditionMessage(err)))
 })
 
-test_that("mm_format_days_hours() shows days with hours in parentheses, singular at exactly one", {
-  fmt <- streamMetabolizer:::mm_format_days_hours
-  expect_equal(fmt(0.5), "0.5 days (12 hours)")
-  expect_equal(fmt(10/24), "0.42 days (10 hours)")
-  expect_equal(fmt(15/24), "0.63 days (15 hours)")
-  expect_equal(fmt(1/24), "0.04 days (1 hour)")
-  expect_equal(fmt(1), "1 day (24 hours)")
-  expect_equal(fmt(0.125), "0.13 days (3 hours)")
-})
-
-test_that("mm_align_2s drops a day whose travel.time exceeds the ceiling, leaving other days intact", {
-  dat <- make_2day_ceiling_data()
-
-  alignment <- expect_message(
-    mm_align_2s(dat, day_start_hour=mm_day_start_2s),
-    "dropping 1 day\\(s\\) whose travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling: 2050-06-02 \\(0\\.63 days \\(15 hours\\)\\)")
-
-  # the offending day is gone entirely, not merely marked invalid; the good
-  # day (2050-06-01) is unaffected
-  expect_equal(as.character(unique(alignment$date)), "2050-06-01")
-  expect_equal(alignment$n_days, 1)
-  expect_equal(alignment$n_obs, 288)
-})
-
-test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fits the remaining day normally", {
+test_that("metab_bayes_2s() drops a day failing the light-window check and fits the remaining day normally", {
   skip_on_cran()
   skip_if_not_installed('rstan')
 
-  dat <- make_2day_ceiling_data()
+  dat <- make_2day_lit_boundary_data()
   sp <- specs(
     mm_name('bayes_2s'),
     n_chains=1, n_cores=1, burnin_steps=100, saved_steps=100, verbose=FALSE)
@@ -67,12 +43,12 @@ test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fi
   # the drop is announced when aligning, and reported again by the fit
   aligned <- expect_message(
     mm_align_data_2s(dat),
-    "dropping 1 day\\(s\\) whose travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling: 2050-06-02")
+    "dropping 1 day\\(s\\) whose travel-time light windows reach light above zero in an earlier day: 2050-06-02")
   expect_equal(as.character(attr(aligned, 'removed')$date), "2050-06-02")
   mm <- suppressMessages(metab_bayes_2s(specs=sp, data=aligned))
 
   # day 2 was excluded before fitting, so it is reported as an invalid day
-  # naming the ceiling rather than as a failed fit; day 1 is unaffected
+  # naming the light window rather than as a failed fit; day 1 is unaffected
   expect_length(mm@fit$errors, 0)
   pm <- predict_metab(mm)
   expect_equal(nrow(pm), 2)
@@ -80,7 +56,7 @@ test_that("metab_bayes_2s() drops a day exceeding the travel-time ceiling and fi
   expect_true(all(is.finite(unlist(pm[1, c('GPP','ER','K600')]))))
   expect_true(all(is.na(unlist(pm[2, c('GPP','ER','K600')]))))
   expect_equal(mm@fit$daily$valid_day, c(TRUE, FALSE))
-  expect_match(mm@fit$daily$errors[2], "travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling")
+  expect_match(mm@fit$daily$errors[2], "light window reaches light above zero in an earlier day")
 })
 
 
@@ -224,7 +200,7 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
 
   alignment <- mm_align_2s(
     data.frame(solar.time=solar.time, travel.time=travel.time),
-    max_travel_time_days=10/24, day_start_hour=mm_day_start_2s)
+    day_start_hour=mm_day_start_2s)
   expect_equal(sort(as.character(unique(alignment$date))), c("2050-06-01", "2050-06-02"))
 
   light_lag <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
@@ -239,7 +215,7 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
     DO.obs.down = rep(8.8, n), DO.sat.down = rep(9.9, n),
     light = light_lag, depth = rep(0.5, n), temp.water = rep(20, n),
     travel.time = travel.time)
-  aligned <- suppressMessages(mm_align_data_2s(dat, max_travel_time_days=10/24))
+  aligned <- suppressMessages(mm_align_data_2s(dat))
   expect_false(anyNA(aligned$light))
   expect_silent(prepdata_bayes_2s(aligned, specs=list(K600_lnorm_meanlog=2.484907, K600_lnorm_sdlog=1.0)))
 })
@@ -358,7 +334,7 @@ test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale,
   travel.time <- rep(2 * timestep_min / 1440, length(solar.time))
   data <- data.frame(solar.time=solar.time, travel.time=travel.time)
 
-  alignment <- mm_align_2s(data, max_travel_time_days=10/24, day_start_hour=mm_day_start_2s)
+  alignment <- mm_align_2s(data, day_start_hour=mm_day_start_2s)
 
   # day 1 (gap-affected: the dropped row plus the one row whose target bin
   # was the dropped row) is 94/96 complete and gets dropped wholesale, even
@@ -897,17 +873,26 @@ test_that("keep_mcmcs/keep_mcmc_data accept a vector of dates in per-day mode on
 #### dropped days are reported, not omitted ####
 
 test_that("mm_align_2s() reports the days it drops, and why", {
-  # the travel-time ceiling
-  alignment <- suppressMessages(mm_align_2s(make_2day_ceiling_data(), day_start_hour=mm_day_start_2s))
+  # the light window: day 2's rows from 06:00 to 09:55 reach back past 19:00
+  # into day 1's lit rows
+  lit <- make_2day_lit_boundary_data()
+  alignment <- expect_message(
+    mm_align_2s(lit, day_start_hour=mm_day_start_2s, light_check_failed=attr(lit, 'light_check_failed')),
+    "dropping 1 day\\(s\\) whose travel-time light windows reach light above zero in an earlier day: 2050-06-02 \\(48 row\\(s\\)\\)")
+  # the offending day is gone entirely, not merely marked invalid; the good
+  # day (2050-06-01) is unaffected
+  expect_equal(as.character(unique(alignment$date)), "2050-06-01")
+  expect_equal(alignment$n_days, 1)
+  expect_equal(alignment$n_obs, 288)
   expect_equal(nrow(alignment$removed), 1)
   expect_named(alignment$removed, c('date','errors'))
   expect_equal(as.character(alignment$removed$date), "2050-06-02")
-  expect_match(alignment$removed$errors, "travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling \\(0\\.63 days \\(15 hours\\)\\)")
+  expect_match(alignment$removed$errors, "light window reaches light above zero in an earlier day \\(48 row\\(s\\)\\)")
 
   # a day that doesn't fill its 06:00-06:00 window. Shortening the second day
   # of a two-day fixture, since dropping the only day is an error, not a result
-  dat <- make_2day_ceiling_data()
-  dat$travel.time <- 0.01 # put day 2 back under the ceiling
+  dat <- make_2day_lit_boundary_data()
+  dat$travel.time <- 0.01 # day 2's windows no longer reach day 1's lit rows
   dat <- dat[1:(nrow(dat) - 20), ]
   alignment3 <- suppressMessages(mm_align_2s(dat, day_start_hour=mm_day_start_2s))
   expect_equal(nrow(alignment3$removed), 1)
@@ -1089,26 +1074,26 @@ test_that("a fit on data with unknown alignment drops says so, and reports only 
   expect_equal(daily$errors[2], 'depth <= 0')
 
   # with the record present, its dropped days come back too
-  ceiling_aligned <- suppressMessages(mm_align_data_2s(make_2day_ceiling_data()))
-  mm2 <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=ceiling_aligned)))
+  lit_aligned <- suppressMessages(mm_align_data_2s(make_2day_lit_boundary_data()))
+  mm2 <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=lit_aligned)))
   expect_equal(as.character(get_fit(mm2)$daily$date), c("2050-06-01", "2050-06-02"))
   expect_equal(get_fit(mm2)$daily$valid_day, c(TRUE, FALSE))
 })
 
-test_that("a fit reports days dropped by the travel-time ceiling and by day_tests together, in date order", {
+test_that("a fit reports days dropped by the light-window check and by day_tests together, in date order", {
   skip_if_not_installed('rstan')
   rec <- new.env()
   testthat::local_mocked_bindings(runstan_bayes=mock_runstan_recorder(rec))
 
   # three 06:00-06:00 days: day 1 fails day_tests (depth 0), day 2 is clean,
-  # day 3's travel.time exceeds the default ceiling
+  # day 3's opening windows reach day 2's last rows, lit here before dawn
   dat <- make_2station_data(n=3 + 3*288)
   dates <- as.Date(c("2050-06-01", "2050-06-02", "2050-06-03"))
   day_of <- mm_date_2s(dat$solar.time, mm_day_start_2s)
   dat$depth[which(day_of == dates[1])[10]] <- 0
-  dat$travel.time[day_of == dates[3]] <- 15/24
+  dat$light[utils::tail(which(day_of == dates[2]), 2)] <- 300
 
-  aligned <- suppressMessages(mm_align_data_2s(dat))
+  aligned <- suppressMessages(mm_align_data_2s(with_light_check_2s(dat)))
   expect_equal(attr(aligned, 'removed')$date, dates[3])
 
   mm <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=aligned)))
@@ -1116,32 +1101,43 @@ test_that("a fit reports days dropped by the travel-time ceiling and by day_test
   expect_equal(daily$date, dates)
   expect_equal(daily$valid_day, c(FALSE, TRUE, FALSE))
   expect_equal(daily$errors[1], 'depth <= 0')
-  expect_match(daily$errors[3], "travel.time exceeds the 0\\.42 days \\(10 hours\\) ceiling")
+  expect_match(daily$errors[3], "light window reaches light above zero in an earlier day")
 
   # only the clean day reached Stan
   expect_length(rec$calls, 1)
   expect_equal(rec$calls[[1]]$n_days, 1)
 })
 
-test_that("the fit records the travel-time ceiling the data were aligned with", {
+test_that("the fit records whether the light-window check was applied", {
   skip_if_not_installed('rstan')
   rec <- new.env()
   testthat::local_mocked_bindings(runstan_bayes=mock_runstan_recorder(rec))
   dat <- make_2station_data()
 
-  mm <- suppressWarnings(suppressMessages(metab_bayes_2s(
-    specs=fast_2station_specs(), data=suppressMessages(mm_align_data_2s(dat, max_travel_time_days=0.3)))))
-  expect_equal(get_specs(mm)$aligned_max_travel_time_days, 0.3)
+  checked <- suppressMessages(mm_align_data_2s(with_light_check_2s(dat)))
+  msgs <- testthat::capture_messages(
+    mm <- suppressWarnings(metab_bayes_2s(specs=fast_2station_specs(), data=checked)))
+  expect_identical(get_specs(mm)$aligned_light_check, TRUE)
+  expect_false(any(grepl('light check not applied', msgs)))
 
-  # unknown for a hand-marked frame: present, and NULL
-  hand <- mm_as_aligned_2s(as.data.frame(suppressMessages(mm_align_data_2s(dat))))
-  mm2 <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=hand)))
-  expect_true('aligned_max_travel_time_days' %in% names(get_specs(mm2)))
-  expect_null(get_specs(mm2)$aligned_max_travel_time_days)
+  # aligned without the check: recorded as FALSE, with a message
+  unchecked <- suppressMessages(mm_align_data_2s(dat))
+  expect_message(
+    mm_unchecked <- suppressWarnings(metab_bayes_2s(specs=fast_2station_specs(), data=unchecked)),
+    'light check not applied')
+  expect_identical(get_specs(mm_unchecked)$aligned_light_check, FALSE)
+
+  # unknown for a hand-marked frame: present, NULL, and messaged
+  hand <- mm_as_aligned_2s(as.data.frame(checked))
+  expect_message(
+    mm2 <- suppressWarnings(metab_bayes_2s(specs=fast_2station_specs(), data=hand)),
+    'light check not applied')
+  expect_true('aligned_light_check' %in% names(get_specs(mm2)))
+  expect_null(get_specs(mm2)$aligned_light_check)
 
   # taken from the data every time, not carried over in reused specs
   mm3 <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=get_specs(mm), data=hand)))
-  expect_null(get_specs(mm3)$aligned_max_travel_time_days)
+  expect_null(get_specs(mm3)$aligned_light_check)
 
   # the day start hour is recorded the same way
   mm4 <- suppressWarnings(suppressMessages(metab_bayes_2s(
@@ -1151,6 +1147,30 @@ test_that("the fit records the travel-time ceiling the data were aligned with", 
   # no gap-filling setting is recorded
   expect_false('aligned_max_gap_hours' %in% names(get_specs(mm)))
   expect_false('aligned_max_gap_hours' %in% names(get_specs(mm2)))
+})
+
+test_that("formatted data go through alignment and fitting with the light-window check applied", {
+  skip_if_not_installed('rstan')
+  rec <- new.env()
+  testthat::local_mocked_bindings(runstan_bayes=mock_runstan_recorder(rec))
+
+  # 2008-09-24 to 2008-09-26 fail the light-window check; 2008-09-27 to
+  # 2008-09-29 pass. Row subsetting keeps the light-window record
+  formatted <- formatted_raw_example_2s()$data
+  st <- unitted::v(formatted$solar.time)
+  dat <- formatted[st >= as.POSIXct('2008-09-24', tz='UTC') & st < as.POSIXct('2008-09-30 06:00', tz='UTC'), ]
+  aligned <- suppressMessages(mm_align_data_2s(dat))
+  expect_identical(attr(aligned, 'light_check'), TRUE)
+
+  mm <- suppressWarnings(suppressMessages(metab_bayes_2s(specs=fast_2station_specs(), data=aligned)))
+  expect_identical(get_specs(mm)$aligned_light_check, TRUE)
+  daily <- get_fit(mm)$daily
+  light_dropped <- as.Date(c('2008-09-24', '2008-09-25', '2008-09-26'))
+  expect_true(all(light_dropped %in% daily$date))
+  expect_false(any(daily$valid_day[daily$date %in% light_dropped]))
+  expect_true(all(grepl(
+    'light window reaches light above zero in an earlier day', daily$errors[daily$date %in% light_dropped])))
+  expect_equal(rec$calls[[1]]$n_days, 3)
 })
 
 test_that("aligned data missing its date column fails validation clearly", {
@@ -1167,7 +1187,7 @@ test_that("metab_bayes_2s() rejects aligned data whose solar.time is not UTC", {
   expect_error(metab_bayes_2s(data=aligned), "timezone 'UTC'")
 })
 
-test_that("specs() no longer takes the travel-time ceiling or the gap-filling tolerance", {
+test_that("specs() takes neither a travel-time ceiling nor a gap-filling tolerance", {
   sp <- specs(mm_name('bayes_2s'))
   expect_false(any(c('max_travel_time_days', 'max_gap_hours') %in% names(sp)))
   expect_error(specs(mm_name('bayes_2s'), max_travel_time_days=0.3), "unused argument")

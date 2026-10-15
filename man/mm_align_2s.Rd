@@ -4,22 +4,19 @@
 \alias{mm_align_2s}
 \title{Align two-station data onto its 24-hour day window}
 \usage{
-mm_align_2s(
-  data,
-  max_travel_time_days = mm_max_travel_time_default,
-  day_start_hour
-)
+mm_align_2s(data, day_start_hour, light_check_failed = NULL)
 }
 \arguments{
 \item{data}{data.frame (units already stripped) containing at least
 \code{solar.time} and \code{travel.time}, sorted ascending by
 \code{solar.time}.}
 
-\item{max_travel_time_days}{the travel-time ceiling, in days. Days whose
-longest travel time exceeds this are dropped.}
-
 \item{day_start_hour}{hour of the day, in [0, 24), at which each
 two-station day begins.}
+
+\item{light_check_failed}{the days that failed the light-window check, as
+returned by \code{\link{mm_light_check_2s}}, or \code{NULL} if the check
+was not run.}
 }
 \value{
 a list with \code{keep} (integer indices of the modeled rows, into
@@ -27,12 +24,13 @@ a list with \code{keep} (integer indices of the modeled rows, into
   \code{data}, of the rows supplying each modeled row's upstream values),
   \code{date} (Date vector of two-station day labels, parallel to
   \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days},
-  \code{timestep_days}, and \code{removed} (a data.frame of \code{date}
-  and \code{errors} naming the days dropped here and why)
+  \code{timestep_days}, \code{removed} (a data.frame of \code{date}
+  and \code{errors} naming the days dropped here and why), and
+  \code{light_check} (TRUE if \code{light_check_failed} was supplied)
 }
 \description{
 Applies, in order: the per-row lead-in test, two-station day labeling, the
-travel-time ceiling, and the whole-day completeness requirement. The
+light-window check, and the whole-day completeness requirement. The
 result describes which input rows are modeled, which input rows supply
 their upstream values, and how those modeled rows partition into days.
 }
@@ -45,8 +43,9 @@ gap partway through.
 
 Whole days are dropped, with a message, in two cases:
 \itemize{
-  \item the day's longest travel time exceeds
-    \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
+  \item the day is listed in \code{light_check_failed}: one of its rows'
+    light windows reaches a row in an earlier day with light above zero or
+    unknown (see \code{\link{mm_light_check_2s}});
   \item the day does not fill its 24-hour window, i.e. it holds fewer than
     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
     the edges of any dataset whose bounds don't fall on the day start

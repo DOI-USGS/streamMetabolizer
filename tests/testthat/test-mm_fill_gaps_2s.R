@@ -390,3 +390,17 @@ test_that("filling behaves on the real two_station_raw_example", {
   n_days <- function(d) suppressMessages(mm_align_2s(unitted::v(d), day_start_hour=mm_day_start_2s))$n_days
   expect_gt(n_days(dat), n_days(unfilled))
 })
+
+test_that("filling formatted data again drops the light-window record, so alignment skips the check", {
+  raw <- as_raw_2s(make_2day_lit_boundary_data())
+  out <- suppressMessages(mm_format_data_2s(raw$upstream, raw$downstream, raw$light))
+  expect_false(is.null(attr(out, 'light_check_failed')))
+
+  refilled <- suppressMessages(mm_fill_gaps_2s(out))
+  expect_null(attr(refilled, 'light_check_failed'))
+  expect_identical(attr(suppressMessages(mm_align_data_2s(refilled)), 'light_check'), FALSE)
+
+  # also when the tolerance is finer than the timestep and nothing can be filled
+  unfillable <- suppressMessages(mm_fill_gaps_2s(out, max_gap_hours=1/60))
+  expect_null(attr(unfillable, 'light_check_failed'))
+})

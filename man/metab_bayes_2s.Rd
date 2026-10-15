@@ -84,10 +84,12 @@ choose a Bayesian model and \code{\link{specs}} for relevant options for the
  \code{data} must be aligned with
   \code{\link{mm_align_data_2s}}, which labels 24-hour days (06:00-06:00
   by default) and drops incomplete ones; see its documentation. The day
-  start hour, lead-in, and travel-time ceiling are all applied during
-  alignment (\code{\link{mm_align_data_2s}}); the day start hour and
-  ceiling used are recorded in \code{get_specs(mm)$aligned_day_start_hour}
-  and \code{get_specs(mm)$aligned_max_travel_time_days}.
+  start hour, lead-in, and light-window check are all applied during
+  alignment (\code{\link{mm_align_data_2s}}); the day start hour used and
+  whether the light-window check was applied are recorded in
+  \code{get_specs(mm)$aligned_day_start_hour} and
+  \code{get_specs(mm)$aligned_light_check}. A message notes when the
+  check was not applied.
 
   The fit does not fill gaps. Fill before aligning with
   \code{\link{mm_fill_gaps_2s}} (data from \code{\link{mm_format_data_2s}}

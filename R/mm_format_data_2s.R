@@ -39,6 +39,10 @@ NULL
 #' by that day's total light sum, and its units are set to \code{NA} to
 #' match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
 #'
+#' Before that conversion, raw light is checked for days whose travel-time
+#' light windows reach a row in an earlier day with light above zero or
+#' unknown; \code{\link{mm_align_data_2s}} drops those days.
+#'
 #' @section Gap filling: brief interruptions in the record -- a sonde that
 #'   logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
 #'   linear interpolation, so a day marred by a short dropout can be modeled
@@ -74,8 +78,9 @@ NULL
 #' @return a unitted data.frame with columns \code{solar.time},
 #'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
 #'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-#'   \code{travel.time}, sorted ascending by \code{solar.time}, and a
-#'   \code{day_start_hour} attribute, ready for
+#'   \code{travel.time}, sorted ascending by \code{solar.time}, and
+#'   \code{day_start_hour} and \code{light_check_failed} (the days failing
+#'   the light-window check) attributes, ready for
 #'   \code{\link{mm_align_data_2s}}
 #' @importFrom unitted v u get_units
 #' @export
@@ -193,6 +198,9 @@ mm_format_data_2s <- function(upstream, downstream, light,
     out, max_gap_hours=max_gap_hours, warn_fill_share=warn_fill_share,
     day_start_hour=day_start_hour)
 
+  # the light-window check needs raw light, so it runs before light becomes
+  # the within-day proportion; alignment drops the failing days
+  light_check_failed <- mm_light_check_2s(out$solar.time, out$light, out$travel.time, day_start_hour)
   out$light <- mm_lag_light_2s(out$solar.time, out$light, out$travel.time, day_start_hour)
 
   template <- mm_data(solar.time, DO.obs.up, DO.sat.up, DO.obs.down, DO.sat.down,
@@ -206,6 +214,7 @@ mm_format_data_2s <- function(upstream, downstream, light,
 
   out <- as.data.frame(out[names(template)])
   attr(out, 'day_start_hour') <- day_start_hour
+  attr(out, 'light_check_failed') <- light_check_failed
   out
 }
 

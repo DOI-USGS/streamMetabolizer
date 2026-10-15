@@ -5,10 +5,10 @@ NULL
 #'
 #' Resolves each downstream observation's upstream partner one travel time
 #' earlier and returns one row per modeled observation, labeled with the
-#' 24-hour day (starting at \code{day_start_hour}) it belongs to. Rows without upstream lead-in, days whose
-#' travel time exceeds \code{max_travel_time_days}, and days that do not fill
-#' their 24-hour window are dropped with a message and recorded in the
-#' result's \code{removed} attribute.
+#' 24-hour day (starting at \code{day_start_hour}) it belongs to. Rows without
+#' upstream lead-in, days that fail the light-window check, and days that do
+#' not fill their 24-hour window are dropped with a message and recorded in
+#' the result's \code{removed} attribute.
 #'
 #' Gaps are not filled here. When data have gaps, call
 #' \code{\link{mm_fill_gaps_2s}} first.
@@ -25,7 +25,7 @@ NULL
 #'   reported as invalid days in the results of
 #'   \code{\link{metab_bayes_2s}}.
 #'
-#' @section Lead-in and travel-time ceiling: \code{data$travel.time} (the
+#' @section Lead-in and light window: \code{data$travel.time} (the
 #'   reach travel time between stations, in days) must be strictly positive,
 #'   and at least one row must have enough preceding observations of upstream
 #'   DO to cover its own travel time. Rows that lack that lead-in -- whose
@@ -34,23 +34,19 @@ NULL
 #'   supplying upstream DO for later rows without appearing in the result
 #'   themselves.
 #'
-#'   Travel time is also subject to a ceiling; see the
-#'   \code{max_travel_time_days} argument.
+#'   A day is dropped when any of its rows' travel-time light windows reaches
+#'   a row in an earlier day with light above zero or unknown, since that
+#'   light has no place in the day's total. Choose a \code{day_start_hour}
+#'   that falls at night. The check is made on raw light by
+#'   \code{\link{mm_format_data_2s}}; data that did not come from it, or whose
+#'   light was filled again afterwards, are aligned without the check, and
+#'   the result's \code{light_check} attribute is \code{FALSE}.
 #'
 #' @param data data.frame, units optional, with the columns
 #'   \code{\link{metab_bayes_2s}} expects (see \code{\link{mm_format_data_2s}}),
 #'   sorted ascending by \code{solar.time}, with \code{solar.time} on a single
 #'   regular timestep grid, as in \code{\link{mm_format_data_2s}} output.
 #'   \code{travel.time} may not be \code{NA}.
-#' @param max_travel_time_days the travel-time ceiling, in days. Defaults to
-#'   0.42 days (10 hours); values above 0.5 days (12 hours) are rejected.
-#'   Beyond the ceiling, a day's upstream parcel almost certainly originates
-#'   before the day's own start, where the light it experienced no
-#'   longer has a well-defined day total to be a proportion of. Days whose
-#'   longest travel time exceeds the ceiling are dropped with a message rather
-#'   than treated as an error, since the remaining days are unaffected. A
-#'   travel time far above the ceiling usually means the column was supplied
-#'   in the wrong units -- days are expected, not minutes or hours.
 #' @param day_start_hour hour of the day, in [0, 24), at which each 24-hour
 #'   two-station day begins. Defaults to 6 (06:00-06:00). Must match the
 #'   value given to \code{\link{mm_format_data_2s}}, whose light proportions
@@ -59,24 +55,28 @@ NULL
 #'   \code{date} column followed by the \code{\link{metab_bayes_2s}} data
 #'   columns in their standard order, and attributes \code{removed} (a
 #'   data.frame of \code{date} and \code{errors} for each dropped day),
-#'   \code{max_travel_time_days}, and \code{day_start_hour}.
+#'   \code{light_check} (\code{TRUE} if the light-window check was applied),
+#'   and \code{day_start_hour}.
 #' @examples
 #' # four 06:00-06:00 days (the default) of the example data. The first day's
 #' # opening rows serve only as lead-in, so that day does not fill its window
-#' # and is dropped
+#' # and is dropped, leaving three. This data's light is already a proportion,
+#' # not raw light, so the light-window check is not applied
 #' dat <- two_station_example[
 #'   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
 #' aligned <- mm_align_data_2s(dat)
 #' table(aligned$date)
 #' attr(aligned, 'removed')
+#' attr(aligned, 'light_check')
 #' @importFrom unitted v
 #' @export
-mm_align_data_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
-                             day_start_hour=mm_day_start_2s) {
+mm_align_data_2s <- function(data, day_start_hour=mm_day_start_2s) {
 
   mm_check_day_start_hour_2s(day_start_hour)
-  # checked before validation, which drops the attribute
+  # both attributes are read before validation, which drops them
+  light_check_failed <- attr(data, 'light_check_failed')
   formatted_hour <- attr(data, 'day_start_hour')
+  mm_check_light_check_failed_2s(light_check_failed, formatted_hour)
   if(!is.null(formatted_hour)) mm_check_day_start_hour_2s(formatted_hour)
   if(!is.null(formatted_hour) && formatted_hour != day_start_hour) {
     stop(paste0(
@@ -92,11 +92,11 @@ mm_align_data_2s <- function(data, max_travel_time_days=mm_max_travel_time_defau
   mm_validate_data_2station(data)
 
   alignment <- mm_align_2s(
-    v(data), max_travel_time_days=max_travel_time_days, day_start_hour=day_start_hour)
+    v(data), day_start_hour=day_start_hour, light_check_failed=light_check_failed)
   frame <- data.frame(date=alignment$date, mm_modeled_rows_2s(data, alignment))
 
   new_aligned_2s(
-    frame, removed=alignment$removed, max_travel_time_days=max_travel_time_days,
+    frame, removed=alignment$removed, light_check=alignment$light_check,
     day_start_hour=day_start_hour)
 }
 
@@ -105,7 +105,8 @@ mm_align_data_2s <- function(data, max_travel_time_days=mm_max_travel_time_defau
 #' For data aligned some other way than \code{\link{mm_align_data_2s}}: each
 #' row must already hold its downstream observation and the upstream values
 #' paired with it. The data.frame is validated as aligned data, and its dropped
-#' days and travel-time ceiling are recorded as unknown.
+#' days and whether the light-window check was applied are recorded as
+#' unknown.
 #'
 #' @param data data.frame, units optional, with the columns
 #'   \code{\link{metab_bayes_2s}} expects and optionally a \code{date} column
@@ -186,12 +187,12 @@ mm_stop_if_na_travel_time_2s <- function(data, fix, day_start_hour) {
 }
 
 # Set the aligned_2s class and attributes on a data.frame. A NULL removed or
-# max_travel_time_days leaves that attribute absent, meaning unknown. A NULL
+# light_check leaves that attribute absent, meaning unknown. A NULL
 # day_start_hour also leaves it absent, which the aligned-data validator
 # rejects: the day labels can't be checked without it.
-new_aligned_2s <- function(df, removed=NULL, max_travel_time_days=NULL, day_start_hour=NULL) {
+new_aligned_2s <- function(df, removed=NULL, light_check=NULL, day_start_hour=NULL) {
   attr(df, 'removed') <- removed
-  attr(df, 'max_travel_time_days') <- max_travel_time_days
+  attr(df, 'light_check') <- light_check
   attr(df, 'day_start_hour') <- day_start_hour
   class(df) <- c('aligned_2s', 'data.frame')
   df
@@ -203,22 +204,22 @@ new_aligned_2s <- function(df, removed=NULL, max_travel_time_days=NULL, day_star
   out <- NextMethod()
   if(!is.data.frame(out)) return(out)
   new_aligned_2s(
-    out, removed=attr(x, 'removed'), max_travel_time_days=attr(x, 'max_travel_time_days'),
+    out, removed=attr(x, 'removed'), light_check=attr(x, 'light_check'),
     day_start_hour=attr(x, 'day_start_hour'))
 }
 
 # removed is always NULL on the result: the dropped days of separately aligned
-# pieces can't be reconciled into one record. The ceiling carries over only
-# when every piece shares it. The day start hour carries over when every
+# pieces can't be reconciled into one record. The light-check flag carries
+# over only when every piece shares it. The day start hour carries over when every
 # piece that has one agrees: a piece without one (e.g. a plain data.frame)
 # doesn't conflict, since validation checks the hour against every date
 #' @export
 #' @noRd
 rbind.aligned_2s <- function(..., deparse.level=1, make.row.names=TRUE, stringsAsFactors=FALSE) {
   pieces <- Filter(Negate(is.null), list(...))
-  ceilings <- lapply(pieces, attr, 'max_travel_time_days')
-  ceil <- if(!any(vapply(ceilings, is.null, logical(1))) &&
-                all(vapply(ceilings, identical, logical(1), ceilings[[1]]))) ceilings[[1]] else NULL
+  checks <- lapply(pieces, attr, 'light_check')
+  check <- if(!any(vapply(checks, is.null, logical(1))) &&
+                all(vapply(checks, identical, logical(1), checks[[1]]))) checks[[1]] else NULL
   hours <- unique(Filter(Negate(is.null), lapply(pieces, attr, 'day_start_hour')))
   start_hour <- if(length(hours) == 1) hours[[1]] else NULL
 
@@ -226,7 +227,7 @@ rbind.aligned_2s <- function(..., deparse.level=1, make.row.names=TRUE, stringsA
   out <- do.call(rbind.data.frame, c(plain, list(
     deparse.level=deparse.level, make.row.names=make.row.names, stringsAsFactors=stringsAsFactors)))
   rownames(out) <- NULL
-  new_aligned_2s(out, removed=NULL, max_travel_time_days=ceil, day_start_hour=start_hour)
+  new_aligned_2s(out, removed=NULL, light_check=check, day_start_hour=start_hour)
 }
 
 # a plain data.frame carries no alignment record, so the attributes go with
@@ -235,7 +236,7 @@ rbind.aligned_2s <- function(..., deparse.level=1, make.row.names=TRUE, stringsA
 #' @noRd
 as.data.frame.aligned_2s <- function(x, ...) {
   attr(x, 'removed') <- NULL
-  attr(x, 'max_travel_time_days') <- NULL
+  attr(x, 'light_check') <- NULL
   attr(x, 'day_start_hour') <- NULL
   class(x) <- 'data.frame'
   x
@@ -243,7 +244,7 @@ as.data.frame.aligned_2s <- function(x, ...) {
 
 # dplyr verbs rebuild their result from the first input's attributes. That is
 # right when every row came from that input (filter, arrange, mutate), but
-# bind_rows() would otherwise stamp the first piece's removed days and ceiling
+# bind_rows() would otherwise stamp the first piece's removed days and light-check flag
 # onto rows aligned separately, so those become unknown instead. The day
 # start hour is kept either way: the aligned-data validator checks it against
 # every row's date, so a wrong one can't pass silently
@@ -257,7 +258,26 @@ dplyr_reconstruct.aligned_2s <- function(data, template) {
     !anyDuplicated(data$solar.time) && all(data$solar.time %in% template$solar.time)
   if(!from_template) {
     attr(out, 'removed') <- NULL
-    attr(out, 'max_travel_time_days') <- NULL
+    attr(out, 'light_check') <- NULL
   }
   out
+}
+
+# Stop if the light-window record that mm_format_data_2s() stores is present
+# but not in the shape mm_light_check_2s() returns, or without the day start
+# hour it was made with: its dates are day labels from that hour, so without
+# it they can't be matched to the days being aligned
+mm_check_light_check_failed_2s <- function(light_check_failed, day_start_hour) {
+  if(is.null(light_check_failed)) return(invisible(NULL))
+  ok <- !is.null(day_start_hour) &&
+    is.data.frame(light_check_failed) &&
+    all(c('date', 'reason', 'n_rows') %in% names(light_check_failed)) &&
+    lubridate::is.Date(light_check_failed$date) &&
+    all(light_check_failed$reason %in% c('lit', 'unknown'))
+  if(!ok) {
+    stop(paste0(
+      "data carry a malformed 'light_check_failed' attribute; format the data ",
+      "again with mm_format_data_2s()"), call.=FALSE)
+  }
+  invisible(NULL)
 }

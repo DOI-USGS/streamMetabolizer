@@ -120,7 +120,10 @@ test_that("aligning with a different day_start_hour than formatting is an error"
   expect_error(
     mm_align_data_2s(suppressMessages(mm_fill_gaps_2s(out))),
     "formatted with day_start_hour=0")
+  # without the recorded hour, the light-window record can't be matched to days
   attr(out, 'day_start_hour') <- NULL
+  expect_error(mm_align_data_2s(out), "malformed 'light_check_failed' attribute")
+  attr(out, 'light_check_failed') <- NULL
   expect_no_error(suppressMessages(mm_align_data_2s(out)))
 })
 

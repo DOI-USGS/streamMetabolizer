@@ -4,11 +4,7 @@
 \alias{mm_align_data_2s}
 \title{Align two-station data onto its modeled rows and 24-hour days}
 \usage{
-mm_align_data_2s(
-  data,
-  max_travel_time_days = mm_max_travel_time_default,
-  day_start_hour = mm_day_start_2s
-)
+mm_align_data_2s(data, day_start_hour = mm_day_start_2s)
 }
 \arguments{
 \item{data}{data.frame, units optional, with the columns
@@ -16,16 +12,6 @@ mm_align_data_2s(
 sorted ascending by \code{solar.time}, with \code{solar.time} on a single
 regular timestep grid, as in \code{\link{mm_format_data_2s}} output.
 \code{travel.time} may not be \code{NA}.}
-
-\item{max_travel_time_days}{the travel-time ceiling, in days. Defaults to
-0.42 days (10 hours); values above 0.5 days (12 hours) are rejected.
-Beyond the ceiling, a day's upstream parcel almost certainly originates
-before the day's own start, where the light it experienced no
-longer has a well-defined day total to be a proportion of. Days whose
-longest travel time exceeds the ceiling are dropped with a message rather
-than treated as an error, since the remaining days are unaffected. A
-travel time far above the ceiling usually means the column was supplied
-in the wrong units -- days are expected, not minutes or hours.}
 
 \item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
 two-station day begins. Defaults to 6 (06:00-06:00). Must match the
@@ -37,15 +23,16 @@ a data.frame of class \code{aligned_2s}, unitless, with a
   \code{date} column followed by the \code{\link{metab_bayes_2s}} data
   columns in their standard order, and attributes \code{removed} (a
   data.frame of \code{date} and \code{errors} for each dropped day),
-  \code{max_travel_time_days}, and \code{day_start_hour}.
+  \code{light_check} (\code{TRUE} if the light-window check was applied),
+  and \code{day_start_hour}.
 }
 \description{
 Resolves each downstream observation's upstream partner one travel time
 earlier and returns one row per modeled observation, labeled with the
-24-hour day (starting at \code{day_start_hour}) it belongs to. Rows without upstream lead-in, days whose
-travel time exceeds \code{max_travel_time_days}, and days that do not fill
-their 24-hour window are dropped with a message and recorded in the
-result's \code{removed} attribute.
+24-hour day (starting at \code{day_start_hour}) it belongs to. Rows without
+upstream lead-in, days that fail the light-window check, and days that do
+not fill their 24-hour window are dropped with a message and recorded in
+the result's \code{removed} attribute.
 }
 \details{
 Gaps are not filled here. When data have gaps, call
@@ -65,7 +52,7 @@ Gaps are not filled here. When data have gaps, call
   \code{\link{metab_bayes_2s}}.
 }
 
-\section{Lead-in and travel-time ceiling}{
+\section{Lead-in and light window}{
  \code{data$travel.time} (the
   reach travel time between stations, in days) must be strictly positive,
   and at least one row must have enough preceding observations of upstream
@@ -75,17 +62,24 @@ Gaps are not filled here. When data have gaps, call
   supplying upstream DO for later rows without appearing in the result
   themselves.
 
-  Travel time is also subject to a ceiling; see the
-  \code{max_travel_time_days} argument.
+  A day is dropped when any of its rows' travel-time light windows reaches
+  a row in an earlier day with light above zero or unknown, since that
+  light has no place in the day's total. Choose a \code{day_start_hour}
+  that falls at night. The check is made on raw light by
+  \code{\link{mm_format_data_2s}}; data that did not come from it, or whose
+  light was filled again afterwards, are aligned without the check, and
+  the result's \code{light_check} attribute is \code{FALSE}.
 }
 
 \examples{
 # four 06:00-06:00 days (the default) of the example data. The first day's
 # opening rows serve only as lead-in, so that day does not fill its window
-# and is dropped
+# and is dropped, leaving three. This data's light is already a proportion,
+# not raw light, so the light-window check is not applied
 dat <- two_station_example[
   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
 aligned <- mm_align_data_2s(dat)
 table(aligned$date)
 attr(aligned, 'removed')
+attr(aligned, 'light_check')
 }

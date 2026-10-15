@@ -34,7 +34,9 @@ differs from the stored hour is an error.}
 \value{
 \code{data} with the same columns, column order, units, and
   \code{day_start_hour} attribute (if any), and with rows inserted where a
-  short missing-row gap could be filled.
+  short missing-row gap could be filled. Any record of the light-window
+  check from \code{\link{mm_format_data_2s}} is dropped, so data filled
+  again are aligned without that check.
 }
 \description{
 Fills gaps short enough to bridge by linear interpolation, so a day

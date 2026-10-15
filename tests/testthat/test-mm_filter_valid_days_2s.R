@@ -30,13 +30,13 @@ test_that("a clean dataset passes untouched", {
 test_that("a filtered frame keeps its aligned class and alignment record", {
   dat <- make_2day_2station_data()
   dat$depth[300] <- 0
-  aligned <- suppressMessages(mm_align_data_2s(dat, max_travel_time_days=0.3))
+  aligned <- suppressMessages(mm_align_data_2s(with_light_check_2s(dat)))
 
   res <- suppressMessages(mm_filter_valid_days_2s(aligned))
 
   expect_s3_class(res$data, 'aligned_2s')
   expect_identical(attr(res$data, 'removed'), attr(aligned, 'removed'))
-  expect_equal(attr(res$data, 'max_travel_time_days'), 0.3)
+  expect_identical(attr(res$data, 'light_check'), TRUE)
 })
 
 test_that("complete_data drops a day with an NA in a downstream column, leaving the other intact", {

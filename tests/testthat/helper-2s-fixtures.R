@@ -1,5 +1,36 @@
 # Two-station test fixtures, shared across test files.
 
+# Raw light that is `level` from 07:00 up to 19:00 and exactly 0 otherwise, so
+# that windows reaching back across a 06:00 day start see only dark rows.
+# Exact zeros, not the tail of a curve: the light-window check treats any
+# value above zero as lit
+daylight_2s <- function(solar.time, level=300) {
+  hour <- as.numeric(format(solar.time, '%H')) + as.numeric(format(solar.time, '%M')) / 60
+  ifelse(hour >= 7 & hour < 19, level, 0)
+}
+
+# Attach the light-window record and day start hour that mm_format_data_2s()
+# would store, so a raw fixture aligns as formatted data does. Call again
+# after changing the data: row subsetting keeps the record, but it still
+# describes the data as they were when it was made
+with_light_check_2s <- function(dat, day_start_hour=mm_day_start_2s) {
+  attr(dat, 'light_check_failed') <- mm_light_check_2s(
+    dat$solar.time, dat$light, dat$travel.time, day_start_hour)
+  attr(dat, 'day_start_hour') <- day_start_hour
+  dat
+}
+
+# Split a fixture into the upstream, downstream, and light inputs of
+# mm_format_data_2s()
+as_raw_2s <- function(dat) {
+  list(
+    upstream=data.frame(timestamp=dat$solar.time, DO.obs=dat$DO.obs.up, DO.sat=dat$DO.sat.up),
+    downstream=data.frame(
+      timestamp=dat$solar.time, DO.obs=dat$DO.obs.down, DO.sat=dat$DO.sat.down,
+      temp.water=dat$temp.water, depth=dat$depth, travel.time=dat$travel.time),
+    light=data.frame(timestamp=dat$solar.time, light=dat$light))
+}
+
 # Build a minimal, valid two-station data.frame. Defaults give a 5-minute
 # timestep (0.0034722 days) and a 0.01-day travel time, so
 # max_lag = round(0.01 / 0.0034722) = 3 timesteps of required upstream lead-in.
@@ -9,35 +40,37 @@
 # rather than a partial-day fragment; n can still be overridden down to a
 # toy size (e.g. n=2) for tests that specifically want too little data.
 make_2station_data <- function(n=291, timestep_min=5, travel_time=0.01) {
+  solar.time <- as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
+    as.difftime((seq_len(n) - 1) * timestep_min, units="mins")
   data.frame(
-    solar.time = as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
-      as.difftime((seq_len(n) - 1) * timestep_min, units="mins"),
+    solar.time = solar.time,
     DO.obs.up = rep(9, n),
     DO.sat.up = rep(10, n),
     DO.obs.down = rep(8.8, n),
     DO.sat.down = rep(9.9, n),
-    light = rep(300, n),
+    light = daylight_2s(solar.time),
     depth = rep(0.5, n),
     temp.water = rep(20, n),
     travel.time = rep(travel_time, n)
   )
 }
 
-# A day whose travel.time exceeds the alignment's max_travel_time_days
-# (10/24-day default, 0.5-day cap) is not a dataset-wide error: mm_align_2s() drops
-# just that day, with a message naming the date and travel time (see
-# mm_lag_2s.R). Built from two make_2station_data() day-shaped blocks: day 1
-# at the default travel_time=0.01 (well under the ceiling), day 2 reusing
-# day 1's complete-day rows as a template, re-dated to follow immediately
-# after, with travel.time raised to 15 hours, 0.625 days (above the ceiling). Day 2
-# still has real upstream lead-in -- it draws on day 1's data -- so the
-# ceiling, not lead-in availability, is what drops it.
-make_2day_ceiling_data <- function() {
+# A day whose light window reaches a lit row of an earlier day is not a
+# dataset-wide error: mm_align_2s() drops just that day, with a message naming
+# it. Built from two make_2station_data() day-shaped blocks: day 1 at the
+# default travel_time=0.01, whose windows reach only the dark 05:45-05:55
+# lead-in rows, and day 2, re-dated to follow immediately after, with
+# travel.time raised to 15 hours, so its opening rows' windows reach back to
+# day 1's lit afternoon. Day 2 still has real upstream lead-in -- it draws on
+# day 1's data -- so the light window, not lead-in availability, is what
+# drops it. Carries the light-window record, as formatted data does.
+make_2day_lit_boundary_data <- function() {
   day1 <- make_2station_data()
   day2 <- day1[-(1:3), ] # drop day 1's own lead-in rows; keep the 288-row complete-day block as a template
   day2$solar.time <- max(day1$solar.time) + as.difftime(seq_len(nrow(day2)) * 5, units="mins")
+  day2$light <- daylight_2s(day2$solar.time)
   day2$travel.time <- 15/24
-  rbind(day1, day2)
+  with_light_check_2s(rbind(day1, day2))
 }
 
 # Build a two-day data.frame with a known, traceable
@@ -58,7 +91,7 @@ make_ts_data <- function(n_leadin=3, n_day1=24, n_day2=24, travel_time=0.125) {
     DO.sat.up = seq_len(n_total) + 100,  # traceable, offset so it's distinguishable from DO.obs.up
     DO.obs.down = seq_len(n_total) + 1000, # traceable, offset so it's distinguishable from up/sat values
     DO.sat.down = rep(9.9, n_total),
-    light = rep(300, n_total),
+    light = daylight_2s(solar.time),
     depth = rep(0.5, n_total),
     temp.water = rep(20, n_total),
     travel.time = rep(travel_time, n_total)
@@ -153,14 +186,15 @@ corrupt_middle_day <- function(n_days=3, col='depth', value=0) {
 # inside day 1 -- the overlap the modeled-frame indexing exists to get right.
 make_2day_2station_data <- function() {
   n <- 3 + 2*288
+  solar.time <- as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
+    as.difftime((seq_len(n) - 1) * 5, units="mins")
   data.frame(
-    solar.time = as.POSIXct("2050-06-01 05:45:00", tz="UTC") +
-      as.difftime((seq_len(n) - 1) * 5, units="mins"),
+    solar.time = solar.time,
     DO.obs.up = rep(9, n),
     DO.sat.up = rep(10, n),
     DO.obs.down = rep(8.8, n),
     DO.sat.down = rep(9.9, n),
-    light = rep(300, n),
+    light = daylight_2s(solar.time),
     depth = rep(0.5, n),
     temp.water = rep(20, n),
     travel.time = rep(0.01, n)
@@ -171,15 +205,17 @@ make_2day_2station_data <- function() {
 # default 1-hour tolerance is exactly 4 bins, so a 4-bin gap is the largest
 # fillable one and a 5-bin gap is the smallest unfillable one -- every
 # boundary test below is written against those two numbers.
+# Light is traceable (100 + row index) from 07:00 to 19:00 and 0 otherwise.
 make_gappy_data <- function(n=40, start="2050-06-01 00:00:00", travel_time=0.01) {
+  solar.time <- as.POSIXct(start, tz="UTC") +
+    as.difftime((seq_len(n) - 1) * 15, units="mins")
   data.frame(
-    solar.time = as.POSIXct(start, tz="UTC") +
-      as.difftime((seq_len(n) - 1) * 15, units="mins"),
+    solar.time = solar.time,
     DO.obs.up = 9 + seq_len(n) / 100,
     DO.sat.up = rep(10, n),
     DO.obs.down = 8.8 + seq_len(n) / 100,
     DO.sat.down = rep(9.9, n),
-    light = 100 + seq_len(n),
+    light = daylight_2s(solar.time, 1) * (100 + seq_len(n)),
     depth = rep(0.5, n),
     temp.water = rep(20, n),
     travel.time = rep(travel_time, n)
@@ -195,6 +231,7 @@ make_full_days <- function(n_days=2, n_leadin=1, start_date="2050-06-01", travel
   n <- n_leadin + 96 * n_days
   dat <- make_gappy_data(n=n, travel_time=travel_time)
   dat$solar.time <- first + as.difftime((seq_len(n) - 1) * 15, units="mins")
+  dat$light <- daylight_2s(dat$solar.time, 1) * (100 + seq_len(n))
   dat
 }
 

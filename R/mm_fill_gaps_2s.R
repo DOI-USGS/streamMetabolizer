@@ -128,7 +128,9 @@ mm_check_warn_fill_share <- function(warn_fill_share) {
 #'   differs from the stored hour is an error.
 #' @return \code{data} with the same columns, column order, units, and
 #'   \code{day_start_hour} attribute (if any), and with rows inserted where a
-#'   short missing-row gap could be filled.
+#'   short missing-row gap could be filled. Any record of the light-window
+#'   check from \code{\link{mm_format_data_2s}} is dropped, so data filled
+#'   again are aligned without that check.
 #' @examples
 #' dat <- two_station_example[
 #'   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
@@ -192,6 +194,7 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default,
     message(paste0(
       'max_gap_hours (', max_gap_hours, ') is shorter than one timestep (',
       signif(timestep_days * 24, 3), ' hours); no gaps can be filled'))
+    attr(data, 'light_check_failed') <- NULL
     return(data)
   }
 
@@ -319,6 +322,9 @@ mm_fill_gaps_2s <- function(data, max_gap_hours=mm_max_gap_hours_default,
   # the day start hour mm_format_data_2s() records must survive, so alignment
   # can still reject a different one
   attr(work, 'day_start_hour') <- attr(data, 'day_start_hour')
+  # the light-window check recorded by mm_format_data_2s() was made on the
+  # light as it was then; filling again may change it, so the record is dropped
+  attr(work, 'light_check_failed') <- NULL
   work
 }
 

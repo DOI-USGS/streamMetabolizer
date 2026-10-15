@@ -24,7 +24,8 @@ a data.frame of class \code{aligned_2s}, unitless, with a
 For data aligned some other way than \code{\link{mm_align_data_2s}}: each
 row must already hold its downstream observation and the upstream values
 paired with it. The data.frame is validated as aligned data, and its dropped
-days and travel-time ceiling are recorded as unknown.
+days and whether the light-window check was applied are recorded as
+unknown.
 }
 \examples{
 dat <- two_station_example[

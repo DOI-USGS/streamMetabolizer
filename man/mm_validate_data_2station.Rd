@@ -23,17 +23,17 @@ checks.
 \details{
 Rows that individually lack lead-in are not an error; they are dropped as
 lead-in rows by \code{mm_align_2s} (see \code{mm_lag_2s.R}), which also
-owns the per-day travel-time ceiling. Column presence, timestamp validity,
-and travel.time positivity are expected to have already been checked by
-\code{\link{mm_validate_data}}.
+drops the days that fail the light-window check. Column presence,
+timestamp validity, and travel.time positivity are expected to have
+already been checked by \code{\link{mm_validate_data}}.
 
 Aligned data (class \code{aligned_2s}) is checked per row and per day
 instead, since each row already holds its upstream values: a UTC
 \code{solar.time}, a recorded day start hour, a \code{date} matching each
 \code{solar.time}'s 24-hour day from that hour, strictly ascending
 \code{solar.time}, the same number of rows every day, a single regular
-timestep across the whole data.frame, positive \code{travel.time}, and
-\code{travel.time} within the stored travel-time ceiling when one is
-recorded. \code{NA}s in the data columns are left to the day-validity tests.
+timestep across the whole data.frame, positive \code{travel.time}, and a
+\code{light_check} attribute that is \code{TRUE}, \code{FALSE}, or absent.
+\code{NA}s in the data columns are left to the day-validity tests.
 }
 \keyword{internal}

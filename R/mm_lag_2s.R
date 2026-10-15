@@ -1,63 +1,3 @@
-#' Default and maximum travel-time ceiling for two-station models
-#'
-#' Bounds how far back in time a modeled day may reach for upstream
-#' observations; days whose travel time exceeds the ceiling are dropped
-#' rather than modeled. \code{mm_max_travel_time_default} is the canonical
-#' default, 0.42 days (10 hours); \code{mm_max_travel_time_cap}, 0.5 days (12
-#' hours), is kept well below the 24-hour day window so a single day's travel
-#' time can't consume the entire lead-in period. Both are in days.
-#'
-#' @keywords internal
-#' @name mm_max_travel_time
-NULL
-
-#' @rdname mm_max_travel_time
-mm_max_travel_time_default <- 10/24
-
-#' @rdname mm_max_travel_time
-mm_max_travel_time_cap <- 12/24
-
-# Format a duration in days as "<days> days (<hours> hours)" for messages.
-# Days round to 2 decimals; hours are whole when the value is, else 1 decimal.
-mm_format_days_hours <- function(days) {
-  round_half_up <- function(x, digits) floor(x * 10^digits + 0.5) / 10^digits
-  vapply(days, function(d) {
-    hours <- d * 24
-    hours_str <- if(isTRUE(all.equal(hours, round(hours)))) {
-      as.character(round(hours))
-    } else {
-      as.character(round_half_up(hours, 1))
-    }
-    days_str <- as.character(round_half_up(d, 2))
-    paste0(days_str, if(days_str == '1') ' day (' else ' days (',
-           hours_str, if(hours_str == '1') ' hour)' else ' hours)')
-  }, character(1))
-}
-
-#' Validate a travel-time ceiling
-#'
-#' Checks the ceiling passed to \code{\link{mm_align_2s}} against
-#' \code{\link{mm_max_travel_time}}'s cap.
-#'
-#' @param max_travel_time_days the value to check.
-#' @keywords internal
-mm_check_max_travel_time_days <- function(max_travel_time_days) {
-  if(!is.numeric(max_travel_time_days) || length(max_travel_time_days) != 1 ||
-     is.na(max_travel_time_days)) {
-    stop('max_travel_time_days must be a single non-NA number', call.=FALSE)
-  }
-  if(max_travel_time_days <= 0) {
-    stop('max_travel_time_days must be > 0', call.=FALSE)
-  }
-  if(max_travel_time_days > mm_max_travel_time_cap) {
-    stop(paste0(
-      'max_travel_time_days must be <= ', mm_format_days_hours(mm_max_travel_time_cap), '; a ceiling ',
-      'approaching the 24-hour two-station day window would allow a single day\'s travel ',
-      'time to consume the entire lead-in period'), call.=FALSE)
-  }
-  invisible(NULL)
-}
-
 #' Default hour at which a two-station day begins
 #'
 #' Two-station days run 24 hours from a start hour chosen during data prep;
@@ -292,10 +232,72 @@ mm_lag_2s <- function(solar.time, travel.time) {
     has_leadin = !is.na(shift_idx))
 }
 
+#' Find the days whose light windows reach light in an earlier day
+#'
+#' Each row's light window is the set of rows its travel-time light sum
+#' covers: the rows from its upstream match (see \code{\link{mm_lag_2s}})
+#' through the row itself. A day fails when any of its rows has a window
+#' reaching a row in an earlier day whose light is above zero (\code{"lit"})
+#' or \code{NA} (\code{"unknown"}). A day with both is reported as
+#' \code{"lit"} only. Rows without lead-in have no window and are not tested.
+#'
+#' @param solar.time POSIXct vector of timestamps, in UTC, sorted ascending,
+#'   already snapped to a single nominal timestep via
+#'   \code{\link{mm_snap_to_bin_2s}}.
+#' @param light numeric vector, the same length as \code{solar.time}, of raw
+#'   light (not the within-day proportion).
+#' @param travel.time numeric vector of reach travel times, in days, the
+#'   same length as \code{solar.time}.
+#' @param day_start_hour hour of the day, in [0, 24), at which each
+#'   two-station day begins.
+#' @return a data.frame with one row per failing day, sorted by date:
+#'   \code{date} (Date), \code{reason} (\code{"lit"} or \code{"unknown"}),
+#'   and \code{n_rows} (the number of that day's rows whose windows fail)
+#' @keywords internal
+mm_light_check_2s <- function(solar.time, light, travel.time, day_start_hour) {
+
+  mm_check_day_start_hour_2s(day_start_hour)
+  if(is.unsorted(solar.time)) {
+    stop('data must be sorted ascending by solar.time', call.=FALSE)
+  }
+  lagged <- mm_lag_2s(solar.time, travel.time)
+  # over all rows, not only those with lead-in: window rows are often lead-in
+  # rows that are never modeled themselves
+  day <- mm_date_2s(solar.time, day_start_hour)
+
+  # sorted rows put each day in one contiguous run, so the earlier-day part
+  # of row i's window is rows shift_idx[i] through first_of_day[i] - 1, and
+  # cumulative counts give each window's lit and unknown rows in O(n)
+  first_of_day <- match(day, day)
+  from <- lagged$shift_idx
+  to <- first_of_day - 1L
+  reaches <- lagged$has_leadin & from <= to
+  count_between <- function(flag) {
+    cum <- c(0, cumsum(flag))
+    out <- numeric(length(flag))
+    out[reaches] <- cum[to[reaches] + 1] - cum[from[reaches]]
+    out
+  }
+  unknown <- is.na(light)
+  row_lit <- count_between(!unknown & light > 0) > 0
+  row_unknown <- count_between(unknown) > 0
+
+  failing <- row_lit | row_unknown
+  dates <- sort(unique(day[failing]))
+  day_reason <- c('unknown', 'lit')[(dates %in% day[row_lit]) + 1]
+  idx <- match(day, dates)
+  counted <- failing & ifelse(day_reason[idx] %in% 'lit', row_lit, row_unknown)
+  data.frame(
+    date=dates,
+    reason=day_reason,
+    n_rows=tabulate(idx[counted], length(dates)),
+    stringsAsFactors=FALSE)
+}
+
 #' Align two-station data onto its 24-hour day window
 #'
 #' Applies, in order: the per-row lead-in test, two-station day labeling, the
-#' travel-time ceiling, and the whole-day completeness requirement. The
+#' light-window check, and the whole-day completeness requirement. The
 #' result describes which input rows are modeled, which input rows supply
 #' their upstream values, and how those modeled rows partition into days.
 #'
@@ -307,8 +309,9 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #'
 #' Whole days are dropped, with a message, in two cases:
 #' \itemize{
-#'   \item the day's longest travel time exceeds
-#'     \code{max_travel_time_days} (see \code{\link{mm_max_travel_time}});
+#'   \item the day is listed in \code{light_check_failed}: one of its rows'
+#'     light windows reaches a row in an earlier day with light above zero or
+#'     unknown (see \code{\link{mm_light_check_2s}});
 #'   \item the day does not fill its 24-hour window, i.e. it holds fewer than
 #'     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
 #'     the edges of any dataset whose bounds don't fall on the day start
@@ -320,22 +323,22 @@ mm_lag_2s <- function(solar.time, travel.time) {
 #' @param data data.frame (units already stripped) containing at least
 #'   \code{solar.time} and \code{travel.time}, sorted ascending by
 #'   \code{solar.time}.
-#' @param max_travel_time_days the travel-time ceiling, in days. Days whose
-#'   longest travel time exceeds this are dropped.
 #' @param day_start_hour hour of the day, in [0, 24), at which each
 #'   two-station day begins.
+#' @param light_check_failed the days that failed the light-window check, as
+#'   returned by \code{\link{mm_light_check_2s}}, or \code{NULL} if the check
+#'   was not run.
 #' @return a list with \code{keep} (integer indices of the modeled rows, into
 #'   the rows of \code{data}), \code{shift_idx} (integer indices, also into
 #'   \code{data}, of the rows supplying each modeled row's upstream values),
 #'   \code{date} (Date vector of two-station day labels, parallel to
 #'   \code{keep}), \code{n_obs} (modeled rows per day), \code{n_days},
-#'   \code{timestep_days}, and \code{removed} (a data.frame of \code{date}
-#'   and \code{errors} naming the days dropped here and why)
+#'   \code{timestep_days}, \code{removed} (a data.frame of \code{date}
+#'   and \code{errors} naming the days dropped here and why), and
+#'   \code{light_check} (TRUE if \code{light_check_failed} was supplied)
 #' @keywords internal
-mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
-                        day_start_hour) {
+mm_align_2s <- function(data, day_start_hour, light_check_failed=NULL) {
 
-  mm_check_max_travel_time_days(max_travel_time_days)
   mm_check_day_start_hour_2s(day_start_hour)
 
   solar_time <- data$solar.time
@@ -356,12 +359,15 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
   # messaged about but not recorded is exactly the day that disappears from
   # the results with nothing to explain it. headline completes "dropping N
   # day(s) ___"; reason is the stored per-day explanation; detail is the
-  # per-day specifics both use
+  # per-day specifics both use. max_listed caps the days named in the message;
+  # every day is still recorded
   removed <- mm_no_removed_days_2s
-  drop_days <- function(dates, detail, headline, reason) {
+  drop_days <- function(dates, detail, headline, reason, max_listed=Inf) {
+    listed <- utils::head(sprintf('%s (%s)', as.character(dates), detail), max_listed)
     message(paste0(
       'dropping ', length(dates), ' day(s) ', headline, ': ',
-      paste(sprintf('%s (%s)', as.character(dates), detail), collapse=', ')))
+      paste(listed, collapse=', '),
+      if(length(dates) > length(listed)) paste0(', and ', length(dates) - length(listed), ' more') else ''))
     removed <<- rbind(removed, data.frame(
       date=as.Date(dates), errors=paste0(reason, ' (', detail, ')'),
       stringsAsFactors=FALSE))
@@ -379,15 +385,27 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
       "no upstream observation at any row's travel-time offset")
   }
 
-  # travel-time ceiling: drop the offending day, not the whole dataset
-  worst_by_day <- tapply(travel_time[keep], date, max)
-  over_ceiling <- worst_by_day[worst_by_day > max_travel_time_days]
-  if(length(over_ceiling) > 0) {
-    drop_days(
-      names(over_ceiling), mm_format_days_hours(unname(over_ceiling)),
-      paste0('whose travel.time exceeds the ', mm_format_days_hours(max_travel_time_days), ' ceiling'),
-      paste0('travel.time exceeds the ', mm_format_days_hours(max_travel_time_days), ' ceiling'))
-    in_bounds <- !(as.character(date) %in% names(over_ceiling))
+  # light window: drop each failing day that is still being modeled; days
+  # already dropped above, or never modeled, need no second entry
+  n_light_dropped <- 0
+  if(!is.null(light_check_failed)) {
+    failed <- light_check_failed[light_check_failed$date %in% date, , drop=FALSE]
+    lit <- failed[failed$reason == 'lit', , drop=FALSE]
+    if(nrow(lit) > 0) {
+      drop_days(
+        lit$date, sprintf('%d row(s)', lit$n_rows),
+        'whose travel-time light windows reach light above zero in an earlier day',
+        'light window reaches light above zero in an earlier day', max_listed=10)
+    }
+    unknown <- failed[failed$reason == 'unknown', , drop=FALSE]
+    if(nrow(unknown) > 0) {
+      drop_days(
+        unknown$date, sprintf('%d row(s)', unknown$n_rows),
+        'whose travel-time light windows reach light unknown in an earlier day',
+        'light unknown in an earlier day of the light window', max_listed=10)
+    }
+    n_light_dropped <- nrow(failed)
+    in_bounds <- !(date %in% failed$date)
     keep <- keep[in_bounds]
     date <- date[in_bounds]
   }
@@ -408,9 +426,14 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
   }
 
   if(length(keep) == 0) {
-    stop(paste0(
-      'no complete days remain after applying the ', mm_format_days_hours(max_travel_time_days),
-      ' travel.time ceiling and the 24-hour day-window requirement'), call.=FALSE)
+    if(n_light_dropped > 0) {
+      stop(paste0(
+        "Every day was dropped: each day's travel-time light window reaches light from an ",
+        "earlier day, which would contaminate the day's light proportions. Check that ",
+        "`travel.time` is in days and not too long, and move `day_start_hour` to a time ",
+        "with no light in the hours before it."), call.=FALSE)
+    }
+    stop('no complete days remain: every day was dropped (see the messages above)', call.=FALSE)
   }
 
   removed <- removed[order(removed$date), , drop=FALSE]
@@ -423,5 +446,6 @@ mm_align_2s <- function(data, max_travel_time_days=mm_max_travel_time_default,
     n_obs = expected_n_obs,
     n_days = length(unique(date)),
     timestep_days = lagged$timestep_days,
-    removed = removed)
+    removed = removed,
+    light_check = !is.null(light_check_failed))
 }

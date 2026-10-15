@@ -43,8 +43,9 @@ is divided by. Defaults to 6 (06:00-06:00). Recorded on the result, so
 a unitted data.frame with columns \code{solar.time},
   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
-  \code{travel.time}, sorted ascending by \code{solar.time}, and a
-  \code{day_start_hour} attribute, ready for
+  \code{travel.time}, sorted ascending by \code{solar.time}, and
+  \code{day_start_hour} and \code{light_check_failed} (the days failing
+  the light-window check) attributes, ready for
   \code{\link{mm_align_data_2s}}
 }
 \description{
@@ -83,6 +84,10 @@ within-day, travel-time-weighted proportion \code{\link{metab_bayes_2s}}
 requires, by summing each row's upstream travel-time window and dividing
 by that day's total light sum, and its units are set to \code{NA} to
 match -- mirroring \code{\link{metab_bayes_2s}}'s own \code{data} default.
+
+Before that conversion, raw light is checked for days whose travel-time
+light windows reach a row in an earlier day with light above zero or
+unknown; \code{\link{mm_align_data_2s}} drops those days.
 }
 \section{Gap filling}{
  brief interruptions in the record -- a sonde that
