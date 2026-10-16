@@ -49,7 +49,7 @@ NULL
 #'   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
 #'   place, and \code{\link{mm_align_data_2s}} drops the days holding them.
 #'   A warning lists days on which more than \code{warn_fill_share} of a
-#'   column's values were filled.
+#'   day's values were filled.
 #'   Filling happens here while \code{light} is still a raw per-timestep
 #'   value, before the within-day proportion is computed -- the accurate
 #'   order, since the proportion is then formed from a complete series
@@ -79,8 +79,9 @@ NULL
 #'   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
 #'   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
 #'   \code{travel.time}, sorted ascending by \code{solar.time}, and
-#'   \code{day_start_hour} and \code{light_check_failed} (the days failing
-#'   the light-window check) attributes, ready for
+#'   \code{day_start_hour}, \code{light_check_failed} (the days failing
+#'   the light-window check), and \code{fill_share} (see
+#'   \code{\link{mm_fill_gaps_2s}}) attributes, ready for
 #'   \code{\link{mm_align_data_2s}}
 #' @importFrom unitted v u get_units
 #' @export
@@ -197,6 +198,8 @@ mm_format_data_2s <- function(upstream, downstream, light,
   out <- mm_fill_gaps_2s(
     out, max_gap_hours=max_gap_hours, warn_fill_share=warn_fill_share,
     day_start_hour=day_start_hour)
+  # taken now, since selecting the template columns below drops it
+  fill_share <- attr(out, 'fill_share')
 
   # the light-window check needs raw light, so it runs before light becomes
   # the within-day proportion; alignment drops the failing days
@@ -215,6 +218,7 @@ mm_format_data_2s <- function(upstream, downstream, light,
   out <- as.data.frame(out[names(template)])
   attr(out, 'day_start_hour') <- day_start_hour
   attr(out, 'light_check_failed') <- light_check_failed
+  attr(out, 'fill_share') <- fill_share
   out
 }
 

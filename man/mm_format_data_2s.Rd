@@ -44,8 +44,9 @@ a unitted data.frame with columns \code{solar.time},
   \code{DO.obs.up}, \code{DO.sat.up}, \code{DO.obs.down},
   \code{DO.sat.down}, \code{light}, \code{depth}, \code{temp.water},
   \code{travel.time}, sorted ascending by \code{solar.time}, and
-  \code{day_start_hour} and \code{light_check_failed} (the days failing
-  the light-window check) attributes, ready for
+  \code{day_start_hour}, \code{light_check_failed} (the days failing
+  the light-window check), and \code{fill_share} (see
+  \code{\link{mm_fill_gaps_2s}}) attributes, ready for
   \code{\link{mm_align_data_2s}}
 }
 \description{
@@ -96,7 +97,7 @@ unknown; \code{\link{mm_align_data_2s}} drops those days.
   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
   place, and \code{\link{mm_align_data_2s}} drops the days holding them.
   A warning lists days on which more than \code{warn_fill_share} of a
-  column's values were filled.
+  day's values were filled.
   Filling happens here while \code{light} is still a raw per-timestep
   value, before the within-day proportion is computed -- the accurate
   order, since the proportion is then formed from a complete series

@@ -26,17 +26,21 @@ any column was filled. A number above 0 and at most 1; defaults to 0.25,
 and 1 turns the warning off.}
 
 \item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
-two-station day begins, used to group filled values into days for the
-warning. \code{NULL} (the default) uses the hour stored by
+two-station day begins, used to group filled values into days.
+\code{NULL} (the default) uses the hour stored by
 \code{\link{mm_format_data_2s}} if present, otherwise 6; a value that
-differs from the stored hour is an error.}
+differs from the stored hour, or from the hour of a carried
+\code{fill_share}, is an error.}
 }
 \value{
 \code{data} with the same columns, column order, units, and
   \code{day_start_hour} attribute (if any), and with rows inserted where a
   short missing-row gap could be filled. Any record of the light-window
   check from \code{\link{mm_format_data_2s}} is dropped, so data filled
-  again are aligned without that check.
+  again are aligned without that check. A \code{fill_share} attribute
+  holds a tibble with one row per day in the result: the \code{date} and
+  the \code{share} of that day's values that were filled, taken from the
+  most-filled column.
 }
 \description{
 Fills gaps short enough to bridge by linear interpolation, so a day
@@ -68,15 +72,22 @@ already dropped by the completeness requirement.
 }
 
 \section{Heavily filled days}{
- Filling never drops a day. When more than
-  \code{warn_fill_share} of a day's values in any column were filled, a
-  single warning lists those days with the share filled. Every filled
-  value counts toward the day its timestamp falls in, whether it filled a
-  missing row or a missing value. Some flagged days may still be dropped
-  later, during alignment.
+ Filling never drops a day. When this call
+  fills any values, a single warning lists the days in \code{fill_share}
+  whose share is above \code{warn_fill_share}. Every filled value counts
+  toward the day its timestamp falls in, whether it filled a missing row
+  or a missing value. Some flagged days may still be dropped later, during
+  alignment.
 
-  The share is measured per call: values filled by an earlier call count
-  as observed in a later one.
+  Shares from an earlier call, carried on \code{data}, are added to this
+  call's, up to 1, so a share can overstate the filled fraction but never
+  understate it. A carried \code{fill_share} that is malformed (wrong
+  columns, invalid values, or an invalid day start hour) is an error.
+
+  To drop heavily filled days, align first and then remove them from the
+  aligned data. Dropping a day before alignment also removes the next day,
+  whose first rows draw their upstream values from it. Days dropped this
+  way are not listed among a fit's invalid days.
 }
 
 \section{Interpolating light}{
@@ -98,6 +109,13 @@ gappy <- dat[-(200:202), ]
 filled <- mm_fill_gaps_2s(gappy)
 c(original=nrow(dat), gappy=nrow(gappy), filled=nrow(filled))
 
-# fill before aligning
+# the share of each day's values that were filled
+fill_share <- attr(filled, 'fill_share')
+fill_share
+
+# fill before aligning, then drop heavily filled days from the aligned data
 aligned <- mm_align_data_2s(filled)
+heavy <- fill_share$date[fill_share$share > 0.02]
+aligned <- aligned[!(aligned$date \%in\% heavy), ]
+table(aligned$date)
 }

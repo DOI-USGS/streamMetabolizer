@@ -1,3 +1,14 @@
+# the data without the fill_share table, for comparing data values alone
+drop_fill_share <- function(x) {
+  attr(x, 'fill_share') <- NULL
+  x
+}
+
+# a fill-share table's columns as a plain data.frame, for comparing values
+plain_fill_share <- function(fill_share) {
+  data.frame(date=fill_share$date, share=fill_share$share)
+}
+
 # gap sizing ----------------------------------------------------------------
 
 test_that("missing-row gaps are filled up to the tolerance and left alone beyond it", {
@@ -19,7 +30,7 @@ test_that("missing-row gaps are filled up to the tolerance and left alone beyond
   filled <- suppressMessages(mm_fill_gaps_2s(gappy))
   expect_equal(nrow(filled), nrow(gappy))
   rownames(gappy) <- NULL # filling renumbers rows; the values are the point
-  expect_equal(filled, gappy)
+  expect_equal(drop_fill_share(filled), gappy)
 })
 
 test_that("missing-value gaps use the same tolerance as missing-row gaps", {
@@ -58,7 +69,11 @@ test_that("a tolerance finer than the timestep fills nothing, and says so", {
   expect_message(
     filled <- mm_fill_gaps_2s(dat, max_gap_hours=0.1),
     'shorter than one timestep')
-  expect_equal(filled, dat)
+  expect_equal(drop_fill_share(filled), dat)
+
+  # the fill-share table is still set, with nothing filled
+  expect_equal(plain_fill_share(attr(filled, 'fill_share')),
+               data.frame(date=as.Date('2050-05-31'), share=0))
 })
 
 
@@ -220,6 +235,14 @@ test_that("filled values count toward the day of their own timestamp", {
   expect_warning(
     suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.03, day_start_hour=0)),
     '2050-06-01')
+
+  # the fill-share table groups days the same way
+  split <- attr(suppressMessages(mm_fill_gaps_2s(gappy)), 'fill_share')
+  expect_equal(plain_fill_share(split),
+               data.frame(date=as.Date(c('2050-05-31', '2050-06-01')), share=c(2, 2)/96))
+  whole <- attr(suppressMessages(mm_fill_gaps_2s(gappy, day_start_hour=0)), 'fill_share')
+  expect_equal(plain_fill_share(whole), data.frame(date=as.Date('2050-06-01'), share=4/96))
+  expect_identical(attr(whole, 'day_start_hour'), 0)
 })
 
 test_that("with no day_start_hour given, the warning groups days by the hour stored on the data", {
@@ -239,6 +262,139 @@ test_that("inserted rows dropped again do not count toward the filled share", {
   dat$DO.obs.down[35] <- NA
   gappy <- dat[-(20:21), ]
   expect_warning(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.015)), NA)
+  fill_share <- attr(suppressMessages(mm_fill_gaps_2s(gappy)), 'fill_share')
+  expect_equal(fill_share$share, 1/96)
+})
+
+test_that("the fill-share table has a row for every day, with the share from the most-filled column", {
+  # the fixture above, extended past 06:00 into an ungapped second day.
+  # DO.obs.up has 4 of 96 values filled on the first day, every other column 2
+  dat <- make_gappy_data(n=120, start="2050-06-01 08:00:00")
+  dat$DO.obs.up[20:21] <- NA
+  gappy <- dat[-(10:11), ]
+
+  fill_share <- attr(suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=1)), 'fill_share')
+  expect_s3_class(fill_share, 'tbl_df')
+  expect_equal(names(fill_share), c('date', 'share'))
+  expect_s3_class(fill_share$date, 'Date')
+  expect_equal(fill_share$date, as.Date(c('2050-06-01', '2050-06-02')))
+  expect_equal(fill_share$share, c(4/96, 0))
+  expect_identical(attr(fill_share, 'day_start_hour'), mm_day_start_2s)
+})
+
+test_that("the warning names exactly the days the fill-share table puts above the threshold", {
+  # three whole days: 4 rows filled on the first (4.2%), 2 on the second
+  # (2.1%), none on the third
+  dat <- make_gappy_data(n=3 * 96, start="2050-06-01 06:00:00")
+  gappy <- dat[-c(10:13, 110:111), ]
+
+  warned <- character(0)
+  filled <- withCallingHandlers(
+    suppressMessages(mm_fill_gaps_2s(gappy, warn_fill_share=0.03)),
+    warning=function(w) {
+      warned <<- c(warned, conditionMessage(w))
+      invokeRestart('muffleWarning')
+    })
+  fill_share <- attr(filled, 'fill_share')
+  above <- fill_share[fill_share$share > 0.03, ]
+
+  expect_length(warned, 1)
+  expect_equal(regmatches(warned, gregexpr('[0-9]{4}-[0-9]{2}-[0-9]{2}', warned))[[1]],
+               as.character(above$date))
+  expect_match(warned, sprintf('%s (%.1f%%)', above$date, 100 * above$share), fixed=TRUE)
+})
+
+test_that("a second call adds its shares to the carried ones", {
+  # a 2-bin gap fillable at a half-hour tolerance and a 4-bin gap fillable
+  # only at one hour, both on the same day
+  dat <- make_gappy_data(n=60, start="2050-06-01 08:00:00")
+  gappy <- dat[-c(10:11, 30:33), ]
+
+  first <- suppressMessages(mm_fill_gaps_2s(gappy, max_gap_hours=0.5))
+  expect_equal(attr(first, 'fill_share')$share, 2/96)
+  second <- suppressMessages(mm_fill_gaps_2s(first, max_gap_hours=1))
+  expect_equal(attr(second, 'fill_share')$share, 6/96)
+})
+
+test_that("a carried fill-share table made with a different day_start_hour is an error", {
+  gappy <- make_gappy_data(n=40)[-(10:11), ]
+  filled <- suppressMessages(mm_fill_gaps_2s(gappy, day_start_hour=0))
+  expect_error(
+    mm_fill_gaps_2s(filled),
+    'fill_share made with day_start_hour=0 but are being filled with day_start_hour=6')
+})
+
+test_that("a malformed carried fill-share table is an error", {
+  filled <- suppressMessages(mm_fill_gaps_2s(make_gappy_data(n=40)[-(10:11), ]))
+  fill_share <- attr(filled, 'fill_share')
+  malformed <- function(value) {
+    attr(filled, 'fill_share') <- value
+    filled
+  }
+  msg <- "malformed 'fill_share'"
+  expect_error(mm_fill_gaps_2s(malformed(fill_share$share)), msg)
+  expect_error(mm_fill_gaps_2s(malformed(fill_share['date'])), msg)
+  no_date <- fill_share
+  no_date$date <- as.character(no_date$date)
+  expect_error(mm_fill_gaps_2s(malformed(no_date)), msg)
+  no_hour <- fill_share
+  attr(no_hour, 'day_start_hour') <- NULL
+  expect_error(mm_fill_gaps_2s(malformed(no_hour)), msg)
+
+  with_share <- function(share) {
+    value <- fill_share
+    value$share <- share
+    value
+  }
+  expect_error(mm_fill_gaps_2s(malformed(with_share(NA_real_))), msg)
+  expect_error(mm_fill_gaps_2s(malformed(with_share(-0.1))), msg)
+  expect_error(mm_fill_gaps_2s(malformed(with_share(1.1))), msg)
+  repeated <- fill_share[c(1, 1), ]
+  attr(repeated, 'day_start_hour') <- attr(fill_share, 'day_start_hour')
+  expect_error(mm_fill_gaps_2s(malformed(repeated)), msg)
+
+  with_hour <- function(hour) {
+    value <- fill_share
+    attr(value, 'day_start_hour') <- hour
+    value
+  }
+  expect_error(mm_fill_gaps_2s(malformed(with_hour('6'))), 'day_start_hour must be a single non-NA number')
+  expect_error(mm_fill_gaps_2s(malformed(with_hour(c(6, 6)))), 'day_start_hour must be a single non-NA number')
+  expect_error(mm_fill_gaps_2s(malformed(with_hour(24))), 'day_start_hour must be >= 0 and < 24')
+})
+
+test_that("shares added across calls are capped at 1", {
+  # one whole day, with every row but every ninth missing in one column: each
+  # of ten 8-bin gaps is fillable at the 2-hour tolerance, 80 of 96 values.
+  # the first call fills DO.obs.up that way, the second DO.obs.down
+  dat <- make_gappy_data(n=96, start="2050-06-01 06:00:00")
+  sparse <- seq_len(96) %% 9 != 1 & seq_len(96) < 91
+  dat$DO.obs.up[sparse] <- NA
+  first <- suppressWarnings(suppressMessages(mm_fill_gaps_2s(dat, max_gap_hours=2)))
+  first$DO.obs.down[sparse] <- NA
+  second <- suppressWarnings(suppressMessages(mm_fill_gaps_2s(first, max_gap_hours=2)))
+
+  alone <- suppressWarnings(suppressMessages(mm_fill_gaps_2s(drop_fill_share(first), max_gap_hours=2)))
+  expect_gt(attr(first, 'fill_share')$share + attr(alone, 'fill_share')$share, 1)
+  expect_identical(attr(second, 'fill_share')$share, 1)
+})
+
+test_that("carried days no longer in the data drop out of the fill-share table", {
+  dat <- make_gappy_data(n=120, start="2050-06-01 08:00:00")
+  filled <- suppressMessages(mm_fill_gaps_2s(dat[-(10:11), ]))
+  expect_equal(nrow(attr(filled, 'fill_share')), 2)
+
+  first_day <- filled[filled$solar.time < as.POSIXct('2050-06-02 06:00:00', tz='UTC'), ]
+  refilled <- suppressMessages(mm_fill_gaps_2s(first_day))
+  expect_equal(plain_fill_share(attr(refilled, 'fill_share')),
+               data.frame(date=as.Date('2050-06-01'), share=2/96))
+})
+
+test_that("the fill-share table is not carried past alignment", {
+  dat <- make_full_days(n_days=2)
+  filled <- suppressMessages(mm_fill_gaps_2s(dat[-(30:31), ]))
+  expect_false(is.null(attr(filled, 'fill_share')))
+  expect_null(attr(suppressMessages(mm_align_data_2s(filled)), 'fill_share'))
 })
 
 test_that("a day_start_hour that differs from the recorded one is an error", {

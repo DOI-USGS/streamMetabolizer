@@ -240,6 +240,15 @@ test_that("mm_format_data_2s()'s output passes validation and runs end-to-end th
   }
 })
 
+test_that("mm_format_data_2s() output carries the fill-share table, one row per day present", {
+  dat <- formatted_raw_example_2s()$data
+  fill_share <- attr(dat, 'fill_share')
+  days <- unique(mm_date_2s(unitted::v(dat$solar.time), mm_day_start_2s))
+  expect_equal(nrow(fill_share), 972)
+  expect_equal(fill_share$date, sort(days))
+  expect_equal(sum(fill_share$share > 0.25), 3)
+})
+
 test_that("a user's own already-formatted data (not built via mm_format_data_2s) passes validation independently", {
   # matches two_station_example's shape directly, with no provenance marker
   dat <- data.frame(
