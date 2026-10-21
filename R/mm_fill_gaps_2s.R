@@ -4,10 +4,8 @@ NULL
 #' Default and maximum gap-filling tolerance for two-station models
 #'
 #' Bounds how much consecutive missing data may be interpolated across
-#' before a gap is left in place; longer gaps are left as-is, and the days
-#' holding them are dropped by \code{\link{mm_align_2s}}'s whole-day
-#' completeness requirement. There is no middle tier: nothing partially
-#' filled ever reaches Stan.
+#' before a gap is left in place; days holding a longer gap never reach Stan
+#' (see \code{\link{mm_fill_gaps_2s}}).
 #'
 #' \code{mm_max_gap_hours_default} is the canonical default (currently 1
 #' hour) -- looser than Bishop et al. (2026)'s single-point/15-minute rule.
@@ -69,11 +67,12 @@ mm_check_warn_fill_share <- function(warn_fill_share) {
 #' Interpolate short gaps in two-station data
 #'
 #' Fills gaps short enough to bridge by linear interpolation, so a day
-#' marred by a brief sensor dropout can still be modeled. Gaps longer than
-#' \code{max_gap_hours} are left as-is and the day is dropped later, during
-#' alignment, for not filling its 24-hour day window -- there's no
-#' partial-fill middle ground, since the Stan model's \code{n_obs x n_days}
-#' matrices can't mask individual missing values.
+#' marred by a brief sensor dropout can still be modeled. Longer gaps are
+#' left in place: a day missing rows is then dropped by
+#' \code{\link{mm_align_data_2s}}, and a day with \code{NA} values is
+#' dropped at fit time by the \code{complete_data} day test (an error if
+#' that test is off). \code{NA} in \code{travel.time} is an error in
+#' \code{\link{mm_align_data_2s}}.
 #'
 #' When data have gaps, call this before \code{\link{mm_align_data_2s}}.
 #' Output of \code{\link{mm_format_data_2s}} is already filled at the
@@ -81,47 +80,29 @@ mm_check_warn_fill_share <- function(warn_fill_share) {
 #'
 #' A gap can be a missing row (no observation at a timestep bin) or a
 #' missing value (a row exists but a column is \code{NA}); both are treated
-#' as the same event. Gap length is measured in timestep bins between the
-#' bracketing observations, not row count, so a run that looks short by row
-#' count but spans a multi-day outage is correctly refused.
+#' as the same event.
 #'
 #' Gaps at the start or end of the record are never filled, since
-#' interpolation needs observations on both sides; those edge days are
-#' already dropped by the completeness requirement.
+#' interpolation needs observations on both sides.
 #'
-#' @section Invariant: This function never returns a row with \code{NA} in
-#'   an interpolated column -- a partially-fillable inserted row is dropped
-#'   rather than kept.
+#' Interpolating \code{light} that is already a within-day proportion is
+#' less accurate than filling raw light, as \code{\link{mm_format_data_2s}}
+#' does.
 #'
 #' @section Heavily filled days: Filling never drops a day. When this call
 #'   fills any values, a single warning lists the days in \code{fill_share}
 #'   whose share is above \code{warn_fill_share}. Every filled value counts
 #'   toward the day its timestamp falls in, whether it filled a missing row
-#'   or a missing value. Some flagged days may still be dropped later, during
-#'   alignment.
+#'   or a missing value. Some flagged days may still be dropped later.
 #'
-#'   Shares from an earlier call, carried on \code{data}, are added to this
-#'   call's, up to 1, so a share can overstate the filled fraction but never
-#'   understate it. A carried \code{fill_share} that is malformed (wrong
-#'   columns, invalid values, or an invalid day start hour) is an error.
-#'
-#'   To drop heavily filled days, align first and then remove them from the
-#'   aligned data. Dropping a day before alignment also removes the next day,
-#'   whose first rows draw their upstream values from it. Days dropped this
-#'   way are not listed among a fit's invalid days.
-#'
-#' @section Interpolating light: The \code{light} column is interpolated
-#'   like any other, but accuracy depends on timing:
-#'   \code{\link{mm_format_data_2s}} fills raw light before converting to
-#'   the within-day proportion (accurate), while hand-formatted data
-#'   arrives pre-converted, so interpolating it approximates a proportion
-#'   whose denominator is already short the missing terms. Supplying raw
-#'   light is the more accurate route.
+#'   Shares carried on \code{data} from an earlier call are added to this
+#'   call's, capped at 1.
 #'
 #' @param data data.frame, unitted or not, with \code{solar.time} already on
 #'   a single nominal timestep grid (as in \code{\link{mm_format_data_2s}}
-#'   output) and sorted ascending. Every other column is treated as a numeric
-#'   time series to be interpolated.
+#'   output) and sorted ascending. Other numeric columns are interpolated. A
+#'   non-numeric column is not interpolated and prevents any missing-row gap
+#'   from being filled.
 #' @param max_gap_hours the gap-filling tolerance, in hours: runs of missing
 #'   data spanning no more than this are interpolated, longer runs are left in
 #'   place. Defaults to 1 hour and may not be set above 2.
@@ -131,17 +112,13 @@ mm_check_warn_fill_share <- function(warn_fill_share) {
 #' @param day_start_hour hour of the day, in [0, 24), at which each 24-hour
 #'   two-station day begins, used to group filled values into days.
 #'   \code{NULL} (the default) uses the hour stored by
-#'   \code{\link{mm_format_data_2s}} if present, otherwise 6; a value that
-#'   differs from the stored hour, or from the hour of a carried
-#'   \code{fill_share}, is an error.
+#'   \code{\link{mm_format_data_2s}} if present, otherwise 6.
 #' @return \code{data} with the same columns, column order, units, and
 #'   \code{day_start_hour} attribute (if any), and with rows inserted where a
-#'   short missing-row gap could be filled. Any record of the light-window
-#'   check from \code{\link{mm_format_data_2s}} is dropped, so data filled
-#'   again are aligned without that check. A \code{fill_share} attribute
-#'   holds a tibble with one row per day in the result: the \code{date} and
-#'   the \code{share} of that day's values that were filled, taken from the
-#'   most-filled column.
+#'   short missing-row gap could be filled in every column, so no inserted
+#'   row holds \code{NA}. A \code{fill_share} attribute holds a tibble with
+#'   one row per day in the result: the \code{date} and the \code{share} of
+#'   that day's values that were filled, taken from the most-filled column.
 #' @examples
 #' dat <- two_station_example[
 #'   unitted::v(two_station_example$solar.time) < as.POSIXct('2008-03-16', tz='UTC'), ]
@@ -154,12 +131,6 @@ mm_check_warn_fill_share <- function(warn_fill_share) {
 #' # the share of each day's values that were filled
 #' fill_share <- attr(filled, 'fill_share')
 #' fill_share
-#'
-#' # fill before aligning, then drop heavily filled days from the aligned data
-#' aligned <- mm_align_data_2s(filled)
-#' heavy <- fill_share$date[fill_share$share > 0.02]
-#' aligned <- aligned[!(aligned$date %in% heavy), ]
-#' table(aligned$date)
 #' @importFrom stats approx
 #' @importFrom unitted u v is.unitted get_units
 #' @export
@@ -418,5 +389,5 @@ mm_warn_heavily_filled_2s <- function(fill_share, warn_fill_share) {
     paste(sprintf('%s (%.1f%%)', as.character(listed$date), 100 * listed$share), collapse=', '),
     if(nrow(flagged) > max_listed) paste0(', and ', nrow(flagged) - max_listed, ' more') else '',
     '. Estimates for these days lean on interpolated values; some may still be dropped ',
-    'during alignment.'), call.=FALSE)
+    'later.'), call.=FALSE)
 }

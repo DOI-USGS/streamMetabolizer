@@ -86,10 +86,11 @@ mm_check_min_n_obs_2s <- function(min_n_obs) {
 #' Drop two-station days whose modeled data fails the day-validity tests
 #'
 #' Sits between alignment and the fit: alignment owns the structural
-#' questions (does this day fill its window, is its travel time usable), and
-#' this owns the data-quality ones (are the modeled values all present, is
-#' depth positive). Failing days are removed from the data and returned
-#' separately, so the caller can report them rather than let them disappear.
+#' questions (does each row have upstream lead-in, does the day pass the
+#' light-window check and fill its window), and this owns the data-quality
+#' ones (are the modeled values all present, is depth positive). Failing days
+#' are removed from the data and returned separately, so the caller can
+#' report them rather than let them disappear.
 #'
 #' \code{\link{mm_filter_valid_days}} is deliberately not reused, though
 #' \code{\link{mm_is_valid_day}} underneath it is: that function partitions

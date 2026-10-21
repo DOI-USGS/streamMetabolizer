@@ -46,10 +46,12 @@ Gaps are not filled here. When data have gaps, call
   Either way, GPP, ER, and gas exchange are held constant over one day's
   data. Days that do not fill the window -- at the edges of a dataset whose
   bounds don't fall on the day start hour, or
-  where observations are missing and the gap was left unfilled (see
+  where rows are missing and the gap was left unfilled (see
   \code{\link{mm_fill_gaps_2s}}) -- are dropped with a message and
   reported as invalid days in the results of
-  \code{\link{metab_bayes_2s}}.
+  \code{\link{metab_bayes_2s}}. \code{NA} values in rows that are present,
+  other than in \code{travel.time}, do not drop a day here; the fit's day
+  tests handle them.
 }
 
 \section{Lead-in and light window}{

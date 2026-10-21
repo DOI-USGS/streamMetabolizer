@@ -18,10 +18,8 @@ mm_max_gap_hours_cap
 }
 \description{
 Bounds how much consecutive missing data may be interpolated across
-before a gap is left in place; longer gaps are left as-is, and the days
-holding them are dropped by \code{\link{mm_align_2s}}'s whole-day
-completeness requirement. There is no middle tier: nothing partially
-filled ever reaches Stan.
+before a gap is left in place; days holding a longer gap never reach Stan
+(see \code{\link{mm_fill_gaps_2s}}).
 }
 \details{
 \code{mm_max_gap_hours_default} is the canonical default (currently 1

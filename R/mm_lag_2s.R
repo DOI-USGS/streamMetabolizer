@@ -315,8 +315,9 @@ mm_light_check_2s <- function(solar.time, light, travel.time, day_start_hour) {
 #'   \item the day does not fill its 24-hour window, i.e. it holds fewer than
 #'     \code{round(1 / timestep_days)} modeled rows. Partial days arise at
 #'     the edges of any dataset whose bounds don't fall on the day start
-#'     hour, and from missing sensor readings; they're dropped because the
-#'     Stan model expects fixed-shape \code{n_obs x n_days} matrices. Short
+#'     hour, and from missing rows (a reading logged as \code{NA} in a row
+#'     that is present does not make a day partial); they're dropped because
+#'     the Stan model expects fixed-shape \code{n_obs x n_days} matrices. Short
 #'     gaps are filled beforehand by \code{\link{mm_fill_gaps_2s}}, if at all, not here.
 #' }
 #'

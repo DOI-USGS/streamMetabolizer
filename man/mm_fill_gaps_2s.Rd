@@ -14,8 +14,9 @@ mm_fill_gaps_2s(
 \arguments{
 \item{data}{data.frame, unitted or not, with \code{solar.time} already on
 a single nominal timestep grid (as in \code{\link{mm_format_data_2s}}
-output) and sorted ascending. Every other column is treated as a numeric
-time series to be interpolated.}
+output) and sorted ascending. Other numeric columns are interpolated. A
+non-numeric column is not interpolated and prevents any missing-row gap
+from being filled.}
 
 \item{max_gap_hours}{the gap-filling tolerance, in hours: runs of missing
 data spanning no more than this are interpolated, longer runs are left in
@@ -28,27 +29,24 @@ and 1 turns the warning off.}
 \item{day_start_hour}{hour of the day, in [0, 24), at which each 24-hour
 two-station day begins, used to group filled values into days.
 \code{NULL} (the default) uses the hour stored by
-\code{\link{mm_format_data_2s}} if present, otherwise 6; a value that
-differs from the stored hour, or from the hour of a carried
-\code{fill_share}, is an error.}
+\code{\link{mm_format_data_2s}} if present, otherwise 6.}
 }
 \value{
 \code{data} with the same columns, column order, units, and
   \code{day_start_hour} attribute (if any), and with rows inserted where a
-  short missing-row gap could be filled. Any record of the light-window
-  check from \code{\link{mm_format_data_2s}} is dropped, so data filled
-  again are aligned without that check. A \code{fill_share} attribute
-  holds a tibble with one row per day in the result: the \code{date} and
-  the \code{share} of that day's values that were filled, taken from the
-  most-filled column.
+  short missing-row gap could be filled in every column, so no inserted
+  row holds \code{NA}. A \code{fill_share} attribute holds a tibble with
+  one row per day in the result: the \code{date} and the \code{share} of
+  that day's values that were filled, taken from the most-filled column.
 }
 \description{
 Fills gaps short enough to bridge by linear interpolation, so a day
-marred by a brief sensor dropout can still be modeled. Gaps longer than
-\code{max_gap_hours} are left as-is and the day is dropped later, during
-alignment, for not filling its 24-hour day window -- there's no
-partial-fill middle ground, since the Stan model's \code{n_obs x n_days}
-matrices can't mask individual missing values.
+marred by a brief sensor dropout can still be modeled. Longer gaps are
+left in place: a day missing rows is then dropped by
+\code{\link{mm_align_data_2s}}, and a day with \code{NA} values is
+dropped at fit time by the \code{complete_data} day test (an error if
+that test is off). \code{NA} in \code{travel.time} is an error in
+\code{\link{mm_align_data_2s}}.
 }
 \details{
 When data have gaps, call this before \code{\link{mm_align_data_2s}}.
@@ -57,47 +55,24 @@ Output of \code{\link{mm_format_data_2s}} is already filled at the
 
 A gap can be a missing row (no observation at a timestep bin) or a
 missing value (a row exists but a column is \code{NA}); both are treated
-as the same event. Gap length is measured in timestep bins between the
-bracketing observations, not row count, so a run that looks short by row
-count but spans a multi-day outage is correctly refused.
+as the same event.
 
 Gaps at the start or end of the record are never filled, since
-interpolation needs observations on both sides; those edge days are
-already dropped by the completeness requirement.
-}
-\section{Invariant}{
- This function never returns a row with \code{NA} in
-  an interpolated column -- a partially-fillable inserted row is dropped
-  rather than kept.
-}
+interpolation needs observations on both sides.
 
+Interpolating \code{light} that is already a within-day proportion is
+less accurate than filling raw light, as \code{\link{mm_format_data_2s}}
+does.
+}
 \section{Heavily filled days}{
  Filling never drops a day. When this call
   fills any values, a single warning lists the days in \code{fill_share}
   whose share is above \code{warn_fill_share}. Every filled value counts
   toward the day its timestamp falls in, whether it filled a missing row
-  or a missing value. Some flagged days may still be dropped later, during
-  alignment.
+  or a missing value. Some flagged days may still be dropped later.
 
-  Shares from an earlier call, carried on \code{data}, are added to this
-  call's, up to 1, so a share can overstate the filled fraction but never
-  understate it. A carried \code{fill_share} that is malformed (wrong
-  columns, invalid values, or an invalid day start hour) is an error.
-
-  To drop heavily filled days, align first and then remove them from the
-  aligned data. Dropping a day before alignment also removes the next day,
-  whose first rows draw their upstream values from it. Days dropped this
-  way are not listed among a fit's invalid days.
-}
-
-\section{Interpolating light}{
- The \code{light} column is interpolated
-  like any other, but accuracy depends on timing:
-  \code{\link{mm_format_data_2s}} fills raw light before converting to
-  the within-day proportion (accurate), while hand-formatted data
-  arrives pre-converted, so interpolating it approximates a proportion
-  whose denominator is already short the missing terms. Supplying raw
-  light is the more accurate route.
+  Shares carried on \code{data} from an earlier call are added to this
+  call's, capped at 1.
 }
 
 \examples{
@@ -112,10 +87,4 @@ c(original=nrow(dat), gappy=nrow(gappy), filled=nrow(filled))
 # the share of each day's values that were filled
 fill_share <- attr(filled, 'fill_share')
 fill_share
-
-# fill before aligning, then drop heavily filled days from the aligned data
-aligned <- mm_align_data_2s(filled)
-heavy <- fill_share$date[fill_share$share > 0.02]
-aligned <- aligned[!(aligned$date \%in\% heavy), ]
-table(aligned$date)
 }

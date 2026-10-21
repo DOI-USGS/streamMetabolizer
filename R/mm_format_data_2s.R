@@ -18,10 +18,11 @@ NULL
 #' package-convention column names (\code{timestamp}, \code{DO.obs},
 #' \code{DO.sat}, etc.).
 #'
-#' \code{downstream} is the central piece: every downstream row survives into the
-#' output, with \code{NA} wherever no upstream or light observation exists at
-#' that timestep. \code{upstream} and \code{light} are matched to it by
-#' timestep bin.
+#' \code{downstream} sets the rows of the output: each downstream row within
+#' the shared deployment window is kept, with \code{NA} wherever no upstream
+#' or light observation exists and the gap is too long to fill, and gap
+#' filling may add rows. \code{upstream} and \code{light} are matched to it
+#' by timestep bin.
 #'
 #' \code{upstream} and \code{downstream} are first trimmed to their shared
 #' deployment window, with a message reporting how many rows of each were
@@ -47,15 +48,14 @@ NULL
 #'   logged nothing for a few timesteps, or logged \code{NA} -- are bridged by
 #'   linear interpolation, so a day marred by a short dropout can be modeled
 #'   rather than discarded. Gaps longer than \code{max_gap_hours} are left in
-#'   place, and \code{\link{mm_align_data_2s}} drops the days holding them.
+#'   place; see \code{\link{mm_fill_gaps_2s}} for how the days holding them
+#'   are dropped.
 #'   A warning lists days on which more than \code{warn_fill_share} of a
 #'   day's values were filled.
 #'   Filling happens here while \code{light} is still a raw per-timestep
 #'   value, before the within-day proportion is computed -- the accurate
 #'   order, since the proportion is then formed from a complete series
-#'   divided by a complete day total. See the "Interpolating light" section
-#'   of \code{\link{mm_fill_gaps_2s}} for what happens if gaps are filled
-#'   after the fact instead, e.g. in hand-formatted data.
+#'   divided by a complete day total.
 #'
 #' @param upstream data.frame or unitted data.frame with columns
 #'   \code{timestamp} (POSIXct, UTC), \code{DO.obs}, \code{DO.sat}
