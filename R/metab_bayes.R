@@ -967,8 +967,8 @@ predict_metab.metab_bayes <- function(metab_model, date_start=NA, date_end=NA, .
     setNames(c('date', metab.names)) # these errors & warnings will mostly be date validity notes, unless split_dates==T
 
   # msgs.fit is treated as a fitting message, not a prediction one: when
-  # split_dates==F (which we plan to force in the near future) the date-specific
-  # messages are all just date validity notes, which belong to fitting alone
+  # split_dates==F the date-specific messages are all just date validity notes,
+  # which belong to fitting alone
   preds <- mm_attach_fit_msgs(
     preds, fit,
     warnings.overall=metab_model@fit$warnings, errors.overall=metab_model@fit$errors)

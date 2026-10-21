@@ -82,8 +82,8 @@ light <- filter(light, timestamp >= overlap_start, timestamp <= overlap_end)
 # --- attach units ------------------------------------------------------
 
 # timestamp is raw clock time, not yet converted to mean solar time (that
-# conversion is a later formatting step), so it's tagged NA rather than
-# reusing mm_data()'s 'solar.time' column.
+# conversion is a later formatting step), so it's tagged NA and still named
+# "timestamp" rather than reusing mm_data()'s 'solar.time' column.
 attach_mm_units <- function(df, ...) {
   template <- mm_data(...)
   for(col in names(template)) {
