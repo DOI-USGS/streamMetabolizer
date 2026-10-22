@@ -169,7 +169,7 @@ test_that("output matrices have n_obs x n_days dimensions", {
 
 test_that("all required Stan data block variables are present", {
   dat <- make_ts_data()
-  # k600_velocity_lnorm_meanlog/sdlog are owned by specs() (see PR D-6/I1);
+  # k600_velocity_lnorm_meanlog/sdlog are owned by specs();
   # pass distinctive marker values here to confirm prepdata_bayes_2s() just
   # reads them through from specs rather than computing its own defaults
   out <- prepdata_bayes_2s(dat, specs=list(k600_velocity_lnorm_meanlog=1.23, k600_velocity_lnorm_sdlog=4.56))
@@ -511,18 +511,16 @@ test_that("specs(mm_name('bayes_2s')) has the expected params_in/params_out/spli
     sp$params_in,
     c('GPP_daily_mu', 'GPP_daily_sigma', 'ER_daily_mu', 'ER_daily_sigma',
       'k600_velocity_lnorm_meanlog', 'k600_velocity_lnorm_sdlog'))
-  # K600_daily stays in params_out even though it is no longer a fitted
-  # parameter: the model reports it as a generated quantity
+  # K600_daily is in params_out as a generated quantity, not a fitted parameter
   expect_equal(sp$params_out, c('GPP_daily', 'ER_daily', 'K600_daily', 'sigma', 'metab'))
   expect_false(sp$split_dates)
   expect_equal(sp$engine, 'stan')
 })
 
 test_that("specs(mm_name('bayes_2s')) defaults the gas exchange prior to the velocity scale", {
-  # the prior is on k600_velocity (m d^-1), not on a rate-scale K600 (d^-1):
-  # the model divides it by each timestep's depth. Pinning the values here
-  # so a drift back toward the one-station K600_daily_meanlog convention
-  # (log(12)), which would double-apply the depth normalization, fails loudly
+  # the default prior for this model is on the velocity-scale k600_velocity
+  # (m d^-1), which the model divides by each timestep's depth; it is not
+  # interchangeable with the rate-scale one-station K600 prior (d^-1)
   sp <- specs(mm_name('bayes_2s'))
   expect_equal(sp$k600_velocity_lnorm_meanlog, log(3.48))
   expect_equal(sp$k600_velocity_lnorm_sdlog, 0.5)
@@ -532,8 +530,8 @@ test_that("specs(mm_name('bayes_2s')) defaults the gas exchange prior to the vel
 
 test_that("the two-station Stan model fits a velocity-scale k600 and reports a rate-scale K600_daily", {
   # a text-level contract test on the model file, so it costs no compile.
-  # Guards the specific error this model has already made once: a
-  # rate-scale parameter fed into a formula that divides by depth
+  # The model fits a velocity-scale k600 (m d^-1) and divides by depth once,
+  # in transformed parameters, so the reported K600_daily is a rate (d^-1)
   stan_code <- readLines(mm_locate_filename(mm_name('bayes_2s')))
 
   # the fitted parameter is velocity-scale, and takes the velocity-scale prior
@@ -544,8 +542,8 @@ test_that("the two-station Stan model fits a velocity-scale k600 and reports a r
   # depth normalization happens exactly once, on the velocity-scale parameter
   expect_equal(sum(grepl('k600_velocity\\[t\\] / depth\\[i,t\\]', stan_code)), 1L)
 
-  # K600_daily is reported as a generated quantity, so downstream consumers
-  # (mm_na_daily(), get_params(), predict_metab()) still find it by name
+  # K600_daily is reported as a generated quantity, so daily output keeps the
+  # same K600_daily name as one-station models
   gq_start <- which(grepl('^generated quantities', stan_code))
   expect_length(gq_start, 1L)
   expect_match(stan_code[gq_start:length(stan_code)], 'vector\\[n_days\\] K600_daily;', all=FALSE)
@@ -925,12 +923,9 @@ test_that("reported K600_daily is the day's velocity-scale k600 divided by depth
   skip_on_cran()
   skip_if_not_installed('rstan')
 
-  # The units test. A prior tight enough to dominate the likelihood pins
-  # k600_velocity at its median, so the reported K600_daily has a value that
-  # can be predicted in closed form: mean(k600 / depth) over the day's
-  # modeled timesteps. Getting the prior's own scale back instead would mean
-  # the depth division had been dropped; getting that value divided by depth
-  # a second time would mean it had been applied twice.
+  # a prior tight enough to dominate the likelihood pins k600_velocity at its
+  # median, so each day's K600_daily should equal mean(k600 / depth) over that
+  # day's modeled timesteps
   k600 <- 3.48
   sp <- revise(fast_2station_specs(),
                k600_velocity_lnorm_meanlog=log(k600),
@@ -950,9 +945,8 @@ test_that("reported K600_daily is the day's velocity-scale k600 divided by depth
 
   expect_equal(fit$K600_daily_50pct, expected, tolerance=0.05)
 
-  # and the scale really is distinguishable: this reach is deep enough that
-  # the rate differs from the velocity by several fold, so the assertion
-  # above would fail if the depth division went missing
+  # the example data's depths are large enough that the expected rate is below
+  # half of k600, so the check above can tell the two scales apart
   expect_true(all(expected < k600 / 2))
 })
 
