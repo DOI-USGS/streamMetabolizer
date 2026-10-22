@@ -120,9 +120,9 @@ test_that("all required Stan data block variables are present", {
 # mm_lag_light_2s() ---------------------------------------------------------
 
 test_that("mm_lag_light_2s computes the traceable within-day light proportion", {
-  # 1 lead-in row + one 06:00-06:00 day (4 rows at a 6-hourly timestep, the
-  # same day window mm_align_2s() uses); travel.time=6hr -> lag=1, so each
-  # modeled row's window is itself plus the immediately preceding row
+  # 1 lead-in row + one 06:00-06:00 day (4 rows at a 6-hourly timestep);
+  # travel.time=6hr -> lag=1, so each modeled row's window is itself plus the
+  # immediately preceding row
   solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
     as.difftime((0:4) * 6, units="hours")
   light <- c(10, 1, 2, 3, 4)
@@ -181,9 +181,8 @@ test_that("an incomplete 06:00-06:00 day (including a trailing partial day) gets
   expect_true(all(is.na(out[51:55])))
 })
 
-test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regression test for #475 day-window mismatch)", {
-  # A day mm_align_2s() marks complete must never have NA light (see the
-  # day-sum-denominator roxygen section of mm_lag_light_2s()).
+test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries", {
+  # A day mm_align_2s() marks complete must never have NA light.
   #
   # Fixture: hourly timestep, 2050-06-01 04:00 through 2050-06-03 08:00.
   # mm_align_2s() calls 06:00-days 2050-06-01 and 2050-06-02 complete (24/24
@@ -205,7 +204,7 @@ test_that("mm_align_2s() and mm_lag_light_2s() agree on day boundaries (regressi
 
   light_lag <- mm_lag_light_2s(solar.time, light, travel.time, day_start_hour=mm_day_start_2s)
   # every row mm_align_2s() considers part of a complete day must have a
-  # real (non-NA) light proportion -- the boundaries now agree by default
+  # real (non-NA) light proportion
   expect_false(any(is.na(light_lag[alignment$keep])))
 
   # and so the aligned frame built from that light has none either
@@ -274,7 +273,7 @@ test_that("a real mid-series gap (on-grid, but a bin missing) is handled, not re
   # still exactly on the hourly grid, unlike the off-grid case above.
   # travel.time=4hr -> lag=4, so the gap is far enough back to fall both at
   # a window boundary (for one row) and strictly inside a window (for
-  # another), exercising both of mm_lag_2s()'s consumers' failure modes
+  # another), covering both the point lookup and the window sum
   n <- 24
   solar.time <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") +
     as.difftime((0:(n - 1)) * 1, units="hours")
@@ -309,9 +308,7 @@ test_that("a real mid-series gap (on-grid, but a bin missing) is handled, not re
     as.POSIXct(c("2050-06-01 08:00:00", "2050-06-01 10:00:00", "2050-06-01 11:00:00", "2050-06-01 12:00:00"), tz="UTC"))
 })
 
-test_that("mm_lag_light_2s runs without erroring on the real, gappy two_station_raw_example (regression test for #475)", {
-  # previously blocked outright by the old regularity guard (any gap ->
-  # hard error); now gap-safe via timestep-bin matching in mm_lag_2s()
+test_that("mm_lag_light_2s runs without error on the real, gappy two_station_raw_example", {
   data("two_station_raw_example", envir=environment())
   up <- two_station_raw_example$upstream
   up_ts <- as.POSIXct(v(up$timestamp), tz="UTC")
@@ -350,8 +347,8 @@ test_that("mm_align_2s drops a day mixing gap-affected and clean rows wholesale,
 
 test_that("mm_snap_to_bin_2s snaps two phase-shifted patterns onto one common grid", {
   # a 15-min nominal grid, plus two synthetic deployments each internally
-  # regular but offset from that grid -- one at :01/:16/:31/:46 (matching
-  # the design doc's example pattern), the other at :04/:19/:34/:49
+  # regular but offset from that grid -- one at :01/:16/:31/:46, the other
+  # at :04/:19/:34/:49
   marks <- as.POSIXct("2050-06-01 00:00:00", tz="UTC") + as.difftime((0:19) * 15, units="mins")
   series_a <- marks + as.difftime(1, units="mins")
   series_b <- marks + as.difftime(4, units="mins")
@@ -370,7 +367,7 @@ test_that("mm_snap_to_bin_2s turns a true gap between deployments into empty bin
   # deployment 1: 5 rows, 15-min cadence, phase +1 min
   seg1 <- as.POSIXct("2050-06-01 00:01:00", tz="UTC") + as.difftime((0:4) * 15, units="mins")
   # a true gap of 3 hours (12 timesteps), then deployment 2: 5 rows, 15-min
-  # cadence, phase +4 min -- concatenated deployments, per the design doc
+  # cadence, phase +4 min -- concatenated deployments
   seg2 <- seg1[5] + as.difftime(3, units="hours") + as.difftime(4, units="mins") +
     as.difftime((0:4) * 15, units="mins")
   solar.time <- c(seg1, seg2)
@@ -675,8 +672,7 @@ test_that("a failed Stan run on one day is recorded as that day's warning, leavi
   skip_on_cran()
   skip_if_not_installed('rstan')
 
-  # mirrors the joint fit's treatment of a mode==2L stanfit (a warning, not
-  # an error), but scoped to the one day that failed
+  # a stanfit with mode 2L is a warning for that day, not an error
   sp <- fast_2station_specs()
   dat <- suppressMessages(mm_align_data_2s(subset_2station_days(two_station_example, 3)))
   bad_date <- unique(dat$date)[2]
@@ -728,7 +724,7 @@ test_that("bayes_perday_2s() compiles the Stan model once and hits the cache for
 
 # split_dates=TRUE wiring ------------------------------------------------
 
-test_that("specs() still defaults split_dates to FALSE but accepts TRUE for two-station", {
+test_that("specs() defaults split_dates to FALSE for two-station and accepts TRUE", {
   expect_false(specs(mm_name('bayes_2s'))$split_dates)
   # setting it in specs() warns (revise() is the preferred route) exactly as
   # it does for one-station, but the value is honored
@@ -815,7 +811,7 @@ test_that("metab_bayes_2s(split_dates=TRUE) reports every date as failed when no
   expect_null(get_fit(mm)$inst)
 })
 
-test_that("the mcmc slot holds one stanfit jointly and a date-named list per day, as for one-station", {
+test_that("the mcmc slot holds one stanfit for a joint fit and a date-named list for a per-day fit", {
   skip_on_cran()
   skip_if_not_installed('rstan')
 
@@ -1047,7 +1043,7 @@ test_that("specs$day_tests is honored, not hard-coded", {
   sp <- fast_2station_specs()
   sp$day_tests <- 'complete_data' # drop pos_depth
 
-  # the depth<=0 day is no longer rejected before fitting
+  # without pos_depth, the depth<=0 day is kept
   res <- suppressMessages(mm_filter_valid_days_2s(dat, day_tests=sp$day_tests))
   expect_equal(nrow(res$removed), 0)
 })

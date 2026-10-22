@@ -181,7 +181,7 @@ test_that("units survive filling, in whichever shape they arrived", {
 
 # preconditions -------------------------------------------------------------
 
-test_that("mm_fill_gaps_2s enforces the same grid preconditions as mm_lag_2s", {
+test_that("mm_fill_gaps_2s rejects off-grid, duplicate-bin, and unsorted timestamps", {
   dat <- make_gappy_data(n=20)
 
   offgrid <- dat
@@ -457,14 +457,12 @@ test_that("an over-tolerance gap still costs its day", {
 })
 
 
-# light: the na.rm bias this fixes ------------------------------------------
+# light: filling before normalizing -----------------------------------------
 
 test_that("filling raw light before normalizing removes mm_lag_light_2s's na.rm bias", {
   # mm_lag_light_2s() sums with na.rm=TRUE in both the travel-time window and
   # the day total, which silently treats a missing light reading as darkness
   # rather than as missing. Filling the raw series first makes na.rm a no-op.
-  # This is an intentional behavior change: the proportions below differ
-  # before and after, and the "after" values are the correct ones.
   n <- 26
   solar.time <- as.POSIXct("2050-06-01 04:00:00", tz="UTC") +
     as.difftime((0:(n - 1)) * 1, units="hours")
@@ -531,8 +529,8 @@ test_that("filling behaves on the real two_station_raw_example", {
     NA)
 
   # every timestamp is still on the bin grid, still sorted, still unique.
-  # "on the grid" allows the same 1-second slack mm_lag_2s() allows, since
-  # timestamp arithmetic leaves sub-second noise on real data
+  # "on the grid" allows 1 second of slack, since timestamp arithmetic leaves
+  # sub-second noise on real data
   stamps <- unitted::v(dat$solar.time)
   expect_false(is.unsorted(stamps))
   expect_false(any(duplicated(stamps)))

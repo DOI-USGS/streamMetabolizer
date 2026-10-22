@@ -124,9 +124,10 @@ first_valid_2station_days <- function(full_data, n_days) {
 # fit. Naively slicing rows doesn't work: max_lag (the number of upstream
 # lead-in rows required) is recomputed from whatever travel.time values are
 # present in the slice, so an arbitrary row range can leave the first date
-# without enough upstream rows to fill its window. Unlike subset_2station_days(), the lead-in block sized here is the
-# window-wide worst case rather than each row's own requirement, so part of
-# it is itself modelable and surfaces as one extra valid_day=FALSE day.
+# without enough upstream rows to fill its window. The lead-in block sized
+# here is the window-wide worst case rather than each row's own requirement,
+# so part of it is itself modelable and surfaces as one extra
+# valid_day=FALSE day.
 subset_2station_data <- function(full_data, n_modeled_days) {
   solar_time <- v(full_data$solar.time)
   timestep_days <- stats::median(as.numeric(diff(solar_time), units='days'))
@@ -203,8 +204,7 @@ make_2day_2station_data <- function() {
 
 # Build a two-station data.frame on a 15-minute grid. At that timestep the
 # default 1-hour tolerance is exactly 4 bins, so a 4-bin gap is the largest
-# fillable one and a 5-bin gap is the smallest unfillable one -- every
-# boundary test below is written against those two numbers.
+# fillable one and a 5-bin gap is the smallest unfillable one.
 # Light is traceable (100 + row index) from 07:00 to 19:00 and 0 otherwise.
 make_gappy_data <- function(n=40, start="2050-06-01 00:00:00", travel_time=0.01) {
   solar.time <- as.POSIXct(start, tz="UTC") +

@@ -74,8 +74,7 @@ test_that("upstream/downstream deployment windows are trimmed to their overlap, 
   # every downstream row still has a real upstream match after trimming (the
   # trimmed-in upstream rows fully cover downstream's window); light itself
   # is separately NA here because these 10 hourly rows don't fill either of
-  # the two partial 06:00-06:00 days they span -- see mm_lag_light_2s()'s
-  # day-completeness rule, exercised elsewhere, not what this test is about
+  # the two partial 06:00-06:00 days they span
   expect_false(any(is.na(v(out$DO.obs.up))))
 })
 
@@ -84,14 +83,11 @@ test_that("no trimming and no dropped rows when inputs already share one deploym
   formatted <- formatted_raw_example_2s()
   out <- formatted$data
 
-  # gap filling reports what it bridged, so this call is no longer silent;
-  # what this test is about is that nothing gets *trimmed* -- the three
-  # inputs already share one deployment window
+  # nothing is trimmed: the three inputs already share one deployment window
   expect_false(any(grepl('trimming to the shared', formatted$messages)))
 
-  # no downstream row is dropped. Rows are now *added*, though: filling
-  # bridges this record's short gaps (see test-mm_fill_gaps_2s.R), so the
-  # output is a superset of downstream's timestamps rather than a match
+  # no downstream row is dropped; filling bridges this record's short gaps,
+  # so the output is a superset of downstream's timestamps
   expect_true(all(v(mm_snap_to_bin_2s(down$timestamp)) %in% v(out$solar.time)))
   expect_gte(nrow(out), nrow(down))
 })
@@ -158,8 +154,8 @@ test_that("a downstream timestamp with no matching upstream/light bin is interpo
   expect_false(any(is.na(v(out$DO.obs.up))))
   expect_equal(v(out$DO.obs.up)[gap_row], 3)
 
-  # two consecutive missing bins exceed the tolerance, so the original
-  # contract still holds there: an unmatched bin is an NA, never a lost row
+  # two consecutive missing bins exceed the tolerance, so the unmatched bin
+  # is NA, never a lost row
   two <- one + as.difftime(c(0, 1), units="hours")
   out2 <- suppressMessages(mm_format_data_2s(make_up(two), downstream, make_lt(two)))
 
@@ -223,8 +219,7 @@ test_that("mm_format_data_2s()'s output passes validation and runs end-to-end th
 
   # the same route a fit takes: align, then drop days whose modeled values
   # fail day_tests, then prep. Skipping the middle step leaves NAs in the
-  # matrices -- 86 of this record's 891 aligned days carry one, mostly from
-  # upstream outages -- and Stan rejects those outright
+  # matrices, mostly from upstream outages, and Stan rejects those outright
   sp <- specs(mm_name('bayes_2s'))
   aligned <- suppressMessages(mm_align_data_2s(out))
   filtered <- suppressMessages(mm_filter_valid_days_2s(aligned, day_tests=sp$day_tests))

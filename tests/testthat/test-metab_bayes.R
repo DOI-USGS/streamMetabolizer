@@ -82,15 +82,9 @@ test_that("prepdata_bayes() errors for data that isn't sorted by date", {
 })
 
 test_that("format_mcmc_mat_nosplit()'s data_list_d/data_list_n parameters stay unused", {
-  # bayes_1fit_2s() (two-station) delegates to runstan_bayes(), which calls
-  # format_mcmc_mat_nosplit(stan_mat, data_list$d, data_list$n, ...).
-  # Two-station's data_list has no $d/$n -- it uses n_days/n_obs instead --
-  # so data_list_d/data_list_n always arrive here as NULL for a two-station
-  # fit. That's only safe because format_mcmc_mat_nosplit() never actually
-  # reads either parameter. If either is ever wired into the function body,
-  # two-station's delegation breaks silently (NULL flowing into logic that
-  # expects a real value) rather than erroring. This pins the invariant
-  # directly rather than waiting to notice a silent break downstream.
+  # Two-station data lists have no $d or $n, so two-station fits pass
+  # NULL for these parameters. That is safe only while the function never
+  # reads them.
   used_vars <- all.vars(body(format_mcmc_mat_nosplit))
   expect_false('data_list_d' %in% used_vars)
   expect_false('data_list_n' %in% used_vars)

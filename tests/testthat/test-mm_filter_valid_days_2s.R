@@ -235,7 +235,7 @@ test_that("specs(mm_name('bayes_2s')) defaults day_tests to complete_data + pos_
   sp <- specs(mm_name('bayes_2s'))
   expect_equal(sp$day_tests, c('complete_data','pos_depth'))
 
-  # one-station's five-test default is deliberately not inherited
+  # not one-station's five-test default
   expect_false('full_day' %in% sp$day_tests)
   expect_false('even_timesteps' %in% sp$day_tests)
 
@@ -251,9 +251,8 @@ test_that("specs(mm_name('bayes_2s')) defaults day_tests to complete_data + pos_
 })
 
 test_that("mm_is_valid_day() accepts a day_tests subset that omits full_day and even_timesteps", {
-  # regression test: those two tests' guards evaluate is.finite(timestep.days)
-  # with `&` rather than `&&`, so timestep.days must be defined even when
-  # neither test was requested (two-station's default requests neither)
+  # neither full_day nor even_timesteps is requested (the two-station
+  # default), so no timestep is needed to judge the day
   ply <- data.frame(
     solar.time = as.POSIXct("2050-06-01 06:00:00", tz="UTC") +
       as.difftime((0:23) * 1, units="hours"),
