@@ -54,7 +54,7 @@ mm_is_valid_day <- function(
   
   # initialize vectors
   stop_strs <- character(0)
-  
+
   # find the mean timestep if it will be needed
   if(any(c('full_day','even_timesteps') %in% day_tests) || !isTRUE(is.na(required_timestep))) {
     timestep.days <- if(!is.null(timestep_days) && is.na(timestep_days)) {
@@ -75,7 +75,7 @@ mm_is_valid_day <- function(
 
   # Require that the data span the full expected period (e.g., from 10:30pm on
   # preceding day to 6am on following day)
-  if('full_day' %in% day_tests & is.finite(timestep.days)) {
+  if('full_day' %in% day_tests && is.finite(timestep.days)) {
     # date_counts <- table(format(data_ply$solar.time, "%Y-%m-%d"))
     # ply_date <- names(date_counts)[which.max(date_counts)]
     date_start <- as.POSIXct(paste0(as.character(ply_date), " 00:00:00"), tz=lubridate::tz(v(data_ply$solar.time)))
@@ -90,7 +90,7 @@ mm_is_valid_day <- function(
   
   # Require that on each day solar.time has a ~single, ~consistent time step
   # (with tolerance of 0.2% of mean timestep length)
-  if('even_timesteps' %in% day_tests & is.finite(timestep.days)) {
+  if('even_timesteps' %in% day_tests && is.finite(timestep.days)) {
     tryCatch(
       ts <- mm_get_timestep(data_ply$solar.time, format='unique', require_unique=TRUE, tol=0.002*timestep.days),
       error=function(e) {

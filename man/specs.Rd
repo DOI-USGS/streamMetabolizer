@@ -57,6 +57,7 @@ specs(
   err_mult_GPP_sdlog_sigma = 1,
   K600_lnorm_meanlog = 2.484907,
   K600_lnorm_sdlog = 1,
+  min_n_obs = 20,
   params_in,
   params_out,
   n_chains = 4,
@@ -346,6 +347,10 @@ The mean of a lognormal prior distribution for K600_daily.}
 \item{K600_lnorm_sdlog}{hyperparameter for \code{type='bayes_2s'}. The
 standard deviation parameter of a lognormal prior distribution for
 K600_daily.}
+
+\item{min_n_obs}{for \code{type='bayes_2s'}, the fewest observations each
+day must have. If days have fewer, fitting stops with an error. Defaults
+to 20, which admits hourly or finer data; 0 turns the check off.}
 
 \item{params_in}{Character vector of hyperparameters to pass from the specs
 list into the data list for the MCMC run. Will be automatically generated

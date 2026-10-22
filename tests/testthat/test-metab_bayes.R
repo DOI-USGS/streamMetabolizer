@@ -81,6 +81,15 @@ test_that("prepdata_bayes() errors for data that isn't sorted by date", {
   expect_error(prepdata_bayes(data=dat, data_daily=NULL, ply_date=NA, specs=sp), "couldn't fit given dates into matrix")
 })
 
+test_that("format_mcmc_mat_nosplit()'s data_list_d/data_list_n parameters stay unused", {
+  # Two-station data lists have no $d or $n, so two-station fits pass
+  # NULL for these parameters. That is safe only while the function never
+  # reads them.
+  used_vars <- all.vars(body(format_mcmc_mat_nosplit))
+  expect_false('data_list_d' %in% used_vars)
+  expect_false('data_list_n' %in% used_vars)
+})
+
 
 manual_test4 <- function() {
 
